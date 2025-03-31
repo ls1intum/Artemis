@@ -1,22 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
+import { CreateCompetencyComponent } from 'app/atlas/manage/create/create-competency.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CompetencyService } from 'app/course/competencies/competency.service';
-import { LectureService } from 'app/lecture/lecture.service';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
-import { Competency } from 'app/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
-import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

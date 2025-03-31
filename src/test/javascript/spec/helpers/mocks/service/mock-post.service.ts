@@ -1,7 +1,7 @@
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
+import { DisplayPriority, PostContextFilter } from 'app/communication/metis.util';
 import { messagesBetweenUser1User2, metisCoursePosts, metisPostExerciseUser1, metisPostInChannel, metisTags } from '../../sample/metis-sample-data';
 
 export class MockPostService {

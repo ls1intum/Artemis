@@ -1,21 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { Lecture } from 'app/entities/lecture.model';
-import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
-import { CompetencyService } from 'app/course/competencies/competency.service';
-import { LectureService } from 'app/lecture/lecture.service';
-import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { EditCompetencyComponent } from 'app/atlas/manage/edit/edit-competency.component';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
+import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
@@ -28,6 +30,7 @@ describe('EditCompetencyComponent', () => {
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

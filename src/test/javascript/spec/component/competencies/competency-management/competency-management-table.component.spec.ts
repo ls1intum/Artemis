@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import '@angular/localize/init';
-import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { CompetencyService } from 'app/course/competencies/competency.service';
+import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockProvider } from 'ng-mocks';
-import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

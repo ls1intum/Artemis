@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
 import dayjs from 'dayjs/esm';
-import { ExerciseSaveButtonComponent } from 'app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
+import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

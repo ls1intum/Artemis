@@ -1,13 +1,13 @@
-import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
+import { VideoUnitFormComponent, VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CreateVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-video-unit/create-video-unit.component';
-import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
+import { CreateVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-video-unit/create-video-unit.component';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -17,6 +17,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateVideoUnitComponent', () => {
     let createVideoUnitComponentFixture: ComponentFixture<CreateVideoUnitComponent>;
@@ -61,6 +63,7 @@ describe('CreateVideoUnitComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

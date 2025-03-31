@@ -1,10 +1,10 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import {
     Competency,
     CompetencyExerciseLink,
@@ -15,18 +15,18 @@ import {
     CompetencyRelationType,
     CompetencyWithTailRelationDTO,
     CourseCompetencyProgress,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import * as dateUtils from 'app/utils/date.utils';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import * as dateUtils from 'app/shared/util/date.utils';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 describe('PrerequisiteService', () => {
     let prerequisiteService: PrerequisiteService;

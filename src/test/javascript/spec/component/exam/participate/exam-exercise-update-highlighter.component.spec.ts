@@ -3,8 +3,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { BehaviorSubject } from 'rxjs';
 import { ExamExerciseUpdate, ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 
 describe('ExamExerciseUpdateHighlighterComponent', () => {

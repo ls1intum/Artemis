@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { MetricsSystemComponent } from 'app/admin/metrics/blocks/metrics-system/metrics-system.component';
+import { MetricsSystemComponent } from 'app/core/admin/metrics/blocks/metrics-system/metrics-system.component';
 
 describe('MetricsSystemComponent', () => {
     let comp: MetricsSystemComponent;

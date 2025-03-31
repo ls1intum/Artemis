@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
+import { CancellationModalComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';

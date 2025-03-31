@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseTutorialGroupDetailComponent } from 'app/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
+import { CourseTutorialGroupDetailComponent } from 'app/tutorialgroup/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CourseTutorialGroupDetailComponent', () => {

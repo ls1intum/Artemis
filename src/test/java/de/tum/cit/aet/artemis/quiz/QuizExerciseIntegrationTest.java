@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.quiz;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -307,7 +308,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void checkCreatedFile(String path) throws Exception {
         MediaType mediaType = path.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
-        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, path);
+        MvcResult result = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }
@@ -525,7 +527,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizExercise quizExercise = quizExerciseUtilService.createAndSaveQuiz(ZonedDateTime.now().minusHours(1), null, QuizMode.SYNCHRONIZED);
 
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
 
         QuizExercise updatedQuizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.BAD_REQUEST);
@@ -1648,7 +1650,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExercise, 1, true, ZonedDateTime.now());
         participationUtilService.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
 
-        exerciseService.filterForCourseDashboard(quizExercise, Set.of((StudentParticipation) quizSubmission.getParticipation()), true);
+        exerciseService.filterExerciseForCourseDashboard(quizExercise, Set.of((StudentParticipation) quizSubmission.getParticipation()), true);
 
         assertThat(quizExercise.getStudentParticipations()).hasSize(1);
         assertThat(quizExercise.getStudentParticipations()).containsExactlyInAnyOrder((StudentParticipation) quizSubmission.getParticipation());
@@ -1783,11 +1785,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
                 assertThat(dragItems.get(3).getText()).as("Text for drag item is correct").isNull();
                 assertThat(dragItems.get(3).getPictureFilePath()).as("Picture file path for drag item is correct").isNotEmpty();
 
-                assertThat(request.get(dragAndDropQuestion.getBackgroundFilePath(), OK, byte[].class)).isNotEmpty();
+                String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragAndDropQuestion.getBackgroundFilePath());
+                assertThat(request.get(requestUrl, OK, byte[].class)).isNotEmpty();
 
                 for (DragItem dragItem : dragItems) {
                     if (dragItem.getPictureFilePath() != null) {
-                        assertThat(request.get(dragItem.getPictureFilePath(), OK, byte[].class)).isNotEmpty();
+                        String requestUrlPath = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, dragItem.getPictureFilePath());
+                        assertThat(request.get(requestUrlPath, OK, byte[].class)).isNotEmpty();
                     }
                 }
             }
@@ -1886,19 +1890,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
     private void updateMultipleChoice(QuizExercise quizExercise) {
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().getFirst();
-        mc.getAnswerOptions().remove(0);
+        mc.getAnswerOptions().removeFirst();
         mc.getAnswerOptions().add(new AnswerOption().text("C").hint("H3").explanation("E3").isCorrect(true));
         mc.getAnswerOptions().add(new AnswerOption().text("D").hint("H4").explanation("E4").isCorrect(true));
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
-        dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
-        dnd.getDragItems().remove(0);
+        dnd.getDropLocations().removeFirst();
+        dnd.getCorrectMappings().removeFirst();
+        dnd.getDragItems().removeFirst();
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
-        sa.getSpots().remove(0);
-        sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getSpots().removeFirst();
+        sa.getSolutions().removeFirst();
+        sa.getCorrectMappings().removeFirst();
     }
 
     private QuizExercise createMultipleChoiceQuizExercise() {

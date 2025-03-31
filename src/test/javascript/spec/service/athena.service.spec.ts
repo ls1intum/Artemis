@@ -1,17 +1,17 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { AthenaService } from 'app/assessment/athena.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { AthenaService } from 'app/assessment/shared/athena.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { of } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('AthenaService', () => {
     let athenaService: AthenaService;

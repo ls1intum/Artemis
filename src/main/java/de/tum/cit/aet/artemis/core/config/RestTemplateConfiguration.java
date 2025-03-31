@@ -23,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 
 /**
@@ -41,12 +40,6 @@ public class RestTemplateConfiguration {
     private static final int VERY_SHORT_CONNECTION_TIMEOUT = 1000;
 
     private static final int VERY_SHORT_READ_TIMEOUT = 1000;
-
-    @Bean
-    @Profile("gitlab | gitlabci")
-    public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
-        return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
-    }
 
     @Bean
     @Profile(PROFILE_JENKINS)
@@ -85,12 +78,6 @@ public class RestTemplateConfiguration {
 
     // Note: for certain requests, e.g. health(), we would like to have shorter timeouts, therefore we need additional rest templates, because
     // it is recommended to keep the timeout settings constant per rest template
-
-    @Bean
-    @Profile("gitlab | gitlabci")
-    public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
-        return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());
-    }
 
     @Bean
     @Profile(PROFILE_JENKINS)

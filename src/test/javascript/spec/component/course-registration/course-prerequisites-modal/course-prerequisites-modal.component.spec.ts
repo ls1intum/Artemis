@@ -3,12 +3,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { CoursePrerequisitesModalComponent } from 'app/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { CoursePrerequisitesModalComponent } from 'app/core/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
-import { CompetencyCardComponent } from '../../../../../../main/webapp/app/course/competencies/competency-card/competency-card.component';
+import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

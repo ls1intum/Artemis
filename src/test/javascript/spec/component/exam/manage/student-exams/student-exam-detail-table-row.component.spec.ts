@@ -1,29 +1,31 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { ReactiveFormsModule } from '@angular/forms';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideRouter } from '@angular/router';
+import { input } from '@angular/core';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 describe('StudentExamDetailTableRowComponent', () => {
     let studentExamDetailTableRowComponentFixture: ComponentFixture<StudentExamDetailTableRowComponent>;
@@ -75,9 +77,6 @@ describe('StudentExamDetailTableRowComponent', () => {
 
     it('should route to modeling submission', () => {
         const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
-        studentExamDetailTableRowComponentFixture.detectChanges();
-        studentExamDetailTableRowComponent.courseId = 23;
-        studentExamDetailTableRowComponent.examId = exam1.id!;
         const modelingExercise = {
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
@@ -86,6 +85,18 @@ describe('StudentExamDetailTableRowComponent', () => {
             type: ExerciseType.MODELING,
             exerciseGroup: { id: 12 },
         };
+        TestBed.runInInjectionContext(() => {
+            studentExamDetailTableRowComponent.exercise = input(modelingExercise);
+            studentExamDetailTableRowComponent.examId = input(exam1.id!);
+            studentExamDetailTableRowComponent.isTestRun = input(false);
+            studentExamDetailTableRowComponent.course = input(course);
+            studentExamDetailTableRowComponent.busy = input(false);
+            studentExamDetailTableRowComponent.studentExam = input({} as StudentExam);
+            studentExamDetailTableRowComponent.achievedPointsPerExercise = input({ 1: 1 });
+        });
+        studentExamDetailTableRowComponentFixture.detectChanges();
+        studentExamDetailTableRowComponent.courseId = 23;
+
         const submission = { id: 14 };
         const route = studentExamDetailTableRowComponent.getAssessmentLink(modelingExercise, submission);
         expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();

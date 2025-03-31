@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.exam.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -20,7 +19,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderColumn;
 import jakarta.persistence.Table;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -31,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Entity
 @Table(name = "student_exam")
@@ -81,8 +79,10 @@ public class StudentExam extends AbstractAuditingEntity {
     private Set<ExamSession> examSessions = new HashSet<>();
 
     @ManyToMany
-    @JoinTable(name = "student_exam_quiz_question", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "quiz_question_id", referencedColumnName = "id"))
-    private List<QuizQuestion> quizQuestions = new ArrayList<>();
+    @JoinTable(name = "student_exam_participation", joinColumns = @JoinColumn(name = "student_exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "participation_id", referencedColumnName = "id"))
+    @OrderColumn(name = "participation_order")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<StudentParticipation> studentParticipations = new ArrayList<>();
 
     public Boolean isSubmitted() {
         return submitted;
@@ -181,22 +181,12 @@ public class StudentExam extends AbstractAuditingEntity {
         this.examSessions = examSessions;
     }
 
-    /**
-     * Returns a list of quiz questions associated with the student exam.
-     * If the quizQuestions list is not null and has been initialized, it returns the list of quiz questions.
-     * Otherwise, it returns an empty list.
-     *
-     * @return the list of quiz questions associated with the student exam
-     */
-    public List<QuizQuestion> getQuizQuestions() {
-        if (quizQuestions != null && Hibernate.isInitialized(quizQuestions)) {
-            return quizQuestions;
-        }
-        return Collections.emptyList();
+    public List<StudentParticipation> getStudentParticipations() {
+        return studentParticipations;
     }
 
-    public void setQuizQuestions(List<QuizQuestion> quizQuestions) {
-        this.quizQuestions = quizQuestions;
+    public void setStudentParticipations(List<StudentParticipation> studentParticipations) {
+        this.studentParticipations = studentParticipations;
     }
 
     /**
@@ -229,6 +219,16 @@ public class StudentExam extends AbstractAuditingEntity {
             return false;
         }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
+    }
+
+    /**
+     * Check if the individual student exam is finished
+     * A student exam is finished if it's started and either submitted or the time has passed
+     *
+     * @return true if the exam is finished, otherwise false
+     */
+    public boolean isFinished() {
+        return Boolean.TRUE.equals(this.isStarted()) && (Boolean.TRUE.equals(this.isEnded()) || Boolean.TRUE.equals(this.isSubmitted()));
     }
 
     /**

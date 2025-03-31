@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { KnowledgeArea, Source, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, Source, StandardizedCompetencyDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { Observable } from 'rxjs';
 
 @Component({

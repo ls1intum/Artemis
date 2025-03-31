@@ -1,16 +1,17 @@
-import { Component, Input, OnChanges } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
-import { Submission } from 'app/entities/submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { Course } from 'app/entities/course.model';
-import { Result } from 'app/entities/result.model';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { Component, OnChanges, input } from '@angular/core';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 @Component({
     selector: '[jhi-student-exam-detail-table-row]',
@@ -19,13 +20,15 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [FaIconComponent, TranslateDirective, RouterLink, ArtemisTranslatePipe],
 })
 export class StudentExamDetailTableRowComponent implements OnChanges {
-    @Input() exercise: Exercise;
-    @Input() examId: number;
-    @Input() isTestRun: boolean;
-    @Input() course: Course;
-    @Input() busy: boolean;
-    @Input() studentExam: StudentExam;
-    @Input() achievedPointsPerExercise: { [exerciseId: number]: number };
+    exercise = input.required<Exercise>();
+    examId = input.required<number>();
+    isTestRun = input.required<boolean>();
+    course = input.required<Course>();
+    busy = input.required<boolean>();
+    studentExam = input.required<StudentExam>();
+    achievedPointsPerExercise = input.required<{
+        [exerciseId: number]: number;
+    }>();
 
     courseId: number;
     studentParticipation: StudentParticipation;
@@ -33,14 +36,15 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     result: Result;
     openingAssessmentEditorForNewSubmission = false;
     readonly ExerciseType = ExerciseType;
+    readonly AssessmentType = AssessmentType;
     getIcon = getIcon;
 
     // Icons
     faFolderOpen = faFolderOpen;
 
     ngOnChanges() {
-        if (this.exercise.studentParticipations?.[0]) {
-            this.studentParticipation = this.exercise.studentParticipations![0];
+        if (this.exercise().studentParticipations?.[0]) {
+            this.studentParticipation = this.exercise().studentParticipations![0];
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
@@ -50,8 +54,8 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 this.result = this.studentParticipation.results![0];
             }
         }
-        if (this.course && this.course.id) {
-            this.courseId = this.course.id!;
+        if (this.course() && this.course().id) {
+            this.courseId = this.course().id!;
         }
     }
 
@@ -75,7 +79,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 exercise.id!,
                 this.studentParticipation?.id,
                 submission.id!,
-                this.examId,
+                this.examId(),
                 exercise.exerciseGroup?.id,
                 resultId,
             );

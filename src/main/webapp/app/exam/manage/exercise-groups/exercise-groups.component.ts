@@ -3,19 +3,19 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/exercise.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { EventManager } from 'app/shared/service/event-manager.service';
 import {
     faAngleDown,
     faAngleUp,
@@ -30,8 +30,8 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,9 +41,9 @@ import { ProgrammingExerciseGroupCellComponent } from './programming-exercise-ce
 import { QuizExerciseGroupCellComponent } from './quiz-exercise-cell/quiz-exercise-group-cell.component';
 import { ModelingExerciseGroupCellComponent } from './modeling-exercise-cell/modeling-exercise-group-cell.component';
 import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cell/file-upload-exercise-group-cell.component';
-import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -86,8 +86,8 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = false;
-    localCIEnabled = false;
+    localVCEnabled = true;
+    localCIEnabled = true;
 
     // Icons
     faPlus = faPlus;

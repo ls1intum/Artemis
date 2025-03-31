@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.io.IOException;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -58,6 +59,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
@@ -77,7 +79,9 @@ import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTheiaConfigDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -88,6 +92,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryS
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
@@ -113,6 +118,8 @@ public class ProgrammingExerciseResource {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     private final UserRepository userRepository;
 
@@ -152,24 +159,27 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final Optional<AthenaApi> athenaApi;
 
     private final Environment environment;
 
+    private final RepositoryCheckoutService repositoryCheckoutService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ProgrammingExerciseService programmingExerciseService,
             ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, ProgrammingExerciseTaskService programmingExerciseTaskService,
             StudentParticipationRepository studentParticipationRepository, StaticCodeAnalysisService staticCodeAnalysisService,
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Environment environment,
+            RepositoryCheckoutService repositoryCheckoutService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
+        this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -189,8 +199,9 @@ public class ProgrammingExerciseResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaApi = athenaApi;
         this.environment = environment;
+        this.repositoryCheckoutService = repositoryCheckoutService;
     }
 
     /**
@@ -246,12 +257,11 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
-                () -> programmingExercise.setFeedbackSuggestionModule(null));
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME), () -> programmingExercise.setFeedbackSuggestionModule(null));
 
         try {
             // Setup all repositories etc
-            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise, false);
+            ProgrammingExercise newProgrammingExercise = programmingExerciseService.createProgrammingExercise(programmingExercise);
 
             // Create default static code analysis categories
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
@@ -341,10 +351,10 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
         // Changing Athena module after the due date has passed is not allowed
-        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());
@@ -368,8 +378,6 @@ public class ProgrammingExerciseResource {
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise,
                 notificationText);
-
-        programmingExerciseRepositoryService.handleRepoAccessRightChanges(programmingExerciseBeforeUpdate, savedProgrammingExercise);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
@@ -494,6 +502,21 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/:exerciseId/theia-config : get the theia config for the programmingExercise.
+     *
+     * @param exerciseId the id of the programmingExercise to retrieve the configuration for
+     * @return the ResponseEntity with status 200 (OK) and with body the TheiaConfigDTO, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/theia-config")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<ProgrammingExerciseTheiaConfigDTO> getBuildConfig(@PathVariable long exerciseId) {
+        log.debug("REST request to get theia image of ProgrammingExercise : {}", exerciseId);
+        var imageDTO = new ProgrammingExerciseTheiaConfigDTO(programmingExerciseBuildConfigRepository.getTheiaImageByProgrammingExerciseId(exerciseId));
+
+        return ResponseEntity.ok().body(imageDTO);
+    }
+
+    /**
      * GET /programming-exercises/:exerciseId/with-participations/ : get the "exerciseId" programmingExercise.
      *
      * @param exerciseId the id of the programmingExercise to retrieve
@@ -550,24 +573,21 @@ public class ProgrammingExerciseResource {
     /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
-     * @param exerciseId                   the id of the programmingExercise to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
-     *                                         and LocalCI, it does not make sense to keep these artifacts
-     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
-     *                                         LocalCI, it does not make sense to keep these artifacts
+     * @param exerciseId                the id of the programmingExercise to delete
+     * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                      LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK) when programming exercise has been successfully deleted or with status 404 (Not Found)
      */
     @DeleteMapping("programming-exercises/{exerciseId}")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans,
-            @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
+    public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable long exerciseId, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete ProgrammingExercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, user);
         exerciseService.logDeletion(programmingExercise, programmingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(exerciseId, deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+        exerciseDeletionService.delete(exerciseId, deleteBaseReposBuildPlans);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, programmingExercise.getTitle())).build();
     }
 
@@ -886,6 +906,7 @@ public class ProgrammingExerciseResource {
      * @return a DTO containing the checkout directories for the exercise, solution, and tests repository
      *         for the requested programming language for the submission and solution build.
      */
+    @Profile(PROFILE_LOCALCI)
     @GetMapping("programming-exercises/repository-checkout-directories")
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
@@ -893,7 +914,8 @@ public class ProgrammingExerciseResource {
             @RequestParam(value = "checkoutSolution", defaultValue = "true") boolean checkoutSolution) {
         log.debug("REST request to get checkout directories for programming language: {}", programmingLanguage);
 
-        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = continuousIntegrationService.orElseThrow().getCheckoutDirectories(programmingLanguage, checkoutSolution);
+        CheckoutDirectoriesDTO repositoriesCheckoutDirectoryDTO = repositoryCheckoutService.getCheckoutDirectories(programmingLanguage, checkoutSolution);
         return ResponseEntity.ok(repositoriesCheckoutDirectoryDTO);
     }
+
 }

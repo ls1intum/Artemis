@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
+import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
-import { LectureService } from 'app/lecture/lecture.service';
-import { Subject, of } from 'rxjs';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import * as CourseModel from 'app/entities/course.model';
+import { LectureService } from 'app/lecture/manage/lecture.service';
+import { of, Subject } from 'rxjs';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
+import * as CourseModel from 'app/core/shared/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
@@ -38,8 +38,8 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import monaco from 'monaco-editor';
-import { FileService } from 'app/shared/http/file.service';
 import { MockFileService } from '../../../../helpers/mocks/service/mock-file.service';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;

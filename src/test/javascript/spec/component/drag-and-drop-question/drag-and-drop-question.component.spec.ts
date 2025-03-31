@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { DragItem } from 'app/entities/quiz/drag-item.model';
-import { DropLocation } from 'app/entities/quiz/drop-location.model';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
-import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
+import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
+import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item.component';
+import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { FitTextDirective } from 'app/exercises/quiz/shared/fit-text/fit-text.directive';
+import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
 
 describe('DragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;

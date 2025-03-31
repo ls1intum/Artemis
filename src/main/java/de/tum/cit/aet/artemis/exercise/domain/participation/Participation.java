@@ -32,7 +32,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -43,7 +42,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A Participation.
@@ -70,11 +68,9 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
-    @JsonView(QuizView.Before.class)
     private InitializationState initializationState;
 
     @Column(name = "initialization_date")
-    @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
     @Column(name = "individual_due_date")
@@ -92,7 +88,6 @@ public abstract class Participation extends DomainObject implements Participatio
     // and the gain from fetching lazy here is minimal
     @ManyToOne
     @JsonIgnoreProperties("studentParticipations")
-    @JsonView(QuizView.Before.class)
     protected Exercise exercise;
 
     /**
@@ -107,7 +102,6 @@ public abstract class Participation extends DomainObject implements Participatio
     @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties(value = "participation", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     @Deprecated(since = "7.7", forRemoval = true)
     private Set<Result> results = new HashSet<>();
 
@@ -123,6 +117,17 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonIgnoreProperties({ "participation" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
+
+    /**
+     * Graded course exercises, practice mode course exercises and real exam exercises always have only one parcitipation per exercise
+     * In case of a test exam, there are multiple participations possible for one exercise
+     * This field is necessary to preserve the constraint of one partipation per exercise, while allowing multiple particpiations per exercise for test exams
+     * The value is 0 for graded course exercises and exercises in the real exams
+     * The value is 1 for practice mode course exercises
+     * The value is 0-255 for test exam exercises. For each subsequent participation the number is increased by one
+     */
+    @Column(name = "attempt")
+    private int attempt = 0;
 
     /**
      * This property stores the total number of submissions in this participation. Not stored in the database, computed dynamically and used in showing statistics to the user in
@@ -276,7 +281,13 @@ public abstract class Participation extends DomainObject implements Participatio
         this.submissions = submissions;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+    public int getAttempt() {
+        return attempt;
+    }
+
+    public void setAttempt(int attempt) {
+        this.attempt = attempt;
+    }
 
     /**
      * Finds the latest result for the participation. Checks if the participation has any results. If there are no results, return null. Otherwise sort the results by completion
@@ -387,4 +398,5 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @JsonIgnore
     public abstract String getType();
+
 }

@@ -1,17 +1,16 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LearningPathsTableComponent } from 'app/course/learning-paths/components/learning-paths-table/learning-paths-table.component';
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
+import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
+import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
-import 'jest-extended';
 
 describe('LearningPathsTableComponent', () => {
     let component: LearningPathsTableComponent;

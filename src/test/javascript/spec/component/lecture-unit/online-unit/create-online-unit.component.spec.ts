@@ -1,13 +1,13 @@
-import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { OnlineUnitFormComponent, OnlineUnitFormData } from 'app/lecture/manage/lecture-units/online-unit-form/online-unit-form.component';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
-import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { CreateOnlineUnitComponent } from 'app/lecture/manage/lecture-units/create-online-unit/create-online-unit.component';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
+import { OnlineUnit } from 'app/lecture/shared/entities/lecture-unit/onlineUnit.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -17,6 +17,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateOnlineUnitComponent', () => {
     let createOnlineUnitComponentFixture: ComponentFixture<CreateOnlineUnitComponent>;
@@ -28,6 +30,7 @@ describe('CreateOnlineUnitComponent', () => {
                 MockProvider(OnlineUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

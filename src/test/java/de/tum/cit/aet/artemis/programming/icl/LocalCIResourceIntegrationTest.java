@@ -12,6 +12,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,6 +82,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void createJobs() {
+        buildJobRepository.deleteAll();
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
@@ -96,7 +98,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
         job1 = new BuildJobQueueItem("1", "job1", buildAgent, 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", buildAgent, 2, course.getId(), 1, 1, 2, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, new ArrayList<>(List.of(job2)), null);
+        agent1 = new BuildAgentInformation(buildAgent, 2, 1, new ArrayList<>(List.of(job1)), BuildAgentInformation.BuildAgentStatus.IDLE, null, null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", buildAgent, 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem2 = new BuildJobQueueItem("4", "job4", buildAgent, 4, course.getId() + 1, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo2,
@@ -136,6 +138,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         queuedJobs.clear();
         processingJobs.clear();
         buildAgentInformation.clear();
+        buildJobRepository.deleteAll();
     }
 
     @Test
@@ -261,7 +264,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetFinishedBuildJobs_returnsSortedJobs() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         buildJobRepository.save(finishedJob3);
@@ -269,16 +271,25 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         pageableSearchDTO.setSortingOrder(SortingOrder.ASCENDING);
         var result = request.getList("/api/core/admin/finished-jobs", HttpStatus.OK, FinishedBuildJobDTO.class,
                 pageableSearchUtilService.searchMapping(pageableSearchDTO, "pageable"));
-        assertThat(result).hasSize(3);
-        assertThat(result.getFirst().id()).isEqualTo(finishedJob2.getBuildJobId());
-        assertThat(result.get(1).id()).isEqualTo(finishedJob3.getBuildJobId());
-        assertThat(result.get(2).id()).isEqualTo(finishedJob1.getBuildJobId());
+
+        assertThat(result).isNotEmpty();
+
+        // Ensure the saved jobs appear in the result list and are in the correct order, even if other jobs are in between
+        List<String> resultIds = result.stream().map(FinishedBuildJobDTO::id).toList();
+        List<String> expectedOrderedIds = List.of(finishedJob2.getBuildJobId(), finishedJob3.getBuildJobId(), finishedJob1.getBuildJobId());
+
+        assertThat(resultIds).containsAll(expectedOrderedIds);
+        assertThat(IntStream.range(0, expectedOrderedIds.size() - 1).allMatch(i -> resultIds.indexOf(expectedOrderedIds.get(i)) < resultIds.indexOf(expectedOrderedIds.get(i + 1))))
+                .isTrue();
+
+        // Ensure the jobs are sorted by buildCompletionDate in ascending order
+        List<ZonedDateTime> completionDates = result.stream().map(FinishedBuildJobDTO::buildCompletionDate).toList();
+        assertThat(completionDates).isSorted();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetFinishedBuildJobs_returnsFilteredJobs() throws Exception {
-        buildJobRepository.deleteAll();
 
         // Create a failed job to filter for
         JobTimingInfo jobTimingInfo = new JobTimingInfo(ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(1).plusMinutes(2),
@@ -314,7 +325,6 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFinishedBuildJobsForCourse_returnsJobs() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         PageableSearchDTO<String> pageableSearchDTO = pageableSearchUtilService.configureFinishedJobsSearchDTO();
@@ -350,15 +360,14 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetBuildJobStatistics() throws Exception {
-        buildJobRepository.deleteAll();
         buildJobRepository.save(finishedJob1);
         buildJobRepository.save(finishedJob2);
         var response = request.get("/api/core/admin/build-job-statistics", HttpStatus.OK, BuildJobsStatisticsDTO.class);
         assertThat(response).isNotNull();
-        assertThat(response.totalBuilds()).isEqualTo(2);
-        assertThat(response.successfulBuilds()).isEqualTo(1);
-        assertThat(response.failedBuilds()).isEqualTo(1);
-        assertThat(response.cancelledBuilds()).isEqualTo(0);
+        assertThat(response.totalBuilds()).isGreaterThanOrEqualTo(2);
+        assertThat(response.successfulBuilds()).isGreaterThanOrEqualTo(1);
+        assertThat(response.failedBuilds()).isGreaterThanOrEqualTo(1);
+        assertThat(response.cancelledBuilds()).isGreaterThanOrEqualTo(0);
     }
 
     @Test

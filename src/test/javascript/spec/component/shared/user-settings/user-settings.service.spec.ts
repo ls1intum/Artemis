@@ -1,14 +1,14 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
-import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { provideHttpClient } from '@angular/common/http';
+import { NotificationSetting, notificationSettingsStructure } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { Setting, UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
 
 const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,

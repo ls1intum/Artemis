@@ -7,11 +7,11 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('SidebarCardSmallComponent', () => {
     let component: SidebarCardSmallComponent;

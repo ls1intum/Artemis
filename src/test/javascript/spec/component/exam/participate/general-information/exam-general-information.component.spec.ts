@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { User } from 'app/core/user/user.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExamGeneralInformationComponent } from 'app/exam/participate/general-information/exam-general-information.component';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

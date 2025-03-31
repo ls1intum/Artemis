@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { HttpResponse } from '@angular/common/http';
 import { metisCoursePosts } from '../../sample/metis-sample-data';
 

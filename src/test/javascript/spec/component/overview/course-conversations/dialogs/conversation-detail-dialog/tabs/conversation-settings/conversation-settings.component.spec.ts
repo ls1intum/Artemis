@@ -1,25 +1,25 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationSettingsComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../helpers/conversationExampleModels';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import * as ConversationPermissionUtils from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import * as ConversationPermissionUtils from 'app/communication/conversations/conversation-permissions.utils';
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ConversationSettingsComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

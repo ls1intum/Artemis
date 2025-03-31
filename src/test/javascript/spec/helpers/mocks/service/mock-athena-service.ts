@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
+import { ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 
 export class MockAthenaService {
     getTextFeedbackSuggestions(exerciseId: number, submissionId: number): Observable<TextFeedbackSuggestion[]> {

@@ -1,27 +1,26 @@
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MissingResultInformation, ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { SimpleChange } from '@angular/core';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import * as utils from 'app/exercises/shared/feedback/feedback.utils';
-import { FeedbackComponentPreparedParams } from 'app/exercises/shared/feedback/feedback.utils';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
+import * as utils from 'app/exercise/feedback/feedback.utils';
+import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { By } from '@angular/platform-browser';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Router } from '@angular/router';
-import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
@@ -80,7 +79,6 @@ describe('ResultComponent', () => {
     let comp: ResultComponent;
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
-    let mockLink: HTMLAnchorElement;
     let router: Router;
 
     beforeEach(async () => {
@@ -120,35 +118,6 @@ describe('ResultComponent', () => {
     afterEach(() => {
         jest.restoreAllMocks();
         global.URL.revokeObjectURL = jest.fn();
-    });
-
-    it('should download build result when participation ID is provided', () => {
-        // Arrange
-        const fakeArtifact = {
-            fileContent: new Blob(['test'], { type: 'text/plain' }),
-            fileName: 'test.txt',
-        };
-        mockLink = document.createElement('a');
-        jest.spyOn(document, 'createElement').mockReturnValue(mockLink);
-        jest.spyOn(document.body, 'appendChild').mockImplementation((child) => child);
-        jest.spyOn(document.body, 'removeChild').mockImplementation((child) => child);
-
-        const urlSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('blob:test-url');
-
-        participationServiceMock.downloadArtifact.mockReturnValue(of(fakeArtifact));
-
-        // Act
-        comp.downloadBuildResult(123);
-
-        // Assert
-        expect(participationServiceMock.downloadArtifact).toHaveBeenCalledWith(123);
-        expect(document.createElement).toHaveBeenCalledWith('a');
-        expect(urlSpy).toHaveBeenCalledWith(fakeArtifact.fileContent);
-        expect(mockLink.download).toBe(fakeArtifact.fileName);
-        expect(mockLink.href).toBe('blob:test-url');
-        expect(document.body.appendChild).toHaveBeenCalledWith(mockLink);
-        // Cleanup to avoid memory leaks
-        URL.revokeObjectURL(mockLink.href);
     });
 
     it('should set template status to BUILDING if isBuilding changes to true even though participation changes', () => {

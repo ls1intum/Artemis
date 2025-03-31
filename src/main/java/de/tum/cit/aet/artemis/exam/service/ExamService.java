@@ -73,7 +73,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -102,16 +101,13 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -140,11 +136,7 @@ public class ExamService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ExamDateService examDateService;
-
     private final ExamLiveEventsService examLiveEventsService;
-
-    private final InstanceMessageSendService instanceMessageSendService;
 
     private final ExamRepository examRepository;
 
@@ -184,30 +176,26 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
-    private final QuizPoolService quizPoolService;
-
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
 
     private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
-    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository,
-            InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ExamLiveEventsService examLiveEventsService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
-            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
-            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizPoolService quizPoolService, QuizResultService quizResultService) {
-        this.examDateService = examDateService;
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
+            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
+            ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
+            GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
+            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
+            QuizResultService quizResultService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -227,7 +215,6 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
-        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
     }
@@ -562,6 +549,7 @@ public class ExamService {
     public void filterParticipationForExercise(StudentExam studentExam, Exercise exercise, List<StudentParticipation> participations, boolean isAtLeastInstructor) {
         // remove the unnecessary inner course attribute
         exercise.setCourse(null);
+
         if (!(exercise instanceof QuizExercise)) {
             // Note: quiz exercises are filtered below
             exercise.filterSensitiveInformation();
@@ -586,22 +574,6 @@ public class ExamService {
 
             // we might need this information for programming exercises with submission policy
             participation.setSubmissionCount(participation.getSubmissions().size());
-
-            // set the locked property of the participation properly
-            if (participation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation
-                    && exercise instanceof ProgrammingExercise programmingExercise) {
-                var submissionPolicy = programmingExercise.getSubmissionPolicy();
-                // in the unlikely case the student exam was already submitted, set all participations to locked
-                if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(studentExam.isEnded())) {
-                    programmingExerciseStudentParticipation.setLocked(true);
-                }
-                else if (submissionPolicy != null && Boolean.TRUE.equals(submissionPolicy.isActive()) && submissionPolicy instanceof LockRepositoryPolicy) {
-                    programmingExerciseStudentParticipation.setLocked(programmingExerciseStudentParticipation.getSubmissionCount() >= submissionPolicy.getSubmissionLimit());
-                }
-                else {
-                    programmingExerciseStudentParticipation.setLocked(false);
-                }
-            }
 
             // only include the latest submission
             Optional<Submission> optionalLatestSubmission = participation.findLatestLegalOrIllegalSubmission();
@@ -893,33 +865,34 @@ public class ExamService {
      * @return true if at least one submission is not empty else false
      */
     private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
-        if (exercise instanceof ProgrammingExercise) {
-            return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
-            return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
-        }
-        else if (exercise instanceof TextExercise) {
-            TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
-            return textSubmission.getText() != null && !textSubmission.getText().isBlank();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
-            try {
-                return !modelingSubmission.isEmpty(this.defaultObjectMapper);
+        switch (exercise) {
+            case ProgrammingExercise ignored -> {
+                return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
             }
-            catch (Exception e) {
-                // Then the student most likely submitted something which breaks the model, if parsing fails
+            case FileUploadExercise ignored -> {
+                FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
+                return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
+            }
+            case TextExercise ignored -> {
+                TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
+                return textSubmission.getText() != null && !textSubmission.getText().isBlank();
+            }
+            case ModelingExercise ignored -> {
+                ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
+                try {
+                    return !modelingSubmission.isEmpty(this.defaultObjectMapper);
+                }
+                catch (Exception e) {
+                    // Then the student most likely submitted something which breaks the model, if parsing fails
+                    return true;
+                }
+            }
+            case QuizExercise ignored -> {
+                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
                 return true;
+                // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
             }
-        }
-        else if (exercise instanceof QuizExercise) {
-            // NOTE: due to performance concerns, this is handled differently, search for quizSubmittedAnswerCounts to find out more
-            return true;
-        }
-        else {
-            throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
+            case null, default -> throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");
         }
     }
 
@@ -1158,19 +1131,6 @@ public class ExamService {
         return quizExercises.size();
     }
 
-    /**
-     * Unlocks all repositories of an exam (only for external version control services)
-     *
-     * @param examId id of the exam for which the repositories should be unlocked
-     * @return number of exercises for which the repositories are unlocked
-     */
-    public Integer unlockAllRepositories(Long examId) {
-        var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
-        // Run the runnable immediately so that the repositories are unlocked as fast as possible
-        programmingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendUnlockAllStudentRepositories);
-        return programmingExercises.size();
-    }
-
     private <T extends Exercise> Set<T> getAllExercisesForExamByType(Long examId, Class<T> exerciseType) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
         return getAllExercisesForExamByType(exam, exerciseType);
@@ -1184,19 +1144,6 @@ public class ExamService {
         return exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream())
                 // this also filters potential null values
                 .filter(exerciseType::isInstance).map(exerciseType::cast).collect(Collectors.toSet());
-    }
-
-    /**
-     * Locks all repositories of an exam (only for external version control services)
-     *
-     * @param examId id of the exam for which the repositories should be locked
-     * @return number of exercises for which the repositories are locked
-     */
-    public Integer lockAllRepositories(Long examId) {
-        var programmingExercises = getAllExercisesForExamByType(examId, ProgrammingExercise.class);
-        // Run the runnable immediately so that the repositories are locked as fast as possible
-        programmingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendLockAllStudentRepositories);
-        return programmingExercises.size();
     }
 
     /**
@@ -1217,19 +1164,6 @@ public class ExamService {
         });
         // set transient number of registered users
         examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
-    }
-
-    /**
-     * Set properties for quiz exercises in exam
-     *
-     * @param exam The exam for which to set the properties
-     */
-    public void setQuizExamProperties(Exam exam) {
-        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
-        if (optionalQuizPool.isPresent()) {
-            QuizPool quizPool = optionalQuizPool.get();
-            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
-        }
     }
 
     /**
@@ -1340,18 +1274,6 @@ public class ExamService {
     }
 
     /**
-     * Schedules all modeling exercises
-     * This is executed when exam is updated or individual working times are updated
-     *
-     * @param exam - the exam whose modeling exercises will be scheduled
-     */
-    public void scheduleModelingExercises(Exam exam) {
-        var modelingExercises = getAllExercisesForExamByType(exam, ModelingExercise.class);
-        // for all modeling exercises in the exam, send their ids for scheduling
-        modelingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendModelingExerciseSchedule);
-    }
-
-    /**
      * Search for all exams fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exams if there are that many in Artemis.
@@ -1417,8 +1339,6 @@ public class ExamService {
      * Updates the working times for student exams based on a given change in working time and reschedules exercises accordingly.
      * This method considers any existing time extensions for individual students and adjusts their working times relative to the original exam duration and the specified change.
      * After updating the working times, it saves the changes and, if the exam is already visible, notifies both the students and relevant instances about the update.
-     * Additionally, if the current time is before the latest individual exam end date, it potentially triggers a rescheduling of the clustering of modeling submissions,
-     * considering the use of Compass.
      *
      * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
      * @param originalExamDuration The original duration of the exam, in seconds, before any changes.
@@ -1427,7 +1347,6 @@ public class ExamService {
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
         var now = now();
-        User instructor = userRepository.getUser();
 
         var studentExams = exam.getStudentExams();
         for (var studentExam : studentExams) {
@@ -1451,16 +1370,6 @@ public class ExamService {
             }
         }
         studentExamRepository.saveAll(studentExams);
-
-        // NOTE: if the exam is already visible, notify instances about the working time change
-        if (now.isAfter(exam.getVisibleDate())) {
-            instanceMessageSendService.sendRescheduleAllStudentExams(exam.getId());
-        }
-
-        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
-        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            scheduleModelingExercises(exam);
-        }
     }
 
     /**

@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
+import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;

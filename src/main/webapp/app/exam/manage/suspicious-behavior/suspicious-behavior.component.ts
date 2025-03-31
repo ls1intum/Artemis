@@ -1,11 +1,11 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Exercise } from 'app/entities/exercise.model';
-import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { PlagiarismResultsService } from 'app/course/plagiarism-cases/shared/plagiarism-results.service';
+import { PlagiarismResultsService } from 'app/plagiarism/shared/plagiarism-results.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

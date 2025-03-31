@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { problemStatement, problemStatementRepeatedTestCases } from '../helpers/sample/problemStatement.json';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
+import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionAnalysisService', () => {

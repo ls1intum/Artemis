@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ApollonDiagramCreateFormComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { ApollonDiagramCreateFormComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-create-form.component';
+import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';

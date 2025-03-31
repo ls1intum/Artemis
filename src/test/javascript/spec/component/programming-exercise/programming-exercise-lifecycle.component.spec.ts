@@ -1,13 +1,13 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ProgrammingExerciseLifecycleComponent } from 'app/programming/shared/lifecycle/programming-exercise-lifecycle.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { QueryList, SimpleChange } from '@angular/core';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { expectElementToBeDisabled, expectElementToBeEnabled } from '../../helpers/utils/general.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -17,7 +17,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {

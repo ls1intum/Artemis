@@ -1,11 +1,11 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -45,8 +45,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private studentExamService = inject(StudentExamService);
 
-    @Input() exam: Exam;
-    @Input() getExamRoutesByIdentifier: any;
+    exam = input.required<Exam>();
+    getExamRoutesByIdentifier = input.required<any>();
     private longestWorkingTimeSub: Subscription | null = null;
 
     examChecklist: ExamChecklist;
@@ -83,14 +83,15 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngOnInit() {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.websocketService.subscribe(submittedTopic);
         this.websocketService.receive(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.websocketService.subscribe(startedTopic);
         this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
-        if (this.exam?.course?.id && this.exam?.id) {
-            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(this.exam.course.id, this.exam.id).subscribe((res) => {
+        const exam = this.exam();
+        if (exam?.course?.id && exam?.id) {
+            this.longestWorkingTimeSub = this.studentExamService.getLongestWorkingTimeForExam(exam.course.id, exam.id).subscribe((res) => {
                 this.longestWorkingTime = res;
                 this.calculateIsExamOver();
             });
@@ -98,16 +99,16 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnChanges() {
-        this.isTestExam = this.exam.testExam!;
-        this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
-        this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
-        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);
-        this.countMandatoryExercises = this.exam.exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
-        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam.exerciseGroups?.length ?? 0);
-        this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
+        this.isTestExam = this.exam().testExam!;
+        this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam());
+        this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam());
+        this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam());
+        this.countMandatoryExercises = this.exam().exerciseGroups?.filter((group) => group.isMandatory)?.length ?? 0;
+        this.hasOptionalExercises = this.countMandatoryExercises < (this.exam().exerciseGroups?.length ?? 0);
+        this.examChecklistService.getExamStatistics(this.exam()).subscribe((examStats) => {
             this.examChecklist = examStats;
-            this.allExamsGenerated =
-                !!this.exam.numberOfExamUsers && this.exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(this.exam, this.examChecklist);
+            const exam = this.exam();
+            this.allExamsGenerated = !!exam.numberOfExamUsers && exam.numberOfExamUsers > 0 && this.examChecklistService.checkAllExamsGenerated(exam, this.examChecklist);
             this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
             this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
             if (this.isExamOver) {
@@ -122,9 +123,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam());
         this.websocketService.unsubscribe(submittedTopic);
-        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam());
         this.websocketService.unsubscribe(startedTopic);
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
@@ -136,8 +137,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      */
     evaluateQuizExercises() {
         this.isEvaluatingQuizExercises = true;
-        if (this.exam.course?.id && this.exam.id) {
-            this.examManagementService.evaluateQuizExercises(this.exam.course.id, this.exam.id).subscribe({
+        const exam = this.exam();
+        if (exam.course?.id && exam.id) {
+            this.examManagementService.evaluateQuizExercises(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.evaluateQuizExerciseSuccess', { number: res?.body });
                     this.existsUnassessedQuizzes = false;
@@ -159,8 +161,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
      */
     assessUnsubmittedExamModelingAndTextParticipations() {
         this.isAssessingUnsubmittedExams = true;
-        if (this.exam.course?.id && this.exam.id) {
-            this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(this.exam.course.id, this.exam.id).subscribe({
+        const exam = this.exam();
+        if (exam.course?.id && exam.id) {
+            this.examManagementService.assessUnsubmittedExamModelingAndTextParticipations(exam.course.id, exam.id).subscribe({
                 next: (res) => {
                     this.alertService.success('artemisApp.studentExams.assessUnsubmittedStudentExamsSuccess', { number: res?.body });
                     this.existsUnsubmittedExercises = false;
@@ -178,11 +181,11 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     }
 
     calculateIsExamOver() {
-        if (this.longestWorkingTime && this.exam) {
-            const startDate = dayjs(this.exam.startDate);
+        if (this.longestWorkingTime && this.exam()) {
+            const startDate = dayjs(this.exam().startDate);
             let endDate = startDate.add(this.longestWorkingTime, 'seconds');
-            if (this.exam.gracePeriod) {
-                endDate = endDate.add(this.exam.gracePeriod!, 'seconds');
+            if (this.exam().gracePeriod) {
+                endDate = endDate.add(this.exam().gracePeriod!, 'seconds');
             }
             this.isExamOver = endDate.isBefore(dayjs());
         }

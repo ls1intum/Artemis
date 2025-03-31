@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { SubmissionExportService } from 'app/exercises/shared/submission-export/submission-export.service';
+import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Submission Export Service', () => {

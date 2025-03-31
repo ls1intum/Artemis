@@ -1,42 +1,42 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { CourseCompetenciesDetailsComponent } from 'app/overview/course-competencies/course-competencies-details.component';
+import { CourseCompetenciesDetailsComponent } from 'app/atlas/overview/course-competencies/course-competencies-details.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
-import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
-import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
-import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
-import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
+import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
+import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
+import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
+import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/entities/competency.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Competency, CompetencyExerciseLink, CompetencyLectureUnitLink, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
-import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 
 describe('CourseCompetenciesDetails', () => {
     let fixture: ComponentFixture<CourseCompetenciesDetailsComponent>;
@@ -48,7 +48,7 @@ describe('CourseCompetenciesDetails', () => {
     let getProgressSpy: jest.SpyInstance;
 
     const parentParams = { courseId: 1 };
-    const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
+    const parentRoute = { parent: { params: of(parentParams) } } as any as ActivatedRoute;
     // example route looks like: /courses/1/competencies/10
     const route = { params: of({ competencyId: 10 }), parent: parentRoute } as any as ActivatedRoute;
 

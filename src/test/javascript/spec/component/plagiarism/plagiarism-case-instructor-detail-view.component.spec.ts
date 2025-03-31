@@ -1,27 +1,27 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { PlagiarismCaseInstructorDetailViewComponent } from 'app/course/plagiarism-cases/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of, ReplaySubject } from 'rxjs';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { Post } from 'app/entities/metis/post.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
-import { NotificationService } from '../../../../../main/webapp/app/shared/notification/notification.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;

@@ -6,10 +6,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { AttachmentService } from 'app/lecture/manage/attachment.service';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {
     let httpMock: HttpTestingController;
@@ -34,7 +34,8 @@ describe('Attachment Service', () => {
         expectedResult = {} as HttpResponse<Attachment>;
         elemDefault = new Attachment();
         elemDefault.releaseDate = dayjs();
-        elemDefault.link = '/api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.link = 'attachments/lecture/4/Mein_Test_PDF4.pdf';
+        elemDefault.linkUrl = 'api/core/files/attachments/lecture/4/Mein_Test_PDF4.pdf';
         elemDefault.name = 'testss';
         elemDefault.lecture = new Lecture();
         elemDefault.attachmentType = AttachmentType.FILE;
@@ -141,7 +142,7 @@ describe('Attachment Service', () => {
         });
 
         it('should convert attachment date from server', async () => {
-            const results = service.convertAttachmentDatesFromServer(elemDefault);
+            const results = service.convertAttachmentFromServer(elemDefault);
             expect(results).toEqual(elemDefault);
         });
     });

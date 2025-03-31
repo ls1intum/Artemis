@@ -1,8 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import dayjs from 'dayjs/esm';
-import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('SubmissionVersion Service', () => {

@@ -1,19 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TextBlockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/text-block-assessment-card.component';
-import { TextBlockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/text-block-feedback-editor.component';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblock-assessment-card/text-block-assessment-card.component';
+import { TextBlockFeedbackEditorComponent } from 'app/text/manage/assess/textblock-feedback-editor/text-block-feedback-editor.component';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { FeedbackType } from 'app/entities/feedback.model';
-import { TextBlockType } from 'app/entities/text/text-block.model';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
-import { TextAssessmentAnalytics } from 'app/exercises/text/assess/analytics/text-assesment-analytics.service';
-import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
+import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { TextBlockType } from 'app/text/shared/entities/text-block.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
@@ -22,6 +21,7 @@ import { EventEmitter } from '@angular/core';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
+import { AssessmentCorrectionRoundBadgeComponent } from 'app/assessment/manage/unreferenced-feedback-detail/assessment-correction-round-badge/assessment-correction-round-badge.component';
 
 describe('TextblockAssessmentCardComponent', () => {
     let component: TextBlockAssessmentCardComponent;

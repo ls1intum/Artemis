@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { lastValueFrom, of } from 'rxjs';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { ForwardedMessageService } from 'app/shared/metis/forwarded-message.service';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
-import { PostingType } from 'app/entities/metis/posting.model';
+import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
+import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { PostingType } from 'app/communication/shared/entities/posting.model';
 
 describe('ForwardedMessageService', () => {
     let service: ForwardedMessageService;

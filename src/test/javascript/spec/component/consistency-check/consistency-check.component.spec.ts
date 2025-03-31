@@ -1,10 +1,8 @@
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
-import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -14,6 +12,8 @@ import { NgbActiveModal, NgbHighlight } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 
 describe('ConsistencyCheckComponent', () => {
     let component: ConsistencyCheckComponent;

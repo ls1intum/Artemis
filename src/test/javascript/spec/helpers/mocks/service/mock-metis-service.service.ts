@@ -1,15 +1,15 @@
 import { Observable, of } from 'rxjs';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Post } from 'app/entities/metis/post.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
-import { Reaction } from 'app/entities/metis/reaction.model';
-import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/shared/metis/metis.util';
-import { Course } from 'app/entities/course.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
+import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 
 let pageType: PageType;
 

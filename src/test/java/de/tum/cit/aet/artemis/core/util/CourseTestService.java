@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.util;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -13,6 +14,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,7 @@ import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -116,8 +119,8 @@ import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -168,6 +171,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class CourseTestService {
 
     @Value("${artemis.course-archives-path}")
@@ -192,7 +196,7 @@ public class CourseTestService {
     private UserTestRepository userRepo;
 
     @Autowired
-    private ExamRepository examRepo;
+    private ExamTestRepository examRepo;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -1022,7 +1026,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
-        User student1 = userUtilService.getUserByLogin(userPrefix + "student1");
+        User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
         Course course = courseUtilService.createCourse();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -1031,7 +1035,7 @@ public class CourseTestService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
 
         programmingExerciseRepository.save(programmingExercise);
-        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
+        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
         StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
@@ -1039,7 +1043,7 @@ public class CourseTestService {
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
-                student1);
+                student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
@@ -1171,6 +1175,21 @@ public class CourseTestService {
 
         optionalCourse = coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
+    }
+
+    // Test
+    public void testGetCourseWithExercisesAndLecturesAndCompetencies() throws Exception {
+        Course course = courseUtilService.createCourseWithExercisesAndLecturesAndCompetencies();
+        Course receivedCourse = request.get("/api/core/courses/" + course.getId() + "/with-exercises-lectures-competencies", HttpStatus.OK, Course.class);
+
+        assertThat(receivedCourse.getExercises()).isNotEmpty();
+        assertThat(receivedCourse.getExercises()).isEqualTo(course.getExercises());
+
+        assertThat(receivedCourse.getLectures()).isNotEmpty();
+        assertThat(receivedCourse.getLectures()).isEqualTo(course.getLectures());
+
+        assertThat(receivedCourse.getCompetencies()).isNotEmpty();
+        assertThat(receivedCourse.getCompetencies()).isEqualTo(course.getCompetencies());
     }
 
     // Test
@@ -3305,7 +3324,8 @@ public class CourseTestService {
         course = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
 
         assertThat(course.getCourseIcon()).as("Course icon got stored").isNotNull();
-        var imgResult = request.performMvcRequest(get(course.getCourseIcon())).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, course.getCourseIcon());
+        var imgResult = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.IMAGE_PNG)).andReturn();
         assertThat(imgResult.getResponse().getContentAsByteArray()).isNotEmpty();
 
         var createdCourse = courseRepo.findByIdElseThrow(course.getId());
@@ -3371,9 +3391,10 @@ public class CourseTestService {
     public void testGetCoursesForImport() throws Exception {
         List<Course> coursesExpected = new ArrayList<>();
         for (int i = 1; i < 3; i++) {
-            coursesExpected.add(courseUtilService.createCourse((long) i));
+            coursesExpected.add(courseUtilService.createCourse());
         }
-        var searchTerm = pageableSearchUtilService.configureSearch("");
+        // when the search tem is not "", the sort order is descending, and we get the last inserted courses first and these contain the courses we just created
+        var searchTerm = pageableSearchUtilService.configureSearch("Course");
 
         SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/core/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
@@ -3389,8 +3410,10 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
+        // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
+        courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
-            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+            expectedOldCourses.add(courseUtilService.createCourse());
         }
 
         expectedOldCourses.get(0).setSemester("SS20");
@@ -3415,17 +3438,18 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
-        Course course1 = courseUtilService.createCourse((long) 1);
+        courseRepo.clearSemester();
+        Course course1 = courseUtilService.createCourse();
         course1.setSemester("SS20");
         course1.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course1);
 
-        Course course2 = courseUtilService.createCourse((long) 2);
+        Course course2 = courseUtilService.createCourse();
         course2.setSemester("SS21");
         course2.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course2);
 
-        Course course3 = courseUtilService.createCourse((long) 3);
+        Course course3 = courseUtilService.createCourse();
         course3.setSemester("WS21/22");
         course3.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course3);

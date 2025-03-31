@@ -3,22 +3,22 @@ import dayjs from 'dayjs/esm';
 import { omit } from 'lodash-es';
 import { combineLatest, takeWhile } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
-import { Course, isCommunicationEnabled } from 'app/entities/course.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.utils';
+import { examWorkingTime, normalWorkingTime } from 'app/exam/overview/exam.utils';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -79,9 +79,9 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
 
     private componentActive = true;
     // Link to the component enabling the selection of exercise groups and exercises for import
-    @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
+    examExerciseImportComponent = viewChild.required(ExamExerciseImportComponent);
 
-    @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
+    public workingTimeConfirmationContent = viewChild<TemplateRef<any>>('workingTimeConfirmationContent');
 
     ngOnInit(): void {
         combineLatest([this.route.url, this.route.data])
@@ -236,7 +236,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.title = 'artemisApp.examManagement.dateChange.title';
             modalRef.componentInstance.text = this.artemisTranslatePipe.transform('artemisApp.examManagement.dateChange.message');
-            modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent;
+            modalRef.componentInstance.contentRef = this.workingTimeConfirmationContent();
             modalRef.result.then(this.save.bind(this));
         } else {
             this.save();
@@ -268,12 +268,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     private createOrUpdateOrImportExam() {
         if (this.isImport && this.exam?.exerciseGroups) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (!this.examExerciseImportComponent.validateUserInput()) {
+            if (!this.examExerciseImportComponent().validateUserInput()) {
                 this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
                 this.isSaving = false;
                 return;
             }
-            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
+            this.exam.exerciseGroups = this.examExerciseImportComponent().mapSelectedExercisesToExerciseGroups();
             return this.examManagementService.import(this.course.id!, this.exam);
         } else if (this.exam.id) {
             return this.examManagementService.update(this.course.id!, this.exam);
@@ -303,12 +303,12 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
         if (errorKey === 'invalidKey') {
             this.exam.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
             // The update() Method is called to update the exercises
-            this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToInvalidProjectKey();
+            this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToInvalidProjectKey();
             const numberOfInvalidProgrammingExercises = httpErrorResponse.error.numberOfInvalidProgrammingExercises;
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: numberOfInvalidProgrammingExercises });
         } else if (errorKey === 'duplicatedProgrammingExerciseShortName' || errorKey === 'duplicatedProgrammingExerciseTitle') {
             this.exam!.exerciseGroups = httpErrorResponse.error.params.exerciseGroups!;
-            this.examExerciseImportComponent.updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
+            this.examExerciseImportComponent().updateMapsAfterRejectedImportDueToDuplicatedShortNameOrTitle();
             this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.' + errorKey);
         } else {
             if (httpErrorResponse.error && httpErrorResponse.error.title) {

@@ -1,19 +1,19 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUser } from 'app/entities/exam/exam-user.model';
+import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/utils/icons.utils';
-import { Exam } from 'app/entities/exam/exam.model';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfoCircle, faPlus, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -55,7 +55,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
 
-    @ViewChild(DataTableComponent) dataTable: DataTableComponent;
+    dataTable = viewChild.required(DataTableComponent);
 
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
@@ -178,9 +178,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             }),
             tap((users) => {
                 setTimeout(() => {
-                    for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
+                    for (let i = 0; i < this.dataTable().typeaheadButtons.length; i++) {
                         const isAlreadyInCourseGroup = this.allRegisteredUsers.map((user) => user.id).includes(users[i].id);
-                        const button = this.dataTable.typeaheadButtons[i];
+                        const button = this.dataTable().typeaheadButtons[i];
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
                             button.insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);

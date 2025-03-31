@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { MultipleChoiceQuestionEditComponent } from 'app/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
@@ -11,7 +11,7 @@ import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

@@ -3,51 +3,49 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
-import { Router, RouterModule } from '@angular/router';
+import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintService } from 'app/complaints/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
-import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
+import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission.component';
 import { createFileUploadSubmission, fileUploadParticipation, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
-import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
+import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
-import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
-import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { FileService } from 'app/shared/http/file.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/header-participation-page.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { FileService } from 'app/shared/service/file.service';
 
 describe('FileUploadSubmissionComponent', () => {
     let comp: FileUploadSubmissionComponent;
     let fixture: ComponentFixture<FileUploadSubmissionComponent>;
     let debugElement: DebugElement;
-    let router: Router;
     let alertService: AlertService;
     let fileUploadSubmissionService: FileUploadSubmissionService;
 
@@ -55,7 +53,7 @@ describe('FileUploadSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, RouterModule.forRoot([routes[0]])],
+            imports: [NgxDatatableModule],
             declarations: [
                 FileUploadSubmissionComponent,
                 MockComponent(ComplaintsForTutorComponent),
@@ -80,6 +78,7 @@ describe('FileUploadSubmissionComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
+                provideRouter([]),
             ],
         })
             .compileComponents()
@@ -87,10 +86,6 @@ describe('FileUploadSubmissionComponent', () => {
                 fixture = TestBed.createComponent(FileUploadSubmissionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                router = debugElement.injector.get(Router);
-                fixture.ngZone!.run(() => {
-                    router.initialNavigation();
-                });
                 alertService = TestBed.inject(AlertService);
                 fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
             });

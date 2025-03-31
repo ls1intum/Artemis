@@ -5,9 +5,9 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
-import { LectureService } from 'app/lecture/lecture.service';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUpdateComponent } from 'app/lecture/manage/lecture-update.component';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,22 +19,21 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
+import { LectureTitleChannelNameComponent } from 'app/lecture/manage/lecture-title-channel-name.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
-import { LectureUpdatePeriodComponent } from 'app/lecture/lecture-period/lecture-period.component';
-import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
-
-import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.component';
-import { LectureUpdateUnitsComponent } from 'app/lecture/lecture-units/lecture-units.component';
-import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
+import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
+import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
+import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
+import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
+import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { signal } from '@angular/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureService: LectureService;

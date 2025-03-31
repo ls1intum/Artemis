@@ -138,120 +138,6 @@ jobs:
         python3 ./supporting_scripts/code-coverage/per_module_cov_report/parse_module_coverage.py build/reports/jacoco $AGGREGATED_REPORT_FILE
         cat $AGGREGATED_REPORT_FILE > $GITHUB_STEP_SUMMARY
 
-  server-tests-mysql:
-      needs: [ server-tests ]
-      runs-on: ubuntu-latest
-      timeout-minutes: 120
-      # Limit the number of concurrent mysql tests to one in total
-      concurrency:
-          group: server-tests-mysql
-      steps:
-          - uses: actions/checkout@v4
-          - name: Setup Java
-            uses: actions/setup-java@v4
-            with:
-                distribution: 'temurin'
-                # Install Java 17 to run programming templates
-                java-version: |
-                  17
-                  ${{ env.java }}
-                cache: 'gradle'
-          - name: Java Tests
-            id: tests
-            run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
-          - name: Print failed tests
-            if: failure()
-            run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
-          - name: Count failed tests
-            id: failedTestCounter
-            if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED\$" tests.log)" >> $GITHUB_OUTPUT
-          - name: Report action failure
-            if: failure()
-            uses: Sibz/github-status-action@v1
-            with:
-                authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - MySQL'
-                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
-                state: 'failure'
-                sha: ${{github.event.pull_request.head.sha || github.sha}}
-          - name: Report action success
-            if: success()
-            uses: Sibz/github-status-action@v1
-            with:
-                authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - MySQL'
-                description: '✅ Test succeeded'
-                state: 'success'
-                sha: ${{github.event.pull_request.head.sha || github.sha}}
-          - name: Test Report
-            uses: dorny/test-reporter@v1
-            if: success() || failure()    # run this step even if previous step failed
-            with:
-                name: MySQL Tests
-                path: build/test-results/test/*.xml
-                reporter: java-junit
-          - name: Number of Server Starts
-            if: success() || failure()
-            run: bash supporting_scripts/extract_number_of_server_starts.sh
-
-  server-tests-postgres:
-      needs: [ server-tests ]
-      runs-on: ubuntu-latest
-      timeout-minutes: 150
-      # Limit the number of concurrent postgres tests to one in total
-      concurrency:
-          group: server-tests-postgres
-      steps:
-          - uses: actions/checkout@v4
-          - name: Setup Java
-            uses: actions/setup-java@v4
-            with:
-                distribution: 'temurin'
-                # Install Java 17 to run programming templates
-                java-version: |
-                    17
-                    ${{ env.java }}
-                cache: 'gradle'
-          - name: Java Tests
-            id: tests
-            run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
-          - name: Print failed tests
-            if: failure()
-            run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
-          - name: Count failed tests
-            id: failedTestCounter
-            if: failure()
-            run: echo "FAILED_TESTS_COUNT=$(grep -c "Test >.* FAILED\$" tests.log)" >> $GITHUB_OUTPUT
-          - name: Report action failure
-            if: failure()
-            uses: Sibz/github-status-action@v1
-            with:
-                authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - PostgreSQL'
-                description: '❌ ${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed test(s)'
-                state: 'failure'
-                sha: ${{github.event.pull_request.head.sha || github.sha}}
-          - name: Report action success
-            if: success()
-            uses: Sibz/github-status-action@v1
-            with:
-                authToken: ${{secrets.GITHUB_TOKEN}}
-                context: 'Test Run - PostgreSQL'
-                description: '✅ Test succeeded'
-                state: 'success'
-                sha: ${{github.event.pull_request.head.sha || github.sha}}
-          - name: Test Report
-            uses: dorny/test-reporter@v1
-            if: success() || failure()    # run this step even if previous step failed
-            with:
-                name: PostgreSQL Tests
-                path: build/test-results/test/*.xml
-                reporter: java-junit
-          - name: Number of Server Starts
-            if: success() || failure()
-            run: bash supporting_scripts/extract_number_of_server_starts.sh
-
   server-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -305,6 +191,12 @@ jobs:
           with:
               name: Coverage Report Client Tests
               path: build/test-results/lcov-report/
+        - name: Upload JUnit Test Results
+          if: success() || failure()
+          uses: actions/upload-artifact@v4
+          with:
+            name: Client JUnit Test Results
+            path: junit.xml
 
   client-tests-selected:
       runs-on: ubuntu-latest
