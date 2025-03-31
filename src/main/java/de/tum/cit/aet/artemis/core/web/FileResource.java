@@ -167,7 +167,8 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String publicPath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
