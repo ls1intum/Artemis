@@ -2,9 +2,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseVersionControlComponent } from 'app/programming/manage/update/update-components/version-control/programming-exercise-version-control.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ComponentRef } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ProgrammingExerciseVersionControlComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseVersionControlComponent>;
