@@ -15,6 +15,17 @@
         </sql>
     </changeSet>
 
+    <changeSet id="20250330-01a-remove-duplicate-saved-posts" author="rangger">
+        <sql>
+            DELETE s1 FROM saved_post s1
+            JOIN saved_post s2
+            WHERE s1.user_id = s2.user_id
+              AND s1.post_id = s2.post_id
+              AND s1.post_type = s2.post_type
+              AND s1.id > s2.id;
+        </sql>
+    </changeSet>
+
     <!-- Step 2a: Add enum columns in PostgreSQL using named types -->
     <changeSet id="20250330-02a-add-enum-columns-postgres" author="krusche">
         <preConditions onFail="MARK_RAN">
