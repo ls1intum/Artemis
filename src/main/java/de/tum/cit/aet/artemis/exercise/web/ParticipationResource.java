@@ -835,6 +835,8 @@ public class ParticipationResource {
             // TODO: Duplicate
             Object responseDTO = null;
             if (participation != null) {
+                var submissions = submissionRepository.findAllWithResultsByParticipationIdOrderBySubmissionDateAsc(participation.getId());
+                participation.setSubmissions(new HashSet<>(submissions));
                 if (quizExercise.isQuizEnded()) {
                     responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
                 }
