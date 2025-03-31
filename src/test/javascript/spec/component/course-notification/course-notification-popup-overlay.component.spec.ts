@@ -24,10 +24,19 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let componentAsAny: any;
 
     const createMockNotification = (id: number, courseId: number): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.UNSEEN, dayjs(), {
-            courseTitle: 'Test Course',
-            courseIconUrl: 'test-icon-url',
-        });
+        return new CourseNotification(
+            id,
+            courseId,
+            'newPostNotification',
+            CourseNotificationCategory.COMMUNICATION,
+            CourseNotificationViewingStatus.UNSEEN,
+            dayjs(),
+            {
+                courseTitle: 'Test Course',
+                courseIconUrl: 'test-icon-url',
+            },
+            '/',
+        );
     };
 
     beforeEach(async () => {

@@ -21,11 +21,20 @@ describe('CourseNotificationComponent', () => {
     let componentAsAny: any;
 
     const createMockNotification = (id: number, courseId: number, notificationType: string = 'newPostNotification', parameters: any = {}): CourseNotification => {
-        return new CourseNotification(id, courseId, notificationType, CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.UNSEEN, dayjs(), {
-            courseTitle: 'Test Course',
-            courseIconUrl: 'test-icon-url',
-            ...parameters,
-        });
+        return new CourseNotification(
+            id,
+            courseId,
+            notificationType,
+            CourseNotificationCategory.COMMUNICATION,
+            CourseNotificationViewingStatus.UNSEEN,
+            dayjs(),
+            {
+                courseTitle: 'Test Course',
+                courseIconUrl: 'test-icon-url',
+                ...parameters,
+            },
+            '/',
+        );
     };
 
     beforeEach(async () => {
