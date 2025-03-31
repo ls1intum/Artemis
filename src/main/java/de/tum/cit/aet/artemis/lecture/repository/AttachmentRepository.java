@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -36,7 +35,6 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
      *
      * @param attachment The attachment to save
      */
-    @Transactional
     default void saveAttachmentWithStudentVersion(Attachment attachment) {
         save(attachment);
     }

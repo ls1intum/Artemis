@@ -645,4 +645,33 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             GROUP BY TYPE(e)
             """)
     List<ExerciseTypeCountDTO> countByCourseIdGroupedByType(@Param("courseId") long courseId);
+
+    /**
+     * Finds all exercises for a course with non-null due dates in the future,
+     * including their categories and title.
+     *
+     * @param courseId the id of the course
+     * @param now      the current date time
+     * @return a set of exercises with future due dates and their categories
+     */
+    @Query("""
+            SELECT DISTINCT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
+                AND e.dueDate IS NOT NULL
+                AND e.dueDate > :now
+            """)
+    Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
+
+    /**
+     * Finds all exercises for a course with non-null due dates in the future,
+     * including their categories and title.
+     *
+     * @param courseId the id of the course
+     * @return a set of exercises with future due dates and their categories
+     */
+    default Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(Long courseId) {
+        return findByCourseIdWithFutureDueDatesAndCategories(courseId, ZonedDateTime.now());
+    }
 }

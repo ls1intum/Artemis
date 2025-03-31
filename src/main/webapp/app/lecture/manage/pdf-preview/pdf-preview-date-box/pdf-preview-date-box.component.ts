@@ -99,7 +99,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * Loads all exercises for the current course
      */
     private loadExercises(): void {
-        this.courseExerciseService.findAllExercisesForCourse(this.course()!.id!).subscribe({
+        this.courseExerciseService.findAllExercisesWithDueDatesForCourse(this.course()!.id!).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.exercises.set(response.body);
@@ -136,14 +136,14 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     }
 
     /**
-     * Group and sort exercises by type, excluding those without a due date
+     * Group and sort exercises by type
+     * The backend already filters for exercises with future due dates
      */
     private processExercises(exercises: Exercise[]): CategorizedExercise[] {
         const groupedExercises = new Map<ExerciseType, Exercise[]>();
-        const now = dayjs();
 
         exercises.forEach((exercise) => {
-            if (exercise.type && exercise.dueDate && exercise.dueDate.isAfter(now)) {
+            if (exercise.type && exercise.dueDate) {
                 if (!groupedExercises.has(exercise.type)) {
                     groupedExercises.set(exercise.type, []);
                 }
