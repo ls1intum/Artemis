@@ -13,7 +13,8 @@ interface UrlArguments {
  */
 export class UrlAction extends TextEditorAction {
     static readonly ID = 'url.action';
-    static readonly DEFAULT_INSERT_TEXT = '[](https://)';
+    static readonly DEFAULT_LINK_TEXT = 'test';
+    static readonly DEFAULT_INSERT_TEXT = `[🔗 ${this.DEFAULT_LINK_TEXT}](https://)`;
 
     constructor() {
         super(UrlAction.ID, 'artemisApp.multipleChoiceQuestion.editor.link', faLink, undefined);
