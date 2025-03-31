@@ -1,39 +1,38 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
 import { MockCourseService } from '../../../helpers/mocks/service/mock-course.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
+import { Course } from 'app/core/shared/entities/course.model';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 
 @Component({
     template: '',
@@ -67,7 +66,6 @@ describe('CourseExerciseRowComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(OrionFilterDirective),
                 CourseExerciseRowComponent,
                 DummyComponent,
             ],

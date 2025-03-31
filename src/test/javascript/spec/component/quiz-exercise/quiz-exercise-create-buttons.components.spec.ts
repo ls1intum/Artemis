@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { QuizExerciseCreateButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-create-buttons.component';
+import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
+import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/quiz-exercise-create-buttons.component';
 
 describe('QuizExercise Create Buttons Component', () => {
     let comp: QuizExerciseCreateButtonsComponent;

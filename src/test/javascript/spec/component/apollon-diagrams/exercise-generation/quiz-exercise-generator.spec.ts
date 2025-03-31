@@ -5,16 +5,16 @@ import { Router } from '@angular/router';
 import { Selection, UMLModel, UMLModelElement, findElement } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import {
     computeDropLocation,
     generateDragAndDropItemForElement,
     generateDragAndDropQuizExercise,
-} from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
-import * as SVGRendererAPI from 'app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+} from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
+import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -22,7 +22,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import * as testClassDiagram from '../../../util/modeling/test-models/class-diagram.json';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -66,7 +66,7 @@ describe('QuizExercise Generator', () => {
     it('generateDragAndDropExercise for Class Diagram', async () => {
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
+        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         configureServices();
         jest.spyOn(quizExerciseService, 'create').mockImplementation((generatedExercise) => of({ body: generatedExercise } as HttpResponse<QuizExercise>));
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(new Blob());

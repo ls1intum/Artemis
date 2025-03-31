@@ -1,9 +1,9 @@
-import { FileService } from 'app/shared/http/file.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { v4 as uuid } from 'uuid';
 import { provideHttpClient } from '@angular/common/http';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { FileService } from 'app/shared/service/file.service';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(),
@@ -36,12 +36,12 @@ describe('FileService', () => {
 
     describe('getFile', () => {
         it('should return a file', async () => {
-            const filePath = 'api/core/file/path/test.png';
+            const filePath = 'path/test.png';
             const blob = new Blob(['123456789']);
 
             const filePromise = fileService.getFile(filePath);
             const req = httpMock.expectOne({
-                url: filePath,
+                url: `api/core/files/${filePath}`,
                 method: 'GET',
             });
             req.flush(blob);
@@ -55,7 +55,7 @@ describe('FileService', () => {
         });
 
         it('should return a file with unique name', async () => {
-            const filePath = 'api/core/file/path/test.png';
+            const filePath = 'path/test.png';
             const blob = new Blob(['123456789']);
             const existingFileNames = new Map<string, { file: File; path?: string }>([
                 [secondUniqueFileName + '.png', { file: new File([], secondUniqueFileName) }],
@@ -64,7 +64,7 @@ describe('FileService', () => {
 
             const filePromise = fileService.getFile(filePath, existingFileNames);
             const req = httpMock.expectOne({
-                url: filePath,
+                url: `api/core/files/${filePath}`,
                 method: 'GET',
             });
             req.flush(blob);

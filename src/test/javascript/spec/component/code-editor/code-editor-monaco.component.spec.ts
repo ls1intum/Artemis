@@ -1,20 +1,20 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-import { Annotation, CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockComponent } from 'ng-mocks';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/service/code-editor-file.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SimpleChange } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
-import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
+import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileType, RenameFileChange } from 'app/programming/shared/code-editor/model/code-editor.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

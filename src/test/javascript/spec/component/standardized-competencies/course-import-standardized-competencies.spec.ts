@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
+import { CourseImportStandardizedCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component';
 import { StandardizedCompetencyFilterStubComponent } from './filter/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -8,20 +8,20 @@ import { StandardizedCompetencyDetailStubComponent } from './detail/standardized
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { CompetencyService } from 'app/course/competencies/competency.service';
-import { Competency } from 'app/entities/competency.model';
+import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Source } from 'app/entities/competency/standardized-competency.model';
+import { Source } from 'app/atlas/shared/entities/standardized-competency.model';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
-import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
-import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
+import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('CourseImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<CourseImportStandardizedCompetenciesComponent>;

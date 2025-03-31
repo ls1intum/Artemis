@@ -1,0 +1,230 @@
+name: E2E Tests
+
+on:
+  workflow_run:
+    # Must match the name of build.yml workflow.
+    workflows: ["Build"]
+    types: [completed]
+
+concurrency:
+  group: |
+    ${{
+      github.event.workflow_run.head_branch && format('e2e-{0}', github.event.workflow_run.head_branch)
+      || format('e2e-{0}', github.event.workflow_run.head_sha)
+    }}
+  cancel-in-progress: true
+
+env:
+  # This is the context of the status. It will be displayed in the GitHub Actions UI.
+  STATUS_CONTEXT: "End-to-End (E2E) Tests"
+  # This is the URL to make a request to the GitHub API to update the status of the workflow run.
+  STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ github.event.workflow_run.head_sha }}"
+  # This is the URL to the workflow run in the GitHub Actions UI.
+  TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+jobs:
+  run-e2e:
+    name: Run E2E Tests
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, e2e-test]
+    environment: playwright-e2e-tests
+    timeout-minutes: 90
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
+      # Since this workflow is triggered by a workflow_run event, we are not able to see the workflow status in check-runs.
+      # So we need to set the status to pending manually by calling the GitHub API.
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"E2E tests are running...","target_url":"${{ env.TARGET_URL }}"}'
+
+      # Save the triggering workflow information as an artifact for later reference
+      - name: Save triggering workflow info
+        run: |
+          echo "TRIGGERING_WORKFLOW_RUN_ID=${{ github.event.workflow_run.id }}" > workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_BRANCH=${{ github.event.workflow_run.head_branch }}" >> workflow-context.txt
+          echo "TRIGGERING_WORKFLOW_HEAD_SHA=${{ github.event.workflow_run.head_sha }}" >> workflow-context.txt
+          cat workflow-context.txt
+
+      - name: Upload workflow context
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-context
+          path: workflow-context.txt
+
+      # Add a notice in this workflow run's timeline showing which Build workflow triggered it
+      # This helps developers navigate between related workflow runs
+      - name: Add link to triggering workflow
+        run: |
+          echo "::notice title=Triggered by workflow run::This E2E test was triggered by workflow run #${{ github.event.workflow_run.id }} - View it at https://github.com/${{ github.repository }}/actions/runs/${{ github.event.workflow_run.id }}"
+
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+      - name: Download Docker tag
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-tag
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+      - name: Set Docker Tag Environment Variable
+        run: |
+          if [ -f "docker-tag.txt" ]; then
+            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
+            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
+          else
+            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+            exit 1
+          fi
+
+      - name: Make scripts executable
+        run: |
+          chmod +x .ci/E2E-tests/cleanup.sh
+          chmod +x .ci/E2E-tests/execute.sh
+
+      - name: Run cleanup script (before E2E)
+        run: .ci/E2E-tests/cleanup.sh
+
+      # If the workflow is triggered by a pull request, we need to run the tests on single node Artemis instance.
+      - name: Run E2E Playwright tests (MySQL, Local)
+        if: ${{ github.event.workflow_run.event == 'pull_request' }}
+        run: .ci/E2E-tests/execute.sh mysql-localci playwright
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      # If the workflow is triggered other events (by a push to a branch e.g. develop, main, or release), we need to run the tests on multi-node Artemis instance.
+      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+        if: ${{ github.event.workflow_run.event != 'pull_request' }}
+        run: .ci/E2E-tests/execute.sh multi-node playwright
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 75
+
+      - name: Upload JUnit Test Results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: JUnit Test Results
+          if-no-files-found: error
+          path: src/test/playwright/test-reports/*.xml
+
+      - name: Run cleanup script (after E2E)
+        run: .ci/E2E-tests/cleanup.sh
+
+      - name: Test Report
+        uses: mikepenz/action-junit-report@v5.5.0
+        id: test-reporter
+        if: always()
+        env:
+          # Increase the memory limit for the action
+          # https://github.com/mikepenz/action-junit-report?tab=readme-ov-file#common-configurations
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          # Specifies which commit SHA to associate the test report with.
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "End-to-End (E2E) Test Report"
+          # Fails the job if any test failed.
+          fail_on_failure: true
+          # Fails the job if no tests are found.
+          require_tests: true
+          # Fails the job if no passed tests are found.
+          require_passed_tests: true
+          # Disable status check creation.
+          annotate_only: true
+          detailed_summary: true
+          include_time_in_summary: true
+          # Groups test results by suite in the detailed summary.
+          group_suite: true
+          # Prevents updating previous test report comment; creates a new comment instead.
+          updateComment: false
+          report_paths: 'src/test/playwright/test-reports/results.xml'
+
+      # Update the status of the workflow run with the results parsed in the previous step.
+      - name: Update status with results
+        if: always()
+        continue-on-error: true
+        run: |
+          # Determine workflow status
+          WORKFLOW_STATUS="${{ job.status }}"
+
+          # Get test results
+          TOTAL="${{ steps.test-reporter.outputs.total || 0 }}"
+          PASSED="${{ steps.test-reporter.outputs.passed || 0 }}"
+          FAILED="${{ steps.test-reporter.outputs.failed || 0 }}"
+          SKIPPED="${{ steps.test-reporter.outputs.skipped || 0 }}"
+
+          # Determine GitHub status state based on workflow status
+          if [ "$WORKFLOW_STATUS" = "success" ]; then
+            STATE="success"
+            DESCRIPTION="E2E tests finished: $PASSED passed, $SKIPPED skipped, $FAILED failed"
+          elif [ "$WORKFLOW_STATUS" = "failure" ]; then
+            STATE="failure"
+            DESCRIPTION="E2E tests finished: $FAILED failed, $SKIPPED skipped, $PASSED passed"
+          else
+            STATE="error"
+            DESCRIPTION="⚠️ E2E tests encountered an error"
+          fi
+
+          DESCRIPTION_ESCAPED=$(echo "$DESCRIPTION" | sed 's/"/\\"/g')
+          JSON_PAYLOAD='{"state":"'$STATE'","context":"${{ env.STATUS_CONTEXT }}","description":"'$DESCRIPTION_ESCAPED'","target_url":"${{ env.TARGET_URL }}"}'
+          echo "JSON payload: $JSON_PAYLOAD"
+
+          # Update status
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d "$JSON_PAYLOAD"
+
+      # Find the PR number
+      - name: Find PR number
+        if: always()
+        id: find-pr
+        continue-on-error: true
+        run: |
+          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
+          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+
+          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+
+          # Extract PR number
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found from branch: $BRANCH_NAME."
+          fi
+
+      # Add comment to the PR with test result summary
+      - name: Add test results comment to PR
+        if: always() && steps.find-pr.outputs.pr_number != ''
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+            const testSummary = `${{ steps.test-reporter.outputs.summary }} ${{ steps.test-reporter.outputs.detailed_summary }}`;
+
+            github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `### End-to-End (E2E) Test Results Summary\n\n${testSummary}`
+              });

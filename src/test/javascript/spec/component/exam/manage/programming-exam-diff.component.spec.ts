@@ -1,24 +1,26 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { CommitsInfoComponent } from 'app/exercises/programming/shared/commits-info/commits-info.component';
+import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { GitDiffReportModalComponent } from '../../../../../../main/webapp/app/exercises/programming/git-diff-report/git-diff-report-modal.component';
-import { ProgrammingExerciseGitDiffEntry } from '../../../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
+import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { CachedRepositoryFilesService } from 'app/programming/manage/services/cached-repository-files.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
+import { input } from '@angular/core';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 describe('ProgrammingExerciseExamDiffComponent', () => {
     let component: ProgrammingExerciseExamDiffComponent;
@@ -56,7 +58,10 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
         modal = TestBed.inject(NgbModal);
         cachedRepositoryFilesService = TestBed.inject(CachedRepositoryFilesService);
-        component.exercise = { id: 3, title: 'prog' } as ProgrammingExercise;
+        const exercise = { id: 3, title: 'prog' } as ProgrammingExercise;
+        const studentParticipation = {} as StudentParticipation;
+        component.exercise.set(exercise);
+        component.studentParticipation.set(studentParticipation);
         fixture.detectChanges();
     });
 
@@ -67,8 +72,10 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
                 id: 2,
             } as ProgrammingExerciseGitDiffReport),
         );
-        component.previousSubmission = { id: 1 };
-        component.currentSubmission = { id: 2 };
+        const previousSubmission = { id: 1 };
+        const currentSubmission = { id: 2 };
+        component.previousSubmission.update(() => previousSubmission);
+        component.currentSubmission.update(() => currentSubmission);
         component.loadGitDiffReport();
         expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);
         expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
@@ -81,9 +88,11 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const diffForSubmissionWithTemplateSpy = jest
             .spyOn(programmingExerciseService, 'getDiffReportForSubmissionWithTemplate')
             .mockReturnValue(of({ id: 2 } as ProgrammingExerciseGitDiffReport));
-        component.previousSubmission = undefined;
-        component.currentSubmission = { id: 2 };
-        component.exercise = { id: 3 } as ProgrammingExercise;
+        component.previousSubmission.update(() => undefined);
+        const currentSubmission = { id: 2 };
+        component.currentSubmission.update(() => currentSubmission);
+        const exercise = { id: 3 } as ProgrammingExercise;
+        component.exercise.update(() => exercise);
         component.loadGitDiffReport();
         expect(diffForSubmissionWithTemplateSpy).toHaveBeenCalledOnce();
         expect(diffForSubmissionsSpy).not.toHaveBeenCalled();
@@ -91,7 +100,8 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
 
     it('should open the modal when showGitDiff is called', () => {
         const modalServiceSpy = jest.spyOn(modal, 'open');
-        component.exercise = { id: 1 } as ProgrammingExercise;
+        const exercise = { id: 1 } as ProgrammingExercise;
+        component.exercise.update(() => exercise);
         component.showGitDiff();
         expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
     });
@@ -99,9 +109,12 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
     it('should use reports from cache if available', fakeAsync(() => {
         const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions');
         const diffForSubmissionWithTemplateSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissionWithTemplate');
-        component.previousSubmission = { id: 1 };
-        component.currentSubmission = { id: 2 };
-        component.exercise = { id: 3 } as ProgrammingExercise;
+        const previousSubmission = { id: 1 };
+        component.previousSubmission.update(() => previousSubmission);
+        const currentSubmission = { id: 2 };
+        component.currentSubmission.update(() => currentSubmission);
+        const exercise = { id: 3 } as ProgrammingExercise;
+        component.exercise.update(() => exercise);
         const cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
         const expectedReport = {
             id: 1,
@@ -110,29 +123,43 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
             participationIdForLeftCommit: 1,
             participationIdForRightCommit: 2,
             programmingExercise: component.exercise,
-        } as ProgrammingExerciseGitDiffReport;
+        } as unknown as ProgrammingExerciseGitDiffReport;
         cachedDiffReports.set(JSON.stringify([1, 2]), expectedReport);
-        component.cachedDiffReports = cachedDiffReports;
+        TestBed.runInInjectionContext(() => {
+            component.cachedDiffReports = input(cachedDiffReports);
+        });
         component.ngOnInit();
-        component.exerciseIdSubject.next(1);
+        component.exerciseIdSubject.update((subject) => {
+            subject.next(1);
+            return subject;
+        });
         // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
-        expect(component.exercise.gitDiffReport).toEqual(expectedReport);
+        expect(component.exercise().gitDiffReport).toEqual(expectedReport);
         expect(diffForSubmissionWithTemplateSpy).not.toHaveBeenCalled();
         expect(diffForSubmissionsSpy).not.toHaveBeenCalled();
     }));
 
     it('should load report if not in cache', fakeAsync(() => {
         const diffForSubmissionsSpy = jest.spyOn(programmingExerciseService, 'getDiffReportForSubmissions').mockReturnValue(of(report));
-        component.previousSubmission = { id: 1 };
-        component.currentSubmission = { id: 2 };
-        component.exercise = { id: 3 } as ProgrammingExercise;
-        component.cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
+        const previousSubmission = { id: 1 };
+        component.previousSubmission.update(() => previousSubmission);
+        const currentSubmission = { id: 2 };
+        component.currentSubmission.update(() => currentSubmission);
+        const exercise = { id: 3 } as ProgrammingExercise;
+        component.exercise.update(() => exercise);
+        const cachedDiffReports = new Map<string, ProgrammingExerciseGitDiffReport>();
+        TestBed.runInInjectionContext(() => {
+            component.cachedDiffReports = input(cachedDiffReports);
+        });
         component.ngOnInit();
-        component.exerciseIdSubject.next(1);
+        component.exerciseIdSubject.update((subject) => {
+            subject.next(1);
+            return subject;
+        });
         // tick 200 is needed because the observable uses debounceTime(200)
         tick(200);
-        expect(component.exercise.gitDiffReport).toEqual(report);
+        expect(component.exercise().gitDiffReport).toEqual(report);
         expect(diffForSubmissionsSpy).toHaveBeenCalledExactlyOnceWith(3, 1, 2);
     }));
 

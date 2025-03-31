@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import {
     ProgrammingExerciseInstructorTriggerAllDialogComponent,
     ProgrammingExerciseTriggerAllButtonComponent,
-} from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
+} from 'app/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

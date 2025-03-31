@@ -7,24 +7,23 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { FaqService } from 'app/faq/faq.service';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FaqComponent } from 'app/faq/faq.component';
-import { FaqCategory } from 'app/entities/faq-category.model';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { FaqComponent } from 'app/communication/faq/faq.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import 'jest-extended';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();

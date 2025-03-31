@@ -1,11 +1,11 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
@@ -33,12 +33,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
 
     readonly ActionType = ActionType;
 
-    @ViewChild('importForm', { static: false }) importForm: NgForm;
+    importForm = viewChild<NgForm>('importForm');
     notFoundUsers?: NotFoundExamUserType;
     file: File;
 
-    @Input() courseId: number;
-    @Input() exam: Exam | undefined;
+    courseId = input.required<number>();
+    exam = input.required<Exam>();
 
     isParsing = false;
     hasParsed = false;
@@ -84,11 +84,12 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
      */
     parsePDFFile() {
         this.isParsing = true;
-        if (this.exam?.id) {
+        const exam = this.exam();
+        if (exam?.id) {
             const formData: FormData = new FormData();
             formData.append('file', this.file);
 
-            this.examManagementService.saveImages(this.courseId, this.exam.id, formData).subscribe({
+            this.examManagementService.saveImages(this.courseId(), exam.id, formData).subscribe({
                 next: (res: any) => {
                     if (res) {
                         this.notFoundUsers = res.body;

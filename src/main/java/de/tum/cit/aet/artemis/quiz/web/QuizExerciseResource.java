@@ -686,7 +686,7 @@ public class QuizExerciseResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(quizExerciseId, false, false);
+        exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
         fileService.deleteFiles(imagesToDelete);

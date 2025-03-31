@@ -1,26 +1,26 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { Result } from 'app/entities/result.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { Course } from 'app/entities/course.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { Submission } from 'app/entities/submission.model';
-import { ProgrammingExerciseGitDiffReport } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
-import { ProgrammingExerciseGitDiffEntry } from '../../../../main/webapp/app/entities/programming-exercise-git-diff-entry.model';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { provideHttpClient } from '@angular/common/http';
-import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -365,18 +365,6 @@ describe('ProgrammingExercise Service', () => {
         service.combineTemplateRepositoryCommits(exerciseId).subscribe();
         const url = `${resourceUrl}/${exerciseId}/combine-template-commits`;
         const req = httpMock.expectOne({ method: 'PUT', url });
-        req.flush({ body: 'something' });
-    });
-
-    it.each(['unlock', 'lock'])('should unlock all repositories', (lockUnlock) => {
-        const exerciseId = 1;
-        if (lockUnlock === 'unlock') {
-            service.unlockAllRepositories(exerciseId).subscribe();
-        } else {
-            service.lockAllRepositories(exerciseId).subscribe();
-        }
-        const url = `${resourceUrl}/${exerciseId}/${lockUnlock}-all-repositories`;
-        const req = httpMock.expectOne({ method: 'POST', url });
         req.flush({ body: 'something' });
     });
 

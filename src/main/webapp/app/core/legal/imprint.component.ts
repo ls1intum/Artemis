@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 

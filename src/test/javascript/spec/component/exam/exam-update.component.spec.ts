@@ -12,21 +12,21 @@ import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam/exam.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { User } from 'app/core/user/user.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -621,6 +621,9 @@ describe('ExamUpdateComponent', () => {
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
             alertService = fixture.debugElement.injector.get(AlertService);
+            global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                return new MockResizeObserver(callback);
+            });
         });
 
         it('should initialize without id and dates set', () => {
@@ -686,7 +689,7 @@ describe('ExamUpdateComponent', () => {
             const expectedExam = prepareExamForImport(examForImport);
             expectedExam.course = course;
             // Only import one of two exercises
-            component.examExerciseImportComponent.selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
+            component.examExerciseImportComponent().selectedExercises = new Map([[exerciseGroup1, new Set([textExercise])]]);
             const alertSpy = jest.spyOn(alertService, 'error');
             const navigateSpy = jest.spyOn(router, 'navigate');
             const importSpy = jest.spyOn(examManagementService, 'import').mockReturnValue(
@@ -733,9 +736,9 @@ describe('ExamUpdateComponent', () => {
 
             component.exam = examWithError;
             TestBed.runInInjectionContext(() => {
-                component.examExerciseImportComponent.exam = input(examWithError);
+                component.examExerciseImportComponent().exam = input(examWithError);
             });
-            component.examExerciseImportComponent.ngOnInit();
+            component.examExerciseImportComponent().ngOnInit();
 
             fixture.detectChanges();
             component.save();

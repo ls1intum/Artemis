@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository
 import de.tum.cit.aet.artemis.assessment.service.AssessmentDashboardService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
@@ -122,7 +122,6 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
 
@@ -160,8 +159,6 @@ public class CourseResource {
 
     private final AssessmentDashboardService assessmentDashboardService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
     private final ExerciseRepository exerciseRepository;
@@ -176,7 +173,7 @@ public class CourseResource {
 
     private final ConductAgreementService conductAgreementService;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final Optional<AthenaApi> athenaApi;
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
@@ -193,11 +190,11 @@ public class CourseResource {
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
+            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService,
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
-            Optional<AthenaModuleService> athenaModuleService, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
+            Optional<AthenaApi> athenaApi, Optional<ExamRepositoryApi> examRepositoryApi, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
@@ -206,7 +203,6 @@ public class CourseResource {
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCiUserManagementService = optionalCiUserManagementService;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
@@ -217,7 +213,7 @@ public class CourseResource {
         this.gradingScaleRepository = gradingScaleRepository;
         this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaApi = athenaApi;
         this.examRepositoryApi = examRepositoryApi;
         this.complaintService = complaintService;
         this.teamRepository = teamRepository;
@@ -334,7 +330,7 @@ public class CourseResource {
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
         if (athenaModuleAccessChanged && !courseUpdate.getRestrictedAthenaModulesAccess()) {
-            athenaModuleService.ifPresent(ams -> ams.revokeAccessToRestrictedFeedbackSuggestionModules(result));
+            athenaApi.ifPresent(api -> api.revokeAccessToRestrictedFeedbackSuggestionModules(result));
         }
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
@@ -344,8 +340,6 @@ public class CourseResource {
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
-        optionalVcsUserManagementService
-                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged && tutorialGroupChannelManagementApi.isPresent()) {
@@ -793,6 +787,20 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/:courseId : get the "id" course.
+     *
+     * @param courseId the id of the course to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
+     */
+    @GetMapping("courses/{courseId}/with-exercises-lectures-competencies")
+    @EnforceAtLeastTutorInCourse
+    public ResponseEntity<Course> getCourseWithExercisesAndLecturesAndCompetencies(@PathVariable Long courseId) {
+        log.debug("REST request to get course {} for tutors", courseId);
+        return courseRepository.findWithEagerExercisesAndLecturesAndLectureUnitsAndCompetenciesById(courseId).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
      * GET /courses/:courseId/with-organizations Get a course by id with eagerly loaded organizations
      *
      * @param courseId the id of the course
@@ -902,7 +910,7 @@ public class CourseResource {
         courseService.archiveCourse(course);
 
         // Note: in the first version, we do not store the results with feedback and other metadata, as those will stay available in Artemis, the main focus is to allow
-        // instructors to download student repos in order to delete those on Gitlab
+        // instructors to download student repos in order to delete those in the VCS
 
         // Note: Lectures are not part of the archive at the moment and will be included in a future version
         // 1) Get all lectures (attachments) of the course and store them in a folder

@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
@@ -62,9 +62,9 @@ public class FileUploadSubmissionService extends SubmissionService {
             ParticipationService participationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, FileService fileService,
             AuthorizationCheckService authCheckService, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService,
             CourseRepository courseRepository, ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService,
-            Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
+            Optional<AthenaApi> athenaApi) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileService = fileService;
         this.exerciseDateService = exerciseDateService;

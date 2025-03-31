@@ -1,5 +1,5 @@
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 

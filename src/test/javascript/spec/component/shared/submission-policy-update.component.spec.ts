@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

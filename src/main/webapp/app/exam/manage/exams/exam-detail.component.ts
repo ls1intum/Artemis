@@ -3,7 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, map } from 'rxjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -11,13 +11,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs/esm';
 import { faAward, faClipboard, faEye, faFlaskVial, faHeartBroken, faListAlt, faThList, faTrash, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/core/util/alert.service';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradeType } from 'app/entities/grading-scale.model';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -73,6 +73,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      * Initialize the exam
      */
     ngOnInit(): void {
+        this.getExamRoutesByIdentifier = this.getExamRoutesByIdentifier.bind(this);
         this.route.data.subscribe(({ exam }) => {
             scrollToTopOfPage();
             this.exam = exam;

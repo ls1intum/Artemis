@@ -1,8 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
+import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { take } from 'rxjs/operators';
 import { provideHttpClient } from '@angular/common/http';
 

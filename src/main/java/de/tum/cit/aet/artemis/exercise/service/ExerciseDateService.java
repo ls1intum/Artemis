@@ -76,7 +76,20 @@ public class ExerciseDateService {
      * @return true, if the due date is in the past and submissions are no longer possible.
      */
     public boolean isAfterDueDate(ParticipationInterface participation) {
-        final Exercise exercise = participation.getExercise();
+        return isAfterDueDate(participation, participation.getExercise());
+    }
+
+    /**
+     * Checks if submissions are no longer possible.
+     * <p>
+     * Checks for exam or course exercise, and if an individual due date is set for the given
+     * participation or only a course-wide due date applies.
+     *
+     * @param participation in a course or exam exercise.
+     * @param exercise      the exercise for which the due date should be checked.
+     * @return true, if the due date is in the past and submissions are no longer possible.
+     */
+    public boolean isAfterDueDate(ParticipationInterface participation, Exercise exercise) {
         if (exercise.isExamExercise()) {
             ExamDateApi api = examDateApi.orElseThrow(() -> new ApiNotPresentException(ExamDateApi.class, PROFILE_CORE));
             if (participation instanceof StudentParticipation studentParticipation) {
@@ -162,11 +175,9 @@ public class ExerciseDateService {
     /**
      * Checks if the current time is after the assessment due date
      * and manual results can be published to the student.
-     * <p>
-     * Returns true if the assessment due date is null.
      *
      * @param exercise to check the assessment due date
-     * @return true if the assessment due date is in the past
+     * @return true if the assessment due date is in the past or if the exercise has no assessment due date.
      */
     public static boolean isAfterAssessmentDueDate(Exercise exercise) {
         if (exercise.isExamExercise()) {

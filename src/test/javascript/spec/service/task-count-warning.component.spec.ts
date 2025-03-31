@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TaskCountWarningComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
+import { TaskCountWarningComponent } from 'app/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

@@ -1,14 +1,14 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
-import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
-import { IrisStatusService } from 'app/iris/iris-status.service';
-import { UserService } from 'app/core/user/user.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
+import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
+import { IrisStatusService } from 'app/iris/overview/iris-status.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import dayjs from 'dayjs/esm';
 import {
     mockClientMessage,
@@ -23,7 +23,7 @@ import {
     mockWebsocketServerMessage,
     mockWebsocketStatusMessage,
 } from '../../helpers/sample/iris-sample-data';
-import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import 'app/shared/util/array.extension';
 
 describe('IrisChatService', () => {

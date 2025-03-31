@@ -1,8 +1,8 @@
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { Team } from 'app/entities/team.model';
-import { TeamsImportFromFileFormComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-from-file-form.component';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { TeamsImportFromFileFormComponent } from 'app/exercise/team/teams-import-dialog/teams-import-from-file-form.component';
 import { mockFileStudents, mockFileTeamsConverted } from '../../helpers/mocks/service/mock-team.service';
 import { unparse } from 'papaparse';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

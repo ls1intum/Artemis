@@ -1,9 +1,9 @@
 import { input, runInInjectionContext } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
+import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 describe('ResultHistoryComponent', () => {
     let component: ResultHistoryComponent;

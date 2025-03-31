@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
@@ -34,7 +33,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * Manages continuous plagiarism control.
  */
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class ContinuousPlagiarismControlService {
 
     private static final Logger log = LoggerFactory.getLogger(ContinuousPlagiarismControlService.class);
@@ -122,8 +121,7 @@ public class ContinuousPlagiarismControlService {
         return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
-            case MODELING -> plagiarismDetectionService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> null;
+            case MODELING, FILE_UPLOAD, QUIZ -> null;
         };
     }
 

@@ -1,16 +1,15 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { take } from 'rxjs/operators';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
-import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Plagiarism Cases Service', () => {
@@ -40,7 +39,7 @@ describe('Plagiarism Cases Service', () => {
         submissionB: plagiarismSubmission2,
         similarity: 0.5,
         status: PlagiarismStatus.CONFIRMED,
-    } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    } as PlagiarismComparison<TextSubmissionElement>;
 
     const textExercise = {
         id: 1,

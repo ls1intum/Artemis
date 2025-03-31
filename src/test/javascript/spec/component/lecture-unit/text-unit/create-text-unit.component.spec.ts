@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { CreateTextUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-text-unit/create-text-unit.component';
-import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
+import { CreateTextUnitComponent } from 'app/lecture/manage/lecture-units/create-text-unit/create-text-unit.component';
+import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
@@ -18,8 +18,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../../helpers/mocks/service/mock-theme.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateTextUnitComponent', () => {
     let createTextUnitComponentFixture: ComponentFixture<CreateTextUnitComponent>;
@@ -32,6 +34,7 @@ describe('CreateTextUnitComponent', () => {
                 MockProvider(TextUnitService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {

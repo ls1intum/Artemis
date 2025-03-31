@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
-import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
+import { PostTagSelectorComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { metisTags } from '../../../../../helpers/sample/metis-sample-data';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';

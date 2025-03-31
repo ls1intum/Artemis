@@ -1,15 +1,15 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
+import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { AlertService } from 'app/core/util/alert.service';
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
+import { ApollonDiagramDetailComponent } from 'app/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -17,7 +17,7 @@ import * as testClassDiagram from '../../util/modeling/test-models/class-diagram
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -110,7 +110,7 @@ describe('ApollonDiagramDetail Component', () => {
         const response: HttpResponse<ApollonDiagram> = new HttpResponse({ body: diagram });
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const svgRenderer = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
+        const svgRenderer = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(svgRenderer, 'convertRenderedSVGToPNG').mockReturnValue(of(new Blob()));
         jest.spyOn(apollonDiagramService, 'update').mockReturnValue(of(response));
 
@@ -154,7 +154,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.editorContainer = new ElementRef(div);
         // TODO: we should mock this differently without require
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const module = require('app/exercises/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
+        const module = require('app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer');
         jest.spyOn(module, 'convertRenderedSVGToPNG').mockReturnValue(new Blob([]));
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);

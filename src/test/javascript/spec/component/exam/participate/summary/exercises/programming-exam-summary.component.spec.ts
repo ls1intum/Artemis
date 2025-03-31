@@ -1,24 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { User } from 'app/core/user/user.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { BehaviorSubject } from 'rxjs';
-import { SubmissionType } from 'app/entities/submission.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
-import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -27,6 +25,8 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 

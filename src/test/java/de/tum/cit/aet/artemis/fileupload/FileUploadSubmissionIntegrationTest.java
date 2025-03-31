@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -141,7 +142,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmission(false);
 
         if (differentFilePath) {
-            submission.setFilePath("/api/core/files/file-upload-exercises/1/submissions/1/file1.png");
+            submission.setFilePath("file-upload-exercises/1/submissions/1/file1.png");
         }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
 
@@ -169,8 +170,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
 
-        MvcResult file = request.performMvcRequest(get(returnedSubmission.getFilePath())).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType))
-                .andReturn();
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, returnedSubmission.getFilePath());
+        MvcResult file = request.performMvcRequest(get(requestUrl)).andExpect(status().isOk()).andExpect(content().contentType(expectedMediaType)).andReturn();
         assertThat(file.getResponse().getContentAsByteArray()).isEqualTo(validFile.getBytes());
     }
 
@@ -712,7 +713,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/core/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         fileUploadSubmissionRepository.delete(submittedFileUploadSubmission);
         assertThat(fileUploadSubmissionRepository.findAll()).doesNotContain(submittedFileUploadSubmission);
@@ -721,7 +722,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOnDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/core/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePath("file-upload-exercises/769/submissions/406062/Pinguin.pdf");
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         assertThatNoException().isThrownBy(() -> submittedFileUploadSubmission.onDelete());
     }

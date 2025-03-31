@@ -1,8 +1,8 @@
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Observable } from 'rxjs';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 const studentExamInstance = new StudentExam();
 const exercise = { id: 7 };

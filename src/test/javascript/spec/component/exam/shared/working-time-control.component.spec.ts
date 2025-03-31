@@ -2,8 +2,9 @@ import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
+import { input } from '@angular/core';
 
 const createTestExam = (duration: number) => ({ workingTime: duration, startDate: dayjs.unix(0), endDate: dayjs.unix(duration) }) as Exam;
 
@@ -46,7 +47,11 @@ describe('WorkingTimeControlComponent', () => {
     it('should parse working time seconds to relative working time extension', () => {
         // act
         component.workingTimeSeconds = 7200;
-        component.exam = createTestExam(3600);
+        const exam = createTestExam(3600);
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
+
         fixture.detectChanges();
 
         // assert
@@ -64,8 +69,11 @@ describe('WorkingTimeControlComponent', () => {
 
     it('should not show relative working time if `relative` is false', async () => {
         // act
-        component.relative = false;
-        component.exam = {} as Exam;
+        const exam = {} as Exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.relative = input(false);
+        });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -75,8 +83,12 @@ describe('WorkingTimeControlComponent', () => {
 
     it('should show relative working time if exam is present and `relative` is true', async () => {
         // act
-        component.relative = true;
-        component.exam = {} as Exam;
+
+        const exam = {} as Exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.relative = input(true);
+        });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -86,9 +98,12 @@ describe('WorkingTimeControlComponent', () => {
 
     it('should disable inputs when `disabled` is true', async () => {
         // act
-        component.disabled = true;
-        component.exam = {} as Exam;
-        component.relative = true;
+        const exam = {} as Exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+            component.relative = input(true);
+            component.disabled = input(true);
+        });
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -101,7 +116,10 @@ describe('WorkingTimeControlComponent', () => {
 
     it('should update the percent difference when the absolute working time changes', () => {
         // arrange
-        component.exam = createTestExam(7200);
+        const exam = createTestExam(7200);
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
 
         // act & assert
         component.workingTime.hours = 4;
@@ -129,7 +147,10 @@ describe('WorkingTimeControlComponent', () => {
 
     it('should update the absolute working time when changing the percent difference', () => {
         // arrange
-        component.exam = createTestExam(7200);
+        const exam = createTestExam(7200);
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
 
         // act & assert
         component.workingTime.percent = 26;

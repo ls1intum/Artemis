@@ -1,24 +1,24 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
+import { AdminImportStandardizedCompetenciesComponent } from 'app/core/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { KnowledgeAreaTreeStubComponent } from './knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
-import { AdminStandardizedCompetencyService } from 'app/admin/standardized-competencies/admin-standardized-competency.service';
+import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { KnowledgeAreasForImportDTO } from 'app/entities/competency/standardized-competency.model';
-import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreasForImportDTO } from 'app/atlas/shared/entities/standardized-competency.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { KnowledgeAreaTreeComponent } from '../../../../../main/webapp/app/shared/standardized-competencies/knowledge-area-tree.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { StandardizedCompetencyDetailComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-detail.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
 
 describe('AdminImportStandardizedCompetenciesComponent', () => {
     let componentFixture: ComponentFixture<AdminImportStandardizedCompetenciesComponent>;

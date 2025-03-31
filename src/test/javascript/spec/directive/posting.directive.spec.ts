@@ -1,24 +1,24 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Posting } from 'app/entities/metis/posting.model';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
-import { PostingDirective } from 'app/shared/metis/posting.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { DisplayPriority } from 'app/communication/metis.util';
+import { PostingDirective } from 'app/communication/posting.directive';
+import { MetisService } from 'app/communication/metis.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { MockMetisConversationService } from '../helpers/mocks/service/mock-metis-conversation.service';
 import { of } from 'rxjs';
-import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
 import { Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
-import * as courseModel from 'app/entities/course.model';
+import * as courseModel from 'app/core/shared/entities/course.model';
+import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 
 class MockOneToOneChatService {
     createWithId = jest.fn().mockReturnValue(of({ body: { id: 1 } }));
@@ -86,8 +86,8 @@ describe('PostingDirective', () => {
 
         fixture = TestBed.createComponent(TestPostingComponent);
         component = fixture.componentInstance;
-        jest.mock('app/entities/course.model', () => ({
-            ...jest.requireActual('app/entities/course.model'),
+        jest.mock('app/core/shared/entities/course.model', () => ({
+            ...jest.requireActual('app/core/shared/entities/course.model'),
             isMessagingEnabled: jest.fn(),
         }));
         mockReactionsBar = new MockReactionsBar();

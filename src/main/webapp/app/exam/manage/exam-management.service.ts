@@ -1,27 +1,27 @@
 import { Injectable, inject } from '@angular/core';
-import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
-import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
+import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
+import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { StudentDTO } from 'app/entities/student-dto.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
-import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
+import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
-import { Exercise } from 'app/entities/exercise.model';
-import { ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
-import { ExamDeletionSummaryDTO } from 'app/entities/exam-deletion-summary.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
+import { ExamDeletionSummaryDTO } from 'app/exam/shared/entities/exam-deletion-summary.model';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -411,26 +411,6 @@ export class ExamManagementService {
      */
     assessUnsubmittedExamModelingAndTextParticipations(courseId: number, examId: number): Observable<HttpResponse<number>> {
         return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/assess-unsubmitted-and-empty-student-exams`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Unlock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be unlocked
-     * @returns number of exercises for which the repositories were unlocked
-     */
-    unlockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/unlock-all-repositories`, {}, { observe: 'response' });
-    }
-
-    /**
-     * Lock all the programming exercises belonging to the exam
-     * @param courseId id of the course to which the exam belongs
-     * @param examId id of the exam for which the programming exercises should be locked
-     * @returns number of exercises for which the repositories were locked
-     */
-    lockAllRepositories(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
     /**

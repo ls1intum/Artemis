@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
-import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
-import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { GradingSystemComponent } from 'app/assessment/manage/grading-system/grading-system.component';
+import { BaseGradingSystemComponent } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { HttpResponse } from '@angular/common/http';
 
 export class MockLtiConfigurationService {

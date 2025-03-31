@@ -5,11 +5,11 @@ import { MockPipe } from 'ng-mocks';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
-import { ExerciseSaveButtonComponent } from '../../../../../../../main/webapp/app/exam/participate/exercises/exercise-save-button/exercise-save-button.component';
-import { Submission } from '../../../../../../../main/webapp/app/entities/submission.model';
-import { facSaveSuccess } from 'app/icons/icons';
+import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
+import { facSaveSuccess } from 'app/shared/icons/icons';
 
 describe('ExerciseSaveButtonComponent', () => {
     let component: ExerciseSaveButtonComponent;

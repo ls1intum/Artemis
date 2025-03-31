@@ -138,7 +138,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setTcpClient(tcpClient);
         }
         else {
-            log.debug("Did NOT enable StompBrokerRelay for WebSocket messages");
+            log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
             config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
         }
     }
@@ -175,11 +175,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
-        // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
-        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
-                .setInterceptors(httpSessionHandshakeInterceptor());
+        // @formatter:off
+        registry
+            // NOTE: clients can connect using sockjs via 'ws://{artemis-url}/websocket' or without sockjs using 'ws://{artemis-url}/websocket/websocket'
+            .addEndpoint("/websocket")
+            .setAllowedOriginPatterns("*")
+            // TODO: in the future, we should deactivate the option to connect with sockjs, because this is not needed any more
+            .withSockJS()
+            .setTransportHandlers(webSocketTransportHandler)
+            .setInterceptors(httpSessionHandshakeInterceptor());
+        // @formatter:on
     }
 
     @Override
@@ -203,6 +209,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
+                log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
@@ -218,6 +225,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             @Override
             public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
+                log.debug("afterHandshake: {}, {}, {}", request, response, wsHandler);
                 if (exception != null) {
                     log.warn("Exception occurred in WS.afterHandshake", exception);
                 }
@@ -231,12 +239,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
+                log.debug("determineUser: {}", principal);
                 if (principal == null) {
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
-                log.debug("determineUser: {}", principal);
                 return principal;
             }
         };
@@ -253,6 +261,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          */
         @Override
         public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+            log.debug("preSend: {}, channel: {}", message, channel);
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();
             String destination = headerAccessor.getDestination();

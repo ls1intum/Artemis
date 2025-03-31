@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/angular';
 import { AppComponent } from '../../../main/webapp/app/app.component';
-import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ThemeService } from 'app/core/theme/theme.service';
-import { ProfileService } from '../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
+import { ProfileService } from '../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from '../../../main/webapp/app/shared/pipes/artemis-translate.pipe';
 import { MockSyncStorage } from '../spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../spec/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
+import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 
 // Mock the initialize method
 class MockThemeService {

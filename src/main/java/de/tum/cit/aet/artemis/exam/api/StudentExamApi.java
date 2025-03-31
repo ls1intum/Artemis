@@ -27,10 +27,6 @@ public class StudentExamApi extends AbstractExamApi {
         this.studentExamRepository = studentExamRepository;
     }
 
-    public Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(long studentExamId, boolean isTestRun) {
-        return studentExamRepository.findWithExercisesParticipationsSubmissionsById(studentExamId, isTestRun);
-    }
-
     public Optional<StudentExam> findByExerciseIdAndUserId(Long exerciseId, Long userId) {
         return studentExamRepository.findByExerciseIdAndUserId(exerciseId, userId);
     }
@@ -43,8 +39,12 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesByExamId(examId);
     }
 
-    public Optional<StudentExam> findByExamIdAndUserId(long examId, long userId) {
-        return studentExamRepository.findByExamIdAndUserId(examId, userId);
+    public Optional<StudentExam> findByExamIdAndParticipationId(long examId, long userId) {
+        return studentExamRepository.findByExamIdAndParticipationId(examId, userId);
+    }
+
+    public Optional<Boolean> isSubmitted(long examId, long userId) {
+        return studentExamRepository.isSubmitted(examId, userId);
     }
 
     public void save(StudentExam studentExam) {

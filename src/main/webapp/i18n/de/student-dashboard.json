@@ -57,9 +57,14 @@
                 "further": "Weitere Übungsgruppen",
                 "real": "Klausuren",
                 "test": "Testklausuren",
+                "attempt": "Testklausurversuche",
+                "testExamAttempt": "Versuch",
+                "attempts": "Versuche",
                 "start": "Beginn",
                 "workingTime": "Bearbeitungszeit",
                 "attainablePoints": "Erreichbare Punkte",
+                "submissionDate": "Abgabedatum",
+                "usedWorkingTime": "Verwendete Arbeitszeit",
                 "noUpcomingSession": "Kein Termin",
                 "header": "Konversationen",
                 "show": "Konversationen zeigen",
@@ -107,7 +112,8 @@
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
                 "gradingSystem": "Notenschlüssel",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "settings": "Einstellungen"
             },
             "exerciseFilter": {
                 "filter": "Filter",
@@ -169,6 +175,7 @@
                 "quizNotStartedShort": "Nicht begonnen",
                 "userNotParticipatedShort": "Nicht teilgenommen",
                 "userParticipatingShort": "Aktuelle Teilnahme",
+                "userWaitingForDueDateShort": "Abgegeben, warte auf Frist",
                 "userSubmittedShort": "Bereits abgegeben",
                 "noDateAssociated": "Ohne Datum",
                 "details": {

@@ -1,32 +1,32 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../overview/course-conversations/helpers/conversationExampleModels';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
+import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { AlertService } from 'app/shared/service/alert.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { ConversationDetailDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),

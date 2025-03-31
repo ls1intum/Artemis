@@ -1,17 +1,17 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
+import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
-import { WindFile } from 'app/entities/programming/wind.file';
-import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
-import { Course } from 'app/entities/course.model';
-import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
+import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
+import { Course } from 'app/core/shared/entities/course.model';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 
 describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     let component: ProgrammingExerciseEditCheckoutDirectoriesComponent;

@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { PostingContentPartComponent } from 'app/shared/metis/posting-content/posting-content-part/posting-content-part.components';
+import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { MetisService } from 'app/communication/metis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { PatternMatch, PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
+import { PatternMatch, PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { Observable, of } from 'rxjs';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';

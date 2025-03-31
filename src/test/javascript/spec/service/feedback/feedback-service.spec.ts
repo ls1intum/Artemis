@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
-import { Feedback } from 'app/entities/feedback.model';
+import { FeedbackService } from 'app/exercise/feedback/feedback.service';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 describe('FeedbackService', () => {
     let service: FeedbackService;

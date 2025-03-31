@@ -1,19 +1,19 @@
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { QuizStatisticComponent } from 'app/exercises/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
+import { QuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistic/quiz-statistic.component';
 import { MockProvider } from 'ng-mocks';
 import { ChangeDetectorRef } from '@angular/core';
 

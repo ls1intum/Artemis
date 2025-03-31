@@ -205,7 +205,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: docker.io/library/postgres:17.3-alpine
+                    image: docker.io/library/postgres:17.4-alpine
                     tmpfs:
                         enabled: true
                 server:
@@ -273,8 +273,6 @@ info:
             -   programming_exercise_fail_tour: 'test'
             -   programming_exercise_success_tour: 'test'
             -   tutor_assessment_tour: 'Patterns in Software Engineering'
-    # Allowed Orion version range. Should only be changed on major version releases
-    allowed-minimum-orion-version: 1.0.0
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for tests
     text-assessment-analytics-enabled: true

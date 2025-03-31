@@ -1,27 +1,21 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { ConversationHeaderComponent } from 'app/overview/course-conversations/layout/conversation-header/conversation-header.component';
+import { ConversationHeaderComponent } from 'app/communication/course-conversations/layout/conversation-header/conversation-header.component';
 import { Location } from '@angular/common';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { BehaviorSubject, EMPTY, of, Subject } from 'rxjs';
-import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import {
-    ConversationDetailDialogComponent,
-    ConversationDetailTabs,
-} from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
-import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/course-exercise-details.component';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
+import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../../../helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -32,6 +26,12 @@ import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-
 import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from '../../../../../helpers/mocks/service/mock-metis-conversation.service';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 const examples: ConversationDTO[] = [
     generateOneToOneChatDTO({}),

@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
-import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
-import { WindFile } from 'app/entities/programming/wind.file';
-import { WindMetadata } from 'app/entities/programming/wind.metadata';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';
+import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Renderer2 } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
-import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
+import { AeolusService } from 'app/programming/service/aeolus.service';
+import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -20,7 +20,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('ProgrammingExercise Custom Build Plan', () => {

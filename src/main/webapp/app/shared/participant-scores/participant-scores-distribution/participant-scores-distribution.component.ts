@@ -1,14 +1,14 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { TranslateService } from '@ngx-translate/core';
-import { GradeStep } from 'app/entities/grade-step.model';
-import { GraphColors } from 'app/entities/statistics.model';
-import { TranslateDirective } from '../../language/translate.directive';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from '../../components/help-icon.component';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface NgxClickEvent {
     name: string;

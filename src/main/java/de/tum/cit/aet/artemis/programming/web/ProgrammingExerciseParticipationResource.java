@@ -298,7 +298,7 @@ public class ProgrammingExerciseParticipationResource {
         participation.setProgrammingExercise(exercise);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
-        if (participation.isLocked()) {
+        if (participationAuthCheckService.isLocked(participation, exercise)) {
             throw new AccessForbiddenException("participation", participationId);
         }
         if (exercise.isExamExercise()) {
@@ -526,7 +526,7 @@ public class ProgrammingExerciseParticipationResource {
      * @return true if the results should be hidden, false otherwise
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
-        if (participation.getProgrammingExercise().isExamExercise()) {
+        if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
             var examApi = this.examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
             var studentExamApi = this.studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
             User student = participation.getStudent()

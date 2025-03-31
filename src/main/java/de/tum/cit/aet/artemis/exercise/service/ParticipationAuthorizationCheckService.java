@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -12,16 +14,21 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -37,13 +44,25 @@ public class ParticipationAuthorizationCheckService {
 
     private final TeamRepository teamRepository;
 
+    private final ExerciseDateService exerciseDateService;
+
+    private final SubmissionPolicyRepository submissionPolicyRepository;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final Optional<StudentExamApi> studentExamApi;
+
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            AuthorizationCheckService authCheckService, TeamRepository teamRepository) {
+            AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, Optional<StudentExamApi> studentExamApi) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-
         this.authCheckService = authCheckService;
         this.teamRepository = teamRepository;
+        this.exerciseDateService = exerciseDateService;
+        this.submissionPolicyRepository = submissionPolicyRepository;
+        this.submissionRepository = submissionRepository;
+        this.studentExamApi = studentExamApi;
     }
 
     /**
@@ -137,5 +156,48 @@ public class ParticipationAuthorizationCheckService {
         // a teaching assistant, an editor or an instructor of the course, or in case they are an admin
         final Course course = participation.getExercise().getCourseViaExerciseGroupOrCourseMember();
         return authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+    }
+
+    /**
+     * Determines whether a given programming exercise participation is locked.
+     * A participation is considered locked if:
+     * <ul>
+     * <li>The due date of the exercise has passed.</li>
+     * <li>The exercise is an exam exercise, and:
+     * <ul>
+     * <li>The associated student exam has already been submitted.</li>
+     * <li>The student exam does not exist (indicating an inconsistency).</li>
+     * </ul>
+     * </li>
+     * <li>A submission policy with a submission limit is active, and the submission count
+     * has reached or exceeded the limit.</li>
+     * </ul>
+     *
+     * @param participation The student participation for the programming exercise.
+     * @param exercise      The programming exercise to check.
+     * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
+     */
+    public boolean isLocked(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
+        if (exerciseDateService.isAfterDueDate(participation, exercise)) {
+            return true;
+        }
+
+        if (exercise.isExamExercise()) {
+            var api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+            var studentExamSubmitted = api.isSubmitted(exercise.getExam().getId(), participation.getParticipant().getId());
+            // if the corresponding student exam was already submitted, the participation is locked
+            // if the student exam does not exist yet, the participation should not exist either
+            return studentExamSubmitted.orElse(true);
+        }
+
+        var submissionPolicy = submissionPolicyRepository.findByProgrammingExerciseId(exercise.getId());
+
+        // NOTE: in case a submission policy is set for the corresponding programming exercise, set the locked value of the participation properly, in particular for exams
+        if (submissionPolicy != null && submissionPolicy.isActive() && submissionPolicy instanceof LockRepositoryPolicy) {
+
+            // the participation is locked when the submission count is at least as high as the submission limit
+            return submissionRepository.countByParticipationId(participation.getId()) >= submissionPolicy.getSubmissionLimit();
+        }
+        return false;
     }
 }

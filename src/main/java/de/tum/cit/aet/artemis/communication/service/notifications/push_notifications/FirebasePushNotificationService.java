@@ -18,6 +18,8 @@ import com.google.common.collect.Lists;
 
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 /**
  * Handles the sending of Android Notifications to the Relay Service
@@ -34,8 +36,9 @@ public class FirebasePushNotificationService extends PushNotificationService {
     @Value("${artemis.push-notification-relay:https://hermes-sandbox.artemis.cit.tum.de}")
     private String relayServerBaseUrl;
 
-    public FirebasePushNotificationService(PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate) {
-        super(restTemplate);
+    public FirebasePushNotificationService(CourseNotificationPushProxyService pushProxyService,
+            PushNotificationDeviceConfigurationRepository pushNotificationDeviceConfigurationRepository, RestTemplate restTemplate, FeatureToggleService featureToggleService) {
+        super(restTemplate, pushProxyService, featureToggleService);
         repository = pushNotificationDeviceConfigurationRepository;
     }
 

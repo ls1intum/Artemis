@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-dialog.component';
-import { CourseGroup } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { CourseGroup } from 'app/core/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ButtonComponent } from '../components/button.component';
 
 @Component({

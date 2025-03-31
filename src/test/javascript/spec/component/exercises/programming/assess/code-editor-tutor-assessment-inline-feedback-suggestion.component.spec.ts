@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { EventEmitter } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
-import { Course } from 'app/entities/course.model';
-import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MockComponent } from 'ng-mocks';
-import { FeedbackSuggestionBadgeComponent } from 'app/exercises/shared/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
+import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

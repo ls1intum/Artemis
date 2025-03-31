@@ -1,11 +1,11 @@
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { Subscription, from } from 'rxjs';
 
-import { Exam } from 'app/entities/exam/exam.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ExamLiveAnnouncementCreateModalComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-modal.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,7 +19,7 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     private modalService = inject(NgbModal);
     alertService = inject(AlertService);
 
-    @Input() exam: Exam;
+    exam = input.required<Exam>();
 
     faBullhorn = faBullhorn;
     announcementCreationAllowed = false;
@@ -44,11 +44,11 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
     private checkAnnouncementCreationAllowed() {
         const now = dayjs();
 
-        this.announcementCreationAllowed = !!this.exam.visibleDate?.isBefore(now);
+        this.announcementCreationAllowed = !!this.exam().visibleDate?.isBefore(now);
 
         // Run the check again at the visible date
         if (!this.announcementCreationAllowed) {
-            const nextCheckTimeout = this.exam.visibleDate?.diff(now);
+            const nextCheckTimeout = this.exam().visibleDate?.diff(now);
             if (nextCheckTimeout) {
                 this.timeoutRef = setTimeout(this.checkAnnouncementCreationAllowed.bind(this), nextCheckTimeout);
             }
@@ -63,8 +63,8 @@ export class ExamLiveAnnouncementCreateButtonComponent implements OnInit, OnDest
             backdrop: 'static',
             animation: true,
         });
-        this.modalRef.componentInstance.examId = this.exam.id;
-        this.modalRef.componentInstance.courseId = this.exam.course!.id!;
+        this.modalRef.componentInstance.examId = this.exam().id;
+        this.modalRef.componentInstance.courseId = this.exam().course!.id!;
 
         from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }

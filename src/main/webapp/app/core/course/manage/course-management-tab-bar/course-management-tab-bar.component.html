@@ -1,0 +1,129 @@
+@if (course) {
+    <div class="mt-n3">
+        <jhi-header-course [course]="course" />
+        <div class="tab-bar">
+            <a class="tab-link" [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
+                <fa-icon [icon]="faGraduationCap" />
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams"></span>
+            </a>
+            <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active">
+                <fa-icon [icon]="faListAlt" />
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises"></span>
+            </a>
+            @if (course.isAtLeastEditor) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
+                    <fa-icon [icon]="faFilePdf" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures"></span>
+                </a>
+            }
+            <a class="tab-link" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
+                <fa-icon [icon]="faChartBar" />
+                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.statistics"></span>
+            </a>
+            @if (course.isAtLeastInstructor && irisEnabled) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'iris-settings']" id="iris-settings" routerLinkActive="active">
+                    <fa-icon [icon]="faRobot" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.iris.settings.button.course.title"></span>
+                </a>
+            }
+            @if (isCommunicationEnabled) {
+                <a class="tab-link" [routerLink]="['/courses', course.id, 'communication']" routerLinkActive="active">
+                    <fa-icon [icon]="faComments" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.metis.communication.label"></span>
+                    <fa-icon [icon]="faArrowUpRightFromSquare" />
+                </a>
+            }
+            @if (course.tutorialGroupsConfiguration || course.isAtLeastInstructor) {
+                <a
+                    class="tab-link"
+                    [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                    routerLinkActive="active"
+                    [class.active]="shouldHighlightTutorialsLink()"
+                >
+                    <fa-icon [icon]="faPersonChalkboard" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
+                </a>
+            }
+            @if (course.isAtLeastInstructor) {
+                <jhi-feature-overlay [enabled]="atlasEnabled">
+                    <a class="tab-link" [routerLink]="['/course-management', course.id, 'competency-management']" routerLinkActive="active">
+                        <fa-icon [icon]="faFlag" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.competency.competencyButton"></span>
+                    </a>
+                </jhi-feature-overlay>
+            }
+            @if (course.isAtLeastInstructor) {
+                <jhi-feature-overlay [enabled]="atlasEnabled">
+                    <a
+                        class="tab-link"
+                        [jhiFeatureToggleHide]="FeatureToggle.LearningPaths"
+                        [routerLink]="['/course-management', course.id, 'learning-path-management']"
+                        routerLinkActive="active"
+                    >
+                        <fa-icon [icon]="faNetworkWired" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.learningPath.learningPathButton"></span>
+                    </a>
+                </jhi-feature-overlay>
+            }
+            <a class="tab-link" [routerLink]="['/course-management', course.id, 'assessment-dashboard']" routerLinkActive="active" [class.active]="shouldHighlightAssessmentLink()">
+                <fa-icon [icon]="faUserCheck" />
+                <span class="tab-link-text" jhiTranslate="entity.action.assessmentDashboard"></span>
+            </a>
+            @if (course.isAtLeastInstructor) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'scores']" routerLinkActive="active">
+                    <fa-icon [icon]="faTable" />
+                    <span class="tab-link-text" jhiTranslate="entity.action.scores"></span>
+                </a>
+            }
+            @if (course.isAtLeastTutor && course.faqEnabled) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'faqs']" routerLinkActive="active">
+                    <fa-icon [icon]="faQuestion" />
+                    <span class="tab-link-text" jhiTranslate="entity.action.faq"></span>
+                </a>
+            }
+            @if (course.isAtLeastInstructor && localCIActive) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
+                    <fa-icon [icon]="faList" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.buildQueue.title"></span>
+                </a>
+            }
+            @if (ltiEnabled && course.onlineCourse && course.isAtLeastInstructor) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'lti-configuration']" id="lti-settings" routerLinkActive="active">
+                    <fa-icon [icon]="faPuzzlePiece" />
+                    <span class="tab-link-text" jhiTranslate="global.menu.admin.lti"></span>
+                </a>
+            }
+            @if (shouldShowControlButtons()) {
+                <div class="controls">
+                    @if (course.isAtLeastInstructor) {
+                        <button id="edit-course" [routerLink]="['/course-management', course.id, 'edit']" class="btn btn-warning btn-md" routerLinkActive="active">
+                            <fa-icon [icon]="faWrench" />
+                            <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
+                        </button>
+                    }
+                    @if (course.isAtLeastInstructor) {
+                        <jhi-course-exam-archive-button [archiveMode]="'Course'" [course]="course" class="archive-button" />
+                    }
+                    <button
+                        id="delete-course"
+                        *jhiHasAnyAuthority="'ROLE_ADMIN'"
+                        [buttonSize]="ButtonSize.MEDIUM"
+                        jhiDeleteButton
+                        [entityTitle]="course.title || ''"
+                        entitySummaryTitle="artemisApp.course.delete.summary.title"
+                        [fetchEntitySummary]="fetchCourseDeletionSummary()"
+                        deleteQuestion="artemisApp.course.delete.question"
+                        deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
+                        (delete)="deleteCourse(course.id!)"
+                        [dialogError]="dialogError$"
+                        style="margin-right: 0 !important"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+}
+<router-outlet />

@@ -1,4 +1,4 @@
-import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
+import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
@@ -6,8 +6,8 @@ import {
     IrisLectureChatSubSettings,
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
-} from 'app/entities/iris/settings/iris-sub-settings.model';
-import { IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
+} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
+import { IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 
 export function mockSettings() {
     const mockChatSettings = new IrisChatSubSettings();
