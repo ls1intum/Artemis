@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -95,14 +96,20 @@ public class QuizParticipationResource {
         var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
         if (result.getId() == null) {
             // Load the live submission of the participation
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
+            var submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow();
+            submission.setResults(List.of(result));
+            participation.setSubmissions(Set.of(submission));
+            // result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).stream().findFirst().orElseThrow());
         }
         else {
             // Load the actual submission of the result
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
+            var submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+            submission.setResults(List.of(result));
+            participation.setSubmissions(Set.of(submission));
+            // result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow());
         }
 
-        participation.setResults(Set.of(result));
+        // participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
         StudentQuizParticipationDTO responseDTO;
