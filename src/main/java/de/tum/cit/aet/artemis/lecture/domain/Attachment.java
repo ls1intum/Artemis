@@ -61,10 +61,9 @@ public class Attachment extends DomainObject implements Serializable {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentUnit attachmentUnit;
 
+    // Student Version holds the version of the file without the pages hidden by the Instructor
     @Column(name = "student_version")
     private String studentVersion;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getName() {
         return name;

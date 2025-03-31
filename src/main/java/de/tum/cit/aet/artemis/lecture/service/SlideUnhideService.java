@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -81,7 +81,7 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
         // Cancel any existing scheduled task for this slide
         cancelScheduledUnhiding(slide.getId());
 
-        Date unhideDate = slide.getHidden();
+        ZonedDateTime unhideDate = slide.getHidden();
         Instant unhideTime = unhideDate.toInstant();
         Instant now = Instant.now();
 

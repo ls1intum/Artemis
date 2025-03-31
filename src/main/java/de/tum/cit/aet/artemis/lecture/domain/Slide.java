@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
-import java.util.Date;
+import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,7 +31,7 @@ public class Slide extends DomainObject {
     private int slideNumber;
 
     @Column(name = "hidden")
-    private Date hidden;
+    private ZonedDateTime hidden;
 
     @ManyToOne
     @JoinColumn(name = "exercise_id")
@@ -61,11 +61,11 @@ public class Slide extends DomainObject {
         this.slideNumber = slideNumber;
     }
 
-    public Date getHidden() {
+    public ZonedDateTime getHidden() {
         return hidden;
     }
 
-    public void setHidden(Date hidden) {
+    public void setHidden(ZonedDateTime hidden) {
         this.hidden = hidden;
     }
 

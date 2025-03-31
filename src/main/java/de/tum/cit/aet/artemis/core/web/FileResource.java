@@ -582,10 +582,7 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            String fileName = matcher.group(1);
-            return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
@@ -603,9 +600,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
         log.debug("REST request to get the slide : {}", slideId);
 
-        Slide slide = slideRepository.findById(slideId).orElseThrow(() -> new EntityNotFoundException("Slide", slideId));
-
-        AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
+        Slide slide = slideRepository.findByIdElseThrow(slideId);
 
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");
@@ -618,10 +613,7 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            String fileName = matcher.group(1);
-            return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    false);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideId);

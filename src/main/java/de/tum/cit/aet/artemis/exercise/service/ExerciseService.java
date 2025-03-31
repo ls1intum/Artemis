@@ -5,12 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -859,14 +859,11 @@ public class ExerciseService {
 
         log.debug("Updating hidden date for {} slides related to exercise {}", relatedSlides.size(), exercise.getId());
 
-        Date newHiddenDate = Date.from(exercise.getDueDate().toInstant());
+        ZonedDateTime newHiddenDate = ZonedDateTime.ofInstant(exercise.getDueDate().toInstant(), ZoneId.systemDefault());
 
-        for (Slide slide : relatedSlides) {
-            slide.setHidden(newHiddenDate);
-            slideRepository.save(slide);
-
-            // Schedule the slide to be unhidden at the new date
-            slideUnhideService.handleSlideHiddenUpdate(slide);
-        }
+        relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
+        slideRepository.saveAll(relatedSlides);
+        // Schedule the slide to be unhidden at the new date
+        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
     }
 }

@@ -8,8 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
-import java.sql.Timestamp;
-import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -136,8 +135,6 @@ public class SlideSplitterService {
                 slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
-                slideEntity.setHidden(null);
-                slideEntity.setExercise(null);
                 slideRepository.save(slideEntity);
             }
         }
@@ -210,7 +207,8 @@ public class SlideSplitterService {
                 hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
                     Map<String, Object> data = new HashMap<>();
                     String dateStr = (String) page.get("date");
-                    data.put("date", Timestamp.from(Instant.parse(dateStr)));
+                    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateStr);
+                    data.put("date", zonedDateTime);
 
                     if (page.get("exerciseId") != null) {
                         data.put("exerciseId", page.get("exerciseId"));
@@ -251,7 +249,7 @@ public class SlideSplitterService {
         slideEntity.setSlideNumber(order);
 
         // Handle hidden status and associated exercise
-        java.util.Date previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap.get(slideId));
+        ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap.get(slideId));
 
         // Handle slide image
         if (isNewSlide) {
@@ -271,11 +269,11 @@ public class SlideSplitterService {
      *
      * @return The previous hidden value
      */
-    private java.util.Date updateSlideHiddenStatus(Slide slideEntity, Map<String, Object> hiddenData) {
-        java.util.Date previousHiddenValue = slideEntity.getHidden();
+    private ZonedDateTime updateSlideHiddenStatus(Slide slideEntity, Map<String, Object> hiddenData) {
+        ZonedDateTime previousHiddenValue = slideEntity.getHidden();
 
         if (hiddenData != null && hiddenData.containsKey("date")) {
-            slideEntity.setHidden((java.util.Date) hiddenData.get("date"));
+            slideEntity.setHidden((ZonedDateTime) hiddenData.get("date"));
 
             if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
                 Number exerciseId = (Number) hiddenData.get("exerciseId");
@@ -349,7 +347,7 @@ public class SlideSplitterService {
     /**
      * Schedule unhiding for a slide if the hidden date has changed.
      */
-    private void scheduleUnhideIfNeeded(Slide savedSlide, java.util.Date previousHiddenValue, java.util.Date newHiddenValue) {
+    private void scheduleUnhideIfNeeded(Slide savedSlide, ZonedDateTime previousHiddenValue, ZonedDateTime newHiddenValue) {
         if (!Objects.equals(previousHiddenValue, newHiddenValue)) {
             slideUnhideService.handleSlideHiddenUpdate(savedSlide);
             log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
