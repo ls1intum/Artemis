@@ -319,7 +319,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 if (
                     isNaN(Number(queryParams.conversationId)) &&
                     Object.values(SavedPostStatus)
-                        .map((status) => status.toString())
+                        .map((status) => status.toString().toLowerCase())
                         .includes(queryParams.conversationId)
                 ) {
                     this.selectedSavedPostStatus = toSavedPostStatus(queryParams.conversationId);
@@ -359,7 +359,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.router.navigate([], {
             relativeTo: this.activatedRoute,
             queryParams: {
-                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus,
+                conversationId: this.activeConversation?.id ?? this.selectedSavedPostStatus?.toLowerCase(),
             },
             replaceUrl: true,
         });
@@ -478,10 +478,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (typeof conversationId === 'string') {
             if (
                 Object.values(SavedPostStatus)
-                    .map((status) => status.toString())
+                    .map((status) => status.toString().toLowerCase())
                     .includes(conversationId)
             ) {
-                this.selectedSavedPostStatus = conversationId as SavedPostStatus;
+                this.selectedSavedPostStatus = conversationId.toUpperCase() as SavedPostStatus;
                 this.postInThread = undefined;
                 this.metisConversationService.setActiveConversation(undefined);
                 this.activeConversation = undefined;

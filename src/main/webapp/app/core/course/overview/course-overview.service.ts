@@ -233,21 +233,21 @@ export class CourseOverviewService {
             entityData: [
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.progress'),
-                    id: SavedPostStatus.IN_PROGRESS.toString(),
+                    id: SavedPostStatus.IN_PROGRESS.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faBookmark,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.completed'),
-                    id: SavedPostStatus.COMPLETED.toString(),
+                    id: SavedPostStatus.COMPLETED.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faSquareCheck,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.archived'),
-                    id: SavedPostStatus.ARCHIVED.toString(),
+                    id: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faBoxArchive,
                     size: 'S',

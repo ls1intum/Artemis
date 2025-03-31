@@ -13,7 +13,7 @@ export enum SavedPostStatus {
 }
 
 export function toSavedPostStatus(value: string): SavedPostStatus | undefined {
-    const upper = value.toLowerCase();
+    const upper = value.toUpperCase();
     return Object.values(SavedPostStatus).find((status) => status === upper);
 }
 
