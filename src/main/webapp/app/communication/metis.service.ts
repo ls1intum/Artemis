@@ -799,14 +799,14 @@ export class MetisService implements OnDestroy {
      * Retrieves the source posts for a given set of post IDs.
      *
      * @param postIds - An array of numeric post IDs to retrieve source posts for.
-     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid or not existent.
      */
     getSourcePostsByIds(postIds: number[]): Observable<Post[] | undefined> {
         if (postIds) {
             return this.postService.getSourcePostsByIds(this.courseId, postIds).pipe(
                 catchError((error) => {
                     if (error.status === 404) {
-                        return of([]);
+                        return of(undefined);
                     }
                     return throwError(() => error);
                 }),
