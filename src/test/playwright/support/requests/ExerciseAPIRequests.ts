@@ -1,10 +1,10 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
@@ -30,14 +30,14 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Team } from 'app/entities/team.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';

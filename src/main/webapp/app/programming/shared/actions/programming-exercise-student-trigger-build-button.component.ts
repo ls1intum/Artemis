@@ -3,7 +3,7 @@ import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-ex
 import { AlertService } from 'app/shared/service/alert.service';
 import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
-import { SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button.component';
 

@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';

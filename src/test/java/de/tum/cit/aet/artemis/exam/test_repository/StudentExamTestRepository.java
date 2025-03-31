@@ -47,20 +47,6 @@ public interface StudentExamTestRepository extends StudentExamRepository {
             """)
     List<StudentExam> findAllWithEagerExercisesById(@Param("ids") List<Long> ids);
 
-    /**
-     * Get all student exams for the given exam id with quiz questions.
-     *
-     * @param ids the ids of the student exams
-     * @return the list of student exams with quiz questions
-     */
-    @Query("""
-            SELECT DISTINCT se
-            FROM StudentExam se
-                LEFT JOIN FETCH se.quizQuestions qq
-            WHERE se.id IN :ids
-            """)
-    List<StudentExam> findAllWithEagerQuizQuestionsById(@Param("ids") List<Long> ids);
-
     // Normally, there should only be one student exam for the same user/exam pair (except test runs for instructors)
     @Query("""
             SELECT DISTINCT se

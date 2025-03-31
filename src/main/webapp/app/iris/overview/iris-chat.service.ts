@@ -1,17 +1,17 @@
 import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/entities/iris/iris-message.model';
-import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
-import { IrisExerciseChatSession } from 'app/entities/iris/iris-exercise-chat-session.model';
-import { IrisStageDTO } from 'app/entities/iris/iris-stage-dto.model';
+import { IrisExerciseChatSession } from 'app/iris/shared/entities/iris-exercise-chat-session.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
-import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/entities/iris/iris-chat-websocket-dto.model';
+import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
 import { IrisStatusService } from 'app/iris/overview/iris-status.service';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
-import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
-import { IrisSession } from 'app/entities/iris/iris-session.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
+import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 

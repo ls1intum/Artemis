@@ -5,18 +5,18 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { EditCompetencyComponent } from 'app/atlas/manage/edit/edit-competency.component';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('EditCompetencyComponent', () => {

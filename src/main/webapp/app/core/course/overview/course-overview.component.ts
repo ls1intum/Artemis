@@ -47,15 +47,16 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
 import { PROFILE_ATLAS } from 'app/app.constants';
+import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
 
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
@@ -72,12 +73,13 @@ import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.comp
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
-import { facSidebar } from 'app/icons/icons';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { facSidebar } from 'app/shared/icons/icons';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -97,6 +99,8 @@ import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.se
         FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
+        CourseNotificationOverviewComponent,
+        FeatureToggleHideDirective,
     ],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -123,7 +127,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
-    private courseId: number;
+    protected courseId: number;
     private subscription: Subscription;
     dashboardSubscription: Subscription;
     // currently displayed course

@@ -5,7 +5,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbActiveModalService } from '../../../helpers/mocks/service/mock-ngb-active-modal.service';
 import { TranslateService } from '@ngx-translate/core';

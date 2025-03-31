@@ -1,7 +1,7 @@
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { Exercise } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 /**
  * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed

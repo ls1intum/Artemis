@@ -1,5 +1,4 @@
 import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
@@ -13,7 +12,7 @@ import {
     NEW_MESSAGE_TITLE,
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     Notification,
-} from 'app/entities/notification.model';
+} from 'app/core/shared/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
@@ -21,26 +20,27 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { OneToOneChat } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { OneToOneChat } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChangeDetectorRef } from '@angular/core';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { MetisPostAction } from 'app/communication/metis.util';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { User } from 'app/core/user/user.model';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/communication/notifications';

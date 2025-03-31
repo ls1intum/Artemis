@@ -8,7 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Router } from '@angular/router';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
