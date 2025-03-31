@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyS
 import de.tum.cit.aet.artemis.communication.service.notifications.InstantNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 /**
  * Wraps the sending of iOS and Android Notifications to the Relay Service
@@ -65,9 +67,12 @@ public abstract class PushNotificationService implements InstantNotificationServ
 
     private final CourseNotificationPushProxyService courseNotificationPushProxyService;
 
-    protected PushNotificationService(RestTemplate restTemplate, CourseNotificationPushProxyService courseNotificationPushProxyService) {
+    private final FeatureToggleService featureToggleService;
+
+    protected PushNotificationService(RestTemplate restTemplate, CourseNotificationPushProxyService courseNotificationPushProxyService, FeatureToggleService featureToggleService) {
         this.restTemplate = restTemplate;
         this.courseNotificationPushProxyService = courseNotificationPushProxyService;
+        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -135,6 +140,10 @@ public abstract class PushNotificationService implements InstantNotificationServ
     @Override
     @Async
     public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            return;
+        }
+
         final NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
 
         final List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());

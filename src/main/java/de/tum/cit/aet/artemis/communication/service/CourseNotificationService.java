@@ -165,7 +165,7 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status);
+                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
     }
 
     /**
@@ -201,7 +201,7 @@ public class CourseNotificationService {
 
             String paramValue = parameters.get(key).toString();
             if (paramValue.length() > 500) {
-                paramValue = paramValue.substring(0, 500);
+                paramValue = paramValue.substring(0, 499);
             }
 
             parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, paramValue));

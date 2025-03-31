@@ -217,4 +217,11 @@ public abstract class CourseNotification {
      * @return Returns list of supported channels.
      */
     public abstract List<NotificationChannelOption> getSupportedChannels();
+
+    /**
+     * This function should return the relative webapp url (e.g /courses/:courseId/communication?conversationId=:conversationId).
+     *
+     * @return Returns the relative webapp URL as a string
+     */
+    public abstract String getRelativeWebAppUrl();
 }
