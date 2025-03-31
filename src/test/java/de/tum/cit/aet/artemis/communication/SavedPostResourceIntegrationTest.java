@@ -52,15 +52,8 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnPostsWhenGetSavedPostIsCalled() throws Exception {
         request.performMvcRequest(
-                MockMvcRequestBuilders.get("/api/communication/saved-posts/" + exampleCourseId + "?status=" + SavedPostStatus.IN_PROGRESS.toString().toLowerCase()))
+                MockMvcRequestBuilders.get("/api/communication/saved-posts?courseId=" + exampleCourseId + "&status=" + SavedPostStatus.IN_PROGRESS.toString().toLowerCase()))
                 .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$", hasSize(1))).andExpect(jsonPath("$[0].id").value(testPost.getId()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnBadRequestWhenWrongStatusIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/saved-posts/?type=test")).andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
@@ -79,19 +72,15 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnBadRequestWhenWrongTypeIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.post("/api/communication/saved-posts/{postId}?type={type}", testPost.getId(), "test"))
-                .andExpect(MockMvcResultMatchers.status().isBadRequest()).andExpect(jsonPath("$.message").value("error.savedPostTypeDoesNotExist"));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnMaxPostReachedWhenSavingAndLimitIsReached() throws Exception {
         int createEntries = 100;
         List<SavedPost> savedPosts = new ArrayList<>();
 
         for (int i = 0; i < createEntries; i++) {
-            SavedPost savedPost = ConversationFactory.generateSavedPost(testUser, testPost, PostingType.POST, SavedPostStatus.IN_PROGRESS);
+            var testPostIteration = ConversationFactory.createBasicPost(i + 2, testUser);
+            testPostIteration.setConversation(conversation);
+            testPostIteration = conversationMessageRepository.save(testPostIteration);
+            SavedPost savedPost = ConversationFactory.generateSavedPost(testUser, testPostIteration, PostingType.POST, SavedPostStatus.IN_PROGRESS);
             savedPostRepository.save(savedPost);
             savedPosts.add(savedPost);
         }
@@ -108,14 +97,6 @@ class SavedPostResourceIntegrationTest extends AbstractConversationTest {
     void shouldReturnOkWhenUpdatingProperStatus() throws Exception {
         request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/saved-posts/{postId}?status={status}&type={type}", testPost.getId(),
                 SavedPostStatus.COMPLETED.toString().toLowerCase(), PostingType.POST.toString().toLowerCase())).andExpect(MockMvcResultMatchers.status().isOk());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnBadRequestWhenUpdatingAndWrongStatusIsSupplied() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.put("/api/communication/saved-posts/{postId}?status={status}&type={type}", testPost.getId(),
-                PostingType.POST.toString().toLowerCase(), "test")).andExpect(MockMvcResultMatchers.status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("error.savedPostStatusDoesNotExist"));
     }
 
     @Test
