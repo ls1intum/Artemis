@@ -114,10 +114,10 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     List<StudentParticipation> findByTeamId(long teamId);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
+    @EntityGraph(type = LOAD, attributePaths = "submissions.results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(long exerciseId, String username, boolean testRun);
 
-    @EntityGraph(type = LOAD, attributePaths = "results")
+    @EntityGraph(type = LOAD, attributePaths = "submissions.results")
     Optional<StudentParticipation> findWithEagerResultsByExerciseIdAndTeamId(long exerciseId, long teamId);
 
     @Query("""
