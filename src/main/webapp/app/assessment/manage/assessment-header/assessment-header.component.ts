@@ -1,11 +1,11 @@
 import { Component, EventEmitter, HostListener, Input, Output, inject } from '@angular/core';
-import { Result } from 'app/entities/result.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
-import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ComplaintType } from 'app/entities/complaint.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faSave, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { faSquareCaretRight } from '@fortawesome/free-regular-svg-icons';

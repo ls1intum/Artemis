@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { of } from 'rxjs';
 import { IrisStatusService } from 'app/iris/overview/iris-status.service';
-import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
+import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimit-info.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisStatusService', () => {

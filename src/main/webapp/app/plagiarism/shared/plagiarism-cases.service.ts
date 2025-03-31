@@ -1,13 +1,13 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
-import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/types/PlagiarismSubmissionElement';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
-import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
-import { Exercise } from 'app/entities/exercise.model';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { PlagiarismSubmissionElement } from 'app/plagiarism/shared/entities/PlagiarismSubmissionElement';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;

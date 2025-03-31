@@ -12,21 +12,20 @@ import {
     getIcon,
     getMastery,
     getProgress,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { Course } from 'app/entities/course.model';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -42,11 +41,12 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
 
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../overview/course-overview.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,

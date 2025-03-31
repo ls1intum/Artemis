@@ -4,10 +4,10 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureService } from './lecture.service';
-import { Lecture } from 'app/entities/lecture.model';
-import { Course } from 'app/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
@@ -17,7 +17,6 @@ import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { FormSectionStatus, FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments.component';
 import { LectureUpdateUnitsComponent } from 'app/lecture/manage/lecture-units/lecture-units.component';
 import { FormsModule } from '@angular/forms';
@@ -28,6 +27,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 
 @Component({
     selector: 'jhi-lecture-update',

@@ -4,24 +4,23 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { PROFILE_IRIS, addPublicFilePrefix } from 'app/app.constants';
 import { downloadStream } from 'app/shared/util/download.util';
 import dayjs from 'dayjs/esm';
-import { Lecture } from 'app/entities/lecture.model';
-import { FileService } from 'app/shared/http/file.service';
-import { Attachment } from 'app/entities/attachment.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, UpperCasePipe } from '@angular/common';
@@ -37,6 +36,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
+import { FileService } from 'app/shared/service/file.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -46,7 +46,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../overview/course-overview.scss', '../../shared/course-lectures.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview.scss', '../../shared/course-lectures.scss'],
     imports: [
         TranslateDirective,
         NgClass,

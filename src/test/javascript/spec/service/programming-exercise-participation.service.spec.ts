@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Submission } from 'app/entities/submission.model';
-import { Result } from 'app/entities/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';

@@ -4,14 +4,14 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Result } from 'app/entities/result.model';
-import { Complaint } from 'app/entities/complaint.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { notUndefined, onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NEW_ASSESSMENT_PATH } from 'app/text/manage/assess/text-submission-assessment.route';
@@ -22,19 +22,19 @@ import {
     getSubmissionResultById,
     setLatestSubmissionResult,
     setSubmissionResultByCorrectionRound,
-} from 'app/entities/submission.model';
+} from 'app/exercise/shared/entities/submission/submission.model';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
-import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
+import { ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
-import { Course } from 'app/entities/course.model';
+import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
+import { Course } from 'app/core/shared/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { AthenaService } from 'app/assessment/shared/athena.service';
-import { TextBlock } from 'app/entities/text/text-block.model';
+import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { Subscription } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
