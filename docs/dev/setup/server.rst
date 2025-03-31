@@ -16,17 +16,17 @@ However, **do not modify this file directly**, as it may lead to accidental comm
 
 Instead, follow these best practices:
 
-1. **Create a custom configuration file**
-   - In ``src/main/resources/config``, create a new file named ``application-local.yml``.
-   - This file is ignored by default and won't be committed to version control.
+#. **Create a custom configuration file**
+	* In ``src/main/resources/config``, create a new file named ``application-local.yml``.
+	* This file is used to override settings in application.yml for local development environments. It is configured to be ignored by Git to ensure that local configurations are not committed.
 
-2. **Copy and customize configuration settings**
-   - Copy relevant settings from ``application-artemis.yml`` into ``application-local.yml``.
-   - Modify values as needed, such as database credentials and authentication settings.
+#. **Copy and customize configuration settings**
+	* Copy relevant settings from ``application-artemis.yml`` into ``application-local.yml``.
+	* Modify values as needed, such as database credentials and authentication settings.
 
-3. **Activate the correct profile**
-   - When running Artemis, ensure the ``local`` profile is selected in the run configurations.
-   - For additional custom configurations, create ``application-<name>.yml`` and activate the ``<name>`` profile.
+#. **Activate the correct profile**
+	* When running Artemis, ensure the ``local`` profile is selected in the run configurations.
+	* For additional custom configurations, create ``application-<name>.yml`` and activate the ``<name>`` profile.
 
 Common Configuration Options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -70,6 +70,9 @@ You only need to modify them if your specific work or production environments re
        athena:
             # If you want to use Athena, refer to the dedicated configuration section. Under Administration Guide, Setup of Extension Services.
 
+**Note:**
+If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
+
 Version Control & Continuous Integration Setup
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -81,6 +84,38 @@ Refer to one of the following guides based on your preferred setup:
 
 **Note:**
 If you use a password for authentication, update it in ``gradle/liquibase.gradle``.
+
+
+.. _RunServerWithIntelliJ:
+
+Run the server via a run configuration in IntelliJ
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
+When you import the project into IntelliJ the run configurations will also be imported.
+
+The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot
+module replacement in the client.
+
+* **Artemis (Client):** Will execute ``npm install`` and ``npm run start``. The client will be available at
+  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
+  :ref:`Client Setup <client-setup>`).
+* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles
+  ``dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap-only,local``.
+* **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles
+  ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
+* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
+  (see `Athena Service <#athena-service>`__).
+* **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
+* **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
+  This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
+
+Deprecated Options
+"""""""""""""""""""
+
+* **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
+* **Artemis (Server & Client):** Will start the server and the client. The client will be available at
+  `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 
 
 Run the server via Docker
@@ -95,8 +130,6 @@ Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<TAG/VERSION>``
 - The **latest stable release** can be retrieved using the tag ``latest``.
 - **Specific releases**, such as ``7.10.8``, can be accessed with ``ghcr.io/ls1intum/artemis:7.10.8``.
 - **Branches tied to a pull request** can be obtained using ``PR-<PR NUMBER>``.
-
-For **development**, follow the [Server Setup Guide](#server-setup) to run Artemis in an IDE.
 
 Dockerfile
 """"""""""
@@ -172,38 +205,6 @@ With the following Java environment variable, you can configure the Remote Java 
 | This is already pre-set in the Docker Compose **Artemis-Dev-MySQL** Setup.
 | For issues at the startup, you might have to suspend the java command until a Debugger is connected.
   This is possible by setting ``suspend=y``.
-
-
-.. _RunServerWithIntelliJ:
-
-Run the server via a run configuration in IntelliJ
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
-When you import the project into IntelliJ the run configurations will also be imported.
-
-The recommended way is to run the server and the client separately. This provides fast rebuilds of the server and hot
-module replacement in the client.
-
-* **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``npm install`` and ``npm run start``. The client will be available at
-  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
-  `Client Setup <#client-setup>`__).
-* **Artemis (Server & Client):** Will start the server and the client. The client will be available at
-  `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
-
-Other run / debug configurations
-""""""""""""""""""""""""""""""""
-
-* **Artemis (Server, LocalVC & LocalCI):** The server will be started separated from the client with the profiles
-  ``dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,ldap-only,local``.
-* **Artemis (Server, LocalVC & Jenkins):** The server will be started separated from the client with the profiles
-  ``dev,jenkins,localvc,artemis,scheduling,core,atlas,local``.
-* **Artemis (Server, LocalVC & LocalCI, Athena):** The server will be started separated from the client with ``athena`` profile and Local VC / CI enabled
-  (see `Athena Service <#athena-service>`__).
-* **Artemis (Server, LocalVC & LocalCI, Theia):** The server will be started separated from the client with ``theia`` profile and Local VC / CI enabled.
-* **Artemis (BuildAgent):** The server will be started separated from the client with the profiles ``buildagent,local``.
-  This configuration is used to run the build agent for the local CI. This configuration is rarely needed for development.
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

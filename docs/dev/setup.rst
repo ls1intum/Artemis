@@ -54,26 +54,16 @@ Refer to JHipster’s guide on configuring an IDE:
 **Note:** The Community Edition of IntelliJ IDEA lacks Spring Boot support. See the
 `comparison matrix <https://www.jetbrains.com/idea/features/editions_comparison_matrix.html>`__ for details.
 
-.. note::
-
-    Artemis allows extension with several additional services, e.g., for mobile notifications ('Hermes'),
-    automatic feedback generation using large language models ('Iris/Pyris'), …
-    Their setup is described as part of the :ref:`extension service setup <extensions_setup>`.
-
 .. _setting-up-artemis:
 
 Set up Artemis
 --------------
 
-Once the development environment is ready, proceed with the Artemis Server set up.
-This includes optional features such as programming exercises, which require a version control and build system.
+Once the development environment is set up, the next step is to configure the Artemis server. This includes optional features such as programming exercises, which require a version control and build system.
 
-The Artemis set up guide provides two setup options for programming exercises:
+Start by following the :ref:`Server Setup <Server Setup>` guide, which explains the necessary configurations and provides details on enabling programming exercises.
 
-- :ref:`Integrated Code Lifecycle Setup (Recommended) <Integrated Code Lifecycle Setup>`
-- :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
-
-After that, we should set up the Artemis client. Refer to the :ref:`Client Setup Guide <client-setup>`.
+After completing the server setup, proceed with setting up the Artemis client by following the :ref:`Client Setup Guide <client-setup>`.
 
 .. toctree::
    :includehidden:
