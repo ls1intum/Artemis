@@ -124,7 +124,7 @@
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
                       columnDataType="enum('POST','ANSWER')"/>
-        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post" unique="true">
             <column name="user_id"/>
             <column name="post_id"/>
             <column name="post_type"/>
