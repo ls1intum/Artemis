@@ -84,6 +84,7 @@ public class ForwardedMessageResource {
             case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(forwardedMessageDTO.sourceId()), user.getId());
         }
 
+        // Rejects creation of forwarded messages that already have an ID, since new entries must not be pre-existing.
         if (forwardedMessageDTO.id() != null) {
             throw new BadRequestAlertException("A new forwarded message cannot already have an ID", ENTITY_NAME, "idExists");
         }
@@ -111,10 +112,12 @@ public class ForwardedMessageResource {
         log.debug("GET getForwardedMessages invoked with postingIds {} and type {}", postingIds, type);
         long start = System.nanoTime();
 
+        // Ensure that the provided 'type' parameter is either 'post' or 'answer'.
         if (postingType != PostingType.POST && postingType != PostingType.ANSWER) {
             throw new BadRequestAlertException("Invalid type provided. Must be 'post' or 'answer'.", ENTITY_NAME, "invalidType");
         }
 
+        // Rejects requests with no posting IDs, as forwarding data can't be retrieved without at least one destination ID
         if (postingIds.isEmpty()) {
             throw new BadRequestAlertException("Posting IDs cannot be empty when getting forwarded messages.", ENTITY_NAME, "emptyPostingIds");
         }
@@ -128,11 +131,13 @@ public class ForwardedMessageResource {
             case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(postingIds, user.getId());
         }
 
+        // Fetch all forwarded messages pointing to the given destination posts or answer posts.
         Set<ForwardedMessage> forwardedMessages = switch (postingType) {
             case POST -> forwardedMessageRepository.findAllByDestinationPostIds(postingIds);
             case ANSWER -> forwardedMessageRepository.findAllByDestinationAnswerPostIds(postingIds);
         };
 
+        // Group forwarded messages by destination ID and convert them to DTOs
         List<ForwardedMessagesGroupDTO> result = forwardedMessages.stream()
                 .collect(Collectors.groupingBy(fm -> postingType == PostingType.POST ? fm.getDestinationPost().getId() : fm.getDestinationAnswerPost().getId(),
                         Collectors.mapping(ForwardedMessageDTO::new, Collectors.toSet())))
