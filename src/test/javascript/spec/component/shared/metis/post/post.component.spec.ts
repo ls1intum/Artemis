@@ -516,4 +516,43 @@ describe('PostComponent', () => {
         expect(spyOnNavigateToPost).toHaveBeenCalledWith(testPost);
         expect(spyOnNavigateToPost).toHaveBeenCalledOnce();
     });
+
+    it('should update showSearchResultInAnswersHint to true for search query matching answer content', () => {
+        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            component.searchQuery = input<string>('answer');
+            component.showSearchResultInAnswersHint = false;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeTrue();
+        });
+    });
+
+    it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
+        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            component.searchQuery = input<string>('base');
+            component.showSearchResultInAnswersHint = true;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeFalse();
+        });
+    });
+
+    it('should update showSearchResultInAnswersHint to false for empty search query', () => {
+        const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            component.searchQuery = input<string>('');
+            component.showSearchResultInAnswersHint = true;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeFalse();
+        });
+    });
 });
