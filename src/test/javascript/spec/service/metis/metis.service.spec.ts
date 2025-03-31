@@ -795,14 +795,11 @@ describe('Metis Service', () => {
     it('should return undefined if no source post is found with the given ids (404 error)', fakeAsync(() => {
         const postIds = [4, 5, 6];
         const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
-
         let result: Post[] | undefined;
         metisService.getSourcePostsByIds(postIds).subscribe((res) => {
             result = res;
         });
-
         tick();
-
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
         expect(result).toBeUndefined();
     }));
