@@ -530,6 +530,19 @@ describe('PostComponent', () => {
         });
     });
 
+    it('should update showSearchResultInAnswersHint to true for search query matching answer content and base post content', () => {
+        const testPost = { id: 123, content: 'Base Post with answer', answers: [{ content: 'Answer' }] };
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.posting = testPost;
+            component.searchQuery = input<string>('answer');
+            component.showSearchResultInAnswersHint = false;
+            component.ngOnChanges();
+
+            expect(component.showSearchResultInAnswersHint).toBeTrue();
+        });
+    });
+
     it('should update showSearchResultInAnswersHint to false for search query matching only base post content', () => {
         const testPost = { id: 123, content: 'Base Post', answers: [{ content: 'Answer' }] };
 
