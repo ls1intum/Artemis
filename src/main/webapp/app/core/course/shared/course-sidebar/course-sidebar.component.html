@@ -89,17 +89,6 @@
                 </li>
             </div>
         }
-        <a
-            [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications"
-            class="nav-link nav-link-sidebar px-3 py-2"
-            id="navSettings"
-            routerLink="settings"
-            routerLinkActive="active"
-            (click)="itemsDrop?.close()"
-        >
-            <fa-icon [fixedWidth]="true" [icon]="faCog" class="ms-2 me-3" />
-            <span [ngClass]="{ invisible: isNavbarCollapsed() }" class="d-none d-lg-inline-block" jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
-        </a>
         <!-- Collapse Chevron -->
         <div
             class="double-arrow mb-2"

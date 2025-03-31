@@ -106,7 +106,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const id = Number(params.courseId);
             this.courseId.set(id);
         });
-        //this.courseId.set(Number(this.route?.snapshot.params['courseId']));
         await super.ngOnInit();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {
@@ -244,6 +243,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             const faqItem = this.sidebarItemService.getFaqItem();
             sidebarItems.push(faqItem);
         }
+        sidebarItems.push(this.sidebarItemService.getNotificationSettingsItem());
 
         return sidebarItems;
     }

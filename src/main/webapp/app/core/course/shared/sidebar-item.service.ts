@@ -5,6 +5,7 @@ import {
     faChalkboardUser,
     faChartBar,
     faChartColumn,
+    faCog,
     faComments,
     faFlag,
     faGraduationCap,
@@ -246,6 +247,17 @@ export class CourseSidebarItemService {
             title: 'LTI Configuration',
             translation: 'global.menu.admin.lti',
             testId: 'lti-settings',
+            hidden: false,
+        };
+    }
+    getNotificationSettingsItem(): SidebarItem {
+        return {
+            routerLink: 'settings',
+            featureToggle: FeatureToggle.CourseSpecificNotifications,
+            icon: faCog,
+            title: 'Notification Settings',
+            translation: 'artemisApp.courseOverview.menu.settings',
+            guidedTour: false,
             hidden: false,
         };
     }

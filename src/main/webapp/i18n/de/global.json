@@ -354,7 +354,8 @@
         "communication": "Kommunikation",
         "archive": "Kursarchiv",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiatsfälle"
+        "plagiarismCases": "Plagiatsfälle",
+        "settings": "Einstellungen"
     },
     "connectionStatus": {
         "connected": "Verbunden",
