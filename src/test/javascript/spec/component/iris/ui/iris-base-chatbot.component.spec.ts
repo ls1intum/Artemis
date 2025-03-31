@@ -1,20 +1,20 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { IrisBaseChatbotComponent } from 'app/iris/base-chatbot/iris-base-chatbot.component';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChatStatusBarComponent } from 'app/iris/base-chatbot/chat-status-bar/chat-status-bar.component';
-import { IrisLogoComponent } from 'app/iris/iris-logo/iris-logo.component';
+import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserService } from 'app/core/user/user.service';
-import { IrisStatusService } from 'app/iris/iris-status.service';
-import { IrisChatHttpService } from 'app/iris/iris-chat-http.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
-import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
+import { UserService } from 'app/core/user/shared/user.service';
+import { IrisStatusService } from 'app/iris/overview/iris-status.service';
+import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -30,9 +30,9 @@ import {
 } from '../../../helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
-import { IrisErrorMessageKey } from 'app/entities/iris/iris-errors.model';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisMessage, IrisUserMessage } from 'app/entities/iris/iris-message.model';
+import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('IrisBaseChatbotComponent', () => {
@@ -613,5 +613,27 @@ describe('IrisBaseChatbotComponent', () => {
             const button: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#clear-chat-button');
             expect(button).toBeNull();
         });
+    });
+
+    it('should set irisQuestion onInit when provided in the queryParams', () => {
+        const mockQueryParams = { irisQuestion: 'Can you explain me the error I got?' };
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe(mockQueryParams.irisQuestion);
+    });
+
+    it('should leave irisQuestion empty onInit when no question provided in the queryParams', () => {
+        const mockQueryParams = {};
+        const activatedRoute = TestBed.inject(ActivatedRoute);
+
+        (activatedRoute.queryParams as any) = of(mockQueryParams);
+
+        component.ngOnInit();
+
+        expect(component.newMessageTextContent).toBe('');
     });
 });

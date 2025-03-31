@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.core.service.telemetry;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
 import java.util.Arrays;
 import java.util.List;
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile(PROFILE_CORE_AND_SCHEDULING)
 public class TelemetrySendingService {
 
     private static final Logger log = LoggerFactory.getLogger(TelemetrySendingService.class);
@@ -93,7 +93,8 @@ public class TelemetrySendingService {
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
 
             log.info("Sending telemetry to {}", destination);
-            var response = restTemplate.postForEntity(destination + "/api/core/telemetry", requestEntity, String.class);
+            // NOTE: there should be no module in the following URL
+            var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
             log.info("Successfully sent telemetry data. {}", response.getBody());
         }
         catch (JsonProcessingException e) {

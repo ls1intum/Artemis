@@ -6,8 +6,8 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
     buildFeedbackTextForReview,
-} from 'app/entities/feedback.model';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
+} from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {
     const createFeedback = (text: string, type: FeedbackType, reference?: string): Feedback => {

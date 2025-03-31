@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -222,6 +223,8 @@ public class CourseService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
+    private final CourseNotificationRepository courseNotificationRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
@@ -236,7 +239,7 @@ public class CourseService {
             Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
             AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
-            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseNotificationRepository courseNotificationRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -282,6 +285,7 @@ public class CourseService {
         this.faqRepository = faqRepository;
         this.learnerProfileApi = learnerProfileApi;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.courseNotificationRepository = courseNotificationRepository;
     }
 
     /**
@@ -322,7 +326,7 @@ public class CourseService {
             boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
             for (Exercise exercise : course.getExercises()) {
                 // add participation with submission and result to each exercise
-                exerciseService.filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
+                exerciseService.filterExerciseForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
                 // remove sensitive information from the exercise for students
                 if (isStudent) {
                     exercise.filterSensitiveInformation();
@@ -599,6 +603,10 @@ public class CourseService {
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
         groupNotificationRepository.deleteAll(notifications);
+
+        var courseNotifications = courseNotificationRepository.findAllByCourseId(course.getId());
+
+        courseNotificationRepository.deleteAll(courseNotifications);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -609,7 +617,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true);
         }
     }
 

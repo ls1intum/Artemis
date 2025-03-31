@@ -1,13 +1,13 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { GraphColors, SpanType } from 'app/entities/statistics.model';
-import { CourseManagementStatisticsModel } from 'app/entities/quiz/course-management-statistics-model';
+import { GraphColors, SpanType } from 'app/exercise/shared/entities/statistics.model';
+import { CourseManagementStatisticsModel } from 'app/quiz/shared/entities/course-management-statistics-model';
 import { faArrowLeft, faArrowRight, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TranslateDirective } from '../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

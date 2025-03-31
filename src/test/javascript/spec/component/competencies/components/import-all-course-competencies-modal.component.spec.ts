@@ -1,13 +1,13 @@
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ImportAllCourseCompetenciesModalComponent } from 'app/course/competencies/components/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
+import { ImportAllCourseCompetenciesModalComponent } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CourseCompetencyImportSettings } from 'app/course/competencies/components/import-course-competencies-settings/import-course-competencies-settings.component';
-import { Course } from 'app/entities/course.model';
+import { CourseCompetencyImportSettings } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
+import { Course } from 'app/core/shared/entities/course.model';
 
 describe('ImportAllCourseCompetenciesModalComponent', () => {
     let component: ImportAllCourseCompetenciesModalComponent;

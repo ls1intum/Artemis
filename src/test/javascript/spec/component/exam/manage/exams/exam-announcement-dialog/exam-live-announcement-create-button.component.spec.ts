@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AlertService } from 'app/core/util/alert.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faBullhorn } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -9,6 +9,7 @@ import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { input } from '@angular/core';
 
 describe('ExamLiveAnnouncementCreateButtonComponent', () => {
     let component: ExamLiveAnnouncementCreateButtonComponent;
@@ -30,18 +31,21 @@ describe('ExamLiveAnnouncementCreateButtonComponent', () => {
         mockModalService = TestBed.inject(NgbModal);
         mockAlertService = TestBed.inject(AlertService);
 
-        component.exam = {
+        const exam = {
             id: 1,
             visibleDate: dayjs().subtract(1, 'day'),
             course: { id: 2 },
         } as Exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
     });
 
     it.each([
         [dayjs().subtract(1, 'day'), true],
         [dayjs().add(1, 'day'), false],
     ])('should initialize component properties with visibleDate', (visibleDate, expectedAnnouncementAllowed) => {
-        component.exam.visibleDate = visibleDate;
+        component.exam().visibleDate = visibleDate;
 
         fixture.detectChanges();
 

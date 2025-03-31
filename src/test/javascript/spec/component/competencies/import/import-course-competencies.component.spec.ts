@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ImportCourseCompetenciesComponent } from 'app/course/competencies/import/import-course-competencies.component';
+import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
-import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';

@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of, throwError } from 'rxjs';
 import { User } from 'app/core/user/user.model';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { AccountInformationComponent } from 'app/core/user/settings/account-information/account-information.component';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;

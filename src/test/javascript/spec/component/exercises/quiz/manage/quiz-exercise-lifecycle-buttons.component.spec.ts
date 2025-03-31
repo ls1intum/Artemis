@@ -4,13 +4,13 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseLifecycleButtonsComponent } from 'app/exercises/quiz/manage/quiz-exercise-lifecycle-buttons.component';
-import { AlertService } from 'app/core/util/alert.service';
+import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/quiz-exercise-lifecycle-buttons.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';

@@ -1,9 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { Post } from 'app/entities/metis/post.model';
-import { PostService } from 'app/shared/metis/post.service';
-import { DisplayPriority } from 'app/shared/metis/metis.util';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { PostService } from 'app/communication/post.service';
+import { DisplayPriority } from 'app/communication/metis.util';
 import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -91,7 +91,7 @@ describe('Post Service', () => {
 
         it('should use /posts endpoints if plagiarismCaseId is provided in the postContextFilter', fakeAsync(() => {
             const plagiarismCaseId = 123;
-            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
+            const expectedUrl = `api/plagiarism/courses/${metisCourse.id}/posts?plagiarismCaseId=${plagiarismCaseId}`;
             const mockResponse: Post[] = [];
 
             service
@@ -106,7 +106,7 @@ describe('Post Service', () => {
 
         it('should use /messages endpoints if course-wide channel ids are provided', fakeAsync(() => {
             const courseWideChannelIds = [123];
-            const expectedUrl = `${service.resourceUrl}${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
+            const expectedUrl = `api/communication/courses/${metisCourse.id}/messages?courseWideChannelIds=${courseWideChannelIds}`;
             const mockResponse: Post[] = [];
 
             service

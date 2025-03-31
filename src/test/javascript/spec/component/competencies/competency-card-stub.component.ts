@@ -1,5 +1,5 @@
 import { Component, input } from '@angular/core';
-import { CourseCompetency } from 'app/entities/competency.model';
+import { CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 @Component({ selector: 'jhi-competency-card', template: '<div><ng-content /></div>' })
 export class CompetencyCardStubComponent {

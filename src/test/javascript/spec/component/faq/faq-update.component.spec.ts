@@ -8,18 +8,18 @@ import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { FaqUpdateComponent } from 'app/faq/faq-update.component';
-import { FaqService } from 'app/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { FaqUpdateComponent } from 'app/communication/faq/faq-update.component';
+import { FaqService } from 'app/communication/faq/faq.service';
+import { Faq } from 'app/communication/shared/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { AlertService } from 'app/core/util/alert.service';
-import { FaqCategory } from 'app/entities/faq-category.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;

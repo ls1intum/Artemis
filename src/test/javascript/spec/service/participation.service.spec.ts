@@ -1,20 +1,20 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
@@ -263,25 +263,6 @@ describe('Participation Service', () => {
 
         expect(resultGetBuildJobId).toEqual(expected);
     }));
-
-    it.each<any>([
-        ['attachment; filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
-        ['', 'artifact'],
-        ['filename="FixArtifactDownload-Tests-1.0.jar"', 'FixArtifactDownload-Tests-1.0.jar'],
-        ['f="abc"', 'artifact'],
-    ])('%# should download artifact and extract file name: %p', async (headerVal: string, expectedFileName: string) => {
-        const expectedBlob = new Blob(['abc', 'cfe'], { type: 'application/java-archive' });
-        const headers = new HttpHeaders({ 'content-disposition': headerVal, 'content-type': 'application/java-archive' });
-        const response = { body: expectedBlob, headers, status: 200 };
-
-        service.downloadArtifact(123).subscribe((resp) => {
-            expect(resp.fileName).toBe(expectedFileName);
-            expect(resp.fileContent).toBe(expectedBlob);
-        });
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.event(new HttpResponse<Blob>(response));
-    });
 
     afterEach(() => {
         httpMock.verify();

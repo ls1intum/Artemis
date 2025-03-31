@@ -4,15 +4,15 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { UrlSerializer } from '@angular/router';
-import { ScienceSettingsComponent } from 'app/shared/user-settings/science-settings/science-settings.component';
-import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
-import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { ScienceSettingsComponent } from 'app/core/user/settings/science-settings/science-settings.component';
+import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
+import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 describe('ScienceSettingsComponent', () => {
     let comp: ScienceSettingsComponent;

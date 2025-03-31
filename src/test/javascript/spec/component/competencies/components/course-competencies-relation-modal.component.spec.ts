@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
-import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { CourseCompetenciesRelationModalComponent } from 'app/atlas/manage/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbActiveModalService } from '../../../helpers/mocks/service/mock-ngb-active-modal.service';
 import { TranslateService } from '@ngx-translate/core';

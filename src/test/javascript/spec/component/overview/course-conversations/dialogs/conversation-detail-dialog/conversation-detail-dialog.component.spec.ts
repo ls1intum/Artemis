@@ -1,17 +1,13 @@
-import { Course } from 'app/entities/course.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import {
-    ConversationDetailDialogComponent,
-    ConversationDetailTabs,
-} from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { ChannelIconComponent } from 'app/communication/course-conversations/other/channel-icon/channel-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
 import { initializeDialog } from '../dialog-test-helpers';
 import { By } from '@angular/platform-browser';
@@ -22,6 +18,10 @@ import { MockTranslateService } from '../../../../../helpers/mocks/service/mock-
 import { TranslateService } from '@ngx-translate/core';
 import { MockSyncStorage } from '../../../../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
+import {
+    ConversationDetailDialogComponent,
+    ConversationDetailTabs,
+} from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

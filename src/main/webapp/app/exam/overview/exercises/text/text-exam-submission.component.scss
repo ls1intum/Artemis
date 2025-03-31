@@ -1,0 +1,67 @@
+@import '../../../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
+
+.text-editor-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+        'problem-statement'
+        'team-info'
+        'main';
+
+    @media (min-width: map-get($grid-breakpoints, 'md')) {
+        grid-template-columns: 1fr min-content;
+        grid-template-areas:
+            'problem-statement team-info'
+            'main              team-info';
+    }
+
+    .grid-area-problem-statement {
+        grid-area: problem-statement;
+    }
+
+    .grid-area-team-info {
+        grid-area: team-info;
+        justify-self: flex-end;
+    }
+
+    .grid-area-main {
+        grid-area: main;
+    }
+}
+
+.text-editor-textarea {
+    width: 100%;
+    max-width: 750px;
+    height: 50vh;
+    padding: 10px 12px;
+    border: 1px solid var(--text-editor-border-color);
+    border-radius: 2px;
+    background-color: var(--text-editor-background);
+    color: var(--text-editor-color);
+
+    &:focus {
+        outline: none;
+        border: 1px solid var(--artemis-dark);
+        background-color: var(--text-editor-focus-background);
+        box-shadow: 0 0 20px rgba(0, 0, 200, 0.04);
+    }
+}
+div {
+    &.positive-feedback {
+        color: #155724;
+        background-color: #d4edda;
+    }
+    &.negative-feedback {
+        color: #721c24;
+        background-color: #f8d7da;
+    }
+    &.neutral-feedback {
+        color: #383d41;
+        background-color: #e2e3e5;
+    }
+    .unreferencedFeedback {
+        background-color: whitesmoke;
+    }
+}

@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -47,7 +46,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -114,8 +112,6 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     private final WebsocketMessagingService websocketMessagingService;
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
@@ -136,9 +132,8 @@ public class StudentExamResource {
             StudentExamAccessService studentExamAccessService, UserRepository userRepository, AuditEventRepository auditEventRepository,
             StudentExamRepository studentExamRepository, ExamDateService examDateService, ExamSessionService examSessionService,
             StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository,
-            AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
-            WebsocketMessagingService websocketMessagingService, SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService,
-            ExamLiveEventRepository examLiveEventRepository) {
+            AuthorizationCheckService authorizationCheckService, ExamService examService, WebsocketMessagingService websocketMessagingService,
+            SubmissionPolicyRepository submissionPolicyRepository, ExamLiveEventsService examLiveEventsService, ExamLiveEventRepository examLiveEventRepository) {
         this.examAccessService = examAccessService;
         this.examDeletionService = examDeletionService;
         this.studentExamService = studentExamService;
@@ -153,7 +148,6 @@ public class StudentExamResource {
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.websocketMessagingService = websocketMessagingService;
         this.submissionPolicyRepository = submissionPolicyRepository;
         this.examLiveEventsService = examLiveEventsService;
@@ -177,7 +171,7 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(studentExamId);
 
         examService.loadQuizExercisesForStudentExam(studentExam);
 
@@ -248,12 +242,7 @@ public class StudentExamResource {
         if (!savedStudentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId, false);
             if (now.isAfter(exam.getVisibleDate())) {
-                instanceMessageSendService.sendStudentExamIndividualWorkingTimeChangeDuringConduction(studentExamId);
                 examLiveEventsService.createAndSendWorkingTimeUpdateEvent(savedStudentExam, workingTime, originalWorkingTime, false);
-            }
-            if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-                // potentially re-schedule clustering of modeling submissions (in case Compass is active)
-                examService.scheduleModelingExercises(exam);
             }
         }
 
@@ -334,7 +323,7 @@ public class StudentExamResource {
 
         log.debug("Completed input validation for submitStudentExam in {}", formatDurationFrom(start));
 
-        studentExamService.submitStudentExam(existingStudentExam, studentExamFromClient, currentUser);
+        studentExamService.submitStudentExam(studentExamFromClient, currentUser);
 
         websocketMessagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
 
@@ -460,7 +449,7 @@ public class StudentExamResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         studentExamAccessService.checkCourseAccessForStudentElseThrow(courseId, user);
 
-        List<StudentExam> studentExamList = studentExamRepository.findStudentExamForTestExamsByUserIdAndCourseId(user.getId(), courseId);
+        List<StudentExam> studentExamList = studentExamRepository.findStudentExamsForTestExamsByUserIdAndCourseId(user.getId(), courseId);
 
         return ResponseEntity.ok(studentExamList);
     }
@@ -484,7 +473,7 @@ public class StudentExamResource {
         log.debug("REST request to get the student exam of user {} for exam {}", user.getLogin(), examId);
 
         // 1st: Get the studentExam from the database
-        StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+        StudentExam studentExam = studentExamRepository.findByIdWithExercisesAndStudentParticipationsElseThrow(studentExamId);
 
         // 2nd: Check equal users and access permissions
         if (!user.equals(studentExam.getUser())) {
@@ -559,8 +548,7 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
-        StudentExam studentExam = studentExamRepository.findByExamIdAndUserId(examId, currentUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("StudentExam for exam " + examId + " and user " + currentUser.getId() + " does not exist"));
+        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId());
 
         if (studentExam.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");
@@ -699,16 +687,8 @@ public class StudentExamResource {
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
         auditEventRepository.add(auditEvent);
 
-        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> {
-            log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-            if (ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(exam))) {
-                // This is a special case if "prepare exercise start" was pressed shortly before the exam start
-                // Normally, the locking operation at the end of the exam gets scheduled during the initial unlocking process
-                // (see ProgrammingExerciseScheduleService#scheduleIndividualRepositoryAndParticipationLockTasks)
-                // Since this gets never executed here, we need to manually schedule the locking.
-                instanceMessageSendService.sendRescheduleAllStudentExams(examId);
-            }
-        });
+        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
+                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
         return ResponseEntity.ok().build();
     }
 
@@ -744,12 +724,9 @@ public class StudentExamResource {
         if (studentExam.isTestExam()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
             if (setupTestExamNeeded) {
-                // Fix startedDate. As the studentExam.startedDate is used to link the participation.initializationDate, we need to drop the ms
-                // (initializationDate is stored with ms)
-                ZonedDateTime startedDate = now().truncatedTo(ChronoUnit.SECONDS);
 
-                // Set up new participations for the Exercises and set initialisationDate to the startedDate
-                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam, startedDate);
+                // Set up new participations for the Exercises
+                studentExamService.setUpTestExamExerciseParticipationsAndSubmissions(studentExam);
             }
         }
 

@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEP
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
@@ -12,7 +14,6 @@ import java.util.Date;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.glassfish.jersey.uri.UriComponent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -72,8 +73,8 @@ public class PublicLtiResource {
 
         UriComponentsBuilder uriBuilder = buildRedirect(request);
         uriBuilder.path(LOGIN_REDIRECT_CLIENT_PATH);
-        uriBuilder.queryParam("state", UriComponent.encode(state, UriComponent.Type.QUERY_PARAM));
-        uriBuilder.queryParam("id_token", UriComponent.encode(idToken, UriComponent.Type.QUERY_PARAM));
+        uriBuilder.queryParam("state", URLEncoder.encode(state, StandardCharsets.UTF_8));
+        uriBuilder.queryParam("id_token", URLEncoder.encode(idToken, StandardCharsets.UTF_8));
         String redirectUrl = uriBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);
         response.sendRedirect(redirectUrl); // Redirect using user-provided values is safe because user-provided values are used in the query parameters, not the url itself

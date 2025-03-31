@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LearningPathsStateComponent } from 'app/course/learning-paths/components/learning-paths-state/learning-paths-state.component';
-import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { LearningPathsStateComponent } from 'app/atlas/manage/learning-paths-state/learning-paths-state.component';
+import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { provideHttpClient } from '@angular/common/http';
@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
+import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('LearningPathsStateComponent', () => {

@@ -10,13 +10,11 @@ import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,7 +42,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -61,21 +59,13 @@ import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
-import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
-import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "modelingassessment";
 
@@ -91,13 +81,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ExampleSubmissionTestRepository exampleSubmissionRepository;
 
     @Autowired
-    private CompassService compassService;
-
-    @Autowired
     private AssessmentService assessmentService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
@@ -112,12 +99,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ComplaintRepository complaintRepository;
 
     @Autowired
-    private ModelElementRepository modelElementRepository;
-
-    @Autowired
-    private ModelClusterRepository modelClusterRepository;
-
-    @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
@@ -126,9 +107,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private ExamUtilService examUtilService;
 
-    @Autowired
-    private PlagiarismUtilService plagiarismUtilService;
-
     private ModelingExercise classExercise;
 
     private ModelingExercise activityExercise;
@@ -136,18 +114,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ModelingExercise objectExercise;
 
     private ModelingExercise useCaseExercise;
-
-    private ModelingExercise communicationExercise;
-
-    private ModelingExercise componentExercise;
-
-    private ModelingExercise deploymentExercise;
-
-    private ModelingExercise petriNetExercise;
-
-    private ModelingExercise syntaxTreeExercise;
-
-    private ModelingExercise flowchartExercise;
 
     private ModelingSubmission modelingSubmission;
 
@@ -167,21 +133,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         activityExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
         objectExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ObjectDiagram");
         useCaseExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "UseCaseDiagram");
-        communicationExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "CommunicationDiagram");
-        componentExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ComponentDiagram");
-        deploymentExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "DeploymentDiagram");
-        petriNetExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "PetriNet");
-        syntaxTreeExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "SyntaxTree");
-        flowchartExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "Flowchart");
 
         validModel = loadFileFromResources("test-data/model-submission/model.54727.json");
-    }
-
-    @AfterEach
-    void tearDown() {
-        // Note: we delete all model elements to avoid test issues
-        modelElementRepository.deleteAll();
-        modelClusterRepository.deleteAll();
     }
 
     @Test
@@ -482,543 +435,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(storedResult.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
 
-    // region Automatic Assessment Tests
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_identicalModel() throws Exception {
-        saveModelingSubmissionAndAssessment(true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    /**
-     * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
-     * not create an automatic result.
-     *
-     * @throws Exception any exception in the test
-     */
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(null, true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
-        saveModelingSubmissionAndAssessment_activityDiagram(true);
-        participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_objectDiagram_identicalModel() throws Exception {
-        saveModelingSubmissionAndAssessment_activityDiagram(true);
-        participationUtilService.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_partialModel() throws Exception {
-        saveModelingSubmissionAndAssessment(true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json",
-                TEST_PREFIX + "student1");
-        modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
-                "test-data/model-assessment/assessment.54727.partial.json", TEST_PREFIX + "tutor1", true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", TEST_PREFIX + "student1");
-        modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json",
-                TEST_PREFIX + "tutor1", true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
-        modelingSubmission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
-        modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
-                "test-data/model-assessment/assessment.inheritance.json", TEST_PREFIX + "tutor1", true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
-        assertThat(automaticResult).as("automatic result is not created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2")
-    void testAutomaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
-        saveModelingSubmissionAndAssessment(true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        Optional<Result> automaticResult = resultRepository.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
-        assertThat(automaticResult).as("automatic result not stored in database").isNotPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testConfidenceThreshold() throws Exception {
-        Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        Feedback feedbackTwentyPoints = new Feedback().credits(20.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student2");
-        ModelingSubmission submission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student3");
-        ModelingSubmission submission4 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student4");
-        ModelingSubmission submission5 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student5");
-        ModelingSubmission submissionToCheck = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student6");
-
-        compassService.build(classExercise);
-
-        createAssessment(submission1, Collections.singletonList(feedbackTwentyPoints.text("wrong text")), "/assessment?submit=true", HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getCredits()).as("credits of element are correct").isEqualTo(20);
-        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("wrong text");
-
-        createAssessment(submission2, Collections.singletonList(feedbackOnePoint.text("long feedback text")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was not created").isNull();
-
-        createAssessment(submission3, Collections.singletonList(feedbackOnePoint.text("short text")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was not created").isNull();
-
-        createAssessment(submission4, Collections.singletonList(feedbackOnePoint.text("very long feedback text")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was not created").isNull();
-
-        createAssessment(submission5, Collections.singletonList(feedbackOnePoint.text("medium text")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getCredits()).as("credits of element are correct").isEqualTo(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testLongestFeedbackTextSelection() throws Exception {
-        Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student2");
-        ModelingSubmission submission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student3");
-        ModelingSubmission submissionToCheck = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student4");
-
-        compassService.build(classExercise);
-
-        createAssessment(submission1, Collections.singletonList(feedbackOnePoint.text("feedback text")), "/assessment?submit=true", HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("feedback text");
-
-        createAssessment(submission2, Collections.singletonList(feedbackOnePoint.text("short")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("feedback text");
-
-        createAssessment(submission3, Collections.singletonList(feedbackOnePoint.text("very long feedback text")), "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("element is assessed automatically").hasSize(1);
-        assertThat(automaticResult.getFeedbacks().getFirst().getText()).as("feedback text of element is correct").isEqualTo("very long feedback text");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json",
-                TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-
-        compassService.build(classExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, classExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentActivityDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise,
-                "test-data/model-submission/example-activity-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(activityExercise,
-                "test-data/model-submission/example-activity-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
-
-        compassService.build(activityExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, activityExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentObjectDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json",
-                TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-object-assessment.json");
-
-        compassService.build(objectExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, objectExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentUseCaseDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json",
-                TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
-
-        compassService.build(useCaseExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, useCaseExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentCommunicationDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(communicationExercise,
-                "test-data/model-submission/example-communication-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(communicationExercise,
-                "test-data/model-submission/example-communication-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-communication-assessment.json");
-
-        compassService.build(communicationExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, communicationExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentComponentDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(componentExercise,
-                "test-data/model-submission/example-component-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(componentExercise,
-                "test-data/model-submission/example-component-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-component-assessment.json");
-
-        compassService.build(componentExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, componentExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentDeploymentDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(deploymentExercise,
-                "test-data/model-submission/example-deployment-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(deploymentExercise,
-                "test-data/model-submission/example-deployment-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-deployment-assessment.json");
-
-        compassService.build(deploymentExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, deploymentExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentPetriNetDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(petriNetExercise,
-                "test-data/model-submission/example-petri-net-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(petriNetExercise,
-                "test-data/model-submission/example-petri-net-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-petri-net-assessment.json");
-
-        compassService.build(petriNetExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, petriNetExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentSyntaxTreeDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(syntaxTreeExercise,
-                "test-data/model-submission/example-syntax-tree-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(syntaxTreeExercise,
-                "test-data/model-submission/example-syntax-tree-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-syntax-tree-assessment.json");
-
-        compassService.build(syntaxTreeExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, syntaxTreeExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentFlowchartDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(flowchartExercise,
-                "test-data/model-submission/example-flowchart-diagram.json", TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(flowchartExercise,
-                "test-data/model-submission/example-flowchart-diagram-cpy.json", TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/example-flowchart-assessment.json");
-
-        compassService.build(flowchartExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, flowchartExercise);
-        assertThat(storedResultOfSubmission2).as("automatic result is created").isNotNull();
-        checkAutomaticAssessment(storedResultOfSubmission2);
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResultOfSubmission2.getFeedbacks(), FeedbackType.AUTOMATIC);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json",
-                TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-
-        compassService.build(classExercise);
-
-        createAssessment(submission1, feedbacks, "/assessment?submit=true", HttpStatus.OK);
-
-        Optional<Result> automaticResult = resultRepository.findDistinctWithFeedbackBySubmissionId(submission2.getId());
-        assertThat(automaticResult).as("automatic result not stored in database").isNotPresent();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testNoAutomaticAssessmentWhenNotBuild() throws Exception {
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json",
-                TEST_PREFIX + "student2");
-        List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
-
-        createAssessment(submission1, feedbacks, "/assessment", HttpStatus.OK);
-
-        Result storedResultOfSubmission2 = compassService.getSuggestionResult(submission2, classExercise);
-        assertThat(storedResultOfSubmission2).as("no automatic result has been created").isNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAutomaticAssessment_elementsWithDifferentContextInSameSimilaritySet() throws Exception {
-        List<Feedback> assessment1 = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.json");
-        List<Feedback> assessment2 = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.automatic.json");
-        ModelingSubmission submission1 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission submission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json",
-                TEST_PREFIX + "student2");
-        ModelingSubmission submissionToCheck = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise,
-                "test-data/model-submission/model.different-context.json", TEST_PREFIX + "student3");
-
-        compassService.build(classExercise);
-
-        createAssessment(submission1, assessment1, "/assessment?submit=true", HttpStatus.OK);
-
-        Result automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("all elements got assessed automatically").hasSize(4);
-
-        createAssessment(submission2, assessment2, "/assessment?submit=true", HttpStatus.OK);
-
-        automaticResult = compassService.getSuggestionResult(submissionToCheck, classExercise);
-        assertThat(automaticResult).as("automatic result was created").isNotNull();
-        assertThat(automaticResult.getFeedbacks()).as("not all elements got assessed automatically").hasSize(2);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testOverrideAutomaticAssessment() throws Exception {
-        classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        exerciseRepository.save(classExercise);
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json",
-                TEST_PREFIX + "student1");
-        modelingAssessment = modelingExerciseUtilService.addModelingAssessmentForSubmission(classExercise, modelingSubmission,
-                "test-data/model-assessment/assessment.54727.partial.json", TEST_PREFIX + "tutor1", true);
-        participationUtilService.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "tutor1");
-
-        ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-                ModelingSubmission.class, HttpStatus.OK);
-
-        compassService.build(classExercise);
-
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("lock", "true");
-        params.add("correction-round", "0");
-        ModelingSubmission submissionWithAutomaticAssessment = request.get("/api/modeling/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment",
-                HttpStatus.OK, ModelingSubmission.class, params);
-
-        assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
-
-        Result resultWithFeedback = submissionWithAutomaticAssessment.getLatestResult();
-        List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
-        Feedback feedback = existingFeedback.getFirst();
-        existingFeedback.set(0, feedback.credits(feedback.getCredits() + 0.5));
-        feedback = existingFeedback.get(2);
-        existingFeedback.set(2, feedback.text(feedback.getText() + " foo"));
-        List<Feedback> newFeedback = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.partial2.json");
-        List<Feedback> overrideFeedback = new ArrayList<>(existingFeedback);
-        overrideFeedback.addAll(newFeedback);
-
-        ModelingAssessmentDTO body = new ModelingAssessmentDTO(overrideFeedback, "text");
-        Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + modelingAssessment.getId() + "/assessment", body,
-                Result.class, HttpStatus.OK);
-
-        List<Feedback> manualFeedback = new ArrayList<>();
-        List<Feedback> automaticFeedback = new ArrayList<>();
-        List<Feedback> adaptedFeedback = new ArrayList<>();
-        List<Feedback> manualUnreferencedFeedback = new ArrayList<>();
-
-        storedResult.getFeedbacks().forEach(storedFeedback -> {
-            switch (storedFeedback.getType()) {
-                case MANUAL -> manualFeedback.add(storedFeedback);
-                case AUTOMATIC -> automaticFeedback.add(storedFeedback);
-                case MANUAL_UNREFERENCED -> manualUnreferencedFeedback.add(storedFeedback);
-                case AUTOMATIC_ADAPTED -> adaptedFeedback.add(storedFeedback);
-            }
-        });
-        assertThat(storedResult.getAssessmentType()).as("type of result is SEMI_AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(manualFeedback).as("number of manual feedback elements is correct").hasSameSizeAs(newFeedback);
-        assertThat(automaticFeedback).as("number of automatic feedback elements is correct").hasSize(existingFeedback.size());
-        assertThat(adaptedFeedback).as("number of adapted feedback elements is correct").isEmpty();
-        assertThat(manualUnreferencedFeedback).as("number of manual unreferenced feedback elements is correct").isEmpty();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
@@ -1041,71 +457,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("existing manual assessment did not change credits").isEqualTo(originalFeedback.getCredits());
         assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("existing manual assessment did not change text").isEqualTo(originalFeedback.getText());
     }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testOverrideSubmittedManualAssessment_noConflict() throws Exception {
-        Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission modelingSubmission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student2");
-
-        compassService.build(classExercise);
-
-        createAssessment(modelingSubmission, Collections.singletonList(originalFeedback), "/assessment?submit=true", HttpStatus.OK);
-
-        Result originalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        Feedback changedFeedback = originalResult.getFeedbacks().getFirst().credits(2.0).text("another text");
-        ModelingAssessmentDTO body = new ModelingAssessmentDTO(Collections.singletonList(changedFeedback), "text");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true", body, HttpStatus.OK);
-
-        modelingAssessment = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are properly overridden").isEqualTo(changedFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text is properly overridden").isEqualTo(changedFeedback.getText());
-        modelingAssessment = compassService.getSuggestionResult(modelingSubmission2, classExercise);
-        assertThat(modelingAssessment.getFeedbacks()).as("automatic assessment still exists").hasSize(1);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("automatic assessment credits are overridden properly").isEqualTo(changedFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("automatic assessment text is overridden properly").isEqualTo(changedFeedback.getText());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testOverrideSubmittedManualAssessment_conflict() throws Exception {
-        Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        Feedback originalFeedbackWithoutReference = new Feedback().credits(1.5).text("some feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
-        modelingSubmission = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student1");
-        ModelingSubmission modelingSubmission2 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student2");
-        ModelingSubmission modelingSubmission3 = modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
-                TEST_PREFIX + "student3");
-
-        compassService.build(classExercise);
-
-        createAssessment(modelingSubmission, Arrays.asList(originalFeedback, originalFeedbackWithoutReference), "/assessment?submit=true", HttpStatus.OK);
-        createAssessment(modelingSubmission2, Arrays.asList(originalFeedback, originalFeedbackWithoutReference), "/assessment?submit=true", HttpStatus.OK);
-
-        Result originalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        Feedback changedFeedback = originalResult.getFeedbacks().getFirst().credits(2.0).text("another text");
-        Feedback feedbackWithoutReference = new Feedback().credits(1.0).text("another feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
-        ModelingAssessmentDTO body = new ModelingAssessmentDTO(Arrays.asList(changedFeedback, feedbackWithoutReference), "text");
-        request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true", body, HttpStatus.OK);
-
-        modelingAssessment = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).orElseThrow();
-        assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(2);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("feedback credits are properly overridden").isEqualTo(changedFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("feedback text is properly overridden").isEqualTo(changedFeedback.getText());
-        modelingAssessment = resultRepository.findDistinctWithFeedbackBySubmissionId(modelingSubmission2.getId()).orElseThrow();
-        assertThat(modelingAssessment.getFeedbacks()).as("existing submitted assessment still exists").hasSize(2);
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getCredits()).as("existing feedback credits are still the same").isEqualTo(originalFeedback.getCredits());
-        assertThat(modelingAssessment.getFeedbacks().getFirst().getText()).as("existing feedback text is still the same").isEqualTo(originalFeedback.getText());
-        modelingAssessment = compassService.getSuggestionResult(modelingSubmission3, classExercise);
-        assertThat(modelingAssessment).as("automatic assessment is not possible").isNull();
-
-    }
-    // endregion
 
     private void checkAssessmentNotFinished(Result storedResult, User assessor) {
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
@@ -1552,32 +903,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCheckPlagiarismIdenticalLongModels() throws Exception {
-        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
-        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
-        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "tutor1");
-        modelingExerciseUtilService.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "instructor1");
-        var path = "/api/modeling/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
-        var result = request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismUtilService.getDefaultPlagiarismOptions());
-        assertThat(result.plagiarismResult().getComparisons()).hasSize(1);
-        assertThat(result.plagiarismResult().getExercise().getId()).isEqualTo(classExercise.getId());
-
-        PlagiarismComparison<ModelingSubmissionElement> comparison = (PlagiarismComparison<ModelingSubmissionElement>) result.plagiarismResult().getComparisons().iterator().next();
-
-        assertThat(comparison.getSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
-        assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
-
-        // verify plagiarism result stats
-        var stats = result.plagiarismResultStats();
-        assertThat(stats.numberOfDetectedSubmissions()).isEqualTo(2);
-        assertThat(stats.averageSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
-        assertThat(stats.maximalSimilarity()).isEqualTo(100.0, Offset.offset(0.1));
-    }
-
-    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testdeleteResult() throws Exception {
+    void testDeleteResult() throws Exception {
         Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
                 Optional.of(loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();

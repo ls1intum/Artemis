@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
@@ -10,7 +10,7 @@ import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -19,6 +19,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { input } from '@angular/core';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -88,21 +89,23 @@ describe('ExamChecklistComponent', () => {
 
     beforeEach(() => {
         // reset exam
-        component.exam = exam;
+        TestBed.runInInjectionContext(() => {
+            component.exam = input(exam);
+        });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
     it('should count mandatory exercises correctly', () => {
-        component.exam.exerciseGroups = getExerciseGroups(true);
+        component.exam().exerciseGroups = getExerciseGroups(true);
 
         component.ngOnChanges();
 
         expect(component.countMandatoryExercises).toBe(0);
         expect(component.hasOptionalExercises).toBeTrue();
 
-        component.exam.exerciseGroups[0].isMandatory = true;
+        component.exam().exerciseGroups![0].isMandatory = true;
 
         component.ngOnChanges();
 
@@ -121,7 +124,8 @@ describe('ExamChecklistComponent', () => {
                 },
             ],
         };
-        component.exam.exerciseGroups.push(additionalExerciseGroup);
+
+        component.exam().exerciseGroups!.push(additionalExerciseGroup);
 
         component.ngOnChanges();
 

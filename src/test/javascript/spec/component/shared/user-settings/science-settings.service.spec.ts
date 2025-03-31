@@ -1,14 +1,17 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Setting } from 'app/shared/user-settings/user-settings.model';
-import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
-import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
+import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
+import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Setting } from 'app/core/user/settings/user-settings.model';
 
 const scienceSetting: ScienceSetting = {
     settingId: SettingId.SCIENCE__GENERAL__ACTIVITY_TRACKING,
@@ -32,7 +35,16 @@ describe('ScienceSettingsService', () => {
             .then(() => {
                 scienceSettingsService = TestBed.inject(ScienceSettingsService);
                 userSettingsService = TestBed.inject(UserSettingsService);
+
+                const profileService = TestBed.inject(ProfileService);
+                const profileInfo = new ProfileInfo();
+                profileInfo.activeProfiles = [PROFILE_ATLAS];
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should refresh settings after user settings changed', () => {

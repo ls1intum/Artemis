@@ -5,32 +5,52 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ATTACHMENT_CHANGE_TITLE, EXERCISE_SUBMISSION_ASSESSED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
+import { ATTACHMENT_CHANGE_TITLE, EXERCISE_SUBMISSION_ASSESSED_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/core/shared/entities/notification.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
-import { UserService } from 'app/core/user/user.service';
+import { UserService } from 'app/core/user/shared/user.service';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
-import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { MockNotificationSettingsService } from '../../../helpers/mocks/service/mock-notification-settings.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ActivatedRoute } from '@angular/router';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
+import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+
+class MockFeatureToggleService implements Partial<FeatureToggleService> {
+    private featureToggles = new Map<FeatureToggle, boolean>();
+
+    constructor() {
+        // By default, set all feature toggles to false
+        Object.values(FeatureToggle).forEach((toggle) => {
+            this.featureToggles.set(toggle, false);
+        });
+    }
+
+    getFeatureToggleActive(feature: FeatureToggle) {
+        return of(this.featureToggles.get(feature) || false);
+    }
+
+    setMockFeatureToggle(feature: FeatureToggle, active: boolean) {
+        this.featureToggles.set(feature, active);
+    }
+}
 
 describe('Notification Sidebar Component', () => {
     let notificationSidebarComponent: NotificationSidebarComponent;
@@ -42,6 +62,7 @@ describe('Notification Sidebar Component', () => {
     let userSettingsService: UserSettingsService;
     let sessionStorageService: SessionStorageService;
     let artemisTranslatePipe: ArtemisTranslatePipe;
+    let featureToggleService: MockFeatureToggleService;
 
     const notificationNow = { id: 1, notificationDate: dayjs(), title: EXERCISE_SUBMISSION_ASSESSED_TITLE } as Notification;
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day'), title: ATTACHMENT_CHANGE_TITLE } as Notification;
@@ -75,6 +96,7 @@ describe('Notification Sidebar Component', () => {
                 { provide: UserService, useClass: MockUserService },
                 { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -90,7 +112,9 @@ describe('Notification Sidebar Component', () => {
                 userSettingsService = TestBed.inject(UserSettingsService);
                 sessionStorageService = TestBed.inject(SessionStorageService);
                 artemisTranslatePipe = TestBed.inject(ArtemisTranslatePipe);
+                featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
 
+                featureToggleService.setMockFeatureToggle(FeatureToggle.CourseSpecificNotifications, false);
                 const loadSettingsStub = jest.spyOn(userSettingsService, 'loadSettings');
                 loadSettingsStub.mockReturnValue(of(new HttpResponse({ body: receivedNotificationSettings })));
             });
@@ -185,6 +209,8 @@ describe('Notification Sidebar Component', () => {
 
     describe('Notification Texts', () => {
         it('should display the correct text for a notification with text', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             // Set up the component with a notification that has text
             const notificationWithText = { id: 3, notificationDate: dayjs(), text: 'Test Notification' } as Notification;
             notificationSidebarComponent.sortedNotifications = [notificationWithText];
@@ -200,6 +226,8 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should display No text found for a notification without text', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             // Set up the component with a notification that does not have text
             const notificationWithoutText = { id: 4, notificationDate: dayjs() } as Notification;
             const notTextFoundText = 'No text found';
@@ -218,6 +246,8 @@ describe('Notification Sidebar Component', () => {
 
     describe('Sidebar visibility', () => {
         it('should open sidebar when user clicks on notification bell', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             jest.spyOn(notificationSidebarComponent, 'toggleSidebar');
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
             bell.click();
@@ -244,6 +274,8 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should close sidebar when user clicks on a notification', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponentFixture.detectChanges();
             notificationSidebarComponent.showSidebar = true;
@@ -255,6 +287,8 @@ describe('Notification Sidebar Component', () => {
 
     describe('Notification click', () => {
         it('should interpret notification target when user clicks notification', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             jest.spyOn(notificationService, 'interpretNotification');
             notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponentFixture.detectChanges();
@@ -266,6 +300,8 @@ describe('Notification Sidebar Component', () => {
 
     describe('Last notification read', () => {
         it('should update users last notification read when user opens sidebar', fakeAsync(() => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             jest.spyOn(notificationSidebarComponent, 'updateLastNotificationRead');
             jest.spyOn(userService, 'updateLastNotificationRead');
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
@@ -276,6 +312,8 @@ describe('Notification Sidebar Component', () => {
         }));
 
         it('should update components last notification read two seconds after the user opened the sidebar', fakeAsync(() => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             notificationSidebarComponent.lastNotificationRead = undefined;
             const bell = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.notification-button');
             const lastNotificationReadNow = dayjs();
@@ -345,6 +383,8 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should show plus sign in recent notification count badge if all loaded notifications are recent notifications', () => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
             notificationSidebarComponent.sortedNotifications = notifications;
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
@@ -354,6 +394,11 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('UI', () => {
+        beforeEach(() => {
+            notificationSidebarComponent.ngOnInit();
+            notificationSidebarComponentFixture.detectChanges();
+        });
+
         it('should show no notifications message', () => {
             notificationSidebarComponent.sortedNotifications = [];
             notificationSidebarComponentFixture.detectChanges();
@@ -384,14 +429,13 @@ describe('Notification Sidebar Component', () => {
         });
 
         it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {
-            notificationSidebarComponent.ngOnInit();
             notificationSidebarComponent.sortedNotifications = notifications;
-            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeTrue();
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeFalse();
             jest.spyOn(notificationSidebarComponent, 'toggleNotificationDisplay');
             jest.spyOn(userService, 'updateNotificationVisibility');
             const hideUntilToggle = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('#hide-until-toggle');
             hideUntilToggle.click();
-            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeFalse();
+            expect(notificationSidebarComponent.showButtonToHideCurrentlyDisplayedNotifications).toBeTrue();
             expect(notificationSidebarComponent.toggleNotificationDisplay).toHaveBeenCalledOnce();
             expect(userService.updateNotificationVisibility).toHaveBeenCalledOnce();
         });

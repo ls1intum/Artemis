@@ -1,20 +1,20 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
-import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
+import { SystemNotificationManagementUpdateComponent } from 'app/core/admin/system-notification-management/system-notification-management-update.component';
+import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import dayjs from 'dayjs/esm';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;

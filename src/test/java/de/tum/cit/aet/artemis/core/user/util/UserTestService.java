@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.user.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -17,6 +18,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
@@ -58,15 +60,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
- * 1) Jenkins + Gitlab
+ * 1) Jenkins + LocalVc
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class UserTestService {
 
     @Autowired
@@ -86,9 +88,6 @@ public class UserTestService {
 
     @Autowired
     protected RequestUtilService request;
-
-    @Autowired
-    private Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
@@ -470,7 +469,6 @@ public class UserTestService {
     public void createUser_asAdmin_hasId() throws Exception {
         userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
-        student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
@@ -810,12 +808,11 @@ public class UserTestService {
         final User user = userTestRepository.save(repoUser);
 
         if (mock) {
-            // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
+            // Mock user creation and update calls to prevent issues in Jenkins tests
             mockDelegate.mockCreateUserInUserManagement(user, false);
             mockDelegate.mockUpdateUserInUserManagement(user.getLogin(), user, null, new HashSet<>());
         }
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/core/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);

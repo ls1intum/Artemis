@@ -1,23 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { LectureService } from 'app/lecture/lecture.service';
+import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { Lecture } from 'app/entities/lecture.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { CreatePrerequisiteComponent } from 'app/atlas/manage/create/create-prerequisite.component';
+import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 describe('CreatePrerequisite', () => {
     let createPrerequisiteComponentFixture: ComponentFixture<CreatePrerequisiteComponent>;

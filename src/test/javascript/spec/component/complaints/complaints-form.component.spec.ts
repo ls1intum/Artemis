@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
-import { Exercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { By } from '@angular/platform-browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

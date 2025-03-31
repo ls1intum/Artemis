@@ -1,19 +1,18 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { SubmittedAnswer } from 'app/entities/quiz/submitted-answer.model';
-import { Result } from 'app/entities/result.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizParticipationComponent } from 'app/exercises/quiz/participate/quiz-participation.component';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizParticipationComponent } from 'app/quiz/overview/quiz-participation.component';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,17 +20,18 @@ import { of } from 'rxjs';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
-import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
+import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
+import { AlertService } from 'app/shared/service/alert.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizParticipationService } from 'app/exercises/quiz/participate/quiz-participation.service';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { QuizParticipationService } from 'app/quiz/overview/quiz-participation.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 const now = dayjs();
 const question1: QuizQuestion = {
@@ -657,7 +657,7 @@ describe('QuizParticipationComponent', () => {
                 submission: quizSubmission,
                 participation: { exercise: quizExerciseForPractice } as StudentParticipation,
             } as Result);
-            expect(request.request.url).toBe(`api/exercise/exercises/${quizExerciseForPractice.id}/submissions/practice`);
+            expect(request.request.url).toBe(`api/quiz/exercises/${quizExerciseForPractice.id}/submissions/practice`);
             fixture.detectChanges();
 
             expect(serviceSpy).toHaveBeenCalledWith(quizExerciseForPractice.id);

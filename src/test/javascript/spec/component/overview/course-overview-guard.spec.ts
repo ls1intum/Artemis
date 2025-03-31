@@ -1,19 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseOverviewGuard } from 'app/overview/course-overview-guard';
-import { Exam } from 'app/entities/exam/exam.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { CourseOverviewRoutePath } from '../../../../../main/webapp/app/overview/courses.route';
+import { CourseOverviewGuard } from 'app/core/course/overview/course-overview-guard';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('CourseOverviewGuard', () => {
     let guard: CourseOverviewGuard;

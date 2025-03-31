@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -11,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,13 +46,12 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to modeling exercises for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ModelingExerciseUtilService {
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
@@ -76,9 +77,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private FeedbackRepository feedbackRepo;
-
-    @Autowired
-    private PlagiarismResultRepository plagiarismResultRepo;
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -427,19 +425,5 @@ public class ModelingExerciseUtilService {
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
-    }
-
-    /**
-     * Creates and saves a ModelingPlagiarismResult for the given Exercise.
-     *
-     * @param exercise The Exercise the ModelingPlagiarismResult belongs to
-     * @return The created ModelingPlagiarismResult
-     */
-    public ModelingPlagiarismResult createModelingPlagiarismResultForExercise(Exercise exercise) {
-        ModelingPlagiarismResult result = new ModelingPlagiarismResult();
-        result.setExercise(exercise);
-        result.setSimilarityDistribution(new int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
-        result.setDuration(4);
-        return plagiarismResultRepo.save(result);
     }
 }

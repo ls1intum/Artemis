@@ -1,9 +1,9 @@
-import { isQuizEditable, isQuizQuestionValid } from 'app/exercises/quiz/shared/quiz-manage-util.service';
-import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
-import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { isQuizEditable, isQuizQuestionValid } from 'app/quiz/shared/quiz-manage-util.service';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 describe('QuizManageUtil', () => {
     let quizExercise: QuizExercise;

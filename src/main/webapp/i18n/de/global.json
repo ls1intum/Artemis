@@ -23,7 +23,6 @@
             "overview": "Kursübersicht",
             "courses": "Kurse",
             "course": "Kursverwaltung",
-            "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
                 "course": "Kurse",
@@ -76,7 +75,6 @@
                 "shortAnswerMapping": "Kurzantwort-Zuordnung",
                 "programmingExerciseTestCase": "Programmingaufgabentestfall",
                 "exerciseHint": "Aufgabenhinweis",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
                 "metis": {
                     "post": "Beitrag",
                     "answerPost": "Antwort"
@@ -114,7 +112,6 @@
                 "apidocs": "API",
                 "database": "Datenbank",
                 "iris": "Iris Einstellungen",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
                 "cleanupService": "Aufräumdienst"
@@ -216,7 +213,6 @@
             "editSelected": "Ausgewählte bearbeiten",
             "editInEditor": "In Editor bearbeiten",
             "editBuildPlan": "Build-Plan bearbeiten",
-            "editInOrion": "In deiner IDE bearbeiten",
             "editEntity": "{{entity}} bearbeiten",
             "exampleSubmissions": "Beispielabgaben",
             "generate": "Generieren",
@@ -357,7 +353,8 @@
         "exams": "Klausuren",
         "communication": "Kommunikation",
         "archive": "Kursarchiv",
-        "faq": "FAQ"
+        "faq": "FAQ",
+        "plagiarismCases": "Plagiatsfälle"
     },
     "connectionStatus": {
         "connected": "Verbunden",

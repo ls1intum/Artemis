@@ -1,14 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
-import { Competency, CompetencyProgress } from 'app/entities/competency.model';
+import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
+import { Competency, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { CompetencyRingsComponent } from 'app/course/competencies/competency-rings/competency-rings.component';
+import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
 import { ArtemisTimeAgoPipe } from '../../../../../main/webapp/app/shared/pipes/artemis-time-ago.pipe';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 

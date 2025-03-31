@@ -7,13 +7,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { EditLtiConfigurationComponent } from 'app/admin/lti-configuration/edit-lti-configuration.component';
-import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
+import { EditLtiConfigurationComponent } from 'app/core/admin/lti-configuration/edit-lti-configuration.component';
+import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { of, throwError } from 'rxjs';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('Edit LTI Configuration Component', () => {
     let comp: EditLtiConfigurationComponent;

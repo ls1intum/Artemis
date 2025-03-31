@@ -43,8 +43,7 @@ import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/stri
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
-import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
 import { HeadingAction } from 'app/shared/monaco-editor/model/actions/heading.action';
 import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
@@ -54,26 +53,29 @@ import { CdkDrag, CdkDragMove, Point } from '@angular/cdk/drag-drop';
 import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
-import { PostingEditType, ReferenceType } from 'app/shared/metis/metis.util';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
+import { PostingEditType, ReferenceType } from 'app/communication/metis.util';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/metis.service';
 import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { EmojiAction } from 'app/shared/monaco-editor/model/actions/emoji.action';
-import { TranslateDirective } from '../../language/translate.directive';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { facArtemisIntelligence } from 'app/icons/icons';
-import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
+import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
+import { RedirectToIrisButtonComponent } from 'app/shared/metis/redirect-to-iris-button/redirect-to-iris-button.component';
+import { Course } from 'app/core/shared/entities/course.model';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
+import { facArtemisIntelligence } from 'app/shared/icons/icons';
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -139,6 +141,7 @@ const BORDER_HEIGHT_OFFSET = 2;
         CdkDrag,
         MatButton,
         ArtemisTranslatePipe,
+        RedirectToIrisButtonComponent,
     ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
@@ -246,6 +249,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     isFormGroupValid = input<boolean>(false);
     isInCommunication = input<boolean>(false);
     editType = input<PostingEditType>();
+    course = input<Course>();
 
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();

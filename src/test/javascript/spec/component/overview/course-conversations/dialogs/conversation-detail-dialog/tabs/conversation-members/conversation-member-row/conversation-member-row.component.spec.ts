@@ -1,30 +1,30 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConversationMemberRowComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
-import { ChannelService } from 'app/shared/metis/conversations/channel.service';
+import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/channel.service';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../helpers/conversationExampleModels';
-import { Course } from 'app/entities/course.model';
-import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { User } from 'app/core/user/user.model';
-import { GenericConfirmationDialogComponent } from 'app/overview/course-conversations/dialogs/generic-confirmation-dialog/generic-confirmation-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
-import { ChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { ConversationMemberRowComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-member-row/conversation-member-row.component';
 
 const memberTemplate = {
     id: 1,

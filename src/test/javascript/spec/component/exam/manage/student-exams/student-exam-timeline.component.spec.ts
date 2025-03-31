@@ -1,42 +1,42 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { Course } from 'app/entities/course.model';
-import { Observable, of } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Observable, of, Subject } from 'rxjs';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamTimelineComponent } from 'app/exam/manage/student-exams/student-exam-timeline/student-exam-timeline.component';
-import { ModelingExamSubmissionComponent } from 'app/exam/participate/exercises/modeling/modeling-exam-submission.component';
-import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
-import { QuizExamSubmissionComponent } from 'app/exam/participate/exercises/quiz/quiz-exam-submission.component';
-import { FileUploadExamSubmissionComponent } from 'app/exam/participate/exercises/file-upload/file-upload-exam-submission.component';
+import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
+import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
+import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/quiz-exam-submission.component';
+import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExamNavigationBarComponent } from 'app/exam/participate/exam-navigation-bar/exam-navigation-bar.component';
+import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
-import { EntityArrayResponseType, SubmissionService } from 'app/exercises/shared/submission/submission.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { QueryList } from '@angular/core';
-import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
-import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
+import { signal } from '@angular/core';
+import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
+import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
 import { ProgrammingExerciseExamDiffComponent } from 'app/exam/manage/student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { MatSlider } from '@angular/material/slider';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 describe('Student Exam Timeline Component', () => {
     let fixture: ComponentFixture<StudentExamTimelineComponent>;
@@ -140,7 +140,7 @@ describe('Student Exam Timeline Component', () => {
                 submissionService = TestBed.inject(SubmissionService);
                 submissionVersionService = TestBed.inject(SubmissionVersionService);
                 fixture.detectChanges();
-                jest.spyOn(component.examNavigationBarComponent, 'changePage').mockImplementation(() => {});
+                jest.spyOn(component.examNavigationBarComponent(), 'changePage').mockImplementation(() => {});
             });
     });
 
@@ -182,7 +182,7 @@ describe('Student Exam Timeline Component', () => {
     });
 
     it('should subscribe to changes in ViewAfterInit', () => {
-        component.currentPageComponents = new QueryList();
+        component.currentPageComponents = signal([]);
         component.ngAfterViewInit();
         expect(component.changesSubscription).toBeDefined();
     });
@@ -190,35 +190,38 @@ describe('Student Exam Timeline Component', () => {
     it.each([
         { exercise: programmingExercise, submission: programmingSubmission1 },
         { exercise: fileUploadExercise, submission: fileUploadSubmission1 },
-        {
-            exercise: textExercise,
-            submission: submissionVersion,
-        },
+        { exercise: textExercise, submission: submissionVersion },
         { exercise: programmingExercise, submission: undefined },
         { exercise: textExercise, submission: undefined },
-        {
-            exercise: fileUploadExercise,
-            submission: undefined,
-        },
+        { exercise: fileUploadExercise, submission: undefined },
     ])('should correctly set the values onPageChange', ({ exercise, submission }) => {
+        // Create a mock model signal that supports update()
+        const createMockSignal = <T>(initial: T) => ({
+            value: initial,
+            update: jest.fn(function (fn: (prev: T) => T) {
+                this.value = fn(this.value);
+                return this.value;
+            }),
+        });
+
+        // Use spyOn to override activePageComponent and provide the necessary update() methods.
         jest.spyOn(component, 'activePageComponent', 'get').mockReturnValue({
-            studentParticipation: { submissions: [] },
-            submission: {},
-            submissionVersion: {},
+            studentParticipation: createMockSignal({ submissions: [] }),
+            exercise: createMockSignal({} as ProgrammingExercise),
+            currentSubmission: createMockSignal({} as ProgrammingSubmission),
+            previousSubmission: createMockSignal({}),
+            submissions: createMockSignal([]),
+            exerciseIdSubject: createMockSignal(new Subject<number>()),
+            studentSubmission: { update: jest.fn() },
             onDeactivate() {},
             onActivate() {},
             updateViewFromSubmission() {},
             setSubmissionVersion() {},
             loadGitDiffReport() {},
-            exerciseIdSubject: {
-                next() {},
-            },
-            studentSubmission: {
-                update() {},
-            },
         } as unknown as ExamSubmissionComponent);
+
         let expectedSubmission = submission;
-        // set the current timestamp needed to find the closest submission if no submission is set
+        // Set the current timestamp needed to find the closest submission if no submission is set
         if (!submission) {
             component.selectedTimestamp = dayjs('2023-01-07').valueOf();
             if (exercise === programmingExercise) {
@@ -239,6 +242,7 @@ describe('Student Exam Timeline Component', () => {
         component.programmingSubmissions = [programmingSubmission1];
         component.submissionTimeStamps = [dayjs('2023-01-07'), dayjs('2023-02-07'), dayjs('2023-05-07')];
         fixture.detectChanges();
+
         component.onPageChange({
             exercise: exercise,
             submission: submission,
@@ -246,10 +250,10 @@ describe('Student Exam Timeline Component', () => {
 
         expect(component.currentSubmission).toEqual(expectedSubmission);
         expect(component.currentExercise).toEqual(exercise);
-        // text exercise has the submission version
+        // For text exercise, the submission version is used to set the timestamp.
         if (exercise === textExercise) {
-            const submissionVersion = component.currentSubmission as SubmissionVersion;
-            expect(component.selectedTimestamp).toEqual(submissionVersion.createdDate.valueOf());
+            const submissionVersionObj = component.currentSubmission as SubmissionVersion;
+            expect(component.selectedTimestamp).toEqual(submissionVersionObj.createdDate.valueOf());
         } else if (exercise === programmingExercise) {
             const programmingSubmission = component.currentSubmission as ProgrammingSubmission;
             expect(component.selectedTimestamp).toEqual(programmingSubmission.submissionDate?.valueOf());

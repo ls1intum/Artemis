@@ -1,6 +1,6 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import {
     AggregatedExamResult,
     AggregatedExerciseGroupResult,
@@ -9,17 +9,17 @@ import {
     ExerciseInfo,
     ExerciseResult,
     StudentResult,
-} from 'app/exam/exam-scores/exam-score-dtos.model';
+} from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
-import { ExamScoresComponent, MedianType } from 'app/exam/exam-scores/exam-scores.component';
+import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { cloneDeep } from 'lodash-es';
 import { EMPTY, of } from 'rxjs';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import {
     BONUS_GRADE_KEY,
@@ -37,14 +37,14 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
-import { BonusStrategy } from 'app/entities/bonus.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 
