@@ -8,5 +8,6 @@
         <dropColumn tableName="post" columnName="tokenized_content"/>
         <dropColumn tableName="post" columnName="answer_count"/>
         <dropColumn tableName="post" columnName="vote_count"/>
+        <dropColumn tableName="answer_post" columnName="tokenized_content"/>
     </changeSet>
 </databaseChangeLog>
