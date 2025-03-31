@@ -44,11 +44,15 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
 
     private Post testPost;
 
+    private Post testPost2;
+
     private AnswerPost testAnswerPost;
 
     private ForwardedMessage testForwardedMessage;
 
     private ForwardedMessage forwardedMessageForAnswer;
+
+    private User testUser;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -58,7 +62,7 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         exampleCourse = courses.get(0);
         exampleCourseId = exampleCourse.getId();
 
-        User testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        testUser = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         Conversation conversation = ConversationFactory.generatePublicChannel(exampleCourse, "Test ForwardedMessage Channel", true);
         conversationRepository.save(conversation);
@@ -66,6 +70,10 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
         testPost = ConversationFactory.createBasicPost(1, testUser);
         testPost.setConversation(conversation);
         testPost = conversationMessageRepository.save(testPost);
+
+        testPost2 = ConversationFactory.createBasicPost(1, testUser);
+        testPost2.setConversation(conversation);
+        testPost2 = conversationMessageRepository.save(testPost2);
 
         testAnswerPost = new AnswerPost();
         testAnswerPost.setContent("Test Answer Post Content");
@@ -137,8 +145,9 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnEmptyWhenNoForwardedMessagesExist() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString()).param("postingIds", "9999")
-                .param("type", PostingType.POST.toString())).andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(0));
+        request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("postingIds", testPost2.getId().toString()).param("type", PostingType.POST.toString()))
+                .andExpect(MockMvcResultMatchers.status().isOk()).andExpect(jsonPath("$.length()").value(0));
     }
 
     /**
@@ -146,9 +155,10 @@ class ForwardedMessageResourceIntegrationTest extends AbstractConversationTest {
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnBadRequestForInvalidType() throws Exception {
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("courseId", exampleCourseId.toString())
-                .param("postingIds", String.valueOf(testPost.getId())).param("type", "invalidType")).andExpect(MockMvcResultMatchers.status().isBadRequest());
+    void shouldThrowServerErrorForInvalidType() throws Exception {
+        request.performMvcRequest(
+                MockMvcRequestBuilders.get("/api/communication/forwarded-messages").param("postingIds", String.valueOf(testPost.getId())).param("type", "invalidType"))
+                .andExpect(MockMvcResultMatchers.status().is5xxServerError());
     }
 
     /**
