@@ -6,7 +6,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ProgrammingExerciseGitDiffReport } from '../../../../../main/webapp/app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

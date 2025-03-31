@@ -5,7 +5,7 @@ import { NgbActiveModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { HttpParams } from '@angular/common/http';
-import { FinishedBuildJob } from 'app/entities/programming/build-job.model';
+import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormsModule } from '@angular/forms';

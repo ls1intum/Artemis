@@ -4,7 +4,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingAssessmentRepoExportService, RepositoryExportOptions } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
 import { HttpResponse } from '@angular/common/http';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';

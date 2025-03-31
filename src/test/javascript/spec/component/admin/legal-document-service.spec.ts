@@ -2,9 +2,9 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
-import { PrivacyStatement } from 'app/entities/privacy-statement.model';
-import { Imprint } from 'app/entities/imprint.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
+import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
+import { Imprint } from 'app/core/shared/entities/imprint.model';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('LegalDocumentService', () => {

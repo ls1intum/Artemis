@@ -6,12 +6,12 @@ import { ChartNode, ExerciseScoresChartComponent } from 'app/core/course/overvie
 import { of } from 'rxjs';
 import { ActivatedRoute, provideRouter } from '@angular/router';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 
 class MockActivatedRoute {

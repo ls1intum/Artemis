@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { MockComponent, MockPipe } from 'ng-mocks';

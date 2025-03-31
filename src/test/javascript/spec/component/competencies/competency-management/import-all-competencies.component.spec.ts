@@ -4,7 +4,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { ImportAllCompetenciesComponent } from 'app/atlas/manage/competency-management/import-all-competencies.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';

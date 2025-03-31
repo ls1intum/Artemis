@@ -1,14 +1,14 @@
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ITeamService } from 'app/exercise/team/team.service';
-import { Exercise } from 'app/entities/exercise.model';
-import { Team, TeamImportStrategyType } from 'app/entities/team.model';
-import { StudentWithTeam } from 'app/entities/team.model';
-import { Course } from 'app/entities/course.model';
-import { TeamSearchUser } from 'app/entities/team-search-user.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Team, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';
+import { StudentWithTeam } from 'app/exercise/shared/entities/team/team.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import { User } from 'app/core/user/user.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import dayjs from 'dayjs/esm';
 
 export const mockTeamStudents = [

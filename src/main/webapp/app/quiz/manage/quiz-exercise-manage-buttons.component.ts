@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';

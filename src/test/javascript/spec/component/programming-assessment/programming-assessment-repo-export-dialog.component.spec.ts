@@ -4,11 +4,11 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-dialog.component';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

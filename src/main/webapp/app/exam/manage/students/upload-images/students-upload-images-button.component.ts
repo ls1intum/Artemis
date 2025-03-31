@@ -2,7 +2,7 @@ import { Component, inject, input, output } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { StudentsUploadImagesDialogComponent } from 'app/exam/manage/students/upload-images/students-upload-images-dialog.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faPlus, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button.component';
 

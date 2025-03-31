@@ -11,9 +11,8 @@ import {
     CompetencyWithTailRelationDTO,
     CourseCompetency,
     CourseCompetencyProgress,
-} from 'app/entities/competency.model';
+} from 'app/atlas/shared/entities/competency.model';
 import { map, tap } from 'rxjs/operators';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { CompetencyPageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { HttpParams } from '@angular/common/http';
@@ -21,6 +20,7 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { CompetencyRecommendation } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<CourseCompetency>;
 type EntityArrayResponseType = HttpResponse<CourseCompetency[]>;

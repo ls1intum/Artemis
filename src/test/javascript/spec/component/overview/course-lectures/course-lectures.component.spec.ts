@@ -1,12 +1,12 @@
 import { Component, Input } from '@angular/core';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService } from 'ngx-webstorage';
-import { Course } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
@@ -23,12 +23,12 @@ import { CourseStorageService } from 'app/core/course/manage/course-storage.serv
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
 import { provideHttpClient } from '@angular/common/http';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {
