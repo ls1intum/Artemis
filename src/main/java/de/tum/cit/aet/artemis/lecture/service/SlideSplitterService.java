@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -40,6 +39,8 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.HiddenPageInfo;
+import de.tum.cit.aet.artemis.lecture.domain.HiddenPagesData;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
@@ -159,7 +160,7 @@ public class SlideSplitterService {
         try {
             // Parse the page order and hidden pages information
             List<Map<String, Object>> pageOrderList = parsePageOrder(pageOrder);
-            Map<String, Map<String, Object>> hiddenPagesMap = parseHiddenPages(hiddenPages);
+            HiddenPagesData hiddenPagesData = HiddenPagesData.fromJson(hiddenPages);
 
             // Retrieve existing slides
             List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
@@ -171,7 +172,7 @@ public class SlideSplitterService {
 
             // Process each slide in the page order
             for (Map<String, Object> page : pageOrderList) {
-                processSlide(page, attachmentUnit, existingSlidesMap, hiddenPagesMap, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
+                processSlide(page, attachmentUnit, existingSlidesMap, hiddenPagesData, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
             }
 
             // Clean up slides that are no longer in the page order
@@ -184,51 +185,9 @@ public class SlideSplitterService {
     }
 
     /**
-     * Parse the page order JSON string into a list of maps.
-     */
-    private List<Map<String, Object>> parsePageOrder(String pageOrder) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.readValue(pageOrder, new TypeReference<>() {
-        });
-    }
-
-    /**
-     * Parse the hidden pages JSON string into a map of slide ID to hidden page data.
-     */
-    private Map<String, Map<String, Object>> parseHiddenPages(String hiddenPages) {
-        Map<String, Map<String, Object>> hiddenPagesMap = new HashMap<>();
-
-        if (hiddenPages != null && !hiddenPages.isEmpty()) {
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                List<Map<String, Object>> hiddenPagesList = objectMapper.readValue(hiddenPages, new TypeReference<>() {
-                });
-
-                hiddenPagesMap = hiddenPagesList.stream().collect(Collectors.toMap(page -> String.valueOf(page.get("slideId")), page -> {
-                    Map<String, Object> data = new HashMap<>();
-                    String dateStr = (String) page.get("date");
-                    ZonedDateTime zonedDateTime = ZonedDateTime.parse(dateStr);
-                    data.put("date", zonedDateTime);
-
-                    if (page.get("exerciseId") != null) {
-                        data.put("exerciseId", page.get("exerciseId"));
-                    }
-                    return data;
-                }));
-            }
-            catch (Exception e) {
-                log.error("Failed to parse hidden pages data: {}", e.getMessage(), e);
-                throw new InternalServerErrorException("Could not parse hidden pages data: " + e.getMessage());
-            }
-        }
-
-        return hiddenPagesMap;
-    }
-
-    /**
      * Process a single slide in the page order.
      */
-    private void processSlide(Map<String, Object> page, AttachmentUnit attachmentUnit, Map<String, Slide> existingSlidesMap, Map<String, Map<String, Object>> hiddenPagesMap,
+    private void processSlide(Map<String, Object> page, AttachmentUnit attachmentUnit, Map<String, Slide> existingSlidesMap, HiddenPagesData hiddenPagesData,
             PDFRenderer pdfRenderer, String fileNameWithOutExt, int totalPages) throws IOException {
         String slideId = String.valueOf(page.get("slideId"));
         int order = ((Number) page.get("order")).intValue();
@@ -247,11 +206,8 @@ public class SlideSplitterService {
         }
 
         slideEntity.setSlideNumber(order);
+        ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesData, slideId);
 
-        // Handle hidden status and associated exercise
-        ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesMap.get(slideId));
-
-        // Handle slide image
         if (isNewSlide) {
             createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentUnit, order, totalPages);
         }
@@ -269,15 +225,15 @@ public class SlideSplitterService {
      *
      * @return The previous hidden value
      */
-    private ZonedDateTime updateSlideHiddenStatus(Slide slideEntity, Map<String, Object> hiddenData) {
+    private ZonedDateTime updateSlideHiddenStatus(Slide slideEntity, HiddenPagesData hiddenPagesData, String slideId) {
         ZonedDateTime previousHiddenValue = slideEntity.getHidden();
+        HiddenPageInfo hiddenPageInfo = hiddenPagesData.getHiddenPageInfo(slideId);
 
-        if (hiddenData != null && hiddenData.containsKey("date")) {
-            slideEntity.setHidden((ZonedDateTime) hiddenData.get("date"));
+        if (hiddenPageInfo != null) {
+            slideEntity.setHidden(hiddenPageInfo.hiddenDate());
 
-            if (hiddenData.containsKey("exerciseId") && hiddenData.get("exerciseId") != null) {
-                Number exerciseId = (Number) hiddenData.get("exerciseId");
-                Optional<Exercise> exercise = exerciseRepository.findById(exerciseId.longValue());
+            if (hiddenPageInfo.hasExercise()) {
+                Optional<Exercise> exercise = exerciseRepository.findById(hiddenPageInfo.exerciseId());
                 exercise.ifPresent(slideEntity::setExercise);
             }
             else {
@@ -290,6 +246,15 @@ public class SlideSplitterService {
         }
 
         return previousHiddenValue;
+    }
+
+    /**
+     * Parse the page order JSON string into a list of maps.
+     */
+    private List<Map<String, Object>> parsePageOrder(String pageOrder) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.readValue(pageOrder, new TypeReference<>() {
+        });
     }
 
     /**
