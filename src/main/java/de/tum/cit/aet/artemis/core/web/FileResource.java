@@ -220,16 +220,15 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
-        Path responsePath = getResponsePathFromPublicPath(publicPath);
-
-        var fileUpload = fileUploadService.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
+        var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(responsePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(responsePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, true);
     }
 
     /**
