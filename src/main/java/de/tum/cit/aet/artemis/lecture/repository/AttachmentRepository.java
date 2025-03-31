@@ -29,13 +29,4 @@ public interface AttachmentRepository extends ArtemisJpaRepository<Attachment, L
     default Attachment findByIdOrElseThrow(Long attachmentId) {
         return getValueElseThrow(findById(attachmentId), attachmentId);
     }
-
-    /**
-     * Saves attachment with student version updates in a transactional context.
-     *
-     * @param attachment The attachment to save
-     */
-    default void saveAttachmentWithStudentVersion(Attachment attachment) {
-        save(attachment);
-    }
 }

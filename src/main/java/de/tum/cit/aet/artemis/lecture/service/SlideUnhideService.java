@@ -11,7 +11,6 @@ import java.util.concurrent.ScheduledFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
@@ -40,7 +39,6 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
-    @Autowired
     public SlideUnhideService(SlideRepository slideRepository, TaskScheduler taskScheduler, AttachmentService attachmentService) {
         this.slideRepository = slideRepository;
         this.taskScheduler = taskScheduler;

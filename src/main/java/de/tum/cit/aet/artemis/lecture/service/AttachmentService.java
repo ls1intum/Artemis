@@ -14,7 +14,6 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -37,7 +36,6 @@ public class AttachmentService {
 
     private final FileService fileService;
 
-    @Autowired
     public AttachmentService(AttachmentRepository attachmentRepository, SlideRepository slideRepository, FileService fileService) {
         this.attachmentRepository = attachmentRepository;
         this.slideRepository = slideRepository;
@@ -63,7 +61,7 @@ public class AttachmentService {
             if (attachment.getStudentVersion() != null) {
                 deleteStudentVersionFile(attachment);
                 attachment.setStudentVersion(null);
-                attachmentRepository.saveAttachmentWithStudentVersion(attachment);
+                attachmentRepository.save(attachment);
             }
             return;
         }
@@ -75,7 +73,7 @@ public class AttachmentService {
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
             handleStudentVersionFile(studentVersionPdf, attachment, attachmentUnit.getId());
-            attachmentRepository.saveAttachmentWithStudentVersion(attachment);
+            attachmentRepository.save(attachment);
         }
         catch (Exception e) {
             throw new InternalServerErrorException("Failed to regenerate student version: " + e.getMessage());

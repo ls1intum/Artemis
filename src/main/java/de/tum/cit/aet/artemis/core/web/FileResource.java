@@ -500,7 +500,7 @@ public class FileResource {
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for tutors", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
