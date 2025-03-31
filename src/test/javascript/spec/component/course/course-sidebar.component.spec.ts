@@ -18,6 +18,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { SimpleChange } from '@angular/core';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -125,10 +126,9 @@ describe('CourseSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should initialize visible/hidden items on component initialization', () => {
+    it('should initialize visible/hidden items on  sidebar update', () => {
         const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
-
-        component.ngOnInit();
+        component.ngOnChanges({ sidebarItems: new SimpleChange([], mockSidebarItems, true) });
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
