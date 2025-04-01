@@ -87,6 +87,9 @@ public class CacheConfiguration {
     @Value("${spring.hazelcast.interface:}")
     private String hazelcastInterface;
 
+    @Value("${spring.hazelcast.public-address:}")
+    private String hazelcastPublicAddress;
+
     @Value("${spring.hazelcast.port:5701}")
     private int hazelcastPort;
 
@@ -282,7 +285,7 @@ public class CacheConfiguration {
         // Hazelcast should bind to the interface and use it as local and public address
         log.debug("Binding Hazelcast to interface {}", hazelcastInterface);
         System.setProperty("hazelcast.local.localAddress", hazelcastInterface);
-        System.setProperty("hazelcast.local.publicAddress", hazelcastInterface);
+        System.setProperty("hazelcast.local.publicAddress", hazelcastPublicAddress);
         config.getNetworkConfig().getInterfaces().setEnabled(true).setInterfaces(Collections.singleton(hazelcastInterface));
 
         // Hazelcast should only bind to the interface provided, not to any interface
