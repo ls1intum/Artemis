@@ -161,4 +161,4 @@ jobs:
         run: |
           WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
 
-          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" --check
+          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" -e ansible_user="${{ vars.DEPLOYMENT_USER }}" --check
