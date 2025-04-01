@@ -190,6 +190,7 @@ describe('GuidedTourService', () => {
                     deleteParticipationStub = jest.spyOn(participationService, 'deleteForGuidedTour');
                     // @ts-ignore
                     deleteGuidedTourSettingStub = jest.spyOn(guidedTourService, 'deleteGuidedTourSetting');
+                    router.navigateByUrl = jest.fn().mockReturnValue(true);
                     navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
                 });
         });
