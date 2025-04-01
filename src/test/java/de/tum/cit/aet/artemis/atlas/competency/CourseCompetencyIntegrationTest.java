@@ -75,13 +75,11 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         // result
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
-        // result.setParticipation(studentParticipation);
-        // TODO Michal Kawka we might need to set up a submission here
         result.setCompletionDate(ZonedDateTime.now());
+        result.setSubmission(submission);
         result = resultRepository.save(result);
 
         submission.addResult(result);
-        result.setSubmission(submission);
         submissionRepository.save(submission);
 
         return result;
