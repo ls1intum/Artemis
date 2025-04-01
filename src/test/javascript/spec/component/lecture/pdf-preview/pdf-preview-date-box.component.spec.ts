@@ -31,7 +31,7 @@ describe('PdfPreviewDateBoxComponent', () => {
 
     beforeEach(async () => {
         courseExerciseServiceMock = {
-            findAllExercisesForCourse: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
+            findAllExercisesWithDueDatesForCourse: jest.fn().mockReturnValue(of(new HttpResponse({ body: mockExercises }))),
         };
 
         alertServiceMock = {
@@ -65,17 +65,18 @@ describe('PdfPreviewDateBoxComponent', () => {
             component.ngOnInit();
             tick();
 
-            expect(courseExerciseServiceMock.findAllExercisesForCourse).toHaveBeenCalledWith(mockCourse.id);
+            expect(courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse).toHaveBeenCalledWith(mockCourse.id);
             expect(component.exercises()).toEqual(mockExercises);
         }));
 
         it('should handle error when loading exercises', fakeAsync(() => {
-            courseExerciseServiceMock.findAllExercisesForCourse.mockReturnValue(throwError(() => new Error('Failed')));
+            courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(throwError(() => new Error('Failed')));
 
             component.ngOnInit();
             tick();
 
             expect(component.exercises()).toEqual([]);
+            expect(alertServiceMock.error).toHaveBeenCalled();
         }));
 
         it('should set isMultiplePages correctly', () => {
@@ -99,7 +100,7 @@ describe('PdfPreviewDateBoxComponent', () => {
                 { id: 4, type: ExerciseType.PROGRAMMING, dueDate: null },
             ] as Exercise[];
 
-            courseExerciseServiceMock.findAllExercisesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
+            courseExerciseServiceMock.findAllExercisesWithDueDatesForCourse.mockReturnValue(of(new HttpResponse({ body: futureMockExercises })));
 
             component.ngOnInit();
             tick();
