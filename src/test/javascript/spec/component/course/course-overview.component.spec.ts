@@ -344,7 +344,7 @@ describe('CourseOverviewComponent', () => {
         const baseUrl = '/' + 'courses/' + course1.id;
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
-            router.url = '' + baseUrl + '/' + tab;
+            jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
 
             expect(metisConversationServiceStub).toHaveBeenCalledOnce();
@@ -693,7 +693,7 @@ describe('CourseOverviewComponent', () => {
     it('should switch course and navigate to the correct URL', async () => {
         const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        component.router.url = `/courses/${course1.id}/exercises`;
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exercises');
 
         component.switchCourse(course2);
         await Promise.resolve();

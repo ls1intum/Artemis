@@ -480,7 +480,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set hasSidebar when onSubRouteActivate is called', () => {
-        router.url = `/course-management/${course1.id}/communication`;
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.onSubRouteActivate({});
 
@@ -497,8 +497,7 @@ describe('CourseManagementContainerComponent', () => {
             ...course1,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         });
-
-        router.url = `/course-management/${course1.id}/communication`;
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.onSubRouteActivate({});
 
@@ -638,7 +637,7 @@ describe('CourseManagementContainerComponent', () => {
     it('should switch course and navigate to the correct URL', async () => {
         const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        component.router.url = `/course-management/${course1.id}/exercises`;
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.switchCourse(course2);
         await Promise.resolve();
