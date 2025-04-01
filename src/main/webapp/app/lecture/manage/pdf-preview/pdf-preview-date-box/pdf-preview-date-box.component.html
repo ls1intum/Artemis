@@ -69,7 +69,7 @@
         <button class="btn btn-secondary" (click)="selectionCancelledOutput.emit(true)">
             <span jhiTranslate="entity.action.cancel"></span>
         </button>
-        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="!hideForever() && !calendarSelected() && !selectedExercise()">
+        <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isSubmitDisabled()">
             <span jhiTranslate="entity.action.save"></span>
         </button>
     </div>

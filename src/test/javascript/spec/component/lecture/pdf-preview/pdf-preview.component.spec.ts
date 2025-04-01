@@ -151,16 +151,11 @@ describe('PdfPreviewComponent', () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('blob-url');
         global.URL.revokeObjectURL = jest.fn();
 
-        // Mock the loadPdf method
         jest.spyOn(component, 'loadPdf').mockResolvedValue();
-
-        // Mock the applyOperations method
         jest.spyOn(component, 'applyOperations').mockResolvedValue({
             instructorPdf: {} as any,
             studentPdf: {} as any,
         });
-
-        // Mock getFinalPageOrder method
         jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
         routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
@@ -174,7 +169,6 @@ describe('PdfPreviewComponent', () => {
 
     describe('Initialization and Data Loading', () => {
         it('should load attachment file and verify service calls when attachment data is available', () => {
-            // Mock the Blob's arrayBuffer method
             const mockArrayBuffer = new ArrayBuffer(10);
             const mockBlob = new Blob([''], { type: 'application/pdf' });
             mockBlob.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
@@ -514,7 +508,6 @@ describe('PdfPreviewComponent', () => {
                 studentPdf: null,
             });
 
-            // Mock getFinalPageOrder
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
 
             const mockError = new Error('Update failed');
@@ -926,7 +919,6 @@ describe('PdfPreviewComponent', () => {
 
             component.pageOrder.set(initialPageOrder);
 
-            // Before the operation, hasOperations should be false
             expect(component.hasOperations()).toBe(false);
 
             component.onPageOrderChange(newPageOrder);
@@ -956,9 +948,7 @@ describe('PdfPreviewComponent', () => {
             expect(component.hasOperations()).toBe(true);
             expect(component.pageOrder()).toEqual(newPageOrder);
 
-            // Verify the operation was recorded correctly
-            const operations = (component as any).operations;
-            const lastOperation = operations[operations.length - 1];
+            const lastOperation = component.operations()[component.operations().length - 1];
             expect(lastOperation.type).toBe('REORDER');
             expect(lastOperation.data.pageOrder).toEqual(
                 newPageOrder.map((page) => ({
@@ -984,8 +974,7 @@ describe('PdfPreviewComponent', () => {
             expect(Object.keys(component.hiddenPages())).toEqual(['slide2']);
             expect(component.selectedPages().size).toBe(0);
 
-            const operations = (component as any).operations;
-            const lastOperation = operations[operations.length - 1];
+            const lastOperation = component.operations()[component.operations().length - 1];
             expect(lastOperation.type).toBe('SHOW');
             expect(lastOperation.data.slideIds).toContain('slide1');
             expect(lastOperation.data.slideIds).toContain('slide3');
@@ -994,17 +983,14 @@ describe('PdfPreviewComponent', () => {
 
     describe('Computed Properties', () => {
         it('should correctly compute allPagesSelected property', () => {
-            // When no pages are selected
             component.selectedPages.set(new Set());
             component.totalPages.set(5);
             expect(component.allPagesSelected()).toBe(false);
 
-            // When some pages are selected
             const selectedPages = new Set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
             component.selectedPages.set(selectedPages);
             expect(component.allPagesSelected()).toBe(false);
 
-            // When all pages are selected
             const allPages = new Set([
                 { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
                 { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
@@ -1017,15 +1003,11 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should correctly compute pageOrderChanged property', () => {
-            // When page order has not changed
             const unchangedOrder = [{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any];
             component.pageOrder.set(unchangedOrder);
             expect(component.pageOrderChanged()).toBe(false);
 
-            const changedOrder = [
-                { slideId: 'slide1', initialIndex: 2, order: 2 } as any, // Changed initialIndex to 2
-                { slideId: 'slide2', initialIndex: 1, order: 1 } as any, // Changed initialIndex to 1
-            ];
+            const changedOrder = [{ slideId: 'slide1', initialIndex: 2, order: 2 } as any, { slideId: 'slide2', initialIndex: 1, order: 1 } as any];
             component.pageOrder.set(changedOrder);
             expect(component.pageOrderChanged()).toBe(true);
         });
@@ -1056,19 +1038,19 @@ describe('PdfPreviewComponent', () => {
         it('should correctly compute hasChanges property', () => {
             component.hiddenPages.set({});
             component.initialHiddenPages.set({});
-            (component as any).operations = [];
+            component.operations.set([]);
             component.hasOperations.set(false);
             component.isFileChanged.set(false);
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any]);
 
             expect(component.hasChanges()).toBe(false);
 
-            component.hasOperations.set(true);
+            component.operations.set([{ type: 'DELETE', timestamp: dayjs(), data: { slideIds: ['slide1'] } }]);
             expect(component.hasChanges()).toBe(true);
-            component.hasOperations.set(false);
+            component.operations.set([]);
 
-            component.initialHiddenPages.set({}); // Empty initial state
-            component.hiddenPages.set({ slide1: { date: dayjs(), exerciseId: null } }); // Different current state
+            component.initialHiddenPages.set({});
+            component.hiddenPages.set({ slide1: { date: dayjs(), exerciseId: null } });
             expect(component.hasChanges()).toBe(true);
             component.hiddenPages.set({});
 
@@ -1076,9 +1058,7 @@ describe('PdfPreviewComponent', () => {
             expect(component.hasChanges()).toBe(true);
             component.isFileChanged.set(false);
 
-            component.pageOrder.set([
-                { slideId: 'slide1', initialIndex: 2, order: 2 } as any, // initialIndex doesn't match index+1
-            ]);
+            component.pageOrder.set([{ slideId: 'slide1', initialIndex: 2, order: 2 } as any]);
             expect(component.hasChanges()).toBe(true);
         });
     });
@@ -1087,7 +1067,7 @@ describe('PdfPreviewComponent', () => {
         it('should handle empty file input when merging PDF', async () => {
             const mockEvent = {
                 target: {
-                    files: [null], // Using [null] instead of [] to avoid the null reference error
+                    files: [null],
                     value: '',
                 },
             };
@@ -1461,7 +1441,7 @@ describe('PdfPreviewComponent', () => {
                 { slideId: 'slide3', initialIndex: 3, order: 3, sourcePdfId: 'original', sourceIndex: 2 } as any,
             ]);
 
-            (component as any).operations = [];
+            component.operations.set([]);
         });
 
         it('should process a DELETE operation correctly', async () => {
@@ -1470,13 +1450,13 @@ describe('PdfPreviewComponent', () => {
             const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
-            (component as any).operations = [
+            component.operations.set([
                 {
                     type: 'DELETE',
                     timestamp: dayjs('2023-01-01'),
                     data: { slideIds: ['slide1', 'slide3'] },
                 },
-            ];
+            ]);
 
             await component.applyOperations();
 
@@ -1493,13 +1473,13 @@ describe('PdfPreviewComponent', () => {
             const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
-            (component as any).operations = [
+            component.operations.set([
                 {
                     type: 'MERGE',
                     timestamp: dayjs('2023-01-01'),
                     data: { sourceId: 'merged' },
                 },
-            ];
+            ]);
 
             await component.applyOperations();
 
@@ -1515,7 +1495,7 @@ describe('PdfPreviewComponent', () => {
             const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
-            (component as any).operations = [
+            component.operations.set([
                 {
                     type: 'REORDER',
                     timestamp: dayjs('2023-01-01'),
@@ -1527,7 +1507,7 @@ describe('PdfPreviewComponent', () => {
                         ],
                     },
                 },
-            ];
+            ]);
 
             await component.applyOperations();
 
@@ -1592,7 +1572,7 @@ describe('PdfPreviewComponent', () => {
             const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
-            (component as any).operations = [
+            component.operations.set([
                 {
                     type: 'REORDER',
                     timestamp: dayjs('2023-01-03'),
@@ -1609,7 +1589,7 @@ describe('PdfPreviewComponent', () => {
                     timestamp: dayjs('2023-01-01'),
                     data: { slideIds: ['slide3'] },
                 },
-            ];
+            ]);
 
             const executionOrder: string[] = [];
 
@@ -1638,7 +1618,7 @@ describe('PdfPreviewComponent', () => {
             const loadMock = jest.spyOn(PDFDocument, 'load').mockClear();
             loadMock.mockResolvedValue(mockInstructorPdf);
 
-            (component as any).operations = [
+            component.operations.set([
                 {
                     type: 'DELETE',
                     timestamp: dayjs('2023-01-01T12:00:00'),
@@ -1654,7 +1634,7 @@ describe('PdfPreviewComponent', () => {
                         ],
                     },
                 },
-            ];
+            ]);
 
             const result = await component.applyOperations();
 

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnChanges, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
@@ -19,6 +19,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective, DragDropModule],
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
@@ -29,7 +30,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     // Inputs
     course = input<Course>();
     currentPdfUrl = input<string>();
-    appendFile = input<boolean>();
+    isAppendingFile = input<boolean>();
     hiddenPages = input<HiddenPageMap>({});
     isAttachmentUnit = input<boolean>();
     updatedSelectedPages = input<Set<OrderedPage>>(new Set());
@@ -54,6 +55,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
     // Injected services
     private readonly alertService = inject(AlertService);
+    private readonly renderer = inject(Renderer2);
 
     protected readonly faEye = faEye;
     protected readonly faEyeSlash = faEyeSlash;
@@ -78,9 +80,13 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
         try {
-            this.pdfContainer()
-                .nativeElement.querySelectorAll('.pdf-canvas-container canvas')
-                .forEach((canvas) => canvas.remove());
+            const containerEl = this.pdfContainer().nativeElement;
+            const canvases = containerEl.querySelectorAll('.pdf-canvas-container canvas');
+            canvases.forEach((canvas: HTMLCanvasElement) => {
+                if (canvas.parentNode) {
+                    this.renderer.removeChild(canvas.parentNode, canvas);
+                }
+            });
 
             this.loadedPages.set(new Set());
 
@@ -96,7 +102,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
 
                     const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${page.slideId}`);
                     if (container) {
-                        container.appendChild(canvas);
+                        this.renderer.appendChild(container, canvas);
                         this.loadedPages.update((loadedPages) => {
                             const newLoadedPages = new Set(loadedPages);
                             newLoadedPages.add(page.order);
@@ -106,7 +112,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
                 }
             }
 
-            if (this.appendFile()) {
+            if (this.isAppendingFile()) {
                 this.scrollToBottom();
             }
         } catch (error) {
@@ -152,10 +158,9 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
             this.activeButtonPage.set(page);
             const button = (event.target as HTMLElement).closest('button');
             if (button) {
-                button.style.opacity = '1';
+                this.renderer.setStyle(button, 'opacity', '1');
             }
         }
-
         event.stopPropagation();
     }
 
@@ -236,7 +241,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     hideActionButton(slideId: string): void {
         const button = document.getElementById('hide-show-button-' + slideId);
         if (button) {
-            button.style.opacity = '0';
+            this.renderer.setStyle(button, 'opacity', '0');
         }
     }
 

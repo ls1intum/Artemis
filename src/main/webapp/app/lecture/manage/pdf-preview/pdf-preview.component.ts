@@ -95,9 +95,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     protected readonly Object = Object;
     protected readonly Array = Array;
 
-    // Track operations in sequential order
-    private operations: PdfOperation[] = [];
-
     // Signals
     course = signal<Course | undefined>(undefined);
     attachment = signal<Attachment | undefined>(undefined);
@@ -106,7 +103,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentToBeEdited = signal<Attachment | undefined>(undefined);
     currentPdfUrl = signal<string | undefined>(undefined);
     totalPages = signal<number>(0);
-    appendFile = signal<boolean>(false);
+    isAppendingFile = signal<boolean>(false);
     isFileChanged = signal<boolean>(false);
     selectedPages = signal<Set<OrderedPage>>(new Set());
     initialHiddenPages = signal<HiddenPageMap>({});
@@ -115,6 +112,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     pageOrder = signal<OrderedPage[]>([]);
     sourcePDFs = signal<Map<string, PDFSource>>(new Map());
     hasOperations = signal<boolean>(false);
+    operations = signal<PdfOperation[]>([]);
 
     // Computed properties
     allPagesSelected = computed(() => this.selectedPages().size === this.totalPages());
@@ -127,7 +125,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     });
 
     hasChanges = computed(() => {
-        return this.hasOperations() || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
+        return this.operations().length > 0 || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
     });
 
     // Injected services
@@ -267,14 +265,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.totalPages.set(this.totalPages() + pageCount);
 
             if (append) {
-                this.operations.push({
-                    type: 'MERGE',
-                    timestamp: dayjs(),
-                    data: {
-                        sourceId,
-                        pageCount,
+                this.operations.update((ops) => [
+                    ...ops,
+                    {
+                        type: 'MERGE',
+                        timestamp: dayjs(),
+                        data: {
+                            sourceId,
+                            pageCount,
+                        },
                     },
-                });
+                ]);
                 this.hasOperations.set(true);
 
                 const currentPageCount = this.pageOrder().length;
@@ -573,7 +574,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             throw new Error('Original PDF source not found');
         }
 
-        const instructorPdf = await this.createPdfDocument(originalSource.pdfDocument, this.operations, this.pageOrder());
+        const instructorPdf = await this.createPdfDocument(originalSource.pdfDocument, this.operations(), this.pageOrder());
 
         let studentPdf = null;
         if (studentVersion) {
@@ -715,7 +716,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private finishSaving(): void {
         this.isSaving.set(false);
-        this.operations = [];
+        this.operations.set([]);
         this.hasOperations.set(false);
         this.isFileChanged.set(false);
         this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
@@ -729,7 +730,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     async getFinalPageOrder(): Promise<OrderedPage[]> {
         let workingPageOrder = [...this.pageOrder()];
 
-        const sortedOperations = [...this.operations].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
+        const sortedOperations = [...this.operations()].sort((a, b) => a.timestamp.valueOf() - b.timestamp.valueOf());
 
         for (const operation of sortedOperations) {
             if (operation.type === 'DELETE') {
@@ -794,11 +795,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.isPdfLoading.set(true);
             const slideIds = Array.from(this.selectedPages()).map((page) => page.slideId);
 
-            this.operations.push({
-                type: 'DELETE',
-                timestamp: dayjs(),
-                data: { slideIds },
-            });
+            this.operations.update((ops) => [
+                ...ops,
+                {
+                    type: 'DELETE',
+                    timestamp: dayjs(),
+                    data: { slideIds },
+                },
+            ]);
 
             const remainingPages = this.pageOrder().filter((page) => !slideIds.includes(page.slideId));
 
@@ -807,16 +811,19 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 order: index + 1,
             }));
 
-            this.operations.push({
-                type: 'REORDER',
-                timestamp: dayjs().add(1, 'millisecond'), // Just after the DELETE
-                data: {
-                    pageOrder: updatedPageOrder.map((page) => ({
-                        slideId: page.slideId,
-                        order: page.order,
-                    })),
+            this.operations.update((ops) => [
+                ...ops,
+                {
+                    type: 'REORDER',
+                    timestamp: dayjs().add(1, 'millisecond'), // Just after the DELETE
+                    data: {
+                        pageOrder: updatedPageOrder.map((page) => ({
+                            slideId: page.slideId,
+                            order: page.order,
+                        })),
+                    },
                 },
-            });
+            ]);
 
             this.hasOperations.set(true);
 
@@ -853,7 +860,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
 
         this.isPdfLoading.set(true);
-        this.appendFile.set(true);
+        this.isAppendingFile.set(true);
         try {
             const newPdfBytes = await file!.arrayBuffer();
             const objectUrl = URL.createObjectURL(file!);
@@ -877,11 +884,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     showPages(selectedPages: Set<OrderedPage>): void {
         const slideIds = Array.from(selectedPages).map((page) => page.slideId);
 
-        this.operations.push({
-            type: 'SHOW',
-            timestamp: dayjs(),
-            data: { slideIds },
-        });
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'SHOW',
+                timestamp: dayjs(),
+                data: { slideIds },
+            },
+        ]);
         this.hasOperations.set(true);
 
         this.hiddenPages.update((current) => {
@@ -892,7 +902,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
         this.selectedPages.set(new Set());
     }
-
     /**
      * Handles the reception of one or more hidden pages from the date box component
      * @param hiddenPageData A single HiddenPage or an array of HiddenPages
@@ -900,11 +909,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hidePages(hiddenPageData: HiddenPage | HiddenPage[]): void {
         const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
 
-        this.operations.push({
-            type: 'HIDE',
-            timestamp: dayjs(),
-            data: { pages },
-        });
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'HIDE',
+                timestamp: dayjs(),
+                data: { pages },
+            },
+        ]);
         this.hasOperations.set(true);
 
         this.hiddenPages.update((currentMap) => {
@@ -926,16 +938,19 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param newOrder The new page order
      */
     onPageOrderChange(newOrder: OrderedPage[]): void {
-        this.operations.push({
-            type: 'REORDER',
-            timestamp: dayjs(),
-            data: {
-                pageOrder: newOrder.map((page) => ({
-                    slideId: page.slideId,
-                    order: page.order,
-                })),
+        this.operations.update((ops) => [
+            ...ops,
+            {
+                type: 'REORDER',
+                timestamp: dayjs(),
+                data: {
+                    pageOrder: newOrder.map((page) => ({
+                        slideId: page.slideId,
+                        order: page.order,
+                    })),
+                },
             },
-        });
+        ]);
         this.hasOperations.set(true);
 
         this.pageOrder.set(newOrder);

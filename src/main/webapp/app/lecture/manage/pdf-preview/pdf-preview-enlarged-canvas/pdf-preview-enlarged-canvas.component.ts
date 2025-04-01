@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnInit, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 type NavigationDirection = 'next' | 'prev';
@@ -9,7 +9,7 @@ type NavigationDirection = 'next' | 'prev';
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
     imports: [TranslateDirective],
 })
-export class PdfPreviewEnlargedCanvasComponent implements OnInit {
+export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
@@ -28,10 +28,17 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit {
     //Outputs
     isEnlargedViewOutput = output<boolean>();
 
+    // Injected services
+    private readonly renderer = inject(Renderer2);
+
     ngOnInit() {
         this.currentPage.set(this.initialPage()!);
-        this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
         this.displayEnlargedCanvas(this.originalCanvas()!);
+    }
+
+    ngAfterViewInit() {
+        const containerEl = this.enlargedContainer().nativeElement;
+        this.renderer.setStyle(containerEl, 'top', `${this.pdfContainer().scrollTop}px`);
     }
 
     /**

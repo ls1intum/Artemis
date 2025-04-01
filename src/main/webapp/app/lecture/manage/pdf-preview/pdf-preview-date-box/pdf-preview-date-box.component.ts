@@ -58,6 +58,9 @@ export class PdfPreviewDateBoxComponent implements OnInit {
             .join(', ');
     });
     isMultiplePages = computed(() => this.selectedPages().length > 1);
+    isSubmitDisabled = computed(() => {
+        return !this.hideForever() && !this.calendarSelected() && !this.selectedExercise();
+    });
 
     // Injected services
     private readonly alertService = inject(AlertService);
@@ -120,12 +123,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * @returns A formatted string representing the date and time.
      */
     formatDate(date: Date): string {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${year}-${month}-${day}T${hours}:${minutes}`;
+        return dayjs(date).format('YYYY-MM-DDTHH:mm');
     }
 
     /**
@@ -158,17 +156,32 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     }
 
     /**
+     * Determines the selected date based on the current user selection.
+     *
+     * - If the "hide forever" option is enabled, returns a date representing the distant future.
+     * - If the calendar is selected, returns the default date from the calendar.
+     * - If an exercise is selected and it has a due date, returns the due date of the selected exercise.
+     * - Otherwise, returns null.
+     *
+     * @returns The selected date as a Dayjs object, or null if no valid selection is made.
+     */
+    getSelectedDate(): dayjs.Dayjs | null {
+        if (this.hideForever()) {
+            return FOREVER;
+        } else if (this.calendarSelected()) {
+            return dayjs(this.defaultDate());
+        } else if (this.exerciseSelected() && this.selectedExercise()) {
+            return this.selectedExercise()!.dueDate!;
+        }
+        return null;
+    }
+
+    /**
      * Submit the selected date option
      */
     onSubmit(): void {
         const now = dayjs();
-        const selectedDate = this.hideForever()
-            ? FOREVER
-            : this.calendarSelected()
-              ? dayjs(this.defaultDate())
-              : this.exerciseSelected() && this.selectedExercise()
-                ? this.selectedExercise()!.dueDate!
-                : null;
+        const selectedDate = this.getSelectedDate();
 
         if (!selectedDate) return;
 
