@@ -153,12 +153,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: Artemis.war
-          path: artifacts
+          path: /tmp/artifact
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
       - name: Deploy Artemis
         run: |
-          WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
-
-          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" -e ansible_user="${{ vars.DEPLOYMENT_USER }}" --check
+          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="/tmp/artifact/Artemis.war" -e ansible_user="${{ vars.DEPLOYMENT_USER }}" --check
