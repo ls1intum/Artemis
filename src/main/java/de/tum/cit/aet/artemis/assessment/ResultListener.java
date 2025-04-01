@@ -46,6 +46,7 @@ public class ResultListener {
     @PostPersist
     @PostUpdate
     public void createOrUpdateResult(Result result) {
+        // TODO should probably not happen, but hack to fix some tests for now -> rework
         if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation) {
             instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), null);
         }
