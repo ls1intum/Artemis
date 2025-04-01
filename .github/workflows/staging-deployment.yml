@@ -1,5 +1,5 @@
-name: Artemis Staging Deployment
-
+---
+name: Deploy Artemis with Ansible
 on:
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         description: 'Environment to deploy to'
         required: true
         type: choice
-        options: 
+        options:
           - artemis-staging-localci.artemis.cit.tum.de
       triggered_by:
         description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
@@ -29,7 +29,7 @@ jobs:
   check-build-status:
     runs-on: ubuntu-latest
     outputs:
-      build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }} 
+      build_workflow_run_id: ${{ steps.set_build_workflow_id.outputs.workflow_id }}
     steps:
       - name: Print inputs
         run: |
@@ -45,21 +45,21 @@ jobs:
           route: GET /repos/${{ github.repository }}/actions/workflows/${{ env.build_workflow_name }}/runs?branch=${{ github.event.inputs.branch_name }}&head_sha=${{ github.event.inputs.commit_sha }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
       - name: Extract workflow ID
         id: set_build_workflow_id
         run: |
           WORKFLOW_DATA='${{ steps.get_workflow_run.outputs.data }}'
-          
+
           WORKFLOW_ID=$(echo "$WORKFLOW_DATA" | jq -r '
             .workflow_runs[0].id // empty
           ')
-          
+
           if [ -z "$WORKFLOW_ID" ]; then
             echo "::error::No build found for commit ${{ github.event.inputs.commit_sha }} on branch ${{ github.event.inputs.branch_name }}"
             exit 1
           fi
-          
+
           echo "Found build workflow ID: $WORKFLOW_ID for commit ${{ github.event.inputs.commit_sha }} on branch ${{ github.event.inputs.branch_name }}"
           echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_OUTPUT
 
@@ -70,12 +70,12 @@ jobs:
           route: GET /repos/${{ github.repository }}/actions/runs/${{ steps.set_build_workflow_id.outputs.workflow_id }}/artifacts?name=Artemis.war
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  
+
       - name: Verify artifact exists
         id: check_result
         run: |
           TOTAL_COUNT=$(echo '${{ steps.verify_artifact.outputs.data }}' | jq -r '.total_count')
-            
+
           if [ "$TOTAL_COUNT" -gt 0 ]; then
             echo "Found Artemis.war artifact in build for commit ${{ github.event.inputs.commit_sha }}"
           else
@@ -86,9 +86,9 @@ jobs:
   deploy:
     needs: check-build-status
     runs-on: [self-hosted, ase-large-ubuntu]
-    environment: 
-        name: ${{ github.event.inputs.environment_name }}
-        url: ${{ vars.DEPLOYMENT_URL }}
+    environment:
+      name: ${{ github.event.inputs.environment_name }}
+      url: ${{ vars.DEPLOYMENT_URL }}
     env:
       DEPLOYMENT_HOSTS_PRIMARY: ${{ vars.DEPLOYMENT_HOSTS_PRIMARY }}
       DEPLOYMENT_HOSTS_SECONDARY: ${{ vars.DEPLOYMENT_HOSTS_SECONDARY }}
@@ -96,23 +96,8 @@ jobs:
       DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
       HEALTH_CHECK_URL: "${{ vars.DEPLOYMENT_URL }}/management/health"
       WORKFLOW_RUN_ID: ${{ needs.check-build-status.outputs.build_workflow_run_id }}
-    
-    steps:
-      - name: Clean workspace
-        run: |
-          echo "[INFO] Cleaning workspace..."
-          rm -rf artifacts/
-          rm -rf ./*
-          mkdir -p artifacts
-          
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: Artemis.war
-          path: artifacts
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
+    steps:
       - name: Setup SSH and Known Hosts
         env:
           DEPLOYMENT_SSH_KEY: ${{ secrets.DEPLOYMENT_SSH_KEY }}
@@ -124,133 +109,56 @@ jobs:
           # Write private key
           echo "$DEPLOYMENT_SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          
+
           # Write known hosts
           echo "$DEPLOYMENT_HOST_PUBLIC_KEYS" > ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Phase 1 - Stop Secondary Nodes
-        run: |
-          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
-          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
-          for node in $HOSTS_SPACE_SEPARATED
-          do
-              SSH="ssh -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
-              echo "[INFO] Stop artemis.service on ${node} ..."
-              $SSH sudo systemctl stop artemis
-          done
+      - name: Checkout Artemis-Ansible repository
+        uses: actions/checkout@v2
+        with:
+          repository: 'ls1intum/artemis-ansible'
+          ref: 'chore/artemis-migration'
 
-      - name: Phase 1 - Deploy to Primary Node
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
         run: |
-          echo "[INFO] Deploy on $DEPLOYMENT_HOSTS_PRIMARY ..."
-          SSH="ssh -o LogLevel=ERROR -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $DEPLOYMENT_HOSTS_PRIMARY"
-          
-          # Store the war file name
+          python -m pip install --upgrade pip
+          pip install ansible
+
+      - name: Install Vault
+        run: |
+          wget https://releases.hashicorp.com/vault/1.8.1/vault_1.8.1_linux_amd64.zip
+          unzip vault_1.8.1_linux_amd64.zip
+          sudo mv vault /usr/local/bin/
+          vault --version
+
+      - name: Install Artemis-Ansible dependencies
+        run: |
+          pip3 install -r requirements.txt
+          ansible-galaxy collection install -r requirements.yml --force
+          ansible-galaxy install -r requirements.yml --force
+          ansible-galaxy install -r ~/.ansible/collections/ansible_collections/ls1intum/artemis/requirements.yml
+
+      - name: Set Vault token
+        run: |
+          echo "${{ secrets.VAULT_TOKEN }}" > ~/.vault-token
+          export VAULT_TOKEN=$(cat ~/.vault-token)
+
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: Artemis.war
+          path: artifacts
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ env.WORKFLOW_RUN_ID  }}
+
+      - name: Deploy Artemis
+        run: |
           WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
-          
-          # Check if artifacts directory contains the WAR file
-          echo "[INFO] Checking local artifacts..."
-          ls -la artifacts/
-          if [ ! -f "$WAR_FILE" ]; then
-            echo "Error: No WAR file found in artifacts directory"
-            exit 1
-          fi
-          
-          # Check remote directory exists and is writable
-          echo "[INFO] Checking remote directory..."
-          $SSH "if [ ! -d /opt/artemis ]; then echo 'Error: /opt/artemis directory does not exist'; exit 1; fi"
-          $SSH "if [ ! -w /opt/artemis ]; then echo 'Error: /opt/artemis directory is not writable'; exit 1; fi"
-          
-          # Remove old backup if exists
-          echo "[INFO] Remove old artemis.war ..."
-          $SSH "rm -f /opt/artemis/artemis.war.old"
-          
-          # Copy new artemis.war to node
-          echo "[INFO] Copy new artemis.war ..."
-          scp -v -i ~/.ssh/id_rsa "$WAR_FILE" $DEPLOYMENT_USER@$DEPLOYMENT_HOSTS_PRIMARY:/opt/artemis/artemis.war.new
-          if [ $? -ne 0 ]; then
-            echo "Error: Failed to copy WAR file"
-            exit 1
-          fi
-          
-          # Verify the file was copied successfully
-          echo "[INFO] Verify new WAR file..."
-          $SSH '
-            if [ ! -f /opt/artemis/artemis.war.new ]; then
-              echo "Error: No WAR file found at /opt/artemis/artemis.war.new"
-              exit 1
-            fi
-          '
-          
-          # Stop Artemis-Service on node
-          echo "[INFO] Stop artemis.service ..."
-          $SSH sudo systemctl stop artemis
-          
-          # Replace old artemis.war
-          echo "[INFO] Rename old artemis.war ..."
-          $SSH mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old || true
-          echo "[INFO] Rename new artemis.war ..."
-          $SSH mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war
-          
-          # Start Artemis-Service on node
-          echo "[INFO] Start artemis.service ..."
-          $SSH sudo systemctl start artemis
 
-      - name: Verify Primary Node Deployment
-        id: verify_deployment
-        timeout-minutes: 10
-        run: |
-          while true; do
-            echo "Performing health check..."
-          
-            RESPONSE=$(curl -s -f $HEALTH_CHECK_URL || echo '{"status":"DOWN"}')
-            STATUS=$(echo $RESPONSE | grep -o '"status":"[^"]*"' | cut -d'"' -f4)
-          
-            if [ "$STATUS" = "UP" ]; then
-              echo "Health check passed! Application is UP"
-              exit 0
-            else
-              echo "Health check failed. Status: $STATUS"
-              echo "Waiting 10 seconds before next attempt..."
-              sleep 10
-            fi
-          done
-
-      - name: Phase 2 - Deploy to Secondary Nodes
-        run: |
-          HOSTS_SPACE_SEPARATED=$(echo "$DEPLOYMENT_HOSTS_SECONDARY" | tr -d '\r' | tr '\n' ' ' | awk '{$1=$1};1')
-          WAR_FILE=$(ls -1 artifacts/*.war | head -n 1)
-          
-          echo "Debug: Hosts list: $HOSTS_SPACE_SEPARATED"
-
-          for node in $HOSTS_SPACE_SEPARATED
-          do
-            echo "##################################################################################################"
-            echo "[INFO] Deploy on $node ..."
-            echo "##################################################################################################"
-
-            # Build SSH-command
-            SSH="ssh -o LogLevel=ERROR -i ~/.ssh/id_rsa -l $DEPLOYMENT_USER $node"
-
-            # Remove old artemis.war
-            echo "[INFO] Remove old artemis.war ..."
-            $SSH "rm -f /opt/artemis/artemis.war.old"
-
-            # Copy new artemis.war to node
-            echo "[INFO] Copy new artemis.war ..."
-            scp -i ~/.ssh/id_rsa "$WAR_FILE" "$DEPLOYMENT_USER@$node:/opt/artemis/artemis.war.new"
-
-            # Stop Artemis-Service on node
-            echo "[INFO] Stop artemis.service ..."
-            $SSH "sudo systemctl stop artemis"
-
-            # Replace old artemis.war
-            echo "[INFO] Rename old artemis.war ..."
-            $SSH "mv /opt/artemis/artemis.war /opt/artemis/artemis.war.old || true"
-            echo "[INFO] Rename new artemis.war ..."
-            $SSH "mv /opt/artemis/artemis.war.new /opt/artemis/artemis.war"
-
-            # Start Artemis-Service on node
-            echo "[INFO] Start artemis.service ..."
-            $SSH "sudo systemctl start artemis"
-          done
+          ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" --check
