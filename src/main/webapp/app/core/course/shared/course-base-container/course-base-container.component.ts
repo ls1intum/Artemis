@@ -209,8 +209,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
      */
     onSubRouteActivate(componentRef: any) {
         this.getPageTitle();
-        const urlSegments = this.router.url.split('/');
+        const urlSegments = this.router.url.split('?')[0].split('/');
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
+
         this.hasSidebar.set(this.getHasSidebar());
         this.setupConversationService();
 
