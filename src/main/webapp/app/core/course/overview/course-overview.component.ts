@@ -113,6 +113,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         await this.initAfterCourseLoad();
         this.courseActionItems.set(this.getCourseActionItems());
         this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
+        this.sidebarItems.set(this.getSidebarItems());
     }
 
     handleCourseIdChange(courseId: number): void {

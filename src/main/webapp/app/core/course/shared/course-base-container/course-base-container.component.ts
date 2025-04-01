@@ -142,8 +142,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti: boolean) => {
             this.isShownViaLti.set(isShownViaLti);
         });
-
-        this.sidebarItems.set(this.getSidebarItems());
     }
 
     // Abstract methods to be implemented by child classes
