@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ACTIVE_MODULE_FEATURES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -14,23 +15,34 @@ class ModuleFeatureInfoContributorTest {
 
     private final Environment mockEnv = mock(Environment.class);
 
-    private ModuleFeatureInfoContributor contributor;
+    private static final List<String> modulePropertyNames = List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME);
 
     @Test
-    void testAtlasContribution() {
-        mockProperty(Constants.ATLAS_ENABLED_PROPERTY_NAME, true);
+    void testEnabledContribution() {
+        testContribution(true, List.of(Constants.MODULE_FEATURE_ATLAS));
+    }
 
-        contributor = new ModuleFeatureInfoContributor(mockEnv);
+    @Test
+    void testDisabledContribution() {
+        testContribution(false, List.of());
+    }
+
+    private void testContribution(boolean propertyEnabled, List<String> expectedReportFeatures) {
+        for (String key : modulePropertyNames) {
+            mockProperty(key, propertyEnabled);
+        }
+
+        ModuleFeatureInfoContributor contributor = new ModuleFeatureInfoContributor(mockEnv);
 
         Info.Builder builder = new Info.Builder();
         contributor.contribute(builder);
         Info info = builder.build();
 
-        var activeModuleFeatures = info.get("activeModuleFeatures");
+        var activeModuleFeatures = info.get(ACTIVE_MODULE_FEATURES);
         assertThat(activeModuleFeatures).isInstanceOf(List.class);
 
         var activeModuleFeaturesList = (List<String>) activeModuleFeatures;
-        assertThat(activeModuleFeaturesList).contains(Constants.MODULE_FEATURE_ATLAS);
+        assertThat(activeModuleFeaturesList).containsExactlyInAnyOrderElementsOf(expectedReportFeatures);
     }
 
     private void mockProperty(String key, Boolean value) {
