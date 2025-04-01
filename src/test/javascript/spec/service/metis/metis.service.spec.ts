@@ -251,6 +251,20 @@ describe('Metis Service', () => {
             subscription.unsubscribe();
         }));
 
+        it('should ignore posts with invalid postContext when receiving WebSocket update', fakeAsync(() => {
+            // Creating invalid postContext by not providing conversationId
+            const post: Post = { id: 100 } as Post;
+            const postDTO: MetisPostDTO = { post, action: MetisPostAction.CREATE } as MetisPostDTO;
+
+            metisService['handleNewOrUpdatedMessage'](postDTO);
+            tick();
+
+            const cachedPostsStub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
+
+            tick();
+            cachedPostsStub.unsubscribe();
+        }));
+
         it('should archive a post', fakeAsync(() => {
             const postServiceSpy = jest.spyOn(postService, 'updatePostDisplayPriority');
             const updatedPostSub = metisService.updatePostDisplayPriority(post.id!, DisplayPriority.ARCHIVED).subscribe((updatedPost) => {
