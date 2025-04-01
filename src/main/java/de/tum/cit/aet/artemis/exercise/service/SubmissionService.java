@@ -485,8 +485,8 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setRated(oldResult.isRated());
         newResult.copyProgrammingExerciseCounters(oldResult);
+        newResult.setSubmission(submission);
         var savedResult = resultRepository.save(newResult);
-        savedResult.setSubmission(submission);
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;
@@ -505,8 +505,8 @@ public class SubmissionService {
         if (result.getSubmission().getParticipation() == null) {
             result.getSubmission().setParticipation(submission.getParticipation());
         }
+        result.setSubmission(submission);
         var savedResult = resultRepository.save(result);
-        savedResult.setSubmission(submission);
         submission.addResult(savedResult);
         submissionRepository.save(submission);
         return savedResult;

@@ -154,6 +154,7 @@ import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.MockDelegate;
@@ -1046,8 +1047,8 @@ public class CourseTestService {
                 student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
-        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1),
-                practiceParticipation.findLatestSubmission().orElseThrow());
+        Submission practiceSubmission = participationUtilService.addSubmission(practiceParticipation, new ProgrammingSubmission());
+        Result practiceResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceSubmission);
         practiceResult.setRated(false);
         resultRepo.save(practiceResult);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(practiceResult, practiceParticipation, "ghjk");
