@@ -1,8 +1,8 @@
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
-import { AssertionServerOptions } from 'app/shared/user-settings/passkey-settings/passkey-settings.component';
 import { Injectable } from '@angular/core';
 import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/register-passkey.dto';
+import { PasskeyLoginResponseDto } from 'app/shared/user-settings/passkey-settings/dto/passkey-login-response.dto';
 
 /**
  * Note: [WebAuthn4j](https://github.com/webauthn4j/webauthn4j) exposes the endpoints, the endpoints are not explicitly defined in a resource
@@ -10,20 +10,36 @@ import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dt
 @Injectable({ providedIn: 'root' })
 export class WebauthnApiService extends BaseApiHttpService {
     /**
-     * The endpoints are provided by spring and not explicitly defined in a resource,
-     * therefore there is no "/api" prefix but instead a "webauthn" prefix.
+     * The endpoints are provided by spring and not explicitly defined in a resource, therefore there is no "/api" prefix
      */
-    protected baseUrl = 'webauthn';
+    protected baseUrl = '';
 
-    async getWebauthnOptions(): Promise<PasskeyOptions> {
-        return await this.post<PasskeyOptions>(`register/options`);
+    /**
+     * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-register-options}
+     */
+    async getRegistrationOptions(): Promise<PasskeyOptions> {
+        return await this.post<PasskeyOptions>(`webauthn/register/options`);
     }
 
+    // TODO get rid of any
+    /**
+     * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-register-create}
+     */
     async registerPasskey(registerPasskeyDto: RegisterPasskeyDto): Promise<any> {
-        return await this.post<RegisterPasskeyDto>(`register`, registerPasskeyDto);
+        return await this.post<RegisterPasskeyDto>(`webauthn/register`, registerPasskeyDto);
     }
 
-    async getAssertionOptions(): Promise<AssertionServerOptions> {
-        return await this.get<AssertionServerOptions>(`authenticate/options`);
+    /**
+     * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-verify-options}
+     */
+    async getAuthenticationOptions(): Promise<PublicKeyCredentialRequestOptions> {
+        return await this.post<PublicKeyCredentialRequestOptions>(`webauthn/authenticate/options`);
+    }
+
+    /**
+     * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-verify-get}
+     */
+    async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<PasskeyLoginResponseDto> {
+        return await this.post<PasskeyLoginResponseDto>(`login/webauthn`, publicKeyCredential);
     }
 }

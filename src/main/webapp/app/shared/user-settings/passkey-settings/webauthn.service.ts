@@ -1,21 +1,22 @@
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
-import { WebAuthn4NgCredentialRequestOptions } from 'app/shared/user-settings/passkey-settings/passkey-settings.component';
 import { decodeBase64url } from 'app/shared/util/utils';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
     private webauthnApiService = inject(WebauthnApiService);
 
-    async getCredential(publicKeyCredentialRequestOptions: WebAuthn4NgCredentialRequestOptions): Promise<Credential | undefined> {
-        const serverAssertionOptions = await this.webauthnApiService.getAssertionOptions();
+    async getCredential(): Promise<PublicKeyCredential | undefined> {
+        const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
 
+        // TODO verify what is base64url encoded and what is not
+        // we need to decode the base64url encoded challenge
         const assertionOptions: PublicKeyCredentialRequestOptions = {
-            challenge: decodeBase64url(serverAssertionOptions.challenge),
-            timeout: serverAssertionOptions.timeout,
-            rpId: serverAssertionOptions.rpId,
-            allowCredentials: serverAssertionOptions.allowCredentials
-                ? serverAssertionOptions.allowCredentials.map((credential) => {
+            challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
+            timeout: publicKeyCredentialOptions.timeout,
+            rpId: publicKeyCredentialOptions.rpId,
+            allowCredentials: publicKeyCredentialOptions.allowCredentials
+                ? publicKeyCredentialOptions.allowCredentials.map((credential) => {
                       return {
                           type: credential.type,
                           id: decodeBase64url(credential.id),
@@ -23,15 +24,16 @@ export class WebauthnService {
                       };
                   })
                 : undefined,
-            userVerification: serverAssertionOptions.userVerification,
-            extensions: serverAssertionOptions.extensions,
+            userVerification: publicKeyCredentialOptions.userVerification,
+            extensions: publicKeyCredentialOptions.extensions,
         };
 
-        const mergedOptions = { ...assertionOptions, ...publicKeyCredentialRequestOptions };
         const credentialRequestOptions: CredentialRequestOptions = {
-            publicKey: mergedOptions,
+            publicKey: assertionOptions,
         };
 
-        return (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
+        const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
+        // TODO find a better way than a cast
+        return credential as PublicKeyCredential | undefined;
     }
 }

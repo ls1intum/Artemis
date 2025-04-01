@@ -19,8 +19,8 @@ import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
-import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
 
 @Component({
     selector: 'jhi-home',
@@ -44,7 +44,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
     private webauthnService = inject(WebauthnService);
-    private passkeySettingsApiService = inject(PasskeySettingsApiService);
+    private webauthnApiService = inject(WebauthnApiService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -105,16 +105,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     }
 
     async loginWithPublicKeyCredential() {
-        const credential = await this.webauthnService.getCredential({
-            userVerification: 'preferred',
-        });
+        const credential = await this.webauthnService.getCredential();
 
         if (!credential || credential.type != 'public-key') {
             alert("Credential is undefined or type is not 'public-key'");
             return;
         }
 
-        await this.passkeySettingsApiService.loginWithPasskey(credential);
+        await this.webauthnApiService.loginWithPasskey(credential);
     }
 
     /**

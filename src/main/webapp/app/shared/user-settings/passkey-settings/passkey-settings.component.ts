@@ -8,30 +8,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
-import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
-import { WebAuthnPublicKeyCredentialDescriptor } from 'app/shared/user-settings/passkey-settings/dto/assertion-server-options.dto';
 import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
-import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
 import { decodeBase64url } from 'app/shared/util/utils';
-
-export interface WebAuthn4NgCredentialRequestOptions {
-    challenge?: BufferSource;
-    timeout?: number;
-    rpId?: string;
-    allowCredentials?: PublicKeyCredentialDescriptor[];
-    userVerification?: 'required' | 'preferred' | 'discouraged';
-    extensions?: AuthenticationExtensionsClientInputs;
-}
-
-export interface AssertionServerOptions {
-    challenge: string;
-    timeout?: number;
-    rpId?: string;
-    allowCredentials?: WebAuthnPublicKeyCredentialDescriptor[];
-    userVerification?: UserVerificationRequirement;
-    extensions?: AuthenticationExtensionsClientInputs;
-}
+import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
 
 @Component({
     selector: 'jhi-passkey-settings',
@@ -49,7 +29,6 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
-    private passkeySettingsApiService = inject(PasskeySettingsApiService);
     private webauthnApiService = inject(WebauthnApiService);
     private webauthnService = inject(WebauthnService);
 
@@ -78,22 +57,9 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    async loginWithPublicKeyCredential() {
-        const credential = await this.webauthnService.getCredential({
-            userVerification: 'preferred',
-        });
-
-        if (!credential || credential.type != 'public-key') {
-            alert("Credential is undefined or type is not 'public-key'");
-            return;
-        }
-
-        await this.passkeySettingsApiService.loginWithPasskey(credential);
-    }
-
     async addNewPasskey() {
         // TODO add proper error handling
-        const options = await this.webauthnApiService.getWebauthnOptions();
+        const options = await this.webauthnApiService.getRegistrationOptions();
         const credentialOptions = this.createCredentialOptions(options);
 
         const credential = await navigator.credentials.create({
@@ -117,6 +83,17 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
                 label: email,
             },
         });
+    }
+
+    async loginWithPublicKeyCredential() {
+        const credential = await this.webauthnService.getCredential();
+
+        if (!credential || credential.type != 'public-key') {
+            alert("Credential is undefined or type is not 'public-key'");
+            return;
+        }
+
+        await this.webauthnApiService.loginWithPasskey(credential);
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
