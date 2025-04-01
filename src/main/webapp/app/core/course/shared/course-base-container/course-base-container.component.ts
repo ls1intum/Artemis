@@ -204,10 +204,15 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        const url = this.router.url.includes('course-management') ? ['course-management', course.id] : ['courses', course.id, 'exercises'];
-        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+        const courseManagementRoute = this.router.url.includes('course-management');
+        const url = courseManagementRoute ? ['course-management', course.id] : ['courses', course.id, 'exercises'];
+        if (courseManagementRoute) {
             this.router.navigate(url);
-        });
+        } else {
+            this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+                this.router.navigate(url);
+            });
+        }
     }
 
     /**

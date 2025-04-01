@@ -153,8 +153,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToCourseUpdates(courseId: number) {
-        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
+        this.courseSub = this.courseManagementService.find(courseId).subscribe(async (courseResponse) => {
             this.course.set(courseResponse.body!);
+            this.sidebarItems.set(this.getSidebarItems());
+            await this.updateRecentlyAccessedCourses();
         });
     }
 
