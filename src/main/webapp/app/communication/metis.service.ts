@@ -660,10 +660,11 @@ export class MetisService implements OnDestroy {
         const postConvId = postDTO.post.conversation?.id;
         const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
         const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
+        const postIsPrivate = !!this.currentPostContextFilter.filterToCourseWide && !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
-        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase) {
+        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
 
