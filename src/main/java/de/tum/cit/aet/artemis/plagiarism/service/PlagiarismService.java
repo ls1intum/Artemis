@@ -77,7 +77,8 @@ public class PlagiarismService {
     /**
      * Checks whether the student with the given user login is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
      *
-     * @param userLogin the user login of the student
+     * @param submission the submission to check
+     * @param userLogin  the user login of the student
      * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
      *         otherwise false
      */
