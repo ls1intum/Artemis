@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
  */
 @Profile(PROFILE_JENKINS)
 @RestController
-@RequestMapping("api/assessment/public/")
+@RequestMapping("api/programming/public/")
 public class PublicProgrammingExerciseResultResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicProgrammingExerciseResultResource.class);
