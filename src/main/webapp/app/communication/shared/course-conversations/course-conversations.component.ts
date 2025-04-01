@@ -22,7 +22,7 @@ import {
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus, toSavedPostStatus } from 'app/communication/shared/entities/posting.model';
@@ -61,6 +61,8 @@ import {
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -115,6 +117,13 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     savedPosts: true,
     recents: true,
 };
+
+interface CombinedOption {
+    id: number;
+    name: string;
+    type: string;
+    img?: string;
+}
 
 @Component({
     selector: 'jhi-course-conversations',
@@ -190,6 +199,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
     readonly ButtonType = ButtonType;
+
+    // New properties for conversation search
+    filteredOptions: CombinedOption[] = [];
+    showDropdown = false;
+    selectedConversation: ConversationDTO | null = null;
+    inChannelSearchMode = false;
 
     // Icons
     faPlus = faPlus;
@@ -432,16 +447,113 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     hideSearchTerm() {
         this.courseWideSearchTerm = '';
+        this.selectedConversation = null;
+        this.showDropdown = false;
+        this.inChannelSearchMode = false;
+    }
+
+    filterItems(event: Event): void {
+        this.courseWideSearchTerm = (event.target as HTMLInputElement).value;
+
+        // Check if search starts with "in:"
+        if (this.courseWideSearchTerm.startsWith('in:')) {
+            this.inChannelSearchMode = true;
+            const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
+            this.filterOptions(searchQuery);
+            this.showDropdown = this.filteredOptions.length > 0;
+        } else {
+            this.inChannelSearchMode = false;
+            this.showDropdown = false;
+        }
+    }
+
+    filterOptions(searchQuery: string): void {
+        if (!searchQuery) {
+            this.filteredOptions = this.conversationsOfUser.map((conv) => ({
+                id: conv.id!,
+                name: this.getConversationName(conv),
+                type: 'channel',
+            }));
+        } else {
+            this.filteredOptions = this.conversationsOfUser
+                .filter((conversation) => {
+                    const name = this.getConversationName(conversation);
+                    return name.toLowerCase().includes(searchQuery);
+                })
+                .map((channel) => ({
+                    id: channel.id!,
+                    name: this.getConversationName(channel),
+                    type: 'channel',
+                }));
+        }
+    }
+
+    getConversationName(conversation: ConversationDTO): string {
+        if (isChannelDTO(conversation)) {
+            return conversation.name || 'Unnamed Channel';
+        } else if (isGroupChatDTO(conversation)) {
+            return conversation.name || 'Unnamed Group Chat';
+        } else if (isOneToOneChatDTO(conversation)) {
+            const user = conversation.members?.find((member) => !member.isRequestingUser);
+            return user ? (user.name ?? '') : 'Unnamed One-to-One Chat';
+        }
+
+        return 'Unknown Conversation';
+    }
+
+    selectOption(option: CombinedOption): void {
+        if (option.type === 'channel') {
+            const conversation = this.conversationsOfUser.find((conv) => conv.id === option.id);
+            if (conversation) {
+                this.selectedConversation = conversation;
+                this.showDropdown = false;
+                this.courseWideSearchTerm = '';
+                this.updateSearchWithSelectedChannel();
+            }
+        }
+    }
+
+    updateSearchWithSelectedChannel(): void {
+        // Focus the search input after selecting a channel
+        setTimeout(() => {
+            if (this.searchElement && this.searchElement()) {
+                this.searchElement()!.nativeElement.focus();
+            }
+        }, 0);
+    }
+
+    removeSelectedChannel(): void {
+        this.selectedConversation = null;
+        this.focusInput();
+    }
+
+    focusInput(): void {
+        setTimeout(() => {
+            if (this.searchElement && this.searchElement()) {
+                this.searchElement()!.nativeElement.focus();
+            }
+        }, 0);
     }
 
     onSearch() {
         if (this.isMobile) {
-            if (this.courseWideSearchTerm) {
+            if (this.courseWideSearchTerm || this.selectedConversation) {
                 this.courseSidebarService.closeSidebar();
             } else {
                 this.courseSidebarService.openSidebar();
             }
         }
+
+        // If a channel is selected, navigate to that channel
+        if (this.selectedConversation) {
+            this.selectedSavedPostStatus = null;
+            this.metisConversationService.setActiveConversation(this.selectedConversation.id);
+            this.focusPostId = undefined;
+            this.openThreadOnFocus = false;
+            this.selectedConversation = null;
+            return;
+        }
+
         this.selectedSavedPostStatus = undefined;
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
@@ -626,6 +738,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
             this.searchElement()!.nativeElement.focus();
+        }
+    }
+
+    @HostListener('document:click', ['$event'])
+    onClickOutside(event: Event): void {
+        // Close dropdown when clicking outside
+        if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
+            this.showDropdown = false;
         }
     }
 
