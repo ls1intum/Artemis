@@ -1,8 +1,0 @@
-<div class="position-relative">
-    <div [ngClass]="{ invisible: !editing }">
-        <span><fa-icon class="text-success mx-2" [icon]="faCheck" (click)="onSave()" /><fa-icon class="text-danger mx-2" [icon]="faXmark" (click)="onAbort()" /></span>
-    </div>
-    <div [ngClass]="{ invisible: editing, 'disabled text-secondary': disabled() }" class="position-absolute top-0 end-0">
-        <fa-icon class="mx-2" [icon]="faPencil" (click)="onEdit()" />
-    </div>
-</div>

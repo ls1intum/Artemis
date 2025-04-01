@@ -1,5 +1,23 @@
-<div class="row">
-    <h2 class="col" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
+<div class="d-flex justify-content-between">
+    <h2 jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.title"></h2>
+    @if (editing) {
+        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="update()">
+            <fa-icon class="ng" [icon]="faSave" />
+            {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+        </button>
+    }
+</div>
+<hr />
+<div class="row align-items-center">
+    <div class="col">
+        <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br />
+        <div class="d-flex align-items-center my-2">
+            <span class="dot background-color ms-1 me-2"></span>
+            <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.initialState"></span>
+            <span class="dot bg-primary ms-3 me-2"></span>
+            <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState">artemisApp.learnerProfile.courseLearnerProfile</span>
+        </div>
+    </div>
     <select class="form-select col-auto w-auto" (change)="courseChanged($event)">
         <option value="-1" jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.selectCourse" selected></option>
         @for (course of courses; track course.id) {
@@ -7,50 +25,36 @@
         }
     </select>
 </div>
-<hr />
-<span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.description"></span><br />
-<div class="d-flex align-items-center my-2">
-    <span class="dot background-color ms-1 me-2"></span>
-    <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.initialState"></span>
-    <span class="dot bg-primary ms-3 me-2"></span>
-    <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState">artemisApp.learnerProfile.courseLearnerProfile</span>
-</div>
-<div>
+<div [ngClass]="{ 'd-none': disabled }">
     <div class="row row-cols-2 gx-5 align-items-end">
         <div class="col">
-            <jhi-editable-slider
+            <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.aimForGradeOrBonus')"
                 [min]="1"
                 [max]="5"
-                [(initialValue)]="aimForGradeOrBonus"
-                [currentValue]="aimForGradeOrBonus()"
-                [(editStateTransition)]="aimForGradeOrBonusState"
-                (initialValueChange)="updateAimForGradeOrBonus($event)"
-                [disabled]="disabled"
+                [initialValue]="initialAimForGradeOrBonus"
+                [(currentValue)]="aimForGradeOrBonus"
+                (currentValueChange)="this.editing = true"
             />
         </div>
         <div class="col">
-            <jhi-editable-slider
+            <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.timeInvestment')"
                 [min]="1"
                 [max]="5"
-                [(initialValue)]="timeInvestment"
-                [currentValue]="timeInvestment()"
-                [(editStateTransition)]="timeInvestmentState"
-                (initialValueChange)="updateTimeInvestment($event)"
-                [disabled]="disabled"
+                [initialValue]="initialTimeInvestment"
+                [(currentValue)]="timeInvestment"
+                (currentValueChange)="this.editing = true"
             />
         </div>
         <div class="col align-items-end">
-            <jhi-editable-slider
+            <jhi-double-slider
                 [title]="translateService.instant('artemisApp.learnerProfile.courseLearnerProfile.repetitionIntensity')"
                 [min]="1"
                 [max]="5"
-                [(initialValue)]="repetitionIntensity"
-                [currentValue]="repetitionIntensity()"
-                [(editStateTransition)]="repetitionIntensityState"
-                (initialValueChange)="updateRepetitionIntensity($event)"
-                [disabled]="disabled"
+                [initialValue]="initialRepetitionIntensity"
+                [(currentValue)]="repetitionIntensity"
+                (currentValueChange)="this.editing = true"
             />
         </div>
     </div>

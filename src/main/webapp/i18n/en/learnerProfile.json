@@ -9,7 +9,8 @@
                 "currentState": "Current State",
                 "aimForGradeOrBonus": "Aim for grade or additional knowledge",
                 "timeInvestment": "Time investment",
-                "repetitionIntensity": "Repetition Intensity"
+                "repetitionIntensity": "Repetition Intensity",
+                "profileSaved": "Profile saved"
             }
         }
     }

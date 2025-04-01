@@ -1,0 +1,9 @@
+<div class="fs-5 my-3">
+    <div>
+        {{ title() }}
+    </div>
+    <div class="sliders_control">
+        <input id="initialSlider" class="form-range" type="range" [value]="initialValue()" min="{{ min() }}" max="{{ max() }}" disabled />
+        <input id="currentSlider" class="form-range" type="range" value="{{ currentValue() }}" min="{{ min() }}" max="{{ max() }}" (change)="onChange($event)" />
+    </div>
+</div>

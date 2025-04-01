@@ -1,0 +1,35 @@
+.sliders_control {
+    position: relative;
+    min-height: 25px;
+}
+
+input[type='range']#currentSlider::-webkit-slider-thumb {
+    background-color: var(--primary);
+    cursor: pointer;
+}
+
+input[type='range']#currentSlider::-moz-range-thumb {
+    background-color: var(--primary);
+    cursor: pointer;
+}
+
+input[type='range']#currentSlider::-ms-thumb {
+    background-color: var(--primary);
+    cursor: pointer;
+}
+
+input[type='range'] {
+    position: absolute;
+}
+
+#currentSlider {
+    z-index: 1;
+}
+
+#initialSlider {
+    pointer-events: none;
+}
+
+#currentSlider::-moz-range-track {
+    background-color: transparent;
+}
