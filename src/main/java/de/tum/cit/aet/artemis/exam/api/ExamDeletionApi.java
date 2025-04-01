@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.exam.api;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
@@ -19,7 +17,7 @@ public class ExamDeletionApi extends AbstractExamApi {
         this.examDeletionService = examDeletionService;
     }
 
-    public void delete(@NotNull long examId) {
+    public void delete(long examId) {
         examDeletionService.delete(examId);
     }
 }
