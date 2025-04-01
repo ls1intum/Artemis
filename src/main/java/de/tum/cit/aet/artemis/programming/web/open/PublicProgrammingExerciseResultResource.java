@@ -1,7 +1,8 @@
-package de.tum.cit.aet.artemis.assessment.web.open;
+package de.tum.cit.aet.artemis.programming.web.open;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.thymeleaf.util.StringUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -32,17 +34,17 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
- * REST controller for receiving build results.
+ * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_JENKINS)
 @RestController
 @RequestMapping("api/assessment/public/")
-public class PublicResultResource {
+public class PublicProgrammingExerciseResultResource {
 
-    private static final Logger log = LoggerFactory.getLogger(PublicResultResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PublicProgrammingExerciseResultResource.class);
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String artemisAuthenticationTokenValue = "";
+    private String artemisAuthenticationTokenValue;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
@@ -54,8 +56,9 @@ public class PublicResultResource {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ResultService resultService, ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService) {
+    public PublicProgrammingExerciseResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ResultService resultService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingMessagingService programmingMessagingService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.resultService = resultService;
@@ -78,8 +81,14 @@ public class PublicResultResource {
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
     public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
-        log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
+        log.debug("Received new programming exercise result from Jenkins");
+        if (StringUtils.isEmpty(artemisAuthenticationTokenValue) || artemisAuthenticationTokenValue.length() < 12) {
+            log.error("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
+            throw new BadRequestAlertException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.", "BuildPlan",
+                    "ciExceptionForBuildPlanKey");
+        }
+
+        if (!Objects.equals(token, artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             throw new AccessForbiddenException(); // Only allow endpoint when using correct token
         }

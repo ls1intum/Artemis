@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Comparator;
 import java.util.Optional;
@@ -38,7 +39,7 @@ import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureInterface<IrisTextExerciseChatSession>, IrisRateLimitedFeatureInterface {
 
     private final IrisSettingsService irisSettingsService;
