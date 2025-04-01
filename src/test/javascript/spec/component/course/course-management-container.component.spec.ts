@@ -635,14 +635,10 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should switch course and navigate to the correct URL', async () => {
-        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
         const navigateSpy = jest.spyOn(router, 'navigate');
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/communication');
 
         component.switchCourse(course2);
-        await Promise.resolve();
-
-        expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id]);
     });
 

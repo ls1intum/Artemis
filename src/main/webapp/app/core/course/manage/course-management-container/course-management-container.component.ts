@@ -90,6 +90,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
+    private learningPathsActive = signal(false);
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -139,6 +140,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
         });
+
+        this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
+            this.learningPathsActive.set(isActive);
+        });
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
@@ -153,10 +158,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private subscribeToCourseUpdates(courseId: number) {
-        this.courseSub = this.courseManagementService.find(courseId).subscribe(async (courseResponse) => {
+        this.courseSub?.unsubscribe();
+        this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course.set(courseResponse.body!);
             this.sidebarItems.set(this.getSidebarItems());
-            await this.updateRecentlyAccessedCourses();
+            this.updateRecentlyAccessedCourses().catch();
         });
     }
 
@@ -241,12 +247,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
-            this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
-                if (isActive) {
-                    sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
-                }
-            });
+        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled() && this.learningPathsActive()) {
+            sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
         }
 
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));

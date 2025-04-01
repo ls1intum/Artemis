@@ -119,6 +119,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
         this.getCollapseStateFromStorage();
         const storedCourse = this.courseStorageService.getCourse(this.courseId());
+
         this.course.set(storedCourse);
 
         // Notify the course access storage service that the course has been accessed
