@@ -9,7 +9,7 @@ import org.springframework.core.env.Environment;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
-public class BuildagentConfigurationTest extends AbstractArtemisBuildAgentTest {
+class BuildagentConfigurationTest extends AbstractArtemisBuildAgentTest {
 
     @Autowired
     private Environment environment;
