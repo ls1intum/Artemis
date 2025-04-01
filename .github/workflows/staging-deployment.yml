@@ -85,7 +85,7 @@ jobs:
 
   deploy:
     needs: check-build-status
-    runs-on: [self-hosted, ase-large-ubuntu]
+    runs-on: [self-hosted, deploy-artemis]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
