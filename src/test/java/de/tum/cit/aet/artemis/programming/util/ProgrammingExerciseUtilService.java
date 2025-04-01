@@ -158,6 +158,9 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private GitService gitService;
 
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
     public ProgrammingExercise createSampleProgrammingExercise() {
         return createSampleProgrammingExercise("Title", "Shortname");
     }
@@ -742,11 +745,11 @@ public class ProgrammingExerciseUtilService {
      * Adds a template submission with a result to the given programming exercise.
      * The method will make sure that all necessary entities are connected.
      *
-     * @param exerciseId The id of the programming exercise to which the submission should be added.
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
      * @return the newly created result
      */
-    public Result addTemplateSubmissionWithResult(long exerciseId) {
-        var templateParticipation = templateProgrammingExerciseParticipationTestRepo.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exerciseId);
+    public Result addTemplateSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var templateParticipation = programmingExercise.getTemplateParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
         // TODO check if it needs to be persisted like before
@@ -758,6 +761,30 @@ public class ProgrammingExerciseUtilService {
         result.setSubmission(submission);
         result = resultRepo.save(result);
         templateProgrammingExerciseParticipationTestRepo.save(templateParticipation);
+        return result;
+    }
+
+    // TODO jfr rework those helpers once tests are running through
+    /**
+     * Adds a solution submission with a result to the given programming exercise.
+     * The method will make sure that all necessary entities are connected.
+     *
+     * @param programmingExercise The ProgrammingExercise of the programming exercise to which the submission should be added.
+     * @return the newly created result
+     */
+    public Result addSolutionSubmissionWithResult(ProgrammingExercise programmingExercise) {
+        var templateParticipation = programmingExercise.getSolutionParticipation();
+        ProgrammingSubmission submission = new ProgrammingSubmission();
+        submission = submissionRepository.save(submission);
+        // TODO check if it needs to be persisted like before
+        Result result = new Result();
+        templateParticipation.addSubmission(submission);
+        submission.setParticipation(templateParticipation);
+        submission.addResult(result);
+        submission = submissionRepository.save(submission);
+        result.setSubmission(submission);
+        result = resultRepo.save(result);
+        solutionProgrammingExerciseParticipationRepository.save(templateParticipation);
         return result;
     }
 

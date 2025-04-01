@@ -766,7 +766,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
         if (templateParticipation) {
             programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise);
-            result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise.getId());
+            result = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
         }
         else {
             result = programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, new ProgrammingSubmission(), student1);

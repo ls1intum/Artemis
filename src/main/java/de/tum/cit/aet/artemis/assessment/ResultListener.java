@@ -46,7 +46,7 @@ public class ResultListener {
     @PostPersist
     @PostUpdate
     public void createOrUpdateResult(Result result) {
-        if (result.getSubmission().getParticipation() instanceof StudentParticipation participation) {
+        if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation) {
             instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), null);
         }
     }

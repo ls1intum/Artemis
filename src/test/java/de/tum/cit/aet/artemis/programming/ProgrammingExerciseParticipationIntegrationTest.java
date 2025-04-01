@@ -346,7 +346,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        // TODO Michal Kawka we might need to set up a submission here
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -358,7 +357,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetParticipationAllResults_afterExam_hidesResultsBeforeExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(4, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        // TODO Michal Kawka we might need to set up a submission here
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -370,7 +368,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        // TODO Michal Kawka we might need to set up a submission here
         participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
@@ -898,7 +895,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        Result r = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise.getId());
+        Result r = programmingExerciseUtilService.addTemplateSubmissionWithResult(programmingExercise);
         r.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
         participationUtilService.addVariousVisibilityFeedbackToResult(r);
@@ -907,9 +904,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult(String login) {
         programmingExerciseParticipation = programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        var submission = ParticipationFactory.generateProgrammingSubmission(true);
-
-        Result result = this.programmingExerciseUtilService.addProgrammingSubmissionWithResult(programmingExercise, submission, login);
+        Result result = this.programmingExerciseUtilService.addSolutionSubmissionWithResult(programmingExercise);
+        ;
         result.successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(null);
 
         participationUtilService.addVariousVisibilityFeedbackToResult(result);
