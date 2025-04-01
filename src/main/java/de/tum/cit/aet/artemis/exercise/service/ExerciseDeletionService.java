@@ -26,11 +26,10 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -52,8 +51,6 @@ public class ExerciseDeletionService {
     private final ParticipationService participationService;
 
     private final ProgrammingExerciseService programmingExerciseService;
-
-    private final ModelingExerciseService modelingExerciseService;
 
     private final QuizExerciseService quizExerciseService;
 
@@ -79,17 +76,16 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository,
-            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository, LectureUnitService lectureUnitService,
+            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.modelingExerciseService = modelingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
@@ -101,7 +97,7 @@ public class ExerciseDeletionService {
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -165,8 +161,8 @@ public class ExerciseDeletionService {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
 
-        if (irisSettingsService.isPresent()) {
-            irisSettingsService.get().deleteSettingsFor(exercise);
+        if (irisSettingsApi.isPresent()) {
+            irisSettingsApi.get().deleteSettingsFor(exercise);
         }
 
         // delete all plagiarism results belonging to this exercise
