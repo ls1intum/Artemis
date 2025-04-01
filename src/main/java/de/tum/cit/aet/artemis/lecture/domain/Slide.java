@@ -33,6 +33,7 @@ public class Slide extends DomainObject {
     @Column(name = "hidden")
     private ZonedDateTime hidden;
 
+    // Exercise ID is retained to sync the Slide's hidden date with the Exercise's due date when linked
     @ManyToOne
     @JoinColumn(name = "exercise_id")
     private Exercise exercise;
