@@ -102,4 +102,12 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         assertThat(userIdeMappingRepository.findAllByUserId(student1.getId())).as("ide preference got deleted").isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetIdePreferenceForUnsupportedLanguage() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", "UNSUPPORTED_LANGUAGE");
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
 }
