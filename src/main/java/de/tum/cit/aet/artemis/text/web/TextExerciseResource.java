@@ -78,7 +78,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -156,7 +156,7 @@ public class TextExerciseResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
@@ -166,7 +166,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsService> irisSettingsService) {
+            Optional<IrisSettingsApi> irisSettingsApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -192,7 +192,7 @@ public class TextExerciseResource {
         this.channelRepository = channelRepository;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -234,7 +234,7 @@ public class TextExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(textExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(result, new HashSet<>()));
+        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(result, new HashSet<>()));
 
         return ResponseEntity.created(new URI("/api/text/text-exercises/" + result.getId())).body(result);
     }
@@ -296,7 +296,7 @@ public class TextExerciseResource {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
-        irisSettingsService.ifPresent(iss -> iss.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
+        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(textExercise, textExerciseBeforeUpdate.getCategories()));
 
         return ResponseEntity.ok(updatedTextExercise);
     }
@@ -386,7 +386,7 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, textExercise, user);
         // NOTE: we use the exerciseDeletionService here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(textExercise, textExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, textExercise.getTitle())).build();
     }
 

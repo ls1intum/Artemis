@@ -1,5 +1,5 @@
 import { BehaviorSubject } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export class MockProfileService {
     getProfileInfo = () =>

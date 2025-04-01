@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { of } from 'rxjs';
@@ -17,15 +17,15 @@ import { CourseDetailLineChartComponent } from 'app/core/course/manage/detail/co
 import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;

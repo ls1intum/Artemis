@@ -1,6 +1,6 @@
 import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
@@ -17,10 +17,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',

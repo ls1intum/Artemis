@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
@@ -25,7 +25,7 @@ import {
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';

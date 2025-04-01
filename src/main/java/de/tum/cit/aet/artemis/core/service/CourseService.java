@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -107,7 +108,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
@@ -204,7 +205,7 @@ public class CourseService {
 
     private final Optional<LearningPathApi> learningPathApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     private final LectureRepository lectureRepository;
 
@@ -222,6 +223,8 @@ public class CourseService {
 
     private final LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
 
+    private final CourseNotificationRepository courseNotificationRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
@@ -232,11 +235,11 @@ public class CourseService {
             SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
             Optional<TutorialGroupApi> tutorialGroupApi, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
-            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, LectureRepository lectureRepository,
             Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
             AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
-            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository) {
+            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseNotificationRepository courseNotificationRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -270,7 +273,7 @@ public class CourseService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
@@ -282,6 +285,7 @@ public class CourseService {
         this.faqRepository = faqRepository;
         this.learnerProfileApi = learnerProfileApi;
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
+        this.courseNotificationRepository = courseNotificationRepository;
     }
 
     /**
@@ -538,7 +542,7 @@ public class CourseService {
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
         learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
-        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
     }
@@ -594,6 +598,10 @@ public class CourseService {
     private void deleteNotificationsOfCourse(Course course) {
         List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
         groupNotificationRepository.deleteAll(notifications);
+
+        var courseNotifications = courseNotificationRepository.findAllByCourseId(course.getId());
+
+        courseNotificationRepository.deleteAll(courseNotifications);
     }
 
     private void deleteLecturesOfCourse(Course course) {
@@ -604,7 +612,7 @@ public class CourseService {
 
     private void deleteExercisesOfCourse(Course course) {
         for (Exercise exercise : course.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), true, true);
+            exerciseDeletionService.delete(exercise.getId(), true);
         }
     }
 

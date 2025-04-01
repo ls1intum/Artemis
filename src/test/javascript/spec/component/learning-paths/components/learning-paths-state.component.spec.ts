@@ -9,7 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { HealthStatus, LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
+import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('LearningPathsStateComponent', () => {

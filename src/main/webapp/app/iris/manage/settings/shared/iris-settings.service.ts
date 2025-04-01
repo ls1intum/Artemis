@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisVariant } from 'app/entities/iris/settings/iris-variant';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
+import { IrisVariant } from 'app/iris/shared/entities/settings/iris-variant';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 
 /**
  * Service for calling the Iris settings endpoints on the server

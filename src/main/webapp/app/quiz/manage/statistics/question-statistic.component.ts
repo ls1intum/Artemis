@@ -1,6 +1,6 @@
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
-import { QuizQuestionStatistic } from 'app/entities/quiz/quiz-question-statistic.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -9,7 +9,7 @@ import { Subscription } from 'rxjs';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { CanBecomeInvalid } from 'app/entities/quiz/drop-location.model';
+import { CanBecomeInvalid } from 'app/quiz/shared/entities/drop-location.model';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
 
 export const redColor = '#d9534f';

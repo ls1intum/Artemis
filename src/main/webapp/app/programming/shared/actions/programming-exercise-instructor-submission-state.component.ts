@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@ang
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

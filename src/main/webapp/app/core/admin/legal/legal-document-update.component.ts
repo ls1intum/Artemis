@@ -3,7 +3,7 @@ import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } fr
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { UnsavedChangesWarningComponent } from 'app/core/admin/legal/unsaved-changes-warning/unsaved-changes-warning.component';
-import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/entities/legal-document.model';
+import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, tap } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';

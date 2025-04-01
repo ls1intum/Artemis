@@ -70,7 +70,6 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -120,14 +119,12 @@ public class StudentExamService {
 
     private final TaskScheduler scheduler;
 
-    private final ExamQuizQuestionsGenerator examQuizQuestionsGenerator;
-
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, SubmittedAnswerRepository submittedAnswerRepository, Optional<TextSubmissionApi> textSubmissionApi,
             ModelingSubmissionRepository modelingSubmissionRepository, SubmissionVersionService submissionVersionService, SubmissionService submissionService,
             StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingTriggerService programmingTriggerService, ExamRepository examRepository, CacheManager cacheManager, WebsocketMessagingService websocketMessagingService,
-            @Qualifier("taskScheduler") TaskScheduler scheduler, QuizPoolService quizPoolService) {
+            @Qualifier("taskScheduler") TaskScheduler scheduler) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -145,7 +142,6 @@ public class StudentExamService {
         this.cacheManager = cacheManager;
         this.websocketMessagingService = websocketMessagingService;
         this.scheduler = scheduler;
-        this.examQuizQuestionsGenerator = quizPoolService;
     }
 
     /**
@@ -765,7 +761,7 @@ public class StudentExamService {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
         long start = System.nanoTime();
         Set<User> userSet = Collections.singleton(student);
-        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet, examQuizQuestionsGenerator).getFirst();
+        StudentExam studentExam = studentExamRepository.createRandomStudentExams(exam, userSet).getFirst();
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
@@ -790,7 +786,7 @@ public class StudentExamService {
         Set<User> users = exam.getRegisteredUsers();
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, users, examQuizQuestionsGenerator);
+        return studentExamRepository.createRandomStudentExams(exam, users);
     }
 
     /**
@@ -812,6 +808,6 @@ public class StudentExamService {
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
-        return studentExamRepository.createRandomStudentExams(exam, missingUsers, examQuizQuestionsGenerator);
+        return studentExamRepository.createRandomStudentExams(exam, missingUsers);
     }
 }

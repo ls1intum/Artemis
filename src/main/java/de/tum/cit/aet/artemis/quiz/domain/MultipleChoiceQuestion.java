@@ -19,9 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceAllOrNothing;
 import de.tum.cit.aet.artemis.quiz.domain.scoring.ScoringStrategyMultipleChoiceProportionalWithPenalty;
@@ -39,11 +37,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     @JoinColumn(name = "question_id")
     @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     @Column(name = "single_choice")
-    @JsonView(QuizView.Before.class)
     private boolean singleChoice = false;
 
     public List<AnswerOption> getAnswerOptions() {
@@ -178,8 +174,6 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return updateNecessary;
     }
 
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
@@ -251,4 +245,5 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         question.setId(getId());
         return question;
     }
+
 }

@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
@@ -45,15 +45,15 @@ public class CompetencyJolService {
 
     private final UserRepository userRepository;
 
-    private final Optional<PyrisEventService> pyrisEventService;
+    private final Optional<PyrisEventApi> pyrisEventApi;
 
     public CompetencyJolService(CompetencyJolRepository competencyJolRepository, CompetencyRepository competencyRepository,
-            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventService> pyrisEventService) {
+            CompetencyProgressRepository competencyProgressRepository, UserRepository userRepository, Optional<PyrisEventApi> pyrisEventApi) {
         this.competencyJolRepository = competencyJolRepository;
         this.competencyRepository = competencyRepository;
         this.competencyProgressRepository = competencyProgressRepository;
         this.userRepository = userRepository;
-        this.pyrisEventService = pyrisEventService;
+        this.pyrisEventApi = pyrisEventApi;
     }
 
     /**
@@ -84,7 +84,7 @@ public class CompetencyJolService {
         final var jol = createCompetencyJol(competencyId, userId, jolValue, ZonedDateTime.now(), competencyProgress);
         competencyJolRepository.save(jol);
 
-        pyrisEventService.ifPresent(service -> {
+        pyrisEventApi.ifPresent(service -> {
             // Inform Iris so it can send a message to the user
             try {
                 service.trigger(new CompetencyJolSetEvent(jol));

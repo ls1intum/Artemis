@@ -3,13 +3,9 @@ package de.tum.cit.aet.artemis.modeling.domain;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_SUBMISSION_MODEL_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Size;
 
 import org.springframework.util.StringUtils;
@@ -17,7 +13,6 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
@@ -41,12 +36,6 @@ public class ModelingSubmission extends Submission {
     @Column(name = "explanation_text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
     private String explanationText;
-
-    @Transient
-    @JsonSerialize
-    private Set<SimilarElementCount> similarElementCounts = new HashSet<>();
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getModel() {
         return model;
@@ -104,17 +93,5 @@ public class ModelingSubmission extends Submission {
         catch (JsonProcessingException ex) {
             return false;
         }
-    }
-
-    public Set<SimilarElementCount> getSimilarElements() {
-        return similarElementCounts;
-    }
-
-    public void addSimilarElement(SimilarElementCount element) {
-        this.similarElementCounts.add(element);
-    }
-
-    public void setSimilarElements(Set<SimilarElementCount> elementCounts) {
-        this.similarElementCounts = elementCounts;
     }
 }

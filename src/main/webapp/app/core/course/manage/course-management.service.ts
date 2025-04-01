@@ -4,31 +4,32 @@ import { CoursesForDashboardDTO } from 'app/core/course/manage/courses-for-dashb
 import { BehaviorSubject, Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/entities/course.model';
+import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { User, UserNameAndLoginDTO, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
+import { Submission, reconnectSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
-import { StudentDTO } from 'app/entities/student-dto.model';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { CourseForDashboardDTO } from 'app/core/course/manage/course-for-dashboard-dto';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { OnlineCourseDtoModel } from 'app/lti/shared/online-course-dto.model';
+import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from './course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -45,6 +46,7 @@ export class CourseManagementService {
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private scoresStorageService = inject(ScoresStorageService);
+    private courseNotificationService = inject(CourseNotificationService);
 
     private resourceUrl = 'api/core/courses';
 
@@ -172,6 +174,9 @@ export class CourseManagementService {
                 if (res.body) {
                     const courses: Course[] = [];
                     res.body.courses?.forEach((courseForDashboardDTO) => {
+                        if (courseForDashboardDTO.course.id) {
+                            this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                        }
                         courses.push(courseForDashboardDTO.course);
                         this.saveScoresInStorage(courseForDashboardDTO);
                     });
@@ -197,6 +202,9 @@ export class CourseManagementService {
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
                     const courseForDashboardDTO: CourseForDashboardDTO = res.body;
+                    if (courseForDashboardDTO.course.id) {
+                        this.courseNotificationService.updateNotificationCountMap(courseForDashboardDTO.course!.id, courseForDashboardDTO.courseNotificationCount);
+                    }
                     this.saveScoresInStorage(courseForDashboardDTO);
 
                     // Replace the CourseForDashboardDTO in the response body with the normal course to enable further processing.
@@ -696,7 +704,7 @@ export class CourseManagementService {
         return res;
     }
 
-    private findAllForNotifications(): Observable<EntityArrayResponseType> {
+    public findAllForNotifications(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
         return this.http.get<Course[]>(`${this.resourceUrl}/for-notifications`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),

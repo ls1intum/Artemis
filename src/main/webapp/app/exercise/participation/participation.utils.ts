@@ -1,10 +1,10 @@
-import { Participation, getExercise } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
 import { isAIResultAndIsBeingProcessed } from 'app/exercise/result/result.utils';
 

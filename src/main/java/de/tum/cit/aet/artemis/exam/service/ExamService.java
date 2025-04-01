@@ -73,7 +73,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -105,12 +104,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -139,11 +136,7 @@ public class ExamService {
 
     private final QuizExerciseRepository quizExerciseRepository;
 
-    private final ExamDateService examDateService;
-
     private final ExamLiveEventsService examLiveEventsService;
-
-    private final InstanceMessageSendService instanceMessageSendService;
 
     private final ExamRepository examRepository;
 
@@ -183,30 +176,26 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
-    private final QuizPoolService quizPoolService;
-
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
 
     private static final String NOT_ALLOWED_TO_ACCESS_THE_GRADE_SUMMARY = "You are not allowed to access the grade summary of a student exam ";
 
-    public ExamService(ExamDateService examDateService, ExamRepository examRepository, StudentExamRepository studentExamRepository,
-            InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, StudentParticipationRepository studentParticipationRepository,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository, ExamLiveEventsService examLiveEventsService,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository,
-            AuthorizationCheckService authorizationCheckService, BonusService bonusService, ExerciseDeletionService exerciseDeletionService,
-            SubmittedAnswerRepository submittedAnswerRepository, AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService,
-            CourseRepository courseRepository, QuizPoolService quizPoolService, QuizResultService quizResultService) {
-        this.examDateService = examDateService;
+    public ExamService(ExamRepository examRepository, StudentExamRepository studentExamRepository, TutorLeaderboardService tutorLeaderboardService,
+            StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
+            ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
+            CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
+            GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
+            BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
+            AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
+            QuizResultService quizResultService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
         this.complaintRepository = complaintRepository;
         this.complaintResponseRepository = complaintResponseRepository;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -226,7 +215,6 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
-        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
     }
@@ -1179,19 +1167,6 @@ public class ExamService {
     }
 
     /**
-     * Set properties for quiz exercises in exam
-     *
-     * @param exam The exam for which to set the properties
-     */
-    public void setQuizExamProperties(Exam exam) {
-        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
-        if (optionalQuizPool.isPresent()) {
-            QuizPool quizPool = optionalQuizPool.get();
-            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
-        }
-    }
-
-    /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
@@ -1299,18 +1274,6 @@ public class ExamService {
     }
 
     /**
-     * Schedules all modeling exercises
-     * This is executed when exam is updated or individual working times are updated
-     *
-     * @param exam - the exam whose modeling exercises will be scheduled
-     */
-    public void scheduleModelingExercises(Exam exam) {
-        var modelingExercises = getAllExercisesForExamByType(exam, ModelingExercise.class);
-        // for all modeling exercises in the exam, send their ids for scheduling
-        modelingExercises.stream().map(Exercise::getId).forEach(instanceMessageSendService::sendModelingExerciseSchedule);
-    }
-
-    /**
      * Search for all exams fitting a {@link SearchTermPageableSearchDTO search query}. The result is paged,
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exams if there are that many in Artemis.
@@ -1376,8 +1339,6 @@ public class ExamService {
      * Updates the working times for student exams based on a given change in working time and reschedules exercises accordingly.
      * This method considers any existing time extensions for individual students and adjusts their working times relative to the original exam duration and the specified change.
      * After updating the working times, it saves the changes and, if the exam is already visible, notifies both the students and relevant instances about the update.
-     * Additionally, if the current time is before the latest individual exam end date, it potentially triggers a rescheduling of the clustering of modeling submissions,
-     * considering the use of Compass.
      *
      * @param exam                 The exam entity for which the student exams and exercises need to be updated and rescheduled. The student exams must be already loaded.
      * @param originalExamDuration The original duration of the exam, in seconds, before any changes.
@@ -1386,7 +1347,6 @@ public class ExamService {
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
         var now = now();
-        User instructor = userRepository.getUser();
 
         var studentExams = exam.getStudentExams();
         for (var studentExam : studentExams) {
@@ -1410,11 +1370,6 @@ public class ExamService {
             }
         }
         studentExamRepository.saveAll(studentExams);
-
-        // NOTE: potentially re-schedule clustering of modeling submissions (in case Compass is active)
-        if (now.isBefore(examDateService.getLatestIndividualExamEndDate(exam))) {
-            scheduleModelingExercises(exam);
-        }
     }
 
     /**

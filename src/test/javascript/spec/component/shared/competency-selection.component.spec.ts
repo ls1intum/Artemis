@@ -1,24 +1,24 @@
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Competency, CompetencyLearningObjectLink } from 'app/entities/competency.model';
+import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
 import { of, throwError, BehaviorSubject } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ChangeDetectorRef } from '@angular/core';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { Prerequisite } from 'app/entities/prerequisite.model';
+import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from '../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from '../../../../../main/webapp/app/shared/layouts/profiles/profile-info.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_ATLAS } from '../../../../../main/webapp/app/app.constants';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 describe('CompetencySelection', () => {
     let fixture: ComponentFixture<CompetencySelectionComponent>;

@@ -203,8 +203,7 @@ public class LearningObjectImportService {
                 importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                         fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow,
-                    modelingExerciseImportService::importModelingExercise);
+                    modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
                 var api = textExerciseImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,

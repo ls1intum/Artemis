@@ -74,12 +74,22 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_branch }}
-      - name: Download Artemis.war
+      - name: Download Docker tag
         uses: actions/download-artifact@v4
         with:
-          name: Artemis.war
+          name: docker-tag
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+      - name: Set Docker Tag Environment Variable
+        run: |
+          if [ -f "docker-tag.txt" ]; then
+            ARTEMIS_DOCKER_TAG=$(cat docker-tag.txt)
+            echo "ARTEMIS_DOCKER_TAG=${ARTEMIS_DOCKER_TAG}" >> $GITHUB_ENV
+            echo "Using Docker tag: ${ARTEMIS_DOCKER_TAG}"
+          else
+            echo "::error::No docker-tag.txt found in the previous build workflow! Artifact is needed to run E2E tests."
+            exit 1
+          fi
 
       - name: Make scripts executable
         run: |
@@ -114,51 +124,33 @@ jobs:
       - name: Run cleanup script (after E2E)
         run: .ci/E2E-tests/cleanup.sh
 
-      # Once the tests are finished, we need to parse the test results to get
-      # the total number of tests, the number of tests that passed, failed or were skipped.
-      # We need this info to display it to the Developers in the Workflow section below each pull request
-      # The next step in this workflow uses this info to update the status.
-      - name: Parse test results
+      - name: Test Report
+        uses: mikepenz/action-junit-report@v5.5.0
+        id: test-reporter
         if: always()
-        id: parse-results
-        continue-on-error: true
-        run: |
-          TOTAL=0
-          PASSED=0
-          FAILED=0
-          SKIPPED=0
-
-          # Check if test results file exists
-          XML_FILE="src/test/playwright/test-reports/results.xml"
-          if [ -f "$XML_FILE" ]; then
-            echo "Final results.xml file found, started parsing..."
-
-            # Sum the totals for all testsuites
-            TESTS_COUNT=$(grep -o 'tests="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
-            FAILURES_COUNT=$(grep -o 'failures="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
-            SKIPPED_COUNT=$(grep -o 'skipped="[0-9]*"' "$XML_FILE" | grep -o '[0-9]*' | awk '{sum+=$1} END {print sum}')
-            set -e
-
-            # Use values if counts were found
-            if [ -n "$TESTS_COUNT" ]; then TOTAL=$TESTS_COUNT; fi
-            if [ -n "$FAILURES_COUNT" ]; then FAILED=$FAILURES_COUNT; fi
-            if [ -n "$SKIPPED_COUNT" ]; then SKIPPED=$SKIPPED_COUNT; fi
-
-            # Calculate passed tests
-            PASSED=$((TOTAL - FAILED - SKIPPED))
-          fi
-
-          echo "XML Parsing Results:"
-          echo "Total: $TOTAL"
-          echo "Failed: $FAILED"
-          echo "Skipped: $SKIPPED"
-          echo "Passed: $PASSED"
-
-          # Save to outputs
-          echo "total=$TOTAL" >> $GITHUB_OUTPUT
-          echo "passed=$PASSED" >> $GITHUB_OUTPUT
-          echo "failed=$FAILED" >> $GITHUB_OUTPUT
-          echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+        env:
+          # Increase the memory limit for the action
+          # https://github.com/mikepenz/action-junit-report?tab=readme-ov-file#common-configurations
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        with:
+          # Specifies which commit SHA to associate the test report with.
+          commit: ${{ github.event.workflow_run.head_sha }}
+          check_name: "End-to-End (E2E) Test Report"
+          # Fails the job if any test failed.
+          fail_on_failure: true
+          # Fails the job if no tests are found.
+          require_tests: true
+          # Fails the job if no passed tests are found.
+          require_passed_tests: true
+          # Disable status check creation.
+          annotate_only: true
+          detailed_summary: true
+          include_time_in_summary: true
+          # Groups test results by suite in the detailed summary.
+          group_suite: true
+          # Prevents updating previous test report comment; creates a new comment instead.
+          updateComment: false
+          report_paths: 'src/test/playwright/test-reports/results.xml'
 
       # Update the status of the workflow run with the results parsed in the previous step.
       - name: Update status with results
@@ -169,18 +161,18 @@ jobs:
           WORKFLOW_STATUS="${{ job.status }}"
 
           # Get test results
-          TOTAL="${{ steps.parse-results.outputs.total || 0 }}"
-          PASSED="${{ steps.parse-results.outputs.passed || 0 }}"
-          FAILED="${{ steps.parse-results.outputs.failed || 0 }}"
-          SKIPPED="${{ steps.parse-results.outputs.skipped || 0 }}"
+          TOTAL="${{ steps.test-reporter.outputs.total || 0 }}"
+          PASSED="${{ steps.test-reporter.outputs.passed || 0 }}"
+          FAILED="${{ steps.test-reporter.outputs.failed || 0 }}"
+          SKIPPED="${{ steps.test-reporter.outputs.skipped || 0 }}"
 
           # Determine GitHub status state based on workflow status
           if [ "$WORKFLOW_STATUS" = "success" ]; then
             STATE="success"
-            DESCRIPTION="✅ E2E tests finished: $PASSED passed, $FAILED failed, $SKIPPED skipped"
+            DESCRIPTION="E2E tests finished: $PASSED passed, $SKIPPED skipped, $FAILED failed"
           elif [ "$WORKFLOW_STATUS" = "failure" ]; then
             STATE="failure"
-            DESCRIPTION="❌ E2E tests failed: $PASSED passed, $FAILED failed, $SKIPPED skipped"
+            DESCRIPTION="E2E tests finished: $FAILED failed, $SKIPPED skipped, $PASSED passed"
           else
             STATE="error"
             DESCRIPTION="⚠️ E2E tests encountered an error"
@@ -196,3 +188,43 @@ jobs:
             -H "Accept: application/vnd.github.v3+json" \
             "${{ env.STATUSES_REQUEST_URL }}" \
             -d "$JSON_PAYLOAD"
+
+      # Find the PR number
+      - name: Find PR number
+        if: always()
+        id: find-pr
+        continue-on-error: true
+        run: |
+          BRANCH_NAME=${{ github.event.workflow_run.head_branch }}
+          echo "Checking if PR exists for head ref: $BRANCH_NAME."
+
+          PR_RESPONSE=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/${{ github.repository }}/pulls?head=${{ github.repository_owner }}:$BRANCH_NAME")
+
+          # Extract PR number
+          PR_NUMBER=$(echo "$PR_RESPONSE" | grep -o '"number": [0-9]*,' | head -1 | sed 's/"number": //g' | sed 's/,//g' | tr -d ' \t\n\r')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "Found PR: $PR_NUMBER from branch: $BRANCH_NAME."
+            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          else
+            echo "No PR found from branch: $BRANCH_NAME."
+          fi
+
+      # Add comment to the PR with test result summary
+      - name: Add test results comment to PR
+        if: always() && steps.find-pr.outputs.pr_number != ''
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const prNumber = ${{ steps.find-pr.outputs.pr_number }};
+            const testSummary = `${{ steps.test-reporter.outputs.summary }} ${{ steps.test-reporter.outputs.detailed_summary }}`;
+
+            github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `### End-to-End (E2E) Test Results Summary\n\n${testSummary}`
+              });

@@ -3,8 +3,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { DomainDependentService } from 'app/programming/shared/code-editor/service/code-editor-domain-dependent.service';
 import { DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 

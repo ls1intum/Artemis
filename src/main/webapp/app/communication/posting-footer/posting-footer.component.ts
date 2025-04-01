@@ -1,12 +1,12 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, input, output } from '@angular/core';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 
