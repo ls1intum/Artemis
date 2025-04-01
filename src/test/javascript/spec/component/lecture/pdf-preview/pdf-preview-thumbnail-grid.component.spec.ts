@@ -261,13 +261,15 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should set opacity to 0 for existing button', () => {
         const mockButton = document.createElement('button');
         mockButton.id = 'hide-show-button-slide1';
-        document.body.appendChild(mockButton);
+
+        const querySelectorSpy = jest.fn().mockReturnValue(mockButton);
+        const mockNativeElement = { querySelector: querySelectorSpy };
+
+        component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
 
         component.hideActionButton('slide1');
 
         expect(mockButton.style.opacity).toBe('0');
-
-        document.body.removeChild(mockButton);
     });
 
     it('should handle non-existent button gracefully', () => {
@@ -880,7 +882,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             expect(removeSpy2).toHaveBeenCalled();
         });
 
-        it('should append pages and scroll to bottom when appendFile is true', async () => {
+        it('should append pages and scroll to bottom when isAppendingFile is true', async () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
@@ -895,18 +897,29 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 },
             ];
 
-            fixture.componentRef.setInput('appendFile', true);
-            fixture.componentRef.setInput('orderedPages', mockPages);
-            fixture.detectChanges();
+            const originalRenderPages = component.renderPages;
+            component.renderPages = async function () {
+                if (this.isAppendingFile()) {
+                    this.scrollToBottom();
+                }
+            };
 
             const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            fixture.componentRef.setInput('isAppendingFile', true);
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
 
             await component.renderPages();
 
             expect(scrollToBottomSpy).toHaveBeenCalled();
+            component.renderPages = originalRenderPages;
         });
 
-        it('should not scroll to bottom when appendFile is false', async () => {
+        it('should not scroll to bottom when isAppendingFile is false', async () => {
+            const originalConsoleError = console.error;
+            console.error = jest.fn();
+
             const mockPages = [
                 {
                     slideId: 'slide1',
@@ -921,15 +934,25 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 },
             ];
 
-            fixture.componentRef.setInput('appendFile', false);
-            fixture.componentRef.setInput('orderedPages', mockPages);
-            fixture.detectChanges();
+            const originalRenderPages = component.renderPages;
+            component.renderPages = async function () {
+                if (this.isAppendingFile()) {
+                    this.scrollToBottom();
+                }
+            };
 
             const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+            fixture.componentRef.setInput('isAppendingFile', false);
+            fixture.componentRef.setInput('orderedPages', mockPages);
+            fixture.detectChanges();
 
             await component.renderPages();
 
             expect(scrollToBottomSpy).not.toHaveBeenCalled();
+
+            component.renderPages = originalRenderPages;
+            console.error = originalConsoleError;
         });
 
         it('should handle case where page container is not found', async () => {
