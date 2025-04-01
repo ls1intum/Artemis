@@ -438,7 +438,7 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
 
         var startDate = System.currentTimeMillis();
 
