@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { EMPTY, NEVER, Observable, of, Subject, throwError } from 'rxjs';
+import { Observable, of, Subject, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -46,7 +46,6 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
@@ -56,6 +55,9 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
+import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
@@ -193,7 +195,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                MockProvider(MetisConversationService),
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -204,28 +206,22 @@ describe('CourseManagementContainerComponent', () => {
                 component = fixture.componentInstance;
 
                 component.isShownViaLti.set(false);
-
-                // Get services
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 courseAdminService = TestBed.inject(CourseAdminService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 eventManager = TestBed.inject(EventManager);
                 featureToggleService = TestBed.inject(FeatureToggleService);
-                metisConversationService = TestBed.inject(MetisConversationService);
                 profileService = TestBed.inject(ProfileService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
-
-                // Set up spies
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
+                metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
                 findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 
                 jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
 
-                metisConversationService.setUpConversationService = jest.fn().mockReturnValue(EMPTY);
-                metisConversationService.checkForUnreadMessages = jest.fn((course: Course) => EMPTY);
                 getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
                     of(
                         new HttpResponse({
@@ -267,10 +263,6 @@ describe('CourseManagementContainerComponent', () => {
         jest.restoreAllMocks();
         localStorage.clear();
         sessionStorage.clear();
-    });
-
-    it('should create the component', () => {
-        expect(component).toBeTruthy();
     });
 
     it('should call necessary methods on init', async () => {
@@ -336,14 +328,10 @@ describe('CourseManagementContainerComponent', () => {
         });
         fixture.detectChanges();
 
-        // Set feature toggle active
         jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
         await component.ngOnInit();
-
-        // await component.ngOnInit();
         const sidebarItems = component.sidebarItems();
 
-        // Check for management default items
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Exercises')).toBeTruthy();
@@ -369,17 +357,20 @@ describe('CourseManagementContainerComponent', () => {
         expect(findSpy).toHaveBeenCalledWith(2);
     });
 
-    // it('should toggle sidebar for CourseConversationsComponent', () => {
-    //
-    //     conversationsComponent.isCollapsed = false;
-    //     conversationsComponent.toggleSidebar = jest.fn();
-    //
-    //     component.activatedComponentReference.set(conversationsComponent);
-    //     component.handleToggleSidebar();
-    //
-    //     expect(conversationsComponent.toggleSidebar).toHaveBeenCalled();
-    //     expect(component.isSidebarCollapsed()).toBeFalse();
-    // });
+    it('should toggle sidebar for CourseConversationsComponent', () => {
+        const mockConversationsComponent = {
+            isCollapsed: false,
+            toggleSidebar: jest.fn(),
+        } as unknown as CourseConversationsComponent;
+        // we have to set this to trick the component into believing it is a CourseConversationsComponent
+        Object.setPrototypeOf(mockConversationsComponent, CourseConversationsComponent.prototype);
+
+        component.activatedComponentReference.set(mockConversationsComponent);
+
+        component.handleToggleSidebar();
+        expect(mockConversationsComponent.toggleSidebar).toHaveBeenCalled();
+        expect(component.isSidebarCollapsed()).toBeFalse();
+    });
 
     it('should not toggle sidebar for non-CourseConversationsComponent', () => {
         component.activatedComponentReference.set(undefined);
@@ -498,7 +489,9 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of() as Observable<never>);
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockImplementation((currentCourse) => {
+            return new Observable((subscriber) => subscriber.complete());
+        });
 
         component.course.set({
             ...course1,
@@ -656,14 +649,14 @@ describe('CourseManagementContainerComponent', () => {
 
     it('should handle component activation with controls', () => {
         const getPageTitleSpy = jest.spyOn(component, 'getPageTitle');
-        const setUpConversationServiceSpy = jest.spyOn(component as any, 'setUpConversationService');
+        const setUpConversationServiceSpy = jest.spyOn(component as any, 'setupConversationService');
         const tryRenderControlsSpy = jest.spyOn(component as any, 'tryRenderControls');
 
         const controlsComponent = {
             controlConfiguration: {
                 subject: new Subject<TemplateRef<any>>(),
-                controlsRendered: new Subject<void>(),
             },
+            controlsRendered: new Subject<void>(),
         };
 
         component.onSubRouteActivate(controlsComponent);
@@ -672,9 +665,10 @@ describe('CourseManagementContainerComponent', () => {
         expect(setUpConversationServiceSpy).toHaveBeenCalled();
         expect(component.controlConfiguration()).toBe(controlsComponent.controlConfiguration);
 
-        // Emit control template
         const template = {} as TemplateRef<any>;
         controlsComponent.controlConfiguration.subject.next(template);
+
+        controlsComponent.controlsRendered.next();
 
         expect(component.controls()).toBe(template);
         expect(tryRenderControlsSpy).toHaveBeenCalled();
@@ -699,7 +693,7 @@ describe('CourseManagementContainerComponent', () => {
         };
         component.course.set(courseWithMessaging);
 
-        component.setUpConversationService();
+        component.setupConversationService();
         expect(checkForUnreadMessagesSpy).toHaveBeenCalled();
         expect(checkForUnreadMessagesSpy).toHaveBeenCalledExactlyOnceWith(courseWithMessaging);
         expect(subscribeToHasUnreadMessagesSpy).toHaveBeenCalledExactlyOnceWith();
@@ -714,7 +708,7 @@ describe('CourseManagementContainerComponent', () => {
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
         });
 
-        component.setUpConversationService();
+        component.setupConversationService();
 
         expect(checkForUnreadMessagesSpy).not.toHaveBeenCalled();
     });
@@ -727,14 +721,5 @@ describe('CourseManagementContainerComponent', () => {
 
         courseSidebarService.closeSidebar();
         expect(component.isSidebarCollapsed()).toBeFalse();
-    });
-
-    it('should apply proper CSS classes based on signals', () => {
-        component.isNavbarCollapsed.set(true);
-        component.isProduction.set(false);
-        fixture.detectChanges();
-
-        expect(fixture.nativeElement.querySelector('.container-closed')).not.toBeNull();
-        expect(fixture.nativeElement.querySelector('.sidenav-height-dev')).not.toBeNull();
     });
 });

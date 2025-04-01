@@ -137,7 +137,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
                     this.course.set(res.body);
                 }
 
-                this.setUpConversationService();
+                this.setupConversationService();
 
                 setTimeout(() => this.refreshingCourse.set(false), 500); // ensure min animation duration
             }),

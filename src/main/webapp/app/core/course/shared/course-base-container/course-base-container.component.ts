@@ -45,7 +45,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
     protected changeDetectorRef = inject(ChangeDetectorRef);
-    protected metisConversationService = inject(MetisConversationService);
+    metisConversationService = inject(MetisConversationService);
     router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
@@ -219,7 +219,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         const urlSegments = this.router.url.split('/');
         this.communicationRouteLoaded.set(urlSegments.length > 3 && urlSegments[3] === 'communication');
         this.hasSidebar.set(this.getHasSidebar());
-        this.setUpConversationService();
+        this.setupConversationService();
 
         if (componentRef.controlConfiguration) {
             const provider = componentRef;
@@ -267,7 +267,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         }
     }
 
-    setUpConversationService() {
+    setupConversationService() {
         const currentCourse = this.course();
         if (!currentCourse || (!isMessagingEnabled(currentCourse) && !isCommunicationEnabled(currentCourse))) {
             return;
