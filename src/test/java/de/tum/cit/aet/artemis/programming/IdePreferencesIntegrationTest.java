@@ -110,4 +110,13 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetPreferenceWithNonExistentIde() throws Exception {
+        Ide nonExistentIde = new Ide("NonExistent", "nonexistent://url");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", ProgrammingLanguage.JAVA.toString());
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(nonExistentIde), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
 }
