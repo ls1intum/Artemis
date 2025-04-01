@@ -157,6 +157,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ env.WORKFLOW_RUN_ID  }}
 
+      - name: Debug
+        run: |
+          ls -la /tmp/artifact
+
       - name: Deploy Artemis
         run: |
           ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="/tmp/artifact/Artemis.war" -e ansible_user="${{ vars.DEPLOYMENT_USER }}" --check
