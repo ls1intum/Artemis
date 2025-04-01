@@ -5,6 +5,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 import java.util.Objects;
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -67,6 +68,16 @@ public class PublicProgrammingExerciseResultResource {
     }
 
     /**
+     * Validates the length of the artemisAuthenticationTokenValue on startup.
+     */
+    @PostConstruct
+    protected void validateTokenLength() {
+        if (artemisAuthenticationTokenValue == null || artemisAuthenticationTokenValue.length() < 12) {
+            throw new IllegalArgumentException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
+        }
+    }
+
+    /**
      * This method is used by the CI system to inform Artemis about a new programming exercise build result.
      * It will make sure to:
      * - Create a result from the build result including its feedbacks
@@ -82,12 +93,6 @@ public class PublicProgrammingExerciseResultResource {
     @EnforceNothing
     public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received new programming exercise result from Jenkins");
-        if (StringUtils.isEmpty(artemisAuthenticationTokenValue) || artemisAuthenticationTokenValue.length() < 12) {
-            log.error("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
-            throw new BadRequestAlertException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.", "BuildPlan",
-                    "ciExceptionForBuildPlanKey");
-        }
-
         if (!Objects.equals(token, artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
             throw new AccessForbiddenException(); // Only allow endpoint when using correct token
