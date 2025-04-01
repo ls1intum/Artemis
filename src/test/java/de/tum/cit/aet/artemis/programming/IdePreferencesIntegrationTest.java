@@ -124,9 +124,7 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
     void testGetPredefinedIdes() throws Exception {
         List<IdeDTO> predefinedIdes = request.getList("/api/programming/ide-settings/predefined", HttpStatus.OK, IdeDTO.class);
         assertThat(predefinedIdes).isNotEmpty();
-
         assertThat(predefinedIdes).extracting("name").contains("VS Code", "IntelliJ");
-
         assertThat(predefinedIdes).allMatch(ideDTO -> ideDTO.deepLink() != null && !ideDTO.deepLink().isEmpty() && ideDTO.deepLink().contains("{cloneUrl}"));
     }
 
