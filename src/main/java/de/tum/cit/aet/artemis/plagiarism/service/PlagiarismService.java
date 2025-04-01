@@ -15,7 +15,6 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -56,23 +55,6 @@ public class PlagiarismService {
     }
 
     /**
-     * Anonymize the submission for the student view.
-     * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
-     *
-     * @param submission    the submission to anonymize.
-     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
-     * @param participation the participation of the student asking to see his plagiarism comparison.
-     */
-    public void checkAccessAndAnonymizeSubmissionForStudent(Submission submission, String userLogin, Participation participation) {
-        if (!hasAccessToSubmission(submission.getId(), userLogin, participation)) {
-            throw new AccessForbiddenException("This plagiarism submission is not related to the requesting user or the user has not been notified yet.");
-        }
-        submission.setParticipation(null);
-        submission.setResults(null);
-        submission.setSubmissionDate(null);
-    }
-
-    /**
      * A student should not see both answers from both students for the comparison before the due date
      *
      * @param submissionId  the id of the submission to check.
@@ -99,6 +81,11 @@ public class PlagiarismService {
      * @return true if the student with user login owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor,
      *         otherwise false
      */
+    public boolean wasUserNotifiedByInstructor(Submission submission, String userLogin) {
+        var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
+        return comparisonOptional.filter(not(Set::isEmpty)).isPresent() && wasUserNotifiedByInstructor(userLogin, comparisonOptional.get());
+    }
+
     private boolean wasUserNotifiedByInstructor(String userLogin, Set<PlagiarismComparison<?>> comparisons) {
         // disallow requests from users who are not notified about this case:
         return comparisons.stream()
