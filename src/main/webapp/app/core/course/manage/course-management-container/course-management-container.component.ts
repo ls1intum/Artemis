@@ -178,7 +178,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     /** Navigate to a new Course */
     switchCourse(course: Course) {
         const url = ['course-management', course.id];
-        this.router.navigate(url);
+        this.router.navigate(url).then(() => {
+            this.handleCourseIdChange(course.id!);
+        });
     }
 
     protected handleComponentActivation(componentRef: any): void {
