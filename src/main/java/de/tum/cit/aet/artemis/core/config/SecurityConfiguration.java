@@ -271,7 +271,12 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
             // TODO: check if we can remove the lambda here and solve this differently, the main purpose was to extract this to a different location
-            .with(webAuthnLoginConfigurer(), configurer -> {});
+            .webAuthn(webauth ->
+                webauth.allowedOrigins("https://3fb2-2003-c2-bf07-b00-bc9f-39a6-f5c8-b798.ngrok-free.app")
+                .rpId("3fb2-2003-c2-bf07-b00-bc9f-39a6-f5c8-b798.ngrok-free.app")
+                .rpName("Artemis Development")
+            );
+//            .with(webAuthnLoginConfigurer(), configurer -> {});
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService

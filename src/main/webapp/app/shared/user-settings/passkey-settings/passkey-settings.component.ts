@@ -105,22 +105,16 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const login = this.currentUser?.login;
-        if (!login) {
-            throw new Error('Login is undefined');
-        }
-
-        const username = this.currentUser?.name;
-        if (!username) {
-            throw new Error('Username is undefined');
-        }
-
         // TODO make sure handle is consistent with the server: handle on server side Base64UrlUtil.encode(userEntity.getUsername().getBytes()
-        await this.passkeySettingsApiService.createNewPasskey({
-            userHandle: login,
-            username: username,
-            webAuthnCredential: credential,
+        await this.webauthnApiService.registerPasskey({
+            publicKey: credential,
+            label: 'myPasskey',
         });
+        // await this.passkeySettingsApiService.createNewPasskey({
+        //     userHandle: login,
+        //     username: username,
+        //     webAuthnCredential: credential,
+        // });
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
