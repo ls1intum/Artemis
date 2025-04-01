@@ -7,7 +7,7 @@ ext {
         "athena"        :          ["INSTRUCTION": 0.870, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.905, "CLASS":  5],
         "buildagent"    :          ["INSTRUCTION": 0.776, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.902, "CLASS":  2],
+        "communication" :          ["INSTRUCTION": 0.895, "CLASS":  2],
         "core"          :          ["INSTRUCTION": 0.856, "CLASS": 23],
         "exam"          :          ["INSTRUCTION": 0.895, "CLASS":  4],
         "exercise"      :          ["INSTRUCTION": 0.918, "CLASS":  0],
