@@ -2,7 +2,7 @@ import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
 import { AssertionServerOptions } from 'app/shared/user-settings/passkey-settings/passkey-settings.component';
 import { Injectable } from '@angular/core';
-import { CreatePasskeyDTO } from 'app/shared/user-settings/passkey-settings/dto/create-passkey.dto';
+import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/register-passkey.dto';
 
 /**
  * Note: [WebAuthn4j](https://github.com/webauthn4j/webauthn4j) exposes the endpoints, the endpoints are not explicitly defined in a resource
@@ -19,8 +19,8 @@ export class WebauthnApiService extends BaseApiHttpService {
         return await this.post<PasskeyOptions>(`register/options`);
     }
 
-    async registerPasskey(createPasskeyDto: CreatePasskeyDTO): Promise<any> {
-        return await this.post<CreatePasskeyDTO>(`register`, createPasskeyDto);
+    async registerPasskey(registerPasskeyDto: RegisterPasskeyDto): Promise<any> {
+        return await this.post<RegisterPasskeyDto>(`register`, registerPasskeyDto);
     }
 
     async getAssertionOptions(): Promise<AssertionServerOptions> {
