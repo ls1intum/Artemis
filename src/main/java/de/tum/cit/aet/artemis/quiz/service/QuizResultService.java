@@ -165,15 +165,10 @@ public class QuizResultService {
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     result.evaluateQuizSubmission(quizExercise);
 
-                    // Detach submission to maintain proper save order
-                    result.setSubmission(null);
-
                     // Save entities individually
                     submissionRepository.save(quizSubmission);
                     result = resultRepository.save(result);
 
-                    // Re-associate result with submission and save
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
                     submissionRepository.save(quizSubmission);
 
