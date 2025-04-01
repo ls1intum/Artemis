@@ -49,17 +49,6 @@ export class SharingComponent implements OnInit {
         private programmingExerciseSharingService: ProgrammingExerciseSharingService,
         private alertService: AlertService,
     ) {
-        this.route.params.subscribe((params) => {
-            this.sharingInfo.basketToken = params['basketToken'];
-        });
-        this.route.queryParams.subscribe((qparams: Params) => {
-            this.sharingInfo.returnURL = qparams['returnURL'];
-            this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
-            this.sharingInfo.checksum = qparams['checksum'];
-            this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
-                this.shoppingBasket = res;
-            });
-        });
         this.predicate = 'id';
     }
 
@@ -112,25 +101,42 @@ export class SharingComponent implements OnInit {
     navigateToImportFromSharing() {
         const importBaseRoute = ['/course-management', this.courseId(), 'programming-exercises'];
         importBaseRoute.push('import-from-sharing');
-        this.router.navigate(importBaseRoute, {
-            queryParams: {
-                basketToken: this.sharingInfo.basketToken,
-                apiBaseUrl: this.sharingInfo.apiBaseURL,
-                returnUrl: this.sharingInfo.returnURL,
-                selectedExercise: this.sharingInfo.selectedExercise,
-                checksum: this.sharingInfo.checksum,
+        this.router
+            .navigate(importBaseRoute, {
+                queryParams: {
+                    basketToken: this.sharingInfo.basketToken,
+                    apiBaseUrl: this.sharingInfo.apiBaseURL,
+                    returnUrl: this.sharingInfo.returnURL,
+                    selectedExercise: this.sharingInfo.selectedExercise,
+                    checksum: this.sharingInfo.checksum,
                 },
-        }).then(nav => {
-            console.log(nav); // true if navigation is successful
-          }, err => {
-            console.log(err) // when there's an error
-          });
+            })
+            .then(
+                (nav) => {
+                    return true; // true if navigation is successful
+                },
+                (err) => {
+                    // just a technical branch, should never be called
+                    this.alertService.addErrorAlert(`Cannot navigate to imported exercise: ${err}`); // when there's an error
+                },
+            );
     }
 
     /**
      * Initialises the sharing page for import
      */
     ngOnInit(): void {
+        this.route.params.subscribe((params) => {
+            this.sharingInfo.basketToken = params['basketToken'];
+        });
+        this.route.queryParams.subscribe((qparams: Params) => {
+            this.sharingInfo.returnURL = qparams['returnURL'];
+            this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
+            this.sharingInfo.checksum = qparams['checksum'];
+            this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
+                this.shoppingBasket = res;
+            });
+        });
         this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {
             if (isLoggedIn) {
                 this.isInstructor = true;

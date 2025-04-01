@@ -59,15 +59,3 @@ export interface UserInfo {
     /** User's email address for sharing notifications */
     email: string;
 }
-
-/**
- * Validates an email address
- * @param email The email address to validate
- * @throws Error if the email is invalid
- */
-export function validateEmail(email: string): void {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        throw new Error('Invalid email address');
-    }
-}

@@ -64,7 +64,7 @@ public class SharingConnectorService {
         @Override
         public boolean add(HealthStatus e) {
             if (this.size() >= HEALTH_HISTORY_LIMIT) {
-                this.removeFirst(); // Remove the oldest element
+                this.remove(0); // Remove the oldest element
             }
             return super.add(e);
         }

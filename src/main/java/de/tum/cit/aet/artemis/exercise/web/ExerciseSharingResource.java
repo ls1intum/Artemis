@@ -204,7 +204,7 @@ public class ExerciseSharingResource {
 
         InputStreamResource resource = new InputStreamResource(new NewFileInputStream(zipFile));
 
-        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.valueOf("application/zip")).header("filename", zipFile.getName()).body(resource);
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
 }

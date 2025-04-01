@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.sharing;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,6 +10,7 @@ import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +35,7 @@ import jakarta.ws.rs.WebApplicationException;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.client.utils.URIBuilder;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.slf4j.Logger;
@@ -44,7 +46,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StreamUtils;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -56,6 +58,7 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
 import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
@@ -160,47 +163,50 @@ public class ExerciseSharingService {
      */
     public Optional<SharingMultipartZipFile> getBasketItem(SharingInfoDTO sharingInfo, int itemPosition) throws SharingException {
         try {
-            String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
-            Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class, Map.of("basketToken", sharingInfo.getBasketToken(), "format", "artemis"));
-            InputStream zipInput = zipInputResource.getInputStream();
-            if (zipInput == null) {
-                throw new SharingException("Could not retrieve basket item");
-            }
-
-            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), zipInput);
+            File f = repositoryCache.get(Pair.of(sharingInfo, itemPosition));
+            SharingMultipartZipFile zipFileItem = new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), new FileInputStream(f));
             return Optional.of(zipFileItem);
         }
-        catch (WebApplicationException | IOException wae) {
+        catch (WebApplicationException | IOException | ExecutionException wae) {
             log.warn("Exception during shared exercise retrieval", wae);
-            throw new SharingException("Could not retrieve basket item");
+            throw new SharingException("Could not retrieve basket item", wae);
         }
     }
 
     /**
      * simple loading cache for file with 1 hour timeout.
      */
-    private final LoadingCache<SharingInfoDTO, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(1, TimeUnit.HOURS)
-            .removalListener(notification -> ((File) notification.getValue()).delete()).build(new CacheLoader<>() {
-
-                public File load(SharingInfoDTO sharingInfo) {
-                    try {
-                        Optional<SharingMultipartZipFile> basketItemO = getBasketItem(sharingInfo, sharingInfo.getExercisePosition());
-                        return basketItemO.map(basketItem -> {
-                            try {
-                                File fTemp = File.createTempFile("SharingBasket", ".zip");
-
-                                StreamUtils.copy(basketItem.getInputStream(), new FileOutputStream(fTemp));
-                                return fTemp;
-                            }
-                            catch (IOException e) {
-                                log.warn("Cannot load sharing Info", e);
-                                return null;
-                            }
-                        }).orElse(null);
+    private final LoadingCache<Pair<SharingInfoDTO, Integer>, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(1, TimeUnit.HOURS)
+            .removalListener(notification -> {
+                File f = (File) notification.getValue();
+                if (f != null) {
+                    boolean deleted = f.delete();
+                    if (!deleted) {
+                        log.info("Cannot delete {}", f.getName());
                     }
-                    catch (SharingException e) {
+                }
+            }).build(new CacheLoader<>() {
+
+                @Override
+                public File load(Pair<SharingInfoDTO, Integer> sharingInfoAndPos) throws SharingException {
+                    SharingInfoDTO sharingInfo = sharingInfoAndPos.getLeft();
+                    int itemPosition = sharingInfoAndPos.getRight();
+                    try {
+                        String exercisesZipUrl = correctLocalHostInDocker(sharingInfo.getApiBaseURL()) + "/basket/{basketToken}/repository/" + itemPosition + "?format={format}";
+                        Resource zipInputResource = restTemplate.getForObject(exercisesZipUrl, Resource.class,
+                                Map.of("basketToken", sharingInfo.getBasketToken(), "format", "artemis"));
+                        if (zipInputResource == null) {
+                            throw new SharingException("Could not retrieve basket item resource");
+                        }
+                        InputStream zipInput = zipInputResource.getInputStream();
+
+                        File basketFile = Files.createTempFile(FilePathService.getTempFilePath(), "basketStore", ".zip").toFile();
+                        FileCopyUtils.copy(zipInput, new FileOutputStream(basketFile));
+                        return basketFile;
+                    }
+                    catch (IOException e) {
                         log.warn("Cannot load sharing Info", e);
-                        return null;
+                        throw new SharingException("Cannot load sharing Info", e);
                     }
 
                 }
@@ -208,16 +214,6 @@ public class ExerciseSharingService {
 
     public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
         int itemPosition = sharingInfo.getExercisePosition();
-        File f = repositoryCache.getIfPresent(sharingInfo);
-        if (f != null) {
-            try {
-                return new SharingMultipartZipFile(getBasketFileName(sharingInfo.getBasketToken(), itemPosition), new FileInputStream(f));
-            }
-            catch (FileNotFoundException e) {
-                log.warn("Cannot find cached file for {}:{} at {}", sharingInfo.getBasketToken(), itemPosition, f.getAbsoluteFile(), e);
-            }
-        }
-        // second try (first try in cache);
         Optional<SharingMultipartZipFile> basketItem = getBasketItem(sharingInfo, itemPosition);
         return basketItem.orElse(null);
     }
@@ -363,12 +359,14 @@ public class ExerciseSharingService {
             return builder.build().toURL();
         }
         catch (URISyntaxException e) {
-            log.error("An error occurred during URL creation: " + e.getMessage());
-            return null;
+            String msg = "An error occurred during URL creation: " + e.getMessage();
+            log.error(msg, e);
+            throw new SharingException(msg, e);
         }
         catch (IOException e) {
-            log.error("Could not generate Zip file for export: " + e.getMessage());
-            return null;
+            String msg = "Could not generate Zip file for export: " + e.getMessage();
+            log.error(msg, e);
+            throw new SharingException(msg, e);
         }
     }
 
@@ -379,21 +377,17 @@ public class ExerciseSharingService {
      * @return returns HMAC-Hash
      */
     private String createHMAC(String base64token) {
-        // Definiere die HMAC-Methode (z. B. HmacSHA256)
+        // selects HMAC-method (here HmacSHA256)
         String algorithm = "HmacSHA256";
         String psk = sharingConnectorService.getSharingApiKeyOrNull();
 
-        // Konvertiere den Pre-shared Key in ein Byte-Array
         SecretKeySpec secretKeySpec = new SecretKeySpec(psk.getBytes(StandardCharsets.UTF_8), algorithm);
 
         try {
-            // Initialisiere den Mac mit dem Algorithmus und dem Schlüssel
             Mac mac = Mac.getInstance(algorithm);
             mac.init(secretKeySpec);
-            // Berechne das HMAC
             byte[] hmacBytes = mac.doFinal(base64token.getBytes(StandardCharsets.UTF_8));
 
-            // Konvertiere das Ergebnis in Base64 für einfache Speicherung
             return Base64.getEncoder().encodeToString(hmacBytes);
         }
         catch (NoSuchAlgorithmException | InvalidKeyException e) {

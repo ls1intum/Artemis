@@ -12,34 +12,34 @@
                         <br />
                         <div>
                             @if (!shoppingBasket) {
-                            <div jhiTranslate="artemisApp.sharing.courseToImport">Keine importierten Aufgaben gefunden</div>
+                                <div jhiTranslate="artemisApp.sharing.courseToImport">Keine importierten Aufgaben gefunden</div>
                             } @else {
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th></th>
-                                        <th class="d-none d-md-table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport">Exercise to import</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for(exercise of shoppingBasket.exerciseInfo; track exercise; let exercisePos = $index) {
+                                <table class="table table-striped">
+                                    <thead>
                                         <tr>
-                                        <td>
-                                            <input
-                                                id="{{ exercise.project.project_id }}"
-                                                [(ngModel)]="sharingInfo.selectedExercise"
-                                                (change)="onExerciseSelected(exercisePos)"
-                                                [value]="exercisePos"
-                                                name="selectedExercise"
-                                                type="radio"
-                                                required
-                                            />
-                                        </td>
-                                        <td>{{ exercise.metadata.title }}</td>
-                                    </tr>
-                                    }
-                                </tbody>
-                            </table>
+                                            <th></th>
+                                            <th class="d-none d-md-table-cell" jhiTranslate="artemisApp.sharing.exerciseToImport">Exercise to import</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @for (exercise of shoppingBasket.exerciseInfo; track exercise; let exercisePos = $index) {
+                                            <tr>
+                                                <td>
+                                                    <input
+                                                        id="{{ exercise.project.project_id }}"
+                                                        [(ngModel)]="sharingInfo.selectedExercise"
+                                                        (change)="onExerciseSelected(exercisePos)"
+                                                        [value]="exercisePos"
+                                                        name="selectedExercise"
+                                                        type="radio"
+                                                        required
+                                                    />
+                                                </td>
+                                                <td>{{ exercise.metadata.title }}</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
                             }
                             <br />
                             <div></div>
@@ -47,10 +47,10 @@
                             <div>
                                 <span jhiTranslate="artemisApp.sharing.expiresAt" [translateValues]="{ expirationDate: getTokenExpiryDate().toLocaleString() }">expires at: </span>
                             </div>
-                            @if(!isInstructor) {
-                            <div class="p-2">
-                                <strong jhiTranslate="artemisApp.sharing.loginAsInstructor">Please ensure to log in as instructor!</strong>
-                            </div>
+                            @if (!isInstructor) {
+                                <div class="p-2">
+                                    <strong jhiTranslate="artemisApp.sharing.loginAsInstructor">Please ensure to log in as instructor!</strong>
+                                </div>
                             }
                         </div>
                     </td>
@@ -61,30 +61,38 @@
                                     <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                                         <th class="d-none d-md-table-cell"></th>
                                         <th class="d-none d-md-table-cell"></th>
-                                        <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort"></fa-icon></th>
-                                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.course.title"></span> <fa-icon [icon]="faSort"></fa-icon></th>
+                                        <th class="d-none d-md-table-cell" jhiSortBy="id"><span jhiTranslate="global.field.id"></span><fa-icon [icon]="faSort" /></th>
+                                        <th jhiSortBy="title"><span jhiTranslate="artemisApp.course.title"></span> <fa-icon [icon]="faSort" /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @for(course of courses; track course) {
-                                    <tr>
-                                        <td>
-                                            <input id="{{ course.id }}" type="radio" value="{{ course.id }}" (change)="onCourseSelected(course)" name="course" ngModel required />
-                                        </td>
-                                        <td class="d-none d-md-table-cell">
-                                            <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
-                                        </td>
-                                        <td class="d-none d-md-table-cell">
-                                            <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
-                                        </td>
-                                        <td>
-                                            <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
-                                            ><br />
-                                            @if(course.shortName) {
-                                            <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
-                                            }
-                                        </td>
-                                    </tr>
+                                    @for (course of courses; track course) {
+                                        <tr>
+                                            <td>
+                                                <input
+                                                    id="{{ course.id }}"
+                                                    type="radio"
+                                                    value="{{ course.id }}"
+                                                    (change)="onCourseSelected(course)"
+                                                    name="course"
+                                                    ngModel
+                                                    required
+                                                />
+                                            </td>
+                                            <td class="d-none d-md-table-cell">
+                                                <div [ngStyle]="{ backgroundColor: course.color || ARTEMIS_DEFAULT_COLOR, width: '15px', height: '20px' }">&nbsp;</div>
+                                            </td>
+                                            <td class="d-none d-md-table-cell">
+                                                <a [routerLink]="['/course-management', course.id]">{{ course.id }}</a>
+                                            </td>
+                                            <td>
+                                                <a [routerLink]="['/course-management', course.id]" class="bold">{{ course.title }}</a
+                                                ><br />
+                                                @if (course.shortName) {
+                                                    <span> <span class="bold" jhiTranslate="artemisApp.course.shortName"> </span>: {{ course.shortName }} </span>
+                                                }
+                                            </td>
+                                        </tr>
                                     }
                                 </tbody>
                             </table>
@@ -98,7 +106,7 @@
                             class="btn btn-primary float-end jh-create-entity create-programming-exercise me-1"
                             (click)="navigateToImportFromSharing()"
                         >
-                            <fa-icon [icon]="faPlus"></fa-icon>
+                            <fa-icon [icon]="faPlus" />
                             <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.sharing.import">Import Programming Exercise from Sharing Plattform</span>
                         </button>
                     </td>

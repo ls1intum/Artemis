@@ -753,12 +753,12 @@
                 }
             },
             "sharing": {
-                    "import": "Import programming exercise from Sharing Platform",
-                    "export": "Export to Sharing",
-                    "error": {
-                        "export": "Unable to export programming exercise: {{ message }}"
-                    }
+                "import": "Import programming exercise from Sharing Platform",
+                "export": "Export to Sharing",
+                "error": {
+                    "export": "Unable to export programming exercise: {{ message }}"
                 }
+            }
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists.",
