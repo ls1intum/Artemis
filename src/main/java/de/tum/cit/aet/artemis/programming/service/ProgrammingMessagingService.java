@@ -63,8 +63,8 @@ public class ProgrammingMessagingService {
     private final ParticipationRepository participationRepository;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventService> pyrisEventService,
-            Optional<IrisExerciseSettingsRepository> irisExerciseSettingsRepository, ParticipationRepository participationRepository) {
+            ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
+            Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
