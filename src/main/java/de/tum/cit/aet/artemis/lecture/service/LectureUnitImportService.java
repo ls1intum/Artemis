@@ -15,8 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -42,18 +41,15 @@ public class LectureUnitImportService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     public LectureUnitImportService(LectureUnitRepository lectureUnitRepository, AttachmentRepository attachmentRepository, FileService fileService,
-            SlideSplitterService slideSplitterService, Optional<PyrisWebhookService> pyrisWebhookService, Optional<IrisSettingsRepository> irisSettingsRepository) {
+            SlideSplitterService slideSplitterService, Optional<IrisLectureApi> irisLectureApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
+        this.irisLectureApi = irisLectureApi;
     }
 
     /**
@@ -76,10 +72,8 @@ public class LectureUnitImportService {
         lectureUnitRepository.saveAll(lectureUnits);
 
         // Send lectures to pyris
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
-                    lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList());
-        }
+        irisLectureApi.ifPresent(lectureApi -> lectureApi.autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+                lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit).map(lectureUnit -> (AttachmentUnit) lectureUnit).toList()));
     }
 
     /**
