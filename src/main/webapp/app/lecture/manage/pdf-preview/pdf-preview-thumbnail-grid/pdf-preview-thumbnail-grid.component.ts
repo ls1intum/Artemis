@@ -239,7 +239,8 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      * @param slideId - The ID of the slide whose action button should be hidden.
      */
     hideActionButton(slideId: string): void {
-        const button = document.getElementById('hide-show-button-' + slideId);
+        const container = this.pdfContainer().nativeElement;
+        const button = container.querySelector(`#hide-show-button-${slideId}`);
         if (button) {
             this.renderer.setStyle(button, 'opacity', '0');
         }
