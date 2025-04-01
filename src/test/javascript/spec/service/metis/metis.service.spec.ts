@@ -188,16 +188,17 @@ describe('Metis Service', () => {
             });
 
             const pinnedPostDTO: MetisPostDTO = {
-                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER } as Post,
-                action: MetisPostAction.UPDATE, // WebSocket'ten güncelleme mesajı geliyor gibi simüle ettik
+                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER, conversation: { id: 22 } as Conversation } as Post,
+                action: MetisPostAction.UPDATE,
             };
 
-            // WebSocket mesajı işleme alındığında
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](pinnedPostDTO);
 
             tick();
 
-            // pinnedPosts$ güncellenmeli ve yeni post burada olmalı
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
@@ -215,10 +216,13 @@ describe('Metis Service', () => {
             });
 
             const unpinnedPostDTO: MetisPostDTO = {
-                post: { id: 42, displayPriority: DisplayPriority.NONE } as Post,
+                post: { id: 42, displayPriority: DisplayPriority.NONE, conversation: { id: 22 } as Conversation } as Post,
                 action: MetisPostAction.UPDATE,
             };
 
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](unpinnedPostDTO);
             tick();
 
@@ -688,8 +692,10 @@ describe('Metis Service', () => {
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup
+            const post = { ...plagiarismPost, conversation: { id: 22 } };
+
             const mockPostDTO = {
-                post: plagiarismPost,
+                post: post,
                 action: MetisPostAction.CREATE,
             };
             const mockReceiveObservable = new Subject();
@@ -697,14 +703,14 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.PLAGIARISM_CASE_STUDENT);
 
             // set currentPostContextFilter appropriately
-            metisService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id } as PostContextFilter);
+            metisService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id, conversationIds: [22] } as PostContextFilter);
 
             // Ensure subscribe to websocket was not called
             expect(websocketService.subscribe).toHaveBeenCalled();
 
             // Emulate receiving a message
             mockReceiveObservable.next(mockPostDTO);
-            expect(metisService['cachedPosts']).toContain(plagiarismPost);
+            expect(metisService['cachedPosts']).toContain(post);
         });
 
         it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
@@ -973,7 +979,7 @@ describe('Metis Service', () => {
         });
 
         it('should remove pinned post from pinnedPosts$ when WebSocket DELETE action is received', () => {
-            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED } as Post;
+            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED, conversation: { id: 22 } } as Post;
             const mockDeleteDTO: MetisPostDTO = {
                 action: MetisPostAction.DELETE,
                 post: { ...pinnedPost },
@@ -981,6 +987,7 @@ describe('Metis Service', () => {
 
             metisService['pinnedPosts$'].next([pinnedPost]);
             metisService['cachedPosts'].push({ ...pinnedPost });
+            metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](mockDeleteDTO);
 
             let pinnedPostsResult: Post[] = [];
@@ -1031,6 +1038,7 @@ describe('Metis Service', () => {
                 content: 'Old Content',
                 authorRole: UserRole.USER,
                 tags: [],
+                conversation: { id: 22 },
             } as Post;
 
             metisService['cachedPosts'] = [pinnedPost];
@@ -1041,12 +1049,14 @@ describe('Metis Service', () => {
                 displayPriority: DisplayPriority.PINNED,
                 content: 'Updated Content',
                 tags: ['newTag'],
+                conversation: { id: 22 },
             } as Post;
             const updateDTO: MetisPostDTO = {
                 post: updatedPost,
                 action: MetisPostAction.UPDATE,
             };
 
+            metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](updateDTO);
             tick();
 

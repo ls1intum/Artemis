@@ -658,12 +658,12 @@ export class MetisService implements OnDestroy {
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
-        const isValidPostContext = postConvId && this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
-        const postIsNotFromCurrentConversation = isValidPostContext && !this.currentPostContextFilter.conversationIds?.includes(postConvId);
+        const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
+        const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
-        if (postIsNotFromCurrentConversation || postIsNotFromCurrentPlagiarismCase) {
+        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase) {
             return;
         }
 
