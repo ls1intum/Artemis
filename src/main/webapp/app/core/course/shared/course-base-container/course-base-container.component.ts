@@ -46,7 +46,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected route = inject(ActivatedRoute);
     protected changeDetectorRef = inject(ChangeDetectorRef);
     protected metisConversationService = inject(MetisConversationService);
-    protected router = inject(Router);
+    router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
     protected ltiService = inject(LtiService);
@@ -84,7 +84,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     sidebarItems = signal<SidebarItem[]>([]);
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
-    protected conversationServiceInstantiated = signal<boolean>(false);
+    conversationServiceInstantiated = signal<boolean>(false);
     checkedForUnreadMessages = signal<boolean>(false);
 
     // Controls handling properties
@@ -204,9 +204,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     /** Navigate to a new Course */
     switchCourse(course: Course) {
-        const baseUrl = this.router.url.includes('course-management') ? 'course-management' : 'courses';
+        const url = this.router.url.includes('course-management') ? ['course-management', course.id] : ['courses', course.id, 'exercises'];
         this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-            this.router.navigate([baseUrl, course.id, 'exercises']);
+            this.router.navigate(url);
         });
     }
 
@@ -272,7 +272,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         if (!currentCourse || (!isMessagingEnabled(currentCourse) && !isCommunicationEnabled(currentCourse))) {
             return;
         }
-
         if (!this.conversationServiceInstantiated() && this.communicationRouteLoaded()) {
             this.metisConversationService
                 .setUpConversationService(currentCourse)

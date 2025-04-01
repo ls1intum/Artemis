@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { EMPTY, of, Subject, throwError } from 'rxjs';
+import { ActivatedRoute, Params, Router } from '@angular/router';
+import { EMPTY, NEVER, Observable, of, Subject, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -56,7 +56,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
@@ -140,7 +139,7 @@ describe('CourseManagementContainerComponent', () => {
     let featureToggleService: FeatureToggleService;
     let metisConversationService: MetisConversationService;
     let profileService: ProfileService;
-    let router: MockRouter;
+    let router: Router;
     let route: ActivatedRoute;
 
     let findSpy: jest.SpyInstance;
@@ -162,10 +161,8 @@ describe('CourseManagementContainerComponent', () => {
             snapshot: { firstChild: { routeConfig: { path: `course-management/${course1.id}/exercises` }, data: {} } },
         } as unknown as ActivatedRoute;
 
-        router = new MockRouter();
-
         TestBed.configureTestingModule({
-            imports: [RouterModule.forRoot([]), MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
+            imports: [MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseManagementContainerComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -189,15 +186,14 @@ describe('CourseManagementContainerComponent', () => {
                 MockProvider(WebsocketService),
                 MockProvider(ArtemisServerDateService),
                 MockProvider(AlertService),
-                { provide: Router, useValue: router },
+                { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
-                { provide: MetisConversationService, useClass: MockMetisConversationService },
+                MockProvider(MetisConversationService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -219,6 +215,7 @@ describe('CourseManagementContainerComponent', () => {
                 metisConversationService = TestBed.inject(MetisConversationService);
                 profileService = TestBed.inject(ProfileService);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
+                router = TestBed.inject(Router);
 
                 // Set up spies
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -227,6 +224,8 @@ describe('CourseManagementContainerComponent', () => {
 
                 jest.spyOn(courseService, 'findAllForDropdown').mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
 
+                metisConversationService.setUpConversationService = jest.fn().mockReturnValue(EMPTY);
+                metisConversationService.checkForUnreadMessages = jest.fn((course: Course) => EMPTY);
                 getDeletionSummarySpy = jest.spyOn(courseAdminService, 'getDeletionSummary').mockReturnValue(
                     of(
                         new HttpResponse({
@@ -247,7 +246,7 @@ describe('CourseManagementContainerComponent', () => {
                     ),
                 );
 
-                deleteSpy = jest.spyOn(courseAdminService, 'delete').mockReturnValue(of());
+                deleteSpy = jest.spyOn(courseAdminService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
                     of({
@@ -318,6 +317,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should load course successfully', () => {
+        component.courseId.set(1);
         component.loadCourse().subscribe(() => {
             expect(component.course()).toEqual(course1);
         });
@@ -351,20 +351,15 @@ describe('CourseManagementContainerComponent', () => {
 
         expect(sidebarItems.find((item) => item.title === 'Lectures')).toBeTruthy();
 
-        // Check for instructor+ items
         expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Learning Path')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
 
-        // Check for communication item
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
-
-        // Check for tutorial groups item
         expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeTruthy();
 
-        // Check for FAQ item
         expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 
@@ -463,13 +458,13 @@ describe('CourseManagementContainerComponent', () => {
 
         component.deleteCourse(1);
 
-        expect(deleteSpy).toHaveBeenCalledWith(1);
-        expect(eventManagerSpy).toHaveBeenCalledWith({
+        expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({
             name: 'courseListModification',
-            content: 'Deleted an course',
+            content: 'Deleted a course',
         });
-        expect(dialogErrorSourceSpy).toHaveBeenCalledWith('');
-        expect(router.navigate).toHaveBeenCalledWith(['/course-management']);
+        expect(dialogErrorSourceSpy).toHaveBeenCalledExactlyOnceWith('');
+        expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);
     });
 
     it('should handle error when deleting course', () => {
@@ -494,9 +489,7 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set hasSidebar when onSubRouteActivate is called', () => {
-        // Setup router URL for communication route
-        const url = `/course-management/${course1.id}/communication`;
-        router.url = url;
+        router.url = `/course-management/${course1.id}/communication`;
 
         component.onSubRouteActivate({});
 
@@ -505,16 +498,14 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should set up conversation service if course has communication enabled', () => {
-        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(EMPTY);
+        const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService').mockReturnValue(of() as Observable<never>);
 
         component.course.set({
             ...course1,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
         });
 
-        // Setup router URL for communication route
-        const url = `/course-management/${course1.id}/communication`;
-        router.url = url;
+        router.url = `/course-management/${course1.id}/communication`;
 
         component.onSubRouteActivate({});
 
@@ -568,8 +559,8 @@ describe('CourseManagementContainerComponent', () => {
     });
 
     it('should correctly determine if course is active', () => {
-        const activeCourse = { ...course1, endDate: new dayjs.Dayjs().add(1, 'day') } as Course;
-        const inactiveCourse = { ...course1, endDate: new dayjs.Dayjs().subtract(1, 'day') } as Course;
+        const activeCourse = { ...course1, endDate: dayjs().add(1, 'day') } as Course;
+        const inactiveCourse = { ...course1, endDate: dayjs().subtract(1, 'day') } as Course;
         const noEndDateCourse = { ...course1, endDate: null } as unknown as Course;
 
         expect(component.isCourseActive(activeCourse)).toBeTrue();
@@ -651,17 +642,16 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.courses()).not.toContain(course2);
     });
 
-    it('should switch course and navigate to the correct URL', () => {
-        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
+    it('should switch course and navigate to the correct URL', async () => {
+        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
         const navigateSpy = jest.spyOn(router, 'navigate');
+        component.router.url = `/course-management/${course1.id}/exercises`;
 
         component.switchCourse(course2);
+        await Promise.resolve();
 
         expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
-        // After the navigateByUrl promise resolves, it should navigate to the course
-        navigateByUrlSpy.mock.calls[0][2]?.(); // Call the 'then' callback
-
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id, 'exercises']);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course2.id]);
     });
 
     it('should handle component activation with controls', () => {
@@ -703,16 +693,16 @@ describe('CourseManagementContainerComponent', () => {
     it('should check for unread messages if messaging is enabled', () => {
         const checkForUnreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         const subscribeToHasUnreadMessagesSpy = jest.spyOn(component as any, 'subscribeToHasUnreadMessages');
-
-        component.course.set({
+        const courseWithMessaging = {
             ...course1,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
-        });
+        };
+        component.course.set(courseWithMessaging);
 
         component.setUpConversationService();
-
         expect(checkForUnreadMessagesSpy).toHaveBeenCalled();
-        expect(subscribeToHasUnreadMessagesSpy).toHaveBeenCalled();
+        expect(checkForUnreadMessagesSpy).toHaveBeenCalledExactlyOnceWith(courseWithMessaging);
+        expect(subscribeToHasUnreadMessagesSpy).toHaveBeenCalledExactlyOnceWith();
         expect(component.checkedForUnreadMessages()).toBeTrue();
     });
 

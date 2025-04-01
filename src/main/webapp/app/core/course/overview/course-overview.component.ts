@@ -185,6 +185,8 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         ) {
             this.activatedComponentReference.set(componentRef);
         }
+        this.isSidebarCollapsed.set(this.activatedComponentReference()?.isCollapsed ?? false);
+
         this.getShowRefreshButton();
     }
 

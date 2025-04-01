@@ -4,7 +4,7 @@ import { NavigationEnd, RouterEvent, RouterState, UrlTree } from '@angular/route
 // When using the spies, bear in mind jest.resetAllMocks does not affect them, they need to be reset manually
 export class MockRouter {
     url = '/';
-    navigateByUrl = jest.fn().mockReturnValue(true);
+    navigateByUrl = jest.fn().mockReturnValue(Promise.resolve(true));
     navigate = jest.fn().mockReturnValue(Promise.resolve(true));
     routerState: RouterState;
     createUrlTree = jest.fn().mockReturnValue({ path: 'testValue' } as unknown as UrlTree);

@@ -191,6 +191,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         ) {
             this.activatedComponentReference.set(componentRef);
         }
+        if (this.activatedComponentReference instanceof CourseConversationsComponent) {
+            const childRouteComponent = this.activatedComponentReference as CourseConversationsComponent;
+            this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
+        }
     }
 
     handleToggleSidebar(): void {
@@ -326,7 +330,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
-                    content: 'Deleted an course',
+                    content: 'Deleted a course',
                 });
                 this.dialogErrorSource.next('');
                 this.router.navigate(['/course-management']);

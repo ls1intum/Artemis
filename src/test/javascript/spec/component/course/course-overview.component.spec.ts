@@ -689,4 +689,16 @@ describe('CourseOverviewComponent', () => {
         courseSidebarService.toggleSidebar();
         expect(component.isSidebarCollapsed()).toBeTrue();
     });
+
+    it('should switch course and navigate to the correct URL', async () => {
+        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        component.router.url = `/courses/${course1.id}/exercises`;
+
+        component.switchCourse(course2);
+        await Promise.resolve();
+
+        expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'exercises']);
+    });
 });

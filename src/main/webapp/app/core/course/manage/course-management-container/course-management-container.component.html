@@ -30,7 +30,6 @@
                 }"
             >
                 @if (course()) {
-                    <!-- Replace the old title bar with the shared component -->
                     <jhi-course-title-bar [hasSidebar]="hasSidebar()" [isSidebarCollapsed]="isSidebarCollapsed()" [pageTitle]="pageTitle()" (toggleSidebar)="toggleSidebar()">
                         <div id="student-view-button">
                             <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/courses', course()?.id]" jhiTranslate="artemisApp.courseOverview.studentView"></a>
