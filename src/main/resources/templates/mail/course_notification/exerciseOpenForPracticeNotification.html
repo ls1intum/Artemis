@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="head">
+    <head>
+        <title th:text="#{email.courseNotification.exerciseOpenForPracticeNotification.title}">Exercise open for practice</title>
+        <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+        <th:block th:replace="~{mail/notification/fragments :: css}"/>
+    </head>
+</th:block>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block>
+        <span th:text="#{email.greetings}">Dear </span>
+        <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+        <br>
+    </th:block>
+    <div class="notification-content">
+        <th:block th:replace="~{mail/notification/fragments :: exerciseTypeTranslation}"/>
+        <span th:utext="#{email.courseNotification.exerciseOpenForPracticeNotification.text(
+                ${parameters['exerciseTitle']},
+                ${parameters['courseTitle']}
+                )}">Exercise opened for practice</span>
+
+        <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<!-- Message Body End -->
+<th:block>
+    <footer>
+        <span th:text="#{email.notification.aux.footer}"/>
+        <a th:href="@{|${serverUrl}/courses/${courseId}/settings|}">
+            <span th:text="#{email.notification.aux.footer.link}"/>
+        </a>
+    </footer>
+</th:block>
+</body>
+</html>
+

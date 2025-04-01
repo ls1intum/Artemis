@@ -4,7 +4,7 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { CompetencyService } from 'app/atlas/manage/competency.service';
 import { of } from 'rxjs';
-import { CompetencyWithTailRelationDTO } from 'app/entities/competency.model';
+import { CompetencyWithTailRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';

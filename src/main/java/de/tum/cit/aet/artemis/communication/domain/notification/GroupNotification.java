@@ -36,8 +36,6 @@ public class GroupNotification extends Notification {
     @JsonIgnoreProperties("groupNotifications")
     private Course course;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public GroupNotificationType getType() {
         return type;
     }

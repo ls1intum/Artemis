@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, input } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];

@@ -3,7 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { AbstractQuizStatisticComponent } from 'app/quiz/manage/statistics/quiz-statistics';
@@ -18,7 +18,7 @@ import { QuizStatisticsFooterComponent } from '../quiz-statistics-footer/quiz-st
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html',
-    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
+    styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../shared/chart/vertical-bar-chart.scss'],
     imports: [TranslateDirective, BarChartModule, FaIconComponent, QuizStatisticsFooterComponent],
 })
 export class QuizStatisticComponent extends AbstractQuizStatisticComponent implements OnInit, OnDestroy {

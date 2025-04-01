@@ -9,7 +9,7 @@ import { mockEmptySettings, mockSettings } from './mock-settings';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { By } from '@angular/platform-browser';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

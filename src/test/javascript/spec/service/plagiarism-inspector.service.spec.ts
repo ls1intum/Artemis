@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Range } from 'app/shared/util/utils';
 import { PlagiarismInspectorService } from 'app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.service';
 

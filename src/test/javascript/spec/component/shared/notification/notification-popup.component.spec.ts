@@ -3,22 +3,42 @@ import { By } from '@angular/platform-browser';
 import { Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ReplaySubject } from 'rxjs';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
-import { NotificationService } from 'app/shared/notification/notification.service';
+import { ReplaySubject, of } from 'rxjs';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/entities/notification.model';
+import { NEW_MESSAGE_TITLE, Notification, QUIZ_EXERCISE_STARTED_TEXT, QUIZ_EXERCISE_STARTED_TITLE } from 'app/core/shared/entities/notification.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
+
+class MockFeatureToggleService implements Partial<FeatureToggleService> {
+    private featureToggles = new Map<FeatureToggle, boolean>();
+
+    constructor() {
+        Object.values(FeatureToggle).forEach((toggle) => {
+            this.featureToggles.set(toggle, false);
+        });
+    }
+
+    getFeatureToggleActive(feature: FeatureToggle) {
+        return of(this.featureToggles.get(feature) || false);
+    }
+
+    setMockFeatureToggle(feature: FeatureToggle, active: boolean) {
+        this.featureToggles.set(feature, active);
+    }
+}
 
 describe('Notification Popup Component', () => {
     let notificationPopupComponent: NotificationPopupComponent;
     let notificationPopupComponentFixture: ComponentFixture<NotificationPopupComponent>;
     let notificationService: NotificationService;
     let router: Router;
+    let featureToggleService: MockFeatureToggleService;
 
     const generateQuizNotification = (notificationId: number) => {
         const generatedNotification = {
@@ -59,11 +79,14 @@ describe('Notification Popup Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 provideHttpClient(),
             ],
         })
             .compileComponents()
             .then(() => {
+                featureToggleService = TestBed.inject(FeatureToggleService) as unknown as MockFeatureToggleService;
+                featureToggleService.setMockFeatureToggle(FeatureToggle.CourseSpecificNotifications, false);
                 notificationPopupComponentFixture = TestBed.createComponent(NotificationPopupComponent);
                 notificationPopupComponent = notificationPopupComponentFixture.componentInstance;
                 notificationService = TestBed.inject(NotificationService);
