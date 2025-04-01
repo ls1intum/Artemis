@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
 import java.net.URI;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -84,6 +83,7 @@ import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
+import de.tum.cit.aet.artemis.text.config.TextExerciseEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -94,7 +94,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 /**
  * REST controller for managing TextExercise.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextExerciseEnabled.class)
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseResource {

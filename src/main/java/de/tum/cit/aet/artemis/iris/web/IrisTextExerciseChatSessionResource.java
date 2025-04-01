@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.iris.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -16,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
@@ -28,6 +25,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionSe
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
+import de.tum.cit.aet.artemis.text.config.TextExerciseNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -70,7 +68,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
-        var exercise = textRepositoryApi.orElseThrow(() -> new ApiProfileNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new TextExerciseNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
@@ -98,7 +96,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        var textExercise = textRepositoryApi.orElseThrow(() -> new ApiProfileNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var textExercise = textRepositoryApi.orElseThrow(() -> new TextExerciseNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(textExercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
@@ -120,7 +118,7 @@ public class IrisTextExerciseChatSessionResource {
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        var exercise = textRepositoryApi.orElseThrow(() -> new ApiProfileNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new TextExerciseNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);

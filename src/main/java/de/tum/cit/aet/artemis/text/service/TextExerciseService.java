@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Collections;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -15,10 +13,11 @@ import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDT
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
+import de.tum.cit.aet.artemis.text.config.TextExerciseEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextExerciseEnabled.class)
 @Service
 public class TextExerciseService {
 

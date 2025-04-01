@@ -1,19 +1,18 @@
 package de.tum.cit.aet.artemis.text.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.text.config.TextExerciseEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextExerciseEnabled.class)
 @Controller
 public class TextRepositoryApi extends AbstractTextApi {
 

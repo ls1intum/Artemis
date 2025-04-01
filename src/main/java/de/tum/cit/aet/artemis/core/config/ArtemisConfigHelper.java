@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEXT_EXERCISE_ENABLED_PROPERTY_NAME;
 
 import org.springframework.core.env.Environment;
 
@@ -19,6 +20,16 @@ public class ArtemisConfigHelper {
      */
     public boolean isAtlasEnabled(Environment environment) {
         return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the text exercise is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the text exercise is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(TEXT_EXERCISE_ENABLED_PROPERTY_NAME, environment);
     }
 
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {

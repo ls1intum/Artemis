@@ -401,6 +401,11 @@ public final class Constants {
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
 
     /**
+     * The name of the property used to enable or disable Text Exercise functionality.
+     */
+    public static final String TEXT_EXERCISE_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;

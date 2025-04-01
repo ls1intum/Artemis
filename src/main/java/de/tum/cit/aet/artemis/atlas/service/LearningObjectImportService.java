@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,7 +36,6 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -63,6 +60,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
+import de.tum.cit.aet.artemis.text.config.TextExerciseNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -205,7 +203,7 @@ public class LearningObjectImportService {
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new TextExerciseNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }

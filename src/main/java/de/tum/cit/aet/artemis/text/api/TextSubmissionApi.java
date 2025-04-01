@@ -1,18 +1,17 @@
 package de.tum.cit.aet.artemis.text.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.text.config.TextExerciseEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
 
+@Conditional(TextExerciseEnabled.class)
 @Controller
-@Profile(PROFILE_CORE)
 public class TextSubmissionApi extends AbstractTextApi {
 
     private final TextSubmissionRepository textSubmissionRepository;
