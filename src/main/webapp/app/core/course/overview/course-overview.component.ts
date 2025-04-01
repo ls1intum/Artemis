@@ -382,6 +382,14 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         }
     }
 
+    /** Navigate to a new Course */
+    switchCourse(course: Course) {
+        const url = ['courses', course.id, 'exercises'];
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
+            this.router.navigate(url);
+        });
+    }
+
     ngOnDestroy() {
         super.ngOnDestroy();
         if (this.teamAssignmentUpdateListener) {

@@ -175,6 +175,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return this.communicationRouteLoaded();
     }
 
+    /** Navigate to a new Course */
+    switchCourse(course: Course) {
+        const url = ['course-management', course.id];
+        this.router.navigate(url);
+    }
+
     protected handleComponentActivation(componentRef: any): void {
         if (
             componentRef instanceof CourseDetailComponent ||

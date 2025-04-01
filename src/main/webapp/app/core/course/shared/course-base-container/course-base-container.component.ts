@@ -157,6 +157,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract handleToggleSidebar(): void;
 
     abstract loadCourse(refresh?: boolean): Observable<void>;
+    abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
         // Check if controls mount point is available, if not, wait for it
@@ -200,19 +201,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
                 }
             },
         });
-    }
-
-    /** Navigate to a new Course */
-    switchCourse(course: Course) {
-        const courseManagementRoute = this.router.url.includes('course-management');
-        const url = courseManagementRoute ? ['course-management', course.id] : ['courses', course.id, 'exercises'];
-        if (courseManagementRoute) {
-            this.router.navigate(url);
-        } else {
-            this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => {
-                this.router.navigate(url);
-            });
-        }
     }
 
     /**
