@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Component, Input } from '@angular/core';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -65,7 +65,7 @@ describe('LectureUnitManagementComponent', () => {
     let getProfileInfo: jest.SpyInstance;
     let getCombinedCourseSettings: jest.SpyInstance;
 
-    let attachmentUnit: AttachmentVideoUnit;
+    let attachmentVideoUnit: AttachmentVideoUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
@@ -82,7 +82,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ExerciseUnitComponent),
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(VideoUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(FaIconComponent),
@@ -135,15 +135,15 @@ describe('LectureUnitManagementComponent', () => {
                 videoUnit.id = 1;
                 exerciseUnit = new ExerciseUnit();
                 exerciseUnit.id = 2;
-                attachmentUnit = new AttachmentVideoUnit();
-                attachmentUnit.id = 3;
+                attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.id = 3;
                 course = new Course();
                 course.id = 99;
 
                 lecture = new Lecture();
                 lecture.id = 0;
                 lecture.course = course;
-                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentVideoUnit];
 
                 const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
                 findLectureSpy.mockReturnValue(returnValue);
@@ -189,7 +189,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
@@ -205,7 +205,7 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentVideoUnit())).toBe('artemisApp.attachmentVideoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
@@ -263,7 +263,7 @@ describe('LectureUnitManagementComponent', () => {
         );
         lectureUnitManagementComponent.updateIngestionStates();
         expect(lectureUnitService.getIngestionState).toHaveBeenCalledWith(lecture.course!.id!, lecture.id);
-        expect(attachmentUnit.pyrisIngestionState).toBe(IngestionState.DONE);
+        expect(attachmentVideoUnit.pyrisIngestionState).toBe(IngestionState.DONE);
     });
 
     it('should handle error when ingestLectureUnitInPyris fails', () => {
@@ -283,7 +283,7 @@ describe('LectureUnitManagementComponent', () => {
     describe('isViewButtonAvailable', () => {
         it('should return true for an attachment unit with a PDF link', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.pdf' },
             } as LectureUnit;
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
@@ -291,7 +291,7 @@ describe('LectureUnitManagementComponent', () => {
 
         it('should return false for file extension different than .pdf', () => {
             const lectureUnit = {
-                type: LectureUnitType.ATTACHMENT,
+                type: LectureUnitType.ATTACHMENT_VIDEO,
                 attachment: { link: 'file.txt' },
             };
             expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();

@@ -163,9 +163,9 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // referenceStr: string to be displayed for the reference
                     // slideToReference: location of attachment to be opened on reference click
                     referenceStr = this.content()!.substring(this.content()!.indexOf(']', patternMatch.startIndex)! + 1, this.content()!.indexOf('(', patternMatch.startIndex)!);
-                    const attachmentUnitRefDir = this.ATTACHMENT_DIR;
+                    const attachmentVideoUnitRefDir = this.ATTACHMENT_DIR;
                     slideToReference =
-                        attachmentUnitRefDir +
+                        attachmentVideoUnitRefDir +
                         this.content()!.substring(this.content()!.indexOf('(', patternMatch.startIndex)! + 1, this.content()!.indexOf(')', patternMatch.startIndex));
                 } else if (ReferenceType.USER === referenceType) {
                     // referenceStr: string to be displayed for the reference

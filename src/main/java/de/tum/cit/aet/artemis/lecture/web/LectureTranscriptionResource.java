@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
@@ -77,6 +78,7 @@ public class LectureTranscriptionResource {
      */
     @PostMapping(value = "{lectureId}/lecture-unit/{lectureUnitId}/transcription")
     @EnforceAdmin
+    @ManualConfig
     public ResponseEntity<LectureTranscription> createLectureTranscription(@Valid @RequestBody LectureTranscriptionDTO transcriptionDTO, @PathVariable Long lectureId,
             @PathVariable Long lectureUnitId) throws URISyntaxException {
         LectureUnit lectureUnit = lectureUnitRepository.findByIdElseThrow(lectureUnitId);

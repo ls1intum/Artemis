@@ -24,7 +24,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Lecture', () => {

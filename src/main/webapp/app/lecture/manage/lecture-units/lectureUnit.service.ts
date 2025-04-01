@@ -7,11 +7,11 @@ import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable, inject } from '@angular/core';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
-import { AttachmentService } from 'app/lecture/manage/attachment.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
 
@@ -58,7 +58,7 @@ export class LectureUnitService {
     }
 
     convertLectureUnitDatesFromClient<T extends LectureUnit>(lectureUnit: T): T {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((<AttachmentVideoUnit>lectureUnit).attachment) {
                 (<AttachmentVideoUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentDatesFromClient((<AttachmentVideoUnit>lectureUnit).attachment!);
                 return lectureUnit;
@@ -86,7 +86,7 @@ export class LectureUnitService {
 
     convertLectureUnitResponseDatesFromServer<T extends LectureUnit>(res: HttpResponse<T>): HttpResponse<T> {
         if (res.body) {
-            if (res.body.type === LectureUnitType.ATTACHMENT) {
+            if (res.body.type === LectureUnitType.ATTACHMENT_VIDEO) {
                 if ((<AttachmentVideoUnit>res.body).attachment) {
                     (<AttachmentVideoUnit>res.body).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentVideoUnit>res.body).attachment);
                 }
@@ -103,7 +103,7 @@ export class LectureUnitService {
     }
 
     convertLectureUnitDateFromServer<T extends LectureUnit>(lectureUnit: T): T {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             if ((<AttachmentVideoUnit>lectureUnit).attachment) {
                 (<AttachmentVideoUnit>lectureUnit).attachment = this.attachmentService.convertAttachmentFromServer((<AttachmentVideoUnit>lectureUnit).attachment);
             }
@@ -137,7 +137,7 @@ export class LectureUnitService {
     }
 
     getLectureUnitName(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             return (<AttachmentVideoUnit>lectureUnit)?.attachment?.name;
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return (<ExerciseUnit>lectureUnit)?.exercise?.title;
@@ -147,7 +147,7 @@ export class LectureUnitService {
     }
 
     getLectureUnitReleaseDate(lectureUnit: LectureUnit) {
-        if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+        if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             return (<AttachmentVideoUnit>lectureUnit)?.attachment?.releaseDate;
         } else if (lectureUnit.type === LectureUnitType.EXERCISE) {
             return (<ExerciseUnit>lectureUnit)?.exercise?.releaseDate;

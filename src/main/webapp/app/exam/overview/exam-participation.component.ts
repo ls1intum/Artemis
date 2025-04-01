@@ -12,11 +12,11 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { cloneDeep } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import { captureException } from '@sentry/angular';
@@ -49,8 +49,8 @@ import {
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
 } from 'app/exam/overview/exam-participation-live-events.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';

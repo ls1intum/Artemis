@@ -11,7 +11,7 @@
                 "exercise": "Übung",
                 "video": "Video",
                 "online": "Online",
-                "attachment": "Datei"
+                "attachmentVideo": "Datei/Video"
             },
             "releaseDate": "Veröffentlichungsdatum",
             "details": {
@@ -45,38 +45,6 @@
             "delete": {
                 "question": "Willst du wirklich die Texteinheit <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Texteinheit zur Bestätigung ein.",
-                "buttonText": "Löschen"
-            }
-        },
-        "videoUnit": {
-            "created": "Eine neue Videoeinheit wurde erstellt",
-            "updated": "Videoeinheit aktualisiert",
-            "tooltip": "Das ist eine Videoeinheit",
-            "description": "Beschreibung",
-            "notReleasedTooltip": "Video nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
-            "createVideoUnit": {
-                "title": "Erstelle Videoeinheit",
-                "name": "Name",
-                "namePlaceHolder": "Gib der Videoeinheit einen Namen",
-                "description": "Beschreibung",
-                "descriptionPlaceHolder": "Gib der Videoeinheit eine Beschreibung",
-                "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
-                "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
-                "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
-                "source": "Einbettbares Video URL",
-                "sourcePlaceHolder": "Gib eine URL zu einem einbettbarem Video ein.",
-                "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
-                "sourceURLValidationError": "Keine valide URL",
-                "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
-                "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
-            },
-            "editVideoUnit": {
-                "title": "Bearbeite eine Videoeinheit"
-            },
-            "delete": {
-                "question": "Willst du wirklich die Videoeinheit <strong>{{ title }}</strong> löschen?Du kannst diese Aktion nicht rückgängig machen!",
-                "typeNameToConfirm": "Bitte gib den Namen der Videoeinheit zur Bestätigung ein.",
                 "buttonText": "Löschen"
             }
         },
@@ -161,12 +129,12 @@
             "createAttachmentVideoUnit": {
                 "title": "Dateieinheit erstellen",
                 "name": "Name",
-                "namePlaceHolder": "Gib der Datei einen Namen",
+                "namePlaceHolder": "Gib der Einheit einen Namen",
                 "description": "Beschreibung",
                 "updateNotificationText": "Update Benachrichtigungstext",
                 "updateNotificationTextPlaceholder": "Optionaler Benachrichtigungstext für Studierende über Änderungen.",
                 "updateNotificationTextMaxLengthValidationError": "Der Benachrichtigungstext kann maximal 1000 Zeichen lang sein.",
-                "descriptionPlaceHolder": "Gib der Datei eine Beschreibung",
+                "descriptionPlaceHolder": "Gib der Einheit eine Beschreibung",
                 "nameRequiredValidationError": "Der Name ist ein Pflichtfeld.",
                 "nameMaxLengthValidationError": "Der Name kann maximal 255 Zeichen lang sein.",
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
@@ -178,7 +146,7 @@
                 "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
-            "editAttachmentUnit": {
+            "editAttachmentVideoUnit": {
                 "title": "Bearbeite Dateieinheit"
             },
             "tooltip": "Das ist eine Datei",
@@ -186,7 +154,7 @@
             "version": "Version",
             "FileName": "Dateiname",
             "description": "Beschreibung",
-            "download": "Herunterladen",
+            "download": "Datei herunterladen",
             "delete": {
                 "question": "Willst du wirklich die Dateieinheit <strong>{{ title }}</strong> löschen? Die Datei wird auch gelöscht! Du kannst diese Aktion nicht rückgängig machen!",
                 "typeNameToConfirm": "Bitte gib den Namen der Dateieinheit zur Bestätigung ein.",

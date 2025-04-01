@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -43,10 +42,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
@@ -358,36 +354,6 @@ public class ProgrammingExercise extends Exercise {
         this.projectKey = (course.getShortName() + this.getShortName()).toUpperCase().replaceAll("\\s+", "");
     }
 
-    /**
-     * Get the latest (potentially) graded submission for a programming exercise.
-     * Programming submissions work differently in this regard as a submission without a result does not mean it is not rated/assessed,
-     * but that e.g. the CI system failed to deliver the build results.
-     *
-     * @param submissions Submissions for the given student.
-     * @return the latest graded submission.
-     */
-    @Nullable
-    @Override
-    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
-        return submissions.stream().filter(submission -> {
-            Result result = submission.getLatestResult();
-            if (result != null) {
-                return checkForRatedAndAssessedResult(result);
-            }
-            return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
-                    || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
-        }).max(Comparator.naturalOrder()).orElse(null);
-    }
-
-    private ZonedDateTime getRelevantDueDateForSubmission(Submission submission) {
-        if (submission.getParticipation().getIndividualDueDate() != null) {
-            return submission.getParticipation().getIndividualDueDate();
-        }
-        else {
-            return this.getDueDate();
-        }
-    }
-
     @Override
     public ExerciseType getExerciseType() {
         return PROGRAMMING;
@@ -642,31 +608,8 @@ public class ProgrammingExercise extends Exercise {
      */
     @Override
     public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(this::checkForAssessedResult).collect(Collectors.toSet());
-    }
-
-    /**
-     * Find relevant participations for this exercise. Normally there are only one practice and graded participation.
-     * In case there are multiple, they are filtered as implemented in {@link Exercise#findRelevantParticipation(Set)}
-     *
-     * @param participations the list of available participations
-     * @return the found participation in an unmodifiable list or the empty list, if none exists
-     */
-    @Override
-    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
-        Set<StudentParticipation> participationOfExercise = participations.stream()
-                .filter(participation -> participation.getExercise() != null && participation.getExercise().equals(this)).collect(Collectors.toSet());
-        Set<StudentParticipation> gradedParticipations = participationOfExercise.stream().filter(participation -> !participation.isPracticeMode()).collect(Collectors.toSet());
-        Set<StudentParticipation> practiceParticipations = participationOfExercise.stream().filter(Participation::isPracticeMode).collect(Collectors.toSet());
-
-        if (gradedParticipations.size() > 1) {
-            gradedParticipations = super.findRelevantParticipation(gradedParticipations);
-        }
-        if (practiceParticipations.size() > 1) {
-            practiceParticipations = super.findRelevantParticipation(practiceParticipations);
-        }
-
-        return Stream.concat(gradedParticipations.stream(), practiceParticipations.stream()).collect(Collectors.toSet());
+        return participation.getResults().stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
+                .collect(Collectors.toSet());
     }
 
     /**
@@ -688,26 +631,6 @@ public class ProgrammingExercise extends Exercise {
         }
 
         return false;
-    }
-
-    /**
-     * This checks if the current result is rated and has a completion date.
-     *
-     * @param result The current result
-     * @return true if the result is manual and assessed, false otherwise
-     */
-    private boolean checkForRatedAndAssessedResult(Result result) {
-        return Boolean.TRUE.equals(result.isRated()) && checkForAssessedResult(result);
-    }
-
-    /**
-     * This checks if the current result has a completion date and if the assessment is over
-     *
-     * @param result The current result
-     * @return true if the result is manual and the assessment is over, or it is an automatic result, false otherwise
-     */
-    private boolean checkForAssessedResult(Result result) {
-        return result.getCompletionDate() != null && ((result.isManual() && ExerciseDateService.isAfterAssessmentDueDate(this)) || result.isAutomatic() || result.isAthenaBased());
     }
 
     @Override

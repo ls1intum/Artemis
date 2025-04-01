@@ -51,7 +51,7 @@ public class LectureUnitProcessingService {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentUnitService attachmentUnitService;
+    private final AttachmentVideoUnitService attachmentVideoUnitService;
 
     private final PDFTextStripper pdfTextStripper = new PDFTextStripper();
 
@@ -59,11 +59,11 @@ public class LectureUnitProcessingService {
     private final Splitter pdfSinglePageSplitter = new Splitter();
 
     public LectureUnitProcessingService(SlideSplitterService slideSplitterService, FileService fileService, LectureRepository lectureRepository,
-            AttachmentUnitService attachmentUnitService) {
+            AttachmentVideoUnitService attachmentVideoUnitService) {
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.lectureRepository = lectureRepository;
-        this.attachmentUnitService = attachmentUnitService;
+        this.attachmentVideoUnitService = attachmentVideoUnitService;
     }
 
     /**
@@ -100,7 +100,7 @@ public class LectureUnitProcessingService {
                 documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
                 documentUnits.getFirst().save(outputStream);
 
-                // setup attachmentUnit and attachment
+                // setup attachmentVideoUnit and attachment
                 attachmentVideoUnit.setDescription("");
                 attachment.setName(lectureUnit.unitName());
                 attachment.setAttachmentType(AttachmentType.FILE);
@@ -108,8 +108,8 @@ public class LectureUnitProcessingService {
                 attachment.setUploadDate(ZonedDateTime.now());
 
                 MultipartFile multipartFile = fileService.convertByteArrayToMultipart(lectureUnit.unitName(), ".pdf", outputStream.toByteArray());
-                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentUnitService.createAttachmentUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
+                AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.createAttachmentVideoUnit(attachmentVideoUnit, attachment, lecture, multipartFile, true);
+                slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(documentUnits.getFirst(), savedAttachmentVideoUnit, multipartFile.getOriginalFilename());
                 documentUnits.getFirst().close(); // make sure to close the document
                 units.add(savedAttachmentVideoUnit);
             }

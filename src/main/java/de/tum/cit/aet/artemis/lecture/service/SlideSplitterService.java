@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
- * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.
+ * Service Implementation for managing the split of AttachmentVideoUnit into single slides and save them as PNG.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -54,12 +54,12 @@ public class SlideSplitterService {
      * @param attachmentVideoUnit The attachment unit to which the slides belong.
      */
     @Async
-    public void splitAttachmentUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
+    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit) {
         Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentVideoUnit.getAttachment().getLink()));
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
+            splitAttachmentVideoUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename);
         }
         catch (IOException e) {
             log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
@@ -74,7 +74,7 @@ public class SlideSplitterService {
      * @param document            The PDF document that is already loaded.
      * @param pdfFilename         The name of the PDF file.
      */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
+    public void splitAttachmentVideoUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename) {
         log.debug("Splitting Attachment Unit file {} into single slides", attachmentVideoUnit.getAttachment().getName());
         try {
             String fileNameWithOutExt = FilenameUtils.removeExtension(pdfFilename);
@@ -87,7 +87,7 @@ public class SlideSplitterService {
                 int slideNumber = page + 1;
                 String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + slideNumber + ".png";
                 MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
+                Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
                 Slide slideEntity = new Slide();
                 slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, (long) slideNumber).toString());

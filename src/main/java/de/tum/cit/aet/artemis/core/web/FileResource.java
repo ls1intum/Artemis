@@ -76,7 +76,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentVideoUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
@@ -105,7 +105,7 @@ public class FileResource {
 
     private final LectureRepository lectureRepository;
 
-    private final AttachmentUnitRepository attachmentUnitRepository;
+    private final AttachmentVideoUnitRepository attachmentVideoUnitRepository;
 
     private final SlideRepository slideRepository;
 
@@ -133,15 +133,15 @@ public class FileResource {
 
     public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
             LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
-            FileUploadService fileUploadService) {
+            AttachmentVideoUnitRepository attachmentVideoUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            ExamUserRepository examUserRepository, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            LectureUnitService lectureUnitService, FileUploadService fileUploadService) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.attachmentRepository = attachmentRepository;
-        this.attachmentUnitRepository = attachmentUnitRepository;
+        this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -474,7 +474,7 @@ public class FileResource {
 
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
-        List<AttachmentVideoUnit> lectureAttachments = attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
+        List<AttachmentVideoUnit> lectureAttachments = attachmentVideoUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lectureId, AttachmentType.FILE).stream()
                 .filter(unit -> authCheckService.isAllowedToSeeLectureUnit(unit, user) && "pdf".equals(StringUtils.substringAfterLast(unit.getAttachment().getLink(), ".")))
                 .toList();
 
@@ -491,17 +491,17 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
+     * GET files/attachments/attachment-unit/:attachmentVideoUnitId/:filename : Get the lecture unit attachment
      * Accesses to this endpoint are created by the server itself in the FilePathService
      *
-     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param attachmentVideoUnitId ID of the attachment unit, the attachment belongs to
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
+    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/*")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachment(@PathVariable Long attachmentVideoUnitId) {
+        log.debug("REST request to get the file for attachment unit {} for students", attachmentVideoUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnitId);
 
         // get the course for a lecture's attachment unit
         Attachment attachment = attachmentVideoUnit.getAttachment();
@@ -513,21 +513,21 @@ public class FileResource {
     }
 
     /**
-     * GET files/courses/{courseId}/attachment-units/{attachmentUnitId} : Returns the file associated with the
-     * given attachmentUnit ID as a downloadable resource
+     * GET files/courses/{courseId}/attachment-units/{attachmentVideoUnitId} : Returns the file associated with the
+     * given attachmentVideoUnit ID as a downloadable resource
      *
-     * @param courseId         The ID of the course that the Attachment belongs to
-     * @param attachmentUnitId the ID of the attachment to retrieve
+     * @param courseId              The ID of the course that the Attachment belongs to
+     * @param attachmentVideoUnitId the ID of the attachment to retrieve
      * @return ResponseEntity containing the file as a resource
      */
-    @GetMapping("files/courses/{courseId}/attachment-units/{attachmentUnitId}")
+    @GetMapping("files/courses/{courseId}/attachment-units/{attachmentVideoUnitId}")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the file for attachment unit {} for editors", attachmentUnitId);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+    public ResponseEntity<byte[]> getAttachmentVideoUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentVideoUnitId) {
+        log.debug("REST request to get the file for attachment unit {} for editors", attachmentVideoUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnitId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Attachment attachment = attachmentVideoUnit.getAttachment();
-        checkAttachmentUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
+        checkAttachmentVideoUnitExistsInCourseOrThrow(course, attachmentVideoUnit);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -552,24 +552,24 @@ public class FileResource {
     }
 
     /**
-     * GET files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
+     * GET files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber} : Get the lecture unit attachment slide by slide number
      *
-     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
-     * @param slideNumber      the slideNumber of the file
+     * @param attachmentVideoUnitId ID of the attachment unit, the attachment belongs to
+     * @param slideNumber           the slideNumber of the file
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
-    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/slide/{slideNumber}")
+    @GetMapping("files/attachments/attachment-unit/{attachmentVideoUnitId}/slide/{slideNumber}")
     @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
+    public ResponseEntity<byte[]> getAttachmentVideoUnitAttachmentSlide(@PathVariable Long attachmentVideoUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide : {}", slideNumber);
-        AttachmentVideoUnit attachmentVideoUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentVideoUnitId);
 
         Attachment attachment = attachmentVideoUnit.getAttachment();
         Course course = attachmentVideoUnit.getLecture().getCourse();
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        Slide slide = slideRepository.findSlideByAttachmentVideoUnitIdAndSlideNumber(attachmentVideoUnitId, Integer.parseInt(slideNumber));
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -579,8 +579,8 @@ public class FileResource {
         if (matcher.matches()) {
             String fileName = matcher.group(1);
             return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+                    FilePathService.getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))),
+                    fileName, true);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
@@ -728,7 +728,7 @@ public class FileResource {
      * @param course              the course to check if the attachment is part of it
      * @param attachmentVideoUnit the attachment unit for which the existence should be checked
      */
-    private void checkAttachmentUnitExistsInCourseOrThrow(Course course, AttachmentVideoUnit attachmentVideoUnit) {
+    private void checkAttachmentVideoUnitExistsInCourseOrThrow(Course course, AttachmentVideoUnit attachmentVideoUnit) {
         if (!attachmentVideoUnit.getLecture().getCourse().equals(course)) {
             throw new EntityNotFoundException("This attachment unit does not exist in this course.");
         }

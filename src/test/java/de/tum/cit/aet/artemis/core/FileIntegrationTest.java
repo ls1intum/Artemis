@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -62,7 +62,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private AttachmentRepository attachmentRepo;
 
     @Autowired
-    private AttachmentUnitTestRepository attachmentUnitRepo;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepo;
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;
@@ -123,7 +123,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetUnreleasedAttachmentUnitAsTutor() throws Exception {
+    void testGetUnreleasedAttachmentVideoUnitAsTutor() throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -131,12 +131,10 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // create unreleased attachment unit
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
         attachmentVideoUnit.setLecture(lecture);
-        Attachment attachment = attachmentVideoUnit.getAttachment();
-        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        attachmentVideoUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
 
         lectureRepo.save(lecture);
-        attachmentRepo.save(attachment);
-        attachmentVideoUnit = attachmentUnitRepo.save(attachmentVideoUnit);
+        attachmentVideoUnit = attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
         String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, attachmentVideoUnit.getAttachment().getLink());
         request.get(requestUrl, HttpStatus.OK, String.class);
@@ -288,12 +286,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc1.addPage(new PDPage());
             doc1.save(outputStream);
             MockMultipartFile file1 = new MockMultipartFile("file", "file.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentUnit(lecture, file1, expectedStatus));
+            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file1, expectedStatus));
         }
 
         // create image file
         MockMultipartFile file2 = new MockMultipartFile("file", "filename2.png", "application/json", "some text".getBytes());
-        lecture.getLectureUnits().add(uploadAttachmentUnit(lecture, file2, expectedStatus));
+        lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file2, expectedStatus));
 
         // create pdf file 3
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc2 = new PDDocument()) {
@@ -304,24 +302,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             doc2.addPage(new PDPage());
             doc2.save(outputStream);
             MockMultipartFile file3 = new MockMultipartFile("file", "filename3.pdf", "application/json", outputStream.toByteArray());
-            lecture.getLectureUnits().add(uploadAttachmentUnit(lecture, file3, expectedStatus));
+            lecture.getLectureUnits().add(uploadAttachmentVideoUnit(lecture, file3, expectedStatus));
         }
 
         // Collect units freshly from the database to prevent issues when persisting the lecture again
-        lecture.setLectureUnits(attachmentUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
+        lecture.setLectureUnits(attachmentVideoUnitRepo.findAllByLectureIdAndAttachmentType(lecture.getId(), AttachmentType.FILE).stream().map(unit -> (LectureUnit) unit)
                 .collect(Collectors.toCollection(ArrayList::new)));
 
         return lecture;
     }
 
-    private AttachmentVideoUnit uploadAttachmentUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
-        AttachmentVideoUnit attachmentVideoUnit = LectureFactory.generateAttachmentUnit();
+    private AttachmentVideoUnit uploadAttachmentVideoUnit(Lecture lecture, MockMultipartFile file, HttpStatus expectedStatus) throws Exception {
+        AttachmentVideoUnit attachmentVideoUnit = LectureFactory.generateAttachmentVideoUnit();
         Attachment attachment = attachmentVideoUnit.getAttachment();
         attachmentVideoUnit.setAttachment(null);
         attachment.setAttachmentVideoUnit(null);
         MockMultipartFile attachmentFile = new MockMultipartFile("attachment", "", "application/json", objectMapper.writeValueAsBytes(attachment));
 
-        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-units", attachmentVideoUnit, "attachmentUnit",
+        return request.postWithMultipartFiles("/api/lecture/lectures/" + lecture.getId() + "/attachment-video-units", attachmentVideoUnit, "attachmentVideoUnit",
                 List.of(attachmentFile, file), AttachmentVideoUnit.class, expectedStatus);
     }
 
@@ -345,7 +343,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetAttachmentUnitFileAsEditor() throws Exception {
+    void testGetAttachmentVideoUnitFileAsEditor() throws Exception {
         Lecture lecture = lectureUtilService.createCourseWithLecture(true);
 
         AttachmentVideoUnit attachmentVideoUnit = lectureUtilService.createAttachmentVideoUnit(true);
@@ -354,17 +352,17 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
-        attachmentUnitRepo.save(attachmentVideoUnit);
+        attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
         Long courseId = lecture.getCourse().getId();
-        Long attachmentUnitId = attachmentVideoUnit.getId();
+        Long attachmentVideoUnitId = attachmentVideoUnit.getId();
 
-        request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
+        request.get("/api/core/files/courses/" + courseId + "/attachment-units/" + attachmentVideoUnitId, HttpStatus.OK, byte[].class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
+    void testGetAttachmentVideoUnitAttachmentFilenameSanitization() throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
         FileUtils.writeByteArrayToFile(tempFile.toFile(), dummyContent);
@@ -381,7 +379,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         attachment.setName(unsanitizedName);
         attachment.setLink(tempFile.toUri().toString());
         attachmentRepo.save(attachment);
-        attachmentUnitRepo.save(attachmentVideoUnit);
+        attachmentVideoUnitRepo.save(attachmentVideoUnit);
 
         String unsanitizedFilename = unsanitizedName + ".pdf";
         String url = "/api/core/files/attachments/attachment-unit/" + attachmentVideoUnit.getId() + "/" + unsanitizedFilename;

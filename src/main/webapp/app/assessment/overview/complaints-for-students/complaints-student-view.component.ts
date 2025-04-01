@@ -13,7 +13,7 @@ import { filter } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';

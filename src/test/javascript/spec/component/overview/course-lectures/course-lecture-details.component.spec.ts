@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
@@ -20,7 +20,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { Lecture } from 'app/entities/lecture.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
@@ -28,12 +28,12 @@ import { LectureService } from 'app/lecture/manage/lecture.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { SubmissionResultStatusComponent } from 'app/course/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
-import { CourseExerciseRowComponent } from 'app/course/overview/course-exercises/course-exercise-row.component';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
@@ -81,8 +81,8 @@ describe('CourseLectureDetailsComponent', () => {
         lecture.title = 'Test lecture';
         lecture.course = course;
 
-        lectureUnit1 = getAttachmentUnit(lecture, 1, releaseDate);
-        lectureUnit2 = getAttachmentUnit(lecture, 2, releaseDate);
+        lectureUnit1 = getAttachmentVideoUnit(lecture, 1, releaseDate);
+        lectureUnit2 = getAttachmentVideoUnit(lecture, 2, releaseDate);
 
         lectureUnit3 = new TextUnit();
         lectureUnit3.id = 3;
@@ -101,7 +101,7 @@ describe('CourseLectureDetailsComponent', () => {
             imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
             declarations: [
                 CourseLectureDetailsComponent,
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(VideoUnitComponent),
@@ -178,9 +178,9 @@ describe('CourseLectureDetailsComponent', () => {
     it('should display all three lecture units: 2 attachment units and 1 text unit', fakeAsync(() => {
         fixture.detectChanges();
 
-        const attachmentUnits = debugElement.queryAll(By.css('jhi-attachment-unit'));
+        const attachmentVideoUnits = debugElement.queryAll(By.css('jhi-attachment-video-unit'));
         const textUnits = debugElement.queryAll(By.css('jhi-text-unit'));
-        expect(attachmentUnits).toHaveLength(2);
+        expect(attachmentVideoUnits).toHaveLength(2);
         expect(textUnits).toHaveLength(1);
     }));
 
@@ -237,7 +237,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should check attachment release date', fakeAsync(() => {
-        const attachment = getAttachmentUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs().add(1, 'day')).attachment!;
 
         expect(courseLecturesDetailsComponent.attachmentNotReleased(attachment)).toBeTrue();
 
@@ -249,7 +249,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 
     it('should get the attachment extension', fakeAsync(() => {
-        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('pdf');
 
@@ -284,7 +284,7 @@ describe('CourseLectureDetailsComponent', () => {
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
         const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
-        const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
+        const attachment = getAttachmentVideoUnit(lecture, 1, dayjs()).attachment!;
 
         courseLecturesDetailsComponent.downloadAttachment(attachment.link, attachment.name);
 
@@ -321,7 +321,7 @@ describe('CourseLectureDetailsComponent', () => {
     }));
 });
 
-const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
+const getAttachmentVideoUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayjs) => {
     const attachment = new Attachment();
     attachment.id = id;
     attachment.version = 1;
@@ -331,12 +331,12 @@ const getAttachmentUnit = (lecture: Lecture, id: number, releaseDate: dayjs.Dayj
     attachment.name = 'test';
     attachment.link = '/path/to/file/test.pdf';
 
-    const attachmentUnit = new AttachmentVideoUnit();
-    attachmentUnit.id = id;
-    attachmentUnit.name = 'Unit 1';
-    attachmentUnit.releaseDate = attachment.releaseDate;
-    attachmentUnit.lecture = lecture;
-    attachmentUnit.attachment = attachment;
-    attachment.attachmentUnit = attachmentUnit;
-    return attachmentUnit;
+    const attachmentVideoUnit = new AttachmentVideoUnit();
+    attachmentVideoUnit.id = id;
+    attachmentVideoUnit.name = 'Unit 1';
+    attachmentVideoUnit.releaseDate = attachment.releaseDate;
+    attachmentVideoUnit.lecture = lecture;
+    attachmentVideoUnit.attachment = attachment;
+    attachment.attachmentVideoUnit = attachmentVideoUnit;
+    return attachmentVideoUnit;
 };

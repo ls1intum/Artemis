@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -46,8 +45,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -79,7 +77,7 @@ public class LectureUtilService {
     private ExerciseUnitRepository exerciseUnitRepository;
 
     @Autowired
-    private AttachmentUnitTestRepository attachmentUnitRepository;
+    private AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -89,9 +87,6 @@ public class LectureUtilService {
 
     @Autowired
     private TextUnitRepository textUnitRepository;
-
-    @Autowired
-    private VideoUnitRepository videoUnitRepository;
 
     @Autowired
     private OnlineUnitRepository onlineUnitRepository;
@@ -145,7 +140,7 @@ public class LectureUtilService {
      *
      * @param userPrefix                  The prefix of the Course's user groups
      * @param withParticipations          True, if 5 participations by student1 should be added for the Course's Exercises
-     * @param withFiles                   True, if the LectureUnit of type AttachmentUnit should contain an Attachment with a link to an image file
+     * @param withFiles                   True, if the LectureUnit of type AttachmentVideoUnit should contain an Attachment with a link to an image file
      * @param numberOfTutorParticipations The number of tutor participations to add to the ModelingExercise ("withParticipations" must be true for this to have an effect)
      * @return A List of the created Courses
      * @throws IOException If a file cannot be loaded from resources
@@ -157,11 +152,10 @@ public class LectureUtilService {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
                 TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().orElseThrow();
-                VideoUnit videoUnit = createVideoUnit();
                 TextUnit textUnit = createTextUnit();
                 AttachmentVideoUnit attachmentVideoUnit = createAttachmentVideoUnit(withFiles);
                 ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(videoUnit, textUnit, attachmentVideoUnit, exerciseUnit)));
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), List.of(textUnit, attachmentVideoUnit, exerciseUnit)));
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
@@ -226,22 +220,22 @@ public class LectureUtilService {
     }
 
     /**
-     * Creates and saves an AttachmentUnit with an Attachment. The Attachment can be created with or without a link to an image file.
+     * Creates and saves an AttachmentVideoUnit with an Attachment. The Attachment can be created with or without a link to an image file.
      *
      * @param withFile True, if the Attachment should link to a file
-     * @return The created AttachmentUnit
+     * @return The created AttachmentVideoUnit
      */
     public AttachmentVideoUnit createAttachmentVideoUnit(Boolean withFile) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true)
+        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        Attachment attachmentOfAttachmentVideoUnit = withFile ? LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true)
                 : LectureFactory.generateAttachment(started);
-        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
-        return attachmentUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
@@ -255,28 +249,28 @@ public class LectureUtilService {
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
         attachmentVideoUnit.setVideoSource(videoSource);
-        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
-        return attachmentUnitRepository.save(attachmentVideoUnit);
+        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
-     * Creates and saves an AttachmentUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentUnit.
+     * Creates and saves an AttachmentVideoUnit with an Attachment that has a file. Also creates and saves the given number of Slides for the AttachmentVideoUnit.
      * The Slides link to image files.
      *
      * @param numberOfSlides The number of Slides to create
      * @param shouldBePdf    if true file will be pdf, else image
-     * @return The created AttachmentUnit
+     * @return The created AttachmentVideoUnit
      */
     public AttachmentVideoUnit createAttachmentVideoUnitWithSlidesAndFile(int numberOfSlides, boolean shouldBePdf) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
-        Attachment attachmentOfAttachmentUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
+        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        Attachment attachmentOfAttachmentVideoUnit = shouldBePdf ? LectureFactory.generateAttachmentWithPdfFile(started, attachmentVideoUnit.getId(), true)
                 : LectureFactory.generateAttachmentWithFile(started, attachmentVideoUnit.getId(), true);
-        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
@@ -291,24 +285,24 @@ public class LectureUtilService {
             slide.setAttachmentVideoUnit(attachmentVideoUnit);
             slideRepository.save(slide);
         }
-        return attachmentUnitRepository.save(attachmentVideoUnit);
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
-     * Creates and saves an AttachmentUnit with an Attachment. Also creates and saves the given number of Slides for the AttachmentUnit. The Slides link to image files.
+     * Creates and saves an AttachmentVideoUnit with an Attachment. Also creates and saves the given number of Slides for the AttachmentVideoUnit. The Slides link to image files.
      *
      * @param numberOfSlides The number of Slides to create
-     * @return The created AttachmentUnit
+     * @return The created AttachmentVideoUnit
      */
-    public AttachmentVideoUnit createAttachmentUnitWithSlides(int numberOfSlides) {
+    public AttachmentVideoUnit createAttachmentVideoUnitWithSlides(int numberOfSlides) {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = LectureFactory.generateAttachment(started);
+        Attachment attachmentOfAttachmentVideoUnit = LectureFactory.generateAttachment(started);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentVideoUnit = attachmentUnitRepository.save(attachmentVideoUnit);
-        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentVideoUnit = attachmentVideoUnitRepository.save(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentOfAttachmentVideoUnit = attachmentRepository.save(attachmentOfAttachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
@@ -323,7 +317,7 @@ public class LectureUtilService {
             slide.setAttachmentVideoUnit(attachmentVideoUnit);
             slideRepository.save(slide);
         }
-        return attachmentUnitRepository.save(attachmentVideoUnit);
+        return attachmentVideoUnitRepository.save(attachmentVideoUnit);
     }
 
     /**
@@ -336,18 +330,6 @@ public class LectureUtilService {
         textUnit.setName("Name Lorem Ipsum");
         textUnit.setContent("Lorem Ipsum");
         return textUnitRepository.save(textUnit);
-    }
-
-    /**
-     * Creates and saves a VideoUnit.
-     *
-     * @return The created VideoUnit
-     */
-    public VideoUnit createVideoUnit() {
-        VideoUnit videoUnit = new VideoUnit();
-        videoUnit.setDescription("Lorem Ipsum");
-        videoUnit.setSource("http://video.fake");
-        return videoUnitRepository.save(videoUnit);
     }
 
     /**

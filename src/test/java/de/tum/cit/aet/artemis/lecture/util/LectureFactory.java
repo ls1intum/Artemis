@@ -42,18 +42,18 @@ public class LectureFactory {
     }
 
     /**
-     * Generates an AttachmentUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
+     * Generates an AttachmentVideoUnit with an Attachment. The attachment can't be generated with a file. Use {@link #generateAttachmentWithFile(ZonedDateTime, Long, boolean)} to
      * replace the attachment for this use case.
      *
-     * @return The generated AttachmentUnit
+     * @return The generated AttachmentVideoUnit
      */
-    public static AttachmentVideoUnit generateAttachmentUnit() {
+    public static AttachmentVideoUnit generateAttachmentVideoUnit() {
         ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = generateAttachment(started);
+        Attachment attachmentOfAttachmentVideoUnit = generateAttachment(started);
         AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
         attachmentVideoUnit.setDescription("Lorem Ipsum");
-        attachmentOfAttachmentUnit.setAttachmentVideoUnit(attachmentVideoUnit);
-        attachmentVideoUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentOfAttachmentVideoUnit.setAttachmentVideoUnit(attachmentVideoUnit);
+        attachmentVideoUnit.setAttachment(attachmentOfAttachmentVideoUnit);
         return attachmentVideoUnit;
     }
 
@@ -84,7 +84,8 @@ public class LectureFactory {
     public static Attachment generateAttachmentWithFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
-        Path savePath = (forUnit ? FilePathService.getAttachmentUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString()).resolve(testFileName);
+        Path savePath = (forUnit ? FilePathService.getAttachmentVideoUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString())
+                .resolve(testFileName);
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), savePath.toFile());
         }
@@ -104,7 +105,8 @@ public class LectureFactory {
     public static Attachment generateAttachmentWithPdfFile(ZonedDateTime startDate, Long entityId, boolean forUnit) {
         Attachment attachment = generateAttachment(startDate);
         String testFileName = "test_" + UUID.randomUUID().toString().substring(0, 8) + ".pdf";
-        Path savePath = (forUnit ? FilePathService.getAttachmentUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString()).resolve(testFileName);
+        Path savePath = (forUnit ? FilePathService.getAttachmentVideoUnitFilePath() : FilePathService.getLectureAttachmentFilePath()).resolve(entityId.toString())
+                .resolve(testFileName);
         try {
             FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/Infun.pdf"), savePath.toFile());
         }

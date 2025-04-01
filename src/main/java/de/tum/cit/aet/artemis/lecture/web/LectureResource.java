@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -211,7 +210,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
         lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
-        lectures.forEach(lectureService::filterActiveAttachmentUnits);
+        lectures.forEach(lectureService::filterActiveAttachmentVideoUnits);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -339,7 +338,7 @@ public class LectureResource {
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
         competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
-        lectureService.filterActiveAttachmentUnits(lecture);
+        lectureService.filterActiveAttachmentVideoUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);
     }
@@ -376,9 +375,6 @@ public class LectureResource {
             if (lectureUnit instanceof ExerciseUnit) {
                 return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
                         && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
-            }
-            else if (lectureUnit instanceof AttachmentVideoUnit) {
-                return ((AttachmentVideoUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);

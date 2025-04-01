@@ -11,13 +11,13 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Location, NgTemplateOutlet } from '@angular/common';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
@@ -32,7 +32,7 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
-import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/utils/navigation.utils';
+import { getExerciseDashboardLink, getLinkToSubmissionAssessment, getLocalRepositoryLink } from 'app/shared/util/navigation.utils';
 import { SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/manage/assessment.service';
 import { breakCircularResultBackReferences } from 'app/exercise/result/result.utils';
@@ -65,8 +65,6 @@ import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessmen
         ResultComponent,
         AssessmentInstructionsComponent,
         UnreferencedFeedbackComponent,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
@@ -142,10 +140,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     templateParticipation: TemplateProgrammingExerciseParticipation;
     templateFileSession: { [fileName: string]: string } = {};
 
-    // extension points, see shared/extension-point
-    // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-    // @ContentChild('overrideCodeEditor') overrideCodeEditor: TemplateRef<any>;
-    // @ContentChild('overrideExportGoToRepository') overrideExportGoToRepository: TemplateRef<any>;
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page

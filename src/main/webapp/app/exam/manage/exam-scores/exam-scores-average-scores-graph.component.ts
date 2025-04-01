@@ -5,7 +5,7 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/shared/util/navigation.utils';
 import { Course } from 'app/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';

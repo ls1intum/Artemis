@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 
 export const enum AttachmentType {
     FILE = 'FILE',

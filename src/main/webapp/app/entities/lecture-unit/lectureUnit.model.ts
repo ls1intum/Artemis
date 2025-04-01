@@ -3,31 +3,28 @@ import dayjs from 'dayjs/esm';
 import { Lecture } from 'app/entities/lecture.model';
 import { CompetencyLectureUnitLink } from 'app/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faDownload, faLink, faQuestion, faScroll, faVideo } from '@fortawesome/free-solid-svg-icons';
+import { faDownload, faLink, faQuestion, faScroll } from '@fortawesome/free-solid-svg-icons';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the ones defined in LectureUnit.java
 export enum LectureUnitType {
-    ATTACHMENT = 'attachment',
+    ATTACHMENT_VIDEO = 'attachment',
     EXERCISE = 'exercise',
     TEXT = 'text',
-    VIDEO = 'video',
     ONLINE = 'online',
 }
 
 export const lectureUnitIcons = {
-    [LectureUnitType.ATTACHMENT]: faDownload,
+    [LectureUnitType.ATTACHMENT_VIDEO]: faDownload,
     [LectureUnitType.EXERCISE]: faQuestion,
     [LectureUnitType.TEXT]: faScroll,
-    [LectureUnitType.VIDEO]: faVideo,
     [LectureUnitType.ONLINE]: faLink,
 };
 
 export const lectureUnitTooltips = {
-    [LectureUnitType.ATTACHMENT]: 'artemisApp.attachmentUnit.tooltip',
+    [LectureUnitType.ATTACHMENT_VIDEO]: 'artemisApp.attachmentVideoUnit.tooltip',
     [LectureUnitType.EXERCISE]: '',
     [LectureUnitType.TEXT]: 'artemisApp.textUnit.tooltip',
-    [LectureUnitType.VIDEO]: 'artemisApp.videoUnit.tooltip',
     [LectureUnitType.ONLINE]: 'artemisApp.onlineUnit.tooltip',
 };
 

@@ -6,7 +6,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
+import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
@@ -30,7 +30,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
 import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
@@ -59,7 +59,7 @@ describe('CourseCompetenciesDetails', () => {
                 CourseCompetenciesDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(MockHasAnyAuthorityDirective),
-                MockComponent(AttachmentUnitComponent),
+                MockComponent(AttachmentVideoUnitComponent),
                 MockComponent(ExerciseUnitComponent),
                 MockComponent(TextUnitComponent),
                 MockComponent(VideoUnitComponent),

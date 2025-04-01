@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
@@ -77,7 +76,7 @@ public class LectureUnitImportService {
 
         // Send lectures to pyris
         if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(),
+            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(),
                     lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList());
         }
     }
@@ -100,26 +99,20 @@ public class LectureUnitImportService {
 
                 return lectureUnitRepository.save(textUnit);
             }
-            case VideoUnit importedVideoUnit -> {
-                VideoUnit videoUnit = new VideoUnit();
-                videoUnit.setName(importedVideoUnit.getName());
-                videoUnit.setReleaseDate(importedVideoUnit.getReleaseDate());
-                videoUnit.setDescription(importedVideoUnit.getDescription());
-                videoUnit.setSource(importedVideoUnit.getSource());
-
-                return lectureUnitRepository.save(videoUnit);
-            }
             case AttachmentVideoUnit importedAttachmentVideoUnit -> {
                 // Create and save the attachment unit, then the attachment itself, as the id is needed for file handling
                 AttachmentVideoUnit attachmentVideoUnit = new AttachmentVideoUnit();
+                attachmentVideoUnit.setName(importedAttachmentVideoUnit.getName());
+                attachmentVideoUnit.setReleaseDate(importedAttachmentVideoUnit.getReleaseDate());
                 attachmentVideoUnit.setDescription(importedAttachmentVideoUnit.getDescription());
+                attachmentVideoUnit.setVideoSource(importedAttachmentVideoUnit.getVideoSource());
                 attachmentVideoUnit = lectureUnitRepository.save(attachmentVideoUnit);
 
                 Attachment attachment = importAttachment(attachmentVideoUnit.getId(), importedAttachmentVideoUnit.getAttachment());
                 attachment.setAttachmentVideoUnit(attachmentVideoUnit);
                 attachmentRepository.save(attachment);
                 if (attachment.getLink().endsWith(".pdf")) {
-                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(attachmentVideoUnit);
+                    slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(attachmentVideoUnit);
                 }
                 attachmentVideoUnit.setAttachment(attachment);
                 return attachmentVideoUnit;
@@ -162,7 +155,7 @@ public class LectureUnitImportService {
         Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
         Path newPath;
         if (oldPath.toString().contains("/attachment-unit/")) {
-            newPath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
+            newPath = FilePathService.getAttachmentVideoUnitFilePath().resolve(entityId.toString());
         }
         else {
             newPath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());

@@ -1,8 +1,8 @@
 import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
-import { AttachmentUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
+import { AttachmentVideoUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [
     {
@@ -30,28 +30,23 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
-                path: 'attachment-units/process',
-                loadComponent: () => import('app/lecture/manage/lecture-units/attachment-units/attachment-units.component').then((m) => m.AttachmentUnitsComponent),
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
-                },
-            },
-            {
-                path: 'attachment-units/create',
+                path: 'attachment-video-units/process',
                 loadComponent: () =>
-                    import('app/lecture/manage/lecture-units/create-attachment-unit/create-attachment-unit.component').then((m) => m.CreateAttachmentUnitComponent),
+                    import('app/lecture/manage/lecture-units/attachment-video-units/attachment-video-units.component').then((m) => m.AttachmentVideoUnitsComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnit.title',
+                    pageTitle: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnits.pageTitle',
                 },
             },
             {
-                path: 'video-units/create',
-                loadComponent: () => import('app/lecture/manage/lecture-units/create-video-unit/create-video-unit.component').then((m) => m.CreateVideoUnitComponent),
+                path: 'attachment-video-units/create',
+                loadComponent: () =>
+                    import('app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component').then(
+                        (m) => m.CreateAttachmentVideoUnitComponent,
+                    ),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.videoUnit.createVideoUnit.title',
+                    pageTitle: 'artemisApp.attachmentVideoUnit.createAttachmentVideoUnit.title',
                 },
             },
             {
@@ -71,27 +66,20 @@ export const lectureUnitRoute: Routes = [
                 },
             },
             {
-                path: 'attachment-units/:attachmentUnitId/edit',
-                loadComponent: () => import('app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component').then((m) => m.EditAttachmentUnitComponent),
+                path: 'attachment-video-units/:attachmentVideoUnitId/edit',
+                loadComponent: () =>
+                    import('app/lecture/manage/lecture-units/edit-attachment-video-unit/edit-attachment-video-unit.component').then((m) => m.EditAttachmentVideoUnitComponent),
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
+                    pageTitle: 'artemisApp.attachmentVideoUnit.editAttachmentVideoUnit.title',
                 },
             },
             {
-                path: 'attachment-units/:attachmentUnitId/view',
+                path: 'attachment-video-units/:attachmentVideoUnitId/view',
                 loadComponent: () => import('app/lecture/manage/pdf-preview/pdf-preview.component').then((m) => m.PdfPreviewComponent),
                 resolve: {
                     course: CourseManagementResolve,
-                    attachmentUnit: AttachmentUnitResolve,
-                },
-            },
-            {
-                path: 'video-units/:videoUnitId/edit',
-                loadComponent: () => import('app/lecture/manage/lecture-units/edit-video-unit/edit-video-unit.component').then((m) => m.EditVideoUnitComponent),
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.videoUnit.editVideoUnit.title',
+                    attachmentVideoUnit: AttachmentVideoUnitResolve,
                 },
             },
             {

@@ -4,7 +4,7 @@ import { Attachment } from 'app/entities/attachment.model';
 import { Post } from 'app/entities/metis/post.model';
 import { Course } from 'app/entities/course.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 
 export class Lecture implements BaseEntity {
     id?: number;

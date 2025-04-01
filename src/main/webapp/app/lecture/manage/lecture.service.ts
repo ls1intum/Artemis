@@ -6,9 +6,9 @@ import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture } from 'app/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;

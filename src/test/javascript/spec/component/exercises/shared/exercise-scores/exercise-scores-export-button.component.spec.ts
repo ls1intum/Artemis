@@ -7,7 +7,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -18,7 +18,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Team } from 'app/entities/team.model';
 import { User } from 'app/core/user/user.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
