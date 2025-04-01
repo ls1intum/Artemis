@@ -48,7 +48,24 @@ public class MailSendingService {
      */
     @Async
     public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
-        executeSend(recipient, subject, content, isMultipart, isHtml);
+        log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
+
+        // Prepare message using a Spring helper
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        try {
+            MimeMessageHelper message = new MimeMessageHelper(mimeMessage, isMultipart, StandardCharsets.UTF_8.name());
+            message.setTo(recipient.getEmail());
+            message.setFrom(jHipsterProperties.getMail().getFrom());
+            message.setSubject(subject);
+            message.setText(content, isHtml);
+            javaMailSender.send(mimeMessage);
+            log.info("Sent email with subject '{}' to User '{}'", subject, recipient);
+        }
+        catch (MailException | MessagingException e) {
+            log.error("Email could not be sent to user '{}'", recipient, e);
+            // Note: we should not rethrow the exception here, as this would prevent sending out other emails in case multiple users are affected
+        }
+        // executeSend(recipient, subject, content, isMultipart, isHtml);
     }
 
     /**
