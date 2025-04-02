@@ -66,7 +66,7 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     if (isAIResultAndIsBeingProcessed(latestResult) || isAIResultAndTimedOut(latestResult) || isAIResultAndFailed(latestResult)) {
         return false;
     }
-    if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {
+    if (latestResult.submission?.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.submission.participation)) {
         return false;
     }
 

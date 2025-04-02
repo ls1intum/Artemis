@@ -178,11 +178,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
-                // TODO fix this
-                const results = changedParticipation.results;
+                const results = changedParticipation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+                const oldResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
                 if (
                     results &&
-                    ((results?.length || 0) > (this.participation?.results?.length || 0) || results?.last()?.completionDate === undefined) &&
+                    ((results?.length || 0) > (oldResults.length || 0) || results?.last()?.completionDate === undefined) &&
                     results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                     results.last()?.successful !== undefined
                 ) {
@@ -263,12 +263,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
         this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
         this.course = getCourseFromExercise(this.textExercise);
-        if (this.participation.results?.length) {
-            this.participation.results = this.participation.results.map((result) => {
-                result.participation = this.participation;
-                return result;
-            });
-            this.sortedHistoryResults = this.participation.results.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+        const results = participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+        if (results.length) {
+            this.sortedHistoryResults = results.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
         }
 
         if (this.participation.submissions?.length) {

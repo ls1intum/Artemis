@@ -71,21 +71,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                     if (this.repositoryType === 'TEMPLATE') {
                         this.participation = this.exercise.templateParticipation!;
                         (this.participation as TemplateProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results = this.participation.submissions
-                            ?.filter((submission) => submission.results && submission.results?.length > 0)
-                            .map((submission) => {
-                                submission.results![0].participation = this.participation!;
-                                return submission.results![0];
-                            });
                     } else if (this.repositoryType === 'SOLUTION') {
                         this.participation = this.exercise.solutionParticipation!;
                         (this.participation as SolutionProgrammingExerciseParticipation).programmingExercise = this.exercise;
-                        this.participation.results = this.participation.submissions
-                            ?.filter((submission) => submission.results && submission.results?.length > 0)
-                            .map((submission) => {
-                                submission.results![0].participation = this.participation!;
-                                return submission.results![0];
-                            });
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
                         this.participation = this.exercise.templateParticipation!;
@@ -111,8 +99,10 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             .pipe(
                 tap((participation) => {
                     this.participation = participation;
-                    this.participation.results?.forEach((result) => {
-                        result.participation = participation!;
+                    this.participation.submissions?.forEach((submission) => {
+                        submission.results?.forEach((result) => {
+                            result.submission = submission;
+                        });
                     });
                 }),
             )
@@ -185,7 +175,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     private setCommitResults() {
         this.commits.forEach((commit) => {
-            this.participation.results?.forEach((result) => {
+            const results = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+            results.forEach((result) => {
                 const submission = result.submission as ProgrammingSubmission;
                 if (submission) {
                     if (submission.commitHash === commit.hash) {

@@ -199,10 +199,11 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private getParticipationWithLatestResult(participationId: number): Observable<ProgrammingExerciseStudentParticipation> {
         return this.programmingExerciseParticipationService.getStudentParticipationWithLatestResult(participationId).pipe(
             map((participation: ProgrammingExerciseStudentParticipation) => {
-                if (participation.results?.length) {
-                    // connect result and participation
-                    participation.results[0].participation = participation;
-                    this.result = participation.results[0];
+                const results = participation.submissions?.last()?.results;
+                if (results && results.length) {
+                    // connect result and submission
+                    results[0].submission = participation.submissions?.last();
+                    this.result = results[0];
                     this.resultHasInlineFeedback = this.result.feedbacks?.some((feedback) => Feedback.getReferenceLine(feedback) !== undefined) ?? false;
                 }
                 return participation;
