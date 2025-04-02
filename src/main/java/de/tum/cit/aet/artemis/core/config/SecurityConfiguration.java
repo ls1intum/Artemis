@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -29,8 +28,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.expression.DefaultHttpSecurityExpressionHandler;
-import org.springframework.security.web.access.expression.WebExpressionAuthorizationManager;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
@@ -38,38 +35,11 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
-import com.webauthn4j.WebAuthnManager;
-import com.webauthn4j.converter.util.ObjectConverter;
-import com.webauthn4j.data.AttestationConveyancePreference;
-import com.webauthn4j.data.PublicKeyCredentialParameters;
-import com.webauthn4j.data.PublicKeyCredentialType;
-import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier;
-import com.webauthn4j.metadata.converter.jackson.WebAuthnMetadataJSONModule;
-import com.webauthn4j.springframework.security.WebAuthnAuthenticationProvider;
-import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidator;
-import com.webauthn4j.springframework.security.WebAuthnSecurityExpression;
-import com.webauthn4j.springframework.security.challenge.ChallengeRepository;
-import com.webauthn4j.springframework.security.challenge.HttpSessionChallengeRepository;
-import com.webauthn4j.springframework.security.config.configurers.WebAuthnLoginConfigurer;
-import com.webauthn4j.springframework.security.converter.jackson.WebAuthn4JSpringSecurityJSONModule;
-import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordService;
-import com.webauthn4j.springframework.security.options.AttestationOptionsProvider;
-import com.webauthn4j.springframework.security.options.AttestationOptionsProviderImpl;
-import com.webauthn4j.springframework.security.options.PublicKeyCredentialUserEntityProvider;
-import com.webauthn4j.springframework.security.options.RpIdProvider;
-import com.webauthn4j.springframework.security.options.RpIdProviderImpl;
-import com.webauthn4j.springframework.security.server.ServerPropertyProvider;
-import com.webauthn4j.springframework.security.server.ServerPropertyProviderImpl;
-
-import de.tum.cit.aet.artemis.core.domain.PublicKeyCredentialUserEntityProviderImpl;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.service.PassKeyCredentialService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -92,22 +62,16 @@ public class SecurityConfiguration {
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
-    private final ApplicationContext applicationContext;
-
-    private final PassKeyCredentialService passKeyCredentialService;
-
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer, ApplicationContext applicationContext, PassKeyCredentialService passKeyCredentialService) {
+            Optional<CustomLti13Configurer> customLti13Configurer) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
-        this.applicationContext = applicationContext;
-        this.passKeyCredentialService = passKeyCredentialService;
     }
 
     /**
@@ -215,8 +179,6 @@ public class SecurityConfiguration {
             .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
-            // TODO
-//            .addFilterAfter(Web)
             // Configures security headers.
             .headers(headers -> headers
                 // Sets Content Security Policy (CSP) directives to prevent XSS attacks.
@@ -262,21 +224,15 @@ public class SecurityConfiguration {
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
                     requests.requestMatchers("/**").authenticated();
-
-                    // TODO: add a comment what this means in terms of security
-                    requests
-                        .anyRequest().access(getWebExpressionAuthorizationManager("@webAuthnSecurityExpression.isWebAuthnAuthenticated(authentication)"));
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
-            // TODO: check if we can remove the lambda here and solve this differently, the main purpose was to extract this to a different location
             .webAuthn(webauth ->
-                webauth.allowedOrigins("https://470a-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
-                .rpId("470a-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
+                webauth.allowedOrigins("https://0e64-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
+                .rpId("0e64-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
                 .rpName("Artemis Development")
             );
-//            .with(webAuthnLoginConfigurer(), configurer -> {});
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
@@ -301,107 +257,5 @@ public class SecurityConfiguration {
      */
     private JWTConfigurer securityConfigurerAdapter() {
         return new JWTConfigurer(tokenProvider);
-    }
-
-    private WebAuthnLoginConfigurer<HttpSecurity> webAuthnLoginConfigurer() {
-
-        // TODO: adapt the options for Artemis
-
-        // @formatter:off
-        WebAuthnLoginConfigurer<HttpSecurity> webAuthnLoginConfigurer = new WebAuthnLoginConfigurer<>();
-        webAuthnLoginConfigurer
-            .loginProcessingUrl("/api/core/public/webauthn/authenticate")
-            .defaultSuccessUrl("/", true)
-            .failureHandler((request, response, exception) -> {
-                log.error("Login error", exception);
-                response.sendRedirect("/login?error=Login failed: " + exception.getMessage());
-            })
-            .attestationOptionsEndpoint()
-                .rp()
-                .name("Artemis Passkey")
-                .and()
-            .pubKeyCredParams(
-                new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.ES256),
-                new PublicKeyCredentialParameters(PublicKeyCredentialType.PUBLIC_KEY, COSEAlgorithmIdentifier.RS256)
-            )
-            .attestation(AttestationConveyancePreference.DIRECT)
-            .extensions()
-                .uvm(true)
-                .credProps(true)
-                .extensionProviders()
-                .and()
-            .assertionOptionsEndpoint()
-                .extensions()
-                .extensionProviders();
-        return webAuthnLoginConfigurer;
-        // @formatter:on
-    }
-
-    @Bean
-    public PublicKeyCredentialUserEntityProvider webAuthnUserEntityProvider(DomainUserDetailsService userManager) {
-        return new PublicKeyCredentialUserEntityProviderImpl(userManager);
-    }
-
-    @Bean
-    public ChallengeRepository challengeRepository() {
-        return new HttpSessionChallengeRepository();
-    }
-
-    @Bean
-    public AttestationOptionsProvider attestationOptionsProvider(RpIdProvider rpIdProvider, WebAuthnCredentialRecordService webAuthnCredentialRecordService,
-            ChallengeRepository challengeRepository, PublicKeyCredentialUserEntityProvider publicKeyCredentialUserEntityProvider) {
-        AttestationOptionsProviderImpl optionsProviderImpl = new AttestationOptionsProviderImpl(rpIdProvider, webAuthnCredentialRecordService, challengeRepository);
-        optionsProviderImpl.setPublicKeyCredentialUserEntityProvider(publicKeyCredentialUserEntityProvider);
-        return optionsProviderImpl;
-    }
-
-    @Bean
-    public RpIdProvider rpIdProvider() {
-        return new RpIdProviderImpl();
-    }
-
-    @Bean
-    public ServerPropertyProvider serverPropertyProvider(RpIdProvider rpIdProvider, ChallengeRepository challengeRepository) {
-        return new ServerPropertyProviderImpl(rpIdProvider, challengeRepository);
-    }
-
-    @Bean
-    public WebAuthnManager webAuthnManager(ObjectConverter objectConverter) {
-
-        WebAuthnManager webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager(objectConverter);
-        webAuthnManager.getAuthenticationDataVerifier().setCrossOriginAllowed(true);
-        return webAuthnManager;
-    }
-
-    @Bean
-    public WebAuthnSecurityExpression webAuthnSecurityExpression() {
-        return new WebAuthnSecurityExpression();
-    }
-
-    @Bean
-    public ObjectConverter objectConverter() {
-        ObjectMapper jsonMapper = new ObjectMapper();
-        jsonMapper.registerModule(new WebAuthnMetadataJSONModule());
-        jsonMapper.registerModule(new WebAuthn4JSpringSecurityJSONModule());
-        ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
-        return new ObjectConverter(jsonMapper, cborMapper);
-    }
-
-    @Bean
-    public WebAuthnRegistrationRequestValidator webAuthnRegistrationRequestValidator(WebAuthnManager webAuthnManager, ServerPropertyProvider serverPropertyProvider) {
-        return new WebAuthnRegistrationRequestValidator(webAuthnManager, serverPropertyProvider);
-    }
-
-    @Bean
-    public WebAuthnAuthenticationProvider webAuthnAuthenticationProvider(WebAuthnCredentialRecordService authenticatorService, WebAuthnManager webAuthnManager) {
-        return new WebAuthnAuthenticationProvider(authenticatorService, webAuthnManager);
-    }
-
-    private WebExpressionAuthorizationManager getWebExpressionAuthorizationManager(final String expression) {
-        var expressionHandler = new DefaultHttpSecurityExpressionHandler();
-        expressionHandler.setApplicationContext(applicationContext);
-        var authorizationManager = new WebExpressionAuthorizationManager(expression);
-        authorizationManager.setExpressionHandler(expressionHandler);
-        return authorizationManager;
     }
 }

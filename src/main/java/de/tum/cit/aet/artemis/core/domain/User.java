@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -36,6 +37,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.webauthn.api.Bytes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -562,6 +564,25 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
+    }
+
+    /**
+     * In our case the external id matches our internal id, but it is expected in a different format
+     */
+    public Bytes getExternalId() {
+        return longToBytes(this.getId());
+    }
+
+    // TODO add comment
+    public static Bytes longToBytes(Long value) {
+        String userIdAsBase64 = Base64.getEncoder().encodeToString(value.toString().getBytes());
+        return Bytes.fromBase64(userIdAsBase64);
+    }
+
+    public static Long bytesToLong(Bytes value) {
+        byte[] decodedBytes = Base64.getDecoder().decode(value.toBase64UrlString());
+        String decodedString = new String(decodedBytes);
+        return Long.parseLong(decodedString);
     }
 
     public static UserDetails toUserDetails(de.tum.cit.aet.artemis.core.domain.User user) {

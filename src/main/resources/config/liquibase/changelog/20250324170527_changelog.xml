@@ -3,74 +3,70 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20250324170527" author="krusche">
-        <!-- Create passkey_credentials table -->
-        <createTable tableName="passkey_credentials">
+        <!-- Create passkey_credential table -->
+        <createTable tableName="passkey_credential">
+            <!-- TODO add more enums if possible-->
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="name" type="varchar(32)">
+            <column name="label" type="varchar(255)"/>
+            <column name="credential_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="counter" type="bigint"/>
-            <column name="uv_initialized" type="boolean" defaultValue="false"/>
-            <column name="backup_eligible" type="boolean" defaultValue="false"/>
-            <column name="backed_up" type="boolean" defaultValue="false"/>
+            <!-- TODO better type possible? -->
+            <column name="credential_id" type="varchar(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+            <column name="public_key_cose" type="text">
+                <constraints nullable="false"/>
+            </column>
+            <column name="signature_count" type="bigint" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="uv_initialized" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="transports" type="varchar(255)" defaultValue="">
+                <constraints nullable="false"/>
+            </column>
+            <column name="backup_eligible" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="backup_state" type="boolean" defaultValue="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attestation_object" type="text"/>
+            <column name="last_used" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <!-- Fields for AbstractAuditingEntity -->
             <column name="created_by" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_date" type="datetime(3)">
+            <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_modified_date" type="datetime(3)"/>
             <column name="last_modified_by" type="varchar(45)"/>
-            <column name="aaguid" type="binary(16)">
-                <constraints nullable="true"/>
-            </column>
-            <column name="credential_id" type="LONGBLOB">
-                <constraints nullable="true"/>
-            </column>
-            <column name="cose_key" type="LONGBLOB">
-                <constraints nullable="true"/>
-            </column>
-            <column name="attestation_statement" type="LONGBLOB"/>
-            <column name="client_data" type="LONGBLOB"/>
-            <column name="client_extensions" type="LONGBLOB"/>
-            <column name="authenticator_extensions" type="LONGBLOB"/>
-        </createTable>
-
-        <!-- Create m_transport table for element collection -->
-        <createTable tableName="m_transport">
-            <column name="credential_record_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="transport" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="last_modified_date" type="datetime(3)"/>
         </createTable>
 
         <!-- Create index for userId -->
-        <createIndex indexName="userId_index" tableName="passkey_credentials">
+        <createIndex indexName="userId_index" tableName="passkey_credential">
             <column name="user_id"/>
         </createIndex>
 
         <!-- Add foreign key constraint for userId referencing jhi_user -->
         <addForeignKeyConstraint
-                baseTableName="passkey_credentials"
+                baseTableName="passkey_credential"
                 baseColumnNames="user_id"
-                constraintName="FK_passkey_credentials_userId"
+                constraintName="FK_passkey_credential_userId"
                 referencedTableName="jhi_user"
-                referencedColumnNames="id"
-                onDelete="CASCADE"/>
-
-        <!-- Add foreign key constraint for credential_record_id referencing passkey_credentials -->
-        <addForeignKeyConstraint
-                baseTableName="m_transport"
-                baseColumnNames="credential_record_id"
-                constraintName="FK_m_transport_credential_record_id"
-                referencedTableName="passkey_credentials"
                 referencedColumnNames="id"
                 onDelete="CASCADE"/>
     </changeSet>
