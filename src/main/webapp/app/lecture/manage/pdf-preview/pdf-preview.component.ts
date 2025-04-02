@@ -857,25 +857,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     async mergePDF(event: Event): Promise<void> {
         const input = event.target as HTMLInputElement;
         const file = input.files?.[0];
-
         if (file!.type !== 'application/pdf') {
             this.alertService.error('artemisApp.attachment.pdfPreview.invalidFileType');
             input.value = '';
             return;
         }
-
         this.isPdfLoading.set(true);
         this.isAppendingFile.set(true);
+        let objectUrl: string | null = null;
         try {
             const newPdfBytes = await file!.arrayBuffer();
-            const objectUrl = URL.createObjectURL(file!);
-
+            objectUrl = URL.createObjectURL(file!);
             const mergeSourceId = `merge_${Date.now()}`;
             await this.loadPdf(objectUrl, newPdfBytes, mergeSourceId, undefined, true);
-
             this.selectedPages.set(new Set());
         } catch (error) {
             this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+            if (objectUrl) {
+                URL.revokeObjectURL(objectUrl);
+            }
         } finally {
             this.isPdfLoading.set(false);
             this.fileInput()!.nativeElement.value = '';
