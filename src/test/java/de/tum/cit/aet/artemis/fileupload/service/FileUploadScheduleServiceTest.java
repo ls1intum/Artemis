@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.fileupload.service;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;
@@ -17,8 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import de.tum.cit.aet.artemis.fileupload.domain.FileUpload;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadScheduleService;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 
 @ExtendWith(MockitoExtension.class)
 class FileUploadScheduleServiceTest {
