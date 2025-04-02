@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.service;
+package de.tum.cit.aet.artemis.core.service.file;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
@@ -9,9 +9,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.fileupload.domain.FileUpload;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadRepository;
+import de.tum.cit.aet.artemis.core.domain.FileUpload;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
 
 @Service
 @Profile(PROFILE_CORE_AND_SCHEDULING)
