@@ -55,7 +55,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { LtiService } from 'app/shared/service/lti.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
 
 import { CourseExercisesComponent } from './course-exercises/course-exercises.component';
@@ -226,7 +226,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo: any) => {
             this.isProduction = profileInfo?.inProduction;
             this.isTestServer = profileInfo.testServer ?? false;
-            this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
         });
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted: boolean) => {

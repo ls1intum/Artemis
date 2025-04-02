@@ -62,7 +62,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -185,7 +185,7 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
@@ -212,8 +212,7 @@ public class ProgrammingExerciseService {
             ExerciseSpecificationService exerciseSpecificationService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService, ProgrammingSubmissionService programmingSubmissionService,
-            Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<AeolusTemplateService> aeolusTemplateService, Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
@@ -241,7 +240,7 @@ public class ProgrammingExerciseService {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -357,8 +356,8 @@ public class ProgrammingExerciseService {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
         // Step 13: Set Iris settings
-        if (irisSettingsService.isPresent()) {
-            irisSettingsService.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
+        if (irisSettingsApi.isPresent()) {
+            irisSettingsApi.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
         }
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
@@ -629,8 +628,7 @@ public class ProgrammingExerciseService {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise)));
 
-        irisSettingsService
-                .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
+        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
 
         return savedProgrammingExercise;
     }
@@ -852,7 +850,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
-        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(programmingExercise));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(programmingExercise));
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
