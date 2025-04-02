@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.HIGH;
 import static de.tum.cit.aet.artemis.atlas.domain.profile.PreferenceScale.MEDIUM_HIGH;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_AS_BONUS;
 import static de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore.INCLUDED_COMPLETELY;
 
@@ -23,12 +22,13 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class LearningPathRecommendationService {
 

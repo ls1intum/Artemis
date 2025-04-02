@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -425,7 +425,7 @@ public class ParticipationResource {
         // Process feedback request
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
-            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
+            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
             updatedParticipation = api.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
         }
         else if (exercise instanceof ModelingExercise) {

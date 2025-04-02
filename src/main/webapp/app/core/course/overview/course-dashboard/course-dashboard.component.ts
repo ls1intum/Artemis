@@ -15,7 +15,7 @@ import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -96,7 +96,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.setCourse(course);
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS)));
+        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)));
     }
 
     ngOnDestroy(): void {
