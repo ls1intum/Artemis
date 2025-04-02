@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -191,7 +191,7 @@ public class FileResource {
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
         api.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId, FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
@@ -219,7 +219,7 @@ public class FileResource {
         var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
         Path responsePath = getResponsePathFromPublicPath(publicPath);
 
-        var api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        var api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
         var fileUpload = api.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
@@ -330,7 +330,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
         FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
