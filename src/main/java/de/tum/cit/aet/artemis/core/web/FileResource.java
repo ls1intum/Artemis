@@ -46,6 +46,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
@@ -63,11 +64,11 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -101,6 +102,8 @@ public class FileResource {
 
     private final FileService fileService;
 
+    private final FileUploadService fileUploadService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final LectureRepository lectureRepository;
@@ -129,10 +132,11 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
-            LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
+    public FileResource(FileUploadService fileUploadService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
+            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+        this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -191,8 +195,8 @@ public class FileResource {
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
-        api.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId, FileUploadEntityType.CONVERSATION);
+        fileUploadService.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+                FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
         String responsePath = getResponsePathFromPublicPathString(publicPath);
@@ -219,8 +223,7 @@ public class FileResource {
         var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
         Path responsePath = getResponsePathFromPublicPath(publicPath);
 
-        var api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
-        var fileUpload = api.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var fileUpload = fileUploadService.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
 
         if (fileUpload.isPresent()) {
             return buildFileResponse(responsePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);

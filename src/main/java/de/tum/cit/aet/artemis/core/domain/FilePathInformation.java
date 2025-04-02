@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.domain;
+package de.tum.cit.aet.artemis.core.domain;
 
 import java.net.URI;
 import java.nio.file.Path;
