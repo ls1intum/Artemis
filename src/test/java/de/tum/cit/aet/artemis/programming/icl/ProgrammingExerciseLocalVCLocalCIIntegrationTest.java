@@ -3,9 +3,7 @@ package de.tum.cit.aet.artemis.programming.icl;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -140,9 +138,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
-
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
@@ -185,8 +180,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise_Invalid_CheckoutPaths() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -246,9 +239,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportProgrammingExercise() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
-
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
         // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution
         // participation).

@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -182,7 +181,6 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
-                var projectType = exercise.getProjectType();
                 var buildLogs = buildResult.extractBuildLogs();
 
                 if (latestSubmission.isBuildFailed()) {
@@ -271,20 +269,8 @@ public class ProgrammingExerciseGradingService {
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        // We always take the build run date as the fallback solution
+        // We always take the build run date as the fallback solution, even though it might not be 100% accurate
         ZonedDateTime submissionDate = buildResult.buildRunDate();
-        if (!ObjectUtils.isEmpty(commitHash)) {
-            try {
-                // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
-                // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
-                // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
-                // time.
-                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash, null);
-            }
-            catch (VersionControlException e) {
-                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
-            }
-        }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash);
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);

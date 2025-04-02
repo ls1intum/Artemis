@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.programming.service.vcs;
 
-import java.time.ZonedDateTime;
-
 import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
@@ -42,16 +40,6 @@ public interface VersionControlService {
      * @return whether the repository is valid
      */
     Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
-
-    /**
-     * Retrieves the date at which the push event was received by the VCS instance.
-     *
-     * @param participation The participation we need the date for
-     * @param commitHash    The commit hash we want to find the event for
-     * @param eventObject   The object provided by the VCS on a push event. null if not available
-     * @return The build queue date
-     */
-    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject);
 
     /**
      * Creates a project on the VCS.
@@ -125,9 +113,4 @@ public interface VersionControlService {
      * @return The default branch used by this programmingExercise
      */
     String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise);
-
-    /***
-     * @return The default branch used by Artemis
-     */
-    String getDefaultBranchOfArtemis();
 }

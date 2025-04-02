@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -63,6 +64,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 public class ParticipationService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     private final GitService gitService;
 
@@ -222,7 +226,7 @@ public class ParticipationService {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
         }
         else {
             participation = new StudentParticipation();
@@ -319,7 +323,7 @@ public class ParticipationService {
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
@@ -357,7 +361,7 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+                participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
             }
             else {
                 participation = new StudentParticipation();

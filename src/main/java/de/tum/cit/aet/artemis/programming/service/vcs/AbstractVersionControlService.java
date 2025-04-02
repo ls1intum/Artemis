@@ -10,7 +10,6 @@ import org.eclipse.jgit.internal.JGitText;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -28,9 +27,6 @@ import de.tum.cit.aet.artemis.programming.service.UriService;
 public abstract class AbstractVersionControlService implements VersionControlService {
 
     private static final Logger log = LoggerFactory.getLogger(AbstractVersionControlService.class);
-
-    @Value("${artemis.version-control.default-branch:main}")
-    protected String defaultBranch;
 
     protected final GitService gitService;
 
@@ -150,10 +146,5 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
 
         return programmingExercise.getBuildConfig().getBranch();
-    }
-
-    @Override
-    public String getDefaultBranchOfArtemis() {
-        return defaultBranch;
     }
 }
