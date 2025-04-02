@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "learnerProfile": {
+            "initialValueHint": "The initial value, which is used by the system to calculate the statistic.",
+            "currentValueHint": "The current value. Calculated using the initial value and your interactions with artemis.",
             "courseLearnerProfile": {
                 "title": "Course Learner Profile",
                 "selectCourse": "Select Course...",

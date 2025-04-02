@@ -14,8 +14,10 @@
         <div class="d-flex align-items-center my-2">
             <span class="dot background-color ms-1 me-2"></span>
             <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.initialState"></span>
+            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.initialValueHint" />
             <span class="dot bg-primary ms-3 me-2"></span>
             <span jhiTranslate="artemisApp.learnerProfile.courseLearnerProfile.currentState">artemisApp.learnerProfile.courseLearnerProfile</span>
+            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.currentValueHint" />
         </div>
     </div>
     <select class="form-select col-auto w-auto" (change)="courseChanged($event)">

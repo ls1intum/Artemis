@@ -12,12 +12,13 @@ import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 @Component({
     selector: 'jhi-course-learner-profile',
     templateUrl: './course-learner-profile.component.html',
     styleUrls: ['./course-learner-profile.component.scss'],
-    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent],
+    imports: [DoubleSliderComponent, TranslateDirective, NgClass, ArtemisTranslatePipe, FaIconComponent, HelpIconComponent],
 })
 export class CourseLearnerProfileComponent implements OnInit {
     private courseManagementService = inject(CourseManagementService);
