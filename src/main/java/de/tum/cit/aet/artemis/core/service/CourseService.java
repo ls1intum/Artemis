@@ -99,6 +99,7 @@ import de.tum.cit.aet.artemis.exam.api.ExamDeletionApi;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
 import de.tum.cit.aet.artemis.exam.api.ExerciseGroupApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -364,7 +365,7 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
 
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
@@ -411,7 +412,7 @@ public class CourseService {
      * @return an unmodifiable list of all courses including exercises for the user
      */
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
 
         long start = System.nanoTime();
 
@@ -499,7 +500,7 @@ public class CourseService {
      * @return the course deletion summary
      */
     public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
 
         Long courseId = course.getId();
 
@@ -582,8 +583,8 @@ public class CourseService {
     }
 
     private void deleteExamsOfCourse(Course course) {
-        var deletionApi = examDeletionApi.orElseThrow(() -> new ApiNotPresentException(ExamDeletionApi.class, PROFILE_CORE));
-        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ApiNotPresentException(ExamRepositoryApi.class, PROFILE_CORE));
+        var deletionApi = examDeletionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDeletionApi.class));
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
         // delete the Exams
         List<Exam> exams = api.findByCourseId(course.getId());
         for (Exam exam : exams) {
@@ -648,7 +649,7 @@ public class CourseService {
     public Course retrieveCourseOverExerciseGroupOrCourseId(Exercise exercise) {
 
         if (exercise.isExamExercise()) {
-            ExerciseGroupApi api = exerciseGroupApi.orElseThrow(() -> new ApiNotPresentException(ExerciseGroupApi.class, PROFILE_CORE));
+            ExerciseGroupApi api = exerciseGroupApi.orElseThrow(() -> new ExamApiNotPresentException(ExerciseGroupApi.class));
             ExerciseGroup exerciseGroup = api.findByIdElseThrow(exercise.getExerciseGroup().getId());
             exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();

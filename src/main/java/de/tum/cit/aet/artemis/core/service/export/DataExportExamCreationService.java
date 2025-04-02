@@ -22,9 +22,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -121,7 +121,7 @@ public class DataExportExamCreationService {
      * @param examWorkingDir the directory in which the results should be stored
      */
     private void addExamScores(StudentExam studentExam, Path examWorkingDir) throws IOException {
-        ExamApi api = examApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamApi api = examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
         var studentExamGrade = api.getStudentExamGradeForDataExport(studentExam);
         var studentResult = studentExamGrade.studentResult();
         var gradingScale = gradingScaleRepository.findByExamId(studentExam.getExam().getId());

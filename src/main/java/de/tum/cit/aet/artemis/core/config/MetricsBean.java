@@ -36,7 +36,6 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -45,6 +44,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
@@ -438,7 +438,7 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamMetricsApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
 
         var startDate = System.currentTimeMillis();
 
@@ -602,7 +602,7 @@ public class MetricsBean {
             return;
         }
 
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ApiNotPresentException(ExamApi.class, PROFILE_CORE));
+        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
         final long startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -660,7 +660,7 @@ public class MetricsBean {
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
-        StudentExamApi api = studentExamApi.orElseThrow(() -> new ApiNotPresentException(StudentExamApi.class, PROFILE_CORE));
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
             final Tags tags = getExamMetricTags(courses, exam);
