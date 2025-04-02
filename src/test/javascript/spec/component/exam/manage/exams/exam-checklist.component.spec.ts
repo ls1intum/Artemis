@@ -21,10 +21,8 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
 import { MODULE_FEATURE_TEXT } from '../../../../../../../main/webapp/app/app.constants';
-import { ProfileInfo } from '../../../../../../../main/webapp/app/core/layouts/profiles/profile-info.model';
 import { ProfileService } from '../../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -82,7 +80,7 @@ describe('ExamChecklistComponent', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -95,7 +93,7 @@ describe('ExamChecklistComponent', () => {
                 profileService = TestBed.inject(ProfileService);
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
             });
     });
 

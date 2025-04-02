@@ -20,11 +20,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
 import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from '../../../../../main/webapp/app/app.constants';
-import { ProfileInfo } from '../../../../../main/webapp/app/core/layouts/profiles/profile-info.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
@@ -63,7 +61,7 @@ describe('Course Management Exercises Component', () => {
                     useValue: route,
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -74,9 +72,8 @@ describe('Course Management Exercises Component', () => {
                 comp = fixture.componentInstance;
 
                 profileService = TestBed.inject(ProfileService);
-
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
             });
     });
 
