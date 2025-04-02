@@ -118,7 +118,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'ls1intum/artemis-ansible'
-          ref: 'chore/artemis-migration'
 
       - name: Set up Python
         uses: actions/setup-python@v2
