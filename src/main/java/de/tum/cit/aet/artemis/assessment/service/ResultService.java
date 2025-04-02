@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -71,12 +70,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
@@ -108,12 +103,6 @@ public class ResultService {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final Optional<StudentExamApi> studentExamApi;
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
@@ -137,13 +126,9 @@ public class ResultService {
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, Optional<StudentExamApi> studentExamApi,
-            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionFilterService submissionFilterService) {
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
+            BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -156,9 +141,6 @@ public class ResultService {
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamApi = studentExamApi;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -376,38 +358,6 @@ public class ResultService {
                 result.filterSensitiveFeedbacks(!shouldResultsBePublished);
             }
         }
-    }
-
-    /**
-     * Returns the matching template, solution or student participation for a given build plan key.
-     *
-     * @param planKey the build plan key
-     * @return the matching participation
-     */
-    @Nullable
-    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
-        // we have to support template, solution and student build plans here
-        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
-            return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
-            return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
-                .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
-        ProgrammingExerciseStudentParticipation participation = null;
-        if (!participations.isEmpty()) {
-            participation = participations.getFirst();
-            if (participations.size() > 1) {
-                // in the rare case of multiple participations, take the latest one.
-                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
-                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
-                        participation = otherParticipation;
-                    }
-                }
-            }
-        }
-        return participation;
     }
 
     /**

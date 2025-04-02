@@ -66,7 +66,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
         "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/" })
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
+        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
