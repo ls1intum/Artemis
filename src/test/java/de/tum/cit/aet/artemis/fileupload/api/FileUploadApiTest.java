@@ -15,10 +15,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.FileUpload;
-import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
-import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -28,16 +25,10 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "fileuploadapitest";
 
     @Autowired
-    private FileUploadApi fileUploadApi;
-
-    @Autowired
     private FileUploadImportApi fileUploadImportApi;
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private FileUploadRepository fileUploadRepository;
 
     @Autowired
     private CompetencyUtilService competencyUtilService;
@@ -53,17 +44,6 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
         fileUploadExercise = fileUploadExerciseUtilService.createFileUploadExercisesWithCourse().getFirst();
         Course course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
         competency = competencyUtilService.createCompetency(course);
-    }
-
-    @Test
-    void shouldFindFileUploadWhenPathExistsViaApi() {
-        String path = "/test/path";
-        FileUpload expectedFileUpload = new FileUpload(path, "/server/path", "test.txt", 1L, FileUploadEntityType.CONVERSATION);
-        fileUploadRepository.save(expectedFileUpload);
-
-        Optional<FileUpload> result = fileUploadApi.findByPath(path);
-
-        assertThat(result).isPresent().contains(expectedFileUpload);
     }
 
     @Test
