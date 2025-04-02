@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -71,7 +71,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -1031,7 +1030,6 @@ public class GitService extends AbstractGitService {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-        Set<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
@@ -1042,7 +1040,7 @@ public class GitService extends AbstractGitService {
                 continue;
             }
 
-            if (omitBinaries && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
+            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
                 log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }

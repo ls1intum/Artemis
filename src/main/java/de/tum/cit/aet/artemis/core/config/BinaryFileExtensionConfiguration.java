@@ -8,7 +8,20 @@ import java.util.Set;
  */
 public class BinaryFileExtensionConfiguration {
 
+    /**
+     * A list of common binary file extensions.
+     * Extensions must be lower-case with a leading dot.
+     */
     private static final Set<String> binaryFileExtensions = Set.of(
+            // Images
+            ".png", ".jpg", ".jpeg", ".heic", ".gif", ".tiff", ".psd",
+
+            // Documents
+            ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".pages", ".numbers", ".key", ".odt",
+
+            // Compressed files
+            ".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".lzma", ".lz4", ".zst",
+
             // Executables
             ".exe", ".msi", ".bin", ".app", ".sh", ".bat",
 
@@ -43,9 +56,16 @@ public class BinaryFileExtensionConfiguration {
             ".hex", ".elf", ".uf2",
 
             // Miscellaneous development-related binaries
-            ".img", ".dsk", ".qcow2");
+            ".img", ".dsk", ".qcow2", ".mdb", ".sqlite");
 
-    public static Set<String> getBinaryFileExtensions() {
-        return binaryFileExtensions;
+    /**
+     * Checks if a file is a binary file based on its file extension.
+     *
+     * @param filePath the path of the file to check
+     * @return true if the file is a binary file, false otherwise
+     */
+    public static boolean isBinaryFile(String filePath) {
+        String lowerCasePath = filePath.toLowerCase();
+        return binaryFileExtensions.stream().anyMatch(lowerCasePath::endsWith);
     }
 }

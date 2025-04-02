@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -73,13 +74,6 @@ public class FileService implements DisposableBean {
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
-
-    /**
-     * A list of common binary file extensions.
-     * Extensions must be lower-case without leading dots.
-     */
-    private static final Set<String> BINARY_FILE_EXTENSIONS = Set.of("png", "jpg", "jpeg", "heic", "gif", "tiff", "psd", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
-            "pages", "numbers", "key", "odt", "zip", "rar", "7z", "tar", "iso", "mdb", "sqlite", "exe", "jar", "bin", "so", "dll");
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
@@ -697,7 +691,7 @@ public class FileService implements DisposableBean {
      */
     public void replaceVariablesInFile(Path filePath, Map<String, String> replacements) {
         log.debug("Replacing {} in file {}", replacements, filePath);
-        if (isBinaryFile(filePath)) {
+        if (isBinaryFile(filePath.toString())) {
             // do not try to read binary files with 'readString'
             return;
         }
@@ -715,18 +709,6 @@ public class FileService implements DisposableBean {
             log.warn("Exception {} occurred when trying to replace {} in (binary) file {}", ex.getMessage(), replacements, filePath);
             // continue
         }
-    }
-
-    /**
-     * very simple and non-exhaustive check for the most common binary files such as images
-     * Unfortunately, Java cannot determine this correctly, so we need to provide typical file endings here
-     *
-     * @param filePath the path of the file
-     * @return whether the simple check for file endings determines the underlying file to be binary (true) or not (false)
-     */
-    private static boolean isBinaryFile(Path filePath) {
-        final String fileExtension = FilenameUtils.getExtension(filePath.getFileName().toString());
-        return BINARY_FILE_EXTENSIONS.stream().anyMatch(fileExtension::equalsIgnoreCase);
     }
 
     /**
@@ -764,7 +746,7 @@ public class FileService implements DisposableBean {
      */
     public void normalizeLineEndings(Path filePath) throws IOException {
         log.debug("Normalizing line endings in file {}", filePath);
-        if (isBinaryFile(filePath)) {
+        if (isBinaryFile(filePath.toString())) {
             // do not try to read binary files with 'readString'
             return;
         }

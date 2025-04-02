@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.FileNotFoundException;
@@ -22,7 +23,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
@@ -237,7 +237,6 @@ public class RepositoryService {
     private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, @NotNull ObjectId commitId) throws IOException {
         RevWalk revWalk = new RevWalk(repository);
         RevCommit commit = revWalk.parseCommit(commitId);
-        RevTree tree = commit.getTree();
 
         // Initialize your map to store file paths and their contents
         Map<String, String> filesWithContent = new HashMap<>();
@@ -273,16 +272,6 @@ public class RepositoryService {
         }
         revWalk.close();
         return filesWithContent;
-    }
-
-    /**
-     * Checks if a file is a binary file based on its file extension.
-     *
-     * @param filePath the path of the file to check
-     * @return true if the file is a binary file, false otherwise
-     */
-    private boolean isBinaryFile(String filePath) {
-        return BinaryFileExtensionConfiguration.getBinaryFileExtensions().stream().anyMatch(filePath::endsWith);
     }
 
     /**
