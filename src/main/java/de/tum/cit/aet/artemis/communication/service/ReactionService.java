@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismPostApi;
+import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentException;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -41,9 +41,7 @@ public class ReactionService {
 
     private final ReactionRepository reactionRepository;
 
-    private final PlagiarismPostService plagiarismPostService;
-
-    private final PlagiarismAnswerPostService plagiarismAnswerPostService;
+    private final Optional<PlagiarismPostApi> plagiarismPostApi;
 
     private final ConversationService conversationService;
 
@@ -51,14 +49,12 @@ public class ReactionService {
 
     private final AnswerPostRepository answerPostRepository;
 
-    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PlagiarismPostService plagiarismPostService,
-            PlagiarismAnswerPostService plagiarismAnswerPostService, ConversationService conversationService, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository) {
+    public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, Optional<PlagiarismPostApi> plagiarismPostApi,
+            ConversationService conversationService, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
-        this.plagiarismPostService = plagiarismPostService;
-        this.plagiarismAnswerPostService = plagiarismAnswerPostService;
+        this.plagiarismPostApi = plagiarismPostApi;
         this.conversationService = conversationService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
@@ -132,15 +128,18 @@ public class ReactionService {
             updatedPost.removeAnswerPost(updatedAnswerPost);
             updatedPost.addAnswerPost(updatedAnswerPost);
         }
-        plagiarismPostService.preparePostForBroadcast(updatedPost);
-        plagiarismPostService.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
+
+        PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
+        api.preparePostForBroadcast(updatedPost);
+        api.broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
         reactionRepository.deleteById(reactionId);
     }
 
     private void mayInteractWithConversationElseThrow(User user, Post post, Course course) {
         if (post.getConversation() != null) {
+            PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
             conversationService.isMemberOrCreateForCourseWideElseThrow(post.getConversation().getId(), user, Optional.empty());
-            plagiarismPostService.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
+            api.preCheckUserAndCourseForCommunicationOrMessaging(user, course);
         }
     }
 
@@ -154,8 +153,9 @@ public class ReactionService {
      * @return saved reaction
      */
     private Reaction createReactionForAnswer(Reaction reaction, AnswerPost posting, User user, Course course) {
+        PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
         Reaction savedReaction;
-        AnswerPost answerPost = plagiarismAnswerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
+        AnswerPost answerPost = api.findAnswerPostOrAnswerMessageById(posting.getId());
         mayInteractWithConversationElseThrow(user, answerPost.getPost(), course);
         reaction.setAnswerPost(answerPost);
         // save reaction
@@ -166,7 +166,7 @@ public class ReactionService {
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
-        plagiarismAnswerPostService.preparePostAndBroadcast(answerPost, course, null);
+        api.preparePostAndBroadcast(answerPost, course, null);
         return savedReaction;
     }
 
@@ -180,8 +180,10 @@ public class ReactionService {
      * @return saved reaction
      */
     private Reaction createReactionForPost(Reaction reaction, Post posting, User user, Course course) {
+        PlagiarismPostApi api = plagiarismPostApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismPostApi.class));
+
         Reaction savedReaction;
-        Post post = plagiarismPostService.findPostOrMessagePostById(posting.getId());
+        Post post = api.findPostOrMessagePostById(posting.getId());
         mayInteractWithConversationElseThrow(user, post, course);
         reaction.setPost(post);
         // save reaction
@@ -190,8 +192,8 @@ public class ReactionService {
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());
 
-        plagiarismPostService.preparePostForBroadcast(post);
-        plagiarismPostService.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
+        api.preparePostForBroadcast(post);
+        api.broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course.getId(), null, null);
         return savedReaction;
     }
 }

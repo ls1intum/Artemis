@@ -290,7 +290,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "LtiApiArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
