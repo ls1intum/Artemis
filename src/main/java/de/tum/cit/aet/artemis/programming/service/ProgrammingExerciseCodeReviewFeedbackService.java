@@ -95,7 +95,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         else {
             log.debug("tutor is responsible to process feedback request: {}", exerciseId);
             groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(programmingExercise);
-            return setIndividualDueDate(participation, programmingExercise, true);
+            return setIndividualDueDate(participation, true);
         }
     }
 
@@ -183,11 +183,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      * Sets an individual due date for a participation, locks the repository,
      * and invalidates previous results to prepare for new feedback.
      *
-     * @param participation       the programming exercise student participation.
-     * @param programmingExercise the associated programming exercise.
+     * @param participation             the programming exercise student participation.
+     * @param invalidatePreviousResults flag indicating whether to invalidate previous results.
      */
-    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise programmingExercise,
-            boolean invalidatePreviousResults) {
+    private ProgrammingExerciseStudentParticipation setIndividualDueDate(ProgrammingExerciseStudentParticipation participation, boolean invalidatePreviousResults) {
         // The participations due date is a flag showing that a feedback request is sent
         participation.setIndividualDueDate(now());
 

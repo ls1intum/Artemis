@@ -130,8 +130,7 @@ public class JenkinsBuildPlanService {
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
-                buildPlanUrl);
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, internalRepositoryUris, checkoutSolution, buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;

@@ -279,7 +279,6 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
-        VersionControlService versionControl = versionControlService.orElseThrow();
 
         // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
         // When saving the object leads to an exception at runtime.

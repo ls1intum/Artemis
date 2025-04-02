@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.jenkins;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +15,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResult
 @Profile(PROFILE_JENKINS)
 @Service
 public class JenkinsResultService extends AbstractContinuousIntegrationResultService {
-
-    private static final Logger log = LoggerFactory.getLogger(JenkinsResultService.class);
 
     public JenkinsResultService(ProgrammingExerciseFeedbackCreationService feedbackCreationService, ProgrammingExerciseTestCaseRepository testCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
