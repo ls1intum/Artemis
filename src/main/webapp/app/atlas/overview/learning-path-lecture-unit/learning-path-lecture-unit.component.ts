@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { lastValueFrom } from 'rxjs';
@@ -9,7 +9,7 @@ import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-u
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
-import { isCommunicationEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';

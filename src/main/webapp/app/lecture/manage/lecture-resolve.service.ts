@@ -1,6 +1,6 @@
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Attachment } from 'app/entities/attachment.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';

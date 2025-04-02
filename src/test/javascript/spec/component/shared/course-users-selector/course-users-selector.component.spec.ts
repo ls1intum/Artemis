@@ -6,8 +6,8 @@ import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/communication/course-users-selector/course-users-selector.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 import { TranslateModule } from '@ngx-translate/core';

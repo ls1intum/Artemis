@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, signal, viewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
@@ -12,18 +12,18 @@ import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { catchError, map, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { NgClass } from '@angular/common';
 import { PostingContentComponent } from 'app/communication/posting-content.components';
 import { MetisService } from 'app/communication/metis.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 interface CombinedOption {
     id: number;

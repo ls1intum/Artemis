@@ -8,7 +8,7 @@ import { CreateTutorialGroupComponent } from 'app/tutorialgroup/manage/tutorial-
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from '../../../helpers/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';

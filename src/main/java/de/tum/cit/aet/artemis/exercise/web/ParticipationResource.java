@@ -50,7 +50,7 @@ import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -96,6 +96,9 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -114,9 +117,6 @@ public class ParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ParticipationService participationService;
 
@@ -171,6 +171,9 @@ public class ParticipationResource {
     private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
@@ -422,7 +425,7 @@ public class ParticipationResource {
         // Process feedback request
         StudentParticipation updatedParticipation;
         if (exercise instanceof TextExercise) {
-            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
+            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
             updatedParticipation = api.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
         }
         else if (exercise instanceof ModelingExercise) {
@@ -760,6 +763,7 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -798,6 +802,7 @@ public class ParticipationResource {
     }
 
     @Nullable
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
@@ -826,11 +831,22 @@ public class ParticipationResource {
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
-            // set view
-            var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
-            MappingJacksonValue value = new MappingJacksonValue(participation);
-            value.setSerializationView(view);
-            return value;
+
+            // TODO: Duplicate
+            Object responseDTO = null;
+            if (participation != null) {
+                if (quizExercise.isQuizEnded()) {
+                    responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+                }
+                else if (quizBatch.get().isStarted()) {
+                    responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+                }
+                else {
+                    responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+                }
+            }
+
+            return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
         }
         else {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
@@ -1026,4 +1042,5 @@ public class ParticipationResource {
 
         return participation;
     }
+
 }

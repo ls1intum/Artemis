@@ -7,7 +7,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { LearningPathCompetencyDTO } from 'app/entities/competency/learning-path.model';
+import { LearningPathCompetencyDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 

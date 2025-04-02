@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
@@ -25,6 +24,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -42,8 +43,8 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_ATLAS, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS,
-        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_TEST_INDEPENDENT, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_ATHENA, PROFILE_APOLLON, PROFILE_IRIS, PROFILE_AEOLUS,
+        PROFILE_THEIA, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false", "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_independent" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 
@@ -61,10 +62,16 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoSpyBean
     protected GroupNotificationScheduleService groupNotificationScheduleService;
 
+    @MockitoSpyBean
+    protected CompetencyProgressService competencyProgressService;
+
+    @MockitoSpyBean
+    protected CompetencyProgressApi competencyProgressApi;
+
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository);
+        Mockito.reset(oAuth2JWKSService, ltiPlatformConfigurationRepository, competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
     }
 
