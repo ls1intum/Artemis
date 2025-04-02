@@ -12,7 +12,7 @@ artemis:
   bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
   # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
   user-management:
-    use-external: true
+    use-external: false
     password-reset:
       credential-provider: <provider> # The credential provider which users can log in though (e.g. TUMonline)
       links: # The password reset links for different languages
@@ -20,8 +20,8 @@ artemis:
         de: '<link>'
     external:
       url: https://jira.ase.in.tum.de
-      user: <username>        # e.g. ga12abc
-      password: <password>
+      user: admin       # e.g. ga12abc
+      password: pass1234
       admin-group-name: tumuser
     ldap: # the whole section is optional: whether user details (such as the registration number) can be obtained from a LDAP service
       url: <url>
