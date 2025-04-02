@@ -396,9 +396,19 @@ public final class Constants {
     public static final String MODULE_FEATURE_ATLAS = "atlas";
 
     /**
+     * The name of the module feature used for Text Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable text exercise functionality.
+     */
+    public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
