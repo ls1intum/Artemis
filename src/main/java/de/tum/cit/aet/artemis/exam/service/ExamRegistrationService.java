@@ -335,7 +335,7 @@ public class ExamRegistrationService {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.REMOVE_ALL_USERS_FROM_EXAM, "exam=" + exam.getTitle());
         auditEventRepository.add(auditEvent);
-        log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions.",
+        log.info("User {} has removed all users from the exam {} with id {}. This also deleted potentially existing student exams with all its participations and submissions..",
                 currentUser.getLogin(), exam.getTitle(), exam.getId());
     }
 
