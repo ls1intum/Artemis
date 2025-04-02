@@ -162,7 +162,7 @@ public class CourseUtilService {
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private CompetencyUtilService competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService;
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
@@ -254,7 +254,8 @@ public class CourseUtilService {
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         course.addLectures(lecture);
 
-        Competency competency = competencyUtilService.createCompetency(course);
+        CompetencyUtilService service = competencyUtilService.orElseThrow();
+        Competency competency = service.createCompetency(course);
         course.setCompetencies(Set.of(competency));
 
         lectureRepo.save(lecture);
@@ -308,7 +309,8 @@ public class CourseUtilService {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competencyUtilService.createCompetency(course))));
+            var competency = competencyUtilService.orElseThrow().createCompetency(course);
+            lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competency)));
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }

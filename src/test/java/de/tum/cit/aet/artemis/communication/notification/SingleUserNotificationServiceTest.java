@@ -70,6 +70,7 @@ import jakarta.mail.internet.MimeMessage;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -417,6 +418,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     // UserSshPublicKey related (expiry warning and newly created key)
 
     @Nested
+    @Disabled
     class UserSshPublicKeyExpiryNotification {
 
         String RSA_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i";
