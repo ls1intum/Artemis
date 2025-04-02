@@ -84,7 +84,7 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
@@ -108,12 +108,12 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -199,13 +199,13 @@ public class CourseService {
 
     private final Optional<TutorialGroupApi> tutorialGroupApi;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final ConversationRepository conversationRepository;
 
     private final Optional<LearningPathApi> learningPathApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     private final LectureRepository lectureRepository;
 
@@ -234,8 +234,8 @@ public class CourseService {
             ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
             SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
             ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            Optional<TutorialGroupApi> tutorialGroupApi, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
-            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
+            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, LectureRepository lectureRepository,
             Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
             AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
@@ -270,10 +270,10 @@ public class CourseService {
         this.participantScoreRepository = participantScoreRepository;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.tutorialGroupApi = tutorialGroupApi;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
         this.lectureRepository = lectureRepository;
         this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
@@ -342,8 +342,13 @@ public class CourseService {
      * @param userId    the user for which the plagiarism cases should be fetched.
      */
     public void fetchPlagiarismCasesForCourseExercises(Set<Exercise> exercises, Long userId) {
+        if (plagiarismCaseApi.isEmpty()) {
+            return;
+        }
+
+        PlagiarismCaseApi api = plagiarismCaseApi.get();
         Set<Long> exerciseIds = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = plagiarismCaseRepository.findByStudentIdAndExerciseIds(userId, exerciseIds);
+        List<PlagiarismCase> plagiarismCasesOfUserInCourseExercises = api.findByStudentIdAndExerciseIds(userId, exerciseIds);
         for (Exercise exercise : exercises) {
             // Add plagiarism cases to each exercise.
             Set<PlagiarismCase> plagiarismCasesForExercise = plagiarismCasesOfUserInCourseExercises.stream()
@@ -542,13 +547,13 @@ public class CourseService {
         deleteGradingScaleOfCourse(course);
         deleteFaqsOfCourse(course);
         learnerProfileApi.ifPresent(api -> api.deleteAllForCourse(course));
-        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
-        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new ApiNotPresentException(TutorialGroupApi.class, PROFILE_CORE));
+        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new ApiProfileNotPresentException(TutorialGroupApi.class, PROFILE_CORE));
         var tutorialGroups = api.findAllByCourseId(course.getId());
         // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {

@@ -233,13 +233,14 @@ public class ConversationService {
     }
 
     /**
-     * Updates a conversation
+     * Updates a conversation last message date in the given object and asynchronously in the database
      *
      * @param conversation the conversation to be updated
-     * @return the updated conversation
      */
-    public Conversation updateConversation(Conversation conversation) {
-        return conversationRepository.save(conversation);
+    public void updateLastMessageDate(Conversation conversation) {
+        var now = ZonedDateTime.now();
+        conversation.setLastMessageDate(now);
+        conversationRepository.updateLastMessageDateAsync(conversation.getId(), now);
     }
 
     /**

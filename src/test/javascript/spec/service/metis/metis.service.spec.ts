@@ -760,11 +760,11 @@ describe('Metis Service', () => {
         const postIds = [1, 2, 3];
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.POST);
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST, course.id);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST);
         forwardedMessageServiceSpy.mockClear();
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER, course.id);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER);
         tick();
     }));
 
@@ -923,7 +923,7 @@ describe('Metis Service', () => {
         expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
 
         createFwSpy.mock.calls.forEach(([argForwardedMessage]) => {
-            expect(argForwardedMessage.sourceType).toBe(1); // ANSWER==1
+            expect(argForwardedMessage.sourceType).toBe(PostingType.ANSWER.toString());
         });
 
         expect(result).toHaveLength(originalAnswerPosts.length);

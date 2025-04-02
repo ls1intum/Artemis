@@ -196,14 +196,6 @@ public class MessageSpecs {
                     // sort by creation date
                     sortCriterion = root.get(Post_.CREATION_DATE);
                 }
-                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                    // sort by answer count
-                    sortCriterion = root.get(Post_.ANSWER_COUNT);
-                }
-                else if (postSortCriterion == PostSortCriterion.VOTES) {
-                    // sort by votes via voteEmojiCount
-                    sortCriterion = root.get(Post_.VOTE_COUNT);
-                }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 query.orderBy(orderList);

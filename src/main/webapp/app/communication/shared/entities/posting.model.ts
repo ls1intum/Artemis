@@ -5,21 +5,22 @@ import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { UserRole } from 'app/communication/metis.util';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 
+// NOTE: this should be the same as on the server side to avoid issues.
 export enum SavedPostStatus {
-    PROGRESS = 0,
-    COMPLETED = 1,
-    ARCHIVED = 2,
+    IN_PROGRESS = 'IN_PROGRESS',
+    COMPLETED = 'COMPLETED',
+    ARCHIVED = 'ARCHIVED',
 }
 
-export enum SavedPostStatusMap {
-    PROGRESS = 'progress',
-    COMPLETED = 'completed',
-    ARCHIVED = 'archived',
+export function toSavedPostStatus(value: string): SavedPostStatus | undefined {
+    const upper = value.toUpperCase();
+    return Object.values(SavedPostStatus).find((status) => status === upper);
 }
 
+// NOTE: this should be the same as on the server side to avoid issues.
 export enum PostingType {
-    POST = 0,
-    ANSWER = 1,
+    POST = 'POST',
+    ANSWER = 'ANSWER',
 }
 
 export abstract class Posting implements BaseEntity {
@@ -31,32 +32,10 @@ export abstract class Posting implements BaseEntity {
     public updatedDate?: dayjs.Dayjs;
     public content?: string;
     public isSaved?: boolean;
-    public savedPostStatus?: number;
-    public postingType?: number;
+    public savedPostStatus?: SavedPostStatus;
+    public postingType?: PostingType;
     public reactions?: Reaction[];
     public hasForwardedMessages?: boolean = false;
     public isConsecutive?: boolean = false;
     public conversation?: Conversation;
-
-    public static mapToStatus(map: SavedPostStatusMap) {
-        switch (map) {
-            case SavedPostStatusMap.COMPLETED:
-                return SavedPostStatus.COMPLETED;
-            case SavedPostStatusMap.ARCHIVED:
-                return SavedPostStatus.ARCHIVED;
-            default:
-                return SavedPostStatus.PROGRESS;
-        }
-    }
-
-    public static statusToMap(status: SavedPostStatus) {
-        switch (status) {
-            case SavedPostStatus.COMPLETED:
-                return SavedPostStatusMap.COMPLETED;
-            case SavedPostStatus.ARCHIVED:
-                return SavedPostStatusMap.ARCHIVED;
-            default:
-                return SavedPostStatusMap.PROGRESS;
-        }
-    }
 }

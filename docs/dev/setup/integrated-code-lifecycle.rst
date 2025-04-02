@@ -100,7 +100,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,atlas,local
+   --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
 
 All of these profiles are enabled by default when using the ``Artemis (Server, LocalVC & LocalCI)`` run configuration in IntelliJ.
 Please read :ref:`Server Setup <RunServerWithIntelliJ>` for more details.

@@ -188,13 +188,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
-        doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
+        doReturn(defaultBranch).when(localVCGitBranchService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
