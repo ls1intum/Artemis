@@ -33,7 +33,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -160,6 +162,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @MockitoSpyBean
     protected PyrisEventService pyrisEventService;
 
+    @MockitoSpyBean
+    protected CompetencyProgressService competencyProgressService;
+
+    @MockitoSpyBean
+    protected CompetencyProgressApi competencyProgressApi;
+
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;
 
@@ -215,7 +223,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
+        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
     }
 

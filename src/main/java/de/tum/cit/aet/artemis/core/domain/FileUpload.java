@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.domain;
+package de.tum.cit.aet.artemis.core.domain;
 
 import java.time.ZonedDateTime;
 
@@ -7,8 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadScheduleService;
+import de.tum.cit.aet.artemis.core.service.file.FileUploadScheduleService;
 
 @Entity
 @Table(name = "file_upload")
