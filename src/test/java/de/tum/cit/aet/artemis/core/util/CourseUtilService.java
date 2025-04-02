@@ -162,7 +162,7 @@ public class CourseUtilService {
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private Optional<CompetencyUtilService> competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;

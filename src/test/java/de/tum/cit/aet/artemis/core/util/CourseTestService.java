@@ -274,10 +274,10 @@ public class CourseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private Optional<CompetencyUtilService> competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
-    private Optional<PrerequisiteUtilService> prerequisiteUtilService;
+    private Optional<PrerequisiteUtilService> prerequisiteUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private LectureUtilService lectureUtilService;
