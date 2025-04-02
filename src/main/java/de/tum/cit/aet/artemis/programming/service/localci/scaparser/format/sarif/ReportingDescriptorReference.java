@@ -33,5 +33,4 @@ public record ReportingDescriptorReference(String id, Integer index) {
     public Optional<Integer> getOptionalIndex() {
         return Optional.ofNullable(index);
     }
-
 }

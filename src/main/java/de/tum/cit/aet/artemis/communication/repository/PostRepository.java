@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
@@ -57,4 +59,27 @@ public interface PostRepository extends ArtemisJpaRepository<Post, Long>, JpaSpe
     List<Post> findAllByCourseId(@Param("courseId") Long courseId);
 
     List<Post> findByIdIn(List<Long> idList);
+
+    @Query("""
+            SELECT COUNT(DISTINCT post.id)
+            FROM Post post
+                LEFT JOIN post.conversation conv
+                LEFT JOIN conv.conversationParticipants cp
+            WHERE post.id IN :postIds
+                AND (
+                    (TYPE(conv) = Channel AND TREAT(conv AS Channel).isCourseWide = TRUE)
+                    OR (cp.user.id = :userId)
+                )
+            """)
+    long countAccessiblePosts(@Param("postIds") Collection<Long> postIds, @Param("userId") Long userId);
+
+    default void userHasAccessToAllPostsElseThrow(Collection<Long> postIds, Long userId) {
+        long accessibleCount = countAccessiblePosts(postIds, userId);
+        if (accessibleCount != postIds.size()) {
+            if (postIds.size() == 1) {
+                throw new AccessForbiddenException("Post", postIds.iterator().next());
+            }
+            throw new AccessForbiddenException("Post", postIds);
+        }
+    }
 }

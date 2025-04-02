@@ -54,7 +54,6 @@ import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/service/aeolus.service';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -250,16 +249,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                 )
                 // split pipe to keep type checks
-                .pipe(
-                    mergeMap(() =>
-                        this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
-                    ),
-                    tap((buildLogStatistics) => {
-                        if (this.programmingExercise.isAtLeastEditor) {
-                            this.programmingExercise.buildLogStatistics = buildLogStatistics;
-                        }
-                    }),
-                )
                 .subscribe({
                     next: () => {
                         this.checkAndAlertInconsistencies();
@@ -613,12 +602,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         title: 'artemisApp.iris.settings.subSettings.enabled.chat',
                         data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
                     },
-                exercise.buildLogStatistics && {
-                    type: DetailType.ProgrammingBuildStatistics,
-                    title: 'artemisApp.programmingExercise.buildLogStatistics.title',
-                    titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
-                    data: { buildLogStatistics: exercise.buildLogStatistics },
-                },
             ],
         };
     }
