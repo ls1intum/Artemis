@@ -6,9 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.test_repository.PrerequisiteTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -18,6 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
  */
 @Service
 @Profile(SPRING_PROFILE_TEST)
+@Conditional(AtlasEnabled.class)
 public class PrerequisiteUtilService {
 
     @Autowired

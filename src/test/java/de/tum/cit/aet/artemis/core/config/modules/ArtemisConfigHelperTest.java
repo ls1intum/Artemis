@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config;
+package de.tum.cit.aet.artemis.core.config.modules;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,6 +7,9 @@ import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
+
+import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 class ArtemisConfigHelperTest {
 
