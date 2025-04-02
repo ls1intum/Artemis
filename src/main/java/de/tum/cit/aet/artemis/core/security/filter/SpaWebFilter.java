@@ -26,7 +26,9 @@ public class SpaWebFilter extends OncePerRequestFilter {
             !path.startsWith("/git") &&
             !path.startsWith("/webauthn") && // exclude webauthn (passkey) from spa
             !path.contains(".") &&
-            path.matches("/(.*)")) {
+            path.matches("/(.*)")
+        ) {
+        // @formatter:on
             request.getRequestDispatcher("/").forward(request, response);
             return;
         }

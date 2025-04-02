@@ -272,8 +272,8 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
             // TODO: check if we can remove the lambda here and solve this differently, the main purpose was to extract this to a different location
             .webAuthn(webauth ->
-                webauth.allowedOrigins("https://3fb2-2003-c2-bf07-b00-bc9f-39a6-f5c8-b798.ngrok-free.app")
-                .rpId("3fb2-2003-c2-bf07-b00-bc9f-39a6-f5c8-b798.ngrok-free.app")
+                webauth.allowedOrigins("https://470a-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
+                .rpId("470a-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
                 .rpName("Artemis Development")
             );
 //            .with(webAuthnLoginConfigurer(), configurer -> {});
