@@ -27,6 +27,11 @@ class ArtemisConfigHelperTest {
         testProperty(artemisConfigHelper::isAtlasEnabled, Constants.ATLAS_ENABLED_PROPERTY_NAME);
     }
 
+    @Test
+    void testPlagiarismProperty() {
+        testProperty(artemisConfigHelper::isPlagiarismEnabled, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME);
+    }
+
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {
         mockProperty(propertyName, true);
         assertThat(propertyTest.apply(mockEnv)).isTrue();
@@ -36,18 +41,6 @@ class ArtemisConfigHelperTest {
 
         mockProperty(propertyName, null);
         assertThatThrownBy(() -> propertyTest.apply(mockEnv)).isInstanceOf(RuntimeException.class).hasMessageContaining(propertyName);
-    }
-
-    @Test
-    void testPlagiarismProperty() {
-        mockProperty(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, true);
-        assertThat(artemisConfigHelper.isPlagiarismEnabled(mockEnv)).isTrue();
-
-        mockProperty(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, false);
-        assertThat(artemisConfigHelper.isPlagiarismEnabled(mockEnv)).isFalse();
-
-        mockProperty(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, null);
-        assertThatThrownBy(() -> artemisConfigHelper.isPlagiarismEnabled(mockEnv)).isInstanceOf(RuntimeException.class);
     }
 
     private void mockProperty(String key, Boolean value) {
