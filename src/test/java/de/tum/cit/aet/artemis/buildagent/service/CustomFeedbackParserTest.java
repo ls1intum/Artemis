@@ -143,4 +143,12 @@ class CustomFeedbackParserTest {
 
         assertThat(successfulTests).isEmpty();
     }
+
+    @Test
+    void shouldNotParseInvalidJson() {
+        final var fileContent = "{ invalid json }";
+        CustomFeedbackParser.processTestResultFile(fileName, fileContent, failedTests, successfulTests);
+        assertThat(failedTests).isEmpty();
+        assertThat(successfulTests).isEmpty();
+    }
 }
