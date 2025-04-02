@@ -54,7 +54,7 @@ public class TeamWebsocketService {
             unassignedUsers.forEach(user -> websocketMessagingService.sendMessageToUser(user.getLogin(), assignmentTopic, payload));
         }
 
-        // Users in the updated team that were not yet part of the existing team were newly assigned => inform them
+        // Users in the updated team that were not yet part of the existing team were newly assigned => inform them.
         if (updatedTeam != null) {
             TeamAssignmentPayload payload = new TeamAssignmentPayload(exercise, updatedTeam, participationsOfUpdatedTeam);
             Set<User> assignedUsers = new HashSet<>(updatedTeam.getStudents());
