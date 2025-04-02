@@ -15,11 +15,11 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.FileUpload;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUpload;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadRepository;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -64,23 +64,6 @@ class FileUploadApiTest extends AbstractSpringIntegrationIndependentTest {
         Optional<FileUpload> result = fileUploadApi.findByPath(path);
 
         assertThat(result).isPresent().contains(expectedFileUpload);
-    }
-
-    @Test
-    void shouldCreateFileUploadWhenValidParametersProvidedViaApi() {
-        String path = "/test/path2";
-        String serverFilePath = "/server/file/path";
-        String fileName = "test.txt";
-        Long entityId = 2L;
-        FileUploadEntityType entityType = FileUploadEntityType.CONVERSATION;
-
-        fileUploadApi.createFileUpload(path, serverFilePath, fileName, entityId, entityType);
-
-        FileUpload actual = fileUploadRepository.findFileUploadByPath(path);
-        assertThat(actual.getEntityId()).isEqualTo(entityId);
-        assertThat(actual.getEntityType()).isEqualTo(entityType);
-        assertThat(actual.getServerFilePath()).isEqualTo(serverFilePath);
-        assertThat(actual.getPath()).isEqualTo(path);
     }
 
     @Test
