@@ -135,6 +135,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Add a new build job to the queue managed by the ExecutorService and process the returned result.
      *
      * @param participation the participation of the repository which should be built and tested.
+     * @param triggerAll    true if this build was triggered as part of a trigger all request. Currently only used for Local CI.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
