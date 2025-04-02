@@ -54,10 +54,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -102,16 +102,16 @@ public class ExerciseResource {
 
     private final ExamAccessService examAccessService;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final PlagiarismCaseService plagiarismCaseService;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
             UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
-            PlagiarismCaseService plagiarismCaseService) {
+            ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsApi> irisSettingsApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -126,8 +126,8 @@ public class ExerciseResource {
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
         this.examAccessService = examAccessService;
-        this.irisSettingsService = irisSettingsService;
-        this.plagiarismCaseService = plagiarismCaseService;
+        this.irisSettingsApi = irisSettingsApi;
+        this.plagiarismCaseApi = plagiarismCaseApi;
     }
 
     /**
@@ -347,9 +347,8 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        IrisCombinedSettingsDTO irisSettings = irisSettingsService.map(service -> service.getCombinedIrisSettingsFor(exercise, service.shouldShowMinimalSettings(exercise, user)))
-                .orElse(null);
-        PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
+        IrisCombinedSettingsDTO irisSettings = irisSettingsApi.map(api -> api.getCombinedIrisSettingsFor(exercise, api.shouldShowMinimalSettings(exercise, user))).orElse(null);
+        PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
         // TODO TW: This "feature" is only temporary for a paper.
         if (StringUtils.contains(exercise.getProblemStatement(), ICER_PAPER_FLAG)) {

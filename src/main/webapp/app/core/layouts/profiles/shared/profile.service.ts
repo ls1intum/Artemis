@@ -29,6 +29,7 @@ export class ProfileService {
                         const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
+                        profileInfo.activeModuleFeatures = data.activeModuleFeatures;
                         const displayRibbonOnProfiles = data.ribbonEnv?.split(',') ?? [];
 
                         this.mapGuidedTourConfig(data, profileInfo);

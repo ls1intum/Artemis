@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -31,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterface<IrisLectureChatSession>, IrisRateLimitedFeatureInterface {
 
     private final IrisSettingsService irisSettingsService;

@@ -69,7 +69,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -347,11 +347,6 @@ public final class Constants {
     public static final String PROFILE_ATHENA = "athena";
 
     /**
-     * The name of the Spring profile used for Atlas functionality.
-     */
-    public static final String PROFILE_ATLAS = "atlas";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_APOLLON = "apollon";
@@ -389,6 +384,21 @@ public final class Constants {
      * The InfoContributor's detail key for the Theia Portal URL
      */
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
+     * The InfoContributor's detail key for the active module features.
+     */
+    public static final String ACTIVE_MODULE_FEATURES = "activeModuleFeatures";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the property used to enable or disable Atlas functionality.
+     */
+    public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
