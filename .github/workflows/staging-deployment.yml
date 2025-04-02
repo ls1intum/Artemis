@@ -115,7 +115,7 @@ jobs:
           chmod 644 ~/.ssh/known_hosts
 
       - name: Checkout Artemis-Ansible repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           repository: 'ls1intum/artemis-ansible'
           ref: 'chore/artemis-migration'
@@ -124,18 +124,6 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
-
-      - name: Install Ansible
-        run: |
-          python -m pip install --upgrade pip
-          pip install ansible
-
-      - name: Install Vault
-        run: |
-          wget https://releases.hashicorp.com/vault/1.8.1/vault_1.8.1_linux_amd64.zip
-          unzip vault_1.8.1_linux_amd64.zip
-          sudo mv vault /usr/local/bin/
-          vault --version
 
       - name: Install Artemis-Ansible dependencies
         run: |
