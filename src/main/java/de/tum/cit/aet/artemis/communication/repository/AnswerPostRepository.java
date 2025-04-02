@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -28,26 +29,80 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, Long> {
 
-    List<AnswerPost> findAnswerPostsByAuthorId(long authorId);
+    /**
+     * Finds all {@link AnswerPost} entities authored by the given user ID.
+     *
+     * @param authorId the ID of the author
+     * @return a set of answer posts created by the author
+     */
+    Set<AnswerPost> findAnswerPostsByAuthorId(long authorId);
 
+    /**
+     * Retrieves an {@link AnswerPost} by ID that is **not** part of a conversation.
+     *
+     * @param answerPostId the ID of the answer post
+     * @return the answer post if found and **not** linked to a conversation
+     */
     @NotNull
-    default AnswerPost findAnswerPostByIdElseThrow(Long answerPostId) {
+    default AnswerPost findAnswerPostByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null), answerPostId);
     }
 
+    /**
+     * Retrieves an {@link AnswerPost} by ID that is part of a conversation (i.e., an answer message).
+     *
+     * @param answerPostId the ID of the answer message
+     * @return the answer message if found and linked to a conversation
+     */
     @NotNull
-    default AnswerPost findAnswerMessageByIdElseThrow(Long answerPostId) {
+    default AnswerPost findAnswerMessageByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }
 
+    /**
+     * Retrieves an {@link AnswerPost} by ID, regardless of whether it is linked to a conversation.
+     *
+     * @param answerPostId the ID of the answer post or message
+     * @return the answer post or message if found
+     */
     @NotNull
-    default AnswerPost findAnswerPostOrMessageByIdElseThrow(Long answerPostId) {
+    default AnswerPost findAnswerPostOrMessageByIdElseThrow(long answerPostId) {
         return getValueElseThrow(findById(answerPostId), answerPostId);
     }
 
-    long countAnswerPostsByPostIdIn(List<Long> postIds);
+    /**
+     * Counts the number of distinct {@link AnswerPost} entities associated with a course via conversations.
+     *
+     * @param courseId the ID of the course
+     * @return the number of answer posts in conversations linked to the course
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT a.id)
+            FROM AnswerPost a
+            WHERE a.post.conversation.course.id = :courseId
+            """)
+    long countAnswerPostsByCourseId(@Param("courseId") long courseId);
 
-    List<AnswerPost> findByIdIn(List<Long> idList);
+    /**
+     * Counts the number of distinct {@link AnswerPost} entities in a specific conversation.
+     *
+     * @param conversationId the ID of the conversation
+     * @return the number of answer posts in the conversation
+     */
+    @Query("""
+            SELECT COUNT(DISTINCT a.id)
+            FROM AnswerPost a
+            WHERE a.post.conversation.id = :conversationId
+            """)
+    long countByConversationId(@Param("conversationId") long conversationId);
+
+    /**
+     * Retrieves all {@link AnswerPost} entities with IDs contained in the given list.
+     *
+     * @param idList a collection of answer post IDs
+     * @return a list of matching answer posts
+     */
+    List<AnswerPost> findByIdIn(Collection<Long> idList);
 
     /**
      * Counts how many of the given AnswerPost IDs are accessible by the given user.

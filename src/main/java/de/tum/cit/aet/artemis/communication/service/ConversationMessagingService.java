@@ -59,7 +59,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -472,10 +471,8 @@ public class ConversationMessagingService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
-        message.setDisplayPriority(displayPriority);
 
         Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
                 .orElse(message.getConversation());
@@ -484,6 +481,8 @@ public class ConversationMessagingService extends PostingService {
                 || conversation instanceof GroupChat && !user.getId().equals(conversation.getCreator().getId())) {
             throw new AccessForbiddenException("You are not allowed to change the display priority of messages in this conversation");
         }
+
+        message.setDisplayPriority(displayPriority);
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();

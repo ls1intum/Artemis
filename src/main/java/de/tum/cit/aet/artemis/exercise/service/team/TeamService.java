@@ -175,7 +175,7 @@ public class TeamService {
         // Check group name is not null, a list of logins is given and it is not empty
         if (groupName != null && logins != null && !logins.isEmpty()) {
             // Find all users whose login is in the given login list and who have the given group name
-            existingStudentsWithLogin = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
+            existingStudentsWithLogin = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
             // Get the list of logins of found users
             Set<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toCollection(HashSet::new));
             // Add logins that are in given login list but not in found users to notFoundLogins
@@ -208,7 +208,7 @@ public class TeamService {
         // Check group name is not null, list of logins is given, list of registration numbers is given and it is not empty
         if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
             // Find all users whose login is in the given registration number list and who have the given group name
-            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
+            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
                     new HashSet<>(registrationNumbers));
             // Find users whose login is in given logins
             Set<String> loginsSet = new HashSet<>(logins);
