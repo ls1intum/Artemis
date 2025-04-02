@@ -7,6 +7,12 @@
                 <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(conversation)"></button>
             </span>
         }
+        @for (author of selectedAuthors; track author) {
+            <span class="badge bg-secondary me-1">
+                <span class="me-1">from:&#64;{{ author.name }}</span>
+                <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedAuthor(author)"></button>
+            </span>
+        }
         <input
             #searchInput
             name="searchText"
@@ -24,12 +30,30 @@
     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="hideSearchTerm()" />
     <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
 </div>
-@if (showDropdown && filteredOptions.length > 0) {
+@if (showDropdown) {
     <ul class="list-group autocomplete-dropdown" tabindex="0">
         @for (option of filteredOptions; let i = $index; track option) {
-            <li class="list-group-item list-group-item-action channel-option" [class.active]="i === activeDropdownIndex" (mousedown)="selectOption(option)">
-                <span class="me-2">#</span>
-                {{ option.name }}
+            <li class="list-group-item list-group-item-action" [class.active]="i === activeDropdownIndex" (mousedown)="selectOption(option)">
+                @if (option.type === 'channel') {
+                    <span class="me-2">#</span>
+                    {{ option.name }}
+                } @else if (option.type === 'user') {
+                    <div class="d-flex align-items-center">
+                        <jhi-profile-picture
+                            [imageSizeInRem]="'1.1'"
+                            [fontSizeInRem]="'0.5'"
+                            [imageId]="'user-profile-picture'"
+                            [defaultPictureId]="'user-default-profile-picture'"
+                            [isGray]="false"
+                            [authorId]="option.id"
+                            [authorName]="option.name"
+                            [imageUrl]="addPublicFilePrefix(option.img)"
+                            [isEditable]="false"
+                            class="me-2"
+                        />
+                        {{ option.name }}
+                    </div>
+                }
             </li>
         }
     </ul>

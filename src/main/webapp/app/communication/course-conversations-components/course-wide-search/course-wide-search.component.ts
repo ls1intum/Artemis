@@ -19,6 +19,7 @@ import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Posting } from 'app/communication/shared/entities/posting.model';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -218,6 +219,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 export class CourseWideSearchConfig {
     searchTerm: string;
     selectedConversations: ConversationDTO[];
+    selectedAuthors: UserPublicInfoDTO[] = [];
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToOwn: boolean;

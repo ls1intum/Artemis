@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
@@ -9,6 +9,11 @@ import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from '../entities/conversation/one-to-one-chat.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { Subject, catchError, map, of, takeUntil } from 'rxjs';
+import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 export interface CombinedOption {
     id: number;
@@ -22,25 +27,36 @@ export interface CombinedOption {
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
     standalone: true,
-    imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe],
+    imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent],
 })
-export class ConversationGlobalSearchComponent {
+export class ConversationGlobalSearchComponent implements OnDestroy {
     @Input() conversations: ConversationDTO[] = [];
-    @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversations: ConversationDTO[] }>();
+    @Input() courseId?: number;
+    @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversations: ConversationDTO[]; selectedAuthors: UserPublicInfoDTO[] }>();
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
     courseWideSearchTerm = '';
     selectedConversations: ConversationDTO[] = [];
+    selectedAuthors: UserPublicInfoDTO[] = [];
 
     showDropdown = false;
     filteredOptions: CombinedOption[] = [];
+    filteredUsers: UserPublicInfoDTO[] = [];
     activeDropdownIndex: number = -1;
+    private destroy$ = new Subject<void>();
 
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
     readonly ButtonType = ButtonType;
+
+    constructor(private courseManagementService: CourseManagementService) {}
+
+    ngOnDestroy(): void {
+        this.destroy$.next();
+        this.destroy$.complete();
+    }
 
     navigateDropdown(step: number, event: Event): void {
         if (this.showDropdown) {
@@ -59,23 +75,30 @@ export class ConversationGlobalSearchComponent {
     hideSearchTerm() {
         this.courseWideSearchTerm = '';
         this.selectedConversations = [];
+        this.selectedAuthors = [];
         this.showDropdown = false;
     }
 
     filterItems(event: Event): void {
         this.courseWideSearchTerm = (event.target as HTMLInputElement).value;
 
-        // Check if search starts with "in:"
+        // Check if search starts with "in:" for conversations
         if (this.courseWideSearchTerm.startsWith('in:')) {
             const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
-            this.filterOptions(searchQuery);
-            this.showDropdown = this.filteredOptions.length > 0;
+            this.filterConversations(searchQuery);
+            this.showDropdown = true;
+        }
+        // Check if search starts with "from:" for users
+        else if (this.courseWideSearchTerm.startsWith('from:')) {
+            const searchQuery = this.courseWideSearchTerm.substring(5).toLowerCase();
+            this.filterUsers(searchQuery);
+            this.showDropdown = true;
         } else {
             this.showDropdown = false;
         }
     }
 
-    filterOptions(searchQuery: string): void {
+    filterConversations(searchQuery: string): void {
         if (!searchQuery) {
             this.filteredOptions = this.conversations.map((conv) => ({
                 id: conv.id!,
@@ -94,6 +117,31 @@ export class ConversationGlobalSearchComponent {
                     type: 'channel',
                 }));
         }
+    }
+
+    filterUsers(searchQuery: string): void {
+        if (!searchQuery || searchQuery.length < 3 || !this.courseId) {
+            this.filteredOptions = [];
+            return;
+        }
+
+        this.courseManagementService
+            .searchUsers(this.courseId, searchQuery, ['students', 'tutors', 'instructors'])
+            .pipe(
+                map((response) => response.body || []),
+                map((users) => users.filter((user) => !this.selectedAuthors.some((selected) => selected.id === user.id))),
+                catchError(() => of([])),
+                takeUntil(this.destroy$),
+            )
+            .subscribe((users) => {
+                this.filteredUsers = users;
+                this.filteredOptions = users.map((user) => ({
+                    id: user.id!,
+                    name: user.name!,
+                    type: 'user',
+                    img: user.imageUrl,
+                }));
+            });
     }
 
     getConversationName(conversation: ConversationDTO): string {
@@ -118,6 +166,14 @@ export class ConversationGlobalSearchComponent {
                 this.courseWideSearchTerm = '';
                 this.updateSearchWithSelectedChannel();
             }
+        } else if (option.type === 'user') {
+            const user = this.filteredUsers.find((user) => user.id === option.id);
+            if (user) {
+                this.selectedAuthors.push(user);
+                this.showDropdown = false;
+                this.courseWideSearchTerm = '';
+                this.updateSearchWithSelectedChannel();
+            }
         }
     }
 
@@ -135,6 +191,11 @@ export class ConversationGlobalSearchComponent {
         this.focusInput();
     }
 
+    removeSelectedAuthor(author: UserPublicInfoDTO): void {
+        this.selectedAuthors = this.selectedAuthors.filter((user) => user.id !== author.id);
+        this.focusInput();
+    }
+
     focusInput(): void {
         setTimeout(() => {
             if (this.searchElement) {
@@ -147,6 +208,7 @@ export class ConversationGlobalSearchComponent {
         this.onSearch.emit({
             searchTerm: this.courseWideSearchTerm,
             selectedConversations: this.selectedConversations,
+            selectedAuthors: this.selectedAuthors,
         });
     }
 
@@ -167,4 +229,6 @@ export class ConversationGlobalSearchComponent {
             }
         }
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
