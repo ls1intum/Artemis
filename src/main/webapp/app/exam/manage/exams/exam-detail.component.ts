@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, map } from 'rxjs';
+import { Observable, Subject, Subscription, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -23,11 +23,23 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from './exam-checklist-component/exam-checklist.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        DeleteButtonDirective,
+        CourseExamArchiveButtonComponent,
+        ExamChecklistComponent,
+        DetailOverviewListComponent,
+        FeatureOverlayComponent,
+    ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
@@ -39,6 +51,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private gradingSystemService = inject(GradingSystemService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+    private profileService = inject(ProfileService);
 
     exam: Exam;
     formattedStartText?: SafeHtml;
@@ -50,6 +63,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     buttonSize = ButtonSize.MEDIUM;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    private profileSubscription: Subscription | null;
 
     // Icons
     faTrash = faTrash;
@@ -63,6 +78,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faHeartBroken = faHeartBroken;
     faAward = faAward;
     faFlaskVial = faFlaskVial;
+
+    plagiarismEnabled = false;
 
     isAdmin = false;
     canHaveBonus = false;
@@ -90,6 +107,10 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }
             });
+
+            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
+            });
         });
     }
 
@@ -98,6 +119,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
+        this.profileSubscription?.unsubscribe();
     }
 
     getExamDetailSections() {

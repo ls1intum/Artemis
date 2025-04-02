@@ -44,7 +44,7 @@ import {
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -67,6 +67,7 @@ import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { hasEditableBuildPlan } from 'app/core/layouts/profiles/profile-info.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -87,6 +88,7 @@ import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-ch
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -152,6 +154,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     localCIEnabled = true;
     irisEnabled = false;
     irisChatEnabled = false;
+    plagiarismEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -234,6 +237,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                                     this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
                                 });
                             }
+                            this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
                         }
                     }),
                     mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
