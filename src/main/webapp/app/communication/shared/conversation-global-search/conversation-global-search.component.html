@@ -3,7 +3,7 @@
     <div class="tag-input-container">
         @if (selectedConversation) {
             <span class="badge bg-primary me-1">
-                <span class="me-1">in:#</span>{{ getConversationName(selectedConversation) }}
+                <span class="me-1">in:#{{ getConversationName(selectedConversation) }}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel()"></button>
             </span>
         }
