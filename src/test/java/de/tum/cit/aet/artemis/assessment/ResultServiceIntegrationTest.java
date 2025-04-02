@@ -676,15 +676,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        var result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation.findLatestSubmission().orElseThrow(),
-                TEST_PREFIX + "instructor1", new ArrayList<>());
+        var result1 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), textSubmission, TEST_PREFIX + "instructor1", new ArrayList<>());
         result1.setRated(true);
         result1 = participationUtilService.addFeedbackToResults(result1);
         result1.setSubmission(textSubmission);
 
         // result 2
-        var result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation.findLatestSubmission().orElseThrow(),
-                TEST_PREFIX + "tutor1", new ArrayList<>());
+        var result2 = participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), textSubmission, TEST_PREFIX + "tutor1", new ArrayList<>());
         result2.setRated(true);
         result2 = participationUtilService.addFeedbackToResults(result2);
         result2.setSubmission(textSubmission);

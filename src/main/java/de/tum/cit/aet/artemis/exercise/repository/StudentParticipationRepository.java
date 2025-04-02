@@ -1369,20 +1369,24 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
      * @return The maximum count of feedback occurrences for the given exercise.
      */
-    @Query(value = """
-            SELECT MAX(feedbackCounts.feedbackCount)
-            FROM (
+    @Query("""
+            SELECT MAX(feedbackCounts.feedbackCount) FROM (
                 SELECT COUNT(f.id) AS feedbackCount
-                FROM programming_exercise_student_participation p
-                INNER JOIN submission s ON s.participation_id = p.id
-                INNER JOIN result r ON r.submission_id = s.id
-                INNER JOIN feedback f ON f.result_id = r.id
-                WHERE p.exercise_id = :exerciseId
-                  AND p.test_run = FALSE
-                  AND f.positive = FALSE
-                GROUP BY f.detail_text, f.test_case_test_name
-            ) feedbackCounts
-            """, nativeQuery = true)
+                FROM ProgrammingExerciseStudentParticipation p
+                INNER JOIN p.submissions s
+                INNER JOIN s.results r ON r.id = (
+                    SELECT MAX(sr.id)
+                    FROM p.submissions ps
+                    INNER JOIN ps.results sr
+                    WHERE ps.participation.id = p.id
+                )
+                INNER JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                AND p.testRun = FALSE
+                AND f.positive = FALSE
+                GROUP BY f.detailText, f.testCase.testName
+            ) AS feedbackCounts
+            """)
     long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
 
     /**
