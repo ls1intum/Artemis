@@ -104,10 +104,6 @@ export class ProfileService {
         return this.profileInfo.pipe(filter((info) => info != undefined) as OperatorFunction<ProfileInfo | undefined, ProfileInfo>);
     }
 
-    public isProfileActive(profile: string): boolean {
-        return this.profileInfo?.value?.activeProfiles?.includes(profile) ?? false;
-    }
-
     private mapTestServer(data: any, profileInfo: ProfileInfo) {
         profileInfo.testServer = data['test-server'];
     }
