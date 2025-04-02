@@ -69,7 +69,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 

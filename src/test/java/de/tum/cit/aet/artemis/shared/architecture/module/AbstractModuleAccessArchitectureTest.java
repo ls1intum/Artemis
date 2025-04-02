@@ -58,12 +58,14 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
+        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class)
+                .check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
+        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController())
+                .check(productionClasses);
     }
 
     protected Set<Class<?>> getIgnoredClasses() {
@@ -72,6 +74,10 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     protected String getModuleApiSubpackage() {
         return getModulePackage() + ".api..";
+    }
+
+    protected String getModuleApiDtoSubpackage() {
+        return getModulePackage() + ".api.dtos..";
     }
 
     protected String getModuleDomainSubpackage() {
