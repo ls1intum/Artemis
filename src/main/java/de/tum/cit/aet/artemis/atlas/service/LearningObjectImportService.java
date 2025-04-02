@@ -42,9 +42,8 @@ import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
@@ -80,9 +79,7 @@ public class LearningObjectImportService {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    private final FileUploadExerciseImportService fileUploadExerciseImportService;
+    private final Optional<FileUploadImportApi> fileUploadImportApi;
 
     private final ModelingExerciseRepository modelingExerciseRepository;
 
@@ -113,18 +110,17 @@ public class LearningObjectImportService {
     private final CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository;
 
     public LearningObjectImportService(ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadExerciseImportService fileUploadExerciseImportService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelingExerciseImportService modelingExerciseImportService, Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository,
-            QuizExerciseImportService quizExerciseImportService, LectureRepository lectureRepository, LectureImportService lectureImportService,
-            LectureUnitRepository lectureUnitRepository, LectureUnitImportService lectureUnitImportService, CourseCompetencyRepository courseCompetencyRepository,
+            ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
+            ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
+            Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
+            LectureRepository lectureRepository, LectureImportService lectureImportService, LectureUnitRepository lectureUnitRepository,
+            LectureUnitImportService lectureUnitImportService, CourseCompetencyRepository courseCompetencyRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
-        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
+        this.fileUploadImportApi = fileUploadImportApi;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.textExerciseImportApi = textExerciseImportApi;
@@ -199,9 +195,11 @@ public class LearningObjectImportService {
     private Exercise importOrLoadExercise(Exercise sourceExercise, Course course) throws JsonProcessingException {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
-            case FileUploadExercise fileUploadExercise ->
-                importOrLoadExercise(fileUploadExercise, course, fileUploadExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
-                        fileUploadExerciseRepository::findWithGradingCriteriaByIdElseThrow, fileUploadExerciseImportService::importFileUploadExercise);
+            case FileUploadExercise fileUploadExercise -> {
+                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
+                yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
+                        api::importFileUploadExercise);
+            }
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
