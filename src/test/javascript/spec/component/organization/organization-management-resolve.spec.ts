@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { OrganizationManagementResolve } from 'app/core/admin/organization-management/organization-management-resolve.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { of } from 'rxjs';
 
 describe('OrganizationManagementResolve', () => {

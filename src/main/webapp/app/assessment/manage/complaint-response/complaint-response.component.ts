@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 

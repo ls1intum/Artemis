@@ -2,7 +2,7 @@ import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ExercisePagingService } from 'app/exercise/manage/exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

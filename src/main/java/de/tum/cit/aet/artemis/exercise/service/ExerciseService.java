@@ -65,7 +65,6 @@ import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
-import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeCountDTO;
@@ -73,8 +72,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
-import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -105,7 +104,7 @@ public class ExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository;
+    private final Optional<LtiApi> ltiApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -135,14 +134,16 @@ public class ExerciseService {
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
+    private final ParticipationFilterService participationFilterService;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
-            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
-            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
-            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            Optional<CompetencyRelationApi> competencyRelationApi) {
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
+            UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
+            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
+            ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
+            ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -150,7 +151,7 @@ public class ExerciseService {
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.lti13ResourceLaunchRepository = lti13ResourceLaunchRepository;
+        this.ltiApi = ltiApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
@@ -166,6 +167,7 @@ public class ExerciseService {
         this.examLiveEventsService = examLiveEventsService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
+        this.participationFilterService = participationFilterService;
     }
 
     /**
@@ -196,9 +198,9 @@ public class ExerciseService {
                     if (!exercise.isVisibleToStudents()) {
                         continue;
                     }
-                    if (lti13ResourceLaunchRepository.isPresent()) {
+                    if (ltiApi.isPresent()) {
                         // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
-                        Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.get().findByUserAndExercise(user, exercise);
+                        Collection<LtiResourceLaunch> ltiResourceLaunches = ltiApi.get().findByUserAndExercise(user, exercise);
                         if (!ltiResourceLaunches.isEmpty()) {
                             exercisesUserIsAllowedToSee.add(exercise);
                         }
@@ -324,7 +326,7 @@ public class ExerciseService {
         boolean isStudent = !authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         for (Exercise exercise : exercises) {
             // add participation with submission and result to each exercise
-            filterForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
+            filterExerciseForCourseDashboard(exercise, participationsOfUserInExercises, isStudent);
             // remove sensitive information from the exercise for students
             if (isStudent) {
                 exercise.filterSensitiveInformation();
@@ -460,65 +462,28 @@ public class ExerciseService {
      * Find the participation in participations that belongs to the given exercise that includes the exercise data, plus the found participation with its most recent relevant
      * result. Filter everything else that is not relevant
      *
-     * @param exercise       the exercise that should be filtered (this deletes many field values of the passed exercise object)
-     * @param participations the set of participations, wherein to search for the relevant participation
-     * @param isStudent      defines if the current user is a student
+     * @param exercise                         the exercise that should be filtered (this deletes many field values of the passed exercise object)
+     * @param participationsAcrossAllExercises the set of participations in all exercises, wherein to search for the participations in this exercise
+     * @param isStudent                        defines if the current user is a student
      */
-    public void filterForCourseDashboard(Exercise exercise, Set<StudentParticipation> participations, boolean isStudent) {
-        // remove the unnecessary inner course attribute
+    public void filterExerciseForCourseDashboard(Exercise exercise, Set<StudentParticipation> participationsAcrossAllExercises, boolean isStudent) {
+        // remove attributes that are not necessary for the dashboard
         exercise.setCourse(null);
-
-        // remove the problem statement, which is loaded in the exercise details call
         exercise.setProblemStatement(null);
-
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             programmingExercise.setTestRepositoryUri(null);
         }
 
-        // get user's participation for the exercise
-        Set<StudentParticipation> relevantParticipations = participations != null ? exercise.findRelevantParticipation(participations) : Set.of();
+        // no participations yet, therefore nothing to filter from here on -> return
+        if (participationsAcrossAllExercises == null) {
+            exercise.setStudentParticipations(Set.of());
+            return;
+        }
+        Set<StudentParticipation> studentParticipationsInExercise = participationFilterService.findStudentParticipationsInExercise(participationsAcrossAllExercises, exercise);
 
-        // add relevant submission (relevancy depends on InitializationState) with its result to participation
-        relevantParticipations.forEach(participation -> {
-            // find the latest submission with a rated result, otherwise the latest submission with
-            // an unrated result or alternatively the latest submission without a result
-            Set<Submission> submissions = participation.getSubmissions();
+        studentParticipationsInExercise.forEach(participation -> participationFilterService.filterParticipationForCourseDashboard(participation, isStudent));
 
-            // only transmit the relevant result
-            // TODO: we should sync the following two and make sure that we return the correct submission and/or result in all scenarios
-            Submission submission = (submissions == null || submissions.isEmpty()) ? null : exercise.findAppropriateSubmissionByResults(submissions);
-            Submission latestSubmissionWithRatedResult = participation.getExercise().findLatestSubmissionWithRatedResultWithCompletionDate(participation, false);
-
-            Set<Result> results = Set.of();
-
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
-                // filter sensitive information about the assessor if the current user is a student
-                if (isStudent) {
-                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
-                }
-            }
-
-            // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getLatestResult() != null) {
-                submission.getLatestResult().filterSensitiveInformation();
-            }
-
-            // add submission to participation or set it to null
-            participation.setSubmissions(submission != null ? Set.of(submission) : null);
-
-            participation.setResults(results);
-            if (submission != null) {
-                submission.setResults(new ArrayList<>(results));
-            }
-
-            // remove inner exercise from participation
-            participation.setExercise(null);
-        });
-
-        exercise.setStudentParticipations(relevantParticipations);
+        exercise.setStudentParticipations(studentParticipationsInExercise);
     }
 
     /**

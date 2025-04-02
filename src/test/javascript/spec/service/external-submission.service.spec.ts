@@ -1,12 +1,12 @@
 import { ExternalSubmissionService } from 'app/exercise/external-submission/external-submission.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { Result } from 'app/entities/result.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { User } from 'app/core/user/user.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

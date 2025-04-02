@@ -3,7 +3,6 @@ import { appConfig } from 'app/app.config';
 import { MonacoConfig } from 'app/core/config/monaco.config';
 import { ProdConfig } from 'app/core/config/prod.config';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
-import { artemisIconPack } from 'app/icons/icons';
 import { AppComponent } from './app.component';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import isMobile from 'ismobilejs-es5';
@@ -13,6 +12,7 @@ import dayjs from 'dayjs/esm';
 import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
+import { artemisIconPack } from 'app/shared/icons/icons';
 
 ProdConfig();
 MonacoConfig();

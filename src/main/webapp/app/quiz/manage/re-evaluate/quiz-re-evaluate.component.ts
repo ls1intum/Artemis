@@ -7,14 +7,14 @@ import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.compo
 import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
 import { HttpResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
-import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExercisePopupService } from 'app/quiz/manage/quiz-exercise-popup.service';
 import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
 import { cloneDeep } from 'lodash-es';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
 import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
 import { faExclamationCircle, faExclamationTriangle, faUndo } from '@fortawesome/free-solid-svg-icons';

@@ -1,14 +1,14 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { SpanType } from 'app/entities/statistics.model';
+import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { of } from 'rxjs';
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

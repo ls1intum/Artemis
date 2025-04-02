@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextExerciseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextSubmissionDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -68,7 +68,7 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
-                var textExercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE))
+                var textExercise = textRepositoryApi.orElseThrow(() -> new ApiProfileNotPresentException(TextApi.class, PROFILE_CORE))
                         .findWithGradingCriteriaByIdElseThrow(exercise.getId());
                 return TextExerciseDTO.of(textExercise);
             }

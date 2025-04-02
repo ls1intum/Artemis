@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUser } from 'app/entities/exam/exam-user.model';
+import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -8,8 +8,8 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/shared/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { iconsAsHTML } from 'app/utils/icons.utils';
-import { Exam } from 'app/entities/exam/exam.model';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';

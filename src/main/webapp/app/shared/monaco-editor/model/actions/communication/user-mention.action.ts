@@ -1,7 +1,7 @@
 import { faAt } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { UserNameAndLoginDTO } from 'app/core/user/user.model';

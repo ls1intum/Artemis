@@ -221,6 +221,11 @@ class CourseNotificationServiceTest {
         }
 
         @Override
+        public String getRelativeWebAppUrl() {
+            return "/";
+        }
+
+        @Override
         public Duration getCleanupDuration() {
             return Duration.ofDays(30);
         }
