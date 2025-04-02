@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.repository;
+package de.tum.cit.aet.artemis.core.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -10,9 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.domain.FileUpload;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUpload;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 
 @Profile(PROFILE_CORE)
 @Repository
