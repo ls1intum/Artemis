@@ -26,26 +26,40 @@ export interface CombinedOption {
 })
 export class ConversationGlobalSearchComponent {
     @Input() conversations: ConversationDTO[] = [];
-    @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversation: ConversationDTO | null }>();
+    @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversations: ConversationDTO[] }>();
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
     courseWideSearchTerm = '';
-    filteredOptions: CombinedOption[] = [];
+    selectedConversations: ConversationDTO[] = [];
+
     showDropdown = false;
-    selectedConversation: ConversationDTO | null = null;
-    inChannelSearchMode = false;
+    filteredOptions: CombinedOption[] = [];
+    activeDropdownIndex: number = -1;
 
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
     readonly ButtonType = ButtonType;
 
+    navigateDropdown(step: number, event: Event): void {
+        if (this.showDropdown) {
+            event.preventDefault();
+            this.activeDropdownIndex = (this.activeDropdownIndex + step + this.filteredOptions.length) % this.filteredOptions.length;
+        }
+    }
+
+    selectActiveOption(): void {
+        if (this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
+            const selectedOption = this.filteredOptions[this.activeDropdownIndex];
+            this.selectOption(selectedOption);
+        }
+    }
+
     hideSearchTerm() {
         this.courseWideSearchTerm = '';
-        this.selectedConversation = null;
+        this.selectedConversations = [];
         this.showDropdown = false;
-        this.inChannelSearchMode = false;
     }
 
     filterItems(event: Event): void {
@@ -53,12 +67,10 @@ export class ConversationGlobalSearchComponent {
 
         // Check if search starts with "in:"
         if (this.courseWideSearchTerm.startsWith('in:')) {
-            this.inChannelSearchMode = true;
             const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
             this.filterOptions(searchQuery);
             this.showDropdown = this.filteredOptions.length > 0;
         } else {
-            this.inChannelSearchMode = false;
             this.showDropdown = false;
         }
     }
@@ -101,7 +113,7 @@ export class ConversationGlobalSearchComponent {
         if (option.type === 'channel') {
             const conversation = this.conversations.find((conv) => conv.id === option.id);
             if (conversation) {
-                this.selectedConversation = conversation;
+                this.selectedConversations.push(conversation);
                 this.showDropdown = false;
                 this.courseWideSearchTerm = '';
                 this.updateSearchWithSelectedChannel();
@@ -118,8 +130,8 @@ export class ConversationGlobalSearchComponent {
         }, 0);
     }
 
-    removeSelectedChannel(): void {
-        this.selectedConversation = null;
+    removeSelectedChannel(conversation: ConversationDTO): void {
+        this.selectedConversations = this.selectedConversations.filter((conv) => conv.id !== conversation.id);
         this.focusInput();
     }
 
@@ -134,7 +146,7 @@ export class ConversationGlobalSearchComponent {
     onTriggerSearch() {
         this.onSearch.emit({
             searchTerm: this.courseWideSearchTerm,
-            selectedConversation: this.selectedConversation,
+            selectedConversations: this.selectedConversations,
         });
     }
 

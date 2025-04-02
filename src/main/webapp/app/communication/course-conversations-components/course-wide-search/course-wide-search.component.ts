@@ -217,6 +217,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
 export class CourseWideSearchConfig {
     searchTerm: string;
+    selectedConversations: ConversationDTO[];
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToOwn: boolean;

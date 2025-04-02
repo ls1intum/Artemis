@@ -423,10 +423,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             : DEFAULT_CHANNEL_GROUPS;
     }
 
-    onSearch(searchInfo?: { searchTerm: string; selectedConversation: ConversationDTO | null }) {
+    onSearch(searchInfo?: { searchTerm: string; selectedConversations: ConversationDTO[] }) {
         if (this.isMobile) {
             // For handling mobile navigation
-            if (searchInfo?.searchTerm || searchInfo?.selectedConversation) {
+            if (searchInfo?.searchTerm || searchInfo?.selectedConversations) {
                 this.courseSidebarService.closeSidebar();
             } else {
                 this.courseSidebarService.openSidebar();
@@ -438,6 +438,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = searchInfo?.searchTerm ?? '';
+        this.courseWideSearchConfig.selectedConversations = searchInfo?.selectedConversations ?? [];
     }
 
     prepareSidebarData() {
