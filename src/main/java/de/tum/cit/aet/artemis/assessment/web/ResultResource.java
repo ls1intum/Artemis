@@ -236,7 +236,8 @@ public class ResultResource {
     public ResponseEntity<Result> createResultForExternalSubmission(@PathVariable Long exerciseId, @RequestParam String studentLogin, @RequestBody Result result)
             throws URISyntaxException {
         log.debug("REST request to create Result for External Submission for Exercise : {}", exerciseId);
-        if (result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null
+        // TODO I'm not sure if that's correct
+        if (result.getSubmission() != null && result.getSubmission().getParticipation() != null && result.getSubmission().getParticipation().getExercise() != null
                 && !result.getSubmission().getParticipation().getExercise().getId().equals(exerciseId)) {
             throw new BadRequestAlertException("exerciseId in RequestBody doesnt match exerciseId in path!", "Exercise", "400");
         }
