@@ -1015,9 +1015,9 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Returns all files and directories within the given repository in a map, excluding symbolic links.
+     * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
-     * It supports bare and checked-out repositories.
+     * It only supports checked-out repositories (not bare ones)
      * <p>
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
