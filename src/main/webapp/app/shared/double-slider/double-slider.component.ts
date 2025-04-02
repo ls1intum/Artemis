@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, model, viewChild } from '@angular/core';
+import { Component, input, model } from '@angular/core';
 
 @Component({
     selector: 'jhi-double-slider',
@@ -12,8 +12,6 @@ export class DoubleSliderComponent {
     max = input.required<number>();
 
     currentValue = model.required<number>();
-
-    currentSlider = viewChild.required<ElementRef>('currentSlider');
 
     onChange(event: Event) {
         this.currentValue.set(parseInt((event.currentTarget as HTMLInputElement).value));

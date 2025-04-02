@@ -82,6 +82,8 @@ export class CourseLearnerProfileComponent implements OnInit {
                 this.initialTimeInvestment = this.timeInvestment();
                 this.initialRepetitionIntensity = this.repetitionIntensity();
 
+                this.editing = false;
+
                 this.alertService.addAlert({
                     type: AlertType.SUCCESS,
                     message: 'Profile saved',
