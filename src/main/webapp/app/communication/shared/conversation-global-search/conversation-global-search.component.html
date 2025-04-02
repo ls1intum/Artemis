@@ -1,0 +1,33 @@
+<div class="input-group mb-2 rounded-3 p-2 me-2 module-bg">
+    <!-- search bar with selected channel -->
+    <div class="tag-input-container">
+        @if (selectedConversation) {
+            <span class="badge bg-primary me-1">
+                <span class="me-1">in:#</span>{{ getConversationName(selectedConversation) }}
+                <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel()"></button>
+            </span>
+        }
+        <input
+            #searchInput
+            name="searchText"
+            id="search"
+            [(ngModel)]="courseWideSearchTerm"
+            class="form-control"
+            (keyup.enter)="onTriggerSearch()"
+            (input)="filterItems($event)"
+            placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
+        />
+    </div>
+    <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="hideSearchTerm()" />
+    <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
+</div>
+@if (showDropdown && inChannelSearchMode && filteredOptions.length > 0) {
+    <ul class="list-group autocomplete-dropdown" tabindex="0">
+        @for (option of filteredOptions; track option) {
+            <li class="list-group-item list-group-item-action channel-option" (mousedown)="selectOption(option)">
+                <span class="me-2">#</span>
+                {{ option.name }}
+            </li>
+        }
+    </ul>
+}
