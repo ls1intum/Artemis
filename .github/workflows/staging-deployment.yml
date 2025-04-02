@@ -150,3 +150,11 @@ jobs:
           WAR_FILE=$(ls -1 /tmp/artifact/*.war | head -n 1)
 
           ansible-playbook ${{ vars.ANSIBLE_PLAYBOOK_PATH }} -e artemis_version="$WAR_FILE" -e ansible_user="${{ vars.DEPLOYMENT_USER }}"
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa
+          rm -f ~/.vault-token
+          unset VAULT_TOKEN
+          rm -rf /tmp/artifact/*
