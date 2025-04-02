@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -30,6 +29,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
@@ -51,20 +51,20 @@ public class PublicProgrammingExerciseResultResource {
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final ResultService resultService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
     public PublicProgrammingExerciseResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseGradingService programmingExerciseGradingService, ResultService resultService, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingMessagingService programmingMessagingService) {
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.resultService = resultService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -117,7 +117,7 @@ public class PublicProgrammingExerciseResultResource {
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
-        var participation = resultService.getParticipationWithResults(planKey);
+        var participation = programmingExerciseParticipationService.getParticipationWithResults(planKey);
         if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
