@@ -37,7 +37,7 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
                 for (Dependency dependency : targetsInModule) {
                     JavaClass target = dependency.getTargetClass();
 
-                    if (resideOutsideOfPackage(getModuleWithSubpackage()).test(origin)) { // ToDo: Remove?
+                    if (resideOutsideOfPackage(getModuleWithSubpackage()).test(origin)) {
                         // target inside default-allowed packages (API, Domain, DTO)
                         boolean inDefaultAllowedPackage = resideInAnyPackage(getModuleApiSubpackage(), getModuleDomainSubpackage(), getModuleDtoSubpackage()).test(target);
                         if (inDefaultAllowedPackage) {
