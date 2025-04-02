@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.service;
+package de.tum.cit.aet.artemis.core.service;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.argThat;

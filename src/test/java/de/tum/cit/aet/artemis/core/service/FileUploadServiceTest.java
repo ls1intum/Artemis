@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.fileupload.service;
+package de.tum.cit.aet.artemis.core.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import de.tum.cit.aet.artemis.core.domain.FileUpload;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.repository.FileUploadRepository;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 
 @ExtendWith(MockitoExtension.class)
