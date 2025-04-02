@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
 
 /**
@@ -70,21 +69,18 @@ public abstract class RepositoryResource {
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    protected final Optional<VersionControlService> versionControlService;
-
     protected final RepositoryAccessService repositoryAccessService;
 
     private final Optional<LocalVCServletService> localVCServletService;
 
     public RepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService) {
+            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCServletService> localVCServletService) {
         this.profileService = profileService;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.repositoryService = repositoryService;
-        this.versionControlService = versionControlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.repositoryAccessService = repositoryAccessService;
         this.localVCServletService = localVCServletService;

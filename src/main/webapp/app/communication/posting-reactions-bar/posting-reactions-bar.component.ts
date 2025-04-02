@@ -506,12 +506,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                             const userLogins = selection.users.map((user) => user.login!);
 
                             if (userLogins.length > 0) {
-                                let newConversation: Conversation | null = null;
+                                let newConversation: Conversation | undefined = undefined;
 
                                 if (userLogins.length === 1) {
                                     try {
                                         const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
-                                        newConversation = (response?.body ?? null) as Conversation;
+                                        newConversation = (response?.body ?? undefined) as Conversation;
                                         if (newConversation) {
                                             allSelections.push(newConversation);
                                         }

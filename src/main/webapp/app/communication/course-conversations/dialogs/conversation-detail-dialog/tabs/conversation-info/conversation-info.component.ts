@@ -158,7 +158,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((newValue: string) => {
-                let updateValue = null;
+                let updateValue: string;
                 if (newValue && newValue.trim().length > 0) {
                     updateValue = newValue.trim();
                 } else {
