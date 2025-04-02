@@ -60,18 +60,22 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).should().beAssignableTo(AbstractApi.class)
-                .check(productionClasses);
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).and()
+                .resideOutsideOfPackage(getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage())
-                .should(beAbstractOrAnnotatedWithController()).check(productionClasses);
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).and()
+                .resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
     }
 
     protected String getModuleApiSubpackage() {
         return getModulePackage() + ".api..";
+    }
+
+    protected String getModuleApiDtoSubpackage() {
+        return getModulePackage() + ".api.dtos..";
     }
 
     protected String getModuleDomainSubpackage() {
