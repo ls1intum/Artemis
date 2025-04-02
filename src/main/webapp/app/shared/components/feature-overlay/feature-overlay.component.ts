@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-feature-overlay',
     template: `
-        <div class="d-inline-block" ngbTooltip="{{ enabled() ? null : ('featureOverview.overlay.title' | artemisTranslate) }}" placement="left">
+        <div class="d-inline-block" ngbTooltip="{{ enabled() ? null : ('featureOverview.overlay.title' | artemisTranslate) }}" [placement]="placement()">
             <div [ngClass]="{ 'pe-none': !enabled(), 'opacity-50': !enabled() }">
                 <ng-content></ng-content>
             </div>
@@ -16,4 +16,5 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class FeatureOverlayComponent {
     enabled = input<boolean>(true);
+    placement = input<string>('left');
 }
