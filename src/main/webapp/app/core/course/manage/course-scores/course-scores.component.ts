@@ -11,7 +11,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
-import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { average, findLatestResult, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
@@ -479,8 +479,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
         const studentsMap = new Map<number, CourseScoresStudentStatistics>();
 
         for (const participation of this.allParticipationsOfCourse) {
-            participation.results?.forEach((result) => (result.participation = participation));
-
             // find all students by iterating through the participations
             const participationStudents = participation.student ? [participation.student] : participation.team!.students;
             if (!participationStudents) {
@@ -509,10 +507,12 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private updateStudentStatisticsWithExerciseResults(student: CourseScoresStudentStatistics, exercise: Exercise) {
         const relevantMaxPoints = exercise.maxPoints!;
         const participation = student.participations.find((part) => part.exercise!.id === exercise.id);
-        if (participation && participation.results && participation.results.length > 0) {
+        const results = participation?.submissions?.flatMap((submission) => submission.results ?? []) ?? [];
+        const latestResult = findLatestResult(results);
+        if (participation && latestResult) {
             // we found a result, there should only be one
-            const result = participation.results[0];
-            if (participation.results.length > 1) {
+
+            if (results.length > 1) {
                 captureException('found more than one result for student ' + student.user.login + ' and exercise ' + exercise.title);
             }
 
@@ -522,7 +522,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
             // In the client, these are now displayed rounded as 1.1 points.
             // If the student adds up the displayed points, he gets a total of 5.5 points.
             // In order to get the same total result as the student, we have to round before summing.
-            const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((result.score! * relevantMaxPoints) / 100, this.course);
+            const pointsAchievedByStudentInExercise = roundValueSpecifiedByCourseSettings((latestResult.score! * relevantMaxPoints) / 100, this.course);
             student.pointsPerExercise.set(exercise.id!, pointsAchievedByStudentInExercise);
             const includedIDs = this.exercisesOfCourseThatAreIncludedInScoreCalculation.map((includedExercise) => includedExercise.id);
             // We only include this exercise if it is included in the exercise score
@@ -532,7 +532,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 student.sumPointsPerExerciseType.set(exercise.type!, oldPointsSum + pointsAchievedByStudentInExercise);
                 student.numberOfParticipatedExercises += 1;
                 exercise.numberOfParticipationsWithRatedResult! += 1;
-                if (result.score! >= 100) {
+                if (latestResult.score! >= 100) {
                     student.numberOfSuccessfulExercises += 1;
                     exercise.numberOfSuccessfulParticipations! += 1;
                 }

@@ -79,7 +79,6 @@ export class TextSubmissionService {
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
 
                 submission.participation!.submissions = [submission];
-                submission.participation!.results = [submission.latestResult!];
 
                 return submission;
             }),

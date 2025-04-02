@@ -550,7 +550,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     })
                     .map((submission) => {
                         submission.participation!.submissions = [submission];
-                        submission.participation!.results = submission.results;
                         setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
                         return submission;
                     });
@@ -569,8 +568,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             if (latestResult) {
                 // reconnect some associations
                 latestResult!.submission = submission;
-                latestResult!.participation = submission.participation;
-                submission.participation!.results = [latestResult!];
                 setLatestSubmissionResult(submission, latestResult);
             }
             return submission;

@@ -178,6 +178,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             .subscribeForParticipationChanges()
             .pipe(skip(1))
             .subscribe((changedParticipation: StudentParticipation) => {
+                // TODO fix this
                 const results = changedParticipation.results;
                 if (
                     results &&
@@ -283,14 +284,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
 
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
-            if (this.participation.results) {
-                if (!this.submission?.results) {
-                    this.result = this.sortedHistoryResults.last()!;
-                } else {
-                    this.result = this.submission.latestResult!;
-                    this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
-                }
-                this.result.participation = this.participation;
+            if (!this.submission?.results) {
+                this.result = this.sortedHistoryResults.last()!;
+            } else {
+                this.result = this.submission.latestResult!;
+                this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
@@ -434,16 +432,11 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.submissionChange.next(this.submission);
                 // reconnect so that the submission status is displayed correctly in the result.component
                 this.submission.participation!.submissions = [this.submission];
-                const results = this.participation.results;
                 this.participation = this.submission.participation as StudentParticipation;
-                this.participation.results = results;
                 this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.result = getLatestSubmissionResult(this.submission)!;
-                if (this.result) {
-                    this.result.participation = this.participation;
-                }
                 this.isSaving = false;
                 if (!this.isAllowedToSubmitAfterDueDate) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');

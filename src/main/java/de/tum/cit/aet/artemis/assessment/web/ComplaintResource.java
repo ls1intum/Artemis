@@ -349,6 +349,9 @@ public class ComplaintResource {
                 }
             }
             submissionWithOnlyId.setId(originalSubmission.getId());
+            // we need to set the participation because without participation we are missing information since result -> participation no longer exists
+            // TODO fix this
+            submissionWithOnlyId.setParticipation(originalSubmission.getParticipation());
             complaint.getResult().setSubmission(submissionWithOnlyId);
         }
     }
