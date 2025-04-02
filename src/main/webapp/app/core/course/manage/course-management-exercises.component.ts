@@ -17,6 +17,8 @@ import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -55,7 +57,10 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
 
+    textExerciseEnabled = false;
+
     private readonly route = inject(ActivatedRoute);
+    private readonly profileService = inject(ProfileService);
 
     /**
      * initializes course
@@ -67,6 +72,9 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
         });
 
+        this.profileService.getProfileInfo().subscribe((result) => {
+            this.textExerciseEnabled = result.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
+        });
         this.exerciseFilter = new ExerciseFilter('');
     }
 

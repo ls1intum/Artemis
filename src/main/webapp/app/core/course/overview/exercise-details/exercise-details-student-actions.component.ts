@@ -14,7 +14,7 @@ import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_TEXT, PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -79,6 +79,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
+    textExerciseEnabled = false;
     localVCEnabled = true;
     athenaEnabled = false;
     routerLink: string;
@@ -100,6 +101,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+                this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -268,5 +270,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+    }
+
+    get allowEditing(): boolean {
+        if (this.exercise.type === ExerciseType.TEXT && this.textExerciseEnabled) {
+            return false;
+        }
+        return (
+            (this.gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
+            this.gradedParticipation?.initializationState === InitializationState.FINISHED
+        );
     }
 }
