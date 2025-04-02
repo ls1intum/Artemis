@@ -979,6 +979,7 @@ public class GitService extends AbstractGitService {
      *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
      *                          </p>
      */
+    @NotNull
     public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);

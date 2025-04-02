@@ -129,8 +129,9 @@ public class RepositoryService {
             log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
             var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-            Repository repository = gitService.getBareRepository(repoUri);
-            return getFilesContentFromBareRepository(repository, commitId);
+            try (Repository repository = gitService.getBareRepository(repoUri)) {
+                return getFilesContentFromBareRepository(repository, commitId);
+            }
         }
         else {
             log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
@@ -218,6 +219,12 @@ public class RepositoryService {
         }
 
         return getFileContentFromBareRepositoryForCommitId(repository, headCommitId);
+    }
+
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(VcsRepositoryUri repositoryUri) throws IOException {
+        try (var bareRepository = gitService.getBareRepository(repositoryUri)) {
+            return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+        }
     }
 
     /**

@@ -3,8 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.Set;
 
 /**
- * Provides a list of binary file extensions which can be used to filter returned files in the business logic of
- * the application.
+ * Provides a list of binary file extensions which can be used to filter returned files in the business logic of the application.
  */
 public class BinaryFileExtensionConfiguration {
 
@@ -62,7 +61,7 @@ public class BinaryFileExtensionConfiguration {
      * Checks if a file is a binary file based on its file extension.
      *
      * @param filePath the path of the file to check
-     * @return true if the file is a binary file, false otherwise
+     * @return true if the file is considered a binary file based on the above extensions, false otherwise
      */
     public static boolean isBinaryFile(String filePath) {
         String lowerCasePath = filePath.toLowerCase();
