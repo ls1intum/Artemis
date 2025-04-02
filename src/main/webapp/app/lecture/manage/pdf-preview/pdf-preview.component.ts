@@ -127,6 +127,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     hasChanges = computed(() => {
         return this.operations().length > 0 || this.hiddenPagesChanged() || this.pageOrderChanged() || this.isFileChanged();
     });
+    sortedHiddenSelectedPages = computed(() => {
+        return Array.from(this.selectedPages())
+            .filter((page) => this.hiddenPages()[page.slideId])
+            .sort((a, b) => a.order - b.order);
+    });
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
