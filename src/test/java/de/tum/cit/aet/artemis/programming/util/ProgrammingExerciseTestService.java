@@ -140,6 +140,7 @@ import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
@@ -296,6 +297,8 @@ public class ProgrammingExerciseTestService {
     // Injected in the constructor
     private VersionControlService versionControlService;
 
+    private LocalVCGitBranchService localVCGitBranchService;
+
     // Injected in the constructor
 
     private MockDelegate mockDelegate;
@@ -313,7 +316,7 @@ public class ProgrammingExerciseTestService {
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, LocalVCGitBranchService localVCGitBranchService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -327,6 +330,7 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
 
         course = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -2140,7 +2144,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()

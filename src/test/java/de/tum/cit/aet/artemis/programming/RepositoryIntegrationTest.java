@@ -228,8 +228,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participation);
 
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(participation);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfParticipation(participation);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         logs.add(buildLogEntry);
         logs.add(largeBuildLogEntry);
@@ -821,7 +821,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var instructorAssignmentRepoUri = new GitUtilService.MockFileRepositoryUri(tempRepository.localRepoFile);
         ProgrammingExerciseStudentParticipation instructorAssignmentParticipation = participationUtilService
                 .addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "instructor1", instructorAssignmentRepoUri.getURI());
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfParticipation(instructorAssignmentParticipation);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfParticipation(instructorAssignmentParticipation);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(tempRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(instructorAssignmentParticipation.getVcsRepositoryUri(), true, defaultBranch);
 

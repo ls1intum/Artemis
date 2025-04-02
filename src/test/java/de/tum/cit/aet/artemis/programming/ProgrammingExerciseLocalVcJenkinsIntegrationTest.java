@@ -55,7 +55,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
-        programmingExerciseTestService.setup(this, versionControlService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         aeolusRequestMockProvider.enableMockingOfRequests();
     }

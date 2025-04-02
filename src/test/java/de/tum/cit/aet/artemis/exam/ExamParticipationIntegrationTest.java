@@ -756,7 +756,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
     @CsvSource({ "false, false", "true, false", "false, true", "true, true" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus, boolean withSecondCorrectionAndStarted) throws Exception {
-        programmingExerciseTestService.setup(this, versionControlService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());

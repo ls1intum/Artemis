@@ -271,7 +271,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVc+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 

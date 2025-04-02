@@ -2,12 +2,10 @@ package de.tum.cit.aet.artemis.programming.service.localvc;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 import jakarta.annotation.Nullable;
 
@@ -15,10 +13,8 @@ import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Constants;
-import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.lib.RepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,7 +22,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -52,12 +47,8 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;
 
-    private static String localVCBasePath;
-
     @Value("${artemis.version-control.local-vcs-repo-path}")
-    public void setLocalVCBasePath(String localVCBasePath) {
-        LocalVCService.localVCBasePath = localVCBasePath;
-    }
+    private String localVCBasePath;
 
     public LocalVCService(UriService uriService, GitService gitService, ProgrammingExerciseStudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -117,58 +108,6 @@ public class LocalVCService extends AbstractVersionControlService {
     }
 
     /**
-     * Get the default branch of the repository
-     *
-     * @param repositoryUri The repository uri to get the default branch for.
-     * @return the name of the default branch, e.g. 'main'
-     * @throws LocalVCInternalException if the default branch cannot be determined
-     */
-    @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) {
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(repositoryUri.toString());
-        return getDefaultBranch(localVCRepositoryUri);
-    }
-
-    /**
-     * Get the default branch of the repository given the Local VC repository URI
-     *
-     * @param localVCRepositoryUri The Local VC repository URI uri to get the default branch for.
-     * @return the name of the default branch, e.g. 'main'
-     * @throws LocalVCInternalException if the default branch cannot be determined
-     */
-    public static String getDefaultBranch(LocalVCRepositoryUri localVCRepositoryUri) {
-        String localRepositoryPath = localVCRepositoryUri.getLocalRepositoryPath(localVCBasePath).toString();
-        return getDefaultBranch(localRepositoryPath);
-    }
-
-    /**
-     * Get the default branch of the repository given the repository path.
-     * We assume that the path links to a bare repository. This implementation is faster than using ls-remote (Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap())
-     *
-     * @param repositoryPath The path of the repository to get the default branch for.
-     * @return the name of the default branch, e.g. 'main'
-     * @throws LocalVCInternalException if the default branch cannot be determined
-     */
-    public static String getDefaultBranch(String repositoryPath) {
-        try (Repository repository = new RepositoryBuilder().setGitDir(new File(repositoryPath)).build()) {
-
-            Ref headRef = repository.exactRef("HEAD");
-            if (headRef != null && headRef.isSymbolic()) {
-                String fullRefName = headRef.getTarget().getName(); // e.g., refs/heads/main
-                String[] refParts = fullRefName.split("/");
-                return refParts[refParts.length - 1];
-            }
-            else {
-                throw new LocalVCInternalException("HEAD is not a symbolic reference in repository " + repositoryPath);
-            }
-
-        }
-        catch (IOException e) {
-            throw new LocalVCInternalException("Cannot read default branch of repository " + repositoryPath + ". Failed to open repository.", e);
-        }
-    }
-
-    /**
      * Check if a project already exists in the file system to make sure the new projectKey is unique.
      *
      * @param projectKey  to check if a project with this unique key already exists.
@@ -201,11 +140,6 @@ public class LocalVCService extends AbstractVersionControlService {
         catch (IOException e) {
             throw new LocalVCInternalException("Error while creating local VC project.", e);
         }
-    }
-
-    @Override
-    public ConnectorHealth health() {
-        return new ConnectorHealth(true, Map.of("url", localVCBaseUrl));
     }
 
     /**

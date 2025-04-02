@@ -109,7 +109,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
-        programmingExerciseTestService.setup(this, versionControlService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach

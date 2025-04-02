@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenSer
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -73,6 +74,8 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
+
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final BuildLogEntryService buildLogEntryService;
 
@@ -105,15 +108,16 @@ public class ParticipationService {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
-            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            Optional<SharedQueueManagementService> localCISharedBuildJobQueueService, ParticipationVcsAccessTokenService participationVCSAccessTokenService,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
+            ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
+            TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
+            ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
         this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -448,7 +452,7 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceURL);
             VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
+            String templateBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
             var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)

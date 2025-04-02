@@ -102,7 +102,7 @@ public class BuildJobExecutionService {
     }
 
     private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
-        log.info("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
+        log.debug("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
             for (Path path : directoryStream) {
                 try {
@@ -119,7 +119,7 @@ public class BuildJobExecutionService {
         catch (IOException e) {
             log.error("Could not delete temporary directories", e);
         }
-        log.info("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
+        log.debug("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
     }
 
     /**

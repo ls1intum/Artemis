@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfig
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -83,7 +83,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
@@ -108,7 +108,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
+            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<LocalVCGitBranchService> localVCGitBranchService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
@@ -119,7 +119,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
@@ -296,7 +296,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildConfig buildConfig) {
         String branch;
         try {
-            branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+            branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);

@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
@@ -210,25 +211,14 @@ public class ParticipationUtilService {
      */
     public Result createSubmissionAndResult(StudentParticipation studentParticipation, long scoreAwarded, boolean rated) {
         Exercise exercise = studentParticipation.getExercise();
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
+        Submission submission = switch (exercise) {
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            case TextExercise ignored -> new TextSubmission();
+            case FileUploadExercise ignored -> new FileUploadSubmission();
+            case QuizExercise ignored -> new QuizSubmission();
+            case null, default -> throw new RuntimeException("Unsupported exercise type: " + exercise);
+        };
 
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);
@@ -897,7 +887,8 @@ public class ParticipationUtilService {
     }
 
     public void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult, ProgrammingExercise programmingExercise, UriService uriService,
-            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+            VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService)
+            throws URISyntaxException {
         String templateRepoName;
         if (useGradedParticipationOfResult) {
             templateRepoName = uriService.getRepositorySlugFromRepositoryUri(((ProgrammingExerciseStudentParticipation) gradedResult.getParticipation()).getVcsRepositoryUri());
@@ -905,7 +896,7 @@ public class ParticipationUtilService {
         else {
             templateRepoName = uriService.getRepositorySlugFromRepositoryUri(programmingExercise.getVcsTemplateRepositoryUri());
         }
-        mockCreationOfExerciseParticipation(templateRepoName, programmingExercise, versionControlService, continuousIntegrationService);
+        mockCreationOfExerciseParticipation(templateRepoName, programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
     }
 
     /**
@@ -916,13 +907,14 @@ public class ParticipationUtilService {
      * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
     public void mockCreationOfExerciseParticipation(String templateRepoName, ProgrammingExercise programmingExercise, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+            ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService) throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), eq(templateRepoName), any(String.class), any(String.class), any(String.class),
                 any(Integer.class));
-        mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
+        mockCreationOfExerciseParticipationInternal(programmingExercise, continuousIntegrationService, localVCGitBranchService);
     }
 
     /**
@@ -932,24 +924,25 @@ public class ParticipationUtilService {
      * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
      * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
     public void mockCreationOfExerciseParticipation(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService) throws URISyntaxException {
+            ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService) throws URISyntaxException {
         var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
-        mockCreationOfExerciseParticipationInternal(programmingExercise, versionControlService, continuousIntegrationService);
+        mockCreationOfExerciseParticipationInternal(programmingExercise, continuousIntegrationService, localVCGitBranchService);
     }
 
     /**
      * Mocks methods in VC and CI system needed for the creation of a StudentParticipation given the ProgrammingExercise.
      *
      * @param programmingExercise          The ProgrammingExercise the StudentParticipation belongs to
-     * @param versionControlService        The mocked VersionControlService
      * @param continuousIntegrationService The mocked ContinuousIntegrationService
+     * @param localVCGitBranchService      The mocked LocalVCGitBranchService
      */
-    private void mockCreationOfExerciseParticipationInternal(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
-            ContinuousIntegrationService continuousIntegrationService) {
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(programmingExercise);
+    private void mockCreationOfExerciseParticipationInternal(ProgrammingExercise programmingExercise, ContinuousIntegrationService continuousIntegrationService,
+            LocalVCGitBranchService localVCGitBranchService) {
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(programmingExercise);
 
         doReturn("buildPlanId").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any());

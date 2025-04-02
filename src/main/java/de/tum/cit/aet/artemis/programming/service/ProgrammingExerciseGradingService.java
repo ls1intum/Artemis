@@ -69,7 +69,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -78,8 +78,6 @@ public class ProgrammingExerciseGradingService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
-
-    private final Optional<VersionControlService> versionControlService;
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -113,18 +111,19 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
-        this.versionControlService = versionControlService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -139,6 +138,7 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
+        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -218,10 +218,10 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {

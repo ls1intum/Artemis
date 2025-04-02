@@ -7,14 +7,10 @@ import java.util.Objects;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.JGitText;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
@@ -114,37 +110,5 @@ public abstract class AbstractVersionControlService implements VersionControlSer
                 && innerTransportException.getCause() instanceof java.io.EOFException eofException && eofException.getMessage().equals(JGitText.get().shortReadOfBlock)
                 && Objects.equals(eofException.getStackTrace()[0].getClassName(), "org.eclipse.jgit.util.IO")
                 && Objects.equals(eofException.getStackTrace()[0].getMethodName(), "readFully");
-    }
-
-    @Override
-    public String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation) {
-        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            if (studentParticipation.getBranch() == null) {
-                String branch = getDefaultBranchOfRepository(participation.getVcsRepositoryUri());
-                studentParticipation.setBranch(branch);
-                studentParticipationRepository.save(studentParticipation);
-            }
-
-            return studentParticipation.getBranch();
-        }
-        else {
-            return getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
-        }
-    }
-
-    @Override
-    public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExerciseBuildConfigRepository.loadAndSetBuildConfig(programmingExercise);
-
-        if (programmingExercise.getBuildConfig().getBranch() == null) {
-            if (!Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-                programmingExercise.setTemplateParticipation(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(programmingExercise.getId()));
-            }
-            String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUri());
-            programmingExercise.getBuildConfig().setBranch(branch);
-            programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
-        }
-
-        return programmingExercise.getBuildConfig().getBranch();
     }
 }
