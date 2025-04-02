@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
@@ -10,6 +10,7 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
@@ -48,11 +49,13 @@ import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges, OnDestroy {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
+
+    private profileSubscription: Subscription | null;
 
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
@@ -98,7 +101,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
                 this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
@@ -126,6 +129,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {

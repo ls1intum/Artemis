@@ -51,6 +51,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
     private profileService = inject(ProfileService);
 
+    private profileSubscription: Subscription | null;
+
     exam = input.required<Exam>();
     getExamRoutesByIdentifier = input.required<any>();
     private longestWorkingTimeSub: Subscription | null = null;
@@ -102,7 +104,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.disabledExercises =
                 this.exam()
                     .exerciseGroups?.flatMap((group) => group.exercises)
@@ -143,6 +145,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }
+        this.profileSubscription?.unsubscribe();
     }
 
     /**

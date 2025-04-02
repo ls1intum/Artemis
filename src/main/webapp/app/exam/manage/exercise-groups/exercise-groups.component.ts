@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -66,7 +66,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         FeatureOverlayComponent,
     ],
 })
-export class ExerciseGroupsComponent implements OnInit {
+export class ExerciseGroupsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
     exerciseService = inject(ExerciseService);
@@ -76,6 +76,8 @@ export class ExerciseGroupsComponent implements OnInit {
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+
+    private profileSubscription: Subscription | null;
 
     courseId: number;
     course: Course;
@@ -124,7 +126,7 @@ export class ExerciseGroupsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
             this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
@@ -132,6 +134,10 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.disabledExerciseTypes.push(ExerciseType.TEXT);
             }
         });
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     /**
