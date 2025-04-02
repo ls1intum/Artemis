@@ -15,11 +15,11 @@ class ModuleFeatureInfoContributorTest {
 
     private final Environment mockEnv = mock(Environment.class);
 
-    private static final List<String> modulePropertyNames = List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME);
+    private static final List<String> modulePropertyNames = List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME);
 
     @Test
     void testEnabledContribution() {
-        testContribution(true, List.of(Constants.MODULE_FEATURE_ATLAS));
+        testContribution(true, List.of(Constants.MODULE_FEATURE_ATLAS, Constants.MODULE_FEATURE_PLAGIARISM));
     }
 
     @Test
