@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -35,7 +35,6 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
@@ -43,7 +42,6 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PageType, SortDirection } from 'app/communication/metis.util';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
@@ -126,7 +124,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
     imports: [
         LoadingIndicatorContainerComponent,
         FormsModule,
-        ButtonComponent,
         CourseConversationsCodeOfConductComponent,
         TranslateDirective,
         NgClass,
@@ -136,7 +133,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         CourseWideSearchComponent,
         SavedPostsComponent,
         ConversationThreadSidebarComponent,
-        ArtemisTranslatePipe,
         ConversationGlobalSearchComponent,
     ],
 })
@@ -186,10 +182,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented = false;
 
-    courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
-
     courseWideSearchConfig: CourseWideSearchConfig;
-    readonly ButtonType = ButtonType;
 
     // Icons
     faPlus = faPlus;
@@ -445,7 +438,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activeConversation = undefined;
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = searchInfo?.searchTerm ?? '';
-        this.courseWideSearch()?.onSearch();
     }
 
     prepareSidebarData() {
