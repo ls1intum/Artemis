@@ -128,6 +128,7 @@ describe('ProfileService', () => {
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
+        activeModuleFeatures: [],
         git: {
             branch: 'code-button',
             commit: {
@@ -152,6 +153,7 @@ describe('ProfileService', () => {
         ]),
         useExternal: false,
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
+        activeModuleFeatures: [],
         testServer: true,
         ribbonEnv: '',
         guidedTourMapping: {
