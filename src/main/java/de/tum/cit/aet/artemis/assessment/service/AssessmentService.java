@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
 
@@ -62,7 +62,7 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
-    protected final Optional<LtiNewResultService> ltiNewResultService;
+    protected final Optional<LtiApi> ltiApi;
 
     protected final SingleUserNotificationService singleUserNotificationService;
 
@@ -70,7 +70,7 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
+            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
@@ -82,7 +82,7 @@ public class AssessmentService {
         this.submissionRepository = submissionRepository;
         this.examDateApi = examDateApi;
         this.userRepository = userRepository;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.singleUserNotificationService = singleUserNotificationService;
         this.resultWebsocketService = resultWebsocketService;
     }
@@ -245,10 +245,10 @@ public class AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
 
-        if (ltiNewResultService.isPresent()) {
+        if (ltiApi.isPresent()) {
             // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
             // Otherwise, it might never become visible in the external system
-            ltiNewResultService.get().onNewResult((StudentParticipation) result.getParticipation());
+            ltiApi.get().onNewResult((StudentParticipation) result.getParticipation());
         }
         return result;
     }
