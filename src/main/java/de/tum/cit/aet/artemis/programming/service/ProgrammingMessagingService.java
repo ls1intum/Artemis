@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.api.PyrisEventApi;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -52,7 +52,7 @@ public class ProgrammingMessagingService {
 
     private final ResultWebsocketService resultWebsocketService;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    private final Optional<LtiApi> ltiApi;
 
     private final TeamRepository teamRepository;
 
@@ -63,12 +63,12 @@ public class ProgrammingMessagingService {
     private final ParticipationRepository participationRepository;
 
     public ProgrammingMessagingService(GroupNotificationService groupNotificationService, WebsocketMessagingService websocketMessagingService,
-            ResultWebsocketService resultWebsocketService, Optional<LtiNewResultService> ltiNewResultService, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
+            ResultWebsocketService resultWebsocketService, Optional<LtiApi> ltiApi, TeamRepository teamRepository, Optional<PyrisEventApi> pyrisEventApi,
             Optional<IrisSettingsApi> irisSettingsApi, ParticipationRepository participationRepository) {
         this.groupNotificationService = groupNotificationService;
         this.websocketMessagingService = websocketMessagingService;
         this.resultWebsocketService = resultWebsocketService;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.teamRepository = teamRepository;
         this.pyrisEventApi = pyrisEventApi;
         this.irisSettingsApi = irisSettingsApi;
@@ -191,7 +191,7 @@ public class ProgrammingMessagingService {
 
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             // do not try to report results for template or solution participations
-            ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(studentParticipation));
+            ltiApi.ifPresent(api -> api.onNewResult(studentParticipation));
             // Inform Iris about the submission status (when certain conditions are met)
             notifyIrisAboutSubmissionStatus(result, studentParticipation);
         }

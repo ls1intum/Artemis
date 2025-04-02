@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -84,7 +84,7 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    private final Optional<LtiApi> ltiApi;
 
     private final ResultWebsocketService resultWebsocketService;
 
@@ -122,16 +122,15 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
-            ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
-            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
-            StudentExamRepository studentExamRepository, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
-            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
+            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
+            LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository, BuildJobRepository buildJobRepository,
+            BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
@@ -177,8 +176,8 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
-            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult((StudentParticipation) savedResult.getParticipation());
+            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
+                ltiApi.get().onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
