@@ -55,7 +55,10 @@
     <!-- Step 3: Alter MySQL columns using inline ENUM syntax -->
     <changeSet id="20250329-13-alter-columns-submission-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <dbms type="mysql"/>
+            <or>
+                <dbms type="postgresql"/>
+                <dbms type="h2"/>
+            </or>
         </preConditions>
 
         <modifyDataType tableName="submission" columnName="jhi_type"

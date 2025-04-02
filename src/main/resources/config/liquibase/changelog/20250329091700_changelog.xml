@@ -64,8 +64,11 @@
     <!-- Step 3: Use simplified enum syntax for MySQL -->
     <changeSet id="20250329-03-alter-columns-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
-            <!-- Ensure this step only runs on MySQL -->
-            <dbms type="mysql"/>
+            <!-- Ensure this step only runs on MySQL and H2 -->
+            <or>
+                <dbms type="postgresql"/>
+                <dbms type="h2"/>
+            </or>
         </preConditions>
 
         <!-- 
