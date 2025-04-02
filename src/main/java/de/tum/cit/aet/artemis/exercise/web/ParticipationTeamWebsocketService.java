@@ -34,7 +34,7 @@ import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -216,8 +216,8 @@ public class ParticipationTeamWebsocketService {
             modelingSubmissionService.hideDetails(submission, user);
         }
         else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
-            submission = textSubmissionApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).handleTextSubmission(textSubmission, textExercise,
-                    user);
+            submission = textSubmissionApi.orElseThrow(() -> new ApiProfileNotPresentException(TextSubmissionApi.class, PROFILE_CORE)).handleTextSubmission(textSubmission,
+                    textExercise, user);
         }
         else {
             throw new IllegalArgumentException("Submission type '" + submission.getType() + "' not allowed.");
