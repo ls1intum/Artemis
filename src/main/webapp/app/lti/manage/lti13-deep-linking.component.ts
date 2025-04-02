@@ -216,7 +216,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
             };
 
             let resourceType: DeepLinkingType;
-            let contentIds: string | null = null;
+            let contentIds: string | undefined = undefined;
 
             if (this.selectedExercises?.size) {
                 if (this.isExerciseGroupingActive) {

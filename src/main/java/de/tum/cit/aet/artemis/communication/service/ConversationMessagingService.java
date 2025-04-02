@@ -143,9 +143,8 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      createMessage:parseUserMentions DONE");
 
         // update last message date of conversation
-        conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        Conversation savedConversation = conversationService.updateConversation(conversation);
+        conversationService.updateLastMessageDate(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -160,7 +159,7 @@ public class ConversationMessagingService extends PostingService {
         createdMessage.setAuthor(author);
         setAuthorRoleForPosting(createdMessage, course);
 
-        return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
+        return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers);
     }
 
     /**

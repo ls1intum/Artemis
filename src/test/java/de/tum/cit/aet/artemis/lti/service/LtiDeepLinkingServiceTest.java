@@ -13,8 +13,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -307,7 +307,7 @@ class LtiDeepLinkingServiceTest {
         when(oidcIdToken.getClaim("iat")).thenReturn("test");
         when(oidcIdToken.getClaim("nonce")).thenReturn("1234-34535-abcbcbd");
         when(oidcIdToken.getIssuer()).thenReturn(new URI("http://artemis.com").toURL());
-        when(oidcIdToken.getAudience()).thenReturn(Arrays.asList("http://moodle.com"));
+        when(oidcIdToken.getAudience()).thenReturn(List.of("http://moodle.com"));
         when(oidcIdToken.getExpiresAt()).thenReturn(Instant.now().plus(2, ChronoUnit.HOURS));
         when(oidcIdToken.getIssuedAt()).thenReturn(Instant.now());
         when(oidcIdToken.getNonce()).thenReturn("1234-34535-abcbcbd");

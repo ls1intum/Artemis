@@ -198,7 +198,7 @@ public class ProgrammingExerciseImportFromFileService {
 
     }
 
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<Repository> repositories) throws IOException {
+    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<Repository> repositories) {
         for (Repository repository : repositories) {
             fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
         }

@@ -49,11 +49,8 @@ public class ExamAccessService {
 
     private final StudentExamService studentExamService;
 
-    private final ExamDateService examDateService;
-
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService,
-            ExamDateService examDateService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -61,7 +58,6 @@ public class ExamAccessService {
         this.courseRepository = courseRepository;
         this.examRegistrationService = examRegistrationService;
         this.studentExamService = studentExamService;
-        this.examDateService = examDateService;
     }
 
     /**
