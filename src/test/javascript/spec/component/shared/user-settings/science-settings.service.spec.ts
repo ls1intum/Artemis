@@ -6,7 +6,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_ATLAS } from '../../../../../../main/webapp/app/app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
@@ -38,7 +38,7 @@ describe('ScienceSettingsService', () => {
 
                 const profileService = TestBed.inject(ProfileService);
                 const profileInfo = new ProfileInfo();
-                profileInfo.activeProfiles = [PROFILE_ATLAS];
+                profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
             });
     });

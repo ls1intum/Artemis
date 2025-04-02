@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -89,7 +89,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = textRepositoryApi.orElseThrow(() -> new ApiNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(session.getExercise().getId());
+        var exercise = textRepositoryApi.orElseThrow(() -> new ApiProfileNotPresentException(TextApi.class, PROFILE_CORE)).findByIdElseThrow(session.getExercise().getId());
         if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }

@@ -39,7 +39,7 @@ export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
-export const PROFILE_ATLAS = 'atlas';
+export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const PROFILE_IRIS = 'iris';
 
