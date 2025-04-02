@@ -241,10 +241,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
 
         // then
-        // expected are 7 database calls independent of the number of students in the course.
-        // 4 calls are for user authentication checks, 3 calls to update database
+        // expected are 6 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 2 calls to update database
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(7);
+        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(6);
     }
 
     @ParameterizedTest
