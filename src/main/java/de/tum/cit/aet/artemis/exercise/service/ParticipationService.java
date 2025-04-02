@@ -455,6 +455,8 @@ public class ParticipationService {
             if (participation.getStudent().isPresent()) {
                 newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
             }
+            // After copying the repository, the new participation uses the default branch
+            participation.setBranch(defaultBranch);
             participation.setRepositoryUri(newRepoUri.toString());
             participation.setInitializationState(InitializationState.REPO_COPIED);
 
@@ -503,8 +505,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
-                continuousIntegrationService.orElseThrow().configureBuildPlan(participation, branch);
+                continuousIntegrationService.orElseThrow().configureBuildPlan(participation);
             }
             catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
