@@ -143,6 +143,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     private refreshMetisConversationPostContextFilter(): void {
         const searchConfig = this.courseWideSearchConfig();
+        // TODO: make use of new searchConfig with selectedConversations and selectedAuthors
 
         if (!searchConfig) return;
 

@@ -16,7 +16,6 @@ import {
     faMessage,
     faPersonChalkboard,
     faPlus,
-    faSearch,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -59,7 +58,7 @@ import {
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
-import { ConversationGlobalSearchComponent } from './conversation-global-search/conversation-global-search.component';
+import { ConversationGlobalSearchComponent, ConversationGlobalSearchConfig } from './conversation-global-search/conversation-global-search.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -188,7 +187,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faPlus = faPlus;
     faTimes = faTimes;
     faFilter = faFilter;
-    faSearch = faSearch;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new EventEmitter<ChannelAction>();
@@ -425,7 +423,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             : DEFAULT_CHANNEL_GROUPS;
     }
 
-    onSearch(searchInfo?: { searchTerm: string; selectedConversations: ConversationDTO[] }) {
+    onSearch(searchInfo: ConversationGlobalSearchConfig) {
         if (this.isMobile) {
             // For handling mobile navigation
             if (searchInfo?.searchTerm || searchInfo?.selectedConversations) {
@@ -439,8 +437,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.setActiveConversation(undefined);
         this.activeConversation = undefined;
         this.updateQueryParameters();
-        this.courseWideSearchConfig.searchTerm = searchInfo?.searchTerm ?? '';
-        this.courseWideSearchConfig.selectedConversations = searchInfo?.selectedConversations ?? [];
+        this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
     }
 
     prepareSidebarData() {

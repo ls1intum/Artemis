@@ -15,7 +15,13 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-export interface CombinedOption {
+export interface ConversationGlobalSearchConfig {
+    searchTerm: string;
+    selectedConversations: ConversationDTO[];
+    selectedAuthors: UserPublicInfoDTO[];
+}
+
+interface CombinedOption {
     id: number;
     name: string;
     type: string;
@@ -46,7 +52,7 @@ enum UserSearchStatus {
 export class ConversationGlobalSearchComponent implements OnDestroy {
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
-    onSearch = output<{ searchTerm: string; selectedConversations: ConversationDTO[]; selectedAuthors: UserPublicInfoDTO[] }>();
+    onSearch = output<ConversationGlobalSearchConfig>();
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
@@ -224,11 +230,6 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         if (conversation) {
             this.selectedConversations = [conversation];
         }
-        this.focusInput();
-    }
-
-    clearSearchAndKeepConversations(): void {
-        this.fullSearchTerm = '';
         this.focusInput();
     }
 
