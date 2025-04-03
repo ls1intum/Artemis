@@ -72,9 +72,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
         return passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).map(credential -> {
             User user = userRepository.findById(Objects.requireNonNull(credential.getUser().getId())).orElseThrow();
-            log.info("findByCredentialId: user={}", user);
-            log.info("findByCredentialId: userEntityUserId={}", Bytes.fromBase64(user.getId().toString()));
-            return toCredentialRecord(credential, Bytes.fromBase64(user.getId().toString()));
+            return toCredentialRecord(credential, user.getExternalId());
         }).orElse(null);
     }
 
