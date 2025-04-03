@@ -20,13 +20,15 @@ class ModuleFeatureInfoContributorTest {
 
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
-        Constants.ATLAS_ENABLED_PROPERTY_NAME
+        Constants.ATLAS_ENABLED_PROPERTY_NAME,
+        Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
-        Constants.MODULE_FEATURE_ATLAS
+        Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_TUTORIALGROUP
     );
     // @formatter:on
 
