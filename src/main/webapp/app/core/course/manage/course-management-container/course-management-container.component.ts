@@ -207,8 +207,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         ) {
             this.activatedComponentReference.set(componentRef);
         }
-        if (this.activatedComponentReference instanceof CourseConversationsComponent) {
-            const childRouteComponent = this.activatedComponentReference as CourseConversationsComponent;
+        if (this.activatedComponentReference() instanceof CourseConversationsComponent) {
+            const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
         }
     }

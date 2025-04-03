@@ -51,7 +51,6 @@ export class StudentExamManagementPage {
                 break;
             }
         }
-        console.log(propertyIndex);
 
         expect(propertyIndex).toBeDefined();
         // First scroll the container
