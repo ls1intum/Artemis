@@ -1,21 +1,20 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 
 /**
  * Spring Data JPA repository for the ExamSession entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Repository
 public interface ExamSessionRepository extends ArtemisJpaRepository<ExamSession, Long> {
 
