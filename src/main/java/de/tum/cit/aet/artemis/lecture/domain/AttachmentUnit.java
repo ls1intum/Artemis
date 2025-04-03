@@ -31,7 +31,7 @@ public class AttachmentUnit extends LectureUnit {
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
 
-    @OneToMany(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "attachmentUnit", fetch = FetchType.EAGER)
     @JsonIgnoreProperties("attachmentUnit")
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
