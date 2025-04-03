@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.exam.api.ExamApi;
 import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
@@ -438,8 +437,6 @@ public class MetricsBean {
         if (!scheduledMetricsEnabled) {
             return;
         }
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
-
         var startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -463,11 +460,14 @@ public class MetricsBean {
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics
-        updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, api::countExamsWithEndDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, api::countExamUsersInExamsWithEndDateBetween);
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, api::countExamsWithEndDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, api::countExamUsersInExamsWithEndDateBetween);
 
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, api::countExamsWithStartDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, api::countExamUsersInExamsWithStartDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, api::countExamsWithStartDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, api::countExamUsersInExamsWithStartDateBetween);
+        }
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -602,7 +602,6 @@ public class MetricsBean {
             return;
         }
 
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
         final long startDate = System.currentTimeMillis();
 
         // The authorization object has to be set because this method is not called by a user but by the scheduler
@@ -616,11 +615,9 @@ public class MetricsBean {
         ensureCourseInformationIsSet(courses);
 
         final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
-        final List<Exam> examsInActiveCourses = api.findExamsInCourses(courseIds);
 
         // Update multi gauges
         updateStudentsCourseMultiGauge(courses);
-        updateStudentsExamMultiGauge(examsInActiveCourses, courses);
         updateActiveUserMultiGauge(now);
         updateActiveExerciseMultiGauge();
         updateExerciseMultiGauge();
@@ -629,8 +626,14 @@ public class MetricsBean {
         activeCoursesGauge.set(courses.size());
         coursesGauge.set((int) courseRepository.count());
 
-        activeExamsGauge.set(api.countAllActiveExams(now));
-        examsGauge.set((int) api.count());
+        // Exam metrics
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            final List<Exam> examsInActiveCourses = api.findExamsInCourses(courseIds);
+            updateStudentsExamMultiGauge(examsInActiveCourses, courses);
+            activeExamsGauge.set(api.countAllActiveExams(now));
+            examsGauge.set((int) api.count());
+        }
 
         log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
