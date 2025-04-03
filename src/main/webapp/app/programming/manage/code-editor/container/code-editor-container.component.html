@@ -47,7 +47,7 @@
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
-            [feedbacks]="showInlineFeedback ? (participation?.results?.[0]?.feedbacks ?? []) : []"
+            [feedbacks]="showInlineFeedback ? ((participation?.submissions)![0].results?.[0]?.feedbacks ?? []) : []"
             [feedbackSuggestions]="feedbackSuggestions"
             [readOnlyManualFeedback]="readOnlyManualFeedback"
             [disableActions]="!editable"

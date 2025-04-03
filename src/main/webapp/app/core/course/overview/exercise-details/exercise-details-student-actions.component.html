@@ -37,7 +37,7 @@
                         }"
                     />
                 }
-                @if (gradedParticipation?.initializationState === InitializationState.FINISHED && !gradedParticipation?.results?.length) {
+                @if (gradedParticipation?.initializationState === InitializationState.FINISHED && !numberOfGradedParticipationResults) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
@@ -50,7 +50,7 @@
                         }"
                     />
                 }
-                @if (gradedParticipation?.results?.length) {
+                @if (numberOfGradedParticipationResults) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{

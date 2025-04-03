@@ -9,6 +9,7 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/progr
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-submission-result-status',
@@ -68,10 +69,10 @@ export class SubmissionResultStatusComponent implements OnChanges {
 
     private setShouldShowResult(afterDueDate: boolean) {
         if (this.exercise.type === ExerciseType.QUIZ) {
-            this.shouldShowResult = !!this.studentParticipation?.results?.length;
+            this.shouldShowResult = !!getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).length;
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.shouldShowResult =
-                (!!this.studentParticipation?.results?.length || !afterDueDate) &&
+                (!!getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).length || !afterDueDate) &&
                 !!this.studentParticipation?.initializationState &&
                 this.initializationStatesToShowProgrammingResult.includes(this.studentParticipation.initializationState);
         } else {

@@ -129,6 +129,19 @@ export function getFirstResult(submission: Submission | undefined): Result | und
     }
 }
 
+export function getAllResultsOfAllSubmissions(submissions?: Submission[]): Result[] {
+    const allResults: Result[] = [];
+    if (!submissions) {
+        return [];
+    }
+    submissions?.forEach((submission) => {
+        if (submission.results) {
+            allResults.push(...submission.results);
+        }
+    });
+    return allResults;
+}
+
 export function getFirstResultWithComplaintFromResults(results: Result[] | undefined): Result | undefined {
     if (results) {
         const resultsWithComplaint = results.filter((result) => result.hasComplaint);

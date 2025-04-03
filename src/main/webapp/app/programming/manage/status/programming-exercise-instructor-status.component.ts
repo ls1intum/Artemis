@@ -14,6 +14,7 @@ import { hasParticipationChanged } from 'app/exercise/participation/participatio
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-programming-exercise-instructor-status',
@@ -44,7 +45,7 @@ export class ProgrammingExerciseInstructorStatusComponent implements OnChanges, 
      */
     ngOnChanges(changes: SimpleChanges) {
         if (hasParticipationChanged(changes)) {
-            this.latestResult = findLatestResult(this.participation.results);
+            this.latestResult = findLatestResult(getAllResultsOfAllSubmissions(this.participation.submissions));
             this.updateResultSubscription();
         }
     }

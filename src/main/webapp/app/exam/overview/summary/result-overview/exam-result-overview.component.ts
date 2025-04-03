@@ -18,6 +18,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 type ExerciseInfo = {
     icon: IconProp;
@@ -217,10 +218,8 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
 
     private hasAtLeastOneResult(): boolean {
         const exercises = this.studentExamWithGrade?.studentExam?.exercises;
-        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-        if (exercises?.length! > 0) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
+        if (exercises?.length && exercises.length > 0) {
+            return exercises!.some((exercise) => getAllResultsOfAllSubmissions(exercise.studentParticipations?.[0]?.submissions).length! > 0);
         }
         return false;
     }

@@ -29,6 +29,7 @@ import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exerc
 import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     imports: [
@@ -82,6 +83,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     localVCEnabled = true;
     athenaEnabled = false;
     routerLink: string;
+    numberOfGradedParticipationResults: number;
 
     // Icons
     readonly faFolderOpen = faFolderOpen;
@@ -139,9 +141,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     updateParticipations() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
+        this.numberOfGradedParticipationResults = getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions).length;
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+        this.hasRatedGradedResult = !!getAllResultsOfAllSubmissions(this.gradedParticipation?.submissions)?.some(
+            (result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA,
+        );
     }
 
     /**
@@ -208,7 +213,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        resumedParticipation.results = participation ? participation.results : [];
+                        // TODO do we have to set submission then?
+                        //resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
                         this.updateParticipations();

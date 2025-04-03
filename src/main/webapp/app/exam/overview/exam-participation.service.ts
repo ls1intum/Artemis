@@ -8,7 +8,7 @@ import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/ex
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
@@ -195,9 +195,9 @@ export class ExamParticipationService {
         studentExam.exercises!.forEach((exercise) => {
             if (exercise.studentParticipations) {
                 for (const participation of exercise.studentParticipations) {
-                    if (participation.results) {
-                        for (const result of participation.results) {
-                            delete result.participation;
+                    const results = getAllResultsOfAllSubmissions(participation.submissions);
+                    if (results) {
+                        for (const result of results) {
                             if (result.feedbacks) {
                                 for (const feedback of result.feedbacks) {
                                     delete feedback.result;
@@ -210,7 +210,6 @@ export class ExamParticipationService {
                             delete submission.participation;
                             const result = getLatestSubmissionResult(submission);
                             if (result) {
-                                delete result.participation;
                                 delete result.submission;
                             }
                         }

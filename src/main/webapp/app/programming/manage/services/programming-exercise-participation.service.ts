@@ -29,9 +29,9 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         const options = createRequestOption({ withSubmission });
         return this.http.get<Result | undefined>(this.resourceUrlParticipations + participationId + '/latest-result-with-feedbacks', { params: options }).pipe(
             tap((res) => {
-                if (res?.participation?.exercise) {
-                    this.sendTitlesToEntityTitleService(res?.participation);
-                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.participation.exercise);
+                if (res?.submission?.participation?.exercise) {
+                    this.sendTitlesToEntityTitleService(res?.submission.participation);
+                    this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.submission.participation.exercise);
                 }
             }),
         );

@@ -6,7 +6,6 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 export enum InitializationState {
     /**

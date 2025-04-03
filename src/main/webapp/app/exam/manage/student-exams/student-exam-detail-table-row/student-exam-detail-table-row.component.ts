@@ -1,6 +1,6 @@
 import { Component, OnChanges, input } from '@angular/core';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { Course } from 'app/core/shared/entities/course.model';
@@ -49,9 +49,9 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
             }
-            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-            if (this.studentParticipation.results?.length! > 0) {
-                this.result = this.studentParticipation.results![0];
+            if (getAllResultsOfAllSubmissions(this.studentParticipation.submissions).length > 0) {
+                // TODO do we still need this?
+                //this.result = this.studentParticipation.results![0];
             }
         }
         if (this.course() && this.course().id) {

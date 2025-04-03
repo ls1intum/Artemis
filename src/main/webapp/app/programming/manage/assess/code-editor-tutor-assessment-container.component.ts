@@ -507,7 +507,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             .subscribe({
                 next: (result: Result) => {
                     assessmentAfterComplaint.onSuccess();
-                    this.participation.results![0] = this.manualResult = result;
+                    this.participation.submissions!.last()!.results![0] = this.manualResult = result;
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
@@ -612,10 +612,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {
-        if (!this.participation.results) {
-            this.participation.results = [];
-        }
-        this.participation.results[0] = this.manualResult = response.body!;
+        this.participation.submissions!.last()!.results![0] = this.manualResult = response.body!;
         this.alertService.closeAll();
         this.alertService.success(translationKey);
         this.saveBusy = this.submitBusy = false;

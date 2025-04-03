@@ -13,7 +13,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Course } from 'app/core/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -96,7 +96,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
                 this.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                     this.exercise,
                     this.course.maxComplaintTimeDays,
-                    this.studentParticipation?.results?.last(),
+                    getAllResultsOfAllSubmissions(this.studentParticipation?.submissions).last(),
                     this.studentParticipation,
                 );
             }
@@ -120,11 +120,12 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
         if (this.submissionPolicy?.active) {
             this.countSubmissions();
         }
-        if (this.studentParticipation?.results?.length) {
+        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        if (results?.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
-            this.sortService.sortByProperty(this.studentParticipation.results, 'id', false);
+            this.sortService.sortByProperty(results, 'id', false);
 
-            const latestRatedResult = this.studentParticipation.results.filter((result) => result.rated).first();
+            const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course);
             }
@@ -191,8 +192,8 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     private countSubmissions() {
         const commitHashSet = new Set<string>();
-
-        this.studentParticipation?.results
+        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
+        results
             ?.map((result) => result.submission)
             .filter((submission) => submission?.type === SubmissionType.MANUAL)
             .map((submission) => (submission as ProgrammingSubmission).commitHash)

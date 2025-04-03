@@ -1,11 +1,11 @@
 @if (participation.submissionCount) {
     @for (correctionRound of correctionRoundIndices; track correctionRound) {
         @if (
-            (correctionRound === 0 || participation.results?.[correctionRound - 1]?.completionDate) &&
+            (correctionRound === 0 || participation.submissions![0].results?.[correctionRound - 1]?.completionDate) &&
             (newManualResultAllowed ||
-                (participation.results?.[correctionRound]?.assessmentType &&
-                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC &&
-                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
+                (participation.submissions![0].results?.[correctionRound]?.assessmentType &&
+                    participation.submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC &&
+                    participation.submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA))
         ) {
             <div>
                 <a
@@ -13,24 +13,28 @@
                     [queryParams]="{ 'correction-round': getCorrectionRoundForAssessmentLink(correctionRound) }"
                     class="btn btn-sm me-1 mb-2"
                     [class.btn-success]="
-                        (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC) &&
-                        !participation.results?.[correctionRound]?.hasComplaint
+                        (!participation.submissions![0].results?.[correctionRound]?.assessmentType ||
+                            participation.submissions![0].results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC) &&
+                        !participation.submissions![0].results?.[correctionRound]?.hasComplaint
                     "
-                    [class.btn-primary]="participation.results?.[correctionRound]?.completionDate || participation.results?.[correctionRound]?.hasComplaint"
+                    [class.btn-primary]="
+                        participation.submissions![0].results?.[correctionRound]?.completionDate || participation.submissions![0].results?.[correctionRound]?.hasComplaint
+                    "
                     [class.btn-warning]="
-                        participation.results?.[correctionRound] &&
-                        !participation.results?.[correctionRound]?.completionDate &&
-                        !participation.results?.[correctionRound]?.hasComplaint
+                        participation.submissions![0].results?.[correctionRound] &&
+                        !participation.submissions![0].results?.[correctionRound]?.completionDate &&
+                        !participation.submissions![0].results?.[correctionRound]?.hasComplaint
                     "
                 >
                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true" />
-                    @if (!participation.results?.[correctionRound]?.hasComplaint) {
+                    @if (!participation.submissions![0].results?.[correctionRound]?.hasComplaint) {
                         {{
                             'artemisApp.assessment.dashboard.actions.' +
                                 (this.examMode ? 'examCorrectionRound.' : '') +
-                                (!participation.results?.[correctionRound]?.assessmentType || participation.results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
+                                (!participation.submissions![0].results?.[correctionRound]?.assessmentType ||
+                                participation.submissions![0].results?.[correctionRound]?.assessmentType === AssessmentType.AUTOMATIC
                                     ? 'assess'
-                                    : participation.results?.[correctionRound]?.completionDate
+                                    : participation.submissions![0].results?.[correctionRound]?.completionDate
                                       ? 'open'
                                       : 'continue') | artemisTranslate: { correctionRound: correctionRound + 1 }
                         }}
@@ -40,11 +44,15 @@
                 </a>
                 @if (
                     newManualResultAllowed &&
-                    participation.results?.[correctionRound]?.assessmentType &&
-                    !participation.results?.[correctionRound]?.completionDate &&
-                    participation.results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC
+                    participation.submissions![0].results?.[correctionRound]?.assessmentType &&
+                    !participation.submissions![0].results?.[correctionRound]?.completionDate &&
+                    participation.submissions![0].results?.[correctionRound]?.assessmentType !== AssessmentType.AUTOMATIC
                 ) {
-                    <button (click)="cancelAssessment(participation.results?.[correctionRound]!, participation)" [disabled]="isLoading" class="btn btn-sm me-1 mb-2 btn-danger">
+                    <button
+                        (click)="cancelAssessment(participation.submissions![0].results?.[correctionRound]!, participation)"
+                        [disabled]="isLoading"
+                        class="btn btn-sm me-1 mb-2 btn-danger"
+                    >
                         <fa-icon [fixedWidth]="true" [icon]="faBan" />
                         <span>
                             {{

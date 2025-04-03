@@ -87,7 +87,7 @@
                                         }
                                     </span>
                                 }
-                                @if (programmingExercise.templateParticipation?.results?.length) {
+                                @if (numberOfResultsOfTemplateParticipation) {
                                     <jhi-programming-exercise-instructor-status
                                         [participationType]="templateParticipationType"
                                         [participation]="programmingExercise.templateParticipation!"
@@ -107,7 +107,7 @@
                                         }
                                     </span>
                                 }
-                                @if (programmingExercise.solutionParticipation?.results?.length) {
+                                @if (numberOfResultsOfSolutionParticipation) {
                                     <jhi-programming-exercise-instructor-status
                                         [participationType]="solutionParticipationType"
                                         [participation]="programmingExercise.solutionParticipation!"

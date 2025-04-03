@@ -235,8 +235,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.getComplaint();
 
         if (this.result) {
-            this.submission.participation!.results = [this.result];
-            this.result!.participation = this.submission.participation;
+            this.submission.results = [this.result];
         }
         if (this.result?.feedbacks) {
             this.unreferencedFeedback = this.result.feedbacks;
@@ -367,7 +366,8 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
-        this.participation.results![0] = this.result!;
+        // TODO do we have set here something with submission?
+        //this.participation.results![0] = this.result!;
         this.showResult = true;
         this.changeDetectorRef.detectChanges();
     }

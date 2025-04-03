@@ -8,6 +8,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponent } from '../feedback.component';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
     selector: 'jhi-standalone-feedback',
@@ -42,10 +43,7 @@ export class StandaloneFeedbackComponent implements OnInit {
                     participation.exercise = this.exercise;
                 }
 
-                const relevantResult = participation?.results?.find((result) => result.id == resultId);
-                if (relevantResult) {
-                    relevantResult.participation = participation;
-                }
+                const relevantResult = getAllResultsOfAllSubmissions(participation?.submissions).find((result) => result.id == resultId);
 
                 this.result = relevantResult;
 
