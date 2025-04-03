@@ -805,7 +805,7 @@ public class ExerciseService {
      * @param courseId the course id
      * @return the mapping from exercise type to course type. If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
      */
-    public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
+    public Map<ExerciseType, Long> countByCourseIdGroupByType(long courseId) {
         Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
                 .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
 

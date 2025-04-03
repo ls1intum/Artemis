@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -95,9 +95,7 @@ public abstract class PostingService {
         }
         catch (Exception e) {
             post.setIsSaved(false);
-            post.getAnswers().forEach(answer -> {
-                answer.setIsSaved(false);
-            });
+            post.getAnswers().forEach(answer -> answer.setIsSaved(false));
         }
     }
 
@@ -223,7 +221,7 @@ public abstract class PostingService {
      * @param posts    the list of posts for which the author roles need to be set
      * @param courseId the ID of the course in which the posts exist
      */
-    protected void setAuthorRoleOfPostings(List<Post> posts, Long courseId) {
+    protected void setAuthorRoleOfPostings(Collection<Post> posts, Long courseId) {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         posts.forEach(post -> {
@@ -235,7 +233,7 @@ public abstract class PostingService {
         });
 
         // we only fetch the minimal data needed for the mapping to avoid performance issues
-        List<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
+        Set<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
         log.debug("userRepository.findUserRolesInCourse done for {} authors ", userRoles.size());
 
         Map<Long, UserRoleDTO> authorRoles = userRoles.stream().collect(Collectors.toMap(UserRoleDTO::userId, Function.identity()));
@@ -243,9 +241,7 @@ public abstract class PostingService {
         // sets respective author role to display user authority icon on posting headers
         posts.stream().filter(post -> post.getAuthor() != null).forEach(post -> {
             post.setAuthorRole(authorRoles.get(post.getAuthor().getId()).role());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role());
-            });
+            post.getAnswers().forEach(answerPost -> answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role()));
         });
     }
 
@@ -313,7 +309,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");

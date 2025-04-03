@@ -60,7 +60,6 @@ import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
@@ -498,22 +497,17 @@ public class CourseService {
     /**
      * Get the course deletion summary for the given course.
      *
-     * @param course the course for which to get the deletion summary
+     * @param courseId the id of the course for which to get the deletion summary
      * @return the course deletion summary
      */
-    public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
+    public CourseDeletionSummaryDTO getDeletionSummary(long courseId) {
 
-        Long courseId = course.getId();
+        long numberOfBuilds = buildJobRepository.countBuildJobsByCourseId(courseId);
 
-        List<Long> programmingExerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
-        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
-
-        List<Post> posts = postRepository.findAllByCourseId(courseId);
-        long numberOfCommunicationPosts = posts.size();
-        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+        long numberOfCommunicationPosts = postRepository.countPostsByCourseId(courseId);
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByCourseId(courseId);
         long numberLectures = lectureRepository.countByCourse_Id(courseId);
-        long numberExams = api.countByCourseId(courseId);
+        long numberExams = examMetricsApi.map(api -> api.countByCourseId(courseId)).orElse(0L);
 
         Map<ExerciseType, Long> countByExerciseType = exerciseService.countByCourseIdGroupByType(courseId);
         long numberProgrammingExercises = countByExerciseType.get(ExerciseType.PROGRAMMING);
@@ -585,8 +579,11 @@ public class CourseService {
     }
 
     private void deleteExamsOfCourse(Course course) {
-        var deletionApi = examDeletionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDeletionApi.class));
-        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+        if (examDeletionApi.isEmpty() || examRepositoryApi.isEmpty()) {
+            return;
+        }
+        var deletionApi = examDeletionApi.get();
+        ExamRepositoryApi api = examRepositoryApi.get();
         // delete the Exams
         List<Exam> exams = api.findByCourseId(course.getId());
         for (Exam exam : exams) {
@@ -1058,7 +1055,7 @@ public class CourseService {
     @NotNull
     public ResponseEntity<Set<User>> getAllUsersInGroup(Course course, String groupName) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        var usersInGroup = userRepository.findAllByIsDeletedIsFalseAndGroupsContains(groupName);
+        var usersInGroup = userRepository.findAllByDeletedIsFalseAndGroupsContains(groupName);
         usersInGroup.forEach(user -> {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
