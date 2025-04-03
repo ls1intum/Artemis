@@ -5,7 +5,8 @@
     <changeSet id="20250403142626" author="ece.eren">
         <dropForeignKeyConstraint baseTableName="slide" constraintName="FK_slide_id"/>
 
-        <modifyDataType tableName="slide" columnName="attachment_unit_id" newDataType="BIGINT NULL"/>
+        <modifyDataType tableName="slide" columnName="attachment_unit_id" newDataType="BIGINT"/>
+        <dropNotNullConstraint tableName="slide" columnName="attachment_unit_id"/>
 
         <addForeignKeyConstraint baseColumnNames="attachment_unit_id"
                                  baseTableName="slide"
