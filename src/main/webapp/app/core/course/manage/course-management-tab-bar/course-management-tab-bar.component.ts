@@ -31,7 +31,7 @@ import {
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_TUTORIALGROUP, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -112,6 +112,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     isCommunicationEnabled = false;
 
     atlasEnabled = false;
+    tutorialGroupEnabled = false;
     irisEnabled = false;
     ltiEnabled = false;
 
@@ -133,6 +134,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+                this.tutorialGroupEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TUTORIALGROUP);
                 this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
