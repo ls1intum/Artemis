@@ -370,14 +370,12 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, competencies and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndCompetenciesAndTutorialGroupsAndFaqForUser(Long courseId, User user) {
-        ExamRepositoryApi examRepoApi = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
-
         Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
-        course.setExams(examRepoApi.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now()));
+        examRepositoryApi.ifPresent(api -> course.setExams(api.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now())));
         // TODO: in the future, we only want to know if lectures exist, the actual lectures will be loaded when the user navigates into the lecture
         course.setLectures(lectureService.filterVisibleLecturesWithActiveAttachments(course, course.getLectures(), user));
         // NOTE: in this call we only want to know if competencies exist in the course, we will load them when the user navigates into them
@@ -394,7 +392,8 @@ public class CourseService {
         if (course.isFaqEnabled()) {
             course.setFaqs(faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
         }
-        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+        if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
+            var examRepoApi = examRepositoryApi.get();
             course.setExams(examRepoApi.filterVisibleExams(course.getExams()));
         }
         return course;
@@ -417,8 +416,6 @@ public class CourseService {
      * @return an unmodifiable list of all courses including exercises for the user
      */
     public Set<Course> findAllActiveWithExercisesForUser(User user) {
-        ExamMetricsApi api = examMetricsApi.orElseThrow(() -> new ExamApiNotPresentException(ExamMetricsApi.class));
-
         long start = System.nanoTime();
 
         var userVisibleCourses = courseRepository.findAllActive().stream().filter(course -> isCourseVisibleForUser(user, course)).filter(Objects::nonNull)
@@ -436,7 +433,7 @@ public class CourseService {
         if (log.isDebugEnabled()) {
             log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
         }
-        var examCounts = api.countVisibleExams(courseIds, ZonedDateTime.now());
+        var examCounts = examMetricsApi.map(api -> api.countVisibleExams(courseIds, ZonedDateTime.now())).orElse(Set.of());
 
         var lectureCounts = lectureRepository.countVisibleLectures(courseIds, ZonedDateTime.now());
 
