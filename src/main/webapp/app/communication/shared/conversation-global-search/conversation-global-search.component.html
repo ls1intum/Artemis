@@ -46,8 +46,6 @@
                     }
                 }
             </li>
-
-            <li class="list-group-item"></li>
         } @else {
             @for (option of filteredOptions; let i = $index; track option) {
                 <li class="list-group-item list-group-item-action" [class.active]="i === activeDropdownIndex" (mousedown)="selectOption(option)">

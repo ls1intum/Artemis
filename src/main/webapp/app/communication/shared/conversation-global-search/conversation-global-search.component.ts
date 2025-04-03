@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, ViewChild, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
@@ -39,14 +39,12 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    standalone: true,
     imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent],
 })
 export class ConversationGlobalSearchComponent implements OnDestroy {
-    // TODO: use input<> and output<>
-    @Input() conversations: ConversationDTO[] = [];
-    @Input() courseId?: number;
-    @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversations: ConversationDTO[]; selectedAuthors: UserPublicInfoDTO[] }>();
+    conversations = input<ConversationDTO[]>([]);
+    courseId = input<number | undefined>(undefined);
+    onSearch = output<{ searchTerm: string; selectedConversations: ConversationDTO[]; selectedAuthors: UserPublicInfoDTO[] }>();
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
@@ -119,28 +117,31 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     }
 
     filterConversations(searchQuery: string): void {
-        if (!searchQuery) {
-            this.filteredOptions = this.conversations.map((conv) => ({
-                id: conv.id!,
-                name: this.getConversationName(conv),
-                type: 'conversation',
-            }));
-        } else {
-            this.filteredOptions = this.conversations
-                .filter((conversation) => {
-                    const name = this.getConversationName(conversation);
-                    return name.toLowerCase().includes(searchQuery);
-                })
-                .map((channel) => ({
-                    id: channel.id!,
-                    name: this.getConversationName(channel),
-                    type: 'conversation',
-                }));
+        const notYetSelectedConversations = this.conversations().filter((conversation) => {
+            return !this.selectedConversations.some((selected) => selected.id === conversation.id);
+        });
+
+        let matchingConversations = notYetSelectedConversations;
+        if (searchQuery) {
+            matchingConversations = matchingConversations.filter((conversation) => {
+                const name = this.getConversationName(conversation);
+                return name.toLowerCase().includes(searchQuery);
+            });
         }
+
+        this.filteredOptions = matchingConversations.map(
+            (conversation) =>
+                ({
+                    id: conversation.id!,
+                    name: this.getConversationName(conversation),
+                    type: 'conversation',
+                }) as CombinedOption,
+        );
     }
 
     filterUsers(searchQuery: string): void {
-        if (!searchQuery || searchQuery.length < 3 || !this.courseId) {
+        const courseId = this.courseId();
+        if (!searchQuery || searchQuery.length < 3 || !courseId) {
             this.filteredOptions = [];
             this.userSearchStatus = UserSearchStatus.TOO_SHORT;
             return;
@@ -148,7 +149,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
         this.userSearchStatus = UserSearchStatus.LOADING;
         this.courseManagementService
-            .searchUsers(this.courseId, searchQuery, ['students', 'tutors', 'instructors'])
+            .searchUsers(courseId, searchQuery, ['students', 'tutors', 'instructors'])
             .pipe(
                 map((response) => response.body || []),
                 map((users) => users.filter((user) => !this.selectedAuthors.some((selected) => selected.id === user.id))),
@@ -182,7 +183,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     selectOption(option: CombinedOption): void {
         if (option.type === 'conversation') {
-            const conversation = this.conversations.find((conv) => conv.id === option.id);
+            const conversation = this.conversations().find((conv) => conv.id === option.id);
             if (conversation) {
                 this.selectedConversations.push(conversation);
                 this.showDropdown = false;
