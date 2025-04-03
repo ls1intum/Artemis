@@ -15,6 +15,9 @@ import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
+/**
+ * API for managing lectures.
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class LectureRepositoryApi extends AbstractLectureApi {

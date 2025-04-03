@@ -8,6 +8,9 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitImportService;
 
+/**
+ * API for managing lecture unit imports.
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class LectureUnitImportApi extends AbstractLectureApi {
