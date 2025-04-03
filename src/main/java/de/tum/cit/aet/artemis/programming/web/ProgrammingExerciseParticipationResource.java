@@ -136,6 +136,11 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
+        if (shouldHideExamExerciseResults(participation)) {
+            participation.getSubmissions().forEach(submission -> {
+                submission.setResults(List.of());
+            });
+        }
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());

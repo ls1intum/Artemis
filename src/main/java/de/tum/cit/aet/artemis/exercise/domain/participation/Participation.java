@@ -244,6 +244,8 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     // TODO Michal Kawka we will delete this method, but let's first fix all server tests
+    // just added deprecation for marking it in IDE for now, still delete ofc
+    @Deprecated(forRemoval = true)
     public Set<Result> getResults() {
         return Stream.ofNullable(this.submissions).flatMap(Collection::stream).flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream))
                 .collect(Collectors.toSet());
