@@ -48,7 +48,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     faChevronRight = faChevronRight;
 
     initialize() {
-        super.initialize(['course', 'channelSubType']);
+        super.initialize(['course']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }

@@ -347,7 +347,7 @@ describe('PostingsMarkdownEditor', () => {
         emojiAction['destroyEmojiPicker']();
 
         expect(mockOverlayRef.dispose).toHaveBeenCalled();
-        expect(emojiAction['overlayRef']).toBeNull();
+        expect(emojiAction['overlayRef']).toBeUndefined();
     });
 
     const simulateKeydownEvent = (editor: TextEditor, key: string, modifiers: { shiftKey?: boolean; metaKey?: boolean } = {}) => {

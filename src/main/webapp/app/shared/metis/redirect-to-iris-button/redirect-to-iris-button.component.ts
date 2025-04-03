@@ -11,6 +11,8 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MetisService } from 'app/communication/metis.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
@@ -27,6 +29,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
     irisSettingsService = inject(IrisSettingsService);
+    profileService = inject(ProfileService);
     router = inject(Router);
 
     private conversationServiceSubscription: Subscription;
@@ -40,6 +43,11 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     TEXT = IrisLogoSize.TEXT;
 
     ngOnInit(): void {
+        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled.set(isIrisActive);
+        if (!isIrisActive) {
+            return;
+        }
         this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
             this.checkIrisSettings(getAsChannelDTO(conversation));
         });

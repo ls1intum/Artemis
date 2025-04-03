@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -70,9 +69,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     protected ObjectMapper objectMapper;
 
     // Repositories
-    @Autowired
-    protected BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
     @Autowired
     protected BuildPlanRepository buildPlanRepository;
 

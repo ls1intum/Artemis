@@ -413,7 +413,6 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
         { uri: 'diff-report', method: 'getDiffReport' },
-        { uri: 'build-log-statistics', method: 'getBuildLogStatistics' },
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
