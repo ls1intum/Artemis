@@ -85,8 +85,6 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
 
     private static final String FILE_FORMAT_PDF = ".pdf";
 
-    private static final String FILE_FORMAT_ZIP = ".zip";
-
     private static final String FILE_FORMAT_CSV = ".csv";
 
     @Value("${artemis.repo-download-clone-path}")
@@ -551,7 +549,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLoca
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.getFirst());
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.iterator().next());
     }
 
     @Test

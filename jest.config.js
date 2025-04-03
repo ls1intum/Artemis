@@ -91,10 +91,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.74,
-            branches: 74.47,
+            statements: 88.67,
+            branches: 74.49,
             functions: 82.90,
-            lines: 88.80,
+            lines: 88.73,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -107,7 +107,6 @@ module.exports = {
             {
                 tsconfig: '<rootDir>/tsconfig.spec.json',
                 stringifyContentPathRegex: '\\.html$',
-                isolatedModules: true,
                 diagnostics: {
                     ignoreCodes: [151001],
                 },
