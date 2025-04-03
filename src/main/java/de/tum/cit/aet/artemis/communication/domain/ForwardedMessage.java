@@ -28,7 +28,7 @@ public class ForwardedMessage extends DomainObject {
     @NotNull
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "source_type", nullable = false)
+    @Column(name = "source_type", nullable = false, columnDefinition = "post_type_enum")
     private PostingType sourceType;
 
     @ManyToOne

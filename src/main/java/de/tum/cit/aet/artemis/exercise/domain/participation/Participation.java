@@ -70,7 +70,7 @@ public abstract class Participation extends DomainObject implements Participatio
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "initialization_state")
+    @Column(name = "initialization_state", columnDefinition = "initialization_state_enum")
     private InitializationState initializationState;
 
     @Column(name = "initialization_date")

@@ -29,12 +29,12 @@ public class SavedPost extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "post_type", nullable = false)
+    @Column(name = "post_type", nullable = false, columnDefinition = "post_type_enum")
     private PostingType postType;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "status", nullable = false)
+    @Column(name = "status", nullable = false, columnDefinition = "saved_post_status_enum")
     private SavedPostStatus status;
 
     @Column(name = "completed_at")

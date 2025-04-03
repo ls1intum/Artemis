@@ -76,7 +76,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "jhi_type")
+    @Column(name = "jhi_type", columnDefinition = "submission_type_enum")
     private SubmissionType type;
 
     @Column(name = "example_submission")
