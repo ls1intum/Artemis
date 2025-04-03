@@ -72,8 +72,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
-import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -104,7 +104,7 @@ public class ExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository;
+    private final Optional<LtiApi> ltiApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -137,13 +137,13 @@ public class ExerciseService {
     private final ParticipationFilterService participationFilterService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
-            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
-            ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
-            TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
-            FeedbackRepository feedbackRepository, RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository,
-            QuizBatchService quizBatchService, ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService,
-            Optional<CompetencyRelationApi> competencyRelationApi, ParticipationFilterService participationFilterService) {
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
+            UserRepository userRepository, ComplaintRepository complaintRepository, TutorLeaderboardService tutorLeaderboardService,
+            ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
+            RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
+            ExamLiveEventsService examLiveEventsService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
+            ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -151,7 +151,7 @@ public class ExerciseService {
         this.submissionRepository = submissionRepository;
         this.teamRepository = teamRepository;
         this.participantScoreRepository = participantScoreRepository;
-        this.lti13ResourceLaunchRepository = lti13ResourceLaunchRepository;
+        this.ltiApi = ltiApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.userRepository = userRepository;
         this.complaintRepository = complaintRepository;
@@ -198,9 +198,9 @@ public class ExerciseService {
                     if (!exercise.isVisibleToStudents()) {
                         continue;
                     }
-                    if (lti13ResourceLaunchRepository.isPresent()) {
+                    if (ltiApi.isPresent()) {
                         // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
-                        Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.get().findByUserAndExercise(user, exercise);
+                        Collection<LtiResourceLaunch> ltiResourceLaunches = ltiApi.get().findByUserAndExercise(user, exercise);
                         if (!ltiResourceLaunches.isEmpty()) {
                             exercisesUserIsAllowedToSee.add(exercise);
                         }
@@ -803,7 +803,7 @@ public class ExerciseService {
      * @param courseId the course id
      * @return the mapping from exercise type to course type. If a course has no exercises for a specific type, the map contains an entry for that type with value 0.
      */
-    public Map<ExerciseType, Long> countByCourseIdGroupByType(Long courseId) {
+    public Map<ExerciseType, Long> countByCourseIdGroupByType(long courseId) {
         Map<ExerciseType, Long> exerciseTypeCountMap = exerciseRepository.countByCourseIdGroupedByType(courseId).stream()
                 .collect(Collectors.toMap(ExerciseTypeCountDTO::exerciseType, ExerciseTypeCountDTO::count));
 

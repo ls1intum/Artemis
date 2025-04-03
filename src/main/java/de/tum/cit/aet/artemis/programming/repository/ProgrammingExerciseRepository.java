@@ -503,6 +503,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
+    @Query("""
+            SELECT DISTINCT p.id
+            FROM ProgrammingExercise p
+            WHERE p.exerciseGroup.exam.id = :examId
+            """)
+    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
+
     // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
     @Query("""
             SELECT pe

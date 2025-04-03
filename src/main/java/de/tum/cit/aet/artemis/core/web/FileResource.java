@@ -46,8 +46,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -62,14 +64,13 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -101,6 +102,8 @@ public class FileResource {
 
     private final FileService fileService;
 
+    private final FileUploadService fileUploadService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final LectureRepository lectureRepository;
@@ -109,7 +112,7 @@ public class FileResource {
 
     private final SlideRepository slideRepository;
 
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+    private final Optional<FileUploadApi> fileUploadApi;
 
     private final AttachmentRepository attachmentRepository;
 
@@ -129,17 +132,14 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final FileUploadService fileUploadService;
-
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
-            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
+    public FileResource(FileUploadService fileUploadService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
+            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
-            FileUploadService fileUploadService) {
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+        this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
@@ -151,7 +151,7 @@ public class FileResource {
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
-        this.fileUploadService = fileUploadService;
+        this.fileUploadApi = fileUploadApi;
     }
 
     /**
@@ -167,7 +167,8 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String publicPath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -220,16 +221,15 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
-        Path responsePath = getResponsePathFromPublicPath(publicPath);
-
-        var fileUpload = fileUploadService.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
+        var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(responsePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(responsePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, true);
     }
 
     /**
@@ -333,7 +333,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadSubmission submission = fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
         // check if the participation is a StudentParticipation before the following cast

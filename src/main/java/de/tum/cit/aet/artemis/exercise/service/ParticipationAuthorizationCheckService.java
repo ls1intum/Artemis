@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -46,16 +45,13 @@ public class ParticipationAuthorizationCheckService {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    private final ParticipationRepository participationRepository;
-
     private final SubmissionRepository submissionRepository;
 
     private final StudentExamRepository studentExamRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository,
-            StudentExamRepository studentExamRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
 
@@ -63,7 +59,6 @@ public class ParticipationAuthorizationCheckService {
         this.teamRepository = teamRepository;
         this.exerciseDateService = exerciseDateService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
         this.studentExamRepository = studentExamRepository;
     }
@@ -163,7 +158,8 @@ public class ParticipationAuthorizationCheckService {
 
     /**
      * Determines whether a given programming exercise participation is locked.
-     * A participation is considered locked if:
+     * A practice mode participation is never locked.
+     * Otherwise, a participation is considered locked if:
      * <ul>
      * <li>The due date of the exercise has passed.</li>
      * <li>The exercise is an exam exercise, and:
@@ -181,6 +177,10 @@ public class ParticipationAuthorizationCheckService {
      * @return {@code true} if the participation is locked based on the conditions above; {@code false} otherwise.
      */
     public boolean isLocked(ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise) {
+        if (participation.isPracticeMode()) {
+            return false;
+        }
+
         if (exerciseDateService.isAfterDueDate(participation, exercise)) {
             return true;
         }
