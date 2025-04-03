@@ -9,6 +9,8 @@
 artemis:
     atlas:
       enabled: false
+    tutorialgroup:
+      enabled: false
 
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
