@@ -83,7 +83,6 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
@@ -119,6 +118,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupNotificationApi;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupApiNotPresentException;
 
 /**
  * Service Implementation for managing Course.
@@ -549,7 +549,7 @@ public class CourseService {
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
-        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new ApiProfileNotPresentException(TutorialGroupApi.class, PROFILE_CORE));
+        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new TutorialGroupApiNotPresentException(TutorialGroupApi.class));
         var tutorialGroups = api.findAllByCourseId(course.getId());
         // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {

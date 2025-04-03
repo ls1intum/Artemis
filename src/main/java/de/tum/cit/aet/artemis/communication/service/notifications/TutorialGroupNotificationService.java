@@ -17,9 +17,9 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupNotificationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupApiNotPresentException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
@@ -69,7 +69,7 @@ public class TutorialGroupNotificationService {
     }
 
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {
-        TutorialGroupNotificationApi api = tutorialGroupNotificationApi.orElseThrow(() -> new ApiProfileNotPresentException(TutorialGroupNotificationApi.class, PROFILE_CORE));
+        TutorialGroupNotificationApi api = tutorialGroupNotificationApi.orElseThrow(() -> new TutorialGroupApiNotPresentException(TutorialGroupNotificationApi.class));
         api.save(notification);
         sendNotificationViaWebSocket(notification);
         sendInstantNotification(notification, notifyTutor);
@@ -92,7 +92,7 @@ public class TutorialGroupNotificationService {
     }
 
     private Set<User> findUsersToNotify(TutorialGroupNotification notification, boolean notifyTutor) {
-        TutorialGroupRegistrationApi api = tutorialGroupRegistrationApi.orElseThrow(() -> new ApiProfileNotPresentException(TutorialGroupRegistrationApi.class, PROFILE_CORE));
+        TutorialGroupRegistrationApi api = tutorialGroupRegistrationApi.orElseThrow(() -> new TutorialGroupApiNotPresentException(TutorialGroupRegistrationApi.class));
 
         var tutorialGroup = notification.getTutorialGroup();
         // ToDo: Adapt to the type of registration in the future
