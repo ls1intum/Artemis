@@ -2,9 +2,7 @@ package de.tum.cit.aet.artemis.lecture.domain;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -31,7 +29,7 @@ public class AttachmentUnit extends LectureUnit {
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
 
-    @OneToMany(mappedBy = "attachmentUnit", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "attachmentUnit", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("attachmentUnit")
     @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
@@ -69,17 +67,7 @@ public class AttachmentUnit extends LectureUnit {
      * @return A list of the most recent version of each slide, ordered by slide number
      */
     public List<Slide> getSlides() {
-        // A map to keep only the slide with the highest ID for each slide number
-        Map<Integer, Slide> latestSlideByNumber = new HashMap<>();
-
-        for (Slide slide : slides) {
-            int slideNumber = slide.getSlideNumber();
-            if (!latestSlideByNumber.containsKey(slideNumber) || slide.getId() > latestSlideByNumber.get(slideNumber).getId()) {
-                latestSlideByNumber.put(slideNumber, slide);
-            }
-        }
-
-        return new ArrayList<>(latestSlideByNumber.values());
+        return slides;
     }
 
     public void setSlides(List<Slide> slides) {

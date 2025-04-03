@@ -320,17 +320,20 @@ public class SlideSplitterService {
     }
 
     /**
-     * Clean up slides that are no longer in the page order.
+     * Update slides that are no longer in the page order by setting their attachment unit to null instead of deleting them.
      */
     private void cleanupRemovedSlides(List<Map<String, Object>> pageOrderList, List<Slide> existingSlides) {
         Set<String> slideIdsInPageOrder = pageOrderList.stream().map(page -> String.valueOf(page.get("slideId"))).filter(id -> !id.startsWith("temp_")).collect(Collectors.toSet());
 
         if (!slideIdsInPageOrder.isEmpty()) {
-            List<Slide> slidesToRemove = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
+            List<Slide> slidesToDetach = existingSlides.stream().filter(slide -> !slideIdsInPageOrder.contains(String.valueOf(slide.getId()))).toList();
 
-            if (!slidesToRemove.isEmpty()) {
-                slideRepository.deleteAll(slidesToRemove);
-                log.debug("Removed {} slides that are no longer in the page order", slidesToRemove.size());
+            if (!slidesToDetach.isEmpty()) {
+                for (Slide slide : slidesToDetach) {
+                    slide.setAttachmentUnit(null);
+                    slideRepository.save(slide);
+                }
+                log.debug("Detached {} slides that are no longer in the page order by setting their attachment unit to null", slidesToDetach.size());
             }
         }
     }
