@@ -1,11 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { VcsRepositoryAccessLogService } from '../../../../main/webapp/app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
-import { VcsAccessLogDTO } from '../../../../main/webapp/app/entities/vcs-access-log-entry.model';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from '../../../../main/webapp/app/shared/table/pageable-table';
-import { RepositoryType } from '../../../../main/webapp/app/exercises/programming/shared/code-editor/model/code-editor.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { VcsRepositoryAccessLogService } from '../../../../main/webapp/app/programming/service/vcs-repository-access-log.service';
+import { VcsAccessLogDTO } from '../../../../main/webapp/app/programming/shared/entities/vcs-access-log-entry.model';
+import { RepositoryType } from '../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 
 describe('VcsRepositoryAccessLogService', () => {
     let service: VcsRepositoryAccessLogService;

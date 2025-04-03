@@ -53,6 +53,21 @@ public class VcsAccessLogResource {
         this.vcsAccessLogService = vcsAccessLogService;
     }
 
+    /**
+     * Retrieves the VCS (Version Control System) access log for a given programming exercise repository.
+     * <p>
+     * This endpoint allows instructors to fetch access logs for different types of repositories associated
+     * with a programming exercise, including user repositories, template repositories, and solution repositories.
+     * Access is restricted based on the user's role and the type of repository requested.
+     * </p>
+     *
+     * @param search         The search criteria and pagination information.
+     * @param exerciseId     The ID of the programming exercise.
+     * @param repositoryType The type of repository (USER, TEMPLATE, SOLUTION).
+     * @param repositoryId   The ID of the specific repository (only applicable for USER repositories).
+     * @return A {@link ResponseEntity} containing a paginated list of {@link VcsAccessLogDTO}, or a bad request
+     *         response if the request parameters are invalid.
+     */
     @GetMapping("programming-exercises/{exerciseId}/repository/{repositoryType}/vcs-access-log")
     @EnforceAtLeastInstructor
     public ResponseEntity<SearchResultPageDTO<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(SearchTermPageableSearchDTO<String> search, @PathVariable long exerciseId,
