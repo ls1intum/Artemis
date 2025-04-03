@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
+/**
+ * API for managing lecture units.
+ */
 @Profile(PROFILE_CORE)
 @Controller
 public class LectureUnitRepositoryApi extends AbstractLectureApi {

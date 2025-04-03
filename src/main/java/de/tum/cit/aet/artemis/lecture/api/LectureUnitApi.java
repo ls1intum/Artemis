@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 /**
@@ -26,14 +27,17 @@ public class LectureUnitApi extends AbstractLectureApi {
 
     private final LectureUnitService lectureUnitService;
 
+    private final LectureUnitImportService lectureUnitImportService;
+
     private final LectureUnitRepository lectureUnitRepository;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
     public LectureUnitApi(LectureUnitService lectureUnitService, LectureUnitRepository lectureUnitRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            ExerciseUnitRepository exerciseUnitRepository) {
+            LectureUnitImportService lectureUnitImportService, ExerciseUnitRepository exerciseUnitRepository) {
         this.lectureUnitService = lectureUnitService;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureUnitImportService = lectureUnitImportService;
         this.exerciseUnitRepository = exerciseUnitRepository;
     }
 
@@ -50,5 +54,9 @@ public class LectureUnitApi extends AbstractLectureApi {
         for (ExerciseUnit exerciseUnit : exerciseUnits) {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
+    }
+
+    public LectureUnit importLectureUnit(LectureUnit sourceLectureUnit) {
+        return lectureUnitImportService.importLectureUnit(sourceLectureUnit);
     }
 }
