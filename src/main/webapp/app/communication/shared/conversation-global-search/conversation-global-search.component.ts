@@ -1,6 +1,6 @@
 import { Component, ElementRef, EventEmitter, HostListener, Input, OnDestroy, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
 import { NgFor, NgIf } from '@angular/common';
@@ -14,6 +14,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Subject, catchError, map, of, takeUntil } from 'rxjs';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export interface CombinedOption {
     id: number;
@@ -22,14 +23,27 @@ export interface CombinedOption {
     img?: string;
 }
 
+enum SearchMode {
+    NORMAL,
+    CONVERSATION,
+    USER,
+}
+
+enum UserSearchStatus {
+    TOO_SHORT,
+    LOADING,
+    RESULTS,
+}
+
 @Component({
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
     standalone: true,
-    imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent],
+    imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent],
 })
 export class ConversationGlobalSearchComponent implements OnDestroy {
+    // TODO: use input<> and output<>
     @Input() conversations: ConversationDTO[] = [];
     @Input() courseId?: number;
     @Output() onSearch = new EventEmitter<{ searchTerm: string; selectedConversations: ConversationDTO[]; selectedAuthors: UserPublicInfoDTO[] }>();
@@ -41,6 +55,9 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     selectedAuthors: UserPublicInfoDTO[] = [];
 
     showDropdown = false;
+    searchMode: SearchMode = SearchMode.NORMAL;
+    userSearchStatus: UserSearchStatus = UserSearchStatus.LOADING;
+
     filteredOptions: CombinedOption[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
     activeDropdownIndex: number = -1;
@@ -49,6 +66,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     // Icons
     faTimes = faTimes;
     faSearch = faSearch;
+    faSpinner = faSpinner;
     readonly ButtonType = ButtonType;
 
     constructor(private courseManagementService: CourseManagementService) {}
@@ -59,7 +77,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     }
 
     navigateDropdown(step: number, event: Event): void {
-        if (this.showDropdown) {
+        if (this.showDropdown && this.filteredOptions.length > 0) {
             event.preventDefault();
             this.activeDropdownIndex = (this.activeDropdownIndex + step + this.filteredOptions.length) % this.filteredOptions.length;
         }
@@ -72,11 +90,10 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         }
     }
 
-    hideSearchTerm() {
+    clearSearch() {
         this.courseWideSearchTerm = '';
         this.selectedConversations = [];
         this.selectedAuthors = [];
-        this.showDropdown = false;
     }
 
     filterItems(event: Event): void {
@@ -86,14 +103,17 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         if (this.courseWideSearchTerm.startsWith('in:')) {
             const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
             this.filterConversations(searchQuery);
+            this.searchMode = SearchMode.CONVERSATION;
             this.showDropdown = true;
         }
         // Check if search starts with "from:" for users
-        else if (this.courseWideSearchTerm.startsWith('from:')) {
-            const searchQuery = this.courseWideSearchTerm.substring(5).toLowerCase();
+        else if (this.courseWideSearchTerm.startsWith('by:')) {
+            const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
             this.filterUsers(searchQuery);
+            this.searchMode = SearchMode.USER;
             this.showDropdown = true;
         } else {
+            this.searchMode = SearchMode.NORMAL;
             this.showDropdown = false;
         }
     }
@@ -103,7 +123,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             this.filteredOptions = this.conversations.map((conv) => ({
                 id: conv.id!,
                 name: this.getConversationName(conv),
-                type: 'channel',
+                type: 'conversation',
             }));
         } else {
             this.filteredOptions = this.conversations
@@ -114,7 +134,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                 .map((channel) => ({
                     id: channel.id!,
                     name: this.getConversationName(channel),
-                    type: 'channel',
+                    type: 'conversation',
                 }));
         }
     }
@@ -122,9 +142,11 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     filterUsers(searchQuery: string): void {
         if (!searchQuery || searchQuery.length < 3 || !this.courseId) {
             this.filteredOptions = [];
+            this.userSearchStatus = UserSearchStatus.TOO_SHORT;
             return;
         }
 
+        this.userSearchStatus = UserSearchStatus.LOADING;
         this.courseManagementService
             .searchUsers(this.courseId, searchQuery, ['students', 'tutors', 'instructors'])
             .pipe(
@@ -141,6 +163,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                     type: 'user',
                     img: user.imageUrl,
                 }));
+                this.userSearchStatus = UserSearchStatus.RESULTS;
             });
     }
 
@@ -158,13 +181,13 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     }
 
     selectOption(option: CombinedOption): void {
-        if (option.type === 'channel') {
+        if (option.type === 'conversation') {
             const conversation = this.conversations.find((conv) => conv.id === option.id);
             if (conversation) {
                 this.selectedConversations.push(conversation);
                 this.showDropdown = false;
                 this.courseWideSearchTerm = '';
-                this.updateSearchWithSelectedChannel();
+                this.focusInput();
             }
         } else if (option.type === 'user') {
             const user = this.filteredUsers.find((user) => user.id === option.id);
@@ -172,18 +195,9 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                 this.selectedAuthors.push(user);
                 this.showDropdown = false;
                 this.courseWideSearchTerm = '';
-                this.updateSearchWithSelectedChannel();
+                this.focusInput();
             }
         }
-    }
-
-    updateSearchWithSelectedChannel(): void {
-        // Focus the search input after selecting a channel
-        setTimeout(() => {
-            if (this.searchElement) {
-                this.searchElement.nativeElement.focus();
-            }
-        }, 0);
     }
 
     removeSelectedChannel(conversation: ConversationDTO): void {
@@ -224,11 +238,11 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     handleSearchShortcut(event: KeyboardEvent) {
         if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
             event.preventDefault();
-            if (this.searchElement) {
-                this.searchElement.nativeElement.focus();
-            }
+            this.focusInput();
         }
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
+    protected readonly SearchMode = SearchMode;
+    protected readonly UserSearchStatus = UserSearchStatus;
 }

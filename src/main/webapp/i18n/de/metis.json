@@ -69,9 +69,15 @@
                 "noMessages": "Keine Nachrichten gefunden",
                 "loadingMessages": "Nachrichten laden..."
             },
+            "globalSearch": {
+                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direkt-Chats und Gruppen (Strg/Cmd + K)",
+                "searchBarWithConversationSelected": "Suche nach einer Nachricht in @{{ conversationName }}",
+                "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
+                "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
+                "userQueryTooShort": "Bitte gib mindestens 3 Zeichen ein, um nach einem Benutzer zu suchen."
+            },
             "overview": {
                 "title": "Nachrichten",
-                "searchBarDefault": "Suche nach Nachrichten in allen Kanälen, Direkt-Chats und Gruppen (Strg/Cmd + K)",
                 "sortedByDate": "Sortiert nach Datum",
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
