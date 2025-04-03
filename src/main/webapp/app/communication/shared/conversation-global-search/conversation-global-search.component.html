@@ -3,13 +3,13 @@
     <div class="tag-input-container">
         @for (conversation of selectedConversations; track conversation) {
             <span class="badge bg-primary me-1">
-                <span class="me-1">in:#{{ getConversationName(conversation) }}</span>
+                <span class="me-1">{{ PREFIX_CONVERSATION_SEARCH }}#{{ getConversationName(conversation) }}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedChannel(conversation)"></button>
             </span>
         }
         @for (author of selectedAuthors; track author) {
             <span class="badge bg-secondary me-1">
-                <span class="me-1">by:&#64;{{ author.name }}</span>
+                <span class="me-1">{{ PREFIX_USER_SEARCH }}&#64;{{ author.name }}</span>
                 <button type="button" class="btn-close btn-close-white btn-sm ms-1" aria-label="Remove" (click)="removeSelectedAuthor(author)"></button>
             </span>
         }
@@ -17,7 +17,7 @@
             #searchInput
             name="searchText"
             id="search"
-            [(ngModel)]="courseWideSearchTerm"
+            [(ngModel)]="fullSearchTerm"
             class="form-control"
             (keyup.enter)="onTriggerSearch()"
             (input)="filterItems($event)"
@@ -35,10 +35,10 @@
         @if (filteredOptions.length === 0) {
             <li class="list-group-item">
                 @if (searchMode === SearchMode.CONVERSATION) {
-                    <span class="text-muted" jhiTranslate="artemisApp.metis.globalSearch.noConversationFound" [translateValues]="{ search: courseWideSearchTerm }"></span>
+                    <span class="text-muted" jhiTranslate="artemisApp.metis.globalSearch.noConversationFound" [translateValues]="{ search: searchTermWithoutPrefix }"></span>
                 } @else if (searchMode === SearchMode.USER) {
                     @if (userSearchStatus === UserSearchStatus.RESULTS) {
-                        <span class="text-muted" jhiTranslate="artemisApp.metis.globalSearch.noUserFound" [translateValues]="{ search: courseWideSearchTerm }"></span>
+                        <span class="text-muted" jhiTranslate="artemisApp.metis.globalSearch.noUserFound" [translateValues]="{ search: searchTermWithoutPrefix }"></span>
                     } @else if (userSearchStatus === UserSearchStatus.LOADING) {
                         <span><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;</span>
                     } @else if (userSearchStatus === UserSearchStatus.TOO_SHORT) {

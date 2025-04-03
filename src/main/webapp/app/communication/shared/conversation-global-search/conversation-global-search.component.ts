@@ -23,6 +23,9 @@ export interface CombinedOption {
     img?: string;
 }
 
+const PREFIX_CONVERSATION_SEARCH = 'in:';
+const PREFIX_USER_SEARCH = 'by:';
+
 enum SearchMode {
     NORMAL,
     CONVERSATION,
@@ -48,7 +51,8 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
-    courseWideSearchTerm = '';
+    fullSearchTerm = '';
+    searchTermWithoutPrefix = '';
     selectedConversations: ConversationDTO[] = [];
     selectedAuthors: UserPublicInfoDTO[] = [];
 
@@ -89,24 +93,26 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     }
 
     clearSearch() {
-        this.courseWideSearchTerm = '';
+        this.fullSearchTerm = '';
         this.selectedConversations = [];
         this.selectedAuthors = [];
     }
 
     filterItems(event: Event): void {
-        this.courseWideSearchTerm = (event.target as HTMLInputElement).value;
+        this.fullSearchTerm = (event.target as HTMLInputElement).value;
 
         // Check if search starts with "in:" for conversations
-        if (this.courseWideSearchTerm.startsWith('in:')) {
-            const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
+        if (this.fullSearchTerm.startsWith(PREFIX_CONVERSATION_SEARCH)) {
+            const searchQuery = this.fullSearchTerm.substring(PREFIX_CONVERSATION_SEARCH.length).toLowerCase();
+            this.searchTermWithoutPrefix = searchQuery;
             this.filterConversations(searchQuery);
             this.searchMode = SearchMode.CONVERSATION;
             this.showDropdown = true;
         }
-        // Check if search starts with "from:" for users
-        else if (this.courseWideSearchTerm.startsWith('by:')) {
-            const searchQuery = this.courseWideSearchTerm.substring(3).toLowerCase();
+        // Check if search starts with "by:" for users
+        else if (this.fullSearchTerm.startsWith(PREFIX_USER_SEARCH)) {
+            const searchQuery = this.fullSearchTerm.substring(PREFIX_USER_SEARCH.length).toLowerCase();
+            this.searchTermWithoutPrefix = searchQuery;
             this.filterUsers(searchQuery);
             this.searchMode = SearchMode.USER;
             this.showDropdown = true;
@@ -187,7 +193,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             if (conversation) {
                 this.selectedConversations.push(conversation);
                 this.showDropdown = false;
-                this.courseWideSearchTerm = '';
+                this.fullSearchTerm = '';
                 this.focusInput();
             }
         } else if (option.type === 'user') {
@@ -195,7 +201,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             if (user) {
                 this.selectedAuthors.push(user);
                 this.showDropdown = false;
-                this.courseWideSearchTerm = '';
+                this.fullSearchTerm = '';
                 this.focusInput();
             }
         }
@@ -221,7 +227,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     onTriggerSearch() {
         this.onSearch.emit({
-            searchTerm: this.courseWideSearchTerm,
+            searchTerm: this.fullSearchTerm,
             selectedConversations: this.selectedConversations,
             selectedAuthors: this.selectedAuthors,
         });
@@ -246,4 +252,6 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
     protected readonly SearchMode = SearchMode;
     protected readonly UserSearchStatus = UserSearchStatus;
+    protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
+    protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
 }
