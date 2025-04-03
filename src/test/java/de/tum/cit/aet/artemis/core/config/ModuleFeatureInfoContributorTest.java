@@ -28,7 +28,7 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
-        Constants.EXAM_ENABLED_PROPERTY_NAME
+        Constants.MODULE_FEATURE_EXAM
     );
     // @formatter:on
 
