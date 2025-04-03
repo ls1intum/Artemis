@@ -31,7 +31,7 @@ import {
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -114,6 +114,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     atlasEnabled = false;
     irisEnabled = false;
     ltiEnabled = false;
+    lectureEnabled = false;
 
     /**
      * On init load the course information and subscribe to listen for changes in course.
@@ -136,6 +137,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
                 this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+                this.lectureEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_LECTURE);
             }
         });
 

@@ -41,6 +41,8 @@ export const PROFILE_AEOLUS = 'aeolus';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
+export const MODULE_FEATURE_LECTURE = 'lecture';
+
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';

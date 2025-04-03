@@ -11,10 +11,12 @@
                 <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises"></span>
             </a>
             @if (course.isAtLeastEditor) {
-                <a class="tab-link" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
-                    <fa-icon [icon]="faFilePdf" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures"></span>
-                </a>
+                <jhi-feature-overlay [enabled]="lectureEnabled" placement="right">
+                    <a class="tab-link" [routerLink]="['/course-management', course.id, 'lectures']" id="lectures" routerLinkActive="active">
+                        <fa-icon [icon]="faFilePdf" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.lectures"></span>
+                    </a>
+                </jhi-feature-overlay>
             }
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'course-statistics']" routerLinkActive="active">
                 <fa-icon [icon]="faChartBar" />
