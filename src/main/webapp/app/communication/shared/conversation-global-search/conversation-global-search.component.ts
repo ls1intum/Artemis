@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
-import { NgFor, NgIf } from '@angular/common';
 import { isChannelDTO } from '../entities/conversation/channel.model';
 import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from '../entities/conversation/one-to-one-chat.model';
@@ -42,7 +41,7 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [NgIf, NgFor, FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent],
+    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent],
 })
 export class ConversationGlobalSearchComponent implements OnDestroy {
     conversations = input<ConversationDTO[]>([]);
@@ -78,20 +77,6 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         this.destroy$.complete();
     }
 
-    navigateDropdown(step: number, event: Event): void {
-        if (this.showDropdown && this.filteredOptions.length > 0) {
-            event.preventDefault();
-            this.activeDropdownIndex = (this.activeDropdownIndex + step + this.filteredOptions.length) % this.filteredOptions.length;
-        }
-    }
-
-    selectActiveOption(): void {
-        if (this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
-            const selectedOption = this.filteredOptions[this.activeDropdownIndex];
-            this.selectOption(selectedOption);
-        }
-    }
-
     clearSearch() {
         this.fullSearchTerm = '';
         this.selectedConversations = [];
@@ -100,6 +85,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     filterItems(event: Event): void {
         this.fullSearchTerm = (event.target as HTMLInputElement).value;
+        this.activeDropdownIndex = 0;
 
         // Check if search starts with "in:" for conversations
         if (this.fullSearchTerm.startsWith(PREFIX_CONVERSATION_SEARCH)) {
@@ -118,8 +104,13 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             this.showDropdown = true;
         } else {
             this.searchMode = SearchMode.NORMAL;
-            this.showDropdown = false;
+            this.closeDropdown();
         }
+    }
+
+    closeDropdown(): void {
+        this.showDropdown = false;
+        this.activeDropdownIndex = -1;
     }
 
     filterConversations(searchQuery: string): void {
@@ -192,7 +183,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             const conversation = this.conversations().find((conv) => conv.id === option.id);
             if (conversation) {
                 this.selectedConversations.push(conversation);
-                this.showDropdown = false;
+                this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
             }
@@ -200,7 +191,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
             const user = this.filteredUsers.find((user) => user.id === option.id);
             if (user) {
                 this.selectedAuthors.push(user);
-                this.showDropdown = false;
+                this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
             }
@@ -233,11 +224,46 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         });
     }
 
+    navigateDropdown(step: number, event: Event): void {
+        if (this.showDropdown && this.filteredOptions.length > 0) {
+            event.preventDefault();
+            const newIndex = this.activeDropdownIndex + step;
+            this.setActiveDropdownIndex((newIndex + this.filteredOptions.length) % this.filteredOptions.length);
+        }
+    }
+
+    setActiveDropdownIndex(index: number): void {
+        this.activeDropdownIndex = index;
+
+        // Allow DOM to update before scrolling
+        setTimeout(() => {
+            const dropdownContainer = document.querySelector('.autocomplete-dropdown') as HTMLElement;
+            const activeElement = document.querySelector('.dropdown-option.active') as HTMLElement;
+
+            if (dropdownContainer && activeElement) {
+                const containerRect = dropdownContainer.getBoundingClientRect();
+                const activeRect = activeElement.getBoundingClientRect();
+
+                // Check if the active element is not fully visible in the container
+                if (activeRect.bottom > containerRect.bottom || activeRect.top < containerRect.top) {
+                    activeElement.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                }
+            }
+        }, 0);
+    }
+
+    selectActiveOption(): void {
+        if (this.activeDropdownIndex >= 0 && this.activeDropdownIndex < this.filteredOptions.length) {
+            const selectedOption = this.filteredOptions[this.activeDropdownIndex];
+            this.selectOption(selectedOption);
+        }
+    }
+
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         // Close dropdown when clicking outside
         if (this.searchElement && !this.searchElement.nativeElement.contains(event.target)) {
-            this.showDropdown = false;
+            this.closeDropdown();
         }
     }
 

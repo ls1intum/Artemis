@@ -1,6 +1,6 @@
 <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg">
     <!-- search bar with selected channel -->
-    <div class="tag-input-container">
+    <div class="tag-input-container form-control">
         @for (conversation of selectedConversations; track conversation) {
             <span class="badge bg-primary me-1">
                 <span class="me-1">{{ PREFIX_CONVERSATION_SEARCH }}#{{ getConversationName(conversation) }}</span>
@@ -18,16 +18,22 @@
             name="searchText"
             id="search"
             [(ngModel)]="fullSearchTerm"
-            class="form-control"
+            class="tag-input"
             (keyup.enter)="onTriggerSearch()"
             (input)="filterItems($event)"
             (keydown.arrowDown)="navigateDropdown(1, $event)"
             (keydown.arrowUp)="navigateDropdown(-1, $event)"
             (keydown.enter)="selectActiveOption()"
-            placeholder="{{ 'artemisApp.metis.globalSearch.searchBarDefault' | artemisTranslate }}"
+            placeholder="{{
+                (selectedConversations.length > 0 ? 'artemisApp.metis.globalSearch.searchBarWithConversationSelected' : 'artemisApp.metis.globalSearch.searchBarDefault')
+                    | artemisTranslate
+            }}"
         />
+
+        @if (fullSearchTerm || selectedConversations.length > 0 || selectedConversations.length > 0) {
+            <button type="button" class="btn-close btn-sm ms-1" aria-label="Remove" (click)="clearSearch()"></button>
+        }
     </div>
-    <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="clearSearch()" />
     <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
 </div>
 @if (showDropdown) {
@@ -48,7 +54,13 @@
             </li>
         } @else {
             @for (option of filteredOptions; let i = $index; track option) {
-                <li class="list-group-item list-group-item-action" [class.active]="i === activeDropdownIndex" (mousedown)="selectOption(option)">
+                <li
+                    class="list-group-item list-group-item-action dropdown-option"
+                    [class.active]="i === activeDropdownIndex"
+                    (mousedown)="selectOption(option)"
+                    (mouseover)="setActiveDropdownIndex(i)"
+                    (focus)="setActiveDropdownIndex(i)"
+                >
                     @if (option.type === 'conversation') {
                         <span class="me-2">#</span>
                         {{ option.name }}

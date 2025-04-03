@@ -4,11 +4,28 @@
 
 .tag-input-container {
     display: flex;
-    flex-wrap: wrap;
     align-items: center;
-    flex-grow: 1;
-    min-width: 0;
-    gap: 0.25rem;
+    flex-wrap: wrap;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    min-height: 2rem;
+    cursor: text;
+    transition:
+        border-color 0.15s ease-in-out,
+        box-shadow 0.15s ease-in-out;
+}
+
+.tag-input-container:focus-within {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.tag-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    min-width: 4rem;
+    color: var(--form-control-color);
 }
 
 .autocomplete-dropdown {
@@ -23,15 +40,9 @@
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
 }
 
-.channel-option {
+.dropdown-option {
     padding: 0.5rem 1rem;
     cursor: pointer;
-}
-
-.channel-option:hover {
-    background-color: var(--bs-primary);
-    border-color: var(--bs-primary);
-    color: var(--bs-white);
 }
 
 .badge {

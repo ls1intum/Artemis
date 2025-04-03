@@ -71,7 +71,7 @@
             },
             "globalSearch": {
                 "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + K)",
-                "searchBarWithConversationSelected": "Search for a message in @{{ conversationName }}",
+                "searchBarWithConversationSelected": "Search for a message in selected conversations",
                 "noConversationFound": "No conversation found for '{{ search }}'",
                 "noUserFound": "No user found for '{{ search }}'",
                 "userQueryTooShort": "Please enter at least 3 characters to search for a user."
