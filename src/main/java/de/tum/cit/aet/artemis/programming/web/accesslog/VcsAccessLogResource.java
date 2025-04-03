@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 
 @Profile(PROFILE_LOCALVC)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class VcsAccessLogResource {
 
     private static final Logger log = LoggerFactory.getLogger(VcsAccessLogResource.class);

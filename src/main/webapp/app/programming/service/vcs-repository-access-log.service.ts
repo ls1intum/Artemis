@@ -15,7 +15,7 @@ export class VcsRepositoryAccessLogService extends BaseApiHttpService {
             .set('sortedColumn', pageable.sortedColumn)
             .set('repositoryId', options.repositoryId);
 
-        return this.get<SearchResult<VcsAccessLogDTO>>(`programming-exercises/${options.exerciseId}/repository/${options.repositoryType}/vcs-access-log`, {
+        return this.get<SearchResult<VcsAccessLogDTO>>(`programming/programming-exercises/${options.exerciseId}/repository/${options.repositoryType}/vcs-access-log`, {
             params,
         });
     }
