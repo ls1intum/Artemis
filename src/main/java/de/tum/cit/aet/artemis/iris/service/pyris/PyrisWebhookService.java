@@ -36,12 +36,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.Pyr
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -57,21 +58,21 @@ public class PyrisWebhookService {
 
     private final IrisSettingsRepository irisSettingsRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisWebhookService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, IrisSettingsService irisSettingsService,
-            IrisSettingsRepository irisSettingsRepository, LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository) {
+            IrisSettingsRepository irisSettingsRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
         this.irisSettingsService = irisSettingsService;
         this.irisSettingsRepository = irisSettingsRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
     }
 
     private boolean lectureIngestionEnabled(Course course) {
@@ -100,7 +101,8 @@ public class PyrisWebhookService {
         String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
         String lectureUnitLink = artemisBaseUrl + attachmentUnit.getAttachment().getLink();
-        lectureUnitRepository.save(attachmentUnit);
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
+        api.save(attachmentUnit);
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription, lectureUnitLink);
     }
 
@@ -198,7 +200,8 @@ public class PyrisWebhookService {
      *
      */
     public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
-        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        Set<Lecture> lectures = api.findAllByCourseId(courseId);
         return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
 
     }
@@ -241,7 +244,8 @@ public class PyrisWebhookService {
      * @return The ingestion state of the lecture Unit
      */
     public Map<Long, IngestionState> getLectureUnitsIngestionState(long courseId, long lectureId) {
-        List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        List<LectureUnit> lectureunits = api.findByIdWithLectureUnitsElseThrow(lectureId).getLectureUnits();
         return lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
                 .collect(Collectors.toMap(DomainObject::getId, unit -> pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, unit.getId())));
     }

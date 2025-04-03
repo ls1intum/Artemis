@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -24,8 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 
 /**
  * Service for managing prerequisites.
@@ -37,12 +37,12 @@ public class PrerequisiteService extends CourseCompetencyService {
     private final PrerequisiteRepository prerequisiteRepository;
 
     public PrerequisiteService(PrerequisiteRepository prerequisiteRepository, AuthorizationCheckService authCheckService, CompetencyRelationRepository competencyRelationRepository,
-            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, LectureUnitService lectureUnitService,
-            CompetencyProgressRepository competencyProgressRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            StandardizedCompetencyRepository standardizedCompetencyRepository, CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService,
-            LearningObjectImportService learningObjectImportService, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
-        super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, lectureUnitService,
-                learningPathService, authCheckService, standardizedCompetencyRepository, lectureUnitCompletionRepository, learningObjectImportService, courseRepository);
+            LearningPathService learningPathService, CompetencyProgressService competencyProgressService, CompetencyProgressRepository competencyProgressRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, StandardizedCompetencyRepository standardizedCompetencyRepository,
+            CourseCompetencyRepository courseCompetencyRepository, ExerciseService exerciseService, LearningObjectImportService learningObjectImportService,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository, CourseRepository courseRepository) {
+        super(competencyProgressRepository, courseCompetencyRepository, competencyRelationRepository, competencyProgressService, exerciseService, learningPathService,
+                authCheckService, standardizedCompetencyRepository, lectureUnitRepositoryApi, learningObjectImportService, courseRepository, competencyLectureUnitLinkRepository);
         this.prerequisiteRepository = prerequisiteRepository;
     }
 

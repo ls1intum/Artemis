@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -43,11 +42,10 @@ public class PlagiarismAnswerPostService extends PostingService {
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
+            AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, WebsocketMessagingService websocketMessagingService,
+            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
             SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
-                savedPostRepository);
+        super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;

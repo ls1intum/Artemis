@@ -64,7 +64,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -92,15 +91,14 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
-            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository,
             GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
             CourseNotificationService courseNotificationService, PostRepository postRepository, FeatureToggleService featureToggleService,
             SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
-                savedPostRepository);
+        super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationNotificationService = conversationNotificationService;

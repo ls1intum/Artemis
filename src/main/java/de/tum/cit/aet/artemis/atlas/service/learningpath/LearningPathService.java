@@ -48,10 +48,11 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service Implementation for managing Learning Paths.
@@ -84,7 +85,7 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -94,7 +95,7 @@ public class LearningPathService {
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+            CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
             CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
@@ -104,7 +105,7 @@ public class LearningPathService {
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseLearnerProfileService = courseLearnerProfileService;
@@ -446,13 +447,15 @@ public class LearningPathService {
             });
             return learningPath;
         }
+
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         Long userId = learningPath.getUser().getId();
         Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()
                 .collect(Collectors.toMap(progress -> progress.getCompetency().getId(), cp -> cp));
         Set<LectureUnit> lectureUnits = learningPath.getCompetencies().stream()
                 .flatMap(competency -> competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit)).collect(Collectors.toSet());
-        Map<Long, LectureUnitCompletion> completions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
+        Map<Long, LectureUnitCompletion> completions = api.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), cp -> cp));
         Set<Long> exerciseIds = learningPath.getCompetencies().stream().flatMap(competency -> competency.getExerciseLinks().stream())
                 .map(exerciseLink -> exerciseLink.getExercise().getId()).collect(Collectors.toSet());
