@@ -156,6 +156,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, addAuxRepos);
     }
 
+    // TODO: enable or remove the test
     @Disabled
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
