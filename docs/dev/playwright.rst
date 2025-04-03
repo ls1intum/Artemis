@@ -414,7 +414,6 @@ should be updated every month to make sure that the latest Playwright image is u
 Functionalities Covered
 -----------------------
 .. list-table::
-   :widths: 25 30 45
    :header-rows: 1
 
    * - **Category**
@@ -422,28 +421,22 @@ Functionalities Covered
      - **Description**
    * - **Courses**
      - Course Management
-     -
+     - Creating, editing, deleting courses; managing course students
    * -
      - Course Exercise
      - Tests filtering exercises based on their title.
-   * -
-     - Course Creation & Deletion
-     - Creating courses, editing them, and deleting courses or course-related icons.
-   * -
-     - Student Management
-     - Tests adding/removing students manually.
    * -
      - Course Messages
      - Messaging within courses, including channel creation, student participation, and message interactions.
    * - **Exams**
      - Exam Management
-     -
+     - Manage exam students and exercise groups
    * -
      - Exam Creation & Deletion
      - Creating, editing, and deleting exams.
    * -
      - Exam Participation
-     - Early Hand-in & Navigation, Page Reload & Continuity, Instructor Announcements
+     - Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements
    * -
      - Exam Assessment
      - Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling.
@@ -452,7 +445,7 @@ Functionalities Covered
      - Exam setup checks, including student registration, exercise groups, and exam publication.
    * -
      - Exam Date Verification
-     - Confirms exams appear/disappear based on visibility dates.
+     - Exams appear/disappear based on visibility dates.
    * -
      - Exam Results
      - Exam result overviews for text, quiz, modeling, and programming exercises.
@@ -461,46 +454,43 @@ Functionalities Covered
      - Creating, managing, and deleting exam test runs.
    * -
      - Exam Statistics
-     - Ensures exam statistics display correctly.
+     - Exam statistics is displayed correctly.
    * - **Exercises**
      - Exercise Import
      - Importing text, quiz, modeling & programming exercises.
    * - **File Upload Exercises**
      - Management
-     - Covers creating and deleting file upload exercises.
+     - Creating and deleting file upload exercises.
    * -
      - Participation
-     - Ensures students can start a file upload exercise.
+     - Students can participate in a file upload exercise.
    * -
      - Assessment & Feedback
-     - Tests assessing submissions, student feedback visibility, and complaint handling.
+     - Assessing submissions, student feedback visibility, and complaint handling.
    * - **Modeling Exercises**
      - Management
-     - Covers creating, editing, and deleting modeling exercises.
+     - Creating, editing, and deleting modeling exercises.
    * -
      - Visibility Controls
-     - Verifies students' access to released/unreleased exercises.
+     - Students can access released/unreleased exercises.
    * -
      - Participation
-     - Ensures students can start and submit models.
+     - Students can start and submit models.
    * -
      - Assessment & Complaints
-     - Tests instructor and tutor assessments, student feedback, and complaint resolution.
+     - Instructor and tutor assessments, student feedback, and complaint resolution.
    * - **Programming Exercises**
      - Management
-     - Covers creating and deleting programming exercises.
+     - Creating and deleting programming exercises.
    * -
      - Team Management
-     - Tests forming and managing exercise teams.
-   * -
-     - UI Functionality
-     - Verifies correct scrolling behavior in form sections.
+     - Forming and managing exercise teams.
    * -
      - Assessment
      - Assessing programming exercise submissions.
    * -
      - Participation
-     - Submitting code through the code editor and Git (HTTPS & SSH), Submissions for Java, C, and Python, Team participation and submission handling.
+     - Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation.
    * -
      - Static Code Analysis
      - Configuring SCA grading and handling submissions with SCA errors.
@@ -530,40 +520,13 @@ Functionalities Covered
      - Tests instructor assessments, feedback visibility, and complaint handling.
    * - **Lectures**
      - Lecture Management
-     -
-   * -
-     - Creating and deleting lectures
-     -
-   * -
-     - Managing existing lectures
-     - Adding text and exercise units.
+     - Creating and deleting lectures, managing existing lectures
    * - **Authentication**
-     - Logging in & Security
-     -
+     - Logging in
+     - Logging in via UI and programmatically, login failures
    * -
-     - Logging in via UI and programmatically
-     -
-   * -
-     - Handling login failures
-     - Wrong password, restricted access.
-   * -
-     - Verifying footer content
-     -
-   * -
-     - Logging out with confirmation
-     - For unsaved changes.
-   * -
-     - Staying logged in
-     - After dismissing unsaved changes dialog.
+     - Logging out
+     - Logging out successfully and canceling logout
    * - **System Status**
-     - Health Checks
-     -
-   * -
-     - Continuous integration & VC server health
-     -
-   * -
-     - Database, Hazelcast, and WebSocket health
-     -
-   * -
-     - Readiness and ping checks
-     -
+     - System status indicators
+     - Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks
