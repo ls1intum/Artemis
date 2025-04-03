@@ -132,11 +132,7 @@
                                         <button
                                             jhiDeleteButton
                                             [entityTitle]="exerciseGroup.title || ''"
-                                            deleteQuestion="{{
-                                                localVCEnabled
-                                                    ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
-                                                    : 'artemisApp.examManagement.exerciseGroup.delete.question'
-                                            }}"
+                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.questionLocalVC"
                                             deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                             [additionalChecks]="
                                                 localCIEnabled

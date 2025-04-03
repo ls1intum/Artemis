@@ -7,8 +7,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
-import { RouterLink } from '@angular/router';
+import { PROFILE_THEIA } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -19,7 +18,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     selector: 'jhi-programming-exercise-group-cell',
     templateUrl: './programming-exercise-group-cell.component.html',
     styles: [':host{display: contents}'],
-    imports: [RouterLink, FaIconComponent, ProgrammingExerciseInstructorStatusComponent, TranslateDirective],
+    imports: [FaIconComponent, ProgrammingExerciseInstructorStatusComponent, TranslateDirective],
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
     private profileService = inject(ProfileService);
@@ -30,7 +29,6 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     protected readonly RepositoryType = RepositoryType;
 
-    localVCEnabled = true;
     onlineIdeEnabled = false;
 
     displayShortName = input(false);
@@ -43,7 +41,6 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
 
             const projectKey = this.exercise()?.projectKey;
@@ -62,16 +59,13 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     }
 
     /**
-     * Downloads the instructor repository. Used when the "localvc" profile is active.
-     * For the local VCS, linking to an external site displaying the repository does not work.
-     * Instead, the repository is downloaded.
+     * Downloads the instructor repository.
      *
      * @param repositoryType
      */
     downloadRepository(repositoryType: RepositoryType): void {
         const programmingExerciseId = this.exercise()?.id;
         if (programmingExerciseId) {
-            // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
             this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');

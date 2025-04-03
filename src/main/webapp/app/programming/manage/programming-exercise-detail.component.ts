@@ -44,7 +44,7 @@ import {
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -147,7 +147,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
-    localVCEnabled = true;
     localCIEnabled = true;
     irisEnabled = false;
     irisChatEnabled = false;
@@ -225,7 +224,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             this.supportsAuxiliaryRepositories =
                                 this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
                                 false;
-                            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                             if (this.irisEnabled && !this.isExamExercise) {

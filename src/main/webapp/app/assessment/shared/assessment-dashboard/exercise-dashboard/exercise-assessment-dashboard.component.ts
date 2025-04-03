@@ -51,7 +51,6 @@ import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
@@ -76,7 +75,6 @@ import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-he
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -136,7 +134,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
-    private profileService = inject(ProfileService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -151,8 +148,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isLoading = false;
-
-    localVCEnabled = true;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -261,9 +256,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.accountService.identity().then((user: User) => (this.tutor = user));
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
-        });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

@@ -17,14 +17,12 @@ import { ExerciseScoresComponent, FilterProp } from 'app/exercise/exercise-score
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { Subscription, of } from 'rxjs';
 import { MockCourseManagementService } from '../../../../helpers/mocks/service/mock-course-management.service';
 import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 import { MockParticipationService } from '../../../../helpers/mocks/service/mock-participation.service';
-import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from '../../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
 
@@ -110,7 +108,6 @@ describe('Exercise Scores Component', () => {
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ResultService, useClass: MockResultService },
-                { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
                 { provide: ParticipationService, useClass: MockParticipationService },

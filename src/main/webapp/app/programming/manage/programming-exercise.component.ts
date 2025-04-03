@@ -33,7 +33,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
@@ -93,7 +93,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
-    localVCEnabled = true;
     localCIEnabled = true;
     onlineIdeEnabled = false;
 
@@ -129,7 +128,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises = res.body!;
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
                     this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
                 });
@@ -239,16 +237,13 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     /**
-     * Downloads the instructor repository. Used when the "localvc" profile is active.
-     * For the local VCS, linking to an external site displaying the repository does not work.
-     * Instead, the repository is downloaded.
+     * Downloads the instructor repository
      *
      * @param programmingExerciseId
      * @param repositoryType
      */
     downloadRepository(programmingExerciseId: number | undefined, repositoryType: RepositoryType) {
         if (programmingExerciseId) {
-            // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
             this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');

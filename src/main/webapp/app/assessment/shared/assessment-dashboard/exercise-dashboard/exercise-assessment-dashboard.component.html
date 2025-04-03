@@ -211,17 +211,11 @@
                 @if (exercise.type === ExerciseType.PROGRAMMING) {
                     <div class="col-12">
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.exampleSolution"></h4>
-                        @if (!localVCEnabled) {
-                            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUri || ''">
-                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
-                            </a>
-                        } @else {
-                            <jhi-code-button
-                                [smallButtons]="true"
-                                [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
-                                [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
-                            />
-                        }
+                        <jhi-code-button
+                            [smallButtons]="true"
+                            [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
+                            [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
+                        />
                     </div>
                 }
 

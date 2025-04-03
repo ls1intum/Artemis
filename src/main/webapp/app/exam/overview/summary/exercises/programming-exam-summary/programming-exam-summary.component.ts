@@ -13,7 +13,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { Router } from '@angular/router';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -66,7 +65,6 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     commitHash: string | undefined;
 
     routerLink: string;
-    localVCEnabled = true;
     isInCourseManagement = false;
 
     ngOnInit() {
@@ -98,7 +96,6 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
             this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise.projectKey, this.participation, this.submission);
-            this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
         });
     }
 

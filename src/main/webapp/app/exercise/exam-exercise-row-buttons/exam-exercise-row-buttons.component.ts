@@ -14,7 +14,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faExclamationTriangle, faEye, faFileExport, faFileSignature, faPencilAlt, faSignal, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -62,12 +62,10 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
     faFileSignature = faFileSignature;
     farListAlt = faListAlt;
 
-    localVCEnabled = true;
     localCIEnabled = true;
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         });
     }

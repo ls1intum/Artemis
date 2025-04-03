@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, input } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
@@ -98,8 +98,6 @@ export class CodeButtonComponent implements OnInit {
     sshTemplateUrl?: string;
     versionControlUrl: string;
 
-    localVCEnabled = signal<boolean>(true);
-
     copyEnabled = false;
     doesUserHaveSSHkeys = false;
     areAnySshKeysExpired = false;
@@ -145,7 +143,7 @@ export class CodeButtonComponent implements OnInit {
         });
 
         effect(() => {
-            if (!this.isInCourseManagement && this.localVCEnabled()) {
+            if (!this.isInCourseManagement) {
                 this.loadVcsAccessTokensForAllParticipations();
             }
         });
@@ -175,7 +173,7 @@ export class CodeButtonComponent implements OnInit {
             }
 
             this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
-            this.configureTooltips(profileInfo);
+            this.configureTooltips();
             this.initTheia(profileInfo);
         });
 
@@ -418,13 +416,10 @@ export class CodeButtonComponent implements OnInit {
         }
     }
 
-    private configureTooltips(profileInfo: ProfileInfo) {
-        if (this.localVCEnabled()) {
-            this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
-            this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
-        } else {
-            this.sshSettingsUrl = profileInfo.sshKeysURL;
-        }
+    private configureTooltips() {
+        this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+        this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
+
         this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
         this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
         this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);

@@ -15,6 +15,7 @@ import { MockProvider } from 'ng-mocks';
 import { RepositoryType } from '../../../../../../../main/webapp/app/programming/shared/code-editor/model/code-editor.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { ActivatedRoute } from '@angular/router';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -58,6 +59,12 @@ describe('Programming Exercise Group Cell Component', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 provideHttpClient(),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        params: of({ examId: '3' }),
+                    },
+                },
             ],
         })
             .compileComponents()
@@ -89,8 +96,8 @@ describe('Programming Exercise Group Cell Component', () => {
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('a'));
         expect(span).toBeDefined();
-        expect(span.nativeElement.textContent).toBe('Template');
-        expect(span.nativeElement.href).toBe(exercise.templateParticipation!.repositoryUri);
+        expect(span.nativeElement.textContent).toBe(' Template ');
+        expect(span.nativeElement.href).toBe(''); // empty, as LocalVC directly downloads the repository without forwarding
     });
 
     it('should display editor mode flags', () => {

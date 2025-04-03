@@ -8,7 +8,6 @@ import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -25,7 +24,6 @@ import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -98,7 +96,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
     private resultService = inject(ResultService);
-    private profileService = inject(ProfileService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private participationService = inject(ParticipationService);
 
@@ -142,8 +139,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     isLoading: boolean;
 
     afterDueDate = false;
-
-    localVCEnabled = true;
 
     // Icons
     faDownload = faDownload;
@@ -229,14 +224,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = this.exercise as ProgrammingExercise;
-            if (programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                });
-            }
-        }
 
         for (const filter of Object.values(FilterProp)) {
             if (this.isFilterRelevantForConfiguration(filter)) {

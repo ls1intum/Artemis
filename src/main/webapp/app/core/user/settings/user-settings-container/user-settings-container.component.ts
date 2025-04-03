@@ -1,7 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
@@ -19,7 +18,6 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, RouterModule, FontAwesomeModule],
 })
 export class UserSettingsContainerComponent implements OnInit {
-    private readonly profileService = inject(ProfileService);
     private readonly accountService = inject(AccountService);
 
     // Icons
@@ -30,10 +28,6 @@ export class UserSettingsContainerComponent implements OnInit {
     isAtLeastTutor = false;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
-
         this.accountService
             .getAuthenticationState()
             .pipe(

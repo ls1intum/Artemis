@@ -39,8 +39,6 @@ import { breakCircularResultBackReferences } from 'app/exercise/result/result.ut
 import { faExternalLink, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { FeedbackSuggestionsPendingConfirmationDialogComponent } from 'app/exercise/feedback/feedback-suggestions-pending-confirmation-dialog/feedback-suggestions-pending-confirmation-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -80,7 +78,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
-    private profileService = inject(ProfileService);
     private modalService = inject(NgbModal);
     private athenaService = inject(AthenaService);
 
@@ -125,7 +122,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     loadingInitialSubmission = true;
     highlightDifferences = false;
 
-    localVCEnabled = true;
     isAtLeastEditor = false;
 
     unreferencedFeedback: Feedback[] = [];
@@ -234,10 +230,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
                     }),
                 )
                 .subscribe();
-        });
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

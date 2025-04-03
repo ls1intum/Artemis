@@ -10,7 +10,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/exercise/result/repository.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -42,7 +42,6 @@ import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-t
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -166,7 +165,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 { provide: Router, useClass: MockRouter },
-                MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

@@ -1,12 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { of } from 'rxjs';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -17,21 +14,15 @@ describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let comp: UserSettingsContainerComponent;
 
-    let profileServiceMock: { getProfileInfo: jest.Mock };
     let translateService: TranslateService;
-
+    let accountService: AccountService;
     const router = new MockRouter();
     router.setUrl('');
 
     beforeEach(async () => {
-        profileServiceMock = {
-            getProfileInfo: jest.fn(),
-        };
-
         await TestBed.configureTestingModule({
-            imports: [UserSettingsContainerComponent, RouterModule],
+            imports: [UserSettingsContainerComponent],
             providers: [
-                { provide: ProfileService, useValue: profileServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useValue: router },
@@ -39,26 +30,18 @@ describe('UserSettingsContainerComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
             ],
         }).compileComponents();
+
         fixture = TestBed.createComponent(UserSettingsContainerComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
+        accountService = TestBed.inject(AccountService);
         translateService.currentLang = 'en';
     });
-
-    beforeEach(() => {
-        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALVC] }));
-    });
-
-    it('should initialize with localVC profile', async () => {
-        comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeTrue();
-    });
-
-    it('should initialize with no localVC profile set', async () => {
-        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
-        comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeFalse();
+    it('should initialize with loaded user', () => {
+        const getAuthenticationSpy = jest.spyOn(accountService, 'getAuthenticationState');
+        fixture.detectChanges();
+        expect(getAuthenticationSpy).toHaveBeenCalled();
+        expect(comp.currentUser?.id).toEqual(99);
+        expect(comp.isAtLeastTutor).toEqual(false);
     });
 });

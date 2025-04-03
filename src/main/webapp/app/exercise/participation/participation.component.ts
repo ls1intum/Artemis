@@ -16,11 +16,9 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/programming-exercise-instructor-submission-state.component';
@@ -36,7 +34,6 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 enum FilterProp {
     ALL = 'all',
@@ -74,7 +71,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
     private gradingSystemService = inject(GradingSystemService);
 
     // make constants available to html for comparison
@@ -97,8 +93,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
-
-    localVCEnabled = true;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -185,14 +179,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private loadParticipations(exerciseId: number) {
         this.participationService.findAllParticipationsByExercise(exerciseId, false).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                const programmingExercise = this.exercise as ProgrammingExercise;
-                if (programmingExercise.projectKey) {
-                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    });
-                }
-            }
             this.isLoading = false;
         });
     }

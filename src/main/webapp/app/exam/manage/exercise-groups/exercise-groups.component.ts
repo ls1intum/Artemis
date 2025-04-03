@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -86,7 +86,6 @@ export class ExerciseGroupsComponent implements OnInit {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = true;
     localCIEnabled = true;
 
     // Icons
@@ -121,7 +120,6 @@ export class ExerciseGroupsComponent implements OnInit {
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
         });
     }
