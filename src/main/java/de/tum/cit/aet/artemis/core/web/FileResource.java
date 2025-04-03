@@ -71,8 +71,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureAttachmentApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -105,7 +105,7 @@ public class FileResource {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final Optional<LectureApi> lectureApi;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Optional<FileUploadApi> fileUploadApi;
 
@@ -128,13 +128,13 @@ public class FileResource {
     private final Optional<LectureUnitApi> lectureUnitApi;
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
-            ResourceLoaderService resourceLoaderService, Optional<LectureApi> lectureApi, Optional<FileUploadApi> fileUploadApi,
+            ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
             Optional<LectureAttachmentApi> lectureAttachmentApi, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
-        this.lectureApi = lectureApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
@@ -463,7 +463,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getLecturePdfAttachmentsMerged(@PathVariable Long lectureId) {
         log.debug("REST request to get merged pdf files for a lecture with id : {}", lectureId);
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         LectureUnitApi unitApi = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
         LectureAttachmentApi attachmentApi = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 

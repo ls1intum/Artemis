@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisLectureChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisLectureChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -42,7 +42,7 @@ public class IrisLectureChatSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final Optional<LectureApi> lectureApi;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
@@ -51,12 +51,12 @@ public class IrisLectureChatSessionResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     protected IrisLectureChatSessionResource(UserRepository userRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            Optional<LectureApi> lectureApi, IrisLectureChatSessionService irisLectureChatSessionService, IrisLectureChatSessionRepository irisLectureChatSessionRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, IrisLectureChatSessionService irisLectureChatSessionService,
+            IrisLectureChatSessionRepository irisLectureChatSessionRepository, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.lectureApi = lectureApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.irisLectureChatSessionService = irisLectureChatSessionService;
         this.irisLectureChatSessionRepository = irisLectureChatSessionRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -70,7 +70,7 @@ public class IrisLectureChatSessionResource {
      */
     @PostMapping("{lectureId}/sessions/current")
     public ResponseEntity<IrisLectureChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long lectureId) throws URISyntaxException {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
         var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
@@ -100,7 +100,7 @@ public class IrisLectureChatSessionResource {
      */
     @PostMapping("{lectureId}/sessions")
     public ResponseEntity<IrisLectureChatSession> createSessionForLecture(@PathVariable Long lectureId) throws URISyntaxException {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 
@@ -124,7 +124,7 @@ public class IrisLectureChatSessionResource {
      */
     @GetMapping("{lectureId}/sessions")
     public ResponseEntity<List<IrisLectureChatSession>> getAllSessions(@PathVariable Long lectureId) {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         var lecture = api.findByIdElseThrow(lectureId);
         validateLecture(lecture);
 

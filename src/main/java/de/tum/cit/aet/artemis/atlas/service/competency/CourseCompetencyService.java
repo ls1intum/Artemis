@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -76,7 +76,7 @@ public class CourseCompetencyService {
 
     protected final StandardizedCompetencyRepository standardizedCompetencyRepository;
 
-    protected final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final LearningObjectImportService learningObjectImportService;
 
@@ -87,7 +87,7 @@ public class CourseCompetencyService {
     public CourseCompetencyService(CompetencyProgressRepository competencyProgressRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyRelationRepository competencyRelationRepository, CompetencyProgressService competencyProgressService, ExerciseService exerciseService,
             LearningPathService learningPathService, AuthorizationCheckService authCheckService, StandardizedCompetencyRepository standardizedCompetencyRepository,
-            Optional<LectureUnitApi> lectureUnitApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
+            Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, LearningObjectImportService learningObjectImportService, CourseRepository courseRepository,
             CompetencyLectureUnitLinkRepository lectureUnitLinkRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
@@ -97,7 +97,7 @@ public class CourseCompetencyService {
         this.learningPathService = learningPathService;
         this.authCheckService = authCheckService;
         this.standardizedCompetencyRepository = standardizedCompetencyRepository;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.learningObjectImportService = learningObjectImportService;
         this.courseRepository = courseRepository;
         this.lectureUnitLinkRepository = lectureUnitLinkRepository;
@@ -392,7 +392,7 @@ public class CourseCompetencyService {
         competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId).ifPresent(progress -> competency.setUserProgress(Set.of(progress)));
         Set<LectureUnit> lectureUnits = competency.getLectureUnitLinks().stream().map(CompetencyLectureUnitLink::getLectureUnit).collect(Collectors.toSet());
         // collect to map lecture unit id -> this
-        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         var completions = api.findByLectureUnitsAndUserId(lectureUnits, userId).stream()
                 .collect(Collectors.toMap(completion -> completion.getLectureUnit().getId(), completion -> completion));
         lectureUnits.forEach(lectureUnit -> {

@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 @Service
@@ -45,7 +45,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     private final IrisMessageService irisMessageService;
 
-    private final Optional<LectureApi> lectureApi;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final PyrisPipelineService pyrisPipelineService;
 
@@ -56,13 +56,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     private final AuthorizationCheckService authCheckService;
 
     public IrisLectureChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisMessageService irisMessageService, Optional<LectureApi> lectureApi, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
+            IrisMessageService irisMessageService, Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.irisRateLimitService = rateLimitService;
         this.irisMessageService = irisMessageService;
-        this.lectureApi = lectureApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.pyrisPipelineService = pyrisPipelineService;
         this.pyrisJobService = pyrisJobService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -77,7 +77,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     // This is the message from the user sent to Iris
     @Override
     public void requestAndHandleResponse(IrisLectureChatSession lectureChatSession) {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
 
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(lectureChatSession.getId());
         var lecture = api.findByIdElseThrow(session.getLecture().getId());

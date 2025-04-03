@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
@@ -36,13 +36,14 @@ public class LearningObjectService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final SubmissionRepository submissionRepository;
 
-    public LearningObjectService(ParticipantScoreService participantScoreService, Optional<LectureUnitApi> lectureUnitApi, SubmissionRepository submissionRepository) {
+    public LearningObjectService(ParticipantScoreService participantScoreService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            SubmissionRepository submissionRepository) {
         this.participantScoreService = participantScoreService;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.submissionRepository = submissionRepository;
     }
 
@@ -86,11 +87,11 @@ public class LearningObjectService {
      * @param user         the user for which to set the completions
      */
     public void setLectureUnitCompletions(Set<LectureUnit> lectureUnits, User user) {
-        if (lectureUnitApi.isEmpty()) {
+        if (lectureUnitRepositoryApi.isEmpty()) {
             return;
         }
 
-        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitApi.get().findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitRepositoryApi.get().findByLectureUnitsAndUserId(lectureUnits, user.getId());
         lectureUnits.forEach(lectureUnit -> {
             Optional<LectureUnitCompletion> completion = lectureUnitCompletions.stream().filter(lectureUnitCompletion -> lectureUnitCompletion.getLectureUnit().equals(lectureUnit))
                     .findFirst();

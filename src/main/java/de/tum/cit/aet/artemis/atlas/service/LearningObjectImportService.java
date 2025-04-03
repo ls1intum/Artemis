@@ -44,8 +44,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureImportApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitImportApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -90,9 +92,13 @@ public class LearningObjectImportService {
 
     private final QuizExerciseImportService quizExerciseImportService;
 
-    private final Optional<LectureApi> lectureApi;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
-    private final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
+
+    private final Optional<LectureUnitImportApi> lectureUnitImportApi;
+
+    private final Optional<LectureImportApi> lectureImportApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -108,9 +114,10 @@ public class LearningObjectImportService {
             ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseImportService modelingExerciseImportService,
             Optional<TextExerciseImportApi> textExerciseImportApi, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService quizExerciseImportService,
-            Optional<LectureApi> lectureApi, Optional<LectureUnitApi> lectureUnitApi, CourseCompetencyRepository courseCompetencyRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, GradingCriterionRepository gradingCriterionRepository,
-            CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, Optional<LectureUnitImportApi> lectureUnitImportApi,
+            Optional<LectureImportApi> lectureImportApi, CourseCompetencyRepository courseCompetencyRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
+            GradingCriterionRepository gradingCriterionRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
+            CompetencyLectureUnitLinkRepository competencyLectureUnitLinkRepository) {
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
@@ -120,8 +127,10 @@ public class LearningObjectImportService {
         this.textExerciseImportApi = textExerciseImportApi;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = quizExerciseImportService;
-        this.lectureApi = lectureApi;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
+        this.lectureUnitImportApi = lectureUnitImportApi;
+        this.lectureImportApi = lectureImportApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -158,7 +167,7 @@ public class LearningObjectImportService {
 
         courseCompetencyRepository.saveAll(importedCourseCompetencies);
         exerciseRepository.saveAll(importedExercises);
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         api.saveAll(importedLectures);
     }
 
@@ -319,10 +328,11 @@ public class LearningObjectImportService {
     private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
             Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
             Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
-        if (lectureUnitApi.isEmpty()) {
+        if (lectureUnitRepositoryApi.isEmpty() || lectureUnitImportApi.isEmpty()) {
             return;
         }
-        LectureUnitApi api = lectureUnitApi.get();
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.get();
+        LectureUnitImportApi importApi = lectureUnitImportApi.get();
 
         LectureUnit sourceLectureUnit = sourceLectureUnitLink.getLectureUnit();
         Lecture sourceLecture = sourceLectureUnit.getLecture();
@@ -332,7 +342,7 @@ public class LearningObjectImportService {
                 courseToImportInto.getId());
         LectureUnit importedLectureUnit;
         if (foundLectureUnit.isEmpty()) {
-            importedLectureUnit = api.importLectureUnit(sourceLectureUnit);
+            importedLectureUnit = importApi.importLectureUnit(sourceLectureUnit);
 
             importedLecture.getLectureUnits().add(importedLectureUnit);
             importedLectureUnit.setLecture(importedLecture);
@@ -351,12 +361,14 @@ public class LearningObjectImportService {
     }
 
     private Lecture importOrLoadLecture(Lecture sourceLecture, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures) throws NoUniqueQueryException {
-        LectureApi api = lectureApi.orElseThrow(() -> new LectureApiNotPresentException(LectureApi.class));
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+        LectureImportApi importApi = lectureImportApi.orElseThrow(() -> new LectureApiNotPresentException(LectureImportApi.class));
+
         Optional<Lecture> foundLecture = Optional.ofNullable(titleToImportedLectures.get(sourceLecture.getTitle()));
         if (foundLecture.isEmpty()) {
             foundLecture = api.findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(sourceLecture.getTitle(), courseToImportInto.getId());
         }
-        Lecture importedLecture = foundLecture.orElseGet(() -> api.importLecture(sourceLecture, courseToImportInto, false));
+        Lecture importedLecture = foundLecture.orElseGet(() -> importApi.importLecture(sourceLecture, courseToImportInto, false));
         titleToImportedLectures.put(importedLecture.getTitle(), importedLecture);
 
         return importedLecture;

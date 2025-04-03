@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -85,7 +85,7 @@ public class LearningPathService {
 
     private final CompetencyRelationRepository competencyRelationRepository;
 
-    private final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -95,8 +95,9 @@ public class LearningPathService {
 
     public LearningPathService(UserRepository userRepository, LearningPathRepository learningPathRepository, CompetencyProgressRepository competencyProgressRepository,
             LearningPathNavigationService learningPathNavigationService, CourseRepository courseRepository, CompetencyRepository competencyRepository,
-            CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitApi> lectureUnitApi, StudentParticipationRepository studentParticipationRepository,
-            CourseCompetencyRepository courseCompetencyRepository, CourseLearnerProfileService courseLearnerProfileService) {
+            CompetencyRelationRepository competencyRelationRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
+            StudentParticipationRepository studentParticipationRepository, CourseCompetencyRepository courseCompetencyRepository,
+            CourseLearnerProfileService courseLearnerProfileService) {
         this.userRepository = userRepository;
         this.learningPathRepository = learningPathRepository;
         this.competencyProgressRepository = competencyProgressRepository;
@@ -104,7 +105,7 @@ public class LearningPathService {
         this.courseRepository = courseRepository;
         this.competencyRepository = competencyRepository;
         this.competencyRelationRepository = competencyRelationRepository;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.courseLearnerProfileService = courseLearnerProfileService;
@@ -447,7 +448,7 @@ public class LearningPathService {
             return learningPath;
         }
 
-        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         Long userId = learningPath.getUser().getId();
         Set<Long> competencyIds = learningPath.getCompetencies().stream().map(CourseCompetency::getId).collect(Collectors.toSet());
         Map<Long, CompetencyProgress> competencyProgresses = competencyProgressRepository.findAllByCompetencyIdsAndUserId(competencyIds, userId).stream()

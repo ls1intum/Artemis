@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
@@ -59,7 +59,7 @@ public class CompetencyProgressService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -76,11 +76,11 @@ public class CompetencyProgressService {
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
-            ParticipantScoreService participantScoreService, Optional<LectureUnitApi> lectureUnitApi, CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
@@ -162,7 +162,7 @@ public class CompetencyProgressService {
     }
 
     private void updateProgressByCompetencyIdsAndLearningObject(Set<Long> competencyIds, LearningObject learningObject) {
-        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
         for (long competencyId : competencyIds) {
             Set<User> existingCompetencyUsers = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
                     .collect(Collectors.toSet());

@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
-import de.tum.cit.aet.artemis.lecture.api.LectureApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
@@ -83,7 +83,7 @@ class Lti13ServiceTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    private LectureApi lectureApi;
+    private LectureRepositoryApi lectureRepositoryApi;
 
     @Mock
     private CourseTestRepository courseRepository;
@@ -125,7 +125,7 @@ class Lti13ServiceTest {
     @BeforeEach
     void init() {
         closeable = MockitoAnnotations.openMocks(this);
-        lti13Service = new Lti13Service(userRepository, exerciseRepository, Optional.of(lectureApi), courseRepository, launchRepository, ltiService, resultRepository,
+        lti13Service = new Lti13Service(userRepository, exerciseRepository, Optional.of(lectureRepositoryApi), courseRepository, launchRepository, ltiService, resultRepository,
                 tokenRetriever, onlineCourseConfigurationService, restTemplate, artemisAuthenticationProvider, ltiPlatformConfigurationRepository);
         clientRegistrationId = "clientId";
         onlineCourseConfiguration = new OnlineCourseConfiguration();
@@ -631,13 +631,13 @@ class Lti13ServiceTest {
         Lecture mockLecture = new Lecture();
         mockLecture.setId(456L);
 
-        when(lectureApi.findById(456L)).thenReturn(Optional.of(mockLecture));
+        when(lectureRepositoryApi.findById(456L)).thenReturn(Optional.of(mockLecture));
 
         Optional<Lecture> lecture = lti13Service.getLectureFromTargetLink(targetLinkUrl);
 
         assertThat(lecture).isPresent();
         assertThat(lecture.get().getId()).isEqualTo(456L);
-        verify(lectureApi).findById(456L);
+        verify(lectureRepositoryApi).findById(456L);
     }
 
     @Test

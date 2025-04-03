@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 /**
@@ -45,14 +45,14 @@ public class LearningMetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
-    private final Optional<LectureUnitApi> lectureUnitApi;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final CompetencyMetricsRepository competencyMetricsRepository;
 
-    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, Optional<LectureUnitApi> lectureUnitApi,
+    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
-        this.lectureUnitApi = lectureUnitApi;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.competencyMetricsRepository = competencyMetricsRepository;
     }
 
@@ -120,7 +120,7 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
-        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
+        LectureUnitRepositoryApi api = lectureUnitRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitRepositoryApi.class));
 
         final var lectureUnitInfo = api.findAllLectureUnitInformationByCourseId(courseId);
         final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
