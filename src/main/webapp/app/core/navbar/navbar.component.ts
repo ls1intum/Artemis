@@ -7,7 +7,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -139,6 +139,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
+    examEnabled = false;
     irisEnabled: boolean;
     localCIActive = false;
     ltiEnabled: boolean;
@@ -239,6 +240,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
                 this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+                this.examEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM);
                 this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
                 this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
                 this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
