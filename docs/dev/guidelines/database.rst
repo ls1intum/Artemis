@@ -228,7 +228,7 @@ An example implementation could look like this:
             FROM User user
                 JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
@@ -254,7 +254,7 @@ An example implementation could look like this:
             FROM User user
                 JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%

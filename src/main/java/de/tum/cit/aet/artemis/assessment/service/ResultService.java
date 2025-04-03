@@ -504,9 +504,7 @@ public class ResultService {
             deleteLongFeedback(result.getFeedbacks(), result);
 
             // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
-            result.getFeedbacks().forEach(feedback -> {
-                feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null));
-            });
+            result.getFeedbacks().forEach(feedback -> feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null)));
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -589,8 +587,8 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;
-        int totalPages = 0;
-        long totalCount = 0;
+        int totalPages;
+        long totalCount;
         long highestOccurrenceOfGroupedFeedback = 0;
         if (!groupFeedback) {
             // Process and map feedback details, calculating relative count and assigning task names

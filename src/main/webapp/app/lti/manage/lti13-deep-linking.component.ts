@@ -58,10 +58,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     reverse = false;
     isLinking = true;
 
-    //dropdowns
-    isExerciseDropdownOpen = false;
-    isLectureDropdownOpen = false;
-
     // Icons
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
@@ -209,7 +205,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
             };
 
             let resourceType: DeepLinkingType;
-            let contentIds: string | null = null;
+            let contentIds: string | undefined = undefined;
 
             if (this.selectedExercises?.size) {
                 resourceType = DeepLinkingType.EXERCISE;

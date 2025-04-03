@@ -125,5 +125,4 @@ public record ReportingDescriptor(String id, Set<String> deprecatedIds, String g
     public Optional<PropertyBag> getOptionalProperties() {
         return Optional.ofNullable(properties);
     }
-
 }

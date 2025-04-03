@@ -356,12 +356,11 @@ public class ProgrammingExerciseFactory {
             case CLANG_TIDY -> "Lint";
             case CLIPPY -> "Style";
             case DART_ANALYZE -> "LINT";
-            case ESLINT -> "Lint";
+            case ESLINT, RUBOCOP -> "Lint";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
             case RUFF -> "Pylint";
-            case RUBOCOP -> "Lint";
             case OTHER -> "Other";
         };
 

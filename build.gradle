@@ -155,7 +155,7 @@ configurations.configureEach {
 dependencies {
 
     // Required by Spring cloud
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.3"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
@@ -205,7 +205,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.0"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.2"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -279,7 +279,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:6.2.1"
+    implementation "com.zaxxer:HikariCP:6.3.0"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:1.13.0"
@@ -367,7 +367,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.5-jre"
+    implementation "com.google.guava:guava:33.4.6-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -416,7 +416,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.13"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.0"
