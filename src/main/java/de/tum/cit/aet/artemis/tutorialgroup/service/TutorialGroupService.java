@@ -546,11 +546,11 @@ public class TutorialGroupService {
     }
 
     private Set<User> findUsersByRegistrationNumbers(Set<String> registrationNumbers, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName, registrationNumbers));
+        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName, registrationNumbers));
     }
 
     private Set<User> findUsersByLogins(Set<String> logins, String groupName) {
-        return new HashSet<>(userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
+        return new HashSet<>(userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, logins));
     }
 
     /**

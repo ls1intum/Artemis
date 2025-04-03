@@ -54,8 +54,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private profileSubscription: Subscription | null;
 
     exam = input.required<Exam>();
-    getExamRoutesByIdentifier = input.required<any>();
-    private longestWorkingTimeSub: Subscription | null = null;
+    getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
+    private longestWorkingTimeSub: Subscription | undefined = undefined;
 
     examChecklist: ExamChecklist;
     isLoading = false;

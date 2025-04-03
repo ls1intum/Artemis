@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -46,16 +45,13 @@ public class ParticipationAuthorizationCheckService {
 
     private final SubmissionPolicyRepository submissionPolicyRepository;
 
-    private final ParticipationRepository participationRepository;
-
     private final SubmissionRepository submissionRepository;
 
     private final StudentExamRepository studentExamRepository;
 
     public ParticipationAuthorizationCheckService(UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, TeamRepository teamRepository, ExerciseDateService exerciseDateService,
-            SubmissionPolicyRepository submissionPolicyRepository, ParticipationRepository participationRepository, SubmissionRepository submissionRepository,
-            StudentExamRepository studentExamRepository) {
+            SubmissionPolicyRepository submissionPolicyRepository, SubmissionRepository submissionRepository, StudentExamRepository studentExamRepository) {
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
 
@@ -63,7 +59,6 @@ public class ParticipationAuthorizationCheckService {
         this.teamRepository = teamRepository;
         this.exerciseDateService = exerciseDateService;
         this.submissionPolicyRepository = submissionPolicyRepository;
-        this.participationRepository = participationRepository;
         this.submissionRepository = submissionRepository;
         this.studentExamRepository = studentExamRepository;
     }

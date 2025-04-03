@@ -50,7 +50,7 @@ public class TextBlockService {
      * A Text Block is defined (for now) as a Sentence. Delimitation is defined by java.text.BreakIterator or Linebreaks.
      *
      * @param submission TextSubmission to split
-     * @return List of TextBlocks
+     * @return set of TextBlocks
      */
     public Set<TextBlock> splitSubmissionIntoBlocks(TextSubmission submission) {
 

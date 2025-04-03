@@ -49,13 +49,9 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
     private route = inject(ActivatedRoute);
 
-    @Input()
-    mode: ChatServiceMode;
+    @Input() mode: ChatServiceMode;
 
-    @Input()
-    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
-
-    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
+    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
     chatOpen = false;
     isOverflowing = false;
     hasNewMessages = false;
@@ -165,7 +161,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
-            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }
