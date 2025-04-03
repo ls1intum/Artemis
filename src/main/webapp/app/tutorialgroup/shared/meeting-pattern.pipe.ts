@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
 import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
 import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';

@@ -8,7 +8,9 @@
         "paths": {
             "@angular/*": ["node_modules/@angular/*"],
             "app/*": ["src/main/webapp/app/*"]
-        }
+        },
+        "emitDecoratorMetadata": false,
+        "isolatedModules": true
     },
     "files": ["src/test/javascript/spec/jest-test-setup.ts"],
     "include": ["src/test/javascript", "src/main/webapp/app"],

@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
  * <br>
  * <p>
  * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.isDeleted = FALSE` to your query.
+ * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
  * </p>
  */
 @Profile(PROFILE_LOCALVC)

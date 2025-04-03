@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faBan, faPencil, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeArea, KnowledgeAreaDTO, KnowledgeAreaValidators } from 'app/atlas/shared/entities/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable } from 'rxjs';

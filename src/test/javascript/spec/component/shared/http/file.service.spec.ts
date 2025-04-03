@@ -1,9 +1,9 @@
-import { FileService } from 'app/shared/http/file.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { v4 as uuid } from 'uuid';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { FileService } from 'app/shared/service/file.service';
 
 jest.mock('uuid', () => ({
     v4: jest.fn(),

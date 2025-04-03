@@ -10,7 +10,7 @@ import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/share
 import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { WindMetadata } from 'app/programming/shared/entities/wind.metadata';
 import { DockerConfiguration } from 'app/programming/shared/entities/docker.configuration';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 
 describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {

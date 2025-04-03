@@ -15,16 +15,16 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
-import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { cloneDeep } from 'lodash-es';
-import { Exam } from 'app/entities/exam/exam.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/quiz/manage/quiz-exercise-validation.directive';
@@ -36,17 +36,16 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { FormsModule } from '@angular/forms';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { JsonPipe, NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.repository.conversation;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,6 +12,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -105,4 +107,14 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
                 )
             """)
     List<Channel> findAllCourseWideChannelsByUserIdAndCourseIdWithoutConversationParticipant(@Param("courseId") Long courseId, @Param("userId") Long userId);
+
+    @Async
+    @Transactional // ok because of modifying query
+    @Modifying
+    @Query("""
+            UPDATE Conversation c
+            SET c.lastMessageDate = :now
+            WHERE c.id = :conversationId
+            """)
+    void updateLastMessageDateAsync(@Param("conversationId") Long conversationId, @Param("now") ZonedDateTime now);
 }

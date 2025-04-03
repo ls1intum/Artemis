@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { fakeAsync, TestBed } from '@angular/core/testing';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -6,25 +6,25 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
-import { Subject, forkJoin, of } from 'rxjs';
-import { ConversationDTO } from '../../../../../../../main/webapp/app/entities/metis/conversation/conversation.model';
+import { forkJoin, of, Subject } from 'rxjs';
+import { ConversationDTO } from '../../../../../../../main/webapp/app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conversation/conversation-websocket-dto.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MetisPostAction } from 'app/communication/metis.util';
 import dayjs from 'dayjs/esm';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../helpers/mocks/service/mock-notification.service';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
-import { Post } from 'app/entities/metis/post.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;

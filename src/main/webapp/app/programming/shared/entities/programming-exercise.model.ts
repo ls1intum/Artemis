@@ -1,14 +1,13 @@
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exercise, ExerciseType, resetForImport } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { Exercise, ExerciseType, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {
@@ -67,7 +66,6 @@ export class ProgrammingExercise extends Exercise {
     public auxiliaryRepositories?: AuxiliaryRepository[];
     public submissionPolicy?: SubmissionPolicy;
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
-    public buildLogStatistics?: BuildLogStatisticsDTO;
     public buildConfig?: ProgrammingExerciseBuildConfig;
     public releaseTestsWithExampleSolution?: boolean;
 

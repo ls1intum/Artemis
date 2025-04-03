@@ -4,7 +4,7 @@ import { PagingService } from 'app/exercise/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { CourseForImportDTO } from 'app/entities/course.model';
+import { CourseForImportDTO } from 'app/core/shared/entities/course.model';
 
 type EntityResponseType = SearchResult<CourseForImportDTO>;
 

@@ -15,7 +15,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +52,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -63,19 +63,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionFilterService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
-import de.tum.cit.aet.artemis.modeling.service.compass.strategy.NameSimilarity;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
 
@@ -89,7 +84,7 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final Optional<LtiNewResultService> ltiNewResultService;
+    private final Optional<LtiApi> ltiApi;
 
     private final ResultWebsocketService resultWebsocketService;
 
@@ -106,12 +101,6 @@ public class ResultService {
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseDateService exerciseDateService;
-
-    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     private final StudentExamRepository studentExamRepository;
 
@@ -133,19 +122,15 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
-            ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
-            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
-            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionFilterService submissionFilterService) {
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
+            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
+            LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository, BuildJobRepository buildJobRepository,
+            BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
         this.ratingRepository = ratingRepository;
@@ -155,9 +140,6 @@ public class ResultService {
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
-        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
-        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.studentExamRepository = studentExamRepository;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -194,8 +176,8 @@ public class ResultService {
         // if it is an example result we do not have any participation (isExampleResult can be also null)
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
-            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiNewResultService.isPresent()) {
-                ltiNewResultService.get().onNewResult((StudentParticipation) savedResult.getParticipation());
+            if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation && ltiApi.isPresent()) {
+                ltiApi.get().onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             resultWebsocketService.broadcastNewResult(savedResult.getParticipation(), savedResult);
@@ -377,38 +359,6 @@ public class ResultService {
     }
 
     /**
-     * Returns the matching template, solution or student participation for a given build plan key.
-     *
-     * @param planKey the build plan key
-     * @return the matching participation
-     */
-    @Nullable
-    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
-        // we have to support template, solution and student build plans here
-        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
-            return templateProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
-            return solutionProgrammingExerciseParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
-        }
-        List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
-                .findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
-        ProgrammingExerciseStudentParticipation participation = null;
-        if (!participations.isEmpty()) {
-            participation = participations.getFirst();
-            if (participations.size() > 1) {
-                // in the rare case of multiple participations, take the latest one.
-                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
-                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
-                        participation = otherParticipation;
-                    }
-                }
-            }
-        }
-        return participation;
-    }
-
-    /**
      * Get the successful results for an exercise, ordered ascending by build completion date.
      *
      * @param participations  the participations with references to the exercises for which the results should be returned
@@ -554,9 +504,7 @@ public class ResultService {
             deleteLongFeedback(result.getFeedbacks(), result);
 
             // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
-            result.getFeedbacks().forEach(feedback -> {
-                feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null));
-            });
+            result.getFeedbacks().forEach(feedback -> feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null)));
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -639,8 +587,8 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;
-        int totalPages = 0;
-        long totalCount = 0;
+        int totalPages;
+        long totalCount;
         long highestOccurrenceOfGroupedFeedback = 0;
         if (!groupFeedback) {
             // Process and map feedback details, calculating relative count and assigning task names

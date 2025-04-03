@@ -15,6 +15,8 @@ import { VcsRepositoryAccessLogService } from '../../../../../main/webapp/app/lo
 import { SearchResult, SortingOrder } from '../../../../../main/webapp/app/shared/table/pageable-table';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;

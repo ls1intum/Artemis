@@ -3,12 +3,12 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import dayjs from 'dayjs/esm';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
-import { CourseNotificationChannelSetting } from 'app/entities/course-notification/course-notification-channel-setting';
-import { CourseNotificationChannel } from 'app/entities/course-notification/course-notification-channel';
-import { CourseNotificationSettingSpecification } from 'app/entities/course-notification/course-notification-setting-specification';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
+import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
+import { CourseNotificationChannel } from 'app/communication/shared/entities/course-notification/course-notification-channel';
+import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 
 /**
@@ -50,10 +50,13 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     courseName: 'Patterns in Software Engineering',
                     courseTitle: 'Patterns in Software Engineering',
                     postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
-                    answerPostMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
+                    replyMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                     courseIconUrl: undefined,
                     channelName: 'tech-support',
+                    exerciseTitle: 'Modeling 123',
+                    unitName: 'Modeling 123',
                 },
+                '/',
             );
             this.channels = this.settingSpecification().channelSetting;
         });
@@ -75,6 +78,6 @@ export class CourseNotificationSettingSpecificationCardComponent {
      * @returns Whether the channel option should be disabled
      */
     isDisabled(option: string, identifier: string) {
-        return CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES[identifier].includes(option as CourseNotificationChannel);
+        return CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES[identifier]?.includes(option as CourseNotificationChannel) || false;
     }
 }

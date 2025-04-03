@@ -1,7 +1,7 @@
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { OneToOneChatDTO } from '../../../../../../main/webapp/app/entities/metis/conversation/one-to-one-chat.model';
+import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
@@ -10,13 +10,13 @@ import { ConversationHeaderComponent } from 'app/communication/course-conversati
 import { CourseWideSearchComponent } from 'app/communication/course-conversations/course-wide-search/course-wide-search.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations/layout/conversation-messages/conversation-messages.component';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, of } from 'rxjs';
 import { NgbModal, NgbModalRef, NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, convertToParamMap, Params, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MetisService } from 'app/communication/metis.service';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -31,15 +31,15 @@ import { CourseOverviewService } from 'app/core/course/overview/course-overview.
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations/group-chat-create-dialog/group-chat-create-dialog.component';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
-import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/communication/course-conversations/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { ChannelsCreateDialogComponent } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/entities/metis/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ElementRef, signal } from '@angular/core';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
@@ -490,7 +490,7 @@ examples.forEach((activeConversation) => {
         describe('query parameter handling', () => {
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                    conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                 };
                 activatedRoute.queryParams = of(queryParams);
 
@@ -557,7 +557,7 @@ examples.forEach((activeConversation) => {
 
             it('should handle multiple query parameters together', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                    conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                     focusPostId: '456',
                     openThreadOnFocus: 'true',
                     messageId: '789',
@@ -643,12 +643,12 @@ examples.forEach((activeConversation) => {
         describe('conversation selection', () => {
             it('should handle numeric conversationId', () => {
                 component.onConversationSelected(123);
-                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
             });
 
             it('should handle valid string conversationId as SavedPostStatus', () => {
-                const validStatus = SavedPostStatusMap.ARCHIVED.toString();
+                const validStatus = SavedPostStatus.ARCHIVED.toString().toLowerCase();
                 component.onConversationSelected(validStatus);
                 expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
                 expect(component.postInThread).toBeUndefined();
@@ -659,7 +659,7 @@ examples.forEach((activeConversation) => {
             it('should ignore invalid string conversationId', () => {
                 const invalidStatus = 'invalidStatus';
                 component.onConversationSelected(invalidStatus);
-                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
             });
 

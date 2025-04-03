@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, viewChild } from '@angular/core';
 import interact from 'interactjs';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

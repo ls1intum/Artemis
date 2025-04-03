@@ -1,19 +1,18 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizParticipationComponent } from 'app/quiz/overview/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -32,6 +31,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 const now = dayjs();
 const question1: QuizQuestion = {

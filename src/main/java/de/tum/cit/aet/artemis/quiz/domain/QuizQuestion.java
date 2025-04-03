@@ -15,14 +15,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -74,9 +72,6 @@ public abstract class QuizQuestion extends DomainObject {
     @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @Column(name = "quiz_group_id")
-    private Long quizGroupId;
-
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuizQuestionStatistic quizQuestionStatistic;
@@ -84,9 +79,6 @@ public abstract class QuizQuestion extends DomainObject {
     @ManyToOne
     @JsonIgnore
     private QuizExercise exercise;
-
-    @Transient
-    private QuizGroup quizGroup;
 
     public String getTitle() {
         return title;
@@ -181,24 +173,6 @@ public abstract class QuizQuestion extends DomainObject {
 
     public void setExercise(QuizExercise quizExercise) {
         this.exercise = quizExercise;
-    }
-
-    public Long getQuizGroupId() {
-        return quizGroupId;
-    }
-
-    public void setQuizGroupId(Long quizGroupId) {
-        this.quizGroupId = quizGroupId;
-    }
-
-    @JsonProperty(value = "quizGroup", access = JsonProperty.Access.READ_ONLY)
-    public QuizGroup getQuizGroup() {
-        return quizGroup;
-    }
-
-    @JsonProperty(value = "quizGroup", access = JsonProperty.Access.WRITE_ONLY)
-    public void setQuizGroup(QuizGroup quizGroup) {
-        this.quizGroup = quizGroup;
     }
 
     /**

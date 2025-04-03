@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
@@ -11,9 +11,9 @@ import { expect } from '@playwright/test';
 import { SshEncryptionAlgorithm } from '../../../support/pageobjects/exercises/programming/GitClient';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
-import { Team } from 'app/entities/team.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { GitCloneMethod } from '../../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 
 test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
