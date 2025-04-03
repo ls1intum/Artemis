@@ -27,6 +27,11 @@ class ArtemisConfigHelperTest {
         testProperty(artemisConfigHelper::isAtlasEnabled, Constants.ATLAS_ENABLED_PROPERTY_NAME);
     }
 
+    @Test
+    void testExamProperty() {
+        testProperty(artemisConfigHelper::isExamEnabled, Constants.EXAM_ENABLED_PROPERTY_NAME);
+    }
+
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {
         mockProperty(propertyName, true);
         assertThat(propertyTest.apply(mockEnv)).isTrue();
