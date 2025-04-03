@@ -60,7 +60,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 2, max = 6)
     private String langKey;
 
-    private boolean isInternal;
+    private boolean internal;
 
     private ZonedDateTime lastNotificationRead;
 
@@ -90,7 +90,7 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
+            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
             Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
@@ -103,7 +103,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
-        this.isInternal = isInternal;
+        this.internal = internal;
         this.setCreatedBy(createdBy);
         this.setCreatedDate(createdDate);
         this.setLastModifiedBy(lastModifiedBy);
@@ -268,11 +268,11 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public boolean isInternal() {
-        return isInternal;
+        return internal;
     }
 
     public void setInternal(boolean internal) {
-        isInternal = internal;
+        this.internal = internal;
     }
 
     public ZonedDateTime getExternalLLMUsageAccepted() {

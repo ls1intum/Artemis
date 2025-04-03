@@ -23,7 +23,7 @@ import de.jplag.Language;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -128,7 +128,7 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
+                    textSubmissionExportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
                             participantIdentifier, submissionsFolderName);
                 }
                 catch (IOException e) {

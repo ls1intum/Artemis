@@ -188,7 +188,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     void testStartExerciseWithProgrammingExercise() throws Exception {
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
 
         createStudentExams(programmingExercise);
 
@@ -223,7 +223,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         ProgrammingExercise programmingExercise = createProgrammingExercise();
 
-        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService);
+        participationUtilService.mockCreationOfExerciseParticipation(programmingExercise, versionControlService, continuousIntegrationService, localVCGitBranchService);
 
         createStudentExams(programmingExercise);
 
