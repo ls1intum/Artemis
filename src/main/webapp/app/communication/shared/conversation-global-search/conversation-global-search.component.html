@@ -31,7 +31,7 @@
         />
 
         @if (fullSearchTerm || selectedConversations.length > 0 || selectedConversations.length > 0) {
-            <button type="button" class="btn-close btn-sm ms-1" aria-label="Remove" (click)="clearSearch()"></button>
+            <button type="button" class="btn-close ms-1" aria-label="Clear search" (click)="clearSearch()"></button>
         }
     </div>
     <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />
