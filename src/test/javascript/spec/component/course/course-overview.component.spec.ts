@@ -61,6 +61,7 @@ import { CourseRegistrationComponent } from 'app/core/course/overview/course-reg
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -257,7 +258,8 @@ describe('CourseOverviewComponent', () => {
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
                     of({
                         inProduction: true,
-                        activeProfiles: ['prod', 'atlas', 'iris', 'lti'],
+                        activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                        activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
                         testServer: false,
                     } as ProfileInfo),
                 );

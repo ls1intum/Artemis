@@ -57,6 +57,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -247,8 +248,8 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
                     of({
                         inProduction: true,
-                        activeProfiles: ['prod', 'atlas', 'iris', 'lti'],
-                        testServer: false,
+                        activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                        activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
                     } as ProfileInfo),
                 );
 

@@ -31,7 +31,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
-import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -110,7 +110,7 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             if (profileInfo) {
                 this.isProduction.set(profileInfo?.inProduction);
                 this.isTestServer.set(profileInfo.testServer ?? false);
-                this.atlasEnabled.set(profileInfo.activeProfiles.includes(PROFILE_ATLAS));
+                this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
                 this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
                 this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
                 this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
