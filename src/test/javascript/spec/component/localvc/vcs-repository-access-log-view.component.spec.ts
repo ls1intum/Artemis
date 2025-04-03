@@ -2,21 +2,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { MockDirective } from 'ng-mocks';
+import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import '@angular/localize/init';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { VcsRepositoryAccessLogViewComponent } from 'app/programming/manage/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 import { VcsAccessLogDTO } from 'app/programming/shared/entities/vcs-access-log-entry.model';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
-import { VcsRepositoryAccessLogService } from '../../../../../main/webapp/app/localvc/vcs-repository-access-log-view/vcs-repository-access-log.service';
 import { SearchResult, SortingOrder } from '../../../../../main/webapp/app/shared/table/pageable-table';
 import { TranslateDirective } from '../../../../../main/webapp/app/shared/language/translate.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { VcsRepositoryAccessLogService } from '../../../../../main/webapp/app/programming/service/vcs-repository-access-log.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
