@@ -35,7 +35,7 @@ export class ProgressBarComponent implements OnChanges, OnDestroy {
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.percentage) {
-            if (isNaN(this.percentage)) {
+            if (isNaN(this.percentage) && this.numerator === 0 && this.denominator === 0) {
                 this.percentage = 0;
             } else {
                 this.percentage = round(this.percentage);
