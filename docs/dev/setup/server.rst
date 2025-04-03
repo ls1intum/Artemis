@@ -20,9 +20,9 @@ Instead, follow these best practices:
 	* In ``src/main/resources/config``, create a new file named ``application-local.yml``.
 	* This file is used to override settings in application.yml for local development environments. It is configured to be ignored by Git to ensure that local configurations are not committed.
 
-#. **Copy and customize configuration settings**
-	* Copy relevant settings from ``application-artemis.yml`` into ``application-local.yml``.
-	* Modify values as needed, such as database credentials and authentication settings.
+#. **Customize configuration settings**
+    * If you want to change application properties, you should do that in ``application-local.yml``.
+    * If needed, you can modify values such as database credentials, authentication and application settings.
 
 #. **Activate the correct profile**
 	* When running Artemis, ensure the ``local`` profile is selected in the run configurations.
