@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
+import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 
 @Injectable({ providedIn: 'root' })

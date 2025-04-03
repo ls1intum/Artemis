@@ -5,7 +5,7 @@ import { LearnerProfileApiService } from 'app/learner-profile/service/learner-pr
 import { Course } from 'app/entities/course.model';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
+import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';

@@ -271,7 +271,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVc+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -611,6 +611,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
 
         var exam = examUtilService.addTextModelingProgrammingExercisesToExam(exam2, true, false);
         final var testRun = examUtilService.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
+        var programmingExercise = (ProgrammingExercise) exam.getExerciseGroups().get(2).getExercises().iterator().next();
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("instructorRepo", "instructorOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, instructor.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, instructor.getLogin(), Set.of(instructor), true);
+
         assertThat(testRun.isTestRun()).isTrue();
 
         var response = request.get("/api/exam/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId() + "/conduction", HttpStatus.OK,
@@ -2197,17 +2204,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         jenkinsRequestMockProvider.reset();
 
         User student = finalStudentExam.getUser();
-        for (StudentExam studentExam : studentExamRepository.findByExamId(exam1.getId())) {
-            if (student.getLogin().equals(studentExam.getUser().getLogin())) {
-                studentExamRepository.delete(studentExam);
-            }
-        }
-
         final String noParticipationGrade = "NoParticipation";
-
         studentExam1.setSubmitted(false);
         studentExam1.setUser(student);
-        studentExamRepository.save(studentExam1);
+        studentExam1 = studentExamRepository.save(studentExam1);
 
         StudentExam bonusStudentExam = studentExam1;
 

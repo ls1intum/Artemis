@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
+import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

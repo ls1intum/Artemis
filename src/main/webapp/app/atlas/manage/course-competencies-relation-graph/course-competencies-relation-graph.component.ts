@@ -2,7 +2,7 @@ import { Component, computed, effect, input, model, output, signal } from '@angu
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
 
 import { Edge, NgxGraphModule, Node } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';

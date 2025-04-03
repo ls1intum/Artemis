@@ -1,13 +1,13 @@
 import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { iconsAsHTML } from 'app/utils/icons.utils';
+import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { UserService } from 'app/core/user/shared/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';

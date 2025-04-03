@@ -5,7 +5,7 @@ import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
-import { CourseLearnerProfileDTO } from 'app/entities/learner-profile.model';
+import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';

@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
@@ -123,5 +123,11 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.examNavigation.handInEarly();
         const response = await this.examStartEnd.finishExam();
         expect(response.status()).toBe(200);
+    }
+
+    async checkExerciseScore(expectedResult: string) {
+        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
+        await resultScore.waitFor({ state: 'visible' });
+        await expect(resultScore.getByText(expectedResult)).toBeVisible();
     }
 }

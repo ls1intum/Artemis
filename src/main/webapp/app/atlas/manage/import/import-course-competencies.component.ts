@@ -1,6 +1,6 @@
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { CourseCompetencyFilter, PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';

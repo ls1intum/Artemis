@@ -224,8 +224,8 @@ Update exercise code in repositories
 
 - **Alternative 1:** Clone the 3 repositories and adapt the code on your local computer in your preferred development environment (e.g. Eclipse).
 
-  - To execute tests, copy the template (or solution) code into a folder **assignment** in the test repository and execute the tests (e.g. using maven clean test)
-  - Commit and push your changes |submit|
+  - To execute tests, copy the template (or solution) code into a folder **assignment** either inside the test repository or its parent directory (depending on the selected language) and execute the tests (e.g. using ``mvn clean test``)
+  - Commit and push your changes via Git
 
   - **Notes for Haskell:** In addition to the assignment folder, the executables of the build file expect the solution repository checked out in the **solution** subdirectory of the test folder and also allow for a **template** subdirectory to easily test the template on your local machine.
     You can use the following script to conveniently checkout an exercise and create the right folder structure:
@@ -334,14 +334,59 @@ Update exercise code in repositories
 
 - **Alternative 2:** Open |edit-in-editor| in Artemis (in the browser) and adapt the code in the online code editor
 
-  - You can change between the different repos and submit the code when needed
+  - You can change between the different repos and submit |submit| the code when needed
 
   **Edit in Editor**
 
   .. figure:: programming/instructor-editor.png
             :align: center
 
-- **Alternative 3:** Use IntelliJ with the Orion plugin and change the code directly in IntelliJ
+- You write the test cases in the **Test** repository using the language-specific testing framework. It should create JUnit-style XML files.
+  The templates are configured with the following frameworks:
+
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  | No. | Programming Language | Package Manager | Build System              | Testing Framework                                                                          |
+  +=====+======================+=================+===========================+============================================================================================+
+  |   1 | Java                 | Maven / Gradle                              | `JUnit 5 <https://junit.org/junit5/>`_ with `Ares <https://github.com/ls1intum/Ares>`_     |
+  +-----+----------------------+---------------------------------------------+--------------------------------------------------------------------------------------------+
+  |   2 | Python               | pip                                         | `pytest <https://docs.pytest.org/en/stable/>`_                                             |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   3 | C                    | \-              | Makefile                  | Python scripts / `FACT <https://fact.readthedocs.io/en/latest/>`_                          |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   4 | Haskell              | Stack                                       | `Tasty <https://hackage.haskell.org/package/tasty>`_                                       |
+  +-----+----------------------+---------------------------------------------+--------------------------------------------------------------------------------------------+
+  |   5 | Kotlin               | Maven                                       | `JUnit 5 <https://junit.org/junit5/>`_ with `Ares <https://github.com/ls1intum/Ares>`_     |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   6 | VHDL                 | \-              | Makefile                  | Python scripts                                                                             |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   7 | Assembler            | \-              | Makefile                  | Python scripts                                                                             |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   8 | Swift                | SwiftPM                                     | `XCTest <https://developer.apple.com/documentation/xctest>`_                               |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |   9 | OCaml                | opam            | Dune                      | `OUnit2 <https://gildor478.github.io/ounit/ounit2/index.html>`_                            |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  10 | Rust                 | cargo                                       | `cargo test <https://doc.rust-lang.org/book/ch11-00-testing.html>`_                        |
+  +-----+----------------------+---------------------------------------------+--------------------------------------------------------------------------------------------+
+  |  11 | JavaScript           | npm                                         | `Jest <https://jestjs.io/>`_                                                               |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  12 | R                    | built-in        | \-                        | `testthat <https://testthat.r-lib.org/>`_                                                  |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  13 | C++                  | \-              | CMake with Python scripts | `Catch2 <https://github.com/catchorg/Catch2>`_                                             |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  14 | TypeScript           | npm                                         | `Jest <https://jestjs.io/>`_                                                               |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  15 | C#                   | NuGet           | dotnet                    | `NUnit <https://nunit.org/>`_                                                              |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  16 | Go                   | built-in                                    | `go testing <https://pkg.go.dev/testing>`_                                                 |
+  +-----+----------------------+---------------------------------------------+--------------------------------------------------------------------------------------------+
+  |  17 | Bash                 | \-                                          | `Bats <https://bats-core.readthedocs.io/en/stable/>`_                                      |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  18 | MATLAB               | mpminstall      | \-                        | `matlab.unittest <https://www.mathworks.com/help/matlab/matlab-unit-test-framework.html>`_ |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  19 | Ruby                 | Gem             | Rake                      | `minitest <https://docs.seattlerb.org/minitest/>`_                                         |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
+  |  20 | Dart                 | pub             | built-in                  | `package.test <https://dart.dev/tools/testing>`_                                           |
+  +-----+----------------------+-----------------+---------------------------+--------------------------------------------------------------------------------------------+
 
 - Check the results of the template and the solution build plan
 - They should not have the status |build_failed|
@@ -417,20 +462,22 @@ Edit Container Configuration
 
 This section is optional. In most cases, the default container configuration does not need to be changed.
 
-Currently, instructors can only change whether the container has internet access and add additional environment variables.
+Currently, instructors can change whether the container has internet access, add additional environment variables, and configure resource limits such as CPU and memory.
 Disabling internet access can be useful if instructors want to prevent students from downloading additional dependencies during the build process.
 If internet access is disabled, the container cannot access the internet during the build process. Thus, it will not be able to download additional dependencies.
-The dependencies must then be included/cached in the docker image.
+The dependencies must then be included/cached in the Docker image.
 
-Additional environment variables can be added to the container configuration. This can be useful if the build process requires additional environment variables to be set.
+Additional environment variables can be added to the container configuration. This can be useful if the build process requires specific variables to be set.
+
+Instructors can also adjust resource limits for the container.
+The number of CPU cores allocated to the container can be modified, as well as the maximum amount of memory and memory swap that the container is allowed to use.
+These settings help ensure that resource usage is balanced while allowing for flexibility in configuring the build environment.
+If set too high, the specified values may be overwritten by the maximum restrictions set by the administrators. Contact the administrators for more information.
 
 .. figure:: programming/docker-flags-edit.png
           :align: center
 
 We plan to add more options to the container configuration in the future.
-
-.. warning::
-  - Disabling internet access is not currently supported for Swift and Haskell exercises.
 
 
 .. _configure_static_code_analysis_tools:
@@ -439,26 +486,54 @@ Configure static code analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - The **Test** repository contains files for the configuration of static code analysis tools if static code analysis was activated during the creation/import of the exercise
-- The folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
+- For Java exercises, the folder *staticCodeAnalysisConfig* contains configuration files for each used static code analysis tool
 - On exercise creation, Artemis generates a default configuration for each tool, which contains a predefined set of parameterized activated/excluded rules. The configuration files serve as a documented template that instructors can freely tailor to their needs.
 - On exercise import, Artemis copies the configuration files from the imported exercise
 - The following table depicts the supported static code analysis tools for each programming language, the dependency mechanism used to execute the tools, and the name of their respective configuration files
 
-+----------------------+---------------------------+-------------------------------+------------------------------+
-| Programming Language | Execution Mechanism       | Supported Tools               | Configuration File           |
-+======================+===========================+===============================+==============================+
-| Java                 | Maven plugins             | Spotbugs                      | spotbugs-exclusions.xml      |
-|                      | (pom.xml or build.gradle) +-------------------------------+------------------------------+
-|                      |                           | Checkstyle                    | checkstyle-configuration.xml |
-|                      |                           +-------------------------------+------------------------------+
-|                      |                           | PMD                           | pmd-configuration.xml        |
-|                      |                           +-------------------------------+------------------------------+
-|                      |                           | PMD Copy/Paste Detector (CPD) |                              |
-+----------------------+---------------------------+-------------------------------+------------------------------+
-| Swift                | Script                    | SwiftLint                     | .swiftlint.yml               |
-+----------------------+---------------------------+-------------------------------+------------------------------+
-| C                    | Script                    | GCC                           |                              |
-+----------------------+---------------------------+-------------------------------+------------------------------+
++-----+-----------------------+-------------------------------+------------------------------+
+| No. | Programming Language  | Supported Tools               | Configuration File           |
++=====+=======================+===============================+==============================+
+|   1 | Java                  | `Spotbugs`_                   | spotbugs-exclusions.xml      |
+|     |                       +-------------------------------+------------------------------+
+|     |                       | `Checkstyle`_                 | checkstyle-configuration.xml |
+|     |                       +-------------------------------+------------------------------+
+|     |                       | `PMD`_                        | pmd-configuration.xml        |
+|     |                       +-------------------------------+------------------------------+
+|     |                       | PMD Copy/Paste Detector (CPD) |                              |
++-----+-----------------------+-------------------------------+------------------------------+
+|   2 | Python                | `Ruff`_                       | ruff-student.toml            |
++-----+-----------------------+-------------------------------+------------------------------+
+|   3 | C                     | GCC                           |                              |
++-----+-----------------------+-------------------------------+------------------------------+
+|   8 | Swift                 | `SwiftLint`_                  | .swiftlint.yml               |
++-----+-----------------------+-------------------------------+------------------------------+
+|  10 | Rust                  | `Clippy`_                     | clippy.toml                  |
++-----+-----------------------+-------------------------------+------------------------------+
+|  11 | JavaScript            | `ESLint`_                     | eslint.config.mjs            |
++-----+-----------------------+                               |                              |
+|  14 | TypeScript            |                               |                              |
++-----+-----------------------+-------------------------------+------------------------------+
+|  12 | R                     | `lintr`_                      | .lintr                       |
++-----+-----------------------+-------------------------------+------------------------------+
+|  13 | C++                   | `Clang-Tidy`_                 | .clang-tidy                  |
++-----+-----------------------+-------------------------------+------------------------------+
+|  19 | Ruby                  | `Rubocop`_                    | .rubocop.yml                 |
++-----+-----------------------+-------------------------------+------------------------------+
+|  20 | Dart                  | `dart analyze`_               | analysis_options.yaml        |
++-----+-----------------------+-------------------------------+------------------------------+
+
+.. _Checkstyle: https://checkstyle.org/
+.. _Clang-Tidy: https://clang.llvm.org/extra/clang-tidy/
+.. _Clippy: https://doc.rust-lang.org/clippy/
+.. _ESLint: https://eslint.org/
+.. _PMD: https://pmd.github.io/
+.. _Rubocop: https://rubocop.org/
+.. _Ruff: https://docs.astral.sh/ruff/
+.. _Spotbugs: https://spotbugs.github.io/
+.. _SwiftLint: https://realm.github.io/SwiftLint/
+.. _dart analyze: https://dart.dev/tools/analysis
+.. _lintr: https://lintr.r-lib.org/
 
 .. note::
   The Maven plugins for the Java static code analysis tools provide additional configuration options.
@@ -649,6 +724,23 @@ To get a better understanding of the feature, you can watch the following video:
   .. note::
     The GCC SCA option for C does not offer categories by default. The issues were categorized during parsing with respect to the :ref:`rules <c_sca_default_config>`.
 
+  - Other languages use categories defined by their static code analysis tool:
+
+    - JavaScript, TypeScript, C++ and R only use the ``Lint`` category.
+    - Dart's analyzer can generate these categories:
+
+      - ``TODO``
+      - ``HINT``
+      - ``COMPILE_TIME_ERROR``
+      - ``CHECKED_MODE_COMPILE_TIME_ERROR``
+      - ``STATIC_WARNING``
+      - ``SYNTACTIC_ERROR``
+      - ``LINT``
+
+    - Python uses Ruff's tool names: https://docs.astral.sh/ruff/rules/
+    - Ruby uses Rubocop's Department names: https://docs.rubocop.org/rubocop/cops.html
+    - Rust uses Clippy's lint groups: https://rust-lang.github.io/rust-clippy/stable/index.html
+
   - On the left side of the page, instructors can configure the static code analysis categories.
 
     - **Category**: The name of category defined by Artemis
@@ -800,4 +892,3 @@ After verifying the exercise configuration, Artemis provides an advanced **Feedb
     <iframe src="https://live.rbg.tum.de/w/artemisintro/56245?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="400">
         Watch this video on TUM-Live.
     </iframe>
-

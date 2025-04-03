@@ -46,24 +46,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendModelingExerciseSchedule(Long exerciseId) {
-        log.info("Sending schedule for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE, exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseScheduleCancel(Long exerciseId) {
-        log.info("Sending schedule cancel for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL, exerciseId);
-    }
-
-    @Override
-    public void sendModelingExerciseInstantClustering(Long exerciseId) {
-        log.info("Sending schedule instant clustering for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING, exerciseId);
-    }
-
-    @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for text exercise {} to broker.", exerciseId);
         sendMessageDelayed(MessageTopic.TEXT_EXERCISE_SCHEDULE, exerciseId);

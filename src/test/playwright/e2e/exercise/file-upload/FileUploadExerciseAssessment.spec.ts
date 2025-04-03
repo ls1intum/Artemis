@@ -1,5 +1,5 @@
-import { Course } from 'app/entities/course.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -51,6 +51,7 @@ test.describe('File upload exercise assessment', { tag: '@fast' }, () => {
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.problemStatement!)).toBeVisible();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.exampleSolution!)).toBeVisible();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().locator('.collapse.show').getByText(exercise.gradingInstructions!)).toBeVisible();
+            await fileUploadExerciseAssessment.downloadSubmissionFile();
             await fileUploadExerciseAssessment.addNewFeedback(tutorFeedbackPoints, tutorFeedback);
             await fileUploadExerciseAssessment.submitFeedback();
         });

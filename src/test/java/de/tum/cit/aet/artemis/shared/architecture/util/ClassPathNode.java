@@ -165,10 +165,9 @@ public abstract class ClassPathNode implements Comparable<ClassPathNode>, Iterab
         if (this == obj) {
             return true;
         }
-        if (!(obj instanceof ClassPathNode)) {
+        if (!(obj instanceof ClassPathNode other)) {
             return false;
         }
-        ClassPathNode other = (ClassPathNode) obj;
         return name.equals(other.name);
     }
 

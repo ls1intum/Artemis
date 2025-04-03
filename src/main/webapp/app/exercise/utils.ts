@@ -1,7 +1,7 @@
 import { SafeHtml } from '@angular/platform-browser';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { Detail } from 'app/detail-overview-list/detail.model';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { Detail } from 'app/shared/detail-overview-list/detail.model';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 export function getExerciseGeneralDetailsSection(exercise: Exercise): DetailOverviewSection {
     return {

@@ -1,15 +1,16 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
+import { BehaviorSubject } from 'rxjs';
 
 describe('ProfileService', () => {
     let service: ProfileService;
@@ -58,7 +59,6 @@ describe('ProfileService', () => {
             dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
         },
         'display-ribbon-on-profiles': 'dev',
-        'allowed-minimum-orion-version': '1.0.0',
         build: {
             artifact: 'Artemis',
             name: 'Artemis',
@@ -129,6 +129,7 @@ describe('ProfileService', () => {
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
+        activeModuleFeatures: [],
         git: {
             branch: 'code-button',
             commit: {
@@ -142,7 +143,7 @@ describe('ProfileService', () => {
             },
         },
         operatorName: 'TUM',
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
     };
 
     const expectedProfileInfo: ProfileInfo = {
@@ -153,7 +154,7 @@ describe('ProfileService', () => {
         ]),
         useExternal: false,
         activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
-        allowedMinimumOrionVersion: '1.0.0',
+        activeModuleFeatures: [],
         testServer: true,
         ribbonEnv: '',
         guidedTourMapping: {
@@ -253,7 +254,7 @@ describe('ProfileService', () => {
                 },
             },
         },
-        theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
         operatorName: 'TUM',
     };
 
@@ -294,5 +295,30 @@ describe('ProfileService', () => {
             req.flush(serverResponse);
             tick();
         }));
+
+        it('should return true if the profile is active', () => {
+            service['profileInfo'] = new BehaviorSubject({
+                activeProfiles: ['dev', 'prod'],
+            } as any);
+            expect(service.isProfileActive('dev')).toBeTrue();
+            expect(service.isProfileActive('prod')).toBeTrue();
+        });
+
+        it('should return false if the profile is not active', () => {
+            service['profileInfo'] = new BehaviorSubject({
+                activeProfiles: ['prod'],
+            } as any);
+            expect(service.isProfileActive('dev')).toBeFalse();
+        });
+
+        it('should return false if profileInfo is undefined', () => {
+            service['profileInfo'] = undefined!;
+            expect(service.isProfileActive('dev')).toBeFalse();
+        });
+
+        it('should return false if activeProfiles is undefined', () => {
+            service['profileInfo'] = new BehaviorSubject({} as any);
+            expect(service.isProfileActive('dev')).toBeFalse();
+        });
     });
 });

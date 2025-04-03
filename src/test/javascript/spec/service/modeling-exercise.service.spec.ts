@@ -2,15 +2,13 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import dayjs from 'dayjs/esm';
-import { ModelingPlagiarismResult } from 'app/plagiarism/shared/types/modeling/ModelingPlagiarismResult';
-import { PlagiarismOptions } from 'app/plagiarism/shared/types/PlagiarismOptions';
 import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -22,7 +20,6 @@ describe('ModelingExercise Service', () => {
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
-    let plagiarismResult: ModelingPlagiarismResult;
     const category = new ExerciseCategory('testCategory', 'red');
     const categories = [JSON.stringify(category) as unknown as ExerciseCategory] as ExerciseCategory[];
     beforeEach(() => {
@@ -45,11 +42,6 @@ describe('ModelingExercise Service', () => {
         elemDefault.releaseDate = dayjs();
         elemDefault.assessmentDueDate = dayjs();
         elemDefault.studentParticipations = [];
-        plagiarismResult = new ModelingPlagiarismResult();
-        plagiarismResult.exercise = elemDefault;
-        plagiarismResult.comparisons = [];
-        plagiarismResult.duration = 43;
-        plagiarismResult.similarityDistribution = [3, 10];
     });
 
     it('should find an element', fakeAsync(() => {
@@ -150,77 +142,6 @@ describe('ModelingExercise Service', () => {
             });
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/import/${modelingExercise.id}` });
         req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should check plagiarism result', fakeAsync(() => {
-        elemDefault.id = 756;
-
-        const returnedFromService = {
-            ...plagiarismResult,
-        };
-
-        const options = new PlagiarismOptions(9, 4, 6);
-
-        const expected = { ...returnedFromService };
-        service
-            .checkPlagiarism(elemDefault.id, options)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/check-plagiarism?similarityThreshold=9&minimumScore=4&minimumSize=6` });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should get plagiarism result', fakeAsync(() => {
-        elemDefault.id = 756;
-
-        const returnedFromService = {
-            ...plagiarismResult,
-        };
-
-        const expected = { ...returnedFromService };
-        service
-            .getLatestPlagiarismResult(elemDefault.id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/plagiarism-result` });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should get number of clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-        const expected = 1;
-        service
-            .getNumberOfClusters(elemDefault.id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/${elemDefault.id}/check-clusters` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should build clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-        const expected = {};
-        service
-            .buildClusters(elemDefault.id)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.adminResourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
-        req.flush(expected);
-        tick();
-    }));
-
-    it('should delete clusters', fakeAsync(() => {
-        elemDefault.id = 756;
-
-        // We use a fake async and don't need to await the promise
-        // eslint-disable-next-line jest/valid-expect
-        expect(lastValueFrom(service.deleteClusters(elemDefault.id))).toResolve();
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.adminResourceUrl}/${elemDefault.id}/clusters` });
-        req.flush(null);
         tick();
     }));
 
