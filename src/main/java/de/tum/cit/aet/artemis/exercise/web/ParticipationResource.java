@@ -421,7 +421,7 @@ public class ParticipationResource {
         StudentParticipation updatedParticipation = null;
         switch (exercise) {
             case TextExercise textExercise -> {
-                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class, PROFILE_CORE));
+                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class));
                 updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
             }
             case ModelingExercise modelingExercise -> updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
