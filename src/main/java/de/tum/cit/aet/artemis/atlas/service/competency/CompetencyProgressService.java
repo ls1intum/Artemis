@@ -40,8 +40,9 @@ import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service for calculating the progress of a student in a competency.
@@ -58,7 +59,7 @@ public class CompetencyProgressService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitApi> lectureUnitApi;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
 
@@ -75,12 +76,11 @@ public class CompetencyProgressService {
     private static final double CONFIDENCE_REASON_DEADZONE = 0.05;
 
     public CompetencyProgressService(CompetencyProgressRepository competencyProgressRepository, LearningPathService learningPathService,
-            ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            CourseCompetencyRepository courseCompetencyRepository) {
+            ParticipantScoreService participantScoreService, Optional<LectureUnitApi> lectureUnitApi, CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyProgressRepository = competencyProgressRepository;
         this.learningPathService = learningPathService;
         this.participantScoreService = participantScoreService;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitApi = lectureUnitApi;
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
@@ -162,12 +162,13 @@ public class CompetencyProgressService {
     }
 
     private void updateProgressByCompetencyIdsAndLearningObject(Set<Long> competencyIds, LearningObject learningObject) {
+        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
         for (long competencyId : competencyIds) {
             Set<User> existingCompetencyUsers = competencyProgressRepository.findAllByCompetencyId(competencyId).stream().map(CompetencyProgress::getUser)
                     .collect(Collectors.toSet());
             Set<User> existingLearningObjectUsers = switch (learningObject) {
                 case Exercise exercise -> participantScoreService.getAllParticipatedUsersInExercise(exercise);
-                case LectureUnit lectureUnit -> lectureUnitCompletionRepository.findCompletedUsersForLectureUnit(lectureUnit);
+                case LectureUnit lectureUnit -> api.findCompletedUsersForLectureUnit(lectureUnit);
                 default -> throw new IllegalStateException("Unexpected value: " + learningObject);
             };
             existingCompetencyUsers.addAll(existingLearningObjectUsers);

@@ -11,6 +11,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.function.ToDoubleFunction;
 
@@ -32,7 +33,8 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 /**
  * Service class to access metrics regarding students' learning progress.
@@ -43,14 +45,14 @@ public class LearningMetricsService {
 
     private final ExerciseMetricsRepository exerciseMetricsRepository;
 
-    private final LectureUnitMetricsRepository lectureUnitMetricsRepository;
+    private final Optional<LectureUnitApi> lectureUnitApi;
 
     private final CompetencyMetricsRepository competencyMetricsRepository;
 
-    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, LectureUnitMetricsRepository lectureUnitMetricsRepository,
+    public LearningMetricsService(ExerciseMetricsRepository exerciseMetricsRepository, Optional<LectureUnitApi> lectureUnitApi,
             CompetencyMetricsRepository competencyMetricsRepository) {
         this.exerciseMetricsRepository = exerciseMetricsRepository;
-        this.lectureUnitMetricsRepository = lectureUnitMetricsRepository;
+        this.lectureUnitApi = lectureUnitApi;
         this.competencyMetricsRepository = competencyMetricsRepository;
     }
 
@@ -118,12 +120,14 @@ public class LearningMetricsService {
      * @return the metrics for the student in the course
      */
     public LectureUnitStudentMetricsDTO getStudentLectureUnitMetrics(long userId, long courseId) {
-        final var lectureUnitInfo = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseId);
+        LectureUnitApi api = lectureUnitApi.orElseThrow(() -> new LectureApiNotPresentException(LectureUnitApi.class));
+
+        final var lectureUnitInfo = api.findAllLectureUnitInformationByCourseId(courseId);
         final var lectureUnitInfoMap = lectureUnitInfo.stream().collect(toMap(LectureUnitInformationDTO::id, identity()));
 
         final var lectureUnitIds = lectureUnitInfoMap.keySet();
 
-        final var completedLectureUnitIds = lectureUnitMetricsRepository.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
+        final var completedLectureUnitIds = api.findAllCompletedLectureUnitIdsForUserByLectureUnitIds(userId, lectureUnitIds);
 
         return new LectureUnitStudentMetricsDTO(lectureUnitInfoMap, completedLectureUnitIds);
     }

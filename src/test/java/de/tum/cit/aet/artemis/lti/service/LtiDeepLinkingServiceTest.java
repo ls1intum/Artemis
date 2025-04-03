@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
@@ -57,7 +57,7 @@ class LtiDeepLinkingServiceTest {
     private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    LectureRepository lectureRepository;
+    LectureApi lectureApi;
 
     @Mock
     private Lti13TokenRetriever tokenRetriever;
@@ -73,7 +73,7 @@ class LtiDeepLinkingServiceTest {
         closeable = MockitoAnnotations.openMocks(this);
         oidcIdToken = mock(OidcIdToken.class);
         SecurityContextHolder.clearContext();
-        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, lectureRepository, tokenRetriever);
+        ltiDeepLinkingService = new LtiDeepLinkingService(courseRepository, exerciseRepository, Optional.of(lectureApi), tokenRetriever);
         ReflectionTestUtils.setField(ltiDeepLinkingService, "artemisServerUrl", "http://artemis.com");
     }
 
@@ -204,7 +204,7 @@ class LtiDeepLinkingServiceTest {
         Lecture lecture = new Lecture();
         lecture.setId(lectureId);
         lecture.setTitle("Test Lecture");
-        when(lectureRepository.findById(lectureId)).thenReturn(Optional.of(lecture));
+        when(lectureApi.findById(lectureId)).thenReturn(Optional.of(lecture));
 
         Set<Long> lectureIds = new HashSet<>();
         lectureIds.add(lectureId);

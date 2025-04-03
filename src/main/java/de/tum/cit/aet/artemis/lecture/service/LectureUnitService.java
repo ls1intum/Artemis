@@ -203,17 +203,6 @@ public class LectureUnitService {
     }
 
     /**
-     * Removes competency from all lecture units.
-     *
-     * @param lectureUnitLinks set of lecture unit links
-     * @param competency       competency to remove
-     */
-    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
-        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
-    }
-
-    /**
      * Validates the given URL string and returns the URL object
      *
      * @param urlString The URL string to validate
