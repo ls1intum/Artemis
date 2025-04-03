@@ -26,10 +26,6 @@ public class ExamAccessApi extends AbstractExamApi {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
     }
 
-    public void checkCourseAccessForInstructorElseThrow(Long courseId) {
-        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
-    }
-
     public void checkCourseAndExamAccessForInstructorElseThrow(Long courseId, Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
     }
