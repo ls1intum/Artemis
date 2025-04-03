@@ -66,7 +66,7 @@
         <preConditions onFail="MARK_RAN">
             <!-- Ensure this step only runs on MySQL and H2 -->
             <or>
-                <dbms type="postgresql"/>
+                <dbms type="mysql"/>
                 <dbms type="h2"/>
             </or>
         </preConditions>
