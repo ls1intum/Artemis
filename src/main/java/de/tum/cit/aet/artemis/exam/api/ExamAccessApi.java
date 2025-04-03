@@ -22,14 +22,31 @@ public class ExamAccessApi extends AbstractExamApi {
         this.examAccessService = examAccessService;
     }
 
+    /**
+     * Checks if the current user is allowed to access the course as a student and the exam.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
     public void checkCourseAndExamAccessForStudentElseThrow(Long courseId, Long examId) {
         examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
     }
 
+    /**
+     * Checks if the current user is allowed to access the course as an instructor and the exam.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
     public void checkCourseAndExamAccessForInstructorElseThrow(Long courseId, Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
     }
 
+    /**
+     * Checks if the current user is allowed to access example solutions for the given exam exercise.
+     *
+     * @param examExercise The exam exercise to check access for
+     */
     public void checkExamExerciseForExampleSolutionAccessElseThrow(Exercise examExercise) {
         examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(examExercise);
     }
