@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faBackward } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -36,6 +36,8 @@ export class ResetRepoButtonComponent implements OnInit {
     @Input() participations: StudentParticipation[];
     @Input() smallButtons: boolean;
 
+    @ViewChild('popover') popover: NgbPopover;
+
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
 
@@ -59,10 +61,14 @@ export class ResetRepoButtonComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.exercise.loading = false;
-                    this.alertService.success('artemisApp.exerciseActions.resetRepository.success');
-                    window.scrollTo(0, 0);
+                    this.popover.close();
                 }),
             )
-            .subscribe();
+            .subscribe({
+                next: () => {
+                    this.alertService.success('artemisApp.exerciseActions.resetRepository.success');
+                    window.scrollTo(0, 0);
+                },
+            });
     }
 }

@@ -31,7 +31,7 @@
         <div>
             <hr class="mt-0" />
             <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
-                @for (sidebarItem of sidebarItems(); track sidebarItem) {
+                @for (sidebarItem of sidebarItems(); track sidebarItem.routerLink) {
                     <li class="nav-item" [hidden]="sidebarItem.hidden">
                         <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                     </li>

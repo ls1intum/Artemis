@@ -119,7 +119,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 import tech.jhipster.web.util.PaginationUtil;
@@ -146,7 +146,7 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
+    private final Optional<LtiApi> ltiApi;
 
     private final CourseRepository courseRepository;
 
@@ -187,18 +187,17 @@ public class CourseResource {
 
     private final TeamRepository teamRepository;
 
-    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService,
-            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
+    public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService, Optional<LtiApi> ltiApi,
+            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseScoreCalculationService courseScoreCalculationService,
             GradingScaleRepository gradingScaleRepository, Optional<LearningPathApi> learningPathApi, ConductAgreementService conductAgreementService,
             Optional<AthenaApi> athenaApi, ExamRepository examRepository, ComplaintService complaintService, TeamRepository teamRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
-        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.ltiApi = ltiApi;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -304,8 +303,8 @@ public class CourseResource {
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
-            if (courseUpdate.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
-                onlineCourseConfigurationService.get().createOnlineCourseConfiguration(courseUpdate);
+            if (courseUpdate.isOnlineCourse() && ltiApi.isPresent()) {
+                ltiApi.get().createOnlineCourseConfiguration(courseUpdate);
             }
             else {
                 courseUpdate.setOnlineCourseConfiguration(null);

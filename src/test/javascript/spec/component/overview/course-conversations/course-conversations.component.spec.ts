@@ -39,7 +39,7 @@ import { ChannelsCreateDialogComponent } from 'app/communication/course-conversa
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
-import { Posting, PostingType, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ElementRef, signal } from '@angular/core';
 import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/communication/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 
@@ -490,7 +490,7 @@ examples.forEach((activeConversation) => {
         describe('query parameter handling', () => {
             it('should handle SavedPostStatus in conversationId', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                    conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                 };
                 activatedRoute.queryParams = of(queryParams);
 
@@ -557,7 +557,7 @@ examples.forEach((activeConversation) => {
 
             it('should handle multiple query parameters together', () => {
                 const queryParams = {
-                    conversationId: SavedPostStatusMap.ARCHIVED.toString(),
+                    conversationId: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                     focusPostId: '456',
                     openThreadOnFocus: 'true',
                     messageId: '789',
@@ -643,12 +643,12 @@ examples.forEach((activeConversation) => {
         describe('conversation selection', () => {
             it('should handle numeric conversationId', () => {
                 component.onConversationSelected(123);
-                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(setActiveConversationSpy).toHaveBeenCalledWith(123);
             });
 
             it('should handle valid string conversationId as SavedPostStatus', () => {
-                const validStatus = SavedPostStatusMap.ARCHIVED.toString();
+                const validStatus = SavedPostStatus.ARCHIVED.toString().toLowerCase();
                 component.onConversationSelected(validStatus);
                 expect(component.selectedSavedPostStatus).toBe(SavedPostStatus.ARCHIVED);
                 expect(component.postInThread).toBeUndefined();
@@ -659,7 +659,7 @@ examples.forEach((activeConversation) => {
             it('should ignore invalid string conversationId', () => {
                 const invalidStatus = 'invalidStatus';
                 component.onConversationSelected(invalidStatus);
-                expect(component.selectedSavedPostStatus).toBeNull();
+                expect(component.selectedSavedPostStatus).toBeUndefined();
                 expect(metisConversationService.setActiveConversation).not.toHaveBeenCalled();
             });
 

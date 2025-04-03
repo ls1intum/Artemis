@@ -749,7 +749,7 @@ public class LocalVCServletService {
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
         ProgrammingExerciseParticipation participation;
-        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName, exercise);
+        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName);
 
         try {
             participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
@@ -900,19 +900,13 @@ public class LocalVCServletService {
         }
     }
 
-    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals("exercise")) {
-            return RepositoryType.TEMPLATE;
-        }
-        else if (repositoryTypeOrUserName.equals("solution")) {
-            return RepositoryType.SOLUTION;
-        }
-        else if (repositoryTypeOrUserName.equals("tests")) {
-            return RepositoryType.TESTS;
-        }
-        else {
-            return RepositoryType.USER;
-        }
+    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
+        return switch (repositoryTypeOrUserName) {
+            case "exercise" -> RepositoryType.TEMPLATE;
+            case "solution" -> RepositoryType.SOLUTION;
+            case "tests" -> RepositoryType.TESTS;
+            default -> RepositoryType.USER;
+        };
     }
 
     /**

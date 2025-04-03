@@ -27,7 +27,7 @@ echo "Compose file:"
 echo $COMPOSE_FILE
 
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
-export HOST_HOSTNAME=$(hostname)
+export HOST_HOSTNAME="nginx"
 
 cd docker
 
