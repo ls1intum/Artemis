@@ -661,6 +661,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.course.id = :courseId
                 AND e.dueDate IS NOT NULL
                 AND e.dueDate > :now
+                AND (e.releaseDate IS NULL OR e.releaseDate <= :now)
             """)
     Set<Exercise> findByCourseIdWithFutureDueDatesAndCategories(@Param("courseId") Long courseId, @Param("now") ZonedDateTime now);
 
