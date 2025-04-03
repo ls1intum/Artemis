@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -45,7 +45,7 @@ public class ConsistencyCheckTestService {
     private UserTestRepository userRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
