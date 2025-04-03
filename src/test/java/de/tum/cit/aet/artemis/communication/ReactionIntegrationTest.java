@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
-import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
@@ -46,9 +45,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private PostTestRepository postRepository;
-
-    @Autowired
-    private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
     private ConversationUtilService conversationUtilService;
@@ -136,8 +132,6 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 HttpStatus.CREATED);
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
-        // should increase post's vote count
-        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
     }
 
     @ParameterizedTest
@@ -306,8 +300,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_OrderByVoteCountDESC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
+    void testGetPostsForCourse_OrderByCreationDateDESC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -344,8 +338,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetPostsForCourse_OrderByVoteCountASC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
+    void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
+        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
         SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -416,16 +410,12 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/communication/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class,
                 HttpStatus.CREATED);
-        // should increase post's vote count
-        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
 
         // student 1 deletes their reaction on this post
         request.delete("/api/communication/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
 
         assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
-        // should decrease post's vote count
-        assertThat(conversationMessageRepository.findById(postReactedOn.getId()).orElseThrow().getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
     }
 
     @ParameterizedTest

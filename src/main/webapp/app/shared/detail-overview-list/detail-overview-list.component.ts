@@ -47,7 +47,6 @@ export enum DetailType {
     ProgrammingDiffReport = 'detail-diff-report',
     ProgrammingProblemStatement = 'detail-problem-statement',
     ProgrammingTimeline = 'detail-timeline',
-    ProgrammingBuildStatistics = 'detail-build-statistics',
     ProgrammingCheckoutDirectories = 'detail-checkout-directories',
 }
 

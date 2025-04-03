@@ -59,7 +59,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -143,9 +142,8 @@ public class ConversationMessagingService extends PostingService {
         log.debug("      createMessage:parseUserMentions DONE");
 
         // update last message date of conversation
-        conversation.setLastMessageDate(ZonedDateTime.now());
         conversation.setCourse(course);
-        Conversation savedConversation = conversationService.updateConversation(conversation);
+        conversationService.updateLastMessageDate(conversation);
 
         // update last read date and unread message count of author
         // invoke async due to db write access to avoid that the client has to wait
@@ -160,7 +158,7 @@ public class ConversationMessagingService extends PostingService {
         createdMessage.setAuthor(author);
         setAuthorRoleForPosting(createdMessage, course);
 
-        return new CreatedConversationMessage(createdMessage, savedConversation, mentionedUsers);
+        return new CreatedConversationMessage(createdMessage, conversation, mentionedUsers);
     }
 
     /**
@@ -473,10 +471,8 @@ public class ConversationMessagingService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final Course course = courseRepository.findByIdElseThrow(courseId);
         preCheckUserAndCourseForCommunicationOrMessaging(user, course);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         Post message = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
-        message.setDisplayPriority(displayPriority);
 
         Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(message.getConversation().getId(), user, Optional.empty())
                 .orElse(message.getConversation());
@@ -485,6 +481,8 @@ public class ConversationMessagingService extends PostingService {
                 || conversation instanceof GroupChat && !user.getId().equals(conversation.getCreator().getId())) {
             throw new AccessForbiddenException("You are not allowed to change the display priority of messages in this conversation");
         }
+
+        message.setDisplayPriority(displayPriority);
 
         Post updatedMessage = conversationMessageRepository.save(message);
         message.getConversation().hideDetails();

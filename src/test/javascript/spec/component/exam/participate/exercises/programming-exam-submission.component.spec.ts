@@ -36,7 +36,6 @@ describe('ProgrammingExamSubmissionComponent', () => {
         const programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.commitHash = 'Hash commit';
         programmingSubmission.buildFailed = false;
-        programmingSubmission.buildArtifact = false;
 
         const participation = new ProgrammingExerciseStudentParticipation();
         participation.submissions = [programmingSubmission];
