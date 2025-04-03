@@ -10,8 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -28,13 +28,13 @@ public class SavedPost extends DomainObject {
     private Long postId;
 
     @Enumerated(EnumType.STRING)
-    @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "post_type", nullable = false, columnDefinition = "post_type_enum")
+    @JdbcTypeCode(SqlTypes.ENUM)
+    @Column(name = "post_type", nullable = false)
     private PostingType postType;
 
     @Enumerated(EnumType.STRING)
-    @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "status", nullable = false, columnDefinition = "saved_post_status_enum")
+    @JdbcTypeCode(SqlTypes.ENUM)
+    @Column(name = "status", nullable = false)
     private SavedPostStatus status;
 
     @Column(name = "completed_at")

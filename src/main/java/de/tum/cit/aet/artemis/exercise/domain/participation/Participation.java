@@ -26,8 +26,8 @@ import jakarta.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.PostgreSQLEnumJdbcType;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -69,8 +69,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 public abstract class Participation extends DomainObject implements ParticipationInterface {
 
     @Enumerated(EnumType.STRING)
-    @JdbcType(PostgreSQLEnumJdbcType.class)
-    @Column(name = "initialization_state", columnDefinition = "initialization_state_enum")
+    @JdbcTypeCode(SqlTypes.ENUM)
+    @Column(name = "initialization_state")
     private InitializationState initializationState;
 
     @Column(name = "initialization_date")
