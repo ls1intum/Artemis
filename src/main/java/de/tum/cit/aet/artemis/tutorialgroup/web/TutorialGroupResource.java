@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601DateString;
 import static de.tum.cit.aet.artemis.core.util.DateUtil.isIso8601TimeString;
 
@@ -23,7 +22,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -59,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -70,7 +70,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
 @RequestMapping("api/tutorialgroup/")

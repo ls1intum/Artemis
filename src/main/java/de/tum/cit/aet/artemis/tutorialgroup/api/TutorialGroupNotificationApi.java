@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.tutorialgroup.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotification;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
 @Controller
 public class TutorialGroupNotificationApi extends AbstractTutorialGroupApi {
 
