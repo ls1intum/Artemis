@@ -46,7 +46,7 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
 
     private ngUnsubscribe = new Subject<void>();
 
-    @Output() collapseSearch = new EventEmitter<void>();
+    @Output() onSearchClick = new EventEmitter<void>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
 
     INFO = ConversationDetailTabs.INFO;
@@ -182,7 +182,7 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
     }
 
     toggleSearchBar() {
-        this.collapseSearch.emit();
+        this.onSearchClick.emit();
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

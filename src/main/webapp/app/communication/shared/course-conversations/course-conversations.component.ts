@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -196,6 +196,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private courseSidebarService: CourseSidebarService = inject(CourseSidebarService);
     private layoutService: LayoutService = inject(LayoutService);
     private changeDetector: ChangeDetectorRef = inject(ChangeDetectorRef);
+
+    @ViewChild(ConversationGlobalSearchComponent) globalSearchComponent?: ConversationGlobalSearchComponent;
 
     getAsChannel = getAsChannelDTO;
 
@@ -604,8 +606,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             });
     }
 
-    toggleChannelSearch() {
-        this.channelSearchCollapsed = !this.channelSearchCollapsed;
+    triggerSearchInConversation() {
+        if (this.globalSearchComponent && this.activeConversation) {
+            this.globalSearchComponent.focusWithSelectedConversation(this.activeConversation);
+        }
     }
 
     openThread(postToOpen: Post | undefined) {

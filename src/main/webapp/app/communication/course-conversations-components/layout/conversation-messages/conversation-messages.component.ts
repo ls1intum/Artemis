@@ -19,7 +19,7 @@ import {
     input,
     output,
 } from '@angular/core';
-import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Subject, forkJoin, map, takeUntil } from 'rxjs';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -87,12 +87,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     @Output() openThread = new EventEmitter<Post>();
 
-    @ViewChild('searchInput') searchInput: ElementRef;
     @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
     @ViewChild('container') content: ElementRef;
 
     @Input() course?: Course;
-    @Input() searchbarCollapsed = false;
     @Input() contentHeightDev = false;
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
@@ -124,7 +122,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     public isFetchingPosts = true;
     // Icons
     faTimes = faTimes;
-    faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
     isMobile = false;
@@ -257,10 +254,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
 
         if (this.course && this._activeConversation) {
-            if (this.searchInput) {
-                this.searchInput.nativeElement.value = '';
-                this.searchText = '';
-            }
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
@@ -493,18 +486,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         requestAnimationFrame(() => {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         });
-    }
-
-    onSearchQueryInput($event: Event) {
-        const searchTerm = ($event.target as HTMLInputElement).value?.trim().toLowerCase() ?? '';
-        this.search$.next(searchTerm);
-    }
-
-    clearSearchInput() {
-        if (this.searchInput) {
-            this.searchInput.nativeElement.value = '';
-            this.searchInput.nativeElement.dispatchEvent(new Event('input'));
-        }
     }
 
     private setupScrollDebounce(): void {

@@ -42,7 +42,7 @@
             >
                 @if (activeConversation) {
                     <jhi-conversation-header
-                        (collapseSearch)="toggleChannelSearch()"
+                        (onSearchClick)="triggerSearchInConversation()"
                         (onUpdateSidebar)="prepareSidebarData()"
                         (togglePinnedMessage)="togglePinnedView()"
                         [pinnedMessageCount]="pinnedCount"
@@ -51,7 +51,6 @@
                         [contentHeightDev]="!isProduction || isTestServer"
                         (openThread)="openThread($event)"
                         [course]="course"
-                        [searchbarCollapsed]="channelSearchCollapsed"
                         (onNavigateToPost)="onTriggerNavigateToPost($event)"
                         [focusPostId]="focusPostId"
                         [openThreadOnFocus]="openThreadOnFocus"

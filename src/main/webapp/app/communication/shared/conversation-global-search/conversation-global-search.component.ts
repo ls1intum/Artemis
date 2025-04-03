@@ -216,6 +216,22 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         }, 0);
     }
 
+    /**
+     * Programmatically focus the search input and select a conversation
+     * @param conversation The conversation to select
+     */
+    focusWithSelectedConversation(conversation: ConversationDTO | undefined): void {
+        if (conversation) {
+            this.selectedConversations = [conversation];
+        }
+        this.focusInput();
+    }
+
+    clearSearchAndKeepConversations(): void {
+        this.fullSearchTerm = '';
+        this.focusInput();
+    }
+
     onTriggerSearch() {
         this.onSearch.emit({
             searchTerm: this.fullSearchTerm,
