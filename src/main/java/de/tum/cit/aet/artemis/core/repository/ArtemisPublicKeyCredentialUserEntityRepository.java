@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -52,28 +51,15 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
 
     @Override
     public void save(PublicKeyCredentialUserEntity userEntity) {
-        throw new NotImplementedException("save not implemented, use userRepository instead");
+        // throw new NotImplementedException("save not implemented, use userRepository instead");
     }
 
     @Override
     public void delete(Bytes id) {
-        throw new NotImplementedException("delete not implemented, use userRepository instead");
+        // throw new NotImplementedException("delete not implemented, use userRepository instead");
     }
 
     private static PublicKeyCredentialUserEntity mapToUserEntity(User user) {
         return ImmutablePublicKeyCredentialUserEntity.builder().id(user.getExternalId()).name(user.getLogin()).displayName(user.getName()).build();
     }
-
-    // // TODO add comment
-    // private static Bytes longToBytes(Long value) {
-    // String userIdAsBase64 = Base64.getEncoder().encodeToString(value.toString().getBytes());
-    // return Bytes.fromBase64(userIdAsBase64);
-    // }
-    //
-    // // TODO add comment for usage (bas64 decoding)
-    // private static Long bytesToLong(Bytes value) {
-    // byte[] decodedBytes = Base64.getDecoder().decode(value.toBase64UrlString());
-    // String decodedString = new String(decodedBytes);
-    // return Long.parseLong(decodedString);
-    // }
 }

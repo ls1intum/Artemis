@@ -24,7 +24,7 @@ public class SpaWebFilter extends OncePerRequestFilter {
             !path.startsWith("/public") &&
             !path.startsWith("/websocket") &&
             !path.startsWith("/git") &&
-            !path.startsWith("/webauthn") && // exclude webauthn (passkey) from spa
+            !path.startsWith("/webauthn") && // required for passkey authentication
             !path.contains(".") &&
             path.matches("/(.*)")
         ) {

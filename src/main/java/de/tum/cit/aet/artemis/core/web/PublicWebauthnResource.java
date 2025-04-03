@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.web.open;
+package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/public/webauthn/")
+@RequestMapping("api/core/webauthn/")
 public class PublicWebauthnResource {
 
     public static final String ENTITY_NAME = "webauthn";

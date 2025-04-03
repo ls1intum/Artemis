@@ -190,7 +190,7 @@ public class SecurityConfiguration {
                 // Disables HTTP Strict Transport Security as it is managed at the reverse proxy level (typically nginx).
                 .httpStrictTransportSecurity((HeadersConfigurer.HstsConfig::disable))
                 // Defines Permissions Policy to restrict what features the browser is allowed to use.
-                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=(), publickey-credentials-get *")))
+                .permissionsPolicyHeader(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
             // Configures sessions to be stateless; appropriate for REST APIs where no session is required.
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             // Configures authorization for various URL patterns. The patterns are considered in order.
@@ -204,8 +204,6 @@ public class SecurityConfiguration {
                     .requestMatchers("/content/**", "/i18n/*.json", "/logo/*").permitAll()
                     // Information and health endpoints do not need authentication
                     .requestMatchers("/management/info", "/management/health").permitAll()
-                    // Everything related to webauthn4j should be permitted
-                    .requestMatchers("/webauthn/**").permitAll()
                     // Admin area requires specific authority.
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
@@ -229,8 +227,8 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
             .webAuthn(webauth ->
-                webauth.allowedOrigins("https://0e64-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
-                .rpId("0e64-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
+                webauth.allowedOrigins("https://8998-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
+                .rpId("8998-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
                 .rpName("Artemis Development")
             );
 
