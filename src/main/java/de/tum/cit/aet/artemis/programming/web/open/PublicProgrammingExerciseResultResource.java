@@ -1,7 +1,9 @@
-package de.tum.cit.aet.artemis.assessment.web.open;
+package de.tum.cit.aet.artemis.programming.web.open;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -16,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
@@ -27,40 +28,47 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
- * REST controller for receiving build results.
+ * REST controller for receiving build results for external CI systems. At the moment, only Jenkins is supported.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_JENKINS)
 @RestController
-@RequestMapping("api/assessment/public/")
-public class PublicResultResource {
+@RequestMapping("api/programming/public/")
+public class PublicProgrammingExerciseResultResource {
 
-    private static final Logger log = LoggerFactory.getLogger(PublicResultResource.class);
-
-    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
-    private String artemisAuthenticationTokenValue = "";
+    private static final Logger log = LoggerFactory.getLogger(PublicProgrammingExerciseResultResource.class);
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final ProgrammingExerciseGradingService programmingExerciseGradingService;
 
-    private final ResultService resultService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public PublicResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            ResultService resultService, ProgrammingTriggerService programmingTriggerService, ProgrammingMessagingService programmingMessagingService) {
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    private final byte[] artemisAuthenticationTokenHash;
+
+    public PublicProgrammingExerciseResultResource(Optional<ContinuousIntegrationService> continuousIntegrationService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingMessagingService programmingMessagingService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
+            @Value("${artemis.continuous-integration.artemis-authentication-token-value}") String artemisAuthenticationTokenValue) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
-        this.resultService = resultService;
         this.programmingTriggerService = programmingTriggerService;
         this.programmingMessagingService = programmingMessagingService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+        // Validates the length of the artemisAuthenticationTokenValue on startup.
+        if (artemisAuthenticationTokenValue == null || artemisAuthenticationTokenValue.length() < 12) {
+            throw new IllegalArgumentException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
+        }
+        this.artemisAuthenticationTokenHash = hash(artemisAuthenticationTokenValue);
     }
 
     /**
@@ -71,17 +79,17 @@ public class PublicResultResource {
      * - Update the result's score based on the exercise's test cases (weights, etc.)
      * - Update the exercise's test cases if the build is from a solution participation
      *
-     * @param token       CI auth token
-     * @param requestBody build result of CI system
+     * @param authorizationToken CI auth authorizationToken coming from the external CI system (Jenkins)
+     * @param requestBody        build result of CI system
      * @return a ResponseEntity to the CI system
      */
     @PostMapping("programming-exercises/new-result")
     @EnforceNothing
-    public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
-        log.debug("Received result notify (NEW)");
-        if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
-            log.info("Cancelling request with invalid token {}", token);
-            throw new AccessForbiddenException(); // Only allow endpoint when using correct token
+    public ResponseEntity<Void> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String authorizationToken, @RequestBody Object requestBody) {
+        log.debug("Received new programming exercise result from Jenkins");
+        if (!matches(authorizationToken)) {
+            log.info("Cancelling request with invalid authorizationToken {}", authorizationToken);
+            throw new AccessForbiddenException(); // Only allow endpoint when using correct authorizationToken
         }
 
         // No 'user' is properly logged into Artemis, this leads to an issue when accessing custom repository methods.
@@ -103,7 +111,7 @@ public class PublicResultResource {
         log.info("Artemis received a new result for build plan {}", planKey);
 
         // Try to retrieve the participation with the build plan key.
-        var participation = resultService.getParticipationWithResults(planKey);
+        var participation = programmingExerciseParticipationService.getParticipationWithResults(planKey);
         if (participation == null) {
             log.warn("Participation is missing for notifyResultNew (PlanKey: {}).", planKey);
             throw new EntityNotFoundException("Participation for build plan " + planKey + " does not exist");
@@ -129,7 +137,20 @@ public class PublicResultResource {
         return ResponseEntity.ok().build();
     }
 
-    // TODO: Move to ResultService. Need to break circular dependencies for that
+    private byte[] hash(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            return digest.digest(token.getBytes(StandardCharsets.UTF_8));
+        }
+        catch (Exception e) {
+            throw new IllegalStateException("Failed to hash CI token", e);
+        }
+    }
+
+    private boolean matches(String incomingToken) {
+        return MessageDigest.isEqual(artemisAuthenticationTokenHash, hash(incomingToken));
+    }
+
     /**
      * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
      * Will use the commitHash of the submission for triggering the template build.

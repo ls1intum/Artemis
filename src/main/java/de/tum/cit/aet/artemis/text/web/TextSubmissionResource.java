@@ -24,23 +24,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -76,15 +79,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
-    private final PlagiarismService plagiarismService;
+    private final Optional<PlagiarismApi> plagiarismApi;
 
-    public TextSubmissionResource(SubmissionRepository submissionRepository, ResultService resultService, TextSubmissionRepository textSubmissionRepository,
-            ExerciseRepository exerciseRepository, TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService,
-            TextSubmissionService textSubmissionService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService, ExamSubmissionService examSubmissionService,
-            PlagiarismService plagiarismService) {
+    private final ExerciseDateService exerciseDateService;
+
+    public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
+            TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
+            StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismApi> plagiarismApi, ExerciseDateService exerciseDateService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -94,8 +98,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.userRepository = userRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.textAssessmentService = textAssessmentService;
-        this.examSubmissionService = examSubmissionService;
-        this.plagiarismService = plagiarismService;
+        this.examSubmissionApi = examSubmissionApi;
+        this.plagiarismApi = plagiarismApi;
+        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -141,11 +146,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(exercise, textSubmission, user);
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
+
+            // Prevent multiple submissions (currently only for exam submissions)
+            textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 
@@ -166,11 +176,14 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     @EnforceAtLeastStudent
     public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
         log.debug("REST request to get text submission: {}", submissionId);
-        var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
+        var textSubmission = textSubmissionRepository.findWithEagerResultsAssessorByIdElseThrow(submissionId);
+        var participation = textSubmission.getParticipation();
+        var textExercise = participation.getExercise();
 
-        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
-            // anonymize and throw exception if not authorized to view submission
-            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin(), textSubmission.getParticipation());
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
+            checkSubmissionAccessForStudent(participation);
+            checkPotentialPlagiarismCaseForStudent(textSubmission);
+            anonymizeSubmissionForStudent(textSubmission);
             return ResponseEntity.ok(textSubmission);
         }
 
@@ -250,5 +263,53 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         textSubmissionService.hideDetails(textSubmission, userRepository.getUserWithGroupsAndAuthorities());
 
         return ResponseEntity.ok().body(textSubmission);
+    }
+
+    /**
+     * Checks if a student has access to a submission.
+     * This is the case if the student is the owner of the submission and the due date is over.
+     * Throws an AccessForbiddenException if the submission does not belong to the user or if the due date is not over.
+     *
+     * @param participation the participation to check
+     */
+    private void checkSubmissionAccessForStudent(Participation participation) {
+        if (!(participation instanceof StudentParticipation studentParticipation)) {
+            throw new AccessForbiddenException("The user is not the owner of the submission.");
+        }
+        User student = userRepository.getUser();
+        if (!studentParticipation.isOwnedBy(student)) {
+            throw new AccessForbiddenException("The user is not the owner of the submission.");
+        }
+
+        var afterDueDate = exerciseDateService.isAfterDueDate(participation);
+        if (!afterDueDate) {
+            throw new AccessForbiddenException("The submission period for this exercise is over.");
+        }
+    }
+
+    /**
+     * Checks if the student has been notified about a plagiarism case.
+     * Throws an AccessForbiddenException if the student has not been notified.
+     *
+     * @param textSubmission the text submission to check
+     */
+    private void checkPotentialPlagiarismCaseForStudent(TextSubmission textSubmission) {
+        plagiarismApi.ifPresent(api -> {
+            boolean wasNotified = api.wasUserNotifiedByInstructor(textSubmission, userRepository.getUser().getLogin());
+            if (!wasNotified) {
+                throw new AccessForbiddenException("The user has not yet been notified about a plagiarism case.");
+            }
+        });
+    }
+
+    /**
+     * Anonymizes the submission for the student by removing sensitive-considered information.
+     *
+     * @param submission the submission to anonymize
+     */
+    private void anonymizeSubmissionForStudent(Submission submission) {
+        submission.setParticipation(null);
+        submission.setResults(null);
+        submission.setSubmissionDate(null);
     }
 }

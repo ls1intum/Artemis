@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -67,11 +69,11 @@ class CourseNotificationEmailServiceTest {
     private URL serverUrl;
 
     @BeforeEach
-    void setUp() throws MalformedURLException {
+    void setUp() throws MalformedURLException, URISyntaxException {
         MockitoAnnotations.openMocks(this);
         courseNotificationEmailService = new CourseNotificationEmailService(messageSource, templateEngine, mailSendingService, markdownCustomLinkRendererService,
                 markdownCustomReferenceRendererService);
-        serverUrl = new URL("https://example.org");
+        serverUrl = new URI("https://example.org").toURL();
 
         ReflectionTestUtils.setField(courseNotificationEmailService, "artemisServerUrl", serverUrl);
     }

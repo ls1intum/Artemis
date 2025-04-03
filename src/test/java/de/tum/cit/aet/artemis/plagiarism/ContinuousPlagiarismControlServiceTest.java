@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -40,7 +41,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlServ
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;

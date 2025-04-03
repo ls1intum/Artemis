@@ -28,7 +28,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
-    readonly courseWideSearchConfig = input.required<CourseWideSearchConfig>();
+    courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);

@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 @Service
 public class RepositoryAccessService {
 
-    private final PlagiarismService plagiarismService;
+    private final Optional<PlagiarismApi> plagiarismApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -33,9 +35,9 @@ public class RepositoryAccessService {
 
     private final ParticipationAuthorizationCheckService participationAuthorizationCheckService;
 
-    public RepositoryAccessService(PlagiarismService plagiarismService, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
+    public RepositoryAccessService(Optional<PlagiarismApi> plagiarismApi, AuthorizationCheckService authorizationCheckService, ExerciseDateService exerciseDateService,
             ParticipationAuthorizationCheckService participationAuthorizationCheckService) {
-        this.plagiarismService = plagiarismService;
+        this.plagiarismApi = plagiarismApi;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseDateService = exerciseDateService;
         this.participationAuthorizationCheckService = participationAuthorizationCheckService;
@@ -166,7 +168,7 @@ public class RepositoryAccessService {
             if (isAtLeastTeachingAssistant) {
                 return;
             }
-            if (plagiarismService.hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
+            if (plagiarismApi.isEmpty() || plagiarismApi.get().hasAccessToSubmission(programmingParticipation.getId(), user.getLogin(), (Participation) programmingParticipation)) {
                 return;
             }
         }

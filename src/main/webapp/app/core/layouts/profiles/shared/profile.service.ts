@@ -127,4 +127,12 @@ export class ProfileService {
             profileInfo.saml2.enablePassword = data.saml2['enable-password'] || false;
         }
     }
+
+    /**
+     * Check if the given profile is active.
+     * @param profile The profile to check.
+     */
+    public isProfileActive(profile: string): boolean {
+        return this.profileInfo?.value?.activeProfiles?.includes(profile) ?? false;
+    }
 }

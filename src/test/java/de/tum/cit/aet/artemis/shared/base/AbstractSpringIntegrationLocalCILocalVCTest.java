@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static org.mockito.Mockito.when;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -33,7 +34,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -58,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildSta
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
@@ -72,7 +76,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.TemplateProgrammingExe
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 // NOTE: in a "single node" environment, PROFILE_BUILDAGENT must be before PROFILE_CORE to avoid issues
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_BUILDAGENT, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALCI, PROFILE_LOCALVC, "ldap-only", PROFILE_LTI,
-        PROFILE_AEOLUS, PROFILE_IRIS })
+        PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_IRIS })
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",
         "artemis.version-control.local-vcs-repo-path=${java.io.tmpdir}", "artemis.build-logs-path=${java.io.tmpdir}/build-logs",
@@ -125,6 +129,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected LocalVCService versionControlService;
 
     @MockitoSpyBean
+    protected LocalVCGitBranchService localVCGitBranchService;
+
+    @MockitoSpyBean
     protected LocalCIService continuousIntegrationService;
 
     @MockitoSpyBean
@@ -159,6 +166,12 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected PyrisEventService pyrisEventService;
+
+    @MockitoSpyBean
+    protected CompetencyProgressService competencyProgressService;
+
+    @MockitoSpyBean
+    protected CompetencyProgressApi competencyProgressApi;
 
     @Value("${artemis.version-control.url}")
     protected URL localVCBaseUrl;
@@ -215,7 +228,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @AfterEach
     @Override
     protected void resetSpyBeans() {
-        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
+        Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService, competencyProgressService, competencyProgressApi);
         super.resetSpyBeans();
     }
 

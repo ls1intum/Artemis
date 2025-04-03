@@ -57,7 +57,6 @@
             },
             "completionDate": "Completion Date",
             "successful": "Successful",
-            "buildArtifact": "Build Artifact",
             "buildError": "Build Error:",
             "score": "Your overall score is {{score}}%",
             "scorePercentage": "Score (in %)",
