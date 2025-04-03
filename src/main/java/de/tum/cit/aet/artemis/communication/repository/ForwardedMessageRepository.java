@@ -29,5 +29,4 @@ public interface ForwardedMessageRepository extends ArtemisJpaRepository<Forward
             WHERE fm.destinationAnswerPost.id IN :destinationAnswerPostIds
             """)
     Set<ForwardedMessage> findAllByDestinationAnswerPostIds(@Param("destinationAnswerPostIds") Set<Long> destinationAnswerPostIds);
-
 }

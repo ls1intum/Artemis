@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exercise.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.ICER_PAPER_FLAG;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
@@ -11,7 +10,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -43,9 +41,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
@@ -54,10 +53,10 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -88,7 +87,7 @@ public class ExerciseResource {
 
     private final TutorParticipationService tutorParticipationService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -100,18 +99,18 @@ public class ExerciseResource {
 
     private final ParticipationRepository participationRepository;
 
-    private final ExamAccessService examAccessService;
+    private final Optional<ExamAccessApi> examAccessApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final PlagiarismCaseService plagiarismCaseService;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     public ExerciseResource(ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, ParticipationService participationService,
-            UserRepository userRepository, ExamDateService examDateService, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
+            UserRepository userRepository, Optional<ExamDateApi> examDateApi, AuthorizationCheckService authCheckService, TutorParticipationService tutorParticipationService,
             ExampleSubmissionRepository exampleSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             GradingCriterionRepository gradingCriterionRepository, ExerciseRepository exerciseRepository, QuizBatchService quizBatchService,
-            ParticipationRepository participationRepository, ExamAccessService examAccessService, Optional<IrisSettingsService> irisSettingsService,
-            PlagiarismCaseService plagiarismCaseService) {
+            ParticipationRepository participationRepository, Optional<ExamAccessApi> examAccessApi, Optional<IrisSettingsApi> irisSettingsApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi) {
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
@@ -120,14 +119,14 @@ public class ExerciseResource {
         this.tutorParticipationService = tutorParticipationService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.quizBatchService = quizBatchService;
         this.participationRepository = participationRepository;
-        this.examAccessService = examAccessService;
-        this.irisSettingsService = irisSettingsService;
-        this.plagiarismCaseService = plagiarismCaseService;
+        this.examAccessApi = examAccessApi;
+        this.irisSettingsApi = irisSettingsApi;
+        this.plagiarismCaseApi = plagiarismCaseApi;
     }
 
     /**
@@ -149,13 +148,14 @@ public class ExerciseResource {
         // Exam exercise
         if (exercise.isExamExercise()) {
             Exam exam = exercise.getExerciseGroup().getExam();
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
             if (authCheckService.isAtLeastEditorForExercise(exercise, user)) {
                 // instructors editors and admins should always be able to see exam exercises
                 // continue
             }
             else if (authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
                 // tutors should only be able to see exam exercises when the exercise has finished
-                ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+                ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exam);
                 if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                     // When there is no due date or the due date is in the future, we return forbidden here
                     throw new AccessForbiddenException();
@@ -202,7 +202,8 @@ public class ExerciseResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
         if (exercise.isExamExercise()) {
-            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(exercise);
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            api.checkExamExerciseForExampleSolutionAccessElseThrow(exercise);
         }
         else {
             // Course exercise
@@ -346,16 +347,8 @@ public class ExerciseResource {
             exercise.filterSensitiveInformation();
         }
 
-        IrisCombinedSettingsDTO irisSettings = irisSettingsService.map(service -> service.getCombinedIrisSettingsFor(exercise, service.shouldShowMinimalSettings(exercise, user)))
-                .orElse(null);
-        PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseService.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId()).orElse(null);
-
-        // TODO TW: This "feature" is only temporary for a paper.
-        if (StringUtils.contains(exercise.getProblemStatement(), ICER_PAPER_FLAG)) {
-            if (user.getId() % 3 == 2) {
-                irisSettings = null;
-            }
-        }
+        IrisCombinedSettingsDTO irisSettings = irisSettingsApi.map(api -> api.getCombinedIrisSettingsFor(exercise, api.shouldShowMinimalSettings(exercise, user))).orElse(null);
+        PlagiarismCaseInfoDTO plagiarismCaseInfo = plagiarismCaseApi.flatMap(api -> api.getPlagiarismCaseInfoForExerciseAndUser(exercise.getId(), user.getId())).orElse(null);
 
         return ResponseEntity.ok(new ExerciseDetailsDTO(exercise, irisSettings, plagiarismCaseInfo));
     }

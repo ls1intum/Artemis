@@ -451,8 +451,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
     @Override
     public Set<CompetencyExerciseLink> getCompetencyLinks() {
         return competencyLinks;
@@ -772,18 +770,22 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
-            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-            newGradingInstruction.setGradingCriterion(newGradingCriterion);
-
+            final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    private static GradingInstruction copyGradingInstruction(GradingCriterion newGradingCriterion, GradingInstruction originalGradingInstruction) {
+        GradingInstruction newGradingInstruction = new GradingInstruction();
+        newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+        newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+        newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+        newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+        newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+        newGradingInstruction.setGradingCriterion(newGradingCriterion);
+        return newGradingInstruction;
     }
 
     /**

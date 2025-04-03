@@ -22,16 +22,16 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
@@ -53,13 +53,11 @@ public class ExerciseDeletionService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ModelingExerciseService modelingExerciseService;
-
     private final QuizExerciseService quizExerciseService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
@@ -69,7 +67,7 @@ public class ExerciseDeletionService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
+    private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
     private final Optional<TextApi> textApi;
 
@@ -79,29 +77,28 @@ public class ExerciseDeletionService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, Optional<TextApi> textApi, ChannelRepository channelRepository,
-            ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi, LectureUnitService lectureUnitService,
+            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.modelingExerciseService = modelingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismResultApi = plagiarismResultApi;
         this.textApi = textApi;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -165,12 +162,12 @@ public class ExerciseDeletionService {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
 
-        if (irisSettingsService.isPresent()) {
-            irisSettingsService.get().deleteSettingsFor(exercise);
+        if (irisSettingsApi.isPresent()) {
+            irisSettingsApi.get().deleteSettingsFor(exercise);
         }
 
         // delete all plagiarism results belonging to this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, false);
@@ -184,12 +181,13 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Set<StudentExam> studentExams = api.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : studentExams) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
                     studentExam.removeExercise(exercise);
-                    studentExamRepository.save(studentExam);
+                    api.save(studentExam);
                 }
             }
         }
@@ -233,7 +231,7 @@ public class ExerciseDeletionService {
      */
     public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
         // delete all plagiarism results for this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExercise(exercise, true);

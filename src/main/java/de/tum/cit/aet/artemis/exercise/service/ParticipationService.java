@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -40,12 +41,10 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
@@ -54,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenSer
 import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
@@ -66,11 +66,16 @@ public class ParticipationService {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     private final GitService gitService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
+
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final BuildLogEntryService buildLogEntryService;
 
@@ -90,8 +95,6 @@ public class ParticipationService {
 
     private final ResultService resultService;
 
-    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
     private final ParticipantScoreRepository participantScoreRepository;
 
     private final StudentScoreRepository studentScoreRepository;
@@ -105,15 +108,16 @@ public class ParticipationService {
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-            BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService, ResultService resultService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ParticipantScoreRepository participantScoreRepository,
-            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
+            Optional<LocalVCGitBranchService> localVCGitBranchService, BuildLogEntryService buildLogEntryService, ParticipationRepository participationRepository,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UriService uriService,
+            ResultService resultService, ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository,
+            TeamScoreRepository teamScoreRepository, Optional<SharedQueueManagementService> localCISharedBuildJobQueueService,
             ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
         this.buildLogEntryService = buildLogEntryService;
         this.participationRepository = participationRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -123,7 +127,6 @@ public class ParticipationService {
         this.teamRepository = teamRepository;
         this.uriService = uriService;
         this.resultService = resultService;
-        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
@@ -227,7 +230,7 @@ public class ParticipationService {
         StudentParticipation participation;
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
         }
         else {
             participation = new StudentParticipation();
@@ -324,7 +327,7 @@ public class ParticipationService {
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
-            participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+            participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
             participation.setInitializationState(InitializationState.UNINITIALIZED);
             participation.setExercise(exercise);
             participation.setParticipant(participant);
@@ -362,7 +365,7 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation(versionControlService.orElseThrow().getDefaultBranchOfArtemis());
+                participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
             }
             else {
                 participation = new StudentParticipation();
@@ -449,13 +452,15 @@ public class ParticipationService {
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = uriService.getRepositorySlugFromRepositoryUri(sourceURL);
             VersionControlService vcs = versionControlService.orElseThrow();
-            String templateBranch = vcs.getOrRetrieveBranchOfExercise(programmingExercise);
+            String templateBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository uri and do not copy it again
             var newRepoUri = vcs.copyRepository(projectKey, templateRepoName, templateBranch, projectKey, repoName, participation.getAttempt());
             // add the userInfo part to the repoUri only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUri = newRepoUri.withUser(participation.getParticipantIdentifier());
             }
+            // After copying the repository, the new participation uses the default branch
+            participation.setBranch(defaultBranch);
             participation.setRepositoryUri(newRepoUri.toString());
             participation.setInitializationState(InitializationState.REPO_COPIED);
 
@@ -504,8 +509,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
-                continuousIntegrationService.orElseThrow().configureBuildPlan(participation, branch);
+                continuousIntegrationService.orElseThrow().configureBuildPlan(participation);
             }
             catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
@@ -842,11 +846,6 @@ public class ParticipationService {
         if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudent().ifPresent(student -> studentScoreRepository.deleteByExerciseAndUser(participation.getExercise(), student));
             studentParticipation.getTeam().ifPresent(team -> teamScoreRepository.deleteByExerciseAndTeam(participation.getExercise(), team));
-        }
-
-        // a programming exercise participation may have many commits (with a submission each): clean them up all at once in a single database query
-        if (participation instanceof ProgrammingExerciseParticipation) {
-            buildLogStatisticsEntryRepository.deleteByParticipationId(participation.getId());
         }
 
         Set<Submission> submissions = participation.getSubmissions();

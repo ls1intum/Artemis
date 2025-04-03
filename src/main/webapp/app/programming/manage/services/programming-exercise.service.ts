@@ -15,7 +15,6 @@ import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOpti
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
-import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -597,10 +596,6 @@ export class ProgrammingExerciseService {
                 return res && new Map(Object.entries(res));
             }),
         );
-    }
-
-    getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
-        return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 
     getTheiaConfig(exerciseId: number): Observable<ProgrammingExerciseTheiaConfig> {

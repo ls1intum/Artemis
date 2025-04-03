@@ -45,6 +45,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.SingleUse
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -60,10 +61,12 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
@@ -71,6 +74,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -103,10 +108,14 @@ public class SingleUserNotificationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, FeatureToggleService featureToggleService, CourseNotificationService courseNotificationService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.websocketMessagingService = websocketMessagingService;
@@ -116,6 +125,8 @@ public class SingleUserNotificationService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.authorizationCheckService = authorizationCheckService;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -201,7 +212,25 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     private void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudent().orElseThrow().equals(recipient)).findFirst();
+
+            if (studentParticipation.isEmpty() || studentParticipation.get().findLatestResult() == null) {
+                return;
+            }
+
+            Double score = Objects.requireNonNull(studentParticipation.get().findLatestResult()).getScore();
+
+            var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue());
+
+            courseNotificationService.sendCourseNotification(exerciseAssessedNotification, List.of(recipient));
+        }
+        else {
+            notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
+        }
     }
 
     /**
@@ -527,7 +556,7 @@ public class SingleUserNotificationService {
     /**
      * Filters which of the mentioned users are permitted to receive a notification
      *
-     * @param mentionedUsers users mentioned in the answer message
+     * @param mentionedUsers users mentioned in the message
      * @param conversation   the conversation of the created post/notification, used for filtering
      * @return the stream of mentioned users which are permitted to receive the notification for the given conversation
      */

@@ -1,5 +1,5 @@
 import { Component, effect, inject, input, output } from '@angular/core';
-import { Posting, SavedPostStatus, SavedPostStatusMap } from 'app/communication/shared/entities/posting.model';
+import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,8 +13,8 @@ import { PostingSummaryComponent } from 'app/communication/course-conversations/
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
 export class SavedPostsComponent {
-    readonly savedPostStatus = input<SavedPostStatus>();
-    readonly courseId = input<number>();
+    savedPostStatus = input.required<SavedPostStatus>();
+    courseId = input.required<number>();
 
     readonly onNavigateToPost = output<Posting>();
 
@@ -22,7 +22,6 @@ export class SavedPostsComponent {
 
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
-    protected savedPostStatusMap: SavedPostStatusMap = SavedPostStatusMap.PROGRESS;
     protected isShowDeleteNotice = false;
 
     // Icons
@@ -31,11 +30,9 @@ export class SavedPostsComponent {
 
     constructor() {
         effect(() => {
-            this.savedPostStatusMap = Posting.statusToMap(this.savedPostStatus()!);
+            this.isShowDeleteNotice = this.savedPostStatus() !== SavedPostStatus.IN_PROGRESS;
 
-            this.isShowDeleteNotice = this.savedPostStatusMap !== SavedPostStatusMap.PROGRESS;
-
-            this.savedPostService.fetchSavedPosts(this.courseId()!, this.savedPostStatus()!).subscribe({
+            this.savedPostService.fetchSavedPosts(this.courseId(), this.savedPostStatus()).subscribe({
                 next: (response) => {
                     if (!response.body) {
                         this.posts = [];

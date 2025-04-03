@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -23,11 +24,11 @@ public class SavedPost extends DomainObject {
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "post_type", nullable = false)
     private PostingType postType;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private SavedPostStatus status;
 

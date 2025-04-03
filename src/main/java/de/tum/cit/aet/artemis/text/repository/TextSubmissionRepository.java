@@ -36,6 +36,11 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "results.assessor" })
     Optional<TextSubmission> findWithEagerResultsAssessorById(long submissionId);
 
+    @NotNull
+    default TextSubmission findWithEagerResultsAssessorByIdElseThrow(long submissionId) {
+        return getValueElseThrow(findWithEagerResultsAssessorById(submissionId), submissionId);
+    }
+
     /**
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor

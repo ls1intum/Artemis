@@ -48,8 +48,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -84,7 +85,7 @@ public class ResultResource {
 
     private final ResultService resultService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseRepository exerciseRepository;
 
@@ -98,13 +99,13 @@ public class ResultResource {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, ExamDateService examDateService,
+    public ResultResource(ResultRepository resultRepository, ParticipationService participationService, ResultService resultService, Optional<ExamDateApi> examDateApi,
             ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, ParticipationAuthorizationCheckService participationAuthCheckService,
             UserRepository userRepository, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository) {
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.resultService = resultService;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseRepository = exerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
@@ -252,7 +253,8 @@ public class ResultResource {
         }
         else {
             Exam exam = exercise.getExerciseGroup().getExam();
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exam);
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exam);
             if (latestIndividualExamEndDate == null || ZonedDateTime.now().isBefore(latestIndividualExamEndDate)) {
                 return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "result", "externalSubmissionBeforeDueDate",
                         "External submissions are not supported before the end of the exam.")).build();
