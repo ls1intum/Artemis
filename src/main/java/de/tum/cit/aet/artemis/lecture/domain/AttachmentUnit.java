@@ -60,12 +60,6 @@ public class AttachmentUnit extends LectureUnit {
         this.attachment = attachment;
     }
 
-    /**
-     * Returns a filtered list of slides where only the latest version of each slide (based on slide number) is included.
-     * For slides with the same slide number, only the one with the highest ID is kept.
-     *
-     * @return A list of the most recent version of each slide, ordered by slide number
-     */
     public List<Slide> getSlides() {
         return slides;
     }
