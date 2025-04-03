@@ -140,7 +140,7 @@ public class BuildScriptProviderService {
                     buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
-            log.error("Failed to provide build script for programming exercise " + exercise.getId(), e);
+            log.error("Failed to provide build script for programming exercise {}", exercise.getId(), e);
         }
         return null;
     }

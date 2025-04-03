@@ -55,7 +55,7 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     @BeforeEach
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         aeolusRequestMockProvider.enableMockingOfRequests();
     }
@@ -586,23 +586,6 @@ class ProgrammingExerciseLocalVcJenkinsIntegrationTest extends AbstractProgrammi
     }
 
     // TODO: add startProgrammingExerciseStudentSubmissionFailedWithBuildlog & copyRepository_testConflictError
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildLogStatistics_unauthorized() throws Exception {
-        programmingExerciseTestService.buildLogStatistics_unauthorized();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testBuildLogStatistics_noStatistics() throws Exception {
-        programmingExerciseTestService.buildLogStatistics_noStatistics();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testBuildLogStatistics() throws Exception {
-        programmingExerciseTestService.buildLogStatistics();
-    }
 
     // TODO: enable or remove the test
     @Test

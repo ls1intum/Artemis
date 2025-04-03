@@ -25,9 +25,8 @@ import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.BaseExercise;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
@@ -68,9 +67,7 @@ public class ExamImportService {
 
     private final ProgrammingExerciseImportService programmingExerciseImportService;
 
-    private final FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    private final FileUploadExerciseImportService fileUploadExerciseImportService;
+    private final Optional<FileUploadImportApi> fileUploadImportApi;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -82,9 +79,8 @@ public class ExamImportService {
             ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository, ExerciseGroupRepository exerciseGroupRepository,
             QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise, CourseRepository courseRepository,
             ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadExerciseImportService fileUploadExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
+            ProgrammingExerciseImportService programmingExerciseImportService, Optional<FileUploadImportApi> fileUploadImportApi,
+            GradingCriterionRepository gradingCriterionRepository, ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingExerciseRepository = modelingExerciseRepository;
@@ -96,8 +92,7 @@ public class ExamImportService {
         this.programmingExerciseService = programmingExerciseService1;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
-        this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
+        this.fileUploadImportApi = fileUploadImportApi;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.channelService = channelService;
@@ -319,11 +314,10 @@ public class ExamImportService {
                 }
 
                 case FILE_UPLOAD -> {
-                    final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopy.getId());
-                    if (optionalFileUploadExercise.isEmpty()) {
+                    if (fileUploadImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield Optional.of(fileUploadExerciseImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy));
+                    yield fileUploadImportApi.get().importFileUploadExercise(exerciseToCopy.getId(), (FileUploadExercise) exerciseToCopy);
                 }
 
                 case QUIZ -> {

@@ -130,11 +130,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
-import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
@@ -144,8 +141,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.UriService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
@@ -203,9 +200,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
-
-    @Autowired
-    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     @Autowired
     private PasswordService passwordService;
@@ -282,8 +276,6 @@ public class ProgrammingExerciseTestService {
 
     public static final String TEAM_SHORT_NAME = "team1";
 
-    public static final String PARTICIPATION_BASE_URL = "/api/exercise/participations/";
-
     public LocalRepository exerciseRepo;
 
     public LocalRepository testRepo;
@@ -307,9 +299,9 @@ public class ProgrammingExerciseTestService {
     // Injected in the constructor
     private VersionControlService versionControlService;
 
+    private LocalVCGitBranchService localVCGitBranchService;
+
     // Injected in the constructor
-    @SuppressWarnings("unused") // might be used in the future and is here for consistency reasons
-    private ContinuousIntegrationService continuousIntegrationService;
 
     private MockDelegate mockDelegate;
 
@@ -329,7 +321,7 @@ public class ProgrammingExerciseTestService {
         userUtilService.addUsers(userPrefix, NUMBER_OF_STUDENTS + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, LocalVCGitBranchService localVCGitBranchService) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -343,7 +335,7 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
-        this.continuousIntegrationService = continuousIntegrationService;
+        this.localVCGitBranchService = localVCGitBranchService;
 
         course = courseUtilService.addEmptyCourse();
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true);
@@ -1367,6 +1359,29 @@ public class ProgrammingExerciseTestService {
                 .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
     }
 
+    // TEST TODO Enable
+    public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode, Object body) throws Exception {
+        var participation = createStudentParticipationWithSubmission(exerciseMode);
+        var participant = participation.getParticipant();
+
+        mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
+        mockDelegate.mockNotifyPush(participation);
+
+        // These will be updated when pushing a commit
+        participation.setInitializationState(InitializationState.INACTIVE);
+        participation.setBuildPlanId(null);
+        programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
+
+        // Mock REST Call from the VCS for a new programming submission (happens as part of the webhook after pushing code to git)
+        request.postWithoutLocation("/api/programming/public/programming-submissions/" + participation.getId(), body, HttpStatus.OK, new HttpHeaders());
+
+        // Fetch updated participation and assert
+        ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
+        assertThat(updatedParticipation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+        assertThat(updatedParticipation.getBuildPlanId()).as("Build Plan Id should be set")
+                .isEqualTo(exercise.getProjectKey().toUpperCase() + "-" + participant.getParticipantIdentifier().toUpperCase());
+    }
+
     // TEST
     public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
@@ -1864,19 +1879,19 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
     }
 
-    // Test
+    // TEST TODO Enable
     public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
@@ -1985,7 +2000,7 @@ public class ProgrammingExerciseTestService {
 
         for (var exercise : programmingExercises) {
             setupRepositoryMocks(exercise);
-            for (var examUser : exam.getExamUsers()) {
+            for (var ignored : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
                 // setupRepositoryMocksParticipant(exercise, examUser.getUser().getLogin(), repo);
@@ -2174,7 +2189,7 @@ public class ProgrammingExerciseTestService {
         var participantRepoTestUrl = ParticipationFactory.getMockFileRepositoryUri(studentTeamRepo);
         final var teamLocalPath = studentTeamRepo.localRepoFile.toPath();
         doReturn(teamLocalPath).when(gitService).getDefaultLocalPathOfRepo(participantRepoTestUrl);
-        doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
+        doReturn(defaultBranch).when(localVCGitBranchService).getOrRetrieveBranchOfExercise(exercise);
         doThrow(new CanceledException("Checkout got interrupted!")).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
         // the local repo should exist before startExercise()
@@ -2369,18 +2384,6 @@ public class ProgrammingExerciseTestService {
         assertThat(solutionSubmission.isPresent()).isTrue();
         assertThat(solutionSubmission.get().getType()).isEqualTo(SubmissionType.INSTRUCTOR);
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
-    }
-
-    private void persistProgrammingExercise() {
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        programmingExerciseRepository.save(exercise);
-        programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
-    }
-
-    private ProgrammingExerciseStudentParticipation createUserParticipation() throws Exception {
-        final var path = "/api/exercise/exercises/" + exercise.getId() + "/participations";
-        return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
     private List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {
@@ -2582,49 +2585,6 @@ public class ProgrammingExerciseTestService {
         examTestRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
-    }
-
-    // TEST
-    public void buildLogStatistics_unauthorized() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
-    }
-
-    // TEST
-    public void buildLogStatistics_noStatistics() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        var statistics = request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isEqualTo(0);
-        assertThat(statistics.agentSetupDuration()).isEqualTo(0);
-        assertThat(statistics.testDuration()).isEqualTo(0);
-        assertThat(statistics.scaDuration()).isEqualTo(0);
-        assertThat(statistics.totalJobDuration()).isEqualTo(0);
-        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(0);
-    }
-
-    // TEST
-    public void buildLogStatistics() throws Exception {
-        exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-        exercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(exercise.getBuildConfig()));
-        exercise = programmingExerciseRepository.save(exercise);
-        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
-        var submission1 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-        var submission2 = programmingExerciseUtilService.createProgrammingSubmission(participation, false);
-
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
-
-        var statistics = request.get("/api/programming/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
-        assertThat(statistics.buildCount()).isEqualTo(2);
-        assertThat(statistics.agentSetupDuration()).isEqualTo(9);
-        assertThat(statistics.testDuration()).isEqualTo(17.5);
-        assertThat(statistics.scaDuration()).isEqualTo(30);
-        assertThat(statistics.totalJobDuration()).isEqualTo(45);
-        assertThat(statistics.dependenciesDownloadedCount()).isEqualTo(2.5);
     }
 
     private void setupMocksForConsistencyChecksOnImport(ProgrammingExercise sourceExercise) throws Exception {

@@ -1,7 +1,10 @@
 <div class="saved-posts pt-2 px-2 d-flex flex-column h-100">
     <div>
         <h4 class="mb-0 p-1 pb-0">
-            <span jhiTranslate="artemisApp.metis.overview.savedPosts"></span> (<span [jhiTranslate]="'artemisApp.metis.overview.' + savedPostStatusMap.toString()"></span>)
+            <span jhiTranslate="artemisApp.metis.overview.savedPosts"></span>
+            @if (savedPostStatus()) {
+                (<span [jhiTranslate]="'artemisApp.metis.overview.' + savedPostStatus()?.toString()"></span>)
+            }
         </h4>
     </div>
     <hr class="my-2" />
