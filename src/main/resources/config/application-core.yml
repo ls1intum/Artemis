@@ -1,6 +1,8 @@
 artemis:
     atlas:
         enabled: true
+    lecture:
+        enabled: true
 
 spring:
     liquibase:
