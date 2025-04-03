@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -99,12 +100,14 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<ExamApi> examApi;
 
+    private final ParticipationService participationService;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
             Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi) {
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi, ParticipationService participationService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -120,6 +123,7 @@ public class ProgrammingExerciseParticipationResource {
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
         this.examApi = examApi;
+        this.participationService = participationService;
     }
 
     /**
@@ -136,15 +140,19 @@ public class ProgrammingExerciseParticipationResource {
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         hasAccessToParticipationElseThrow(participation);
+        filterParticipationSubmissionResults(participation);
+
+        // hide details that should not be shown to the students
+        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
+        return ResponseEntity.ok(participation);
+    }
+
+    private void filterParticipationSubmissionResults(ProgrammingExerciseStudentParticipation participation) {
         if (shouldHideExamExerciseResults(participation)) {
             participation.getSubmissions().forEach(submission -> {
                 submission.setResults(List.of());
             });
         }
-
-        // hide details that should not be shown to the students
-        resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
-        return ResponseEntity.ok(participation);
     }
 
     /**
@@ -161,6 +169,7 @@ public class ProgrammingExerciseParticipationResource {
 
         // TODO: improve access checks to avoid fetching the user multiple times
         hasAccessToParticipationElseThrow(participation);
+        filterParticipationSubmissionResults(participation);
 
         // hide details that should not be shown to the students
         resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
