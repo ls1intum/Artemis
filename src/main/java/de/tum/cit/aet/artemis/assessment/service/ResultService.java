@@ -54,8 +54,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -102,7 +103,7 @@ public class ResultService {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final LongFeedbackTextRepository longFeedbackTextRepository;
 
@@ -125,7 +126,7 @@ public class ResultService {
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, StudentExamRepository studentExamRepository, BuildJobRepository buildJobRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
         this.userRepository = userRepository;
@@ -140,7 +141,7 @@ public class ResultService {
         this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -343,10 +344,11 @@ public class ResultService {
     }
 
     private void filterSensitiveFeedbacksInExamExercise(Participation participation, Collection<Result> results, Exercise exercise) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
         Exam exam = exercise.getExerciseGroup().getExam();
         boolean shouldResultsBePublished = exam.resultsPublished();
         if (!shouldResultsBePublished && exam.isTestExam() && participation instanceof StudentParticipation) {
-            var studentExamOptional = studentExamRepository.findByExamIdAndParticipationId(exam.getId(), participation.getId());
+            var studentExamOptional = api.findByExamIdAndParticipationId(exam.getId(), participation.getId());
             if (studentExamOptional.isPresent()) {
                 shouldResultsBePublished = studentExamOptional.get().areResultsPublishedYet();
             }
@@ -504,9 +506,7 @@ public class ResultService {
             deleteLongFeedback(result.getFeedbacks(), result);
 
             // Set all long feedback IDs to null to make hibernate aware that the long feedback doesn't exist.
-            result.getFeedbacks().forEach(feedback -> {
-                feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null));
-            });
+            result.getFeedbacks().forEach(feedback -> feedback.getLongFeedback().ifPresent(longFeedbackText -> longFeedbackText.setId(null)));
             // Note: This also saves the feedback objects in the database because of the 'cascade = CascadeType.ALL' option.
             return resultRepository.save(result);
         }
@@ -589,8 +589,8 @@ public class ResultService {
                 maxOccurrence, filterErrorCategories, pageable);
 
         List<FeedbackDetailDTO> processedDetails;
-        int totalPages = 0;
-        long totalCount = 0;
+        int totalPages;
+        long totalCount;
         long highestOccurrenceOfGroupedFeedback = 0;
         if (!groupFeedback) {
             // Process and map feedback details, calculating relative count and assigning task names

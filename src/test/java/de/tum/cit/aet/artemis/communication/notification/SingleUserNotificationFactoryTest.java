@@ -74,9 +74,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
-import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
@@ -140,10 +140,6 @@ class SingleUserNotificationFactoryTest {
 
     private static final String USER_LOGIN = "de27sms";
 
-    private static PlagiarismSubmission plagiarismSubmission;
-
-    private static Set<PlagiarismSubmission<?>> plagiarismSubmissionSet;
-
     private static PlagiarismCase plagiarismCase;
 
     private static final String DATA_EXPORTS = "data-exports";
@@ -173,16 +169,16 @@ class SingleUserNotificationFactoryTest {
         cheatingUser = new User();
         cheatingUser.setLogin(USER_LOGIN);
 
-        PlagiarismResult plagiarismResult = new TextPlagiarismResult();
+        TextPlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
-        plagiarismSubmission = new PlagiarismSubmission();
+        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission = new PlagiarismSubmission<>();
         plagiarismSubmission.setStudentLogin(USER_LOGIN);
 
-        plagiarismSubmissionSet = new HashSet<>();
+        Set<PlagiarismSubmission<?>> plagiarismSubmissionSet = new HashSet<>();
         plagiarismSubmissionSet.add(plagiarismSubmission);
 
-        PlagiarismComparison plagiarismComparison = new PlagiarismComparison();
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
 

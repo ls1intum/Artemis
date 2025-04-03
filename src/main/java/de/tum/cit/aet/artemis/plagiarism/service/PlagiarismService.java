@@ -116,7 +116,7 @@ public class PlagiarismService {
 
     /**
      * Retrieves the number of potential plagiarism cases by considering the plagiarism submissions for the exercise
-     * Additionally, it filters out cases for deleted user --> isDeleted = true because we do not delete the user entity entirely.
+     * Additionally, it filters out cases for deleted user --> deleted = true because we do not delete the user entity entirely.
      *
      * @param exerciseId the exercise id for which the potential plagiarism cases should be retrieved
      * @return the number of potential plagiarism cases
@@ -151,7 +151,7 @@ public class PlagiarismService {
     }
 
     /**
-     * Checks if the user the submission belongs to, has not the isDeleted flag set to true
+     * Checks if the user the submission belongs to, has not the deleted flag set to true
      *
      * @param submission the submission to check
      * @return true if the user is NOT deleted, false otherwise

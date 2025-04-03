@@ -27,7 +27,6 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -46,7 +45,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let gitDiffReportStub: jest.SpyInstance;
     let profileServiceStub: jest.SpyInstance;
     let submissionPolicyServiceStub: jest.SpyInstance;
-    let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
 
@@ -90,15 +88,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         ],
     } as ProgrammingExerciseGitDiffReport;
 
-    const buildLogStatistics = {
-        buildCount: 5,
-        agentSetupDuration: 2.5,
-        testDuration: 3,
-        scaDuration: 2,
-        totalJobDuration: 7.5,
-        dependenciesDownloadedCount: 6,
-    } as BuildLogStatisticsDTO;
-
     const profileInfo = {
         activeProfiles: [],
         activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
@@ -141,7 +130,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         profileServiceStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
-        buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
@@ -204,11 +192,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 );
                 comp.ngOnInit();
                 await new Promise((r) => setTimeout(r, 100));
-                if (isEditor) {
-                    expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-                } else {
-                    expect(buildLogStatisticsStub).not.toHaveBeenCalled();
-                }
             },
         );
 

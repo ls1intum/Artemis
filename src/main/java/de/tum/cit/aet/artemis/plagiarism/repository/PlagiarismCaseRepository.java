@@ -165,7 +165,7 @@ public interface PlagiarismCaseRepository extends ArtemisJpaRepository<Plagiaris
     @Query("""
             SELECT COUNT(plagiarismCase)
             FROM PlagiarismCase plagiarismCase
-            WHERE plagiarismCase.student.isDeleted = FALSE
+            WHERE plagiarismCase.student.deleted = FALSE
                 AND plagiarismCase.exercise.id = :exerciseId
             """)
     long countByExerciseId(@Param("exerciseId") long exerciseId);

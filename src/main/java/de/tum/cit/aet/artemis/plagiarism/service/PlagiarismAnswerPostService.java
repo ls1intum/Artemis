@@ -75,9 +75,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
         parseUserMentions(course, answerPost.getContent());
 
-        // increase answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() + 1);
-
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -159,9 +156,6 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         post.removeAnswerPost(answerPost);
-
-        // decrease answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() - 1);
 
         // sets the post as resolved if there exists any resolving answer
         post.setResolved(post.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));

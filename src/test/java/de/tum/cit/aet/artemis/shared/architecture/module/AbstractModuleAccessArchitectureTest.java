@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.shared.architecture.module;
 
+import static com.tngtech.archunit.base.DescribedPredicate.not;
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.belongToAnyOf;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideInAnyPackage;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.resideOutsideOfPackage;
@@ -58,18 +60,14 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     @Test
     void apiClassesShouldInheritFromAbstractApi() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class)
-                .check(productionClasses);
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).and()
+                .resideOutsideOfPackage(getModuleApiDtoSubpackage()).should().beAssignableTo(AbstractApi.class).check(productionClasses);
     }
 
     @Test
     void apiClassesShouldBeAbstractOrAnnotatedWithController() {
-        classes().that().resideInAPackage(getModuleApiSubpackage()).and().resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController())
-                .check(productionClasses);
-    }
-
-    protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of();
+        classes().that(not(belongToAnyOf(getIgnoredClasses().toArray(Class<?>[]::new)))).and().resideInAPackage(getModuleApiSubpackage()).and()
+                .resideOutsideOfPackage(getModuleApiDtoSubpackage()).should(beAbstractOrAnnotatedWithController()).check(productionClasses);
     }
 
     protected String getModuleApiSubpackage() {
@@ -86,6 +84,10 @@ public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchi
 
     protected String getModuleDtoSubpackage() {
         return getModulePackage() + ".dto..";
+    }
+
+    protected Set<Class<?>> getIgnoredClasses() {
+        return Set.of();
     }
 
     private static ArchCondition<JavaClass> beAbstractOrAnnotatedWithController() {

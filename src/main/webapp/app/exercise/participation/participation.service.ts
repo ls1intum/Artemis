@@ -15,11 +15,6 @@ import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
-export type EntityBlobResponseType = HttpResponse<Blob>;
-export type BuildArtifact = {
-    fileName: string;
-    fileContent: Blob;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {

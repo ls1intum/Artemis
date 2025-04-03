@@ -137,10 +137,19 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
+            	AND (se.started = FALSE OR se.started IS NULL)
+            	AND se.testRun = FALSE
+            """)
+    long countStudentExamsNotStartedByExamIdIgnoreTestRuns(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.started = TRUE
             	AND se.testRun = FALSE
             """)
-    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     @Query("""
             SELECT COUNT(se)
@@ -149,7 +158,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.submitted = TRUE
             	AND se.testRun = FALSE
             """)
-    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
      * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.

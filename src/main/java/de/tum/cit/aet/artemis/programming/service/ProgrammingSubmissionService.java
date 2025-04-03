@@ -38,8 +38,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -67,7 +68,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
 @Profile(PROFILE_CORE)
@@ -75,6 +76,8 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 public class ProgrammingSubmissionService extends SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
+
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -90,9 +93,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final ExamSubmissionService examSubmissionService;
-
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService;
 
@@ -108,28 +109,29 @@ public class ProgrammingSubmissionService extends SubmissionService {
 
     public ProgrammingSubmissionService(ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ProgrammingMessagingService programmingMessagingService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository,
+            ProgrammingMessagingService programmingMessagingService, ResultRepository resultRepository,
             Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ParticipationService participationService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService, GitService gitService,
-            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, ExamDateService examDateService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<ExamSubmissionApi> examSubmissionApi, GitService gitService,
+            StudentParticipationRepository studentParticipationRepository, FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi,
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi) {
-        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaApi> athenaApi,
+            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+        super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateApi,
                 exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;
-        this.versionControlService = versionControlService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.gitService = gitService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.submissionPolicyRepository = submissionPolicyRepository;
+        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -148,12 +150,11 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
         var existingSubmissionCount = participation.getSubmissions().size();
         ZonedDateTime submissionDate = ZonedDateTime.now();
-        VersionControlService versionControl = versionControlService.orElseThrow();
 
         log.info("processNewProgrammingSubmission invoked due to the commit {} by {} with {} in branch {}", commit.commitHash(), commit.authorName(), commit.authorEmail(),
                 commit.branch());
 
-        String branch = versionControl.getOrRetrieveBranchOfParticipation(participation);
+        String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
         if (commit.branch() != null && !commit.branch().equalsIgnoreCase(branch)) {
             // if the commit was made in a branch different from the default, ignore this
             throw new VersionControlException(
@@ -287,7 +288,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
     private boolean isAllowedToSubmit(ProgrammingExerciseStudentParticipation participation, User studentWithGroups, ProgrammingSubmission programmingSubmission) {
         ProgrammingExercise exercise = participation.getProgrammingExercise();
         if (exercise.isExamExercise()) {
-            return examSubmissionService.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
+            return api.isAllowedToSubmitDuringExam(exercise, studentWithGroups, true);
         }
         return isAllowedToSubmitForCourseExercise(participation, programmingSubmission);
     }

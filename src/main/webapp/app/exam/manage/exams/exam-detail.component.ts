@@ -158,7 +158,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     /**
      * Returns the route for exam components by identifier
      */
-    getExamRoutesByIdentifier(identifier: string) {
+    getExamRoutesByIdentifier(identifier: string): (string | number | undefined)[] {
         return ['/course-management', this.exam.course?.id, 'exams', this.exam.id, identifier];
     }
 
