@@ -1,9 +1,9 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
 import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

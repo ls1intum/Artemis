@@ -20,11 +20,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// We dont want to expose the programming exercise in the build config
+@JsonIgnoreProperties(value = { "programmingExercise" })
 public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);
@@ -64,7 +65,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")
-    @JsonIgnoreProperties("buildConfig")
     private ProgrammingExercise programmingExercise;
 
     @Nullable
@@ -113,8 +113,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * Getter for the stored default branch of the exercise.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
      *
      * @return the name of the default branch or null if not yet stored in Artemis
      */

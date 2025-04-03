@@ -2,13 +2,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { ChangeDetectorRef, Component } from '@angular/core';
-import { UserSettingsDirective } from 'app/shared/user-settings/user-settings.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
@@ -18,6 +15,9 @@ import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-use
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { UserSettingsDirective } from 'app/core/user/settings/user-settings.directive';
+import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 
 /**
  * needed for testing the abstract UserSettingsDirective

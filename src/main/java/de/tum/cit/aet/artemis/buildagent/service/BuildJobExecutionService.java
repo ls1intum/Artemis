@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
@@ -102,7 +102,7 @@ public class BuildJobExecutionService {
     }
 
     private void cleanUpTempDirectoriesAsync(ZonedDateTime currentTime) {
-        log.info("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
+        log.debug("Cleaning up temporary directories in {}", CHECKED_OUT_REPOS_TEMP_DIR);
         try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(Path.of(CHECKED_OUT_REPOS_TEMP_DIR))) {
             for (Path path : directoryStream) {
                 try {
@@ -119,7 +119,7 @@ public class BuildJobExecutionService {
         catch (IOException e) {
             log.error("Could not delete temporary directories", e);
         }
-        log.info("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
+        log.debug("Clean up of temporary directories in {} completed.", CHECKED_OUT_REPOS_TEMP_DIR);
     }
 
     /**
@@ -321,7 +321,7 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+        buildJobContainerService.moveResultsToSpecifiedDirectory(containerId, buildJob.buildConfig().resultPaths(), LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
         // Get an input stream of the test result files.
 
@@ -334,7 +334,7 @@ public class BuildJobExecutionService {
         BuildResult buildResult;
 
         try {
-            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+            testResultsTarInputStream = buildJobContainerService.getArchiveFromContainer(containerId, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY);
 
             var buildLogs = buildLogsMap.getAndTruncateBuildLogs(buildJob.id());
             buildResult = parseTestResults(testResultsTarInputStream, buildJob.buildConfig().branch(), assignmentRepoCommitHash, testRepoCommitHash, buildCompletedDate,

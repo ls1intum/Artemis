@@ -72,4 +72,11 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
                 AND examUser.didCheckName = TRUE
             """)
     boolean isAttendanceChecked(@Param("examId") long examId, @Param("login") String login);
+
+    @Query("""
+            SELECT COUNT (DISTINCT eu)
+            FROM ExamUser eu
+            WHERE eu.exam.id = :examId
+            """)
+    long countByExamId(@Param("examId") long examId);
 }

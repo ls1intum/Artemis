@@ -1,7 +1,7 @@
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Post } from 'app/entities/metis/post.model';
-import { Course } from 'app/entities/course.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockPostService } from '../../helpers/mocks/service/mock-post.service';
 import { MockAnswerPostService } from '../../helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/metis.service';
@@ -9,10 +9,10 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { PostService } from 'app/communication/post.service';
 import { AnswerPostService } from 'app/communication/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ReactionService } from 'app/communication/reaction.service';
 import { MockReactionService } from '../../helpers/mocks/service/mock-reaction.service';
-import { Reaction } from 'app/entities/metis/reaction.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { DisplayPriority, MetisPostAction, PageType, PostContextFilter, UserRole } from 'app/communication/metis.util';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,9 +22,11 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MetisPostDTO } from 'app/entities/metis/metis-post-dto.model';
+import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { of, Subject, throwError } from 'rxjs';
 import {
+    conversationBetweenUser1User2,
+    directMessageUser2,
     metisChannel,
     metisCourse,
     metisExam,
@@ -40,18 +42,17 @@ import {
     plagiarismPost,
 } from '../../helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { Conversation, ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/communication/saved-post.service';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
-import 'jest-extended';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ForwardedMessageService } from 'app/communication/forwarded-message.service';
 import { MockForwardedMessageService } from '../../helpers/mocks/service/mock-forwarded-message.service';
-import { ForwardedMessage } from 'app/entities/metis/forwarded-message.model';
+import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -463,6 +464,45 @@ describe('Metis Service', () => {
         expect(contextInformation.displayName).not.toBeEmpty();
     });
 
+    it('should return "Direct Message" when conversation is a one-to-one chat', () => {
+        const dmConversation = { ...conversationBetweenUser1User2, type: ConversationType.ONE_TO_ONE };
+        const directMessagePost: Post = {
+            ...directMessageUser2,
+            conversation: dmConversation,
+        };
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(directMessagePost);
+
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Direct Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: dmConversation.id });
+    });
+
+    it('should return "Group Message" when conversation is a group chat', () => {
+        const groupChatConversation = {
+            id: 9999,
+            type: ConversationType.GROUP_CHAT,
+            conversationParticipants: [
+                { id: 1, user: metisUser1, unreadMessagesCount: 0 },
+                { id: 2, user: metisUser2, unreadMessagesCount: 0 },
+                { id: 3, user: { id: 3, name: 'User3' }, unreadMessagesCount: 0 },
+            ],
+        };
+
+        const groupChatPost: Post = {
+            id: 8888,
+            author: metisUser1,
+            content: 'Hello Group Chat',
+            conversation: groupChatConversation,
+        } as Post;
+
+        metisService.setCourse(course);
+        const contextInformation = metisService.getContextInformation(groupChatPost);
+        expect(contextInformation.routerLinkComponents).toEqual(['/courses', course.id, 'communication']);
+        expect(contextInformation.displayName).toBe('Group Message');
+        expect(contextInformation.queryParams).toEqual({ conversationId: groupChatConversation.id });
+    });
+
     describe('Handle websocket related functionality', () => {
         beforeEach(() => {
             metisServiceCreateWebsocketSubscriptionSpy = jest.spyOn(metisService, 'createWebsocketSubscription');
@@ -720,11 +760,11 @@ describe('Metis Service', () => {
         const postIds = [1, 2, 3];
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.POST);
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST, course.id);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.POST);
         forwardedMessageServiceSpy.mockClear();
 
         metisService.getForwardedMessagesByIds(postIds, PostingType.ANSWER);
-        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER, course.id);
+        expect(forwardedMessageServiceSpy).toHaveBeenCalledWith(postIds, PostingType.ANSWER);
         tick();
     }));
 
@@ -883,7 +923,7 @@ describe('Metis Service', () => {
         expect(createFwSpy).toHaveBeenCalledTimes(originalAnswerPosts.length);
 
         createFwSpy.mock.calls.forEach(([argForwardedMessage]) => {
-            expect(argForwardedMessage.sourceType).toBe(1); // ANSWER==1
+            expect(argForwardedMessage.sourceType).toBe(PostingType.ANSWER.toString());
         });
 
         expect(result).toHaveLength(originalAnswerPosts.length);

@@ -1,7 +1,7 @@
 import { NestedTreeControl } from '@angular/cdk/tree';
 import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
-import { KnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
+import { KnowledgeAreaForTree } from 'app/atlas/shared/entities/standardized-competency.model';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',

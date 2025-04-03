@@ -274,10 +274,10 @@ public class CourseTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private CompetencyUtilService competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
-    private PrerequisiteUtilService prerequisiteUtilService;
+    private Optional<PrerequisiteUtilService> prerequisiteUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -681,13 +681,16 @@ public class CourseTestService {
 
         Set<Organization> organizations = course.getOrganizations();
 
+        CompetencyUtilService competencyService = competencyUtilService.orElseThrow();
+        PrerequisiteUtilService prerequisiteService = prerequisiteUtilService.orElseThrow();
+
         Set<Competency> competencies = new HashSet<>();
-        competencies.add(competencyUtilService.createCompetency(course));
+        competencies.add(competencyService.createCompetency(course));
         course.setCompetencies(competencies);
         course = courseRepo.save(course);
 
         Set<Prerequisite> prerequisites = new HashSet<>();
-        prerequisites.add(prerequisiteUtilService.createPrerequisite(course));
+        prerequisites.add(prerequisiteService.createPrerequisite(course));
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
@@ -1026,7 +1029,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesForDashboardPracticeRepositories() throws Exception {
-        User student1 = userUtilService.getUserByLogin(userPrefix + "student1");
+        User student = userUtilService.getUserByLogin(userPrefix + "student3");
 
         Course course = courseUtilService.createCourse();
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -1035,7 +1038,7 @@ public class CourseTestService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusMinutes(90));
 
         programmingExerciseRepository.save(programmingExercise);
-        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student1");
+        Result gradedResult = participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, userPrefix + "student3");
         gradedResult.completionDate(ZonedDateTime.now().minusHours(3)).assessmentType(AssessmentType.AUTOMATIC).score(42D);
         resultRepo.save(gradedResult);
         StudentParticipation gradedParticipation = (StudentParticipation) gradedResult.getParticipation();
@@ -1043,7 +1046,7 @@ public class CourseTestService {
         participationRepository.save(gradedParticipation);
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(gradedResult, gradedParticipation, "asdf");
         StudentParticipation practiceParticipation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
-                student1);
+                student);
         practiceParticipation.setPracticeMode(true);
         participationRepository.save(practiceParticipation);
         Result practiceResult = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), practiceParticipation);
@@ -3391,9 +3394,10 @@ public class CourseTestService {
     public void testGetCoursesForImport() throws Exception {
         List<Course> coursesExpected = new ArrayList<>();
         for (int i = 1; i < 3; i++) {
-            coursesExpected.add(courseUtilService.createCourse((long) i));
+            coursesExpected.add(courseUtilService.createCourse());
         }
-        var searchTerm = pageableSearchUtilService.configureSearch("");
+        // when the search tem is not "", the sort order is descending, and we get the last inserted courses first and these contain the courses we just created
+        var searchTerm = pageableSearchUtilService.configureSearch("Course");
 
         SearchResultPageDTO<CourseForImportDTO> result = request.getSearchResult("/api/core/courses/for-import", HttpStatus.OK, CourseForImportDTO.class,
                 pageableSearchUtilService.searchMapping(searchTerm));
@@ -3409,8 +3413,10 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
+        // we have to set the semester of all existing courses to null to avoid them being selected by the archive logic
+        courseRepo.clearSemester();
         for (int i = 1; i <= 4; i++) {
-            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+            expectedOldCourses.add(courseUtilService.createCourse());
         }
 
         expectedOldCourses.get(0).setSemester("SS20");
@@ -3435,17 +3441,18 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
-        Course course1 = courseUtilService.createCourse((long) 1);
+        courseRepo.clearSemester();
+        Course course1 = courseUtilService.createCourse();
         course1.setSemester("SS20");
         course1.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course1);
 
-        Course course2 = courseUtilService.createCourse((long) 2);
+        Course course2 = courseUtilService.createCourse();
         course2.setSemester("SS21");
         course2.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course2);
 
-        Course course3 = courseUtilService.createCourse((long) 3);
+        Course course3 = courseUtilService.createCourse();
         course3.setSemester("WS21/22");
         course3.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course3);

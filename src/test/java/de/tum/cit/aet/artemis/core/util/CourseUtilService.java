@@ -162,7 +162,7 @@ public class CourseUtilService {
     private LectureUtilService lectureUtilService;
 
     @Autowired
-    private CompetencyUtilService competencyUtilService;
+    private Optional<CompetencyUtilService> competencyUtilService; // Optional because it is not used in all tests
 
     @Autowired
     private ExerciseUtilService exerciseUtilService;
@@ -195,22 +195,12 @@ public class CourseUtilService {
     private GradingScaleUtilService gradingScaleUtilService;
 
     /**
-     * Creates and saves a course with null id.
+     * Creates and saves a course (`id` is automatically generated).
      *
      * @return The created course.
      */
     public Course createCourse() {
-        return createCourse(null);
-    }
-
-    /**
-     * Creates and saves a course with the given id.
-     *
-     * @param id The id of the course.
-     * @return The newly created course.
-     */
-    public Course createCourse(Long id) {
-        Course course = CourseFactory.generateCourse(id, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         return courseRepo.save(course);
     }
 
@@ -264,7 +254,8 @@ public class CourseUtilService {
         Lecture lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
         course.addLectures(lecture);
 
-        Competency competency = competencyUtilService.createCompetency(course);
+        CompetencyUtilService service = competencyUtilService.orElseThrow();
+        Competency competency = service.createCompetency(course);
         course.setCompetencies(Set.of(competency));
 
         lectureRepo.save(lecture);
@@ -318,7 +309,8 @@ public class CourseUtilService {
         List<Course> courses = lectureUtilService.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competencyUtilService.createCompetency(course))));
+            var competency = competencyUtilService.orElseThrow().createCompetency(course);
+            lectures.replaceAll(lecture -> lectureUtilService.addCompetencyToLectureUnits(lecture, Set.of(competency)));
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
@@ -337,7 +329,7 @@ public class CourseUtilService {
     }
 
     /**
-     * Creates and saves two courses with exercises and lectures.
+     * Creates and saves two courses with exercises and lectures. Requires at least two students.
      *
      * @param userPrefix                  The prefix of the course user groups.
      * @param withParticipations          True, if 5 participations by student1 should be added to the course exercises. If false, no participations are added.
@@ -446,10 +438,12 @@ public class CourseUtilService {
             User user = userUtilService.getUserByLogin(userPrefix + "student1");
             StudentParticipation participation1 = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, modelingExercise, user);
             StudentParticipation participation2 = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
-            StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user);
             StudentParticipation participation4 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.FINISHED, programmingExercise, user);
             StudentParticipation participation5 = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, user);
             participation5.setPracticeMode(true);
+
+            User user2 = userUtilService.getUserByLogin(userPrefix + "student2");
+            StudentParticipation participation3 = ParticipationFactory.generateStudentParticipation(InitializationState.UNINITIALIZED, modelingExercise, user2);
 
             Submission modelingSubmission1 = ParticipationFactory.generateModelingSubmission("model1", true);
             Submission modelingSubmission2 = ParticipationFactory.generateModelingSubmission("model2", true);

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ModePickerComponent, ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { BaseGradingSystemComponent, CsvGradeStep, GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { parse } from 'papaparse';

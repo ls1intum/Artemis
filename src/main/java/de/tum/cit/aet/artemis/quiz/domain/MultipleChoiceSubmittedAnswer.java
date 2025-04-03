@@ -16,10 +16,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A MultipleChoiceSubmittedAnswer.
@@ -32,19 +30,18 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "multiple_choice_submitted_answer_selected_options", joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
-    @JsonView(QuizView.Before.class)
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
     public Set<AnswerOption> getSelectedOptions() {
         return selectedOptions;
     }
 
-    public void addSelectedOptions(AnswerOption answerOption) {
-        this.selectedOptions.add(answerOption);
-    }
-
     public void setSelectedOptions(Set<AnswerOption> answerOptions) {
         this.selectedOptions = answerOptions;
+    }
+
+    public void addSelectedOptions(AnswerOption answerOption) {
+        this.selectedOptions.add(answerOption);
     }
 
     /**
@@ -113,4 +110,5 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer {
     public Set<Long> toSelectedIds() {
         return getSelectedOptions().stream().map(DomainObject::getId).collect(Collectors.toSet());
     }
+
 }

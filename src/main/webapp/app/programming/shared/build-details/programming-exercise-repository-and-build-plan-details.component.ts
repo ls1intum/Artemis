@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
-import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import type { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
-import type { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
+import type { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
-import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CommonModule } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

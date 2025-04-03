@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PageableSearch } from 'app/shared/table/pageable-table';
 import { Component } from '@angular/core';

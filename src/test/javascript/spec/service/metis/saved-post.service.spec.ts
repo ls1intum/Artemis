@@ -2,11 +2,11 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { SavedPostService } from 'app/communication/saved-post.service';
-import { Post } from 'app/entities/metis/post.model';
-import { Posting, PostingType, SavedPostStatus } from 'app/entities/metis/posting.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import Dayjs from 'dayjs/esm';
 
 describe('SavedPostService', () => {
@@ -38,7 +38,7 @@ describe('SavedPostService', () => {
 
             service.savePost(post).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}`);
             expect(req.request.method).toBe('POST');
         });
 
@@ -48,7 +48,7 @@ describe('SavedPostService', () => {
 
             service.savePost(answerPost).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}`);
             expect(req.request.method).toBe('POST');
         });
     });
@@ -60,7 +60,7 @@ describe('SavedPostService', () => {
 
             service.removeSavedPost(post).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}`);
             expect(req.request.method).toBe('DELETE');
         });
 
@@ -70,7 +70,7 @@ describe('SavedPostService', () => {
 
             service.removeSavedPost(answerPost).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}`);
             expect(req.request.method).toBe('DELETE');
         });
     });
@@ -80,9 +80,9 @@ describe('SavedPostService', () => {
             const post = new Post();
             post.id = 1;
 
-            service.changeSavedPostStatus(post, SavedPostStatus.PROGRESS).subscribe();
+            service.changeSavedPostStatus(post, SavedPostStatus.IN_PROGRESS).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.POST}?status=${SavedPostStatus.PROGRESS}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.POST.toLowerCase()}&status=${SavedPostStatus.IN_PROGRESS.toLowerCase()}`);
             expect(req.request.method).toBe('PUT');
         });
 
@@ -92,7 +92,7 @@ describe('SavedPostService', () => {
 
             service.changeSavedPostStatus(answerPost, SavedPostStatus.COMPLETED).subscribe();
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${PostingType.ANSWER}?status=${SavedPostStatus.COMPLETED}`);
+            const req = httpMock.expectOne(`${resourceUrl}1?type=${PostingType.ANSWER.toLowerCase()}&status=${SavedPostStatus.COMPLETED.toLowerCase()}`);
             expect(req.request.method).toBe('PUT');
         });
     });
@@ -100,7 +100,7 @@ describe('SavedPostService', () => {
     describe('Fetch saved posts', () => {
         it('should fetch saved posts and convert dates accordingly', fakeAsync(() => {
             const courseId = 1;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             const mockPosts = [
                 {
                     id: 1,
@@ -116,7 +116,8 @@ describe('SavedPostService', () => {
                 expect(response.body?.[0].updatedDate).toBeInstanceOf(Dayjs);
             });
 
-            const req = httpMock.expectOne(`${resourceUrl}1/${SavedPostStatus.PROGRESS}`);
+            const resourceUrlNoTrailingSlash = resourceUrl.slice(0, -1);
+            const req = httpMock.expectOne(`${resourceUrlNoTrailingSlash}?status=${SavedPostStatus.IN_PROGRESS.toLowerCase()}&courseId=${courseId}`);
             expect(req.request.method).toBe('GET');
             req.flush(mockPosts, { status: 200, statusText: 'OK' });
             tick();
