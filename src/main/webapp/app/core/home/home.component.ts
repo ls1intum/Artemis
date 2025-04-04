@@ -45,6 +45,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private translateService = inject(TranslateService);
     private webauthnService = inject(WebauthnService);
     private webauthnApiService = inject(WebauthnApiService);
+    // private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -112,6 +113,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
+        // await this.passkeySettingsApiService.loginWithPasskey(credential);
         await this.webauthnApiService.loginWithPasskey(credential);
     }
 

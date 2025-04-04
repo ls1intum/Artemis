@@ -4,30 +4,18 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URISyntaxException;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.webauthn4j.springframework.security.WebAuthnAuthenticationRequest;
-import com.webauthn4j.springframework.security.WebAuthnAuthenticationToken;
-import com.webauthn4j.springframework.security.WebAuthnRegistrationRequestValidationResponse;
-import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecord;
-import com.webauthn4j.springframework.security.credential.WebAuthnCredentialRecordImpl;
-
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.AuthenticateDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -46,13 +34,15 @@ public class PublicWebauthnResource {
 
     private final UserRepository userRepository;
 
-    public PublicWebauthnResource(UserRepository userRepository) {
+    private final AuthenticationManager authenticationManager;
+
+    public PublicWebauthnResource(UserRepository userRepository, AuthenticationManager authenticationManager) {
         this.userRepository = userRepository;
+        this.authenticationManager = authenticationManager;
     }
 
     /**
      * {@code Get /authenticate} : authenticate as a user with a passkey.
-     *
      */
     // @PostMapping("authenticate")
     // @EnforceNothing
@@ -60,60 +50,43 @@ public class PublicWebauthnResource {
     // TODO endpoint does not work yet
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authenticate(JWTCookieService jwtCookieService, HttpServletResponse response) throws URISyntaxException {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (!authentication.isAuthenticated()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            // throw new BadRequestAlertException("Authentication with passkey was not successful, not authenticated", ENTITY_NAME, null);
-            // TODO Unauthorzied Exception werfen (oder badCredentials wenn es das nicht gibt)
-            // HttpClientErrorException.unauthorzied
-            // UnauthorizedException
-            // BadCredentials
-        }
+    public ResponseEntity<Void> authenticate(HttpServletRequest request, HttpServletResponse response, JWTCookieService jwtCookieService,
+            AuthenticationManager authenticationManager) throws URISyntaxException {
+        // try {
+        // WebAuthnAuthenticationFilter filter = new WebAuthnAuthenticationFilter();
+        // filter.setAuthenticationManager(authenticationManager);
+        // filter.attemptAuthentication(request, response);
+        // webAuthnAuthenticationFilter.setAuthenticationManager(authenticationManager);
+        // webAuthnAuthenticationFilter.attemptAuthentication(request, response);
+        // }
+        // catch (IOException | ServletException e) {
+        // log.error("Error during WebAuthn authentication", e);
+        // return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
+        // }
 
+        // RelyingPartyAuthenticationRequest authenticationRequest = new RelyingPartyAuthenticationRequest(
+        // webAuthnAuthenticateDto.rawId().getBytes(),
+        // webAuthnAuthenticateDto.response().clientDataJSON().getBytes(),
+        // webAuthnAuthenticateDto.response().authenticatorData().getBytes(),
+        // webAuthnAuthenticateDto.response().signature().getBytes(),
+        // webAuthnAuthenticateDto.clientExtensionResults().toString()
+        // );
         //
-        // WebAuthnAuthenticationToken authenticationToken = getWebAuthnAuthenticationToken(authenticateDTO);
+        // WebAuthnAuthenticationRequestToken authenticationToken = new WebAuthnAuthenticationRequestToken(authenticationRequest);
         //
-        // Authentication authResult = authenticationManager.authenticate(authenticationToken);
-        // SecurityContextHolder.getContext().setAuthentication(authResult);
-        // log.info("User is authenticated");
+        // try {
+        // Authentication authentication = authenticationManager.authenticate(authenticationToken);
+        // SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // boolean rememberMe = loginVM.isRememberMe() != null && loginVM.isRememberMe();
-        boolean rememberMe = true;
-
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-        // return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
-
-        // TODO hier response cookie zurückgeben, Https ServletR
-        // TODO remember me setzen
+        // boolean rememberMe = true; // TODO adjust properly
+        //
+        // ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        // response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        // return ResponseEntity.ok().build();
+        // } catch (BadCredentialsException exception) {
+        // // TODO unauthoroized vs bad credentials
+        // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        // }
         return ResponseEntity.ok().build();
-    }
-
-    private static WebAuthnAuthenticationToken getWebAuthnAuthenticationToken(AuthenticateDTO authenticateDTO) {
-        WebAuthnAuthenticationRequest authenticationRequest = new WebAuthnAuthenticationRequest(authenticateDTO.rawId().getBytes(),
-                authenticateDTO.response().clientDataJSON().getBytes(), authenticateDTO.response().authenticatorData().getBytes(),
-                authenticateDTO.response().signature().getBytes(), authenticateDTO.clientExtensionResults().toString());
-
-        // or provide a collection of authorities if needed
-        return new WebAuthnAuthenticationToken(authenticateDTO.id(), authenticationRequest, null // or provide a collection of authorities if needed
-        );
-    }
-
-    private WebAuthnCredentialRecord getWebAuthnCredentialRecord(WebAuthnRegistrationRequestValidationResponse registrationRequestValidationResponse) {
-        if (registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData() == null) {
-            throw new BadRequestAlertException("attestedCredentialData is null", ENTITY_NAME, null);
-        }
-
-        User user = userRepository.getUser();
-
-        // TODO exchange name with passkey name
-        return new WebAuthnCredentialRecordImpl(user.getName(), user.getLogin(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getAttestedCredentialData(),
-                registrationRequestValidationResponse.getAttestationObject().getAttestationStatement(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getSignCount(), registrationRequestValidationResponse.getTransports(),
-                registrationRequestValidationResponse.getRegistrationExtensionsClientOutputs(),
-                registrationRequestValidationResponse.getAttestationObject().getAuthenticatorData().getExtensions());
     }
 }

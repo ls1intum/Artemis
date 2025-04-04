@@ -51,12 +51,12 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
 
     @Override
     public void save(PublicKeyCredentialUserEntity userEntity) {
-        // throw new NotImplementedException("save not implemented, use userRepository instead");
+        log.warn("save not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");
     }
 
     @Override
     public void delete(Bytes id) {
-        // throw new NotImplementedException("delete not implemented, use userRepository instead");
+        log.warn("delete not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");
     }
 
     private static PublicKeyCredentialUserEntity mapToUserEntity(User user) {

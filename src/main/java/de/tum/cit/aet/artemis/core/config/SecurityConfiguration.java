@@ -82,7 +82,6 @@ public class SecurityConfiguration {
      * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
      *                                             implementation.
      * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
-     *
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
@@ -208,6 +207,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
+                    .requestMatchers("/api/core/webauthn/authenticate").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -226,12 +226,12 @@ public class SecurityConfiguration {
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
-            .webAuthn(webauth ->
-                webauth.allowedOrigins("https://8998-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
-                .rpId("8998-2003-c2-bf07-b00-fcf4-f6da-6156-1a3c.ngrok-free.app")
-                .rpName("Artemis Development")
+            // Spring Security generates options and register endpoints for webauthn (passkey) authentication with this option
+            .webAuthn(webauth -> webauth
+                .allowedOrigins("http://localhost:9000")
+                .rpId("localhost")
+                .rpName("Artemis")
             );
-
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());

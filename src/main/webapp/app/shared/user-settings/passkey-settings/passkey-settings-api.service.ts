@@ -4,11 +4,15 @@ import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dt
 
 @Injectable({ providedIn: 'root' })
 export class PasskeySettingsApiService extends BaseApiHttpService {
-    private readonly basePath = `core/public/webauthn`;
+    private readonly basePath = `core/webauthn`;
 
     // TODO add delete and rename endpoint
 
     async createNewPasskey(registerPasskeyDto: RegisterPasskeyDto): Promise<void> {
         return await this.post<void>(`${this.basePath}/signup`, registerPasskeyDto);
+    }
+
+    async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<void> {
+        return await this.post<void>(`${this.basePath}/authenticate`, publicKeyCredential);
     }
 }
