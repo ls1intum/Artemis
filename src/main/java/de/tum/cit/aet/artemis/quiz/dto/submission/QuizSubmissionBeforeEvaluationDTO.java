@@ -19,7 +19,7 @@ public record QuizSubmissionBeforeEvaluationDTO(Long id, String submissionExerci
     public static QuizSubmissionBeforeEvaluationDTO of(QuizSubmission submission) {
         return new QuizSubmissionBeforeEvaluationDTO(submission.getId(), submission.getSubmissionExerciseType(), submission.isSubmitted(), submission.getType(),
                 submission.getSubmissionDate(), submission.getSubmittedAnswers().stream().map(SubmittedAnswerBeforeEvaluationDTO::of).collect(Collectors.toSet()),
-                submission.getResults().stream().map(ResultBeforeEvaluationDTO::of).collect(Collectors.toList()));
+                submission.getResults().stream().map(ResultBeforeEvaluationDTO::of).toList());
     }
 
 }

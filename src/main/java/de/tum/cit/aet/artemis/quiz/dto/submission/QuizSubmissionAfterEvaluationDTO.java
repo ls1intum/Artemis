@@ -20,7 +20,7 @@ public record QuizSubmissionAfterEvaluationDTO(Long id, String submissionExercis
         return new QuizSubmissionAfterEvaluationDTO(submission.getId(), submission.getSubmissionExerciseType(), submission.isSubmitted(), submission.getType(),
                 submission.getSubmissionDate(), submission.getScoreInPoints(),
                 submission.getSubmittedAnswers().stream().map(SubmittedAnswerAfterEvaluationDTO::of).collect(Collectors.toSet()),
-                submission.getResults().stream().map(ResultAfterEvaluationDTO::of).collect(Collectors.toList()));
+                submission.getResults().stream().map(ResultAfterEvaluationDTO::of).toList());
     }
 
 }
