@@ -434,16 +434,6 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // Quiz Pool Configuration
-    {
-        path: ':examId/quiz-pool',
-        loadComponent: () => import('app/quiz/manage/quiz-pool.component').then((m) => m.QuizPoolComponent),
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     // Import File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',

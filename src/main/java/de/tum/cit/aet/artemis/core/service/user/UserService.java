@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -119,11 +121,16 @@ public class UserService {
 
     private final UserSshPublicKeyService userSshPublicKeyService;
 
+    private final CourseNotificationSettingService courseNotificationSettingService;
+
+    private final UserCourseNotificationStatusService userCourseNotificationStatusService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
             Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
-            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService) {
+            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -140,6 +147,8 @@ public class UserService {
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
         this.userSshPublicKeyService = userSshPublicKeyService;
+        this.courseNotificationSettingService = courseNotificationSettingService;
+        this.userCourseNotificationStatusService = userCourseNotificationStatusService;
     }
 
     /**
@@ -493,6 +502,9 @@ public class UserService {
             savedPostRepository.deleteAll(savedPostsOfUser);
         }
 
+        userCourseNotificationStatusService.deleteAllForUser(user.getId());
+        courseNotificationSettingService.deleteAllForUser(user.getId());
+
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
@@ -638,7 +650,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
+        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

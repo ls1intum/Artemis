@@ -22,7 +22,6 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-ac
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
@@ -41,7 +40,6 @@ import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
-        FaIconComponent,
         RequestFeedbackButtonComponent,
         ArtemisTranslatePipe,
     ],

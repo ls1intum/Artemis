@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.time.ZonedDateTime;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
@@ -16,7 +15,7 @@ import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 /**
  * Service class for {@link ScienceEvent}.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class ScienceEventService {
 

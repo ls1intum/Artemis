@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -14,12 +13,13 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 /**
  * Service for managing {@link StandardizedCompetency} entities.
  */
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @Service
 public class StandardizedCompetencyService {
 

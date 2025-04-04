@@ -10,6 +10,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DomSanitizer } from '@angular/platform-browser';
+import { RouterLink } from '@angular/router';
 
 /**
  * Component for displaying a single course notification.
@@ -18,7 +19,7 @@ import { DomSanitizer } from '@angular/platform-browser';
  */
 @Component({
     selector: 'jhi-course-notification',
-    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule],
+    imports: [FaIconComponent, ProfilePictureComponent, TranslateDirective, CommonModule, RouterLink],
     templateUrl: './course-notification.component.html',
     styleUrls: ['./course-notification.component.scss'],
 })
@@ -33,11 +34,14 @@ export class CourseNotificationComponent {
     readonly isUnseen = input<boolean>(false);
     readonly isShowClose = input<boolean>(false);
     readonly isHideTime = input<boolean>(false);
+    readonly isRedirectToUrl = input<boolean>(false);
     readonly displayTimeInMilliseconds = input<number | undefined>(undefined);
 
     protected faIcon: IconDefinition;
     protected notificationParameters: { [key: string]: unknown };
     protected notificationType: string;
+    protected notificationInitialized: boolean = false;
+    protected notificationUrl: { link: string[]; queryParams: Record<string, string> };
     protected notificationTimeTranslationKey: string;
     protected notificationTimeTranslationParameters: { [key: string]: unknown };
 
@@ -57,7 +61,7 @@ export class CourseNotificationComponent {
             this.notificationParameters = {
                 ...Object.entries(this.courseNotification().parameters!).reduce(
                     (acc, [key, value]) => {
-                        if (!CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                        if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                             acc[key] = value;
                         } else {
                             acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString()))?.replace(/<[^>]*>/g, '') || '';
@@ -71,6 +75,7 @@ export class CourseNotificationComponent {
                 courseId: this.courseNotification().courseId,
             };
             this.notificationType = this.courseNotification().notificationType!;
+            this.notificationUrl = this.parseUrlToRouterObject(this.courseNotification().relativeWebAppUrl!);
             this.notificationTimeTranslationKey = this.courseNotificationService.getDateTranslationKey(this.courseNotification());
             this.notificationTimeTranslationParameters = this.courseNotificationService.getDateTranslationParams(this.courseNotification());
             if ('authorName' in this.notificationParameters && 'authorImageUrl' in this.notificationParameters && 'authorId' in this.notificationParameters) {
@@ -78,9 +83,15 @@ export class CourseNotificationComponent {
                 this.authorId = this.notificationParameters.authorId as number;
                 this.authorImageUrl = this.notificationParameters.authorImageUrl as string;
                 this.isShowProfilePicture = true;
+            } else if ('replyAuthorName' in this.notificationParameters && 'replyImageUrl' in this.notificationParameters && 'replyAuthorId' in this.notificationParameters) {
+                this.authorName = this.notificationParameters.replyAuthorName as string;
+                this.authorId = this.notificationParameters.replyAuthorId as number;
+                this.authorImageUrl = this.notificationParameters.replyImageUrl as string;
+                this.isShowProfilePicture = true;
             } else {
                 this.isShowProfilePicture = false;
             }
+            this.notificationInitialized = true;
         });
     }
 
@@ -90,6 +101,29 @@ export class CourseNotificationComponent {
      */
     protected closeClicked() {
         this.onCloseClicked.emit();
+    }
+
+    /**
+     * Parses an url to an object that can be interpreted by a routerLink
+     * @param url The url to parse as a string
+     * @return An object that can be interpreted by a routerLink
+     */
+    private parseUrlToRouterObject(url: string): { link: string[]; queryParams: Record<string, string> } {
+        if (url === undefined) {
+            return { link: [''], queryParams: {} };
+        }
+
+        const [path, queryString] = url.split('?');
+        const queryParams: Record<string, string> = {};
+
+        if (queryString) {
+            queryString.split('&').forEach((param) => {
+                const [key, value] = param.split('=');
+                queryParams[key] = decodeURIComponent(value || '');
+            });
+        }
+
+        return { link: [path], queryParams };
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
