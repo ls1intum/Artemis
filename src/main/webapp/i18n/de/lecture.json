@@ -98,7 +98,7 @@
                 "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
                 "attachmentUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID.",
                 "noPDFAvailable": "Kein PDF verfügbar",
-                "cancelButton": "Abbruch",
+                "cancelButton": "Abbrechen",
                 "removePageButton": "Seiten entfernen",
                 "hidePageButton": "Seiten ausblenden",
                 "showPageButton": "Seiten anzeigen",
@@ -121,16 +121,16 @@
                     "hiddenUntil": "Diese Seite ist ausgeblendet bis:",
                     "showPageConfirmation": "Möchtest du diese Seite anzeigen?",
                     "forever": "IMMER",
-                    "exerciseId": "(Übung Id: {{ param }})"
+                    "exerciseId": "(Aufgabe Id: {{ param }})"
                 },
                 "dateBox": {
                     "hidePage": "Seite {{ param }} ausblenden",
                     "hideMultiplePages": "Seiten {{ param }} ausblenden",
                     "hideForever": "Für immer ausblenden",
                     "selectDate": "Datum auswählen",
-                    "selectExercise": "Übung auswählen",
-                    "noExercises": "Keine Übungen verfügbar",
-                    "exerciseTypeTitle": "{{ param }} Übungen",
+                    "selectExercise": "Aufgabe auswählen",
+                    "noExercises": "Keine Aufgaben verfügbar",
+                    "exerciseTypeTitle": "{{ param }} Aufgaben",
                     "dateError": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen."
                 }
             }
