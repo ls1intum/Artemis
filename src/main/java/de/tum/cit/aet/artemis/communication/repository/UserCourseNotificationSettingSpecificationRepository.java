@@ -65,4 +65,12 @@ public interface UserCourseNotificationSettingSpecificationRepository extends Ar
     @Transactional // Deleting Query
     @Override
     void delete(UserCourseNotificationSettingSpecification userCourseNotificationSettingSpecification);
+
+    /**
+     * Find all course notification setting specifications by user id.
+     *
+     * @param userId id to query for
+     * @return list of course notification setting specifications for the user
+     */
+    List<UserCourseNotificationSettingSpecification> findAllByUserId(long userId);
 }

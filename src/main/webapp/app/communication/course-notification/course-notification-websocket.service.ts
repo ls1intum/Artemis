@@ -66,6 +66,7 @@ export class CourseNotificationWebsocketService {
                     CourseNotificationViewingStatus[notification.status as unknown as keyof typeof CourseNotificationViewingStatus],
                     convertDateFromServer(notification.creationDate!)!,
                     notification.parameters!,
+                    notification.relativeWebAppUrl!,
                 );
                 this.courseNotificationService.addNotification(courseId, courseNotification);
                 this.websocketNotificationSubject.next(courseNotification);

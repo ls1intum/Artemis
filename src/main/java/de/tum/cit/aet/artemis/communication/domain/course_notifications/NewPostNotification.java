@@ -68,4 +68,9 @@ public class NewPostNotification extends CourseNotification {
     public List<NotificationChannelOption> getSupportedChannels() {
         return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
     }
+
+    @Override
+    public String getRelativeWebAppUrl() {
+        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId;
+    }
 }

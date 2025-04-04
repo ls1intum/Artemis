@@ -542,7 +542,7 @@ public class TutorialGroupResource {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        String csvContent = "";
+        String csvContent;
         try {
             csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
         }

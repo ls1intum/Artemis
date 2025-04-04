@@ -71,14 +71,14 @@
                         (pinnedCount)="onPinnedCountChanged($event)"
                     />
                 } @else {
-                    @if (selectedSavedPostStatus === null) {
+                    @if (selectedSavedPostStatus === undefined) {
                         <jhi-course-wide-search
                             (openThread)="postInThread = $event"
                             [courseWideSearchConfig]="courseWideSearchConfig"
                             (onNavigateToPost)="onTriggerNavigateToPost($event)"
                         />
                     } @else {
-                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id" (onNavigateToPost)="onNavigateToPost($event)" />
+                        <jhi-saved-posts [savedPostStatus]="selectedSavedPostStatus" [courseId]="course.id!" (onNavigateToPost)="onNavigateToPost($event)" />
                     }
                 }
             </div>
