@@ -65,6 +65,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -135,7 +136,10 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
+                {
+                    provide: ProgrammingExerciseParticipationService,
+                    useClass: MockProgrammingExerciseParticipationService,
+                },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ProfileService, {
@@ -220,12 +224,16 @@ describe('CodeEditorInstructorIntegration', () => {
 
     it('should load the exercise and select the template participation if no participation id is provided', () => {
         jest.resetModules();
+        const result = { id: 9 } as Result;
+        const submission = { id: 1, buildFailed: false, results: [result] } as Submission;
+        result.submission = submission;
+
         // @ts-ignore
         const exercise = {
             id: 1,
             problemStatement,
             studentParticipations: [{ id: 2, repositoryUri: 'test' }],
-            templateParticipation: { id: 3, repositoryUri: 'test2', results: [{ id: 9, submission: { id: 1, buildFailed: false } }] },
+            templateParticipation: { id: 3, repositoryUri: 'test2', submissions: [submission] },
             solutionParticipation: { id: 4, repositoryUri: 'test3' },
             course: { id: 1 },
         } as ProgrammingExercise;
@@ -278,7 +286,12 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     it('should go into error state when loading the exercise failed', () => {
-        const exercise = { id: 1, studentParticipations: [{ id: 2 }], templateParticipation: { id: 3 }, solutionParticipation: { id: 4 } } as ProgrammingExercise;
+        const exercise = {
+            id: 1,
+            studentParticipations: [{ id: 2 }],
+            templateParticipation: { id: 3 },
+            solutionParticipation: { id: 4 },
+        } as ProgrammingExercise;
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         initContainer(exercise);
 
@@ -343,10 +356,24 @@ describe('CodeEditorInstructorIntegration', () => {
             course: { id: 1 },
             problemStatement,
         } as ProgrammingExercise;
-        exercise.templateParticipation = { id: 3, repositoryUri: 'test2', programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.templateParticipation = {
+            id: 3,
+            repositoryUri: 'test2',
+            programmingExercise: exercise,
+        } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = {
+            id: 4,
+            repositoryUri: 'test3',
+            programmingExercise: exercise,
+        } as SolutionProgrammingExerciseParticipation;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
+        exercise.studentParticipations = [
+            {
+                id: 2,
+                repositoryUri: 'test',
+                exercise,
+            } as ProgrammingExerciseStudentParticipation,
+        ];
 
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 
@@ -393,9 +420,22 @@ describe('CodeEditorInstructorIntegration', () => {
             problemStatement,
         } as ProgrammingExercise;
         // @ts-ignore
-        exercise.studentParticipations = [{ id: 2, repositoryUri: 'test', exercise } as ProgrammingExerciseStudentParticipation];
-        exercise.templateParticipation = { id: 3, programmingExercise: exercise } as TemplateProgrammingExerciseParticipation;
-        exercise.solutionParticipation = { id: 4, repositoryUri: 'test3', programmingExercise: exercise } as SolutionProgrammingExerciseParticipation;
+        exercise.studentParticipations = [
+            {
+                id: 2,
+                repositoryUri: 'test',
+                exercise,
+            } as ProgrammingExerciseStudentParticipation,
+        ];
+        exercise.templateParticipation = {
+            id: 3,
+            programmingExercise: exercise,
+        } as TemplateProgrammingExerciseParticipation;
+        exercise.solutionParticipation = {
+            id: 4,
+            repositoryUri: 'test3',
+            programmingExercise: exercise,
+        } as SolutionProgrammingExerciseParticipation;
 
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
 

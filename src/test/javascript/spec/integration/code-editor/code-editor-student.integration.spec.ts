@@ -169,7 +169,8 @@ describe('CodeEditorStudentIntegration', () => {
         container.ngOnInit();
         const feedbacks = [{ id: 2 }] as Feedback[];
         result.feedbacks = feedbacks;
-        const participation = { id: 1, submissions: [{ results: [result] }], exercise: { id: 99 } } as Participation;
+        const submission = { id: 1, results: [result] } as any;
+        const participation = { id: 1, submissions: [submission], exercise: { id: 99 } } as Participation;
         const findWithLatestResultSubject = new Subject<Participation>();
         getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
 
@@ -182,7 +183,7 @@ describe('CodeEditorStudentIntegration', () => {
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeFalse();
-        expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
+        expect(container.participation).toEqual({ ...participation, submissions: [{ ...submission, results: [result] }] });
     });
 
     // TODO re-enable after remove-gitalb issues are resolved

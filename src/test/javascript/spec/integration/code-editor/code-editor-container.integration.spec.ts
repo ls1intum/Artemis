@@ -386,8 +386,9 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should wait for build result after submission if no unsaved changes exist', () => {
         cleanInitialize();
-        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        const successfulSubmission = { id: 1, buildFailed: false, participation: { id: 3 } } as ProgrammingSubmission;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
+        successfulSubmission.results = [successfulResult];
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         expect(container.unsavedFiles).toStrictEqual({});
@@ -424,8 +425,8 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should first save unsaved files before triggering commit', async () => {
         cleanInitialize();
-        const successfulSubmission = { id: 1, buildFailed: false } as ProgrammingSubmission;
-        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[], participation: { id: 3 } } as Result;
+        const successfulSubmission = { id: 1, buildFailed: false, participation: { id: 3 } } as ProgrammingSubmission;
+        const successfulResult = { id: 4, successful: true, feedbacks: [] as Feedback[] } as Result;
         successfulResult.submission = successfulSubmission;
         const expectedBuildLog = new BuildLogEntryArray();
         const unsavedFile = Object.keys(container.fileBrowser.repositoryFiles)[0];
