@@ -1,5 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -23,6 +24,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -37,6 +39,9 @@ import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
@@ -60,9 +65,10 @@ import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/ass
         ArtemisDatePipe,
         SortDirective,
         SortByDirective,
+        FeatureOverlayComponent,
     ],
 })
-export class AssessmentDashboardComponent implements OnInit {
+export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
@@ -71,9 +77,14 @@ export class AssessmentDashboardComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
+
+    private profileSubscription?: Subscription;
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
+
+    plagiarismEnabled = false;
 
     course: Course;
     exam: Exam;
@@ -134,6 +145,13 @@ export class AssessmentDashboardComponent implements OnInit {
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
+        });
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     /**
