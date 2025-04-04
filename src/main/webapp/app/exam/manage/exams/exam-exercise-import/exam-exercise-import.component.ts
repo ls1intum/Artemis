@@ -1,4 +1,5 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -10,6 +11,8 @@ import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { MODULE_FEATURE_FILEUPLOAD } from 'app/app.constants';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -17,7 +20,10 @@ import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficul
     styleUrls: ['./exam-exercise-import.component.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
 })
-export class ExamExerciseImportComponent implements OnInit {
+export class ExamExerciseImportComponent implements OnInit, OnDestroy {
+    private profileService = inject(ProfileService);
+    private profileSubscription: Subscription | null;
+
     exam = input.required<Exam>();
     importInSameCourse = input(false);
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
@@ -46,14 +52,24 @@ export class ExamExerciseImportComponent implements OnInit {
     faCheckDouble = faCheckDouble;
     faFont = faFont;
 
+    fileUploadExerciseEnabled = false;
+
     getExerciseIcon = getIcon;
 
     ngOnInit(): void {
-        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
-        // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
-        if (this.importInSameCourse()) {
-            this.initializeTitleAndShortNameMap();
-        }
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.fileUploadExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_FILEUPLOAD);
+
+            this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+            // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
+            if (this.importInSameCourse()) {
+                this.initializeTitleAndShortNameMap();
+            }
+        });
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     /**
@@ -85,7 +101,7 @@ export class ExamExerciseImportComponent implements OnInit {
     initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
         // Initialize selectedExercises
         this.exam().exerciseGroups?.forEach((exerciseGroup) => {
-            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises));
+            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises?.filter((exercise) => this.isExerciseTypeEnabled(exercise.type))));
         });
         const duplicated = new Set<string>();
         // Initialize containsProgrammingExercises
@@ -132,6 +148,10 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup The exercise group for which the user selected an exercise to import
      */
     onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
+        if (!this.isExerciseTypeEnabled(exercise.type)) {
+            return;
+        }
+
         if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
             // Case Exercise is already selected -> delete
             this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
@@ -317,5 +337,12 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         });
         return validConfiguration;
+    }
+
+    protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
+        if (type === ExerciseType.FILE_UPLOAD && !this.fileUploadExerciseEnabled) {
+            return false;
+        }
+        return true;
     }
 }

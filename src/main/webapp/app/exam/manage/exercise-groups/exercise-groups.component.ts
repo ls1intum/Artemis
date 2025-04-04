@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, forkJoin, of } from 'rxjs';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -44,6 +44,7 @@ import { FileUploadExerciseGroupCellComponent } from './file-upload-exercise-cel
 import { LowerCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -62,9 +63,10 @@ import { ExamExerciseRowButtonsComponent } from 'app/exercise/exam-exercise-row-
         ExamExerciseRowButtonsComponent,
         LowerCasePipe,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
-export class ExerciseGroupsComponent implements OnInit {
+export class ExerciseGroupsComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
     exerciseService = inject(ExerciseService);
@@ -74,6 +76,8 @@ export class ExerciseGroupsComponent implements OnInit {
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private profileService = inject(ProfileService);
+
+    private profileSubscription: Subscription | null;
 
     courseId: number;
     course: Course;
@@ -88,6 +92,8 @@ export class ExerciseGroupsComponent implements OnInit {
 
     localVCEnabled = true;
     localCIEnabled = true;
+    fileUploadExerciseEnabled = false;
+    disabledExerciseTypes: string[] = [];
 
     // Icons
     faPlus = faPlus;
@@ -120,10 +126,18 @@ export class ExerciseGroupsComponent implements OnInit {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+            this.fileUploadExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_FILEUPLOAD);
+            if (!this.fileUploadExerciseEnabled) {
+                this.disabledExerciseTypes.push(ExerciseType.FILE_UPLOAD);
+            }
         });
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     /**
@@ -301,5 +315,9 @@ export class ExerciseGroupsComponent implements OnInit {
                 this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
             }
         });
+    }
+
+    protected isExerciseTypeDisabled(exerciseType: ExerciseType) {
+        return this.disabledExerciseTypes.includes(exerciseType);
     }
 }

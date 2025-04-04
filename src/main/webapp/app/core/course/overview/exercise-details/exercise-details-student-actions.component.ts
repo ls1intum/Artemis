@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
@@ -10,11 +10,12 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_FILEUPLOAD, PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -48,11 +49,13 @@ import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../course-overview.scss'],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges, OnDestroy {
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
+
+    private profileSubscription: Subscription | null;
 
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
@@ -79,6 +82,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     hasRatedGradedResult: boolean;
     beforeDueDate: boolean;
     editorLabel?: string;
+    fileUploadExerciseEnabled = false;
     localVCEnabled = true;
     athenaEnabled = false;
     routerLink: string;
@@ -97,9 +101,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+                this.fileUploadExerciseEnabled = profileInfo.activeModuleFeatures?.includes(MODULE_FEATURE_FILEUPLOAD);
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
@@ -124,6 +129,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
+    }
+
+    ngOnDestroy() {
+        this.profileSubscription?.unsubscribe();
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
@@ -268,5 +277,15 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+    }
+
+    get allowEditing(): boolean {
+        if (this.exercise.type === ExerciseType.FILE_UPLOAD && this.fileUploadExerciseEnabled) {
+            return false;
+        }
+        return (
+            (this.gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
+            this.gradedParticipation?.initializationState === InitializationState.FINISHED
+        );
     }
 }

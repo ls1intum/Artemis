@@ -32,6 +32,9 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_FILEUPLOAD } from '../../../../../main/webapp/app/app.constants';
 
 @Component({
     template: '',
@@ -43,6 +46,9 @@ describe('ExamUpdateComponent', () => {
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
     let router: Router;
+    let profileService: ProfileService;
+    let getProfileInfoSub: jest.SpyInstance;
+
     const examWithoutExercises = new Exam();
     examWithoutExercises.id = 1;
 
@@ -70,6 +76,7 @@ describe('ExamUpdateComponent', () => {
                     { provide: ArtemisTranslatePipe, useClass: ArtemisTranslatePipe },
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
+                    { provide: ProfileService, useClass: MockProfileService },
                     {
                         provide: ActivatedRoute,
                         useValue: {
@@ -118,6 +125,9 @@ describe('ExamUpdateComponent', () => {
             });
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+            profileService = TestBed.inject(ProfileService);
+            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_FILEUPLOAD] }));
         });
 
         it('should initialize', () => {
@@ -528,6 +538,8 @@ describe('ExamUpdateComponent', () => {
 
     describe('import exams', () => {
         let alertService: AlertService;
+        let profileService: ProfileService;
+        let getProfileInfoSub: jest.SpyInstance;
 
         const course2 = new Course();
         course2.id = 2;
@@ -613,6 +625,7 @@ describe('ExamUpdateComponent', () => {
                     }),
                     MockDirective(NgForm),
                     { provide: TranslateService, useClass: MockTranslateService },
+                    { provide: ProfileService, useClass: MockProfileService },
                 ],
             }).compileComponents();
 
@@ -624,6 +637,10 @@ describe('ExamUpdateComponent', () => {
             global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });
+
+            profileService = TestBed.inject(ProfileService);
+            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_FILEUPLOAD] }));
         });
 
         it('should initialize without id and dates set', () => {

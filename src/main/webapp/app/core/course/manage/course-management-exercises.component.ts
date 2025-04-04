@@ -1,5 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/shared/entities/course.model';
+import { Subscription } from 'rxjs';
+
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -17,6 +19,8 @@ import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_FILEUPLOAD } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -37,7 +41,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ArtemisTranslatePipe,
     ],
 })
-export class CourseManagementExercisesComponent implements OnInit {
+export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly documentationType: DocumentationType = 'Exercise';
 
@@ -55,7 +59,11 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
 
+    fileUploadExerciseEnabled = false;
+
     private readonly route = inject(ActivatedRoute);
+    private readonly profileService = inject(ProfileService);
+    private profileSubscription: Subscription | null;
 
     /**
      * initializes course
@@ -67,7 +75,14 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
         });
 
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((result) => {
+            this.fileUploadExerciseEnabled = result.activeModuleFeatures.includes(MODULE_FEATURE_FILEUPLOAD);
+        });
         this.exerciseFilter = new ExerciseFilter('');
+    }
+
+    ngOnDestroy(): void {
+        this.profileSubscription?.unsubscribe();
     }
 
     /**

@@ -22,6 +22,9 @@ import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from '../../../../../../main/webapp/app/app.constants';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -29,6 +32,8 @@ describe('Exam Import Component', () => {
     let activeModal: NgbActiveModal;
     let examManagementService: ExamManagementService;
     let alertService: AlertService;
+    let profileService: ProfileService;
+    let getProfileInfoStub: jest.SpyInstance;
 
     const exam1 = { id: 1 } as Exam;
 
@@ -60,6 +65,7 @@ describe('Exam Import Component', () => {
                 MockProvider(ExamManagementService),
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
