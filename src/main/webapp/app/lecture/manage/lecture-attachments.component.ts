@@ -1,11 +1,10 @@
 import { Component, ElementRef, OnDestroy, ViewChild, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
 import { Subject, Subscription } from 'rxjs';
-import { FileService } from 'app/shared/http/file.service';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/manage/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { ACCEPTED_FILE_EXTENSIONS_FILE_BROWSER, ALLOWED_FILE_EXTENSIONS_HUMAN_READABLE } from 'app/shared/constants/file-extensions.constants';
@@ -21,6 +20,7 @@ import { DeleteButtonDirective } from '../../shared/delete-dialog/delete-button.
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from '../../shared/pipes/html-for-markdown.pipe';
+import { FileService } from 'app/shared/service/file.service';
 
 export interface LectureAttachmentFormData {
     attachmentName?: string;

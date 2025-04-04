@@ -6,7 +6,7 @@ import {
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
     buildFeedbackTextForReview,
-} from 'app/entities/feedback.model';
+} from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 
 describe('Feedback', () => {

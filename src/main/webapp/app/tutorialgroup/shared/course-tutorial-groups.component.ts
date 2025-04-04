@@ -1,23 +1,23 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/core/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/types/sidebar';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
+import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { cloneDeep } from 'lodash-es';
 import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/course/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 
 const TUTORIAL_UNIT_GROUPS: AccordionGroups = {
     registered: { entityData: [] },

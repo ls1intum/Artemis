@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -14,7 +12,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressForLearningPathDTO;
@@ -57,7 +56,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
-@Profile(PROFILE_ATLAS)
+@Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.LearningPaths)
 @RestController
 @RequestMapping("api/atlas/")
@@ -224,17 +223,20 @@ public class LearningPathResource {
      * @param learningObjectId   the id of the learning object to navigate to
      * @param learningObjectType the type of the learning object to navigate to
      * @param competencyId       the id of the competency the learning object belongs to
+     * @param repeatedTest       whether the learning object is part of a repeated test
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/relative-navigation")
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
-            @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId) {
+            @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId, @RequestParam(defaultValue = "false") boolean repeatedTest) {
         log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {} in competency with id: {}", learningPathId,
                 learningObjectId, learningObjectType, competencyId);
         var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
-        return ResponseEntity.ok(learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType, competencyId));
+
+        return ResponseEntity
+                .ok(learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType, competencyId, repeatedTest));
     }
 
     /**
@@ -369,7 +371,8 @@ public class LearningPathResource {
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
-                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user), competencyId)).toList();
+                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, learningObjectService.isCompletedByUser(learningObject, user), competencyId))
+                .toList();
         return ResponseEntity.ok(learningObjects);
     }
 

@@ -2,7 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { SimpleChange } from '@angular/core';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
-import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';

@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, OnChanges, OnInit, SimpleChanges, input } from '@angular/core';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';

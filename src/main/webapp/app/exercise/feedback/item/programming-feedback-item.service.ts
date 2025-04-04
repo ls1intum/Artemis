@@ -9,12 +9,12 @@ import {
     PRELIMINARY_FEEDBACK_IDENTIFIER,
     STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
     SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-} from 'app/entities/feedback.model';
+} from 'app/assessment/shared/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
+import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
 import { getAllFeedbackGroups } from 'app/exercise/feedback/group/programming-feedback-groups';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 

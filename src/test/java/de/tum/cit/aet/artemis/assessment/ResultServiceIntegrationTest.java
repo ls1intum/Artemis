@@ -709,7 +709,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setParticipation(programmingExerciseStudentParticipation);
         programmingSubmission.setSubmitted(true);
-        programmingSubmission.setBuildArtifact(true);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1

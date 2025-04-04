@@ -6,14 +6,12 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ParseLinks } from 'app/core/admin/system-notification-management/parse-links.service';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -22,6 +20,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import { AdminSystemNotificationService } from 'app/core/notification/system-notification/admin-system-notification.service';
 
 enum NotificationState {
     SCHEDULED = 'SCHEDULED',

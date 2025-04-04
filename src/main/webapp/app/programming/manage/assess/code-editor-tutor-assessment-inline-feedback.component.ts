@@ -1,12 +1,12 @@
 import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
-import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/assessment/shared/entities/feedback.model';
 import { FeedbackSuggestionBadgeComponent } from 'app/exercise/feedback/feedback-suggestion-badge/feedback-suggestion-badge.component';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { cloneDeep } from 'lodash-es';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { Course } from 'app/entities/course.model';
-import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTimes, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/core/shared/entities/course.model';
+import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -187,3 +187,4 @@ export class CodeEditorTutorAssessmentInlineFeedbackComponent {
         }
     }
 }
+

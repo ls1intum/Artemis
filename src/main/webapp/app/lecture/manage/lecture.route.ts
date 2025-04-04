@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/manage/lecture-units/lecture-unit-management.route';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
 import { hasLectureUnsavedChangesGuard } from './hasLectureUnsavedChanges.guard';
 import { AttachmentResolve, LectureResolve } from 'app/lecture/manage/lecture-resolve.service';
 

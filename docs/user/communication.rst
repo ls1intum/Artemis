@@ -183,13 +183,15 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Edit Message                                         | Authors only                         | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Save Message for later                               |                                      | |AVAILABLE|        | |PLANNED|           | |AVAILABLE|         |
+| Save Message for later                               |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Forward Messages                                     |                                      | |AVAILABLE|        | |PLANNED|           | |WIP|               |
+| Forward Messages                                     |                                      | |AVAILABLE|        | |WIP|               | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Choose to also send replies into main thread         |                                      | |WIP|              | |UNAVAILABLE|       | |PLANNED|           |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Resolve Messages                                     | At least tutor and authors           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Post action bar (thread view)                        |                                      ||NOT PLANNED|       | |AVAILABLE|         | |AVAILABLE|         |
+| Post action bar (thread view)                        |                                      | |NOT PLANNED|      | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -199,7 +201,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Reference channels, lectures and exercises           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Tag FAQ                                              |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Tag FAQ                                              |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Basic formatting (underline, bold, italic)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -225,25 +227,27 @@ Available features on each platform
 | | lecture-units, slides, lecture-attachment with     |                                      |                    |                     |                     |
 | | correct icon                                       |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Render FAQ links                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Render FAQ links                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Mark unread messages                                 |                                      | |UNAVAILABLE|      | |UNAVAILABLE|       | |UNAVAILABLE|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Render images                                        |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| Show link previews                                   |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Render links to uploaded files                       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Filter messages (unresolved, own, reacted)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Filter messages (unresolved, own, reacted)           |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Sort messages (ascending, descending)                |                                      | |AVAILABLE|        | |NOT PLANNED|       | |NOT PLANNED|       |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Search for messages in chat                          |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Search for messages across all chats                 |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
+| Search for messages across all chats                 |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |WIP|               |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Open Profile info by clicking profile picture        |                                      | |PLANNED|          | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Start a conversation from Profile                    |                                      | |WIP|              | |AVAILABLE|         | |AVAILABLE|         |
+| Start a conversation from Profile                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 |                                                                                                                                                              |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -264,7 +268,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Search for chats                                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Filter chats (all, unread, favorites)                |                                      | |UNAVAILABLE|      | |AVAILABLE|         | |PLANNED|           |
+| Filter chats (all, unread, favorites)                |                                      | |UNAVAILABLE|      | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Mark unread chats                                    |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -274,7 +278,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Archive Chat                                         |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Delete Chat                                          |                                      | |AVAILABLE|        | |UNAVAILABLE|       | |PLANNED|           |
+| Delete Chat                                          |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | View Members                                         |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
@@ -316,7 +320,7 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Leave chat                                           | For groups only                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Delete channel                                       | | Creators with moderation           | |AVAILABLE|        | |UNAVAILABLE|       | |UNAVAILABLE|       |
+| Delete channel                                       | | Creators with moderation           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 |                                                      | | rights and instructors             |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | Archive channel                                      | Moderators                           | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
@@ -325,7 +329,10 @@ Available features on each platform
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | **Notifications**                                                                                                                                            |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
-| Notification overview for past notifications         |                                      | |AVAILABLE|        | |AVAILABLE|         | |PLANNED|           |
+| Notification overview for past notifications         |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
++------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
+| | Notification overview for past                     |                                      | |AVAILABLE|        | |AVAILABLE|         | |UNAVAILABLE|       |
+| | course specific notifications                      |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 | | Notification settings (unsubscribe/subscribe       |                                      | |AVAILABLE|        | |AVAILABLE|         | |AVAILABLE|         |
 | | to various notification types)                     |                                      |                    |                     |                     |
@@ -334,6 +341,7 @@ Available features on each platform
 .. note:: 
     - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
     - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
+    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat. 
     - Downloading sent images in the chat is only available through the browser option on the web app.
     - Seeing who reacted to a post is available when hovering over a reaction on the web app.
 

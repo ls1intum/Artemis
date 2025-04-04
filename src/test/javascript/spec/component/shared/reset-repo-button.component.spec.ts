@@ -8,19 +8,19 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Subject } from 'rxjs';
-import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 
 describe('JhiResetRepoButtonComponent', () => {
     let comp: ResetRepoButtonComponent;

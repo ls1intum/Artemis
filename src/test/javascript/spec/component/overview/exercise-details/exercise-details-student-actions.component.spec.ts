@@ -5,23 +5,21 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Team } from 'app/entities/team.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Exercise, ExerciseMode, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ExerciseDetailsStudentActionsComponent } from 'app/course/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -31,10 +29,12 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { PROFILE_ATHENA, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
+import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -589,89 +589,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             }
         }),
     );
-
-    it.each([
-        [
-            'start theia button should be visible when profile is active and theia is configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            true,
-        ],
-        [
-            'start theia button should not be visible when profile is active but theia is ill-configured',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: undefined,
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but onlineIde is not activated',
-            {
-                activeProfiles: [PROFILE_THEIA],
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: false,
-            },
-            {
-                theiaImage: 'this-is-an-old-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is active but url is not set',
-            {
-                activeProfiles: [PROFILE_THEIA],
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-        [
-            'start theia button should not be visible when profile is not active but url is set',
-            {
-                theiaPortalURL: 'https://theia.test',
-            },
-            {
-                allowOnlineIde: true,
-            },
-            {
-                theiaImage: 'this-is-a-theia-image',
-            },
-            false,
-        ],
-    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-
-        // Expand the programmingExercise by given properties
-        comp.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
-
-        fixture.detectChanges();
-
-        expect(comp.theiaEnabled).toBe(expectedVisibility);
-    });
-
-    it('should display the request feedback button for modeling exercises when Athena is enabled and before due date', () => {
+    it('should display the request feedback button for text exercises when Athena is enabled and before due date', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(
             of({

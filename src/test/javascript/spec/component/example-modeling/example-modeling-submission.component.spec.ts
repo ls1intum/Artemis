@@ -1,21 +1,20 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { delay, of, throwError } from 'rxjs';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap, Router } from '@angular/router';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback, FeedbackCorrectionError, FeedbackCorrectionErrorType, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExampleModelingSubmissionComponent } from 'app/modeling/manage/example-modeling/example-modeling-submission.component';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -34,6 +33,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;

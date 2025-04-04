@@ -1,12 +1,12 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { ProgrammingExerciseAssessmentType } from '../../../support/constants';
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { expect } from '@playwright/test';
 import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 

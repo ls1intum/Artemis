@@ -5,23 +5,26 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { EntityResponseType, ResultService } from 'app/exercise/result/result.service';
-import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
-import { Result } from 'app/entities/result.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
+import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import {
+    FeedbackType,
+    PRELIMINARY_FEEDBACK_IDENTIFIER, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER
+} from 'app/assessment/shared/entities/feedback.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';
 // Preliminary mock before import to prevent errors
 jest.mock('@sentry/angular', () => {

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
-import { Competency, CompetencyProgress } from 'app/entities/competency.model';
+import { Competency, CompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';

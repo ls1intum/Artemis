@@ -12,7 +12,7 @@ import {
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {

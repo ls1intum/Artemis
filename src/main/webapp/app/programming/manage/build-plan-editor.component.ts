@@ -4,9 +4,9 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result.com
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { BuildPlanService } from 'app/programming/manage/services/build-plan.service';
-import { BuildPlan } from 'app/entities/programming/build-plan.model';
+import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

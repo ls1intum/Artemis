@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.domain;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +39,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -63,14 +60,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -115,13 +110,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("exercise")
-    @JsonView(QuizView.Before.class)
     private Set<CompetencyExerciseLink> competencyLinks = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
-    @JsonView(QuizView.Before.class)
     private Set<String> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -149,11 +142,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String preliminaryFeedbackModule;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private Course course;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -344,7 +335,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return the course class member
      */
-    @JsonInclude
+    @JsonProperty
     protected Course getCourse() {
         return course;
     }
@@ -462,8 +453,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
 
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
-
     @Override
     public Set<CompetencyExerciseLink> getCompetencyLinks() {
         return competencyLinks;
@@ -503,81 +492,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             }
         }
         return null;
-    }
-
-    /**
-     * TODO: this method should be refactored/improved. It is almost static except the almost hidden part "exercise.equals(this)"
-     * In addition, it is implemented in an ambiguous way, because it's completely unclear, what relevant means here, in addition the method name does not fit to the return type
-     * Find a relevant participation for this exercise (relevancy depends on InitializationState)
-     *
-     * @param participations the list of available participations
-     * @return the found participation in an unmodifiable list or the empty list, if none exists
-     */
-    public Set<StudentParticipation> findRelevantParticipation(Set<StudentParticipation> participations) {
-        StudentParticipation relevantParticipation = null;
-        for (StudentParticipation participation : participations) {
-            var exercise = participation.getExercise();
-            if (exercise != null && exercise.equals(this)) {
-                if (participation.getInitializationState() == InitializationState.INITIALIZED) {
-                    // InitializationState INITIALIZED is preferred
-                    // => if we find one, we can return immediately
-                    return Set.of(participation);
-                }
-                // InitializationState INACTIVE is also ok
-                // => if we can't find INITIALIZED, we return that one
-                // or
-                // this case handles FINISHED participations which typically happen when manual results are involved
-                else if (participation.getInitializationState() == InitializationState.INACTIVE || exercise instanceof ModelingExercise || exercise instanceof TextExercise
-                        || exercise instanceof FileUploadExercise
-                        || (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
-                    relevantParticipation = participation;
-                }
-            }
-        }
-        return relevantParticipation != null ? Set.of(relevantParticipation) : Collections.emptySet();
-    }
-
-    /**
-     * Get the latest relevant result from the given participation (rated == true or rated == null) (relevancy depends on Exercise type => this should be overridden by subclasses
-     * if necessary)
-     *
-     * @param participation           the participation whose results we are considering
-     * @param ignoreAssessmentDueDate defines if assessment due date is ignored for the selected results
-     * @return the latest relevant result in the given participation, or null, if none exist
-     */
-    @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
-        // for most types of exercises => return latest result (all results are relevant)
-        Submission latestSubmission = null;
-        // we get the results over the submissions
-        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
-            return null;
-        }
-        for (var submission : participation.getSubmissions()) {
-            var result = submission.getLatestResult();
-            // If not the result does not exist or is not assessed yet, we can skip it
-            if (result == null || result.getCompletionDate() == null) {
-                continue;
-            }
-            // NOTE: for the dashboard we only use rated results with completion date
-            boolean isAssessmentOver = ignoreAssessmentDueDate || ExerciseDateService.isAfterAssessmentDueDate(this);
-            boolean isProgrammingExercise = participation.getExercise() instanceof ProgrammingExercise;
-            // Check that submission was submitted in time (rated). For non programming exercises we check if the assessment due date has passed (if set)
-            boolean ratedOrPractice = Boolean.TRUE.equals(result.isRated()) || participation.isPracticeMode();
-            boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
-            // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
-            boolean programmingAfterAssessmentOrAutomaticOrAthena = isProgrammingExercise
-                    && ((result.isManual() && isAssessmentOver) || result.isAutomatic() || result.isAthenaBased());
-            if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomaticOrAthena)) {
-                // take the first found result that fulfills the above requirements
-                // or
-                // take newer results and thus disregard older ones
-                if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
-                    latestSubmission = submission;
-                }
-            }
-        }
-        return latestSubmission;
     }
 
     /**
@@ -624,71 +538,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             return Set.of();
         }
         return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
-    }
-
-    /**
-     * Filter for appropriate submission. Relevance in the following order:
-     * - submission with rated result
-     * - submission with unrated result (late submission)
-     * - no submission with any result > the latest submission
-     *
-     * @param submissions that need to be filtered
-     * @return filtered submission
-     */
-    public Submission findAppropriateSubmissionByResults(Set<Submission> submissions) {
-        List<Submission> submissionsWithRatedResult = new ArrayList<>();
-        List<Submission> submissionsWithUnratedResult = new ArrayList<>();
-        List<Submission> submissionsWithoutResult = new ArrayList<>();
-
-        for (Submission submission : submissions) {
-            Result result = submission.getLatestResult();
-            if (result != null) {
-                if (Boolean.TRUE.equals(result.isRated())) {
-                    submissionsWithRatedResult.add(submission);
-                }
-                else {
-                    submissionsWithUnratedResult.add(submission);
-                }
-            }
-            else {
-                submissionsWithoutResult.add(submission);
-            }
-        }
-
-        if (!submissionsWithRatedResult.isEmpty()) {
-            if (submissionsWithRatedResult.size() == 1) {
-                return submissionsWithRatedResult.getFirst();
-            }
-            else {
-                // this means we have more than one submission, we want the one with the last submission date
-                // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        else if (!submissionsWithUnratedResult.isEmpty()) {
-            if (this instanceof ProgrammingExercise) {
-                // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
-                // that there is no result for the submission and would display a red trigger button.
-                return null;
-            }
-            if (submissionsWithUnratedResult.size() == 1) {
-                return submissionsWithUnratedResult.getFirst();
-            }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        else if (!submissionsWithoutResult.isEmpty()) {
-            if (submissionsWithoutResult.size() == 1) {
-                return submissionsWithoutResult.getFirst();
-            }
-            else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
-            }
-        }
-        return null;
     }
 
     public Set<TutorParticipation> getTutorParticipations() {
@@ -962,18 +811,22 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
-            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-            newGradingInstruction.setGradingCriterion(newGradingCriterion);
-
+            final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    private static GradingInstruction copyGradingInstruction(GradingCriterion newGradingCriterion, GradingInstruction originalGradingInstruction) {
+        GradingInstruction newGradingInstruction = new GradingInstruction();
+        newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+        newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+        newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+        newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+        newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+        newGradingInstruction.setGradingCriterion(newGradingCriterion);
+        return newGradingInstruction;
     }
 
     /**

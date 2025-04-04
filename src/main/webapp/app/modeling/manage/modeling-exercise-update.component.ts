@@ -1,20 +1,20 @@
 import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { cloneDeep, isEmpty } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
@@ -24,9 +24,8 @@ import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
-import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { Subscription } from 'rxjs';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { FormsModule, NgModel } from '@angular/forms';
@@ -34,18 +33,17 @@ import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-grou
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
-import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { loadCourseExerciseCategories } from 'app/exercise/course-exercises/course-utils';
+import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
+import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
+import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/shared/preliminary-feedback/exercise-preliminary-feedback-options.component';
 
@@ -72,7 +70,6 @@ import { ExercisePreliminaryFeedbackOptionsComponent } from 'app/exercises/share
         CustomMaxDirective,
         ExerciseFeedbackSuggestionOptionsComponent,
         ExercisePreliminaryFeedbackOptionsComponent,
-        ExerciseUpdatePlagiarismComponent,
         PresentationScoreComponent,
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
@@ -130,7 +127,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     titleChannelNameComponentSubscription?: Subscription;
     pointsSubscription?: Subscription;
     bonusPointsSubscription?: Subscription;
-    plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
 
     get editType(): EditType {
@@ -147,7 +143,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         );
         this.pointsSubscription = this.points?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
         this.bonusPointsSubscription = this.bonusPoints?.valueChanges?.subscribe(() => this.calculateFormSectionStatus());
-        this.plagiarismSubscription = this.exerciseUpdatePlagiarismComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
         this.teamSubscription = this.teamConfigFormGroupComponent?.formValidChanges.subscribe(() => this.calculateFormSectionStatus());
     }
 
@@ -231,7 +226,6 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         this.titleChannelNameComponentSubscription?.unsubscribe();
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
-        this.plagiarismSubscription?.unsubscribe();
     }
 
     async calculateFormSectionStatus() {
@@ -257,8 +251,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                     this.points?.valid &&
                         this.bonusPoints?.valid &&
                         (this.isExamMode ||
-                            (this.exerciseUpdatePlagiarismComponent?.formValid &&
-                                !this.modelingExercise.startDateError &&
+                            (!this.modelingExercise.startDateError &&
                                 !this.modelingExercise.dueDateError &&
                                 !this.modelingExercise.assessmentDueDateError &&
                                 this.releaseDateField?.dateInput.valid &&

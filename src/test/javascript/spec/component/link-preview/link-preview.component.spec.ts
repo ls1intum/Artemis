@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LinkPreviewComponent } from 'app/shared/link-preview/components/link-preview/link-preview.component';
 import { MetisService } from 'app/communication/metis.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,8 +8,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
-import { Post } from 'app/entities/metis/post.model';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { LinkPreviewComponent } from 'app/communication/link-preview/components/link-preview/link-preview.component';
 
 describe('LinkPreviewComponent', () => {
     let component: LinkPreviewComponent;

@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/entities/course.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,7 +15,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 @Component({
     selector: 'jhi-course-lecture-row',
     templateUrl: './course-lecture-row.component.html',
-    styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
+    styleUrls: ['../../../core/course/overview/course-exercises/course-exercise-row.scss'],
     imports: [RouterLink, FaIconComponent, NgbTooltip, NgClass, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, ArtemisTimeAgoPipe],
 })
 export class CourseLectureRowComponent {

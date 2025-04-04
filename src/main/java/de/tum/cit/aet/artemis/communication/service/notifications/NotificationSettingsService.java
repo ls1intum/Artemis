@@ -56,6 +56,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -260,14 +261,15 @@ public class NotificationSettingsService {
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
-    // Please adapt the above docs if you change the supported notification types
+    // Please adapt the above docs if you change the supported notification types.
+    // Note: When adding new types here, please create issues in the artemis-ios and artemis-android repos, so that these new notifcations can be displayed!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT,
             PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR,
             TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED,
             TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST,
-            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE, SSH_KEY_ADDED,
-            SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
+            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE,
+            CONVERSATION_USER_MENTIONED, SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
@@ -304,14 +306,14 @@ public class NotificationSettingsService {
             NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
-        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
-                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
-        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
+        var userIds = users.stream().map(DomainObject::getId).toList();
+        Map<Long, Set<NotificationSetting>> userToNotificationSettingsMap = notificationSettingRepository.findAllNotificationSettingsForRecipientsWithId(userIds).stream()
+                .collect(Collectors.groupingBy(setting -> setting.getUser().getId(), Collectors.toCollection(HashSet::new)));
 
         return users.stream().filter(user -> {
+            Set<NotificationSetting> notificationSettings = userToNotificationSettingsMap.getOrDefault(user.getId(), new HashSet<>());
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
-                    .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+            Set<String> decidedIds = notificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
                     notificationSettings
@@ -397,65 +399,54 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Extracts the settingsIds of a notification settings set
-     * E.g. used to compare two sets of notification settings based on setting id
+     * Compares two notification settings sets based on their notification setting IDs.
      *
-     * @param notificationSettings set which setting ids should be extracted
-     * @return a set of settings ids
+     * @param notificationSettingsA the first set
+     * @param notificationSettingsB the second set
+     * @return true if both sets have the same notification setting IDs, otherwise false
      */
-    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
-        Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
-        return settingsIds;
+    private boolean haveSameNotificationSettingIds(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        return Objects.equals(notificationSettingsA.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()),
+                notificationSettingsB.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()));
     }
 
     /**
-     * Compares two notification settings sets based on their notification setting ids
+     * Checks and updates the personal notification settings retrieved from the DB.
+     * If the loaded set is empty, use default settings.
+     * If the loaded set has different setting IDs than the default settings, merge both sets.
      *
-     * @param notificationSettingsA is the first set
-     * @param notificationSettingsB is the second set
-     * @return true if the notification setting ids of both are the same else return false
-     */
-    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
-        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
-        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
-        return settingIdsA.equals(settingIdsB);
-    }
-
-    /**
-     * Checks the personal notificationSettings retrieved from the DB.
-     * If the loaded set is empty substitute it with the default settings
-     * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     *
-     * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
-     * @param user                     the user for which the settings should be loaded
-     * @return the updated and correct notification settings
+     * @param userNotificationSettings The notification settings retrieved from the DB for the user (it's important that the entities are not detached).
+     * @param user                     The user for whom the settings should be checked.
+     * @return The updated and correct notification settings.
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
         if (userNotificationSettings.isEmpty()) {
-            return DEFAULT_NOTIFICATION_SETTINGS;
+            return defaultSettings;
         }
-        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
-        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(userNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedDefaultNotificationSettings = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
-
-            userNotificationSettings.forEach(userNotificationSetting -> DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
-                if (defaultSetting.getSettingId().equals(userNotificationSetting.getSettingId())) {
-                    updatedDefaultNotificationSettings.remove(defaultSetting);
-                    updatedDefaultNotificationSettings.add(userNotificationSetting);
-                }
-            }));
-
-            updatedDefaultNotificationSettings.forEach(userNotificationSetting -> userNotificationSetting.setUser(user));
-            // update DB to fix inconsistencies and avoid redundant future merges
-            // first remove all settings of the current user in the DB
-            notificationSettingRepository.deleteAll(userNotificationSettings);
-            // save correct merge to DB
-            notificationSettingRepository.saveAll(updatedDefaultNotificationSettings);
-            return updatedDefaultNotificationSettings;
+        // If all default settings are available in the database, return them
+        if (haveSameNotificationSettingIds(userNotificationSettings, defaultSettings)) {
+            return userNotificationSettings;
         }
-        return userNotificationSettings;
+
+        Map<String, NotificationSetting> settingsMap = userNotificationSettings.stream().collect(Collectors.toMap(NotificationSetting::getSettingId, setting -> setting));
+
+        // defaultSettings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+        //
+        // Merge user-specific settings with default settings:
+        // - If the user already has a setting with the same ID, use the user’s version.
+        // - If the user doesn’t have a specific setting, fall back to the default version.
+        Set<NotificationSetting> mergedSettings = defaultSettings.stream().map(defaultSetting -> settingsMap.getOrDefault(defaultSetting.getSettingId(), defaultSetting))
+                .collect(Collectors.toSet());
+
+        // Assign user reference to the updated settings
+        mergedSettings.forEach(setting -> setting.setUser(user));
+
+        // Save only **new or updated** settings, avoiding unnecessary deletes
+        notificationSettingRepository.saveAll(mergedSettings);
+
+        return mergedSettings;
     }
 
     /**

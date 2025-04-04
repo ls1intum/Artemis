@@ -1,7 +1,7 @@
 import { Directive, ElementRef, HostListener, Input, OnInit, Renderer2, inject } from '@angular/core';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/programming-exercise-reset-dialog.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 @Directive({ selector: '[jhiProgrammingExerciseResetButton]' })
 export class ProgrammingExerciseResetButtonDirective implements OnInit {

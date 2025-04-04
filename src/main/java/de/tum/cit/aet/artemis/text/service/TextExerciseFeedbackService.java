@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
@@ -119,8 +119,8 @@ public class TextExerciseFeedbackService {
 
             log.debug("Submission id: {}", textSubmission.getId());
 
-            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, true);
+            AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
+            var athenaResponse = api.getTextFeedbackSuggestions(textExercise, textSubmission, false);
 
             Set<TextBlock> textBlocks = new HashSet<>();
             List<Feedback> feedbacks = new ArrayList<>();

@@ -18,10 +18,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { CodeEditorFileBrowserComponent, InteractableEvent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
-import { Feedback, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { Course } from 'app/entities/course.model';
+import { Feedback, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
@@ -116,7 +116,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     /** END WIP */
 
-    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
+        // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
