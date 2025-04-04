@@ -22,7 +22,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
@@ -50,7 +50,7 @@ import org.springframework.security.web.webauthn.registration.WebAuthnRegistrati
  * @author Rob Winch
  * @since 6.4
  */
-public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends AbstractHttpConfigurer<ArtemisWebAuthnConfigurer<H>, H> {
+public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
     private String rpId;
 

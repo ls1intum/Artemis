@@ -24,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -225,13 +227,22 @@ public class SecurityConfiguration {
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
-            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http))
+            .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
             // Spring Security generates options and register endpoints for webauthn (passkey) authentication with this option
-            .webAuthn(webauth -> webauth
+//            .webAuthn(webauth -> webauth
+//                .allowedOrigins("http://localhost:9000")
+//                .rpId("localhost")
+//                .rpName("Artemis")
+//            );
+
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>();
+            webAuthnConfigurer
                 .allowedOrigins("http://localhost:9000")
                 .rpId("localhost")
-                .rpName("Artemis")
-            );
+                .rpName("Artemis");
+            // FIXME use the new version and not the deprecated one
+            http.apply(webAuthnConfigurer);
+
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.core.repository.webauthn;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -24,6 +24,8 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
 @Repository
