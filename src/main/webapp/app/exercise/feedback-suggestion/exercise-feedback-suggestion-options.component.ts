@@ -34,7 +34,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
-    showDropdownList: boolean = false;
+    showDropdownList = false;
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
@@ -86,6 +86,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         this.showDropdownList = event.target.checked;
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.allowManualFeedbackRequests = false;
         } else {
             this.exercise.feedbackSuggestionModule = undefined;
         }
