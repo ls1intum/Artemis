@@ -43,6 +43,8 @@ import org.springframework.security.web.webauthn.registration.DefaultWebAuthnReg
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+
 /**
  * Configures WebAuthn for Spring Security applications
  *
@@ -59,6 +61,12 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     private Set<String> allowedOrigins = new HashSet<>();
 
     private boolean disableDefaultRegistrationPage = false;
+
+    private final JWTCookieService jwtCookieService;
+
+    public ArtemisWebAuthnConfigurer(JWTCookieService jwtCookieService) {
+        this.jwtCookieService = jwtCookieService;
+    }
 
     /**
      * The Relying Party id.
@@ -126,7 +134,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         PublicKeyCredentialUserEntityRepository userEntities = getSharedOrBean(http, PublicKeyCredentialUserEntityRepository.class).orElse(userEntityRepository());
         UserCredentialRepository userCredentials = getSharedOrBean(http, UserCredentialRepository.class).orElse(userCredentialRepository());
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(userEntities, userCredentials);
-        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new WebAuthnAuthenticationFilter();
+        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(jwtCookieService);
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
         http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentials, rpOperations), AuthorizationFilter.class);

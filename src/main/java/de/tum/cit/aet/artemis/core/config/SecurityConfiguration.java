@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -67,13 +68,16 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
+    private final JWTCookieService jwtCookieService;
+
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer) {
+            Optional<CustomLti13Configurer> customLti13Configurer, JWTCookieService jwtCookieService) {
         this.tokenProvider = tokenProvider;
         this.passwordService = passwordService;
         this.corsFilter = corsFilter;
         this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
+        this.jwtCookieService = jwtCookieService;
     }
 
     /**
@@ -235,7 +239,7 @@ public class SecurityConfiguration {
 //                .rpName("Artemis")
 //            );
 
-            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>();
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
             webAuthnConfigurer
                 .allowedOrigins("http://localhost:9000")
                 .rpId("localhost")

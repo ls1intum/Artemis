@@ -19,7 +19,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -30,6 +32,8 @@ import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.util.Assert;
+
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
  * An {@link AuthenticationSuccessHandler} that writes a JSON response with the redirect
@@ -50,6 +54,12 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
     private HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter();
 
     private RequestCache requestCache = new HttpSessionRequestCache();
+
+    private final JWTCookieService jwtCookieService;
+
+    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(JWTCookieService jwtCookieService) {
+        this.jwtCookieService = jwtCookieService;
+    }
 
     /**
      * Sets the {@link GenericHttpMessageConverter} to write to the response. The default
@@ -78,6 +88,11 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         final SavedRequest savedRequest = this.requestCache.getRequest(request, response);
         final String redirectUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : request.getContextPath() + "/";
         this.requestCache.removeRequest(request, response);
+
+        boolean rememberMe = true;
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }
 

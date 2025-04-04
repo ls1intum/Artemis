@@ -115,6 +115,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
         // await this.passkeySettingsApiService.loginWithPasskey(credential);
         await this.webauthnApiService.loginWithPasskey(credential);
+        this.handleLoginSuccess();
     }
 
     /**
