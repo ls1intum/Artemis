@@ -22,7 +22,9 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import {
     FeedbackType,
-    PRELIMINARY_FEEDBACK_IDENTIFIER, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER
+    PRELIMINARY_FEEDBACK_IDENTIFIER,
+    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
 } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import * as Sentry from '@sentry/angular';

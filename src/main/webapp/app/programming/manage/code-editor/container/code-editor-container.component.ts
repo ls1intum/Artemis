@@ -26,8 +26,8 @@ import { ConnectionError } from 'app/programming/shared/code-editor/service/code
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { Result } from 'app/entities/result.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -116,7 +116,7 @@ export class CodeEditorContainerComponent implements OnChanges, ComponentCanDeac
 
     /** END WIP */
 
-        // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
+    // WARNING: Don't initialize variables in the declaration block. The method initializeProperties is responsible for this task.
     selectedFile?: string;
     unsavedFilesValue: { [fileName: string]: string }; // {[fileName]: fileContent}
     fileBadges: { [fileName: string]: FileBadge[] };
