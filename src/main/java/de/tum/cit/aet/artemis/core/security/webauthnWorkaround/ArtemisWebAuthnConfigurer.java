@@ -11,7 +11,7 @@
  * limitations under the License.
  */
 
-package de.tum.cit.aet.artemis.core.security.webauthn;
+package de.tum.cit.aet.artemis.core.security.webauthnWorkaround;
 
 import java.util.HashSet;
 import java.util.Map;

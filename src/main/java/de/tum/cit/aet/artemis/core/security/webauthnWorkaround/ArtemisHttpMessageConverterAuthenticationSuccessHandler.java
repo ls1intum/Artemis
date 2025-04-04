@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.webauthn;
+package de.tum.cit.aet.artemis.core.security.webauthnWorkaround;
 
 /*
  * Copyright 2002-2024 the original author or authors.

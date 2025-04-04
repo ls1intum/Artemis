@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.core.security.webauthnWorkaround.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -244,7 +244,7 @@ public class SecurityConfiguration {
                 .allowedOrigins("http://localhost:9000")
                 .rpId("localhost")
                 .rpName("Artemis");
-            // FIXME use the new version and not the deprecated one
+//            // FIXME use the new version and not the deprecated one
             http.apply(webAuthnConfigurer);
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
