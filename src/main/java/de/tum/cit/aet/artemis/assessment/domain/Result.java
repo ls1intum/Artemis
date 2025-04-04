@@ -88,7 +88,8 @@ public class Result extends DomainObject implements Comparable<Result> {
 
     // @ManyToOne(fetch = FetchType.LAZY)
     @ManyToOne // TODO Michal Kawka I'm not sure, but I thin this should be eager, since participation was eager before it was removed
-    @JsonIgnoreProperties({ "results", "participation" })
+    @JsonIgnoreProperties({ "results" }) // TODO: jfr the submission.participation property was previously ignored i think because we used the direct relationship
+                                         // result<->participation still. Check if this causes issues anywhere else
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
