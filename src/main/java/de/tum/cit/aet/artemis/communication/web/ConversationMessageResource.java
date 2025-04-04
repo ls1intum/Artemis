@@ -112,21 +112,18 @@ public class ConversationMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
-        Page<Post> coursePosts;
 
         final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.conversationId() != null) {
-            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
-        }
-        else if (postContextFilter.courseWideChannelIds() != null) {
-            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser, course.getId());
-        }
-        else {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
-        }
+        Page<Post> coursePosts = switch (postContextFilter) {
+            case PostContextFilterDTO filter when filter.conversationId() != null -> conversationMessagingService.getMessages(pageable, filter, requestingUser, course.getId());
+            case PostContextFilterDTO filter when filter.courseWideChannelIds() != null ->
+                conversationMessagingService.getCourseWideMessages(pageable, filter, requestingUser, course.getId());
+            default -> throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
+        };
+
         // keep the data as small as possible and avoid unnecessary information sent to the client
         // TODO: in the future we should use a DTO and send only the necessary information
         coursePosts.getContent().forEach(post -> {
@@ -165,6 +162,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
         log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
@@ -183,6 +181,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
         log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
         log.debug("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -201,12 +200,13 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        // Note: authorization is checked in the service method
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**
-     * GET /courses/{courseId}/messages/source-posts : Retrieve posts by their IDs
+     * GET /courses/{courseId}/messages-source-posts : Retrieve posts by their IDs
      *
      * @param courseId id of the course the posts belong to
      * @param postIds  list of IDs of the posts to retrieve
@@ -216,7 +216,7 @@ public class ConversationMessageResource {
     @GetMapping("courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
-        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds.size());
+        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds != null ? postIds.size() : 0);
         long start = System.nanoTime();
 
         if (postIds == null || postIds.isEmpty()) {

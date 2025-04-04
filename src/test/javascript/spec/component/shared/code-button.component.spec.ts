@@ -54,6 +54,7 @@ describe('CodeButtonComponent', () => {
         ]),
         useExternal: false,
         activeProfiles: ['localvc'],
+        activeModuleFeatures: [],
         buildPlanURLTemplate: '',
         commitHashURLTemplate: '',
         contact: '',

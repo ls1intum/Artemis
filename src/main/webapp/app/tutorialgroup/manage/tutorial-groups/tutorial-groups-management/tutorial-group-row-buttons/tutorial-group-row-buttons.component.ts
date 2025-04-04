@@ -11,7 +11,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
 
@@ -19,7 +18,7 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutoria
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective, ArtemisTranslatePipe],
+    imports: [FaIconComponent, TranslateDirective, RouterLink, DeleteButtonDirective],
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
     private tutorialGroupsService = inject(TutorialGroupsService);

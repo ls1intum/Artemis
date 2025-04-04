@@ -253,7 +253,7 @@ public class GroupNotificationService {
 
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(
                     Set.of(course.getEditorGroupName(), course.getInstructorGroupName(), course.getStudentGroupName()));
 
             var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
@@ -298,8 +298,7 @@ public class GroupNotificationService {
     public void notifyEditorAndInstructorGroupAboutExerciseUpdate(Exercise exercise, String notificationText) {
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            var recipients = userRepository
-                    .findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
 
             var exerciseUpdatedNotification = new ExerciseUpdatedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
                     exercise.getSanitizedExerciseTitle());

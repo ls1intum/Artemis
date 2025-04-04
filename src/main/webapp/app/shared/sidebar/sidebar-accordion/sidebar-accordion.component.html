@@ -32,7 +32,7 @@
                             </div>
                         }
                         <div class="bg-body p-2">
-                            @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
+                            @for (sidebarItem of weekGroup.items | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem.id) {
                                 <div [ngClass]="{ 'mb-2': !last }">
                                     <!-- loading sidebarCard with help of a directive depending on its size input-->
                                     <div
