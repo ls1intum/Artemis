@@ -57,7 +57,7 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
