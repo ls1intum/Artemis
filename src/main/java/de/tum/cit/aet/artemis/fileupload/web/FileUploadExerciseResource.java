@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.FILE_ENDING_PATTERN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -13,7 +12,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,6 +55,7 @@ import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionExportServi
 /**
  * REST controller for managing FileUploadExercise.
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadExerciseResource {

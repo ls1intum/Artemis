@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -70,6 +69,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadApiNotPresentException;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -334,7 +334,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new FileUploadApiNotPresentException(FileUploadApi.class));
         FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 

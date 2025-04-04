@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadApiNotPresentException;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -196,7 +197,7 @@ public class LearningObjectImportService {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
-                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
+                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new FileUploadApiNotPresentException(FileUploadImportApi.class));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
                         api::importFileUploadExercise);
             }

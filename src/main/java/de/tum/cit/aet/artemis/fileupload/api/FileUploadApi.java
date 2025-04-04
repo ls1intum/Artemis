@@ -1,17 +1,16 @@
 package de.tum.cit.aet.artemis.fileupload.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
 
 /**
  * General-purpose API for file upload exercises (but not for general upload functionality).
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @Controller
 public class FileUploadApi extends AbstractFileModuleApi {
 

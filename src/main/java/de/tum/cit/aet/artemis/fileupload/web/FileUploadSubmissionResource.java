@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.fileupload.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -12,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,6 +47,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
+import de.tum.cit.aet.artemis.fileupload.config.FileUploadEnabled;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
@@ -58,7 +57,7 @@ import de.tum.cit.aet.artemis.fileupload.service.FileUploadSubmissionService;
 /**
  * REST controller for managing FileUploadSubmission.
  */
-@Profile(PROFILE_CORE)
+@Conditional(FileUploadEnabled.class)
 @RestController
 @RequestMapping("api/fileupload/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
