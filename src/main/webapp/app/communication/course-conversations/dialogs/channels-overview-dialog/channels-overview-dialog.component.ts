@@ -4,8 +4,8 @@ import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { Course } from 'app/entities/course.model';
+import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { ChannelItemComponent } from './channel-item/channel-item.component';
@@ -48,7 +48,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     faChevronRight = faChevronRight;
 
     initialize() {
-        super.initialize(['course', 'channelSubType']);
+        super.initialize(['course']);
         if (this.isInitialized) {
             this.loadChannelsOfCourse();
         }

@@ -6,17 +6,17 @@ import dayjs from 'dayjs/esm';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
+import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CommitsInfoComponent', () => {
     let component: CommitsInfoComponent;

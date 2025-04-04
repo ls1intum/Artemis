@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';

@@ -31,6 +31,21 @@
                 "commitHash": "Commit Hash",
                 "timeStamp": "Zeitstempel",
                 "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden"
+            },
+            "userRepository": {
+                "title": "Assignment-Repository"
+            },
+            "templateRepository": {
+                "title": "Template-Repository"
+            },
+            "solutionRepository": {
+                "title": "Lösungs-Repository"
+            },
+            "testsRepository": {
+                "title": "Test-Repository"
+            },
+            "auxiliaryRepository": {
+                "title": "Hilfs-Repository"
             }
         }
     }

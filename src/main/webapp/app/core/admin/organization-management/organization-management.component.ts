@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Subject } from 'rxjs';
 import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';

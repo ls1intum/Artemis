@@ -1,13 +1,12 @@
 import { Component, Input, inject } from '@angular/core';
 import { Subject } from 'rxjs';
-import { PlagiarismStatus } from 'app/plagiarism/shared/types/PlagiarismStatus';
-import { PlagiarismComparison } from 'app/plagiarism/shared/types/PlagiarismComparison';
-import { TextSubmissionElement } from 'app/plagiarism/shared/types/text/TextSubmissionElement';
-import { ModelingSubmissionElement } from 'app/plagiarism/shared/types/modeling/ModelingSubmissionElement';
+import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
+import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
+import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, getCourseId } from 'app/entities/exercise.model';
+import { Exercise, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RouterModule } from '@angular/router';
@@ -24,7 +23,7 @@ export class PlagiarismHeaderComponent {
     private plagiarismCasesService = inject(PlagiarismCasesService);
     private modalService = inject(NgbModal);
 
-    @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+    @Input() comparison: PlagiarismComparison<TextSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 

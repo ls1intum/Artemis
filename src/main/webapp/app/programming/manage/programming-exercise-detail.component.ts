@@ -1,29 +1,28 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
 import { Subject, Subscription, of } from 'rxjs';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import {
     faBook,
@@ -45,19 +44,16 @@ import {
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { hasEditableBuildPlan } from 'app/shared/layouts/profiles/profile-info.model';
 import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
-import { Competency } from 'app/entities/competency.model';
+import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/service/aeolus.service';
 import { catchError, mergeMap, tap } from 'rxjs/operators';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
@@ -67,6 +63,9 @@ import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
+import { hasEditableBuildPlan } from 'app/core/layouts/profiles/profile-info.model';
+import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -250,16 +249,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     }),
                 )
                 // split pipe to keep type checks
-                .pipe(
-                    mergeMap(() =>
-                        this.programmingExercise.isAtLeastEditor ? this.programmingExerciseService.getBuildLogStatistics(exerciseId!) : of([] as BuildLogStatisticsDTO),
-                    ),
-                    tap((buildLogStatistics) => {
-                        if (this.programmingExercise.isAtLeastEditor) {
-                            this.programmingExercise.buildLogStatistics = buildLogStatistics;
-                        }
-                    }),
-                )
                 .subscribe({
                     next: () => {
                         this.checkAndAlertInconsistencies();
@@ -613,12 +602,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         title: 'artemisApp.iris.settings.subSettings.enabled.chat',
                         data: { exercise, disabled: !exercise.isAtLeastInstructor, subSettingsType: IrisSubSettingsType.CHAT },
                     },
-                exercise.buildLogStatistics && {
-                    type: DetailType.ProgrammingBuildStatistics,
-                    title: 'artemisApp.programmingExercise.buildLogStatistics.title',
-                    titleHelpText: 'artemisApp.programmingExercise.buildLogStatistics.tooltip',
-                    data: { buildLogStatistics: exercise.buildLogStatistics },
-                },
             ],
         };
     }

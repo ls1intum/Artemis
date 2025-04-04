@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningPathNavComponent } from 'app/atlas/overview/learning-path-student-nav/learning-path-student-nav.component';
-import { LearningObjectType, LearningPathNavigationDTO } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-path-nav-overview/learning-path-nav-overview.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
@@ -20,6 +20,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.EXERCISE,
             completed: true,
             competencyId: 1,
+            repeatedTest: false,
             unreleased: false,
         },
         currentLearningObject: {
@@ -28,6 +29,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.LECTURE,
             completed: false,
             competencyId: 2,
+            repeatedTest: false,
             unreleased: false,
         },
         successorLearningObject: {
@@ -36,6 +38,7 @@ describe('LearningPathStudentNavComponent', () => {
             type: LearningObjectType.EXERCISE,
             completed: false,
             competencyId: 2,
+            repeatedTest: false,
             unreleased: false,
         },
         progress: 50,

@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -134,7 +134,7 @@ public class ExampleSubmissionService {
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
         if (exercise instanceof TextExercise) {
-            var api = textSubmissionImportApi.orElseThrow(() -> new ApiNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
+            var api = textSubmissionImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextSubmissionApi.class, PROFILE_CORE));
             TextSubmission textSubmission = api.importStudentSubmission(submissionId, exercise.getId(), gradingInstructionCopyTracker);
             newExampleSubmission.setSubmission(textSubmission);
         }

@@ -1,7 +1,7 @@
 import { Component, effect, input, output, viewChild } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 
 import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';

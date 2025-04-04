@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
@@ -122,8 +122,7 @@ public class ContinuousPlagiarismControlService {
         return switch (exercise.getExerciseType()) {
             case TEXT -> plagiarismDetectionService.checkTextExercise((TextExercise) exercise);
             case PROGRAMMING -> plagiarismDetectionService.checkProgrammingExercise((ProgrammingExercise) exercise);
-            case MODELING -> plagiarismDetectionService.checkModelingExercise((ModelingExercise) exercise);
-            case FILE_UPLOAD, QUIZ -> null;
+            case MODELING, FILE_UPLOAD, QUIZ -> null;
         };
     }
 

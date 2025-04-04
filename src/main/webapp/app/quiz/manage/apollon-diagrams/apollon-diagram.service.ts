@@ -2,9 +2,9 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
-import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
+import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<ApollonDiagram>;
 

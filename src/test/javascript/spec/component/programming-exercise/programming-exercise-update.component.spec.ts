@@ -2,32 +2,31 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
-import { WindFile } from 'app/entities/programming/wind.file';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { of, Subject, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import '@angular/localize/init';
 import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
-import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { ProgrammingExerciseGradingComponent } from 'app/programming/manage/update/update-components/grading/programming-exercise-grading.component';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
-import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../../../main/webapp/app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -43,6 +42,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -96,6 +96,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         const newProfileInfo = new ProfileInfo();
         newProfileInfo.activeProfiles = [];
+        newProfileInfo.activeModuleFeatures = [];
         getProfileInfoSub.mockReturnValue(of(newProfileInfo));
 
         comp.isSimpleMode.set(false);

@@ -1,25 +1,25 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, ViewEncapsulation, inject } from '@angular/core';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
-import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { QuizConfirmImportInvalidQuestionsModalComponent } from 'app/quiz/manage/quiz-confirm-import-invalid-questions-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { checkForInvalidFlaggedQuestions } from 'app/quiz/shared/quiz-manage-util.service';
-import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 import { KeyValuePipe, NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
+import { FileService } from 'app/shared/service/file.service';
 
 export enum State {
     COURSE = 'Course',

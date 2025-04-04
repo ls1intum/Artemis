@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
-import { StarRatingComponent } from 'app/exercise/rating/star-rating/star-rating.component';
+import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 
 import { AlertService } from 'app/shared/service/alert.service';
 

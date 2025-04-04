@@ -8,7 +8,7 @@ import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-so
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -49,13 +49,9 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
     private route = inject(ActivatedRoute);
 
-    @Input()
-    mode: ChatServiceMode;
+    @Input() mode: ChatServiceMode;
 
-    @Input()
-    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
-
-    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
+    dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | undefined = undefined;
     chatOpen = false;
     isOverflowing = false;
     hasNewMessages = false;
@@ -165,7 +161,6 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
             scrollStrategy: this.overlay.scrollStrategies.noop(),
             position: { bottom: '0px', right: '0px' },
             disableClose: true,
-            data: { isChatGptWrapper: this.isChatGptWrapper },
         });
         this.dialogRef.afterClosed().subscribe(() => this.handleDialogClose());
     }

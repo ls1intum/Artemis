@@ -4,15 +4,15 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseResetDialogComponent } from 'app/programming/manage/reset/programming-exercise-reset-dialog.component';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { MockProvider } from 'ng-mocks';
 

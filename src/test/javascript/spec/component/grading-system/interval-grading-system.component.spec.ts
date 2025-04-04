@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IntervalGradingSystemComponent } from 'app/assessment/manage/grading-system/interval-grading-system/interval-grading-system.component';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { MockProvider } from 'ng-mocks';
-import { GradeStep } from 'app/entities/grade-step.model';
+import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { cloneDeep } from 'lodash-es';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { Exam } from 'app/entities/exam/exam.model';
-import { Course } from 'app/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';

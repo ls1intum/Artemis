@@ -9,7 +9,7 @@ import { LoadImageService } from 'app/shared/image-cropper/services/load-image.s
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/core/course/manage/course-update.component';
-import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -23,12 +23,9 @@ import { BehaviorSubject, of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import dayjs from 'dayjs/esm';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -41,12 +38,15 @@ import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { PROFILE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from '../../../../../main/webapp/app/app.constants';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
@@ -164,7 +164,7 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, PROFILE_ATLAS] } as ProfileInfo;
+            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
             const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
             const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
             const organization = new Organization();
@@ -946,7 +946,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI, PROFILE_ATLAS] } as ProfileInfo;
+        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
         const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
 

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent, FaStackComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { generateExampleTutorialGroupFreePeriod } from '../helpers/tutorialGroupFreePeriodExampleModel';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';

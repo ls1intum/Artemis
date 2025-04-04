@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Submission } from 'app/entities/submission.model';
-import { Result } from 'app/entities/result.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import dayjs from 'dayjs/esm';
 import { AssessmentProgressLabelComponent } from 'app/exercise/assessment-progress-label/assessment-progress-label.component';
 

@@ -155,7 +155,7 @@ configurations.configureEach {
 dependencies {
 
     // Required by Spring cloud
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.4.3"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
@@ -205,7 +205,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2025.0"
+    implementation "net.sourceforge.plantuml:plantuml:1.2025.2"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
@@ -222,11 +222,12 @@ dependencies {
     implementation "ch.qos.logback:logback-classic:${logback_version}"
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
-    // required by Saml2, should NOT be used in other places
+    // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
     implementation "org.apache.santuario:xmlsec:4.0.3"
 
     implementation "org.jsoup:jsoup:1.19.1"
-    implementation "commons-codec:commons-codec:1.18.0"   // needed for spring security saml2
+    // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
+    implementation "commons-codec:commons-codec:1.18.0"
 
     // use the latest version to avoid security vulnerabilities
     implementation "org.springframework:spring-webmvc:${spring_framework_version}"
@@ -278,7 +279,7 @@ dependencies {
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
     // Required for jdbc connection pooling to databases
-    implementation "com.zaxxer:HikariCP:6.2.1"
+    implementation "com.zaxxer:HikariCP:6.3.0"
 
     // Required for several dependencies
     implementation "org.apache.commons:commons-text:1.13.0"
@@ -307,7 +308,7 @@ dependencies {
 
     implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    
+
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
@@ -331,12 +332,13 @@ dependencies {
     implementation "org.springframework.security:spring-security-web:${spring_security_version}"
     implementation "org.springframework.security:spring-security-messaging:${spring_security_version}"
     implementation "org.springframework.security:spring-security-ldap:${spring_security_version}"
-    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
-    implementation "org.opensaml:opensaml-security-api:${opensaml_version}"
-    implementation "org.opensaml:opensaml-core:${opensaml_version}"
-    implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
-    implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+    constraints {
+        implementation "org.opensaml:opensaml-core:${opensaml_version}"
+        implementation "org.opensaml:opensaml-saml-api:${opensaml_version}"
+        implementation "org.opensaml:opensaml-saml-impl:${opensaml_version}"
+    }
+    implementation "org.springframework.security:spring-security-saml2-service-provider:${spring_security_version}"
 
     implementation "io.jsonwebtoken:jjwt-api:${jwt_version}"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:${jwt_version}"
@@ -365,7 +367,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.5-jre"
+    implementation "com.google.guava:guava:33.4.6-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -414,7 +416,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.13"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.2"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.3"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.6.0"
 
     testImplementation "com.tngtech.archunit:archunit:1.4.0"

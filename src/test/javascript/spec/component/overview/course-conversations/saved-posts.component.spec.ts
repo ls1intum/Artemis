@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SavedPostsComponent } from 'app/communication/course-conversations/saved-posts/saved-posts.component';
 import { SavedPostService } from 'app/communication/saved-post.service';
-import { Posting, SavedPostStatus } from 'app/entities/metis/posting.model';
+import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { EMPTY, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
@@ -45,7 +45,7 @@ describe('SavedPostsComponent', () => {
     describe('Initialization', () => {
         it('should fetch saved posts successfully', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(of(new HttpResponse({ body: mockPostings })));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -59,7 +59,7 @@ describe('SavedPostsComponent', () => {
 
         it('should handle empty response', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(of(new HttpResponse({ body: [] })));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -71,7 +71,7 @@ describe('SavedPostsComponent', () => {
 
         it('should handle error response', fakeAsync(() => {
             const courseId = 123;
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             savedPostService.fetchSavedPosts.mockReturnValue(throwError(() => new Error('Test error')));
 
             fixture.componentRef.setInput('courseId', courseId);
@@ -106,13 +106,15 @@ describe('SavedPostsComponent', () => {
 
     describe('Template interaction', () => {
         beforeEach(async () => {
-            const status = SavedPostStatus.PROGRESS;
+            const status = SavedPostStatus.IN_PROGRESS;
             fixture.componentRef.setInput('savedPostStatus', status);
             savedPostService.fetchSavedPosts.mockReturnValue(EMPTY);
         });
 
         it('should show empty notice when no posts are available', () => {
             component['posts'] = [];
+            fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.IN_PROGRESS);
+            fixture.componentRef.setInput('courseId', 1);
             fixture.detectChanges();
 
             const emptyNotice = fixture.nativeElement.querySelector('.saved-posts-empty-notice');
@@ -133,6 +135,7 @@ describe('SavedPostsComponent', () => {
 
         it('should show delete post notice when archived is selected', fakeAsync(() => {
             fixture.componentRef.setInput('savedPostStatus', SavedPostStatus.ARCHIVED);
+            fixture.componentRef.setInput('courseId', 1);
             fixture.detectChanges();
             tick();
             fixture.detectChanges();

@@ -3,7 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { stringifyCircular } from 'app/shared/util/utils';
 import { SubmissionService } from 'app/exercise/submission/submission.service';

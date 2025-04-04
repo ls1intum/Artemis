@@ -33,5 +33,4 @@ public record ToolComponent(String name, GlobalMessageStrings globalMessageStrin
     public Optional<List<ReportingDescriptor>> getOptionalRules() {
         return Optional.ofNullable(rules);
     }
-
 }

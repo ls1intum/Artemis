@@ -4,7 +4,7 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { AssessmentHeaderComponent } from 'app/assessment/manage/assessment-header/assessment-header.component';
 import { AssessmentComplaintAlertComponent } from 'app/assessment/manage/assessment-complaint-alert/assessment-complaint-alert.component';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { Complaint } from 'app/entities/complaint.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

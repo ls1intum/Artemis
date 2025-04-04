@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
 import { faWrench } from '@fortawesome/free-solid-svg-icons';
-import { SystemNotification } from 'app/entities/system-notification.model';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
