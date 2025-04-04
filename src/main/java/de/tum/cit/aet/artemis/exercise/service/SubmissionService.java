@@ -502,11 +502,10 @@ public class SubmissionService {
      * @return the result with correctly persisted relationship to its submission
      */
     public Result saveNewResult(Submission submission, final Result result) {
-        result.setSubmission(null);
+        result.setSubmission(submission);
         if (result.getSubmission().getParticipation() == null) {
             result.getSubmission().setParticipation(submission.getParticipation());
         }
-        result.setSubmission(submission);
         var savedResult = resultRepository.save(result);
         submission.addResult(savedResult);
         submissionRepository.save(submission);
