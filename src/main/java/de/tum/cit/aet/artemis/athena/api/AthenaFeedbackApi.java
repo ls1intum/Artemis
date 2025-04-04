@@ -38,16 +38,16 @@ public class AthenaFeedbackApi extends AbstractAthenaApi {
     }
 
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, isGraded);
+        return athenaFeedbackSuggestionsService.getTextFeedbackSuggestions(exercise, submission, !isGraded);
     }
 
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
             throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(exercise, submission, isGraded);
+        return athenaFeedbackSuggestionsService.getProgrammingFeedbackSuggestions(exercise, submission, !isGraded);
     }
 
     public List<ModelingFeedbackDTO> getModelingFeedbackSuggestions(ModelingExercise exercise, ModelingSubmission submission, boolean isGraded) throws NetworkingException {
-        return athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(exercise, submission, isGraded);
+        return athenaFeedbackSuggestionsService.getModelingFeedbackSuggestions(exercise, submission, !isGraded);
     }
 
     public void checkRateLimitOrThrow(StudentParticipation participation) {
