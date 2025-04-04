@@ -181,17 +181,22 @@ const fileUploadExercise: FileUploadExercise = {
             initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 1,
-            results: [
+            submissions: [
                 {
-                    id: 231,
-                    completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
-                    successful: false,
-                    score: 75,
-                    rated: true,
-                    assessmentType: AssessmentType.MANUAL,
-                    hasComplaint: false,
+                    results: [
+                        {
+                            id: 231,
+                            completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
+                            successful: false,
+                            score: 75,
+                            rated: true,
+                            assessmentType: AssessmentType.MANUAL,
+                            hasComplaint: false,
+                        },
+                    ],
                 },
             ],
+
             student: {
                 id: 9,
                 login: 'artemis_test_user_1',
@@ -225,17 +230,22 @@ const quizExercise: QuizExercise = {
             initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 7,
-            results: [
+            submissions: [
                 {
-                    id: 232,
-                    completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
-                    successful: false,
-                    score: 33,
-                    rated: true,
-                    assessmentType: AssessmentType.MANUAL,
-                    hasComplaint: false,
+                    results: [
+                        {
+                            id: 232,
+                            completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
+                            successful: false,
+                            score: 33,
+                            rated: true,
+                            assessmentType: AssessmentType.MANUAL,
+                            hasComplaint: false,
+                        },
+                    ],
                 },
             ],
+
             student: {
                 id: 9,
                 login: 'artemis_test_user_1',
@@ -271,17 +281,22 @@ const programmingExercise: ProgrammingExercise = {
             initializationState: InitializationState.FINISHED,
             initializationDate: dayjs('2019-06-16T18:10:28.293+02:00'),
             presentationScore: 6,
-            results: [
+            submissions: [
                 {
-                    id: 233,
-                    completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
-                    successful: false,
-                    score: 100,
-                    rated: true,
-                    assessmentType: AssessmentType.MANUAL,
-                    hasComplaint: false,
+                    results: [
+                        {
+                            id: 233,
+                            completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
+                            successful: false,
+                            score: 100,
+                            rated: true,
+                            assessmentType: AssessmentType.MANUAL,
+                            hasComplaint: false,
+                        },
+                    ],
                 },
             ],
+
             student: {
                 id: 9,
                 login: 'artemis_test_user_1',

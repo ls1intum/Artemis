@@ -154,7 +154,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     const cleanInitialize = () => {
         const exercise = { id: 1, problemStatement };
-        const participation = { id: 2, exercise, student: { id: 99 }, results: [result] } as StudentParticipation;
+        const participation = { id: 2, exercise, student: { id: 99 }, submissions: [{ results: [result] }] } as StudentParticipation;
         const isCleanSubject = new Subject();
         const getRepositoryContentSubject = new Subject();
         const getBuildLogsSubject = new Subject();
@@ -214,7 +214,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
     };
 
     const loadFile = async (fileName: string, fileContent: string) => {
@@ -232,7 +232,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     it('should not load files and render other components correctly if the repository status cannot be retrieved', fakeAsync(() => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
-        const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
+        const participation = { id: 2, exercise, submissions: [{ results: [result] }] } as StudentParticipation;
         const isCleanSubject = new Subject();
         const getBuildLogsSubject = new Subject();
         checkIfRepositoryIsCleanStub.mockReturnValue(isCleanSubject);
@@ -290,7 +290,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0]);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.submissions![0].results![0]);
 
         flush();
         discardPeriodicTasks();
@@ -400,7 +400,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         container.actions.commit();
         containerFixture.detectChanges();
@@ -412,7 +412,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: undefined,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
@@ -456,7 +456,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
             submission: {} as ProgrammingSubmission,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
 
         // Commit state should change asynchronously
@@ -470,7 +470,7 @@ describe('CodeEditorContainerIntegration', () => {
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
             submission: undefined,
-            participationId: successfulResult!.participation!.id!,
+            participationId: successfulResult!.submission.participation!.id!,
         });
         containerFixture.detectChanges();
 
@@ -487,7 +487,7 @@ describe('CodeEditorContainerIntegration', () => {
         guidedTourService.guidedTourMapping = guidedTourMapping;
 
         const successfulResult = { id: 3, successful: false };
-        const participation = { id: 1, results: [successfulResult], exercise: { id: 99 } } as StudentParticipation;
+        const participation = { id: 1, submissions: [{ results: [successfulResult] }], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];
         const findWithLatestResultSubject = new Subject<Participation>();
         const isCleanSubject = new Subject();

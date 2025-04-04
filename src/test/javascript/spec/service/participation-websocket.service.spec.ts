@@ -7,6 +7,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from '../helpers/mocks/service/mock-participation.service';
+import { getAllResultsOfAllSubmissions, Submission } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: WebsocketService;
@@ -25,7 +26,8 @@ describe('ParticipationWebsocketService', () => {
 
     const participation = { id: 1, exercise: { id: exerciseId1 } } as Participation;
     const currentResult = { id: 10, participation } as Result;
-    participation.results = [currentResult];
+    const currentSubmission = { id: 1, participation, results: [currentResult] } as Submission;
+    participation.submissions = [currentSubmission];
     const newRatedResult = { id: 11, rated: true, participation } as Result;
     const newUnratedResult = { id: 12, rated: false, participation } as Result;
 
@@ -34,7 +36,8 @@ describe('ParticipationWebsocketService', () => {
 
     const participation2 = { id: 2, exercise: { id: exerciseId2 } } as Participation;
     const currentResult2 = { id: 13, participation: participation2 } as Result;
-    participation2.results = [currentResult2];
+    const currentSubmission2 = { id: 2, participation: participation2, results: [currentResult2] } as Submission;
+    participation2.submissions = [currentSubmission2];
 
     const participationInstructorResultTopic = `/topic/exercise/${participation2.exercise!.id}/newResults`;
     const participation2Topic = `/user/topic/exercise/${participation2.exercise!.id}/participation`;
@@ -159,8 +162,11 @@ describe('ParticipationWebsocketService', () => {
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
         expect(participationSpy).toHaveBeenCalledOnce();
-        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newRatedResult] });
-        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({ ...participation, results: [...participation.results!, newRatedResult] });
+        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...getAllResultsOfAllSubmissions(participation.submissions), newRatedResult] });
+        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
+            ...participation,
+            results: [...getAllResultsOfAllSubmissions(participation.submissions)!, newRatedResult],
+        });
     });
 
     it('should emit participation update with new result when unrated result arrives through websocket', () => {
@@ -180,10 +186,10 @@ describe('ParticipationWebsocketService', () => {
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newUnratedResult);
         expect(participationSpy).toHaveBeenCalledOnce();
-        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newUnratedResult] });
+        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [getAllResultsOfAllSubmissions(participation.submissions), newUnratedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
             ...participation,
-            results: [...participation.results!, newUnratedResult],
+            results: [...getAllResultsOfAllSubmissions(participation.submissions), newUnratedResult],
         });
     });
 
@@ -204,18 +210,21 @@ describe('ParticipationWebsocketService', () => {
         receiveResultForParticipationSubject.next(newRatedResult);
 
         expect(participationWebsocketService.cachedParticipations.size).toBe(2);
-        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({ ...participation, results: [...participation.results!, newRatedResult] });
+        expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
+            ...participation,
+            results: [...getAllResultsOfAllSubmissions(participation.submissions), newRatedResult],
+        });
         expect(participationWebsocketService.cachedParticipations.get(participation2.id!)).toEqual(participation2);
 
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
         expect(participationSpy).toHaveBeenCalledOnce();
-        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...participation.results!, newRatedResult] });
+        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [getAllResultsOfAllSubmissions(participation.submissions), newRatedResult] });
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { results, ...participationWithoutResult } = participation;
+        const { ...participationWithoutResult } = participation;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id!, true);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);

@@ -46,16 +46,20 @@ describe('CommitDetailsViewComponent', () => {
         id: 2,
         repositoryUri: 'student-repo-uri',
         exercise: exercise,
-        results: [
+        submissions: [
             {
-                id: 1,
-                successful: true,
-                completionDate: dayjs('2021-01-02'),
-            },
-            {
-                id: 2,
-                successful: false,
-                completionDate: dayjs('2021-01-03'),
+                results: [
+                    {
+                        id: 1,
+                        successful: true,
+                        completionDate: dayjs('2021-01-02'),
+                    },
+                    {
+                        id: 2,
+                        successful: false,
+                        completionDate: dayjs('2021-01-03'),
+                    },
+                ],
             },
         ],
     };

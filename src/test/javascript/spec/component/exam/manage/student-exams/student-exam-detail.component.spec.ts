@@ -24,6 +24,7 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -72,7 +73,10 @@ describe('StudentExamDetailComponent', () => {
 
         result = { score: 40 };
         studentParticipation = new StudentParticipation(ParticipationType.STUDENT);
-        studentParticipation.results = [result];
+        const submission = new TextSubmission();
+        submission.results = [result];
+        submission.participation = studentParticipation;
+        studentParticipation.submissions = [submission];
 
         exercise = new ModelingExercise(UMLDiagramType.ActivityDiagram, course, new ExerciseGroup());
         exercise.maxPoints = 100;

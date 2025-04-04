@@ -27,6 +27,7 @@ import { MockParticipationService } from '../../../../helpers/mocks/service/mock
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
 import { MockProgrammingSubmissionService } from '../../../../helpers/mocks/service/mock-programming-submission.service';
 import { MockResultService } from '../../../../helpers/mocks/service/mock-result.service';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -72,7 +73,11 @@ describe('Exercise Scores Component', () => {
         userIndependentRepositoryUri: 'url',
         participantIdentifier: 'participationId',
         participantName: 'participantName',
-        results: [{ assessmentType: AssessmentType.MANUAL }],
+        submissions: [
+            {
+                results: [{ assessmentType: AssessmentType.MANUAL }],
+            },
+        ],
     };
     const scoresToFilter = [3, 11, 22, 33, 44, 55, 66, 77, 88, 100];
     let participationsToFilter: Participation[];
@@ -99,7 +104,10 @@ describe('Exercise Scores Component', () => {
     beforeAll(() => {
         participationsToFilter = scoresToFilter.map((score: number) => {
             const studentParticipation = new StudentParticipation();
-            studentParticipation.results = [{ score, successful: score >= 100 }];
+            const submission = new TextSubmission();
+            submission.results = [{ score, successful: score >= 100 }];
+            submission.participation = studentParticipation;
+            studentParticipation.submissions = [submission];
             return studentParticipation;
         });
     });

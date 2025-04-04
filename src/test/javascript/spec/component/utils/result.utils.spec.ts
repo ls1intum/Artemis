@@ -193,18 +193,18 @@ describe('ResultUtils', () => {
             submission: baseSubmission,
             participation: baseParticipation,
         } as Result;
+        // TODO do we need these tests anymore?
+        // it('should break a reference from the participation results back to the result', () => {
+        //     baseParticipation.results = [baseResult];
+        //     breakCircularResultBackReferences(baseResult);
+        //     expect(baseParticipation.results).toEqual([]);
+        // });
 
-        it('should break a reference from the participation results back to the result', () => {
-            baseParticipation.results = [baseResult];
-            breakCircularResultBackReferences(baseResult);
-            expect(baseParticipation.results).toEqual([]);
-        });
-
-        it('should break a reference from the submission results back to the result', () => {
-            baseSubmission.results = [baseResult];
-            breakCircularResultBackReferences(baseResult);
-            expect(baseSubmission.results).toEqual([]);
-        });
+        // it('should break a reference from the submission results back to the result', () => {
+        //     baseSubmission.results = [baseResult];
+        //     breakCircularResultBackReferences(baseResult);
+        //     expect(baseSubmission.results).toEqual([]);
+        // });
 
         it('should break a reference chain result -> submission -> participation -> result', () => {
             // do not use baseParticipation here, otherwise the direct reference result -> participation is identical

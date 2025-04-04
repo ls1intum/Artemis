@@ -43,7 +43,7 @@ describe('StandaloneFeedbackComponent', () => {
                 // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
-                participation.results = [result];
+                participation.submissions = [{ results: [result] }];
                 exercise.studentParticipations = [participation];
                 course.exercises = [exercise];
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));

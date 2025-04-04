@@ -235,7 +235,7 @@ describe('FeedbackComponent', () => {
 
     it('should set the exercise from the participation if available', () => {
         comp.exercise = undefined;
-        comp.result.participation!.exercise = exercise;
+        comp.result.submission!.participation!.exercise = exercise;
 
         comp.ngOnInit();
 
@@ -256,7 +256,7 @@ describe('FeedbackComponent', () => {
     it('should set the exercise type from a programming participation if not available otherwise', () => {
         comp.exerciseType = undefined as any;
         comp.exercise = undefined;
-        comp.result.participation!.type = ParticipationType.PROGRAMMING;
+        comp.result.submission!.participation!.type = ParticipationType.PROGRAMMING;
 
         comp.ngOnInit();
 
@@ -297,7 +297,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id!, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -307,7 +307,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBeFalse();
     });
@@ -319,7 +319,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
         expect(comp.isLoading).toBeFalse();
     });
@@ -354,7 +354,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeFalse();
         expect(comp.isLoading).toBeFalse();
     });
@@ -367,7 +367,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).toHaveBeenCalledOnce();
-        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
+        expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
     });

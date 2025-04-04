@@ -52,14 +52,13 @@ const mockResult: Result = {
     completionDate: dayjs().subtract(2, 'hours'),
     score: 85,
     rated: true,
-    submission: { id: 42 },
+    submission: { id: 42, participation: mockParticipation },
     feedbacks: [
         {
             id: 1,
             text: 'Well done!',
         },
     ],
-    participation: mockParticipation,
 };
 
 const preparedFeedback: FeedbackComponentPreparedParams = {
@@ -85,6 +84,14 @@ describe('ResultComponent', () => {
         participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
         global.URL.createObjectURL = jest.fn(() => 'blob:test-url');
         global.URL.revokeObjectURL = jest.fn();
+
+        mockParticipation.submissions = [
+            {
+                id: 1,
+                participation: mockParticipation,
+                results: [mockResult],
+            },
+        ];
 
         await TestBed.configureTestingModule({
             declarations: [ResultComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTimeAgoPipe), MockDirective(TranslateDirective)],
@@ -209,7 +216,7 @@ describe('ResultComponent', () => {
             'text-exercises',
             comp.exercise.id,
             'participate',
-            mockResult.participation?.id,
+            mockResult.submission!.participation?.id,
             'submission',
             mockResult.submission?.id,
         ]);
@@ -308,7 +315,7 @@ describe('ResultComponent', () => {
         });
 
         it('should display the first rated result if showUngradedResults is false', () => {
-            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
+            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult, { id: 3, rated: false, score: 70 } as Result];
             comp.showUngradedResults = false;
             comp.ngOnInit();
 
@@ -316,15 +323,15 @@ describe('ResultComponent', () => {
         });
 
         it('should display the first result if showUngradedResults is true', () => {
-            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
+            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, mockResult];
             comp.showUngradedResults = true;
             comp.ngOnInit();
 
-            expect(comp.result).toEqual(comp.participation.results[0]);
+            expect(comp.result).toEqual(comp.participation.submissions![0].results[0]);
         });
 
         it('should not have a result if there are no rated results and showUngradedResults is false', () => {
-            comp.participation.results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
+            comp.participation.submissions![0].results = [{ id: 2, rated: false, score: 50 } as Result, { id: 3, rated: false, score: 70 } as Result];
             comp.showUngradedResults = false;
             comp.ngOnInit();
 

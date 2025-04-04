@@ -114,7 +114,9 @@ describe('ProgrammingExamSummaryComponent', () => {
                 component = fixture.componentInstance;
 
                 component.exercise = programmingExercise;
-                programmingParticipation.results = [result];
+                programmingSubmission.results = [result];
+                programmingSubmission.participation = programmingParticipation;
+                programmingParticipation.submissions = [programmingSubmission];
                 component.participation = programmingParticipation;
                 component.submission = programmingSubmission;
                 component.exam = exam;

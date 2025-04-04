@@ -13,7 +13,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { getAllResultsOfAllSubmissions, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
@@ -109,7 +109,7 @@ describe('ExerciseHeadersInformationComponent', () => {
     it('should set individualComplaintDueDate if course.maxComplaintTimeDays is defined', () => {
         const course: Course = { id: 1, maxComplaintTimeDays: 7 } as Course;
         const result: Result = { id: 1, completionDate: dayjs().subtract(2, 'day') } as Result;
-        const studentParticipation: StudentParticipation = { id: 1, results: [result] } as StudentParticipation;
+        const studentParticipation: StudentParticipation = { id: 1, submissions: [{ results: [result] }] } as StudentParticipation;
 
         component.course = course;
         component.studentParticipation = studentParticipation;
@@ -121,7 +121,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             component.individualComplaintDueDate = ComplaintService.getIndividualComplaintDueDate(
                 component.exercise,
                 component.course.maxComplaintTimeDays,
-                component.studentParticipation?.results?.last(),
+                getAllResultsOfAllSubmissions(component.studentParticipation.submissions).last(),
                 component.studentParticipation,
             );
         }

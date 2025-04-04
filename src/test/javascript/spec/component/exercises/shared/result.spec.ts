@@ -32,7 +32,7 @@ describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
-    const result: Result = { id: 0, participation: {}, submission: {} };
+    const result: Result = { id: 0, submission: {} };
     const programmingExercise: ProgrammingExercise = {
         id: 1,
         type: ExerciseType.PROGRAMMING,
@@ -89,20 +89,18 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
-
+    // TODO do we need this anymore?
     it('should set results for programming exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
-        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(programmingParticipation);
-        participation1.results = [result1, result2];
+
         component.participation = participation1;
         component.showUngradedResults = true;
 
         fixture.detectChanges();
 
         expect(component.result).toEqual(result1);
-        expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faQuestionCircle);
@@ -112,16 +110,13 @@ describe('ResultComponent', () => {
     it('should set results for modeling exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
-        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(modelingParticipation);
-        participation1.results = [result1, result2];
         component.participation = participation1;
         component.showUngradedResults = true;
 
         fixture.detectChanges();
 
         expect(component.result).toEqual(result1);
-        expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
         expect(component.resultIconClass).toEqual(faTimesCircle);
@@ -132,16 +127,13 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for modeling exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(modelingParticipation);
-        participation1.results = [result1, result2];
         component.participation = participation1;
         component.showUngradedResults = true;
 
         fixture.detectChanges();
 
         expect(component.result).toEqual(result1);
-        expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -152,16 +144,13 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for programming exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(programmingParticipation);
-        participation1.results = [result1, result2];
         component.participation = participation1;
         component.showUngradedResults = true;
 
         fixture.detectChanges();
 
         expect(component.result).toEqual(result1);
-        expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -172,16 +161,13 @@ describe('ResultComponent', () => {
     it('should set (automatic athena) results for text exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
-        const result2: Result = { id: 2 };
         const participation1 = cloneDeep(textParticipation);
-        participation1.results = [result1, result2];
         component.participation = participation1;
         component.showUngradedResults = true;
 
         fixture.detectChanges();
 
         expect(component.result).toEqual(result1);
-        expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
         expect(component.resultIconClass).toEqual(faCheckCircle);
@@ -202,7 +188,7 @@ describe('ResultComponent', () => {
         { short: true, score: MIN_SCORE_GREEN, codeIssues: 0, iconShown: false },
         { short: true, score: MIN_SCORE_GREEN, codeIssues: 10, iconShown: true },
     ])('should show a warning icon if code issues exist (%s)', ({ short, score, codeIssues, iconShown }) => {
-        const submission: Submission = { id: 1 };
+        let submission: Submission = { id: 1 };
         const result: Result = {
             id: 3,
             submission,
@@ -211,10 +197,9 @@ describe('ResultComponent', () => {
             codeIssueCount: codeIssues,
             completionDate: dayjs().subtract(2, 'minutes'),
         };
+        submission = { ...submission, results: [result] };
         const participation = cloneDeep(programmingParticipation);
-        result.participation = participation;
-        participation.results = [result];
-
+        participation.submissions = [submission];
         component.short = short;
         component.participation = participation;
         fixture.detectChanges();

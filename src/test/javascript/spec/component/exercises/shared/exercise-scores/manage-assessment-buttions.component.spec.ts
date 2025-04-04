@@ -98,7 +98,9 @@ describe('ManageAssessmentButtonsComponent', () => {
     describe('getCorrectionRoundForAssessmentLink', () => {
         it('should increment the correction round if an accepted complaint is present', () => {
             component.exercise = programmingExercise;
-            component.participation = { results: [{ id: 1, hasComplaint: true }, { id: 2 }] };
+            const submission = { id: 1, results: [{ id: 1, hasComplaint: true }] };
+
+            component.participation = { submissions: [submission] };
 
             fixture.detectChanges();
             const correctionRound = component.getCorrectionRoundForAssessmentLink(0);
@@ -108,7 +110,8 @@ describe('ManageAssessmentButtonsComponent', () => {
 
         it('should not increment the correction round if the complaint did not get answered', () => {
             component.exercise = programmingExercise;
-            component.participation = { results: [{ id: 1, hasComplaint: true }] }; // no second result
+            const submission = { id: 1, results: [{ id: 1, hasComplaint: false }] };
+            component.participation = { submissions: [submission] };
 
             fixture.detectChanges();
             const correctionRound = component.getCorrectionRoundForAssessmentLink(0);

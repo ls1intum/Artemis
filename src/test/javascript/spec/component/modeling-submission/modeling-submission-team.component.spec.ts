@@ -315,7 +315,6 @@ describe('ModelingSubmissionComponent', () => {
         newResult.score = 50.0;
         newResult.assessmentType = AssessmentType.MANUAL;
         newResult.submission = submission;
-        newResult.participation = submission.participation;
         newResult.completionDate = dayjs();
         newResult.feedbacks = [unreferencedFeedback];
         const subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(newResult);

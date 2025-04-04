@@ -464,7 +464,7 @@ describe('ComplaintsStudentViewComponent', () => {
         expect(component.formComplaintType).toBeUndefined();
         expect(component.remainingNumberOfComplaints).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction).toBeTrue();
-        expect(result.participation).toStrictEqual(participation);
+        expect(result.submission?.participation).toStrictEqual(participation);
     }
 
     it('should set time of complaint invalid without completion date', fakeAsync(() => {

@@ -292,10 +292,10 @@ describe('ListOfComplaintsComponent', () => {
         complaint.result = new Result();
         complaint.result.submission = new TextSubmission();
         complaint.result.submission.id = submissionId;
-        complaint.result.participation = new StudentParticipation();
-        complaint.result.participation.id = participationId;
-        complaint.result.participation.exercise = new TextExercise(course, undefined);
-        complaint.result.participation.exercise.id = exerciseId;
+        complaint.result.submission.participation = new StudentParticipation();
+        complaint.result.submission.participation.id = participationId;
+        complaint.result.submission.participation.exercise = new TextExercise(course, undefined);
+        complaint.result.submission.participation.exercise.id = exerciseId;
         return complaint;
     }
 

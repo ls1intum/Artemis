@@ -109,13 +109,15 @@ describe('HeaderExercisePageWithDetails', () => {
 
         exercise.assessmentDueDate = dayjs().subtract(1, 'days');
         component.course = { maxComplaintTimeDays: 7 } as Course;
-        participation.results = [{ rated: true, completionDate: dayjs() } as Result];
+        const submission = { results: [{ rated: true, completionDate: dayjs() }] } as ProgrammingSubmission;
+        participation.submissions = [submission];
         component.ngOnInit();
-        expect(component.nextRelevantDate).toEqual(participation.results[0].completionDate?.add(7, 'days'));
+        expect(component.nextRelevantDate).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
         expect(component.nextRelevantDateStatusBadge).toBe('bg-success');
 
         participation.submissionCount = 1;
-        participation.results = [{ rated: false } as Result];
+        const submission2 = { results: [{ rated: false }] } as ProgrammingSubmission;
+        participation.submissions = [submission2];
         exercise.assessmentType = AssessmentType.MANUAL;
         exercise.dueDate = dayjs().subtract(3, 'months');
         component.ngOnInit();
@@ -124,9 +126,10 @@ describe('HeaderExercisePageWithDetails', () => {
         expect(component.canComplainLaterOn).toBeTrue();
 
         exercise.assessmentDueDate = dayjs().subtract(2, 'months');
-        participation.results = [{ rated: true, completionDate: dayjs().subtract(1, 'month') } as Result];
+        const submission3 = { results: [{ rated: true, completionDate: dayjs().subtract(1, 'month') }] } as ProgrammingSubmission;
+        participation.submissions = [submission3];
         component.ngOnInit();
-        expect(component.nextRelevantDate).toEqual(participation.results[0].completionDate?.add(7, 'days'));
+        expect(component.nextRelevantDate).toEqual(participation.submissions![0].results![0].completionDate?.add(7, 'days'));
         expect(component.nextRelevantDateStatusBadge).toBe('bg-danger');
         expect(component.canComplainLaterOn).toBeFalse();
     });
@@ -200,7 +203,6 @@ describe('HeaderExercisePageWithDetails', () => {
             2,
         ],
     ])('should count number of submissions correctly', (results: Result[], expectedNumber: number) => {
-        participation.results = results;
         component.studentParticipation = participation;
         component.submissionPolicy = new LockRepositoryPolicy();
         component.submissionPolicy.active = true;

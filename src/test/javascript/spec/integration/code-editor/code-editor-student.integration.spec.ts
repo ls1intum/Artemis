@@ -169,7 +169,7 @@ describe('CodeEditorStudentIntegration', () => {
         container.ngOnInit();
         const feedbacks = [{ id: 2 }] as Feedback[];
         result.feedbacks = feedbacks;
-        const participation = { id: 1, results: [result], exercise: { id: 99 } } as Participation;
+        const participation = { id: 1, submissions: [{ results: [result] }], exercise: { id: 99 } } as Participation;
         const findWithLatestResultSubject = new Subject<Participation>();
         getStudentParticipationWithLatestResultStub.mockReturnValue(findWithLatestResultSubject);
 

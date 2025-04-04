@@ -117,7 +117,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         };
         const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
-        const participation: Participation = { id: 2, results: [result] };
+        const participation: Participation = { id: 2, submissions: [{ results: [result] }] };
         const oldSubscription = new Subscription();
         const getTestCasesSpy = jest.spyOn(programmingExerciseGradingService, 'getTestCases');
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());

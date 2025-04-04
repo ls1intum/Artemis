@@ -25,6 +25,7 @@ import { MockResultService } from '../../../../helpers/mocks/service/mock-result
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -65,7 +66,11 @@ describe('ExerciseScoresExportButtonComponent', () => {
     const result1 = new Result();
     result1.id = 1;
     result1.score = 1;
-    result1.participation = participation1;
+    const submission1 = new TextSubmission();
+    submission1.results = [result1];
+    result1.submission = submission1;
+    submission1.participation = participation1;
+    participation1.submissions = [submission1];
 
     const resultWithPoints1 = new ResultWithPointsPerGradingCriterion();
     resultWithPoints1.result = result1;
@@ -78,7 +83,11 @@ describe('ExerciseScoresExportButtonComponent', () => {
     const result2 = new Result();
     result2.id = 2;
     result2.score = 2;
-    result2.participation = participation2;
+    const submission2 = new TextSubmission();
+    submission2.results = [result2];
+    result2.submission = submission2;
+    submission2.participation = participation2;
+    participation2.submissions = [submission2];
 
     const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
     resultWithPoints2.result = result2;
@@ -206,7 +215,11 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const teamResult = new Result();
         teamResult.id = 3;
         teamResult.score = 50;
-        teamResult.participation = teamParticipation;
+        const teamSubmission = new TextSubmission();
+        teamSubmission.results = [teamResult];
+        teamResult.submission = teamSubmission;
+        teamSubmission.participation = teamParticipation;
+        teamParticipation.submissions = [teamSubmission];
 
         const teamResultWithPoints = new ResultWithPointsPerGradingCriterion();
         teamResultWithPoints.result = teamResult;
@@ -298,7 +311,10 @@ describe('ExerciseScoresExportButtonComponent', () => {
 
     function setupParticipation(studentLogin: string, studentName: string, isProgramming: boolean): StudentParticipation {
         const participation = new StudentParticipation();
-        participation.results = [];
+        const submission = new TextSubmission();
+        submission.results = [];
+        submission.participation = participation;
+        participation.submissions = [submission];
         participation.participantIdentifier = studentLogin;
         participation.participantName = studentName;
         if (isProgramming) {

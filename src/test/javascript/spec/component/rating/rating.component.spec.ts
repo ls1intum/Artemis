@@ -8,7 +8,6 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { MockComponent } from 'ng-mocks';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,8 +33,7 @@ describe('RatingComponent', () => {
                 ratingService = TestBed.inject(RatingService);
 
                 ratingComponent.result = { id: 89 } as Result;
-                ratingComponent.result.submission = { id: 1 } as Submission;
-                ratingComponent.result.participation = { id: 1 } as Participation;
+                ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
             });
     });
 
@@ -55,7 +53,7 @@ describe('RatingComponent', () => {
 
     it('should return due to missing participation', () => {
         jest.spyOn(ratingService, 'getRating');
-        delete ratingComponent.result?.participation;
+        delete ratingComponent.result?.submission?.participation;
         ratingComponent.ngOnInit();
         expect(ratingService.getRating).not.toHaveBeenCalled();
     });
@@ -91,8 +89,7 @@ describe('RatingComponent', () => {
     it('should call loadRating when result changes', () => {
         const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
         ratingComponent.result = { id: 90 } as Result;
-        ratingComponent.result.submission = { id: 1 } as Submission;
-        ratingComponent.result.participation = { id: 1 } as Participation;
+        ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.detectChanges();
         expect(loadRatingSpy).toHaveBeenCalledOnce();
@@ -103,8 +100,7 @@ describe('RatingComponent', () => {
         // without this condition the loadRating might be spammed making unnecessary api calls
         const loadRatingSpy = jest.spyOn(ratingComponent, 'loadRating');
         ratingComponent.result = { id: 90 } as Result;
-        ratingComponent.result.submission = { id: 1 } as Submission;
-        ratingComponent.result.participation = { id: 1 } as Participation;
+        ratingComponent.result.submission = { id: 1, participation: { id: 1 } } as Submission;
         jest.spyOn(ratingService, 'getRating').mockReturnValue(of(2));
         ratingComponentFixture.detectChanges();
         ratingComponent.result = { id: 90 } as Result;

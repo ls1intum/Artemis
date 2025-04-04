@@ -56,9 +56,10 @@ describe('ResultService', () => {
     };
     const participation1: StudentParticipation = { type: ParticipationType.STUDENT, initializationDate: dayjs().subtract(4, 'hours'), exercise: programmingExercise };
     const participation2: StudentParticipation = { type: ParticipationType.STUDENT, exercise: programmingExercise };
-    const submission1: ProgrammingSubmission = { buildFailed: true };
-    const result1: Result = { id: 1, participation: participation1, completionDate: dayjs().add(1, 'hours'), submission: submission1, score: 0 };
-    const result2: Result = { id: 2, participation: participation2, completionDate: dayjs().add(2, 'hours'), score: 20 };
+    const submission1: ProgrammingSubmission = { buildFailed: true, participation: participation1 };
+    const submission2: ProgrammingSubmission = { buildFailed: false, participation: participation2 };
+    const result1: Result = { id: 1, completionDate: dayjs().add(1, 'hours'), submission: submission1, score: 0 };
+    const result2: Result = { id: 2, submission: submission2, completionDate: dayjs().add(2, 'hours'), score: 20 };
     const result3: Result = {
         feedbacks: [
             { testCase: { testName: 'testBubbleSort' }, detailText: 'lorem ipsum', positive: false, type: FeedbackType.AUTOMATIC },
@@ -85,34 +86,44 @@ describe('ResultService', () => {
     };
     const result5: Result = {
         feedbacks: [{ text: 'Manual feedback', type: FeedbackType.MANUAL }],
-        participation: { type: ParticipationType.PROGRAMMING },
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
         completionDate: dayjs().subtract(5, 'minutes'),
         score: 80,
     };
     const result6: Result = {
         feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
-        participation: { type: ParticipationType.PROGRAMMING },
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
         completionDate: dayjs().subtract(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: true,
     };
     const result7: Result = {
         feedbacks: [{ text: NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER + 'AI feedback', type: FeedbackType.AUTOMATIC }],
-        participation: { type: ParticipationType.PROGRAMMING },
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
         completionDate: dayjs().subtract(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: false,
     };
     const result8: Result = {
         feedbacks: [],
-        participation: { type: ParticipationType.PROGRAMMING },
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
         completionDate: dayjs().subtract(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: undefined,
     };
     const result9: Result = {
         feedbacks: [],
-        participation: { type: ParticipationType.PROGRAMMING },
+        submission: {
+            participation: { type: ParticipationType.PROGRAMMING },
+        },
         completionDate: dayjs().add(5, 'minutes'),
         assessmentType: AssessmentType.AUTOMATIC_ATHENA,
         successful: undefined,
@@ -125,7 +136,8 @@ describe('ResultService', () => {
         studentAssignedTeamIdComputed: false,
     };
     const modelingParticipation: StudentParticipation = { type: ParticipationType.STUDENT, exercise: modelingExercise };
-    const modelingResult: Result = { participation: modelingParticipation, score: 42 };
+    const modelingSubmission = { participation: modelingParticipation };
+    const modelingResult: Result = { submission: modelingSubmission, score: 42 };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -166,9 +178,9 @@ describe('ResultService', () => {
 
             const receivedResult1 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 1);
             expect(receivedResult1!.result.completionDate).toEqual(result1.completionDate);
-            expect(receivedResult1!.result.participation!.initializationDate).toEqual(participation1.initializationDate);
-            expect(receivedResult1!.result.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
-            expect(receivedResult1!.result.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
+            expect(receivedResult1!.result.submission!.participation!.initializationDate).toEqual(participation1.initializationDate);
+            expect(receivedResult1!.result.submission!.participation!.exercise!.releaseDate).toEqual(programmingExercise.releaseDate);
+            expect(receivedResult1!.result.submission!.participation!.exercise!.dueDate).toEqual(programmingExercise.dueDate);
             expect(receivedResult1!.result.durationInMinutes).toBe(300);
 
             const receivedResult2 = resultsWithScores.find((resWithPoints) => resWithPoints.result.id === 2);

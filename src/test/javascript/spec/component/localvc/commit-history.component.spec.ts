@@ -76,13 +76,18 @@ describe('CommitHistoryComponent', () => {
         id: 2,
         repositoryUri: 'student-repo-uri',
         exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
-        results: [
-            { id: 1, successful: true, completionDate: dayjs('2021-01-02'), submission: { id: 2, commitHash: 'commit2' } as ProgrammingSubmission },
-            { id: 2, successful: false, completionDate: dayjs('2021-01-03'), submission: { id: 3, commitHash: 'commit3' } as ProgrammingSubmission },
-        ],
+
         submissions: [
-            { id: 2, commitHash: 'commit2' },
-            { id: 3, commitHash: 'commit3' },
+            {
+                id: 2,
+                commitHash: 'commit2',
+                results: [{ id: 1, successful: true, completionDate: dayjs('2021-01-02'), submission: { id: 2, commitHash: 'commit2' } as ProgrammingSubmission }],
+            },
+            {
+                id: 3,
+                commitHash: 'commit3',
+                results: [{ id: 2, successful: false, completionDate: dayjs('2021-01-03'), submission: { id: 3, commitHash: 'commit3' } as ProgrammingSubmission }],
+            },
         ] as ProgrammingSubmission[],
     };
     // template commit
@@ -138,9 +143,9 @@ describe('CommitHistoryComponent', () => {
 
         // Expectations
         expect(component.participation).toEqual(mockParticipation);
-        expect(component.participation.results).toHaveLength(2); // Updated to reflect the number of results
-        expect(component.participation.results![0].participation).toEqual(mockParticipation);
-        expect(component.participation.results![1].participation).toEqual(mockParticipation);
+        expect(component.participation.submissions).toHaveLength(2);
+        expect(component.participation.submissions![0].results![0].id).toEqual(1);
+        expect(component.participation.submissions![1].results![0].id).toEqual(2);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
@@ -180,8 +185,8 @@ describe('CommitHistoryComponent', () => {
         expect(component.participation).toEqual(mockParticipation);
         expect(component.commits).toEqual([commit3, commit2, commit1]); // Updated to reflect the correct order
 
-        expect(component.commits[0].result).toEqual(mockParticipation.results![1]);
-        expect(component.commits[1].result).toEqual(mockParticipation.results![0]);
+        expect(component.commits[0].result).toEqual(mockParticipation.submissions![1].results![0]);
+        expect(component.commits[1].result).toEqual(mockParticipation.submissions![0].results![0]);
         expect(component.commits[2].result).toBeUndefined();
 
         // Trigger ngOnDestroy
@@ -203,8 +208,8 @@ describe('CommitHistoryComponent', () => {
 
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
-        expect(component.participation.results).toHaveLength(2); // Updated to reflect the number of results
-        expect(component.participation.results).toEqual(templateSubmissions.map((submission) => submission.results![0]));
+        expect(component.participation.submissions).toHaveLength(2);
+        expect(component.participation.submissions![0].results).toEqual(templateSubmissions.map((submission) => submission.results![0]));
 
         expect(component.commits).toEqual([mockTemplateCommit2, mockTemplateCommit1]); // Updated to reflect the correct order
 
@@ -231,8 +236,8 @@ describe('CommitHistoryComponent', () => {
 
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.solutionParticipation);
-        expect(component.participation.results).toHaveLength(2); // Updated to reflect the number of results
-        expect(component.participation.results).toEqual(solutionSubmissions.map((submission) => submission.results![0]));
+        expect(component.participation.submissions).toHaveLength(2);
+        expect(component.participation.submissions![0].results).toEqual(solutionSubmissions.map((submission) => submission.results![0]));
 
         expect(component.commits).toEqual([mockSolutionCommit2, mockSolutionCommit1]); // Updated to reflect the correct order
 

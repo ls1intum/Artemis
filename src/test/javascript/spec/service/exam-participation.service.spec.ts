@@ -185,13 +185,9 @@ describe('ExamParticipationService', () => {
         /*configure exercises of this student Exam*/
         const exercise = new TextExercise(new Course(), undefined);
         const studentParticipation = new StudentParticipation();
-        const participationResult = new Result();
-        participationResult.participation = studentParticipation;
-        studentParticipation.results = [participationResult];
         const submission = new TextSubmission();
         submission.results = [new Result()];
         submission.participation = studentParticipation;
-        getLatestSubmissionResult(submission)!.participation = studentParticipation;
         getLatestSubmissionResult(submission)!.submission = submission;
         studentParticipation.submissions = [submission];
         exercise.studentParticipations = [studentParticipation];
