@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { MockDirective, MockProvider } from 'ng-mocks';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { MockProvider } from 'ng-mocks';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';

@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 import { provideHttpClient } from '@angular/common/http';

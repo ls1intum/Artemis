@@ -21,8 +21,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -45,24 +44,21 @@ public class AttachmentUnitService {
 
     private final SlideRepository slideRepository;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
+        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
@@ -94,9 +90,7 @@ public class AttachmentUnitService {
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         savedAttachmentUnit.setAttachment(savedAttachment);
         evictCache(file, savedAttachmentUnit);
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentUnit));
-        }
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentUnit)));
         return savedAttachmentUnit;
     }
 
@@ -147,9 +141,7 @@ public class AttachmentUnitService {
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
                 slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
             }
-            if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-                pyrisWebhookService.get().autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit));
-            }
+            irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit)));
         }
 
         // Set the original competencies back to the attachment unit so that the competencyProgressService can determine which competencies changed

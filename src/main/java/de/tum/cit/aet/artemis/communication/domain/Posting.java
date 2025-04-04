@@ -52,21 +52,8 @@ public abstract class Posting extends DomainObject {
     @Column(name = "content", length = 5000)
     private String content;
 
-    // To be used as soon as more advanced strategies for post similarity comparisons are developed
-    @Size(max = 1000)
-    @Column(name = "tokenized_content", length = 1000)
-    private String tokenizedContent;
-
     @Transient
     private UserRole authorRoleTransient;
-
-    public String getTokenizedContent() {
-        return tokenizedContent;
-    }
-
-    public void setTokenizedContent(String tokenizedContent) {
-        this.tokenizedContent = tokenizedContent;
-    }
 
     @JsonProperty
     public User getAuthor() {

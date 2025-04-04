@@ -1,26 +1,25 @@
 import { Injectable, inject } from '@angular/core';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBookmark, faBoxArchive, faBullhorn, faGraduationCap, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { Exercise, getIcon } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { SavedPostStatus } from 'app/communication/shared/entities/posting.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/types/sidebar';
+import { Exercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
+import { AccordionGroups, ChannelGroupCategory, SidebarCardElement, TimeGroupCategory } from 'app/shared/types/sidebar';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
-import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
-import { ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faBookmark, faBoxArchive, faBullhorn, faHashtag, faLock, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { SavedPostStatusMap } from 'app/entities/metis/posting.model';
-import { Course } from 'app/entities/course.model';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -82,29 +81,25 @@ export class CourseOverviewService {
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
-            const upcomingTutorialGroup = tutorialGroups?.reduce((a, b) => ((a?.nextSession?.start?.valueOf() ?? 0) > (b?.nextSession?.start?.valueOf() ?? 0) ? a : b));
-            return upcomingTutorialGroup;
+            return tutorialGroups?.reduce((a, b) => ((a?.nextSession?.start?.valueOf() ?? 0) > (b?.nextSession?.start?.valueOf() ?? 0) ? a : b));
         }
     }
     getUpcomingLecture(lectures: Lecture[] | undefined): Lecture | undefined {
         if (lectures && lectures.length) {
-            const upcomingLecture = lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
-            return upcomingLecture;
+            return lectures?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
         }
     }
 
     getUpcomingExam(exams: Exam[] | undefined): Exam | undefined {
         if (exams && exams.length) {
-            const upcomingExam = exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
-            return upcomingExam;
+            return exams?.reduce((a, b) => ((a?.startDate?.valueOf() ?? 0) > (b?.startDate?.valueOf() ?? 0) ? a : b));
         }
         return undefined;
     }
 
     getUpcomingExercise(exercises: Exercise[] | undefined): Exercise | undefined {
         if (exercises && exercises.length) {
-            const upcomingLecture = exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
-            return upcomingLecture;
+            return exercises?.reduce((a, b) => ((a?.dueDate?.valueOf() ?? 0) > (b?.dueDate?.valueOf() ?? 0) ? a : b));
         }
     }
 
@@ -238,21 +233,21 @@ export class CourseOverviewService {
             entityData: [
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.progress'),
-                    id: SavedPostStatusMap.PROGRESS.toString(),
+                    id: SavedPostStatus.IN_PROGRESS.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faBookmark,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.completed'),
-                    id: SavedPostStatusMap.COMPLETED.toString(),
+                    id: SavedPostStatus.COMPLETED.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faSquareCheck,
                     size: 'S',
                 },
                 {
                     title: this.translate.instant('artemisApp.courseOverview.sidebar.archived'),
-                    id: SavedPostStatusMap.ARCHIVED.toString(),
+                    id: SavedPostStatus.ARCHIVED.toString().toLowerCase(),
                     type: ConversationType.CHANNEL,
                     icon: faBoxArchive,
                     size: 'S',
@@ -304,23 +299,21 @@ export class CourseOverviewService {
     }
 
     mapLectureToSidebarCardElement(lecture: Lecture): SidebarCardElement {
-        const lectureCardItem: SidebarCardElement = {
+        return {
             title: lecture.title ?? '',
             id: lecture.id ?? '',
             subtitleLeft: lecture.startDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDate'),
             size: 'M',
         };
-        return lectureCardItem;
     }
     mapTutorialGroupToSidebarCardElement(tutorialGroup: TutorialGroup): SidebarCardElement {
-        const tutorialGroupCardItem: SidebarCardElement = {
+        return {
             title: tutorialGroup.title ?? '',
             id: tutorialGroup.id ?? '',
             size: 'M',
             subtitleLeft: tutorialGroup.nextSession?.start?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noUpcomingSession'),
             subtitleRight: this.getUtilization(tutorialGroup),
         };
-        return tutorialGroupCardItem;
     }
 
     getUtilization(tutorialGroup: TutorialGroup): string {
@@ -333,7 +326,7 @@ export class CourseOverviewService {
     }
 
     mapExerciseToSidebarCardElement(exercise: Exercise): SidebarCardElement {
-        const exerciseCardItem: SidebarCardElement = {
+        return {
             title: exercise.title ?? '',
             id: exercise.id ?? '',
             subtitleLeft: exercise.dueDate?.format('MMM DD, YYYY') ?? this.translate.instant('artemisApp.courseOverview.sidebar.noDueDate'),
@@ -346,11 +339,10 @@ export class CourseOverviewService {
                 : undefined,
             size: 'M',
         };
-        return exerciseCardItem;
     }
 
     mapExamToSidebarCardElement(exam: Exam, studentExam?: StudentExam, numberOfAttempts?: number): SidebarCardElement {
-        const examCardItem: SidebarCardElement = {
+        return {
             title: exam.title ?? '',
             id: exam.id ?? '',
             icon: faGraduationCap,
@@ -364,11 +356,10 @@ export class CourseOverviewService {
             testExam: exam.testExam,
             attempts: numberOfAttempts ?? 0,
         };
-        return examCardItem;
     }
 
     mapAttemptToSidebarCardElement(attempt: StudentExam, index: number): SidebarCardElement {
-        const examCardItem: SidebarCardElement = {
+        return {
             title: attempt.exam!.title ?? '',
             id: attempt.exam!.id + '/test-exam/' + attempt.id,
             icon: faGraduationCap,
@@ -378,7 +369,6 @@ export class CourseOverviewService {
             size: 'L',
             isAttempt: true,
         };
-        return examCardItem;
     }
 
     getChannelIcon(conversation: ConversationDTO): IconDefinition {
@@ -414,7 +404,7 @@ export class CourseOverviewService {
             isCurrent = relevantDate ? dayjs(relevantDate).isBetween(oneAndHalfWeekBefore, oneAndHalfWeekLater, 'day', '[]') : false;
         }
 
-        const conversationCardItem: SidebarCardElement = {
+        return {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
             type: conversation.type,
@@ -423,29 +413,24 @@ export class CourseOverviewService {
             size: 'S',
             isCurrent: isCurrent,
         };
-        return conversationCardItem;
     }
 
     sortLectures(lectures: Lecture[]): Lecture[] {
-        const sortedLecturesByStartDate = lectures.sort((a, b) => {
+        return lectures.sort((a, b) => {
             const startDateA = a.startDate ? a.startDate.valueOf() : dayjs().valueOf();
             const startDateB = b.startDate ? b.startDate.valueOf() : dayjs().valueOf();
             // If Due Date is identical or undefined sort by title
             return startDateB - startDateA !== 0 ? startDateB - startDateA : this.sortByTitle(a, b);
         });
-
-        return sortedLecturesByStartDate;
     }
 
     sortExercises(exercises: Exercise[]): Exercise[] {
-        const sortedExercisesByDueDate = exercises?.sort((a, b) => {
+        return exercises?.sort((a, b) => {
             const dueDateA = getExerciseDueDate(a, this.studentParticipation(a))?.valueOf() ?? 0;
             const dueDateB = getExerciseDueDate(b, this.studentParticipation(b))?.valueOf() ?? 0;
             // If Due Date is identical or undefined sort by title
             return dueDateB - dueDateA !== 0 ? dueDateB - dueDateA : this.sortByTitle(a, b);
         });
-
-        return sortedExercisesByDueDate;
     }
     studentParticipation(exercise: Exercise): StudentParticipation | undefined {
         return exercise.studentParticipations?.length ? exercise.studentParticipations[0] : undefined;

@@ -1,8 +1,8 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, inject, viewChild, viewChildren } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ExamPage } from 'app/entities/exam/exam-page.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExamPage } from 'app/exam/shared/entities/exam-page.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
 import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/modeling/modeling-exam-submission.component';
@@ -10,10 +10,10 @@ import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/qu
 import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import dayjs from 'dayjs/esm';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { Observable, Subscription, forkJoin, map, mergeMap, tap, toArray } from 'rxjs';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { Submission } from 'app/entities/submission.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';

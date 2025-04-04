@@ -1,16 +1,16 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseDetailComponent } from 'app/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -21,16 +21,15 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/programming/shared/entities/build-log-statistics-dto';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -45,7 +44,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let gitDiffReportStub: jest.SpyInstance;
     let profileServiceStub: jest.SpyInstance;
     let submissionPolicyServiceStub: jest.SpyInstance;
-    let buildLogStatisticsStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
 
@@ -89,15 +87,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         ],
     } as ProgrammingExerciseGitDiffReport;
 
-    const buildLogStatistics = {
-        buildCount: 5,
-        agentSetupDuration: 2.5,
-        testDuration: 3,
-        scaDuration: 2,
-        totalJobDuration: 7.5,
-        dependenciesDownloadedCount: 6,
-    } as BuildLogStatisticsDTO;
-
     const profileInfo = {
         activeProfiles: [],
     } as unknown as ProfileInfo;
@@ -139,7 +128,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
         profileServiceStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
-        buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
         jest.spyOn(programmingLanguageFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
@@ -202,11 +190,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
                 );
                 comp.ngOnInit();
                 await new Promise((r) => setTimeout(r, 100));
-                if (isEditor) {
-                    expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
-                } else {
-                    expect(buildLogStatisticsStub).not.toHaveBeenCalled();
-                }
             },
         );
 

@@ -6,10 +6,10 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { AssessmentNamesForModelId, getNamesForAssessments } from 'app/modeling/manage/assess/modeling-assessment.util';
 

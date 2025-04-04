@@ -2,11 +2,11 @@ import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryLis
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/exercise.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';

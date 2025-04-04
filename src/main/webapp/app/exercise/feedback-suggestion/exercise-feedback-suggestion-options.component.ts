@@ -1,6 +1,6 @@
 import { AfterViewChecked, ChangeDetectorRef, Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/shared/athena.service';
 import { ActivatedRoute } from '@angular/router';
@@ -83,11 +83,10 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     }
 
     toggleFeedbackSuggestions(event: any) {
-        this.showDropdownList = event.target.checked;
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
-            this.exercise.allowManualFeedbackRequests = false;
         } else {
+            this.exercise.allowFeedbackRequests = false;
             this.exercise.feedbackSuggestionModule = undefined;
         }
     }

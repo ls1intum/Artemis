@@ -6,16 +6,16 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import {
     formDataToTutorialGroupSessionDTO,
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
 } from '../../../helpers/tutorialGroupSessionExampleModels';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSessionFormComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
-import { ScoresPerExerciseType } from 'app/entities/exercise.model';
+import { ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 
 /**

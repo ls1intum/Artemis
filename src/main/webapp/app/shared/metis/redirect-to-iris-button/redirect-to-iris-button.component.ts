@@ -1,9 +1,9 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
-import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { IrisCourseSettings, IrisExerciseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { IrisCourseSettings, IrisExerciseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { Subscription, catchError, of } from 'rxjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { Router } from '@angular/router';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,6 +11,8 @@ import { MetisConversationService } from 'app/communication/metis-conversation.s
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { MetisService } from 'app/communication/metis.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-redirect-to-iris-button',
@@ -27,6 +29,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     metisConversationService = inject(MetisConversationService);
     protected metisService = inject(MetisService);
     irisSettingsService = inject(IrisSettingsService);
+    profileService = inject(ProfileService);
     router = inject(Router);
 
     private conversationServiceSubscription: Subscription;
@@ -40,6 +43,11 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     TEXT = IrisLogoSize.TEXT;
 
     ngOnInit(): void {
+        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.irisEnabled.set(isIrisActive);
+        if (!isIrisActive) {
+            return;
+        }
         this.conversationServiceSubscription = this.metisConversationService.activeConversation$.subscribe((conversation) => {
             this.checkIrisSettings(getAsChannelDTO(conversation));
         });

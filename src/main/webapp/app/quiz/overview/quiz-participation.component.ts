@@ -6,13 +6,13 @@ import { Subscription, combineLatest, of, take } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
@@ -29,13 +29,12 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple-choice-submitted-answer.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { debounce } from 'lodash-es';
 import { captureException } from '@sentry/angular';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
@@ -47,6 +46,7 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     selector: 'jhi-quiz',

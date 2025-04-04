@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
