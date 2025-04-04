@@ -55,11 +55,13 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     private RequestCache requestCache = new HttpSessionRequestCache();
 
+    // =========== ADJUSTED START ===========
     private final JWTCookieService jwtCookieService;
 
     public ArtemisHttpMessageConverterAuthenticationSuccessHandler(JWTCookieService jwtCookieService) {
         this.jwtCookieService = jwtCookieService;
     }
+    // =========== ADJUSTED END ===========
 
     /**
      * Sets the {@link GenericHttpMessageConverter} to write to the response. The default
@@ -89,9 +91,12 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         final String redirectUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : request.getContextPath() + "/";
         this.requestCache.removeRequest(request, response);
 
+        // =========== ADJUSTED START ===========
+        // for our authentication process we want to send a JWT token back to the now authenticated user
         boolean rememberMe = true;
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        // =========== ADJUSTED END ===========
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }

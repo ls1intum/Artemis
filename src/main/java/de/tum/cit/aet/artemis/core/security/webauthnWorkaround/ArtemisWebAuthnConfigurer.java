@@ -62,11 +62,13 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private boolean disableDefaultRegistrationPage = false;
 
+    // =========== ADJUSTED START ===========
     private final JWTCookieService jwtCookieService;
 
     public ArtemisWebAuthnConfigurer(JWTCookieService jwtCookieService) {
         this.jwtCookieService = jwtCookieService;
     }
+    // =========== ADJUSTED END ===========
 
     /**
      * The Relying Party id.
@@ -134,7 +136,10 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         PublicKeyCredentialUserEntityRepository userEntities = getSharedOrBean(http, PublicKeyCredentialUserEntityRepository.class).orElse(userEntityRepository());
         UserCredentialRepository userCredentials = getSharedOrBean(http, UserCredentialRepository.class).orElse(userCredentialRepository());
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(userEntities, userCredentials);
+        // =========== ADJUSTED START ===========
+        // We want to instantiate the ArtemisWebAuthnAuthenticationFilter due to custom onAuthenticationSuccess success logic
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(jwtCookieService);
+        // =========== ADJUSTED END ===========
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
         http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentials, rpOperations), AuthorizationFilter.class);
