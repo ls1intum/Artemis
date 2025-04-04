@@ -136,7 +136,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             log.debug("Submission id: {}", submission.getId());
 
             AthenaFeedbackApi api = athenaFeedbackApi.orElseThrow(() -> new ApiProfileNotPresentException(AthenaFeedbackApi.class, PROFILE_ATHENA));
-            var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, true);
+            var athenaResponse = api.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {
