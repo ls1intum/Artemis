@@ -20,7 +20,6 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 
 @Component({
     selector: 'jhi-programming-exam-summary',
@@ -73,7 +72,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
     ngOnInit() {
         this.routerLink = this.router.url;
 
-        this.result = getLatestResultOfStudentParticipation(this.participation, false);
+        this.result = this.participation.submissions![0].results![0];
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;

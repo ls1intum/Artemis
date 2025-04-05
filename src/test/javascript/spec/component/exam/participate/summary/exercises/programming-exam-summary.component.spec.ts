@@ -82,11 +82,13 @@ const feedback = {
 
 const result = {
     id: 89,
-    participation: {
-        id: 55,
-        type: ParticipationType.PROGRAMMING,
-        participantIdentifier: 'student42',
-        repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+    submission: {
+        participation: {
+            id: 55,
+            type: ParticipationType.PROGRAMMING,
+            participantIdentifier: 'student42',
+            repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+        },
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,
