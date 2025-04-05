@@ -403,7 +403,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         // If the timer runs out and the fallback fails we will emit an error as we assume the result is lost
         const timerObservable = this.resultTimerSubjects.get(participationId)!.pipe(
             // Fallback: Try to fetch the latest result from the server as the websocket connection might have failed
-            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId, true)),
+            switchMap(() => this.participationService.getLatestResultWithFeedback(participationId)),
             tap((result: Result) => {
                 if (this.isResultOfLatestSubmission(result, exerciseId, participationId)) {
                     // Notify all result subscribers with the latest result if it belongs to the latest submission

@@ -366,8 +366,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     private updateParticipationWithResult(): void {
         this.showResult = false;
         this.changeDetectorRef.detectChanges();
-        // TODO do we have set here something with submission?
-        //this.participation.results![0] = this.result!;
+        this.submission!.results![0] = this.result!;
         this.showResult = true;
         this.changeDetectorRef.detectChanges();
     }

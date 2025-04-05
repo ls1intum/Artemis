@@ -272,7 +272,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!, true).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );
