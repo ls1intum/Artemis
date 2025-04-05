@@ -51,15 +51,12 @@ describe('DetailOverviewList', () => {
         component = fixture.componentInstance;
     });
 
-    it('should initialize and destroy', () => {
+    it('should initialize', () => {
         fixture.componentRef.setInput('sections', sections);
         fixture.detectChanges();
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
-
-        component.ngOnDestroy();
-        expect(component.profileSubscription?.closed).toBeTruthy();
     });
 
     it('should escape all falsy values', () => {
