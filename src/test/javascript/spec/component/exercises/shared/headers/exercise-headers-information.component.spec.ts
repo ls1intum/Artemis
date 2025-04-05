@@ -11,11 +11,10 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
+import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { getAllResultsOfAllSubmissions, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -109,7 +108,10 @@ describe('ExerciseHeadersInformationComponent', () => {
     it('should set individualComplaintDueDate if course.maxComplaintTimeDays is defined', () => {
         const course: Course = { id: 1, maxComplaintTimeDays: 7 } as Course;
         const result: Result = { id: 1, completionDate: dayjs().subtract(2, 'day') } as Result;
-        const studentParticipation: StudentParticipation = { id: 1, submissions: [{ results: [result] }] } as StudentParticipation;
+        const studentParticipation: StudentParticipation = {
+            id: 1,
+            submissions: [{ results: [result] }],
+        } as StudentParticipation;
 
         component.course = course;
         component.studentParticipation = studentParticipation;
@@ -260,7 +262,10 @@ describe('ExerciseHeadersInformationComponent', () => {
 
         // Initialize informationBoxItems with a mock item
         component.informationBoxItems = [
-            { title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle', content: { type: 'string', value: 'Original Item' } as StringNumberContent },
+            {
+                title: 'artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle',
+                content: { type: 'string', value: 'Original Item' } as StringNumberContent,
+            },
         ];
 
         // Call the function
@@ -275,15 +280,15 @@ describe('ExerciseHeadersInformationComponent', () => {
     });
 
     it('should correctly count unique manual submissions', () => {
-        const mockResults: Result[] = [
-            { submission: { type: SubmissionType.MANUAL, commitHash: 'hash1' } as ProgrammingSubmission } as Result,
-            { submission: { type: SubmissionType.MANUAL, commitHash: 'hash2' } as ProgrammingSubmission } as Result,
-            { submission: { type: SubmissionType.MANUAL, commitHash: 'hash1' } as ProgrammingSubmission } as Result, // Duplicate commit hash
-            { submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'hash3' } as ProgrammingSubmission } as Result, // Different submission type
+        const mockSubmissions: ProgrammingSubmission[] = [
+            { type: SubmissionType.MANUAL, commitHash: 'hash1' },
+            { type: SubmissionType.MANUAL, commitHash: 'hash2' },
+            { type: SubmissionType.MANUAL, commitHash: 'hash1' }, // Duplicate commit hash
+            { type: SubmissionType.INSTRUCTOR, commitHash: 'hash3' }, // Different submission type
         ];
 
         const mockStudentParticipation: StudentParticipation = {
-            results: mockResults,
+            submissions: mockSubmissions,
         } as StudentParticipation;
 
         component.studentParticipation = mockStudentParticipation;
