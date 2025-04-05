@@ -88,7 +88,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     it('should show nothing if the participation is template and the latest result has a score of 0', () => {
         const latestResult = { id: 3, successful: false, score: 0 } as Result;
         comp.participationType = ProgrammingExerciseParticipationType.TEMPLATE;
-        comp.participation = { id: 1, results: [latestResult, { id: 2, successful: false, score: 99 } as Result] } as TemplateProgrammingExerciseParticipation;
+        comp.participation = { id: 1, submissions: [{ results: [latestResult, { id: 2, successful: false, score: 99 } as Result] }] } as TemplateProgrammingExerciseParticipation;
         comp.exercise = { id: 99 } as ProgrammingExercise;
 
         triggerChanges(comp, { property: 'participationType', currentValue: comp.participationType }, { property: 'participation', currentValue: comp.participation });
@@ -104,7 +104,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     it('should show nothing if the participation is solution and the latest result is successful', () => {
         const latestResult = { id: 3, successful: true, score: 100 } as Result;
         comp.participationType = ProgrammingExerciseParticipationType.SOLUTION;
-        comp.participation = { id: 1, results: [{ id: 2, successful: false, score: 99 } as Result, latestResult] } as SolutionProgrammingExerciseParticipation;
+        comp.participation = { id: 1, submissions: [{ results: [{ id: 2, successful: false, score: 99 } as Result, latestResult] }] } as SolutionProgrammingExerciseParticipation;
         comp.exercise = { id: 99 } as ProgrammingExercise;
         triggerChanges(
             comp,
@@ -122,7 +122,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     it('should show a template warning if the participation is template and the score is > 0', () => {
         const latestResult = { id: 3, successful: false, score: 40 } as Result;
         comp.participationType = ProgrammingExerciseParticipationType.TEMPLATE;
-        comp.participation = { id: 1, results: [latestResult, { id: 2, successful: false, score: 99 } as Result] } as TemplateProgrammingExerciseParticipation;
+        comp.participation = { id: 1, submissions: [{ results: [latestResult, { id: 2, successful: false, score: 99 } as Result] }] } as TemplateProgrammingExerciseParticipation;
         comp.exercise = { id: 99 } as ProgrammingExercise;
 
         triggerChanges(
@@ -142,7 +142,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
     it('should show a solution warning if the participation is solution and the result is not successful', () => {
         const latestResult = { id: 3, successful: false, score: 40 } as Result;
         comp.participationType = ProgrammingExerciseParticipationType.SOLUTION;
-        comp.participation = { id: 1, results: [{ id: 2, successful: false, score: 99 } as Result, latestResult] } as SolutionProgrammingExerciseParticipation;
+        comp.participation = { id: 1, submissions: [{ results: [{ id: 2, successful: false, score: 99 } as Result, latestResult] }] } as SolutionProgrammingExerciseParticipation;
         comp.exercise = { id: 99 } as ProgrammingExercise;
 
         triggerChanges(
