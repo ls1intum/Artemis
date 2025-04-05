@@ -215,24 +215,32 @@ describe('Exercise Scores Component', () => {
 
     it.each([
         [FilterProp.ALL, {} as Participation, true],
-        [FilterProp.SUCCESSFUL, { results: [{ successful: true }] } as Participation, true],
-        [FilterProp.SUCCESSFUL, { results: [{ successful: false }] } as Participation, false],
-        [FilterProp.SUCCESSFUL, { results: [{ successful: false }, { successful: true }] } as Participation, true], // always use the latest result
-        [FilterProp.SUCCESSFUL, { results: [{ successful: true }, { successful: false }] } as Participation, false],
-        [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }] } as Participation, true],
-        [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }] } as Participation, false],
-        [FilterProp.UNSUCCESSFUL, { results: [{ successful: false }, { successful: true }] } as Participation, false],
-        [FilterProp.UNSUCCESSFUL, { results: [{ successful: true }, { successful: false }] } as Participation, true],
-        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{ buildFailed: true } as Submission] } as Participation, true],
-        [FilterProp.BUILD_FAILED, { results: [{}], submissions: [{}] } as Participation, false],
-        [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
-        [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, false],
-        [FilterProp.MANUAL, { results: [{ assessmentType: AssessmentType.AUTOMATIC }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, true],
-        [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.AUTOMATIC }] } as Participation, true],
-        [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, false],
-        [FilterProp.AUTOMATIC, { results: [{ assessmentType: AssessmentType.AUTOMATIC }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] } as Participation, false],
-        [FilterProp.LOCKED, { results: [{ completionDate: undefined }] } as Participation, true],
-        [FilterProp.LOCKED, { results: [{ completionDate: dayjs() }] } as Participation, false],
+        [FilterProp.SUCCESSFUL, { submissions: [{ results: [{ successful: true }] }] } as Participation, true],
+        [FilterProp.SUCCESSFUL, { submissions: [{ results: [{ successful: false }] }] } as Participation, false],
+        [FilterProp.SUCCESSFUL, { submissions: [{ results: [{ successful: false }, { successful: true }] }] } as Participation, true], // always use the latest result
+        [FilterProp.SUCCESSFUL, { submissions: [{ results: [{ successful: true }, { successful: false }] }] } as Participation, false],
+        [FilterProp.UNSUCCESSFUL, { submissions: [{ results: [{ successful: false }] }] } as Participation, true],
+        [FilterProp.UNSUCCESSFUL, { submissions: [{ results: [{ successful: true }] }] } as Participation, false],
+        [FilterProp.UNSUCCESSFUL, { submissions: [{ results: [{ successful: false }, { successful: true }] }] } as Participation, false],
+        [FilterProp.UNSUCCESSFUL, { submissions: [{ results: [{ successful: true }, { successful: false }] }] } as Participation, true],
+        [FilterProp.BUILD_FAILED, { submissions: [{ buildFailed: true, results: [{}] } as Submission] } as Participation, true],
+        [FilterProp.BUILD_FAILED, { submissions: [{ results: [{}] }] } as Participation, false],
+        [FilterProp.MANUAL, { submissions: [{ results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] }] } as Participation, true],
+        [FilterProp.MANUAL, { submissions: [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }] }] } as Participation, false],
+        [
+            FilterProp.MANUAL,
+            { submissions: [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] }] } as Participation,
+            true,
+        ],
+        [FilterProp.AUTOMATIC, { submissions: [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }] }] } as Participation, true],
+        [FilterProp.AUTOMATIC, { submissions: [{ results: [{ assessmentType: AssessmentType.SEMI_AUTOMATIC }] }] } as Participation, false],
+        [
+            FilterProp.AUTOMATIC,
+            { submissions: [{ results: [{ assessmentType: AssessmentType.AUTOMATIC }, { assessmentType: AssessmentType.SEMI_AUTOMATIC }] }] } as Participation,
+            false,
+        ],
+        [FilterProp.LOCKED, { submissions: [{ results: [{ completionDate: undefined }] }] } as Participation, true],
+        [FilterProp.LOCKED, { submissions: [{ results: [{ completionDate: dayjs() }] }] } as Participation, false],
     ])('should filter participations correctly', (filter: FilterProp, participation: Participation, expected: boolean) => {
         component.resultCriteria.filterProp = filter;
         expect(component.filterParticipationsByProp(participation)).toBe(expected);
