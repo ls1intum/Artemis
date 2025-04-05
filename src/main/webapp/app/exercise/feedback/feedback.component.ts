@@ -241,11 +241,12 @@ export class FeedbackComponent implements OnInit, OnChanges {
                     }
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
+                    //TODO I think we can only rely on buildFailed anymore as without a submission, we cannot get a participation
                     if (
                         this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&
                         this.result.submission?.participation &&
-                        (!this.result.submission || (this.result.submission as ProgrammingSubmission).buildFailed)
+                        (this.result.submission as ProgrammingSubmission).buildFailed
                     ) {
                         return this.fetchAndSetBuildLogs(this.result.submission.participation.id!, this.result.id);
                     }
