@@ -225,4 +225,39 @@ describe('IrisChatService', () => {
         });
         tick();
     }));
+
+    it('should emit sessionId when set', () => {
+        const expectedId = 456;
+        service.sessionId$.subscribe((id) => {
+            expect(id).toBe(expectedId);
+        });
+        service.sessionId = expectedId;
+    });
+
+    it('should request tutor suggestion if sessionId is set', fakeAsync(() => {
+        const post = { id: 99, content: 'Test post' } as any;
+        service.sessionId = id;
+        const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
+
+        service.requestTutorSuggestion(post).subscribe((res) => {
+            expect(res).toBeUndefined();
+        });
+
+        expect(httpStub).toHaveBeenCalledWith(id, expect.anything());
+        tick();
+    }));
+
+    it('should throw error if sessionId is undefined on tutor suggestion', fakeAsync(() => {
+        const post = { id: 99, content: 'Test post' } as any;
+
+        service.sessionId = undefined;
+
+        service.requestTutorSuggestion(post).subscribe({
+            error: (err) => {
+                expect(err.message).toBe('Not initialized');
+            },
+        });
+
+        tick();
+    }));
 });

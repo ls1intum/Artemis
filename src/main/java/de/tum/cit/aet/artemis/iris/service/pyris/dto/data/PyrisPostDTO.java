@@ -15,9 +15,9 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
  * @param answers answers to the post
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisPostDTO(Long id, String content, Set<PyrisAnswerPostDTO> answers) {
+public record PyrisPostDTO(Long id, String content, Set<PyrisAnswerPostDTO> answers, Long userID) {
 
     public PyrisPostDTO(Post post) {
-        this(post.getId(), post.getContent(), post.getAnswers().stream().map(PyrisAnswerPostDTO::new).collect(Collectors.toSet()));
+        this(post.getId(), post.getContent(), post.getAnswers().stream().map(PyrisAnswerPostDTO::new).collect(Collectors.toSet()), post.getAuthor().getId());
     }
 }

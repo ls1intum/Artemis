@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for managing Iris tutor suggestion sessions.
@@ -31,13 +33,16 @@ public class IrisTutorSuggestionSessionResource {
 
     private final UserRepository userRepository;
 
+    protected final IrisSettingsService irisSettingsService;
+
     private final IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository;
 
     protected IrisTutorSuggestionSessionResource(PostRepository postRepository, IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, UserRepository userRepository,
-            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository) {
+            IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository, IrisSettingsService irisSettingsService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.irisTutorSuggestionSessionRepository = irisTutorSuggestionSessionRepository;
+        this.irisSettingsService = irisSettingsService;
     }
 
     /**
@@ -51,7 +56,9 @@ public class IrisTutorSuggestionSessionResource {
     // @EnforceAtLeastTutorInCourse
     public ResponseEntity<IrisTutorSuggestionSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        // TODO: Add Iris settings activated for tutor suggestions check
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
+        var course = post.getCoursePostingBelongsTo();
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
 
         var sessionOptional = irisTutorSuggestionSessionRepository.findLatestSessionsByPostIdAndUserIdWithMessages(postId, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
@@ -72,7 +79,8 @@ public class IrisTutorSuggestionSessionResource {
     public ResponseEntity<IrisTutorSuggestionSession> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
-        // TODO: Add Iris settings activated for tutor suggestions check
+        var course = post.getCoursePostingBelongsTo();
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
