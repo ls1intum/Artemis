@@ -98,7 +98,7 @@ describe('ManageAssessmentButtonsComponent', () => {
     describe('getCorrectionRoundForAssessmentLink', () => {
         it('should increment the correction round if an accepted complaint is present', () => {
             component.exercise = programmingExercise;
-            const submission = { id: 1, results: [{ id: 1, hasComplaint: true }] };
+            const submission = { id: 1, results: [{ id: 1, hasComplaint: true }, { id: 2 }] };
 
             component.participation = { submissions: [submission] };
 
