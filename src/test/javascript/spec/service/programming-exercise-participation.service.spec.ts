@@ -1,9 +1,8 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
@@ -40,23 +39,20 @@ describe('ProgrammingExerciseParticipation Service', () => {
     });
 
     describe('REST calls', () => {
-        it.each([true, false])(
-            'getLatestResultWithFeedback',
-            fakeAsync((withSubmission: boolean) => {
-                const participation = { id: 21, exercise: { id: 321 } };
-                const result = { id: 42, rated: true, submission: withSubmission ? ({ id: 43 } as Submission) : undefined, participation } as Result;
-                const expected = Object.assign({}, result);
+        it('getLatestResultWithFeedback', fakeAsync(() => {
+            const participation = { id: 21, exercise: { id: 321 } };
+            const result = { id: 42, rated: true, submission: { id: 43, participation } } as Result;
+            const expected = Object.assign({}, result);
 
-                service.getLatestResultWithFeedback(participation.id, withSubmission).subscribe((resp) => expect(resp).toEqual(expected));
+            service.getLatestResultWithFeedback(participation.id).subscribe((resp) => expect(resp).toEqual(expected));
 
-                const expectedURL = `${resourceUrlParticipations}${participation.id}/latest-result-with-feedbacks?withSubmission=${withSubmission}`;
-                const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
-                req.flush(result);
-                tick();
-                expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
-                expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
-            }),
-        );
+            const expectedURL = `${resourceUrlParticipations}${participation.id}/latest-result-with-feedbacks?withSubmission=true`;
+            const req = httpMock.expectOne({ method: 'GET', url: expectedURL });
+            req.flush(result);
+            tick();
+            expect(titleSpy).toHaveBeenCalledExactlyOnceWith(participation);
+            expect(accessRightsSpy).toHaveBeenCalledExactlyOnceWith(participation.exercise);
+        }));
 
         it('getStudentParticipationWithLatestResult', fakeAsync(() => {
             const participation = { id: 42, exercise: { id: 123 } };
