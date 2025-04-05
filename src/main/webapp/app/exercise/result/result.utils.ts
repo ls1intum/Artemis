@@ -491,17 +491,10 @@ export function getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]):
  * @param result Some result.
  */
 export function breakCircularResultBackReferences(result: Result) {
-    // TODO this should not be needed anymore.
-    // if (result.participation?.results) {
-    //     result.participation.results = [];
-    // }
-    // if (result.submission?.participation?.results) {
-    //     result.submission.participation.results = [];
-    // }
-    // if (result.submission?.results) {
-    //     result.submission.results = [];
-    // }
-    // if (result.feedbacks) {
-    //     result.feedbacks.forEach((feedback) => (feedback.result = undefined));
-    // }
+    if (result.submission?.results) {
+        result.submission.results = [];
+    }
+    if (result.feedbacks) {
+        result.feedbacks.forEach((feedback) => (feedback.result = undefined));
+    }
 }
