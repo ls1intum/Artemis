@@ -15,7 +15,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { ExerciseInfo } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { ExerciseInfo } from 'app/exam/shared/entities/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { CourseScores } from 'app/core/course/manage/course-scores/course-scores';
 

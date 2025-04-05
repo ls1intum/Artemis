@@ -5,7 +5,7 @@ import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import dayjs from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/shared/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';

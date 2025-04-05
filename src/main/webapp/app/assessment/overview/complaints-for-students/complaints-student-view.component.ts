@@ -18,7 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
-import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
+import { ComplaintResponseComponent } from 'app/assessment/shared/complaint-response/complaint-response.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

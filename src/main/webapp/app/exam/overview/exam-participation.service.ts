@@ -9,7 +9,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';

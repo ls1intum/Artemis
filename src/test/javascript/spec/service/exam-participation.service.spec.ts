@@ -16,7 +16,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/shared/entities/exam-score-dtos.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { HttpErrorResponse, HttpHeaders, provideHttpClient } from '@angular/common/http';
 

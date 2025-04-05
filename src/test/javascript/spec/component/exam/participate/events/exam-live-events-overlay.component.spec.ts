@@ -3,7 +3,7 @@ import { ExamLiveEventsOverlayComponent } from 'app/exam/overview/events/exam-li
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/exam-participation-live-events.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/shared/exam-exercise-update.service';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';

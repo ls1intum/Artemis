@@ -14,7 +14,7 @@ import { Course } from 'app/core/shared/entities/course.model';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-request/complaint-request.component';
-import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
+import { ComplaintResponseComponent } from 'app/assessment/shared/complaint-response/complaint-response.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

@@ -6,7 +6,7 @@ import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared
 import { onError } from 'app/shared/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph-modal/competency-graph-modal.component';
+import { CompetencyGraphModalComponent } from 'app/atlas/shared/competency-graph-modal/competency-graph-modal.component';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

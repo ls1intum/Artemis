@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpClient, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Student Exam Service', () => {

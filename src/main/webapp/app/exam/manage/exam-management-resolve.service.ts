@@ -7,7 +7,7 @@ import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { catchError } from 'rxjs/operators';

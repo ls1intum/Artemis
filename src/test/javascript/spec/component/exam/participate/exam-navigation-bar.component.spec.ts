@@ -12,7 +12,7 @@ import { CommitState } from 'app/programming/shared/code-editor/model/code-edito
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/shared/exam-exercise-update.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

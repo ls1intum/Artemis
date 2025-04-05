@@ -9,7 +9,7 @@ import {
     ExerciseInfo,
     ExerciseResult,
     StudentResult,
-} from 'app/exam/manage/exam-scores/exam-score-dtos.model';
+} from 'app/exam/shared/entities/exam-score-dtos.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 import { ExamScoresComponent, MedianType } from 'app/exam/manage/exam-scores/exam-scores.component';
