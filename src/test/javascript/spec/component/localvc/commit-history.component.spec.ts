@@ -209,7 +209,7 @@ describe('CommitHistoryComponent', () => {
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.templateParticipation);
         expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results).toEqual(templateSubmissions.map((submission) => submission.results![0]));
+        expect(component.participation.submissions![0].results).toEqual([templateSubmissions[0].results![0]]);
 
         expect(component.commits).toEqual([mockTemplateCommit2, mockTemplateCommit1]); // Updated to reflect the correct order
 
@@ -237,7 +237,7 @@ describe('CommitHistoryComponent', () => {
         // Expectations
         expect(component.participation).toEqual(mockExerciseWithTemplateAndSolution.solutionParticipation);
         expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results).toEqual(solutionSubmissions.map((submission) => submission.results![0]));
+        expect(component.participation.submissions![0].results).toEqual([solutionSubmissions[0].results![0]]);
 
         expect(component.commits).toEqual([mockSolutionCommit2, mockSolutionCommit1]); // Updated to reflect the correct order
 
