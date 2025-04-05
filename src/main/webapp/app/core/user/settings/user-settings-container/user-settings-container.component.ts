@@ -24,7 +24,6 @@ export class UserSettingsContainerComponent implements OnInit {
     faUser = faUser;
 
     currentUser?: User;
-    localVCEnabled = true;
     isAtLeastTutor = false;
 
     ngOnInit() {

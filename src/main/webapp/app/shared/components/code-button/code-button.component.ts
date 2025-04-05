@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -172,7 +172,6 @@ export class CodeButtonComponent implements OnInit {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
 
-            this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
             this.configureTooltips();
             this.initTheia(profileInfo);
         });
