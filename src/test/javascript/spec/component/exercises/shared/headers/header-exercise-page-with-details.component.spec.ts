@@ -14,8 +14,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -185,24 +184,25 @@ describe('HeaderExercisePageWithDetails', () => {
     });
 
     it.each([
-        [[] as Result[], 0],
-        [[{ submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 1],
-        [[{ submission: { type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission }] as Result[], 0],
+        [[] as Submission[], 0],
+        [[{ type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 1],
+        [[{ type: SubmissionType.INSTRUCTOR, commitHash: 'first' } as ProgrammingSubmission] as Submission[], 0],
         [
             [
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-            ] as Result[],
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+            ] as Submission[],
             1,
         ],
         [
             [
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission },
-                { submission: { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission },
-            ] as Result[],
+                { type: SubmissionType.MANUAL, commitHash: 'first' } as ProgrammingSubmission,
+                { type: SubmissionType.MANUAL, commitHash: 'second' } as ProgrammingSubmission,
+            ] as Submission[],
             2,
         ],
-    ])('should count number of submissions correctly', (results: Result[], expectedNumber: number) => {
+    ])('should count number of submissions correctly', (submissions: Submission[], expectedNumber: number) => {
+        participation.submissions = submissions;
         component.studentParticipation = participation;
         component.submissionPolicy = new LockRepositoryPolicy();
         component.submissionPolicy.active = true;

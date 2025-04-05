@@ -4,11 +4,10 @@ import dayjs from 'dayjs/esm';
 import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getExerciseDueDate } from 'app/exercise/exercise.utils';
+import { countSubmissions, getExerciseDueDate } from 'app/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/shared/entities/course.model';
-import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
@@ -296,14 +295,6 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     }
 
     countSubmissions() {
-        const commitHashSet = new Set<string>();
-        const results = getAllResultsOfAllSubmissions(this.studentParticipation?.submissions);
-        results
-            ?.map((result) => result.submission)
-            .filter((submission) => submission?.type === SubmissionType.MANUAL)
-            .map((submission) => (submission as ProgrammingSubmission).commitHash)
-            .forEach((commitHash: string) => commitHashSet.add(commitHash));
-
-        this.numberOfSubmissions = commitHashSet.size;
+        this.numberOfSubmissions = countSubmissions(this.studentParticipation);
     }
 }
