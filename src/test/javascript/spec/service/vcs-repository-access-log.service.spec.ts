@@ -70,7 +70,7 @@ describe('VcsRepositoryAccessLogService', () => {
         const requestPromise = service.search(pageable, options);
 
         const req = httpMock.expectOne((request) => {
-            const urlMatches = request.url === `api/programming-exercises/${options.exerciseId}/repository/${options.repositoryType}/vcs-access-log`;
+            const urlMatches = request.url === `api/programming/programming-exercises/${options.exerciseId}/repository/${options.repositoryType}/vcs-access-log`;
 
             const params = request.params;
             const paramsMatch =

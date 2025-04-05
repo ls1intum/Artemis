@@ -26,6 +26,8 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
 
     private static final String TEST_PREFIX = "vcsaccesslogresourcetest";
 
+    private static final String BASE_URL = "/api/programming/programming-exercises/";
+
     private ProgrammingExercise programmingExercise;
 
     private String defaultParams;
@@ -52,7 +54,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
         var user = userTestRepository.getUser();
         saveAccessLogs(user, participation);
-        var studentRequestPath = "/api/programming-exercises/" + participation.getExercise().getId() + "/repository/USER/vcs-access-log?repositoryId=" + participation.getId();
+        var studentRequestPath = BASE_URL + participation.getExercise().getId() + "/repository/USER/vcs-access-log?repositoryId=" + participation.getId();
 
         var result = request.getSearchResult(studentRequestPath + defaultParams, HttpStatus.OK, VcsAccessLogDTO.class, new LinkedMultiValueMap<>());
 
@@ -71,7 +73,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "instructor1");
         var user = userTestRepository.getUser();
         saveAccessLogs(user, participation);
-        var studentRequestPath = "/api/programming-exercises/" + participation.getExercise().getId() + "/repository/USER/vcs-access-log?repositoryId=" + participation.getId();
+        var studentRequestPath = BASE_URL + participation.getExercise().getId() + "/repository/USER/vcs-access-log?repositoryId=" + participation.getId();
         defaultParams = "&page=1&pageSize=25&sortingOrder=DESCENDING&sortedColumn=timestamp";
 
         var result = request.getSearchResult(studentRequestPath + defaultParams, HttpStatus.OK, VcsAccessLogDTO.class, new LinkedMultiValueMap<>());
@@ -88,7 +90,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
     void testGetVcsAccessLogForTemplateParticipation() throws Exception {
         var user = userTestRepository.getUser();
         saveAccessLogs(user, programmingExercise.getTemplateParticipation());
-        var templateRequestPath = "/api/programming-exercises/" + programmingExercise.getId() + "/repository/TEMPLATE/vcs-access-log?repositoryId=0";
+        var templateRequestPath = BASE_URL + programmingExercise.getId() + "/repository/TEMPLATE/vcs-access-log?repositoryId=0";
 
         var result = request.getSearchResult(templateRequestPath + defaultParams, HttpStatus.OK, VcsAccessLogDTO.class, new LinkedMultiValueMap<>());
 
@@ -105,7 +107,7 @@ class VcsAccessLogResourceIntegrationTest extends AbstractProgrammingIntegration
     void testGetVcsAccessLogForSolutionParticipation() throws Exception {
         var user = userTestRepository.getUser();
         saveAccessLogs(user, programmingExercise.getSolutionParticipation());
-        var solutionRequestPath = "/api/programming-exercises/" + programmingExercise.getId() + "/repository/SOLUTION/vcs-access-log?repositoryId=0";
+        var solutionRequestPath = BASE_URL + programmingExercise.getId() + "/repository/SOLUTION/vcs-access-log?repositoryId=0";
 
         var result = request.getSearchResult(solutionRequestPath + defaultParams, HttpStatus.OK, VcsAccessLogDTO.class, new LinkedMultiValueMap<>());
 
