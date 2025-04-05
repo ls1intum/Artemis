@@ -127,7 +127,7 @@ Communication Features Availability
     <span style="background-color: #6c757d; padding: 3px 6px; border-radius: 8px; color: white; font-weight: bold; display: inline-block; width: 150px; text-align: center;">NOT PLANNED</span>
 
 
-The following table represents the currently available communication features of Artemis on the different platforms. Note that not all 
+The following table represents the currently available communication features of Artemis on the different platforms. Note that not all
 features are available to every user, which is why **Actor restrictions** have been added. The following sections will explore this in more
 detail.
 
@@ -338,10 +338,10 @@ Available features on each platform
 | | to various notification types)                     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
-.. note:: 
+.. note::
     - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
     - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
-    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat. 
+    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat.
     - Downloading sent images in the chat is only available through the browser option on the web app.
     - Seeing who reacted to a post is available when hovering over a reaction on the web app.
 
@@ -369,6 +369,16 @@ possible combinations:
 A simplified version of this feature is available on the exercise and lecture details page as well.
 
 To search within a specific channel in the communications module, users can navigate to the desired channel and utilize the search bar located in that channel.
+
+Filter Pinned Messages within a Conversation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If there are any pinned messages in a conversation, a button labeled "x pinned messages"
+(where x is the number of pinned messages) appears at the top right of the conversation view.
+By clicking this button, users can filter and view only the pinned messages within that conversation.
+Clicking the button again will return the view to the regular conversation.
+
+
 
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
@@ -478,6 +488,18 @@ Note that only the author of the message as well as a moderator can perform this
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
 
+Forward Messages
+^^^^^^^^^^^^^^^^
+
+Users can forward any message to another conversation within the same course. In the forward message dialog,
+they can add additional content using the input field. On the forwarded message view, users can navigate to the
+exact location of the original message by clicking the View Conversation button.
+
+Expand Thread to Full-Screen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
+
 |resolved-post|
 
 Features for Moderators
@@ -490,6 +512,12 @@ Pin Messages
 
 By clicking the pushpin icon next to the reaction button of a message, a moderator can *pin* the message.
 As a consequence, the message is highlighted to receive higher attention.
+
+Toggle Channel Privacy
+^^^^^^^^^^^^^^^^^^^^^^
+
+Moderators have the ability to seamlessly toggle a channel’s privacy between private and public using
+the toggle button in the channel settings.
 
 Features for Instructors
 ------------------------
@@ -508,6 +536,11 @@ The video below provides a demonstration for the creation of a course-wide chann
     <iframe src="https://live.rbg.tum.de/w/artemisintro/47623?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
     </iframe>
+
+Besides automatic creation during lecture, exercise, or exam setup, moderators can also manually create new channels later
+if needed. When creating a channel, they must choose between a selective channel (default option) and a course-wide channel.
+In a selective channel, users are added manually after the channel is created. In a course-wide channel, all users
+enrolled in the course are automatically added as members.
 
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
