@@ -22,19 +22,19 @@ const SIDEBAR_CARD_ELEMENT_1 = {
     exercise: EXERCISE_1,
     type: ExerciseType.TEXT,
     difficulty: DifficultyLevel.HARD,
-    studentParticipation: { results: [{ score: 7.7 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 7.7 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_2 = {
     exercise: EXERCISE_2,
     type: ExerciseType.PROGRAMMING,
     difficulty: DifficultyLevel.EASY,
-    studentParticipation: { results: [{ score: 82.3 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 82.3 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_3 = {
     exercise: EXERCISE_3,
     type: ExerciseType.QUIZ,
     difficulty: DifficultyLevel.MEDIUM,
-    studentParticipation: { results: [{ score: 44.5 } as Result] } as StudentParticipation,
+    studentParticipation: { submissions: [{ results: [{ score: 44.5 } as Result] }] } as StudentParticipation,
 } as SidebarCardElement;
 const SIDEBAR_CARD_ELEMENT_4 = { exercise: EXERCISE_4 } as SidebarCardElement;
 
