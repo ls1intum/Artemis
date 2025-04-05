@@ -17,7 +17,7 @@
                     </div>
                 }
                 <div class="login-form">
-                    <form (change)="inputChange($event)" class="mb-5" name="loginForm" role="form">
+                    <form (change)="inputChange($event)" (ngSubmit)="login()" class="mb-5" name="loginForm" role="form">
                         <div class="form-group">
                             @if (authenticationError) {
                                 <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
