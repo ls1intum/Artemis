@@ -432,7 +432,8 @@ describe('QuizParticipationComponent', () => {
                 scoreInPoints: 1,
             };
             const result: Result = { submission: quizSubmission };
-            const participation: StudentParticipation = { exercise: quizExerciseForResults, submissions: [{ results: [result] }] };
+            quizSubmission.results = [result];
+            const participation: StudentParticipation = { exercise: quizExerciseForResults, submissions: [quizSubmission] };
             component.showQuizResultAfterQuizEnd(participation);
 
             expect(participationSpy).toHaveBeenCalledWith(quizExercise.id);
@@ -491,8 +492,9 @@ describe('QuizParticipationComponent', () => {
                 submittedAnswers: [],
             };
             const result: Result = { id: 1, submission };
+            submission.results = [result];
             const endedQuizExercise = { ...quizExercise, quizEnded: true };
-            const participation: StudentParticipation = { exercise: endedQuizExercise, submissions: [{ results: [result] }] };
+            const participation: StudentParticipation = { exercise: endedQuizExercise, submissions: [submission] };
 
             component.quizExercise = quizExercise;
             component.updateParticipationFromServer(participation);
