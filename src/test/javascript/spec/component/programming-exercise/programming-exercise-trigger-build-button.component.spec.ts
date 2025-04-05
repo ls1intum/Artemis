@@ -40,7 +40,7 @@ describe('TriggerBuildButtonSpec', () => {
     const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
     const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
-    const participation = { id: 1, exercise, results, student } as any;
+    const participation = { id: 1, exercise, submissions: [{ results }], student } as any;
 
     const submission = { id: 1 } as any;
 
