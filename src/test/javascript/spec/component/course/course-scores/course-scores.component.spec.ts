@@ -152,50 +152,50 @@ describe('CourseScoresComponent', () => {
         id: 1,
         student: user1,
         exercise: textIncludedWith10Points10BonusPoints,
-        results: [{ score: 200 } as Result],
+        submissions: [{ results: [{ score: 200 } as Result] }],
         presentationScore: 100,
     } as StudentParticipation;
     const participation2 = {
         id: 2,
         student: user1,
         exercise: modelingIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation3 = {
         id: 3,
         student: user1,
         exercise: fileBonusWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation4 = {
         id: 4,
         student: user1,
         exercise: modelingIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation5 = {
         id: 5,
         student: user2,
         exercise: textIncludedWith10Points10BonusPoints,
-        results: [],
+        submissions: [{ results: [] }],
     } as StudentParticipation;
     const participation6 = {
         id: 6,
         student: user2,
         exercise: modelingIncludedWith10Points0BonusPoints,
-        results: [{ score: 50 } as Result],
+        submissions: [{ results: [{ score: 50 } as Result] }],
     } as StudentParticipation;
     const participation7 = {
         id: 7,
         student: user2,
         exercise: fileBonusWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation8 = {
         id: 8,
         student: user2,
         exercise: modelingIncludedWith10Points0BonusPoints,
-        results: [{ score: 50 } as Result],
+        submissions: [{ results: [{ score: 50 } as Result] }],
     } as StudentParticipation;
     const courseScoreStudent1 = new ScoresDTO();
     courseScoreStudent1.studentId = user1.id;
@@ -212,26 +212,26 @@ describe('CourseScoresComponent', () => {
         id: 9,
         student: user1,
         exercise: quizNotIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation10 = {
         id: 10,
         student: user2,
         exercise: quizNotIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participation11 = {
         id: 11,
         student: user1,
         exercise: modelingNotIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
         presentationScore: 100,
     } as StudentParticipation;
     const participation12 = {
         id: 12,
         student: user2,
         exercise: modelingNotIncludedWith10Points0BonusPoints,
-        results: [{ score: 100 } as Result],
+        submissions: [{ results: [{ score: 100 } as Result] }],
     } as StudentParticipation;
     const participations: StudentParticipation[] = [
         participation1,
