@@ -56,7 +56,7 @@
     <changeSet id="20250329-13-alter-columns-submission-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
             <or>
-                <dbms type="postgresql"/>
+                <dbms type="mysql"/>
                 <dbms type="h2"/>
             </or>
         </preConditions>
