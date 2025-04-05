@@ -1,6 +1,6 @@
 import { Component, EventEmitter, OnInit, Output } from '@angular/core';
-import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
+import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

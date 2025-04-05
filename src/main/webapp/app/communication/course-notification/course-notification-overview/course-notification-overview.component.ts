@@ -4,12 +4,12 @@ import { faBell, faCog, faEnvelopeOpen, faFilter, faSpinner, faTrash } from '@fo
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CourseNotificationBubbleComponent } from 'app/communication/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { Subscription, fromEvent } from 'rxjs';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -51,7 +51,7 @@ export class CourseNotificationOverviewComponent implements OnDestroy, OnInit, A
     protected courseCategories: string[];
 
     protected isShown = false;
-    protected selectedCategory = CourseNotificationCategory.COMMUNICATION;
+    protected selectedCategory = CourseNotificationCategory.GENERAL;
     protected notifications: CourseNotification[];
     protected notificationsForSelectedCategory: CourseNotification[] = [];
     protected courseNotificationCount: number = 0;

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Course } from 'app/entities/course.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Course } from 'app/core/shared/entities/course.model';
 import { matchesRegexFully } from 'app/shared/util/regex.util';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';

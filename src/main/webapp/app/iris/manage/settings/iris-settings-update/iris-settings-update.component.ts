@@ -1,5 +1,5 @@
 import { Component, DoCheck, Input, OnInit, inject } from '@angular/core';
-import { IrisSettings, IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings, IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -17,7 +17,7 @@ import {
     IrisLectureIngestionSubSettings,
     IrisTextExerciseChatSubSettings,
     IrisTutorSuggestionSubSettings,
-} from 'app/entities/iris/settings/iris-sub-settings.model';
+} from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

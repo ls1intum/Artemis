@@ -9,9 +9,9 @@ import { QuizQuestionListEditExistingComponent, State } from 'app/quiz/manage/qu
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { FormsModule } from '@angular/forms';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -28,12 +28,12 @@ import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { FileService } from 'app/shared/http/file.service';
 import JSZip from 'jszip';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
+import { FileService } from 'app/shared/service/file.service';
 
 const createValidMCQuestion = () => {
     const question = new MultipleChoiceQuestion();

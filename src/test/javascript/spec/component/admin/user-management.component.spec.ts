@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import {
     AuthorityFilter,
     OriginFilter,
@@ -13,7 +13,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { Subscription, of } from 'rxjs';
+import { of, Subscription } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -21,15 +21,15 @@ import { CourseManagementService } from 'app/core/course/manage/course-managemen
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;

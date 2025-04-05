@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.localci;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -21,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
-@Profile("jenkins")
+@Profile(PROFILE_JENKINS)
 @RestController
 @RequestMapping("api/programming/")
 public class BuildPlanResource {

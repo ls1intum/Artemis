@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { CourseManagementTabBarComponent } from 'app/core/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -18,7 +18,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
 

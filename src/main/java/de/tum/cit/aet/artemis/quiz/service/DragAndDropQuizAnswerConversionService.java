@@ -86,16 +86,20 @@ public class DragAndDropQuizAnswerConversionService {
         graphics.setStroke(new BasicStroke(3));
         List<DropLocation> dropLocations = question.getDropLocations();
         for (var dropLocation : dropLocations) {
-            int dropLocationX = (int) (dropLocation.getPosX() / MAX_SIZE_UNIT * backgroundImageWidth);
-            int dropLocationY = (int) (dropLocation.getPosY() / MAX_SIZE_UNIT * backgroundImageHeight);
-            int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
-            int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
-            DropLocationCoordinates dropLocationCoordinates = new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
+            final var dropLocationCoordinates = getDropLocationCoordinates(dropLocation, backgroundImageWidth, backgroundImageHeight);
             drawDropLocation(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates, showResult);
             drawDragItem(dragAndDropSubmittedAnswer, graphics, dropLocation, dropLocationCoordinates);
         }
         graphics.drawImage(backgroundImage, 0, 0, null);
 
+    }
+
+    private static DropLocationCoordinates getDropLocationCoordinates(DropLocation dropLocation, int backgroundImageWidth, int backgroundImageHeight) {
+        int dropLocationX = (int) (dropLocation.getPosX() / MAX_SIZE_UNIT * backgroundImageWidth);
+        int dropLocationY = (int) (dropLocation.getPosY() / MAX_SIZE_UNIT * backgroundImageHeight);
+        int dropLocationWidth = (int) (dropLocation.getWidth() / MAX_SIZE_UNIT * backgroundImageWidth);
+        int dropLocationHeight = (int) (dropLocation.getHeight() / MAX_SIZE_UNIT * backgroundImageHeight);
+        return new DropLocationCoordinates(dropLocationX, dropLocationY, dropLocationWidth, dropLocationHeight);
     }
 
     private void drawDragItem(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer, Graphics2D graphics, DropLocation dropLocation,

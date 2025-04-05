@@ -17,10 +17,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
 import { QuizExerciseLifecycleButtonsComponent } from './quiz-exercise-lifecycle-buttons.component';
-import { ExerciseCategoriesComponent } from 'app/shared/exercise-categories/exercise-categories.component';
 import { QuizExerciseManageButtonsComponent } from './quiz-exercise-manage-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
     selector: 'jhi-quiz-exercise',

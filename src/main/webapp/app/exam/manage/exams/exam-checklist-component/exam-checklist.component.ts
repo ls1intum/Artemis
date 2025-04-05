@@ -1,6 +1,6 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -46,8 +46,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
 
     exam = input.required<Exam>();
-    getExamRoutesByIdentifier = input.required<any>();
-    private longestWorkingTimeSub: Subscription | null = null;
+    getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
+    private longestWorkingTimeSub: Subscription | undefined = undefined;
 
     examChecklist: ExamChecklist;
     isLoading = false;
@@ -68,8 +68,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
-
-    examPreparationFinished: boolean;
 
     // Icons
     faEye = faEye;

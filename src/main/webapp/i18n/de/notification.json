@@ -193,6 +193,56 @@
                 "title": "Neue Nachricht",
                 "content": "{{postMarkdownContent}}"
             },
+            "newAnswerNotification": {
+                "title": "Neue Thread Antwort",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Neue Thread Antwort"
+            },
+            "newMentionNotification": {
+                "title": "Du wurdest markiert",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Du wurdest markiert"
+            },
+            "newAnnouncementNotification": {
+                "title": "Neue Ankündigung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue Ankündigung"
+            },
+            "newExerciseNotification": {
+                "title": "Neue Aufgabe",
+                "content": "{{exerciseTitle}} wurde veröffentlicht.",
+                "settingsTitle": "Neue Aufgabe"
+            },
+            "exerciseOpenForPracticeNotification": {
+                "title": "Aufgabe steht bereit",
+                "content": "{{exerciseTitle}} steht nun bereit zur Übung.",
+                "settingsTitle": "Aufgabe steht bereit"
+            },
+            "exerciseAssessedNotification": {
+                "title": "Aufgabe bewertet",
+                "content": "{{exerciseTitle}} wurde bewertet.",
+                "settingsTitle": "Aufgabe bewertet"
+            },
+            "exerciseUpdatedNotification": {
+                "title": "Aufgabe editiert",
+                "content": "{{exerciseTitle}} wurde editiert.",
+                "settingsTitle": "Aufgabe editiert"
+            },
+            "quizExerciseStartedNotification": {
+                "title": "Neue Quiz Aufgabe",
+                "content": "Die Quiz Aufgabe {{exerciseTitle}} hat begonnen.",
+                "settingsTitle": "Neue Quiz Aufgabe"
+            },
+            "attachmentChangedNotification": {
+                "title": "Anhang verändert",
+                "content": "Ein Anhang wurde in {{unitName}} verändert.",
+                "settingsTitle": "Anhang verändert"
+            },
+            "newManualFeedbackRequestNotification": {
+                "title": "Feedback benötigt",
+                "content": "In {{exerciseTitle}} wird Feedback benötigt.",
+                "settingsTitle": "Feedback benötigt"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",
@@ -215,7 +265,7 @@
                 "title": "Benachrichtigungen",
                 "emptyTitle": "Alles erledigt!",
                 "settingsTooltip": "Zu den Einstellungen",
-                "archiveAllTooltip": "Alle archivieren",
+                "archiveAllTooltip": "Alle entfernen",
                 "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
             },
             "category": {

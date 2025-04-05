@@ -2,7 +2,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { LegalDocumentLanguage } from 'app/core/shared/entities/legal-document.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
 import { SessionStorageService } from 'ngx-webstorage';

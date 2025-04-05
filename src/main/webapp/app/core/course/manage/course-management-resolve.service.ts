@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable, inject } from '@angular/core';

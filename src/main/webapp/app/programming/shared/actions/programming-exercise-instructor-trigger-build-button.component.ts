@@ -2,7 +2,7 @@ import { Component, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseTriggerBuildButtonComponent } from './programming-exercise-trigger-build-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { SubmissionType } from 'app/entities/submission.model';
+import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { faRedo } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button.component';

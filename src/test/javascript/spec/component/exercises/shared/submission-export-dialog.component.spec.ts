@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/submission-export-dialog.component';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';

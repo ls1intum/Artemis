@@ -14,6 +14,7 @@
                 [courseNotification]="notification"
                 [isShowClose]="true"
                 [isHideTime]="true"
+                [isRedirectToUrl]="isExpanded || notifications.length === 1"
                 [displayTimeInMilliseconds]="popupTimeInMilliseconds - 500"
                 (onCloseClicked)="closeClicked(notification)"
             />

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.lang.reflect.InvocationTargetException;
@@ -21,10 +20,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -193,7 +192,7 @@ public class PyrisPipelineService {
     private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass, Optional<String> eventVariant) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
-        var api = learningMetricsApi.orElseThrow(() -> new ApiNotPresentException(LearningMetricsApi.class, PROFILE_ATLAS));
+        var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
 
         // @formatter:off
         executePipeline(

@@ -1,16 +1,16 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
-import { Post } from 'app/entities/metis/post.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
-import { IrisMessage, IrisSender } from 'app/entities/iris/iris-message.model';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
-import { IrisTextMessageContent } from 'app/entities/iris/iris-content-type.model';
+import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Course } from 'app/entities/course.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 /**
  * Component to display the tutor suggestion in the chat

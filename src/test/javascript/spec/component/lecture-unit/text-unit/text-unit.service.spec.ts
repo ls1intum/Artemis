@@ -4,9 +4,9 @@ import { TestBed, fakeAsync } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { take } from 'rxjs/operators';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
 
 describe('TextUnitService', () => {

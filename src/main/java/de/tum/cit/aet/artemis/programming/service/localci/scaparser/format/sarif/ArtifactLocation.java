@@ -18,5 +18,4 @@ public record ArtifactLocation(String uri) {
     public Optional<String> getOptionalUri() {
         return Optional.ofNullable(uri);
     }
-
 }

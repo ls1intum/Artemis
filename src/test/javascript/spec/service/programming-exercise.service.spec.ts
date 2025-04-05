@@ -8,14 +8,14 @@ import { MockTranslateService } from '../helpers/mocks/service/mock-translate.se
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import dayjs from 'dayjs/esm';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
-import { Course } from 'app/entities/course.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
-import { Submission } from 'app/entities/submission.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/programming/shared/entities/programming-exercise-git-diff-entry.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
@@ -413,7 +413,6 @@ describe('ProgrammingExercise Service', () => {
         { uri: 'plagiarism-result', method: 'getLatestPlagiarismResult' },
         { uri: 'test-case-state', method: 'getProgrammingExerciseTestCaseState' },
         { uri: 'diff-report', method: 'getDiffReport' },
-        { uri: 'build-log-statistics', method: 'getBuildLogStatistics' },
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;

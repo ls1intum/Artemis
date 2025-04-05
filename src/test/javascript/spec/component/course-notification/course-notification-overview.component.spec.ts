@@ -3,9 +3,9 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective } from 'ng-mocks';
@@ -33,7 +33,7 @@ describe('CourseNotificationOverviewComponent', () => {
         category: CourseNotificationCategory,
         status: CourseNotificationViewingStatus = CourseNotificationViewingStatus.UNSEEN,
     ): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' });
+        return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
     };
 
     beforeEach(async () => {
@@ -87,7 +87,7 @@ describe('CourseNotificationOverviewComponent', () => {
 
     it('should initialize with the correct default values', () => {
         expect(componentAsAny.isShown).toBeFalse();
-        expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.COMMUNICATION);
+        expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.GENERAL);
         expect(componentAsAny.notifications).toBeUndefined();
         expect(componentAsAny.notificationsForSelectedCategory).toEqual([]);
         expect(componentAsAny.courseNotificationCount).toBe(0);
@@ -114,7 +114,7 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny.filterNotificationsIntoCurrentCategory();
 
         expect(componentAsAny.notificationsForSelectedCategory).toHaveLength(1);
-        expect(componentAsAny.notificationsForSelectedCategory[0]).toBe(communicationNotification);
+        expect(componentAsAny.notificationsForSelectedCategory[0]).toBe(generalNotification);
     });
 
     it('should toggle overlay visibility when toggleOverlay is called', () => {

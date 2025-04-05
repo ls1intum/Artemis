@@ -3,13 +3,13 @@ import { faChevronLeft, faCircleNotch, faEnvelope, faFilter, faLongArrowAltDown,
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { Course } from 'app/entities/course.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { Post } from 'app/entities/metis/post.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/metis.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { NgClass } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -18,7 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -28,7 +28,7 @@ import { Posting } from 'app/entities/metis/posting.model';
     imports: [NgClass, TranslateDirective, FaIconComponent, FormsModule, ReactiveFormsModule, NgbTooltip, InfiniteScrollDirective, PostingThreadComponent, ArtemisTranslatePipe],
 })
 export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestroy {
-    readonly courseWideSearchConfig = input.required<CourseWideSearchConfig>();
+    courseWideSearchConfig = input.required<CourseWideSearchConfig>();
 
     readonly messages = viewChildren<ElementRef>('postingThread');
     readonly messages$ = toObservable(this.messages);

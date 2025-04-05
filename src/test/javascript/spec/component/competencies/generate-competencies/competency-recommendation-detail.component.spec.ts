@@ -4,7 +4,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';

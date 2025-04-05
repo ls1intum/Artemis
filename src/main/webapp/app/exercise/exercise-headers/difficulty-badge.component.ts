@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
-import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgClass } from '@angular/common';
 
 @Component({
