@@ -259,7 +259,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // Expect the fallback mechanism to kick in after the timeout
         expect(getLatestResultStub).toHaveBeenCalledOnce();
-        expect(getLatestResultStub).toHaveBeenCalledWith(participationId, true);
+        expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
 
         // HAS_FAILED_SUBMISSION is expected as the result provided by getLatestResult does not match the pending submission
         expect(returnedSubmissions).toEqual([
@@ -299,7 +299,7 @@ describe('ProgrammingSubmissionService', () => {
 
         // Expect the fallback mechanism to kick in after the timeout
         expect(getLatestResultStub).toHaveBeenCalledOnce();
-        expect(getLatestResultStub).toHaveBeenCalledWith(participationId, true);
+        expect(getLatestResultStub).toHaveBeenCalledWith(participationId);
         expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
         expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result });
         wsLatestResultSubject.next(result);
