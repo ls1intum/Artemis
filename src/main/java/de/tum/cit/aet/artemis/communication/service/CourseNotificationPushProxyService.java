@@ -1,11 +1,22 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ATTACHMENT_CHANGE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_NEW_MESSAGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_NEW_REPLY_MESSAGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_USER_MENTIONED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_RELEASED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_UPDATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -49,10 +60,11 @@ public class CourseNotificationPushProxyService {
         String[] notificationPlaceholders;
         String target;
         String type;
-        String date;
+        String date = courseNotificationDTO.creationDate().toString();
         int version = Constants.PUSH_NOTIFICATION_VERSION;
         Map<String, String> parameters = courseNotificationDTO.parameters().entrySet().stream().collect(HashMap::new,
                 (map, entry) -> map.put(entry.getKey(), entry.getValue() == null ? null : String.valueOf(entry.getValue())), HashMap::putAll);
+        NotificationTarget notificationTarget;
 
         switch (courseNotificationDTO.notificationType()) {
             case "newMessageNotification":
@@ -60,12 +72,77 @@ public class CourseNotificationPushProxyService {
                         parameters.get("channelName"), parameters.get("authorName"), parameters.get("channelType"), parameters.get("authorImageUrl"), parameters.get("authorId"),
                         parameters.get("postId"), };
 
-                var notificationTarget = new NotificationTarget(NotificationTargetFactory.NEW_MESSAGE_TEXT, Long.parseLong(parameters.get("postId")),
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.NEW_MESSAGE_TEXT, Long.parseLong(parameters.get("postId")),
                         NotificationTargetFactory.MESSAGE_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
                 notificationTarget.setConversationId(Long.parseLong(parameters.get("channelId")));
                 target = notificationTarget.toJsonString();
                 type = CONVERSATION_NEW_MESSAGE.toString();
-                date = courseNotificationDTO.creationDate().toString();
+                break;
+            case "newAnswerNotification":
+            case "newMentionNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("postMarkdownContent"), parameters.get("postCreationDate"),
+                        parameters.get("postAuthorName"), parameters.get("replyMarkdownContent"), parameters.get("replyCreationDate"), parameters.get("replyAuthorName"),
+                        parameters.get("channelName"), parameters.get("replyImageUrl"), parameters.get("replyAuthorId"), parameters.get("replyId"), parameters.get("postId"), };
+
+                var isReply = parameters.get("replyId") != null;
+
+                notificationTarget = new NotificationTarget(isReply ? NotificationTargetFactory.NEW_REPLY_TEXT : NotificationTargetFactory.NEW_MESSAGE_TEXT,
+                        Long.parseLong(!isReply ? parameters.get("postId") : parameters.get("replyId")), NotificationTargetFactory.MESSAGE_TEXT, courseNotificationDTO.courseId(),
+                        NotificationTargetFactory.COURSES_TEXT);
+                notificationTarget.setConversationId(Long.parseLong(parameters.get("channelId")));
+                target = notificationTarget.toJsonString();
+                type = Objects.equals(courseNotificationDTO.notificationType(), "newAnswerNotification") ? CONVERSATION_NEW_REPLY_MESSAGE.toString()
+                        : CONVERSATION_USER_MENTIONED.toString();
+                break;
+            case "newAnnouncementNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("postTitle"), parameters.get("postMarkdownContent"),
+                        courseNotificationDTO.creationDate().toString(), parameters.get("authorName"), parameters.get("authorImageUrl"), parameters.get("authorId"),
+                        parameters.get("postId"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.NEW_MESSAGE_TEXT, Long.parseLong(parameters.get("postId")),
+                        NotificationTargetFactory.MESSAGE_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                notificationTarget.setConversationId(Long.parseLong(parameters.get("channelId")));
+                target = notificationTarget.toJsonString();
+                type = NEW_ANNOUNCEMENT_POST.toString();
+                break;
+            case "newExerciseNotification":
+            case "exerciseOpenForPracticeNotification":
+            case "exerciseUpdatedNotification":
+            case "quizExerciseStartedNotification":
+            case "newManualFeedbackRequestNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseTitle"), };
+
+                var targetText = Objects.equals(courseNotificationDTO.notificationType(), "newExerciseNotification") ? NotificationTargetFactory.EXERCISE_RELEASED_TEXT
+                        : NotificationTargetFactory.EXERCISE_UPDATED_TEXT;
+
+                notificationTarget = new NotificationTarget(targetText, Long.parseLong(parameters.get("exerciseId")), NotificationTargetFactory.EXERCISES_TEXT,
+                        courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = switch (courseNotificationDTO.notificationType()) {
+                    case "newExerciseNotification" -> EXERCISE_RELEASED.toString();
+                    case "exerciseOpenForPracticeNotification" -> EXERCISE_PRACTICE.toString();
+                    case "exerciseUpdatedNotification" -> EXERCISE_UPDATED.toString();
+                    case "newManualFeedbackRequestNotification" -> NEW_MANUAL_FEEDBACK_REQUEST.toString();
+                    default -> QUIZ_EXERCISE_STARTED.toString();
+                };
+                break;
+            case "exerciseAssessedNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseType"), parameters.get("exerciseTitle"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.EXERCISE_UPDATED_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.EXERCISES_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = EXERCISE_SUBMISSION_ASSESSED.toString();
+                break;
+            case "attachmentChangedNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("attachmentName"), parameters.get("unitName"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.ATTACHMENT_UPDATED_TEXT,
+                        parameters.get("exerciseId") != null ? Long.parseLong(parameters.get("exerciseId")) : Long.parseLong(parameters.get("lectureId")),
+                        parameters.get("exerciseId") != null ? NotificationTargetFactory.EXERCISES_TEXT : NotificationTargetFactory.LECTURES_TEXT, courseNotificationDTO.courseId(),
+                        NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = ATTACHMENT_CHANGE.toString();
                 break;
             default:
                 return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));

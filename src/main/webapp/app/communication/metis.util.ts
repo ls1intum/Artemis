@@ -28,14 +28,12 @@ export enum SortDirection {
 
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
-    VOTES = 'VOTES',
 }
 
 export enum MetisPostAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
-
     NEW_MESSAGE = 'NEW_MESSAGE',
 }
 

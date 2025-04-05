@@ -31,8 +31,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
-    private Course course;
-
     private Exercise exercise;
 
     private StudentParticipation studentParticipation;
@@ -45,21 +43,19 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 
     private Result ratedResult;
 
-    private Result unratedResult;
-
     @Autowired
     private ExerciseService exerciseService;
 
     @BeforeEach
     void setUp() {
-        course = CourseFactory.generateCourse(42L, null, null, null);
+        Course course = CourseFactory.generateCourse(42L, null, null, null);
         exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
 
         studentParticipation = ParticipationFactory.generateStudentParticipationWithoutUser(InitializationState.FINISHED, exercise);
 
         ratedResult = new Result();
         ratedResult.setRated(true);
-        unratedResult = new Result();
+        Result unratedResult = new Result();
         unratedResult.setRated(false);
 
         submission1 = new ProgrammingSubmission();

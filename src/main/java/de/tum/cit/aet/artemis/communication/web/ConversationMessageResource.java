@@ -170,6 +170,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
         log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
@@ -188,6 +189,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
         log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
         log.debug("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -206,12 +208,13 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        // Note: authorization is checked in the service method
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
     }
 
     /**
-     * GET /courses/{courseId}/messages/source-posts : Retrieve posts by their IDs
+     * GET /courses/{courseId}/messages-source-posts : Retrieve posts by their IDs
      *
      * @param courseId id of the course the posts belong to
      * @param postIds  list of IDs of the posts to retrieve
@@ -221,7 +224,7 @@ public class ConversationMessageResource {
     @GetMapping("courses/{courseId}/messages-source-posts")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
-        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds.size());
+        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds != null ? postIds.size() : 0);
         long start = System.nanoTime();
 
         if (postIds == null || postIds.isEmpty()) {

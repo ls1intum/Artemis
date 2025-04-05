@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.COURSES_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.COURSE_MANAGEMENT_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.EXAMS_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.EXERCISES_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.LECTURES_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT;
@@ -38,8 +37,6 @@ class NotificationTargetFactoryTest {
 
     private static final Long CHANNEL_ID = 123L;
 
-    private static Course course;
-
     private static final Long COURSE_ID = 42L;
 
     private static Lecture lecture;
@@ -59,12 +56,6 @@ class NotificationTargetFactoryTest {
     private static final String BASE_URL = "https://artemistest.ase.in.tum.de";
 
     private String resultingURL;
-
-    private static final String PROBLEM_STATEMENT = "problem statement";
-
-    private static final Long EXAM_ID = 27L;
-
-    private static NotificationTarget originalTransientTargetWithProblemStatement;
 
     /// Auxiliary constants
 
@@ -99,9 +90,7 @@ class NotificationTargetFactoryTest {
      */
     @BeforeAll
     static void setUp() {
-        prepareOriginalTransientTargetWithProblemStatement();
-
-        course = new Course();
+        Course course = new Course();
         course.setId(COURSE_ID);
 
         Channel channel = new Channel();
@@ -125,17 +114,6 @@ class NotificationTargetFactoryTest {
         programmingExercise.setCourse(course);
 
         notification = new GroupNotification();
-    }
-
-    /**
-     * Auxiliary method to prepare the comparison value for the original transient notification target with problem statement
-     * Expected value -> "{\"problemStatement\":\"PROBLEM STATEMENT\",\"exercise\":3,\"exam\":1,\"entity\":\"exams\",\"course\":1,\"mainPage\":\"courses\"}"
-     */
-    private static void prepareOriginalTransientTargetWithProblemStatement() {
-        originalTransientTargetWithProblemStatement = new NotificationTarget(EXAMS_TEXT, COURSE_ID, COURSES_TEXT);
-        originalTransientTargetWithProblemStatement.setProblemStatement(PROBLEM_STATEMENT);
-        originalTransientTargetWithProblemStatement.setExerciseId(EXERCISE_ID);
-        originalTransientTargetWithProblemStatement.setExamId(EXAM_ID);
     }
 
     /// extractNotificationUrl test (very important for e.g. MailService and Emails to contain valid Links)

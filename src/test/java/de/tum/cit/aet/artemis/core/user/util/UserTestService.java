@@ -651,7 +651,7 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
         userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
