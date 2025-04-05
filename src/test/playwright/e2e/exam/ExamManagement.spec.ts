@@ -1,5 +1,5 @@
 import { expect } from '@playwright/test';
-import { admin, instructor, studentFour, studentOne } from '../../support/users';
+import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { Course } from 'app/core/shared/entities/course.model';
@@ -167,7 +167,7 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             await examManagement.openStudentRegistration(exam.id!);
             const response = await studentExamManagement.clickRegisterCourseStudents();
             expect(response.status()).toBe(200);
-            await studentExamManagement.checkStudent(studentFour.username);
+            await studentExamManagement.checkStudent(studentOne.username);
         });
 
         test('Generates student exams', async ({ page, examManagement, studentExamManagement }) => {
