@@ -25,17 +25,17 @@ describe('ParticipationWebsocketService', () => {
     const exerciseId2 = 40;
 
     const participation = { id: 1, exercise: { id: exerciseId1 } } as Participation;
-    const currentResult = { id: 10, participation } as Result;
+    const currentResult = { id: 10, submission: { participation } } as Result;
     const currentSubmission = { id: 1, participation, results: [currentResult] } as Submission;
     participation.submissions = [currentSubmission];
-    const newRatedResult = { id: 11, rated: true, participation } as Result;
-    const newUnratedResult = { id: 12, rated: false, participation } as Result;
+    const newRatedResult = { id: 11, rated: true, submission: { participation } } as Result;
+    const newUnratedResult = { id: 12, rated: false, submission: { participation } } as Result;
 
     const participationPersonalResultTopic = `/user/topic/newResults`;
     const participationTopic = `/user/topic/exercise/${participation.exercise!.id}/participation`;
 
     const participation2 = { id: 2, exercise: { id: exerciseId2 } } as Participation;
-    const currentResult2 = { id: 13, participation: participation2 } as Result;
+    const currentResult2 = { id: 13, submission: { participation: participation2 } } as Result;
     const currentSubmission2 = { id: 2, participation: participation2, results: [currentResult2] } as Submission;
     participation2.submissions = [currentSubmission2];
 
@@ -186,7 +186,7 @@ describe('ParticipationWebsocketService', () => {
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newUnratedResult);
         expect(participationSpy).toHaveBeenCalledOnce();
-        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [getAllResultsOfAllSubmissions(participation.submissions), newUnratedResult] });
+        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...getAllResultsOfAllSubmissions(participation.submissions), newUnratedResult] });
         expect(participationWebsocketService.cachedParticipations.get(participation.id!)).toEqual({
             ...participation,
             results: [...getAllResultsOfAllSubmissions(participation.submissions), newUnratedResult],
@@ -219,12 +219,12 @@ describe('ParticipationWebsocketService', () => {
         expect(resultSpy).toHaveBeenCalledOnce();
         expect(resultSpy).toHaveBeenCalledWith(newRatedResult);
         expect(participationSpy).toHaveBeenCalledOnce();
-        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [getAllResultsOfAllSubmissions(participation.submissions), newRatedResult] });
+        expect(participationSpy).toHaveBeenCalledWith({ ...participation, results: [...getAllResultsOfAllSubmissions(participation.submissions), newRatedResult] });
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { ...participationWithoutResult } = participation;
+        const { submissions, ...participationWithoutResult } = participation;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id!, true);
         participationWebsocketService.addParticipation(participationWithoutResult as Participation);
