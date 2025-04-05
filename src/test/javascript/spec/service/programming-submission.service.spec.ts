@@ -301,7 +301,7 @@ describe('ProgrammingSubmissionService', () => {
         expect(getLatestResultStub).toHaveBeenCalledOnce();
         expect(getLatestResultStub).toHaveBeenCalledWith(participationId, true);
         expect(notifyAllResultSubscribersStub).toHaveBeenCalledOnce();
-        expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result, participation: { id: participationId } });
+        expect(notifyAllResultSubscribersStub).toHaveBeenCalledWith({ ...result });
         wsLatestResultSubject.next(result);
 
         // HAS_NO_PENDING_SUBMISSION is expected as the result provided by getLatestResult matches the pending submission
