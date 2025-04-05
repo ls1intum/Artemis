@@ -48,11 +48,13 @@ describe('ComplaintsStudentViewComponent', () => {
         assessmentDueDate: dayjs().subtract(1, 'day'),
         assessmentType: AssessmentType.MANUAL,
     } as Exercise;
-    const submission: Submission = {} as Submission;
     const result: Result = { id: 1, completionDate: dayjs().subtract(complaintTimeLimitDays - 1, 'day'), assessmentType: AssessmentType.MANUAL, rated: true } as Result;
+    const submission: Submission = { results: [result] } as Submission;
+    result.submission = submission;
     const resultWithoutCompletionDate: Result = { id: 1 } as Result;
     const user: User = { id: 1337 } as User;
-    const participation: Participation = { id: 2, results: [result], submissions: [submission], student: user } as Participation;
+    const participation: Participation = { id: 2, submissions: [submission], student: user } as Participation;
+    submission.participation = participation;
     const defaultExam: Exam = {
         examStudentReviewStart: dayjs().subtract(complaintTimeLimitDays, 'day'),
         examStudentReviewEnd: dayjs().add(complaintTimeLimitDays, 'day'),
