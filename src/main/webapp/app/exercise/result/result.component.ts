@@ -144,7 +144,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             }
         } else if (!this.participation && this.result) {
             // make sure this.participation is initialized in case it was not passed
-            this.participation = this.submission!.participation!;
+            this.participation = this.result.submission!.participation!;
             this.exercise = this.exercise ?? getExercise(this.participation);
             this.participation.exercise = this.exercise;
         } else if (this.participation) {

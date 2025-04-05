@@ -10,7 +10,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { TranslateService } from '@ngx-translate/core';
 import { cloneDeep } from 'lodash-es';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
-import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -32,7 +32,7 @@ describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
     let component: ResultComponent;
 
-    const result: Result = { id: 0, submission: {} };
+    const result: Result = { id: 0, submission: { id: 1, participation: { id: 1, exercise: { type: ExerciseType.PROGRAMMING } as Exercise } } };
     const programmingExercise: ProgrammingExercise = {
         id: 1,
         type: ExerciseType.PROGRAMMING,
@@ -91,9 +91,11 @@ describe('ResultComponent', () => {
     });
     // TODO do we need this anymore?
     it('should set results for programming exercise', () => {
-        const submission1: Submission = { id: 1 };
+        const submission1: Submission = { id: 1, participation: programmingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
         const participation1 = cloneDeep(programmingParticipation);
+        participation1.submissions = [submission1];
+        submission1.results = [result1];
 
         component.participation = participation1;
         component.showUngradedResults = true;
@@ -108,9 +110,11 @@ describe('ResultComponent', () => {
     });
 
     it('should set results for modeling exercise', () => {
-        const submission1: Submission = { id: 1 };
+        const submission1: Submission = { id: 1, participation: modelingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1 };
         const participation1 = cloneDeep(modelingParticipation);
+        participation1.submissions = [submission1];
+        submission1.results = [result1];
         component.participation = participation1;
         component.showUngradedResults = true;
 
@@ -125,9 +129,11 @@ describe('ResultComponent', () => {
     });
 
     it('should set (automatic athena) results for modeling exercise', () => {
-        const submission1: Submission = { id: 1 };
+        const submission1: Submission = { id: 1, participation: modelingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
         const participation1 = cloneDeep(modelingParticipation);
+        participation1.submissions = [submission1];
+        submission1.results = [result1];
         component.participation = participation1;
         component.showUngradedResults = true;
 
@@ -142,9 +148,11 @@ describe('ResultComponent', () => {
     });
 
     it('should set (automatic athena) results for programming exercise', () => {
-        const submission1: Submission = { id: 1 };
+        const submission1: Submission = { id: 1, participation: programmingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
         const participation1 = cloneDeep(programmingParticipation);
+        participation1.submissions = [submission1];
+        submission1.results = [result1];
         component.participation = participation1;
         component.showUngradedResults = true;
 
@@ -159,9 +167,11 @@ describe('ResultComponent', () => {
     });
 
     it('should set (automatic athena) results for text exercise', () => {
-        const submission1: Submission = { id: 1 };
+        const submission1: Submission = { id: 1, participation: textParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
         const participation1 = cloneDeep(textParticipation);
+        participation1.submissions = [submission1];
+        submission1.results = [result1];
         component.participation = participation1;
         component.showUngradedResults = true;
 
