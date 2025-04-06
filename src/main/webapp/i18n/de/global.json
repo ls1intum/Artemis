@@ -194,6 +194,7 @@
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
+        "actions": "Aktionen",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",

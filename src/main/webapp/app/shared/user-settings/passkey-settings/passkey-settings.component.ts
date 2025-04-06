@@ -66,7 +66,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    private async updateRegisteredPasskeys() {
+    private async updateRegisteredPasskeys(): Promise<void> {
         if (this.currentUser()?.id) {
             this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys(this.currentUser()!.id!);
         }
