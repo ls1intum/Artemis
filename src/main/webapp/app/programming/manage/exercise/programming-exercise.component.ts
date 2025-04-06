@@ -40,7 +40,7 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { ProgrammingExerciseGradingDirtyWarningComponent } from './grading/warning/programming-exercise-grading-dirty-warning.component';
+import { ProgrammingExerciseGradingDirtyWarningComponent } from '../grading/warning/programming-exercise-grading-dirty-warning.component';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/reset/button/programming-exercise-reset-button.directive';
@@ -50,7 +50,7 @@ import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/
 import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 
