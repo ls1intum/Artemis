@@ -111,11 +111,9 @@ export class IrisChatService implements OnDestroy {
             return throwError(() => new Error('Not initialized'));
         }
 
-        const messageJSON = JSON.stringify(post);
-
         const newMessage = new IrisTutorSuggestionRequestMessage();
         newMessage.sender = IrisSender.TUT_SUG;
-        newMessage.content = [new IrisTextMessageContent(messageJSON)];
+        newMessage.content = [new IrisTextMessageContent('Requested tutor suggestion')];
         return this.http.createTutorSuggestion(this.sessionId, newMessage).pipe(
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
