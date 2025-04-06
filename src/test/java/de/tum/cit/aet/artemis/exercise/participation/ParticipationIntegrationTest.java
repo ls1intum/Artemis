@@ -916,7 +916,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         // TODO jfr what we expect really? results are of course empty if no submissions see comments above
         assertThat(receivedParticipationWithResult.getResults()).containsExactlyInAnyOrder(result2, result3);
-        assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
+        assertThat(receivedParticipationWithResult.getSubmissions()).containsExactly(result1.getSubmission());
         assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
 
         assertThat(receivedParticipationWithOnlySubmission.getResults()).isEmpty();
@@ -952,7 +952,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         // also we only return submissions if all results are AssessmentType.AUTOMATIC_ATHENA so we also get no results otherwise
 
         assertThat(receivedParticipation.getResults()).containsOnly(notGradedResult);
-        assertThat(receivedParticipation.getSubmissions()).isEmpty();
+        assertThat(receivedParticipation.getSubmissions()).containsOnly(result1.getSubmission());
         assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
     }
 
@@ -975,6 +975,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
+                // TODO jfr how should it really be now? if we excpect results, submissions can not be empty anymore
                 .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
                 .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
         var recievedParticipation1 = participations.stream().filter(participation -> participation.getParticipant().equals(participation1.getParticipant())).findAny();
@@ -1593,10 +1594,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var actualParticipation = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         var actualResults = actualParticipation.getResults();
-        // TODO jfr what we expect really? results are of course empty if no submissions see also comments above
+
         assertThat(actualResults).hasSize(1);
 
-        var actualSubmission = (QuizSubmission) actualResults.stream().findFirst().get().getSubmission();
+        var actualSubmission = (QuizSubmission) actualParticipation.getSubmissions().stream().findFirst().get();
         assertThat(actualSubmission.isSubmitted()).isTrue();
 
         var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();

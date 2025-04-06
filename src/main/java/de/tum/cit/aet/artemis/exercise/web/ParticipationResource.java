@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -169,6 +170,8 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
+    private final ResultService resultService;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -181,7 +184,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, ResultService resultService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -208,6 +211,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
+        this.resultService = resultService;
     }
 
     /**
@@ -603,16 +607,20 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getResults() != null && !participation.getResults().isEmpty()
-                        && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
-                    // TODO jfr setting submissions to null will also not return results consequentially do we want this behavior?
-                    participation.setSubmissions(null);
-                }
-                else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
+                // TODO jfr confirm removing this is does not expose info we dont want to expose
+                /*
+                 * if (participation.getResults() != null && !participation.getResults().isEmpty()
+                 * && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
+                 * // TODO jfr setting submissions to null will also not return results consequentially do we want this behavior?
+                 * participation.setSubmissions(null);
+                 * }
+                 */
+                if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
                     var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
                             .max(Comparator.naturalOrder());
                     participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
                 }
+                resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
             });
         }
         else {
@@ -787,7 +795,7 @@ public class ParticipationResource {
         if (quizExercise.isQuizEnded()) {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), null);
+            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), null);
             if (participation == null) {
                 return null;
             }
@@ -803,7 +811,7 @@ public class ParticipationResource {
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
+            StudentParticipation participation = participationForQuizWithSubmissionAndResult(quizExercise, user.getLogin(), quizBatch.get());
 
             // TODO: Duplicate
             Object responseDTO = null;
@@ -977,7 +985,7 @@ public class ParticipationResource {
      */
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
-    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
+    private StudentParticipation participationForQuizWithSubmissionAndResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
         // try getting participation from database
         Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 
@@ -992,13 +1000,15 @@ public class ParticipationResource {
             // add exercise
             participation.setExercise(quizExercise);
 
-            // add the appropriate result
+            // add the appropriate submission and result
             Result result = resultRepository.findFirstByParticipationIdAndRatedWithSubmissionOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
             if (result != null) {
                 // find the submitted answers (they are NOT loaded eagerly anymore)
                 var quizSubmission = (QuizSubmission) result.getSubmission();
+                quizSubmission.setResults(List.of(result));
                 var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
                 quizSubmission.setSubmittedAnswers(submittedAnswers);
+                participation.setSubmissions(Set.of(quizSubmission));
             }
             return participation;
         }
