@@ -10,29 +10,15 @@ describe('Angular Architecture Rules', () => {
     const modulesWithExerciseAccess = ['fileupload', 'quiz', 'programming', 'text', 'modeling'];
 
     jest.setTimeout(60000);
-    // TODO our entities are not compatible with this
-    // describe('Module Structure Rules', () => {
-    //     it('modules should be free of cycles', async () => {
-    //         for (const module of allModules) {
-    //             const rule = filesOfProject().inFolder(`${module}`).should().beFreeOfCycles();
-    //             await checkForViolations(rule);
-    //         }
-    //     });
-    // });
 
-    const checkForViolations = async (rule: DependOnFileCondition | CycleFreeFileCondition) => {
+    const checkForViolations = async (rule: DependOnFileCondition) => {
         const violations = await rule.check();
         if (violations.length > 0) {
             let errorMessage = violations.length + ' violations in the module structure:\n';
 
             for (const violation of violations) {
-                if (rule instanceof CycleFreeFileCondition) {
-                    console.log('cycle', violation);
-                    //errorMessage += `- Cycle in ${JSON.stringify(violation)}:\n`;
-                } else {
-                    // @ts-ignore
-                    errorMessage += `- Access from ${violation.dependency.sourceLabel} to ${violation.dependency.targetLabel}\n`;
-                }
+                // @ts-ignore This is required as tsarch does not have a type definition for Violation
+                errorMessage += `- Access from ${violation.dependency.sourceLabel} to ${violation.dependency.targetLabel}\n`;
             }
 
             throw new Error(errorMessage);

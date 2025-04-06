@@ -126,7 +126,7 @@ module.exports = {
         '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/architecture-tests.spec.ts'
+        '<rootDir>/src/test/javascript/spec/architecture.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
