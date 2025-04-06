@@ -568,6 +568,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
         result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         result2.setSuccessful(null);
+        result2.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result2);
 
         request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, ProgrammingExerciseStudentParticipation.class,
@@ -1699,8 +1700,10 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
             var athenaResult = ParticipationFactory.generateResult(false, 100).submission(submission);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+            submission.addResult(athenaResult);
             resultRepository.save(athenaResult);
         }
+        submissionRepository.save(submission);
 
         request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "maxAthenaResultsReached");
 
