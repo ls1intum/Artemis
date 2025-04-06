@@ -97,8 +97,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
         List<CredentialRecord> credentialRecords = findByUserId(userId);
 
-        return credentialRecords.stream().map(credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getSignatureCount(),
-                credential.getCreated(), credential.getLastUsed())).collect(Collectors.toList());
+        return credentialRecords.stream()
+                .map(credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
+                .collect(Collectors.toList());
     }
 
     private static CredentialRecord toCredentialRecord(PasskeyCredential credential, Bytes userId) {
