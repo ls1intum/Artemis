@@ -51,23 +51,15 @@ export class PasskeySettingsComponent implements OnDestroy {
     private authStateSubscription: Subscription;
 
     constructor() {
-        effect(() => {
-            this.authStateSubscription = this.accountService
-                .getAuthenticationState()
-                .pipe(
-                    tap((user: User) => {
-                        this.currentUser.set(user);
-                        return this.currentUser;
-                    }),
-                )
-                .subscribe();
-        });
+        this.loadCurrentUser();
 
-        effect(() => {
-            if (this.currentUser != undefined) {
-                this.updateRegisteredPasskeys();
-            }
-        });
+        effect(
+            function loadPasskeysWhenUserDetailsChange() {
+                if (this.currentUser != undefined) {
+                    this.updateRegisteredPasskeys();
+                }
+            }.bind(this),
+        );
     }
 
     ngOnDestroy(): void {
@@ -120,6 +112,18 @@ export class PasskeySettingsComponent implements OnDestroy {
         }
 
         await this.webauthnApiService.loginWithPasskey(credential);
+    }
+
+    private loadCurrentUser() {
+        this.authStateSubscription = this.accountService
+            .getAuthenticationState()
+            .pipe(
+                tap((user: User) => {
+                    this.currentUser.set(user);
+                    return this.currentUser;
+                }),
+            )
+            .subscribe();
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
