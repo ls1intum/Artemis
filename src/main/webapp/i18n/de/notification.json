@@ -248,6 +248,21 @@
                 "content": "In {{exerciseTitle}} wurde ein Test Duplikat entdeckt.",
                 "settingsTitle": "Test Duplikat Warnung"
             },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "Neue signifikante Übereinstimmung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue signifikante Übereinstimmung"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "Neuer Plagiatsfall",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neuer Plagiatsfall"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build Update",
+                "content": "Es gibt ein neues Update in einem Build in {{exerciseTitle}}.",
+                "settingsTitle": "Build Update"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

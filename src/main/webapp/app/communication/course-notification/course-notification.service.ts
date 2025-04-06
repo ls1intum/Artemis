@@ -33,6 +33,9 @@ export class CourseNotificationService {
         attachmentChangedNotification: faRectangleList,
         newManualFeedbackRequestNotification: faRectangleList,
         duplicateTestCaseNotification: faTriangleExclamation,
+        newCpcPlagiarismCaseNotification: faRectangleList,
+        newPlagiarismCaseNotification: faRectangleList,
+        programmingBuildRunUpdateNotification: faRectangleList,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -48,6 +51,9 @@ export class CourseNotificationService {
         attachmentChangedNotification: [CourseNotificationChannel.EMAIL],
         newManualFeedbackRequestNotification: [CourseNotificationChannel.EMAIL],
         duplicateTestCaseNotification: [],
+        newCpcPlagiarismCaseNotification: [],
+        newPlagiarismCaseNotification: [],
+        programmingBuildRunUpdateNotification: [CourseNotificationChannel.EMAIL],
     };
 
     // Parameter keys that should be rendered as markdown

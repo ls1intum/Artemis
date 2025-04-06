@@ -248,6 +248,21 @@
                 "content": "There is a duplicate test in {{exerciseTitle}}.",
                 "settingsTitle": "Test duplicate warning"
             },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "New significant similarity",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New significant similarity"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "New plagiarism case",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New plagiarism case"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build update",
+                "content": "There is a new update in a build in {{exerciseTitle}}.",
+                "settingsTitle": "Build update"
+            },
             "temporal": {
                 "now": "Now",
                 "oneHourAgo": "1 hour ago.",

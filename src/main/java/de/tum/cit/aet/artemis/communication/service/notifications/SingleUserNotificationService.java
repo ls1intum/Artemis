@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -375,7 +376,18 @@ public class SingleUserNotificationService {
      * @param student        who should be notified
      */
     public void notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
-        notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var plagiarismCaseExercise = plagiarismCase.getExercise();
+            var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var newCpcPlagiarismCaseNotification = new NewCpcPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
+                    plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent());
+
+            courseNotificationService.sendCourseNotification(newCpcPlagiarismCaseNotification, List.of(student));
+        }
+        else {
+            notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
+        }
     }
 
     /**
