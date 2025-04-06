@@ -1,6 +1,17 @@
 export type PasskeyDto = {
+    /**
+     * The credential ID of the passkey, encoded in Base64url format.
+     */
     credentialId: string;
     label: string;
-    created: string; // ISO 8601 date string
-    lastUsed: string; // ISO 8601 date string
+
+    /**
+     * ISO 8601 date string
+     */
+    created: string;
+
+    /**
+     * ISO 8601 date string
+     */
+    lastUsed: string;
 };

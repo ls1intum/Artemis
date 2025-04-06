@@ -13,6 +13,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.web.webauthn.api.Bytes;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -47,15 +49,29 @@ public class WebauthnResource {
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
     }
 
-    @GetMapping("users/{userId}/passkeys")
+    @GetMapping("passkeys")
     @EnforceNothing
-    public ResponseEntity<List<PasskeyDto>> getPasskeys(@PathVariable Long userId) {
-        log.info("Retrieving passkeys for user with id: {}", userId);
-
+    public ResponseEntity<List<PasskeyDto>> getPasskeys() {
         var user = userRepository.getUser();
+        log.info("Retrieving passkeys for user with id: {}", user.getId());
+
         List<PasskeyDto> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(User.longToBytes(user.getId()));
 
         return ResponseEntity.ok(passkeys);
+    }
+
+    /**
+     * @param credentialIdBase64Encoded as base64 encoded url string
+     */
+    @DeleteMapping("passkeys/{credentialIdBase64Encoded}")
+    @EnforceNothing
+    public ResponseEntity<Void> deletePasskey(@PathVariable String credentialIdBase64Encoded) {
+        log.info("Deleting passkey with id: {}", credentialIdBase64Encoded);
+
+        Bytes credentialId = Bytes.fromBase64(credentialIdBase64Encoded);
+        artemisUserCredentialRepository.delete(credentialId);
+
+        return ResponseEntity.noContent().build();
     }
 
     /**

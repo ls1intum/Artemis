@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -49,13 +48,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     @Override
     public void delete(Bytes credentialId) {
-        // log.info("delete: id={}", credentialId.toBase64UrlString());
-        // credentialRepository.findByCredentialId(credentialId.toBase64UrlString())
-        // .ifPresent(credentialRepository::delete);
-        throw new NotImplementedException("delete not implemented");
+        log.info("delete: id={}", credentialId.toBase64UrlString());
+        passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).ifPresent(passkeyCredentialsRepository::delete);
     }
-
-    // TODO directly use long instead of string?
 
     @Override
     public void save(CredentialRecord credentialRecord) {

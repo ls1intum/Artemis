@@ -32,7 +32,7 @@
                                 {{ passkey.lastUsed | artemisDate }}
                             </td>
                             <td>
-                                <button jhiDeleteButton>
+                                <button jhiDeleteButton (delete)="deletePasskey(passkey)">
                                     <!--                                    <span jhiTranslate="entity.action.delete"></span>-->
                                     <!--                                <fa-icon [icon]="faUserSlash" />-->
                                 </button>
@@ -61,70 +61,8 @@
                 </tbody>
             </table>
         } @else {
+            <!--            TODO add translation-->
             <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
-        }
-        @if (!isEdit) {
-            <div class="list-group-item">
-                <dt>
-                    <!--                    TODO load if user has passkeys -->
-                    @if (this.currentUser()?.vcsAccessToken) {
-                        <table class="table table-striped flex">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th class="col-4">
-                                        <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.actions"></span>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>
-                                        <button
-                                            class="btn btn-md flex-grow-1 d-flex align-items-center"
-                                            id="delete-passkey-button"
-                                            jhiDeleteButton
-                                            [renderButtonText]="false"
-                                            (delete)="deletePasskey()"
-                                            deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
-                                            [dialogError]="dialogError$"
-                                        >
-                                            <fa-icon [icon]="faTrash" />
-                                            <div jhiTranslate="entity.action.delete" class="ms-2"></div>
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    } @else {
-                        <div jhiTranslate="artemisApp.userSettings.passkeySettingsPage.noPasskeyRegistered"></div>
-                    }
-                </dt>
-            </div>
-            <div class="list-group-item">
-                <dt>
-                    <div class="btn-group" role="group" aria-label="Actions">
-                        <jhi-button
-                            class="d-flex"
-                            id="add-new-token-button"
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faEdit"
-                            [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
-                            (onClick)="addNewPasskey()"
-                        />
-
-                        <jhi-button
-                            class="d-flex"
-                            id="login-button"
-                            [btnType]="ButtonType.PRIMARY"
-                            [btnSize]="ButtonSize.SMALL"
-                            [icon]="faEdit"
-                            title="Login with passkey"
-                            (onClick)="loginWithPublicKeyCredential()"
-                        />
-                    </div>
-                </dt>
-            </div>
         }
     </div>
 }

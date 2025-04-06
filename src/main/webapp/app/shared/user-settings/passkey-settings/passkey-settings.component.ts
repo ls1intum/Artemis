@@ -1,6 +1,6 @@
 import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,7 +19,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -67,9 +67,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     private async updateRegisteredPasskeys(): Promise<void> {
-        if (this.currentUser()?.id) {
-            this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys(this.currentUser()!.id!);
-        }
+        this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys();
     }
 
     async addNewPasskey() {
@@ -154,9 +152,8 @@ export class PasskeySettingsComponent implements OnDestroy {
         };
     }
 
-    deletePasskey() {
-        // TODO
-        this.alertService.addErrorAlert('Not implemented yet');
+    deletePasskey(passkey: PasskeyDto) {
+        this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
     }
 
     editPasskey() {

@@ -8,8 +8,12 @@ export class PasskeySettingsApiService extends BaseApiHttpService {
 
     // TODO add delete and rename endpoint
 
-    async getRegisteredPasskeys(userId: number): Promise<PasskeyDto[]> {
-        return await this.get<PasskeyDto[]>(`${this.basePath}/users/${userId}/passkeys`);
+    async getRegisteredPasskeys(): Promise<PasskeyDto[]> {
+        return await this.get<PasskeyDto[]>(`${this.basePath}/passkeys`);
+    }
+
+    async deletePasskey(credentialId: string): Promise<void> {
+        return await this.delete(`${this.basePath}/passkeys/${credentialId}`);
     }
 
     async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<void> {
