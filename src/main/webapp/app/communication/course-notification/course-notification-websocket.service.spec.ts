@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, firstValueFrom } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
@@ -110,17 +110,10 @@ describe('CourseNotificationWebsocketService', () => {
         expect(processedNotification.creationDate).toBeDefined();
         expect(processedNotification.parameters).toEqual({ key: 'value' });
     });
-    // TODO properly fix this eslint warning
     it('should emit received notifications via websocketNotification$ observable', async () => {
-        // service.websocketNotification$.subscribe((notification) => {
-        //     expect(notification.notificationId).toBe(123);
-        //     expect(notification.courseId).toBe(1);
-        //     done();
-        // });
-
+        const notificationPromise = firstValueFrom(service.websocketNotification$);
         const courses = [{ id: 1, title: 'Course 1' }] as Course[];
         coursesSubject.next(courses);
-
         const incomingNotification: CourseNotification = {
             notificationId: 123,
             courseId: 1,
@@ -133,8 +126,11 @@ describe('CourseNotificationWebsocketService', () => {
         };
 
         websocketReceiveSubject.next(incomingNotification);
-    });
 
+        const receivedNotification = await notificationPromise;
+        expect(receivedNotification.notificationId).toBe(123);
+        expect(receivedNotification.courseId).toBe(1);
+    });
     it('should do nothing when courses list is undefined', () => {
         coursesSubject.next(undefined);
         expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
