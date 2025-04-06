@@ -233,13 +233,14 @@ public class ConversationService {
     }
 
     /**
-     * Updates a conversation
+     * Updates a conversation last message date in the given object and asynchronously in the database
      *
      * @param conversation the conversation to be updated
-     * @return the updated conversation
      */
-    public Conversation updateConversation(Conversation conversation) {
-        return conversationRepository.save(conversation);
+    public void updateLastMessageDate(Conversation conversation) {
+        var now = ZonedDateTime.now();
+        conversation.setLastMessageDate(now);
+        conversationRepository.updateLastMessageDateAsync(conversation.getId(), now);
     }
 
     /**
@@ -486,14 +487,14 @@ public class ConversationService {
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
         }
         return users;
     }

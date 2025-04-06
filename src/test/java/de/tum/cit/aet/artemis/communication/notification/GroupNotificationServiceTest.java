@@ -124,13 +124,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String LECTURE_TITLE = "lecture title";
 
-    private Post post;
-
     private static final String POST_TITLE = "post title";
 
     private static final String POST_CONTENT = "post content";
-
-    private AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
 
@@ -227,13 +223,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         channel.setId(123L);
         channel.setName("test");
 
-        post = new Post();
+        Post post = new Post();
         post.setConversation(channel);
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
-        answerPost = new AnswerPost();
+        AnswerPost answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
@@ -279,7 +275,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
                         .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
 
         List<Notification> capturedNotifications = notificationTestRepository.findAll();
-        Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
+        Notification lastCapturedNotification = capturedNotifications.getLast();
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);

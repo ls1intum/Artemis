@@ -528,7 +528,7 @@ For ICL, the run configuration for core nodes need to include the additional pro
 
 ::
 
-        --spring.profiles.active=prod,core,atlas,ldap-only,localvc,localci,athena,scheduling,iris,lti
+        --spring.profiles.active=prod,core,ldap-only,localvc,localci,athena,scheduling,iris,lti
 
 Core nodes do not require further adjustments to the ``application-prod.yml``, as long as you have added the necessary variables as described in the :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`.
 
