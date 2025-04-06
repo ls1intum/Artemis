@@ -9,7 +9,7 @@ import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/programming/manage/assess/repo-export/export-dialog/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';

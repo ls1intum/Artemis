@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/services/videoUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditVideoUnitComponent } from 'app/lecture/manage/lecture-units/edit-video-unit/edit-video-unit.component';

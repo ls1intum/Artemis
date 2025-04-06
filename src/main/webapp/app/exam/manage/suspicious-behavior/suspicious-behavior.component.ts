@@ -3,9 +3,9 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { PlagiarismResultsService } from 'app/plagiarism/shared/plagiarism-results.service';
+import { PlagiarismResultsService } from 'app/plagiarism/shared/services/plagiarism-results.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

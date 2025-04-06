@@ -8,12 +8,12 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/programming-exercise-create-buttons.component';
+import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/create-buttons/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
-import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
+import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

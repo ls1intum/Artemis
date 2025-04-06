@@ -5,11 +5,11 @@ import { ModelElementCount } from 'app/modeling/shared/entities/modeling-submiss
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { ModelingComponent } from 'app/modeling/shared/modeling.component';
+import { ModelingComponent } from 'app/modeling/shared/modeling/modeling.component';
 import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-assessment.util';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor.component';
+import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 
 export interface DropInfo {
     instruction: GradingInstruction;

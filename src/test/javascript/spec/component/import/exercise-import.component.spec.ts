@@ -6,7 +6,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
+import { ModelingExercisePagingService } from 'app/modeling/manage/services/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/quiz-exercise-paging.service';

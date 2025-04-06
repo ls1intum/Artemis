@@ -14,7 +14,7 @@ import {
 } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { DomainDependentEndpointService } from 'app/programming/shared/code-editor/service/code-editor-domain-dependent-endpoint.service';
-import { BuildLogService } from 'app/programming/service/build-log.service';
+import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { downloadFile } from 'app/shared/util/download.util';
 
 export interface ICodeEditorRepositoryFileService {

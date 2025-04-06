@@ -14,7 +14,7 @@ import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/asse
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 
 @Component({

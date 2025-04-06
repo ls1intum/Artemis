@@ -24,7 +24,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/modeling/manage/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';

@@ -1,7 +1,7 @@
 import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
+import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

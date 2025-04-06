@@ -9,7 +9,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

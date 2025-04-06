@@ -54,7 +54,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { AlertService } from 'app/shared/service/alert.service';

@@ -5,7 +5,7 @@ import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';

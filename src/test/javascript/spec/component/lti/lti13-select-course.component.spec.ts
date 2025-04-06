@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { of } from 'rxjs';
-import { LtiCoursesComponent } from 'app/lti/manage/lti13-select-course.component';
+import { LtiCoursesComponent } from 'app/lti/manage/lti13-select-course/lti13-select-course.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card.component';
+import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';

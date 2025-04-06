@@ -33,7 +33,7 @@ import { FormsModule } from '@angular/forms';
 import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
-import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-button.component';
+import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';

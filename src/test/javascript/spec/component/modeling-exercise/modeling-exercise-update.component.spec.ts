@@ -3,8 +3,8 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
 
-import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/modeling-exercise-update.component';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseUpdateComponent } from 'app/modeling/manage/update/modeling-exercise-update.component';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

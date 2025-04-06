@@ -35,7 +35,7 @@ import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/inc
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

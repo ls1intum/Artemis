@@ -15,7 +15,7 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { of } from 'rxjs';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';

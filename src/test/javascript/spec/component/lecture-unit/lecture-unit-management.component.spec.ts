@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
+import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
 import { AttachmentUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
@@ -12,7 +12,7 @@ import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-uni
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';

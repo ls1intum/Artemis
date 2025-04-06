@@ -1,5 +1,5 @@
 import dayjs from 'dayjs/esm';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { EditOnlineUnitComponent } from 'app/lecture/manage/lecture-units/edit-online-unit/edit-online-unit.component';

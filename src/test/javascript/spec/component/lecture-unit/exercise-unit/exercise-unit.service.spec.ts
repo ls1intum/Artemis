@@ -1,11 +1,11 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';

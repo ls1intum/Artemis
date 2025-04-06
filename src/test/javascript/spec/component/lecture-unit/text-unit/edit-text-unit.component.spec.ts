@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { TextUnitFormComponent, TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/services/textUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { EditTextUnitComponent } from 'app/lecture/manage/lecture-units/edit-text-unit/edit-text-unit.component';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';

@@ -14,7 +14,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MockRouter } from '../helpers/mocks/mock-router';

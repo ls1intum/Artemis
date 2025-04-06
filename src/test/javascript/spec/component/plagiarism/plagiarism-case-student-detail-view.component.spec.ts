@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/plagiarism/overview/detail-view/plagiarism-case-student-detail-view.component';
-import { EntityResponseType, PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { EntityResponseType, PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

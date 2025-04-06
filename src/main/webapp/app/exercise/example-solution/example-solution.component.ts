@@ -6,7 +6,7 @@ import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exer
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/with-details/header-exercise-page-with-details.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor/modeling-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 

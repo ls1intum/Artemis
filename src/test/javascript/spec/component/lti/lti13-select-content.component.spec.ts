@@ -1,4 +1,4 @@
-import { Lti13SelectContentComponent } from 'app/lti/overview/lti13-select-content.component';
+import { Lti13SelectContentComponent } from 'app/lti/overview/lti13-select-content/lti13-select-content.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';

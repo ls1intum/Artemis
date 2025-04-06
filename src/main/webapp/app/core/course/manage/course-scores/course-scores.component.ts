@@ -40,7 +40,7 @@ import {
     SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';

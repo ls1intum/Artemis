@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
@@ -22,7 +22,7 @@ import {
     getSubmissionResultByCorrectionRound,
     setLatestSubmissionResult,
 } from 'app/exercise/shared/entities/submission/submission.model';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Observable, of } from 'rxjs';
 import { finalize, map } from 'rxjs/operators';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';

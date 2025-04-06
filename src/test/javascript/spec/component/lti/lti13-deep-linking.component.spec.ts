@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick, waitForAsync } from '@angular/core/testing';
-import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking.component';
+import { Lti13DeepLinkingComponent } from 'app/lti/manage/lti13-deep-linking/lti13-deep-linking.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -14,7 +14,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TranslateLoader, TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { DeepLinkingType } from 'app/lti/lti.constants';
+import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
 
 function HttpLoaderFactory(http: HttpClient) {
     return new TranslateHttpLoader(http);

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';

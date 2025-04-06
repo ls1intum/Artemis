@@ -7,13 +7,13 @@ import { ApollonDiagram } from 'app/modeling/shared/entities/apollon-diagram.mod
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor.component';
+import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

@@ -12,8 +12,8 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';

@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
+import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 
 describe('ExternalCloningService', () => {
     let service: ExternalCloningService;

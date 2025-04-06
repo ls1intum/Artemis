@@ -6,7 +6,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
 import { EditAttachmentUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-unit/edit-attachment-unit.component';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';

@@ -3,7 +3,7 @@ import { BuildAction, ScriptAction } from 'app/programming/shared/entities/build
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { AeolusService } from 'app/programming/service/aeolus.service';
+import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { FormsModule } from '@angular/forms';

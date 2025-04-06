@@ -47,7 +47,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -55,7 +55,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';

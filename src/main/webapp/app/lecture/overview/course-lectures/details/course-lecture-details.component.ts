@@ -13,7 +13,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -46,7 +46,7 @@ export interface LectureUnitCompletionEvent {
 @Component({
     selector: 'jhi-course-lecture-details',
     templateUrl: './course-lecture-details.component.html',
-    styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../shared/course-lectures.scss'],
+    styleUrls: ['../../../../core/course/overview/course-overview/course-overview.scss', '../../../shared/course-lectures/course-lectures.scss'],
     imports: [
         TranslateDirective,
         NgClass,

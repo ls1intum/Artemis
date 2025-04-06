@@ -41,7 +41,7 @@ import { QuizExamSubmissionComponent } from 'app/exam/overview/exercises/quiz/qu
 import { TextExamSubmissionComponent } from 'app/exam/overview/exercises/text/text-exam-submission.component';
 import { ExamResultSummaryComponent } from 'app/exam/overview/summary/exam-result-summary.component';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { JhiConnectionStatusComponent } from 'app/shared/connection-status/connection-status.component';

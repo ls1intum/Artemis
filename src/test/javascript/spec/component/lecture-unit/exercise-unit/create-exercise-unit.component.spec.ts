@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { CreateExerciseUnitComponent } from 'app/lecture/manage/lecture-units/create-exercise-unit/create-exercise-unit.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';

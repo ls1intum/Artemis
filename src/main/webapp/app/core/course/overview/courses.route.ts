@@ -153,7 +153,7 @@ export const routes: Routes = [
 
             {
                 path: CourseOverviewRoutePath.LECTURES,
-                loadComponent: () => import('app/lecture/shared/course-lectures.component').then((m) => m.CourseLecturesComponent),
+                loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',

@@ -10,7 +10,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { BuildLogService } from 'app/programming/service/build-log.service';
+import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/programming-feedback-item.service';

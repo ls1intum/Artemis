@@ -14,16 +14,16 @@ import { CategoryIssuesChartComponent } from 'app/programming/manage/grading/cha
 import { ScaCategoryDistributionChartComponent } from 'app/programming/manage/grading/charts/sca-category-distribution-chart.component';
 import { TestCaseDistributionChartComponent } from 'app/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { TestCasePassedBuildsChartComponent } from 'app/programming/manage/grading/charts/test-case-passed-builds-chart.component';
-import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/programming/manage/grading/programming-exercise-configure-grading-actions.component';
-import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/programming/manage/grading/programming-exercise-configure-grading-status.component';
+import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/programming/manage/grading/configure-actions/programming-exercise-configure-grading-actions.component';
+import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/programming/manage/grading/configure-status/programming-exercise-configure-grading-status.component';
 import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
     Table,
-} from 'app/programming/manage/grading/programming-exercise-configure-grading.component';
-import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
-import { ProgrammingExerciseGradingTableActionsComponent } from 'app/programming/manage/grading/programming-exercise-grading-table-actions.component';
+} from 'app/programming/manage/grading/configure/programming-exercise-configure-grading.component';
+import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/programming/manage/grading/configure-submission-policy/programming-exercise-grading-submission-policy-configuration-actions.component';
+import { ProgrammingExerciseGradingTableActionsComponent } from 'app/programming/manage/grading/table-actions/programming-exercise-grading-table-actions.component';
 import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExerciseWebsocketService } from 'app/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/programming/manage/services/programming-exercise.service';
@@ -49,7 +49,7 @@ import { MockProgrammingExerciseWebsocketService } from '../../helpers/mocks/ser
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { expectElementToBeEnabled, getElement } from '../../helpers/utils/general.utils';
-import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
+import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';

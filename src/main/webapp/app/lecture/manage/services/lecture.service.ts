@@ -5,7 +5,7 @@ import { map, tap } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';

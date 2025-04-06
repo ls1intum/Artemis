@@ -5,7 +5,7 @@ import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

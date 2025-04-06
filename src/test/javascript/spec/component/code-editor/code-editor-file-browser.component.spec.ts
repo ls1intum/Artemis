@@ -7,9 +7,9 @@ import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } fro
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-folder.component';
-import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-create-node.component';
-import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserCreateNodeComponent } from 'app/programming/manage/code-editor/file-browser/create-node/code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFileComponent } from 'app/programming/manage/code-editor/file-browser/file/code-editor-file-browser-file.component';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';

@@ -8,15 +8,15 @@ import { ParticipationSubmissionComponent } from 'app/exercise/participation-sub
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
 
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
-import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
+import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
-import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
+import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
@@ -333,7 +333,7 @@ export const examManagementRoute: Routes = [
     // Create Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/new',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -346,7 +346,7 @@ export const examManagementRoute: Routes = [
     // Import Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/import/:exerciseId',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -359,7 +359,7 @@ export const examManagementRoute: Routes = [
     // Edit Modeling Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -549,7 +549,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
+        loadComponent: () => import('app/modeling/manage/detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',
@@ -558,7 +558,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId',
-        loadComponent: () => import('app/programming/manage/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
+        loadComponent: () => import('app/programming/manage/detail/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
@@ -611,7 +611,8 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/grading/:tab',
-        loadComponent: () => import('app/programming/manage/grading/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
+        loadComponent: () =>
+            import('app/programming/manage/grading/configure/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -620,7 +621,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.buildPlanEditor',

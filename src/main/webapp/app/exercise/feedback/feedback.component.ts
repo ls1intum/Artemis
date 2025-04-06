@@ -8,7 +8,7 @@ import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/assessment/sh
 import { Badge, ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { BuildLogService } from 'app/programming/service/build-log.service';
+import { BuildLogService } from 'app/programming/shared/services/build-log.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';

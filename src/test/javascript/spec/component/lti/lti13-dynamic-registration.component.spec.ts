@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration.component';
+import { Lti13DynamicRegistrationComponent } from 'app/lti/overview/lti13-dynamic-registration/lti13-dynamic-registration.component';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router, convertToParamMap } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpClient, provideHttpClient } from '@angular/common/http';

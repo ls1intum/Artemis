@@ -4,7 +4,7 @@ import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';

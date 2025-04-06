@@ -47,7 +47,7 @@ import { ExerciseDetailsStudentActionsComponent } from './student-actions/exerci
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';

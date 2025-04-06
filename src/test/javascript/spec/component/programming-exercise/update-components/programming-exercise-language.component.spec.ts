@@ -5,7 +5,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
-import { TheiaService } from 'app/programming/service/theia.service';
+import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

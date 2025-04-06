@@ -8,7 +8,7 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { programmingExerciseCreationConfigMock } from '../programming-exercise-creation-config-mock';
 import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update/update-components/theia/programming-exercise-theia.component';
-import { TheiaService } from 'app/programming/service/theia.service';
+import { TheiaService } from 'app/programming/shared/services/theia.service';
 
 describe('ProgrammingExerciseTheiaComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseTheiaComponent>;

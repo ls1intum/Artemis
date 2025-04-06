@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { FileTypeService } from 'app/programming/service/file-type.service';
+import { FileTypeService } from 'app/programming/shared/services/file-type.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('FileTypeService', () => {

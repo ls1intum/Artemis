@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';

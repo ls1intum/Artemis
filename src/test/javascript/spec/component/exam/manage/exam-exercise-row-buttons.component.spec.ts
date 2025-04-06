@@ -10,7 +10,7 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { ModelingExerciseService } from 'app/modeling/manage/modeling-exercise.service';
+import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';

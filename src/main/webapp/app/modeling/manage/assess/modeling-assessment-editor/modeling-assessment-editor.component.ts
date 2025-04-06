@@ -15,7 +15,7 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { Feedback, FeedbackHighlightColor, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';

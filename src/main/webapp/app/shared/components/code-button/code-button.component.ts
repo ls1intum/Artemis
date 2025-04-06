@@ -1,7 +1,7 @@
 import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
+import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,7 +26,7 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { TheiaService } from 'app/programming/service/theia.service';
+import { TheiaService } from 'app/programming/shared/services/theia.service';
 import { SshUserSettingsService } from 'app/core/user/settings/ssh-settings/ssh-user-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-settings.service';

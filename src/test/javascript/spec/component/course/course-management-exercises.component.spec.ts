@@ -5,7 +5,7 @@ import { CourseManagementExercisesComponent } from 'app/core/course/manage/exerc
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
-import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
+import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';

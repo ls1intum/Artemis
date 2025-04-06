@@ -69,7 +69,7 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
 import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';

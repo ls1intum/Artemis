@@ -13,7 +13,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
-import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/programming-exercise-edit-selected.component';
+import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
