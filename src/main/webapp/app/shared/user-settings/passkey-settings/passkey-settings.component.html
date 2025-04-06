@@ -8,61 +8,86 @@
                 <!--                <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.passkeySettingsPage.learnMore'" />-->
             </dt>
         </div>
-        @if (registeredPasskeys.length) {
-            <table class="table table-striped flex">
-                <thead class="thead-dark">
-                    <tr>
-                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
-                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></th>
-                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></th>
-                        <th class="col-3" jhiTranslate="entity.actions"></th>
-                    </tr>
-                </thead>
 
-                <tbody>
-                    @for (passkey of registeredPasskeys; track passkey.credentialId) {
+        <div class="list-group-item">
+            @if (registeredPasskeys().length) {
+                <table class="table table-striped flex">
+                    <thead class="thead-dark">
                         <tr>
-                            <td>
-                                {{ passkey.label }}
-                            </td>
-                            <td>
-                                {{ passkey.created | artemisDate }}
-                            </td>
-                            <td>
-                                {{ passkey.lastUsed | artemisDate }}
-                            </td>
-                            <td>
-                                <button jhiDeleteButton (delete)="deletePasskey(passkey)">
-                                    <!--                                    <span jhiTranslate="entity.action.delete"></span>-->
-                                    <!--                                <fa-icon [icon]="faUserSlash" />-->
-                                </button>
-                                <!--                            <button-->
-                                <!--                                [disabled]="false"-->
-                                <!--                                [actionType]="ActionType.Remove"-->
-                                <!--                                [entityTitle]="exam.title || ''"-->
-                                <!--                                [renderButtonText]="false"-->
-                                <!--                                [buttonSize]="ButtonSize.MEDIUM"-->
-                                <!--                                jhiDeleteButton-->
-                                <!--                                class="btn btn-primary ms-auto"-->
-                                <!--                                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"-->
-                                <!--                                (delete)="removeAllStudents($event)"-->
-                                <!--                                [dialogError]="dialogError$"-->
-                                <!--                                [additionalChecks]="{-->
-                                <!--                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',-->
-                                <!--                    }"-->
-                                <!--                                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"-->
-                                <!--                            >-->
-                                <!--                                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>-->
-                                <!--                                <fa-icon [icon]="faUserSlash" />-->
-                                <!--                            </button>-->
-                            </td>
+                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
+                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></th>
+                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></th>
+                            <th class="col-3" jhiTranslate="entity.actions"></th>
                         </tr>
-                    }
-                </tbody>
-            </table>
-        } @else {
-            <!--            TODO add translation-->
-            <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
-        }
+                    </thead>
+
+                    <tbody>
+                        @for (passkey of registeredPasskeys(); track passkey.credentialId) {
+                            <tr>
+                                <td>
+                                    {{ passkey.label }}
+                                </td>
+                                <td>
+                                    {{ passkey.created | artemisDate }}
+                                </td>
+                                <td>
+                                    {{ passkey.lastUsed | artemisDate }}
+                                </td>
+                                <td>
+                                    <button jhiDeleteButton (delete)="deletePasskey(passkey)" [disabled]="isDeletingPasskey" [dialogError]="dialogError$">
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                    <!--                            <button-->
+                                    <!--                                [disabled]="false"-->
+                                    <!--                                [actionType]="ActionType.Remove"-->
+                                    <!--                                [entityTitle]="exam.title || ''"-->
+                                    <!--                                [renderButtonText]="false"-->
+                                    <!--                                [buttonSize]="ButtonSize.MEDIUM"-->
+                                    <!--                                jhiDeleteButton-->
+                                    <!--                                class="btn btn-primary ms-auto"-->
+                                    <!--                                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"-->
+                                    <!--                                (delete)="removeAllStudents($event)"-->
+                                    <!--                                [dialogError]="dialogError$"-->
+                                    <!--                                [additionalChecks]="{-->
+                                    <!--                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',-->
+                                    <!--                    }"-->
+                                    <!--                                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"-->
+                                    <!--                            >-->
+                                    <!--                                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>-->
+                                    <!--                                <fa-icon [icon]="faUserSlash" />-->
+                                    <!--                            </button>-->
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            } @else {
+                <div jhiTranslate="artemisApp.userSettings.passkeySettingsPage.noneRegistered"></div>
+            }
+        </div>
+
+        <div class="list-group-item">
+            <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    id="add-new-token-button"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faEdit"
+                    [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
+                    (onClick)="addNewPasskey()"
+                />
+
+                <jhi-button
+                    class="d-flex"
+                    id="login-button"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faEdit"
+                    title="Login with passkey"
+                    (onClick)="loginWithPublicKeyCredential()"
+                />
+            </div>
+        </div>
     </div>
 }

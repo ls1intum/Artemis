@@ -88,6 +88,7 @@
             "passkeySettingsPage": {
                 "infoText": "Passkeys are webauthn credentials that validate your identity using touch, facial recognition, a device password, or a PIN. They can be used as a password replacement or as a 2FA method.",
                 "learnMore": "Learn more about passkeys.",
+                "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "actions": "Actions",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey {passkeyName} for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",

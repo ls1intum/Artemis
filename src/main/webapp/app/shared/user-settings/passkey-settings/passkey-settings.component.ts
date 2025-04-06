@@ -1,6 +1,6 @@
 import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
@@ -19,7 +19,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe],
+    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ButtonComponent],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -40,26 +40,22 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
 
-    registeredPasskeys: PasskeyDto[] = [];
+    registeredPasskeys = signal<PasskeyDto[]>([]);
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
     currentUser = signal<User | undefined>(undefined);
 
-    isEdit = false;
+    isDeletingPasskey = false;
 
     private authStateSubscription: Subscription;
 
     constructor() {
         this.loadCurrentUser();
 
-        effect(
-            function loadPasskeysWhenUserDetailsChange() {
-                if (this.currentUser != undefined) {
-                    this.updateRegisteredPasskeys();
-                }
-            }.bind(this),
-        );
+        effect(() => {
+            this.loadPasskeysWhenUserDetailsChange();
+        });
     }
 
     ngOnDestroy(): void {
@@ -67,7 +63,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     private async updateRegisteredPasskeys(): Promise<void> {
-        this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys();
+        this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
     }
 
     async addNewPasskey() {
@@ -124,6 +120,12 @@ export class PasskeySettingsComponent implements OnDestroy {
             .subscribe();
     }
 
+    private async loadPasskeysWhenUserDetailsChange() {
+        if (this.currentUser != undefined) {
+            await this.updateRegisteredPasskeys();
+        }
+    }
+
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
         const userId = this.currentUser()?.id;
 
@@ -152,8 +154,16 @@ export class PasskeySettingsComponent implements OnDestroy {
         };
     }
 
-    deletePasskey(passkey: PasskeyDto) {
-        this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
+    async deletePasskey(passkey: PasskeyDto) {
+        this.isDeletingPasskey = true;
+        try {
+            await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
+            await this.updateRegisteredPasskeys();
+        } catch (error) {
+            this.alertService.addErrorAlert('Unable to delete passkey');
+        }
+        this.isDeletingPasskey = false;
+        this.dialogErrorSource.next('');
     }
 
     editPasskey() {

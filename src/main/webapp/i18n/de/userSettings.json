@@ -88,6 +88,7 @@
             "passkeySettingsPage": {
                 "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Sie können als Passwortersatz oder als 2FA-Methode verwendet werden.",
                 "learnMore": "Erfahre mehr über Passkeys.",
+                "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
                 "actions": "Aktionen",
                 "deletePasskeyQuestion": "Möchtest du deinen Passkey {passkeyName} für passwortlose Authentifikation mit Artemis wirklisch löschen?",
                 "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
