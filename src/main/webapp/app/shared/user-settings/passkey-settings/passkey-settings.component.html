@@ -8,6 +8,61 @@
                 <!--                <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.passkeySettingsPage.learnMore'" />-->
             </dt>
         </div>
+        @if (registeredPasskeys.length) {
+            <table class="table table-striped flex">
+                <thead class="thead-dark">
+                    <tr>
+                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
+                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></th>
+                        <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></th>
+                        <th class="col-3" jhiTranslate="entity.action.delete"></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @for (passkey of registeredPasskeys; track passkey.credentialId) {
+                        <tr>
+                            <td>
+                                {{ passkey.label }}
+                            </td>
+                            <td>
+                                {{ passkey.created | artemisDate }}
+                            </td>
+                            <td>
+                                {{ passkey.lastUsed | artemisDate }}
+                            </td>
+                            <td>
+                                <button jhiDeleteButton>
+                                    <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
+                                    <!--                                <fa-icon [icon]="faUserSlash" />-->
+                                </button>
+                                <!--                            <button-->
+                                <!--                                [disabled]="false"-->
+                                <!--                                [actionType]="ActionType.Remove"-->
+                                <!--                                [entityTitle]="exam.title || ''"-->
+                                <!--                                [renderButtonText]="false"-->
+                                <!--                                [buttonSize]="ButtonSize.MEDIUM"-->
+                                <!--                                jhiDeleteButton-->
+                                <!--                                class="btn btn-primary ms-auto"-->
+                                <!--                                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"-->
+                                <!--                                (delete)="removeAllStudents($event)"-->
+                                <!--                                [dialogError]="dialogError$"-->
+                                <!--                                [additionalChecks]="{-->
+                                <!--                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',-->
+                                <!--                    }"-->
+                                <!--                                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"-->
+                                <!--                            >-->
+                                <!--                                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>-->
+                                <!--                                <fa-icon [icon]="faUserSlash" />-->
+                                <!--                            </button>-->
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        } @else {
+            <div jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.noTokenSet"></div>
+        }
         @if (!isEdit) {
             <div class="list-group-item">
                 <dt>

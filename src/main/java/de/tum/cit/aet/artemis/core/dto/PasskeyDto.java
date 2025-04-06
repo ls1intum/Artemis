@@ -7,5 +7,5 @@ import java.time.Instant;
  *
  * @param credentialId encoded as base64url
  */
-public record PasskeyDto(String credentialId, long signatureCount, Instant created, Instant lastUsed) {
+public record PasskeyDto(String credentialId, String label, long signatureCount, Instant created, Instant lastUsed) {
 }

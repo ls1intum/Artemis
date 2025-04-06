@@ -91,7 +91,10 @@
                 "actions": "Actions",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey {passkeyName} for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
-                "addNewPasskey": "Add a passkey"
+                "addNewPasskey": "Add a passkey",
+                "label": "Label",
+                "created": "Created",
+                "lastUsed": "Last used"
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",

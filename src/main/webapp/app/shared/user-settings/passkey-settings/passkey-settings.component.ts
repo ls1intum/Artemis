@@ -14,14 +14,17 @@ import { decodeBase64url } from 'app/shared/util/utils';
 import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
 import { PasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent],
+    imports: [TranslateDirective, ButtonComponent, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
 export class PasskeySettingsComponent implements OnInit, OnDestroy {
+    protected readonly ActionType = ActionType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly faEdit = faEdit;
@@ -36,7 +39,8 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
-    private registeredPasskeys: PasskeyDto[] = [];
+
+    registeredPasskeys: PasskeyDto[] = [];
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
