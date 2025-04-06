@@ -34,7 +34,7 @@ REPORT_TASK="jacocoE2EReport"
 # Check if the .exec file exists, with a timeout of 5 seconds
 echo "Waiting for JaCoCo .exec file to be generated at: $EXEC_FILE"
 for i in {1..5}; do
-    if [ -f "$EXEC_FILE" ]; then
+    if [[ -f "$EXEC_FILE" ]]; then
         echo "JaCoCo .exec file found: $EXEC_FILE"
         break
     else
@@ -49,7 +49,7 @@ cd $ARTEMIS_PATH
 ./gradlew $REPORT_TASK
 
 # Handle errors
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
     echo "Failed to generate JaCoCo report. Please check the Gradle logs."
 else
     echo "JaCoCo report generated successfully. Check the output directory for details."

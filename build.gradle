@@ -1,6 +1,3 @@
-import java.util.zip.ZipEntry
-import java.util.zip.ZipOutputStream
-
 buildscript {
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
@@ -494,46 +491,6 @@ tasks.named("dependencyUpdates").configure {
 
     rejectVersionIf {
         isNonStable(it.candidate.version) && !isNonStable(it.currentVersion)
-    }
-}
-
-tasks.register('jacocoE2EReport', JacocoReport) {
-    executionData file(file("${project.rootDir}/docker/playwright/report/jacoco-report.exec"))
-
-    reports {
-        def outputDirectory = "${project.rootDir}/src/test/playwright/test-reports/server-coverage"
-        html.required = true
-        html.outputLocation = file("${outputDirectory}/html")
-    }
-
-    sourceDirectories.setFrom(files(sourceSets.main.allSource.srcDirs))
-    classDirectories.setFrom(files(sourceSets.main.output))
-
-    // Zipping the generated report after the task finishes
-    doLast {
-        def reportDir = file("${project.rootDir}/src/test/playwright/test-reports/server-coverage/html")
-        def zipFile = file("${project.rootDir}/src/test/playwright/test-reports/server-coverage/e2e-server-coverage.zip")
-
-        if (!reportDir.exists()) {
-            throw new GradleException("Report directory does not exist: ${reportDir}")
-        }
-
-        // Create the ZIP file
-        zipFile.withOutputStream { os ->
-            new ZipOutputStream(os).withCloseable { zip ->
-                reportDir.eachFileRecurse { file ->
-                    if (file.isFile()) {
-                        def relativePath = reportDir.toPath().relativize(file.toPath()).toString()
-                        zip.putNextEntry(new ZipEntry(relativePath))
-                        file.withInputStream { fis ->
-                            fis.transferTo(zip) // Copy file content to ZIP
-                        }
-                        zip.closeEntry()
-                    }
-                }
-            }
-        }
-        println "Coverage report successfully zipped into: ${zipFile}"
     }
 }
 
