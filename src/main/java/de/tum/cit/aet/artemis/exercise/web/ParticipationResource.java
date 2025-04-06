@@ -605,6 +605,7 @@ public class ParticipationResource {
                 participation.setSubmissionCount(participation.getSubmissions().size());
                 if (participation.getResults() != null && !participation.getResults().isEmpty()
                         && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
+                    // TODO jfr setting submissions to null will also not return results consequentially do we want this behavior?
                     participation.setSubmissions(null);
                 }
                 else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {

@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -251,7 +252,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @JsonIgnore
     public Set<Result> getResults() {
         return Stream.ofNullable(this.submissions).flatMap(Collection::stream).flatMap(submission -> Stream.ofNullable(submission.getResults()).flatMap(Collection::stream))
-                .collect(Collectors.toSet());
+                .filter(Objects::nonNull).collect(Collectors.toSet());
     }
 
     /**

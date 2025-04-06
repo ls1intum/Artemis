@@ -458,6 +458,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
     }
 
+    // TODO jfr does this test case make any sense now? I think we can delete it, the initial idea
+    // that the result is only linked to participation is not possible anymore now
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteResultWithoutSubmission() throws Exception {
@@ -470,7 +472,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participationRepo.existsById(participationId)).isTrue();
 
         // There should be a submission and no result assigned to the participation.
-        assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
+        // TODO jfr: i dont understand why this should not be 1 (prev. empty) delete above comment?
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).hasSize(1);
         assertThat(resultRepository.findBySubmissionParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/exercise/participations/" + participationId, HttpStatus.OK);
@@ -943,6 +946,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participations = request.getList("/api/exercise/exercises/" + quizExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
 
         var receivedParticipation = participations.stream().filter(p -> p.getParticipantIdentifier().equals(login)).findFirst().orElseThrow();
+        // TODO jfr: what do we really want to happen here now? if we need results, submissions can not be empty anymore
+        // also we only return submissions if all results are AssessmentType.AUTOMATIC_ATHENA so we also get no results otherwise
+
         assertThat(receivedParticipation.getResults()).containsOnly(notGradedResult);
         assertThat(receivedParticipation.getSubmissions()).isEmpty();
         assertThat(receivedParticipation.getSubmissionCount()).isEqualTo(1);
