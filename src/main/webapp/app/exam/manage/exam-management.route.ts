@@ -17,7 +17,7 @@ import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/servi
 import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
-import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
+import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
@@ -372,7 +372,7 @@ export const examManagementRoute: Routes = [
     // Create Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/new',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -385,7 +385,7 @@ export const examManagementRoute: Routes = [
     // Import Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/import/:exerciseId',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -398,7 +398,7 @@ export const examManagementRoute: Routes = [
     // Edit Text Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('app/text/manage/text-exercise/update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -450,7 +450,7 @@ export const examManagementRoute: Routes = [
     // Create Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/new',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -460,7 +460,7 @@ export const examManagementRoute: Routes = [
     // Import Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/import/:exerciseId',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -470,7 +470,7 @@ export const examManagementRoute: Routes = [
     // Edit Quiz Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('app/quiz/manage/update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -531,7 +531,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/text-exercises/:exerciseId',
-        loadComponent: () => import('app/text/manage/text-exercise/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
+        loadComponent: () => import('app/text/manage/detail/text-exercise-detail.component').then((m) => m.TextExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.textExercise.home.title',
@@ -578,7 +578,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId',
-        loadComponent: () => import('app/quiz/manage/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
+        loadComponent: () => import('app/quiz/manage/detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -630,7 +630,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/preview',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -640,7 +640,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/quiz-exercises/:exerciseId/solution',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',

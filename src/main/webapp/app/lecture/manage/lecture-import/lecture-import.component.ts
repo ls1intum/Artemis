@@ -3,11 +3,11 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { SortDirective } from '../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../shared/sort/sort-by.directive';
+import { SortDirective } from '../../../shared/sort/directive/sort.directive';
+import { SortByDirective } from '../../../shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from '../../../shared/components/button.component';
+import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { LecturePagingService } from 'app/lecture/manage/services/lecture-paging.service';
 
 const tableColumns: Column<Lecture>[] = [

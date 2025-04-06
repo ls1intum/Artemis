@@ -27,14 +27,14 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/programming
 import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { ProgrammingExerciseWebsocketService } from 'app/programming/manage/services/programming-exercise-websocket.service';
 import { ProgrammingExerciseService, ProgrammingExerciseTestCaseStateDTO } from 'app/programming/manage/services/programming-exercise.service';
-import { ProgrammingBuildRunService } from 'app/programming/overview/programming-build-run.service';
-import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/programming-exercise-re-evaluate-button.component';
-import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/programming-exercise-trigger-all-button.component';
+import { ProgrammingBuildRunService } from 'app/programming/shared/services/programming-build-run.service';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evalulate-button/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/programming/shared/actions/trigger-all-button/programming-exercise-trigger-all-button.component';
 import { SubmissionPolicyUpdateComponent } from 'app/exercise/submission-policy/submission-policy-update.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

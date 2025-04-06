@@ -3,7 +3,7 @@ import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/program
 
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { BuildAction, PlatformAction, ScriptAction } from 'app/programming/shared/entities/build.action';

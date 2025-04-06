@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import * as monaco from 'monaco-editor';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';

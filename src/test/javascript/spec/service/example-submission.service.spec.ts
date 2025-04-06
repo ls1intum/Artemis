@@ -10,7 +10,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Submission, getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { StringCountService } from 'app/text/overview/string-count.service';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 import { MockProvider } from 'ng-mocks';
 

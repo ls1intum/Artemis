@@ -19,7 +19,7 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';

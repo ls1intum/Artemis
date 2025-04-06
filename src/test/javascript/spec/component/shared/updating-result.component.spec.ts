@@ -3,7 +3,12 @@ import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
+import {
+    BuildTimingInfo,
+    ProgrammingSubmissionService,
+    ProgrammingSubmissionState,
+    ProgrammingSubmissionStateObj,
+} from 'app/programming/shared/services/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

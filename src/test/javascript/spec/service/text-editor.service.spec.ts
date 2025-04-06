@@ -1,4 +1,4 @@
-import { TextEditorService } from 'app/text/overview/text-editor.service';
+import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 
 import { provideHttpClient } from '@angular/common/http';
 import { Language } from 'app/core/course/shared/entities/course.model';

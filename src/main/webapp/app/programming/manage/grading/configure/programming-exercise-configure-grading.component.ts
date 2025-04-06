@@ -34,7 +34,7 @@ import { ProgrammingExerciseGradingTableActionsComponent } from '../table-action
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { CategoryIssuesChartComponent } from '../charts/category-issues-chart.component';
 import { ScaCategoryDistributionChartComponent } from '../charts/sca-category-distribution-chart.component';
 import { FeedbackAnalysisComponent } from '../feedback-analysis/feedback-analysis.component';

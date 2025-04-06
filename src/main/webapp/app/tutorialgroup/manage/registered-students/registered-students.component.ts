@@ -12,7 +12,7 @@ import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { captureException } from '@sentry/angular';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
 
 @Component({

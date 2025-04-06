@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { ButtonType } from 'app/shared/components/button.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 
 /**
  * The actions of the submission policy configuration:

@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CreateTutorialGroupSessionComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import {
     formDataToTutorialGroupSessionDTO,
     generateExampleTutorialGroupSession,

@@ -8,7 +8,7 @@ import { FeedbackModalComponent } from 'app/programming/manage/grading/feedback-
 import { FeedbackFilterModalComponent, FilterData } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
-import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
+import { SortIconComponent } from 'app/shared/sort/icon/sort-icon.component';
 import { AffectedStudentsModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-affected-students-modal.component';
 import { FeedbackDetailChannelModalComponent } from 'app/programming/manage/grading/feedback-analysis/modal/feedback-detail-channel-modal.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

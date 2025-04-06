@@ -12,8 +12,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-suspicious-behavior',

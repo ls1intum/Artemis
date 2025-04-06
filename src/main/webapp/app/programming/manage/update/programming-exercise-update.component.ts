@@ -59,7 +59,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['../programming-exercise-form.scss'],
+    styleUrls: ['../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,

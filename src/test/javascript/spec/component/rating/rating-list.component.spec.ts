@@ -10,7 +10,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';

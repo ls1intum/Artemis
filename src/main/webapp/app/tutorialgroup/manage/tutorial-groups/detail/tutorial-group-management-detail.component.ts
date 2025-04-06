@@ -10,7 +10,7 @@ import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupRowButtonsComponent } from '../tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-tutorial-group-management-detail',

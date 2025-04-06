@@ -18,7 +18,7 @@ import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-resp
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

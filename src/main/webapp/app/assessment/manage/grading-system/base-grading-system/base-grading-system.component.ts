@@ -3,7 +3,7 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { ActivatedRoute } from '@angular/router';
 import { EntityResponseType, GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { Observable, Subject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { catchError, finalize } from 'rxjs/operators';

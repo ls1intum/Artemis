@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';

@@ -12,7 +12,7 @@ import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';

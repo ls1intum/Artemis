@@ -15,7 +15,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -25,7 +25,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';

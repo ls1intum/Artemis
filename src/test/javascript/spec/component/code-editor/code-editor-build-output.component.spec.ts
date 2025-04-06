@@ -7,7 +7,7 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
-import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
@@ -19,7 +19,7 @@ import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';
+import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

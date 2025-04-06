@@ -1,5 +1,5 @@
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import {
     KnowledgeAreaDTO,
     KnowledgeAreaForTree,

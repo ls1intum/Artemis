@@ -11,12 +11,12 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';

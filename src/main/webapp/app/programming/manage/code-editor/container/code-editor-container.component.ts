@@ -1,8 +1,8 @@
 import { Component, EventEmitter, HostListener, Input, OnChanges, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
-import { CodeEditorFileService } from 'app/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid.component';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
 import {
     CommitState,
     CreateFileChange,
@@ -22,7 +22,7 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
+import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,8 +17,8 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { SidebarData } from 'app/shared/types/sidebar';
 import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';

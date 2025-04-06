@@ -6,7 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { input } from '@angular/core';
 
 describe('StudentsUploadImagesButtonComponent', () => {

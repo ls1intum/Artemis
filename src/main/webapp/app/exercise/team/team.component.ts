@@ -5,7 +5,7 @@ import { TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { User } from 'app/core/user/user.model';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

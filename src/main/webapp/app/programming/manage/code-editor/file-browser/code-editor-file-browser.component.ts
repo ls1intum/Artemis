@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/treeview/tree-view.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import {
     CommitState,
     CreateFileChange,
@@ -31,8 +31,8 @@ import {
     GitConflictState,
     RenameFileChange,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorFileService } from 'app/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
 export type InteractableEvent = {

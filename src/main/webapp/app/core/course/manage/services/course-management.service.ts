@@ -26,8 +26,8 @@ import { ExerciseType, ScoresPerExerciseType } from 'app/exercise/shared/entitie
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { CourseForArchiveDTO } from '../../shared/entities/course-for-archive-dto';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 

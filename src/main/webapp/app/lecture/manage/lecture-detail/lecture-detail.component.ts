@@ -5,7 +5,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { Subscription } from 'rxjs';

@@ -1,4 +1,4 @@
-import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PrivacyComponent } from 'app/core/legal/privacy.component';
 import { MockDirective, MockPipe } from 'ng-mocks';

@@ -13,7 +13,7 @@ import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/g
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { catchError } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';

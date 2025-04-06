@@ -3,7 +3,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigation-sidebar/exam-navigation-sidebar.component';
-import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';

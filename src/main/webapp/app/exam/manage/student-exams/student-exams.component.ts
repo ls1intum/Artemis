@@ -13,7 +13,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';

@@ -9,7 +9,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ButtonSize } from '../button.component';
+import { ButtonSize } from '../button/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -18,7 +18,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleDirective } from '../../feature-toggle/feature-toggle.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from '../../delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from '../../delete-dialog/directive/delete-button.directive';
 
 export type CourseExamArchiveState = {
     exportState: 'COMPLETED' | 'RUNNING' | 'COMPLETED_WITH_WARNINGS' | 'COMPLETED_WITH_ERRORS';

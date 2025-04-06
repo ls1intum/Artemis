@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 
 describe('TableEditableFieldComponent', () => {
     let comp: TableEditableFieldComponent;

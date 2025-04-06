@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { debounceTime, map, takeUntil } from 'rxjs/operators';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/button/button.component';
 
 import { CourseFaqAccordionComponent } from 'app/communication/course-faq/course-faq-accordion-component';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';

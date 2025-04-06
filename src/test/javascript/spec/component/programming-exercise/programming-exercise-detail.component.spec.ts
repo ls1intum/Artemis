@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateModule } from '@ngx-translate/core';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';

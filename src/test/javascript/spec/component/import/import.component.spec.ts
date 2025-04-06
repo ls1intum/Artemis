@@ -3,12 +3,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { SortService } from 'app/shared/service/sort.service';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';

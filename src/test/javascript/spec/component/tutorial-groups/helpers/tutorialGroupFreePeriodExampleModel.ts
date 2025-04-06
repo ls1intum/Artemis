@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
 
 export const generateExampleTutorialGroupFreePeriod = ({

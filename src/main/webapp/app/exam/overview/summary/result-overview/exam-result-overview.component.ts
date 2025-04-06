@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faAward, faClipboard } from '@fortawesome/free-solid-svg-icons';
@@ -15,7 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

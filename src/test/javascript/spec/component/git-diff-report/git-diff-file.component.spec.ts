@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file.component';
+import { GitDiffFileComponent } from 'app/programming/shared/git-diff-report/git-diff-file/git-diff-file.component';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { MonacoDiffEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
+import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 

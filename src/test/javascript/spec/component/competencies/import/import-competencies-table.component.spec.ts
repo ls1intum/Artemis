@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ImportCompetenciesTableComponent } from 'app/atlas/manage/import/import-competencies-table.component';
 import { SortingOrder } from 'app/shared/table/pageable-table';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 

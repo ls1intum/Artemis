@@ -21,7 +21,7 @@ import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/t
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
 import { faExclamationTriangle, faGripLines, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';

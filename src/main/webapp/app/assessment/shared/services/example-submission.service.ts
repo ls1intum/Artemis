@@ -8,7 +8,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { StringCountService } from 'app/text/overview/string-count.service';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 
 export type EntityResponseType = HttpResponse<ExampleSubmission>;
 

@@ -3,7 +3,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
@@ -32,7 +32,7 @@ import { ExamResultOverviewComponent } from './result-overview/exam-result-overv
 import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { NgClass } from '@angular/common';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';

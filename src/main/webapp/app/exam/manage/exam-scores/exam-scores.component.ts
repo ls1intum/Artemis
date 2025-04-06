@@ -27,13 +27,13 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
-import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
+import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {
@@ -61,10 +61,10 @@ import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/average-scores-graph/exam-scores-average-scores-graph.component';
 
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

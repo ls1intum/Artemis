@@ -11,12 +11,12 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';

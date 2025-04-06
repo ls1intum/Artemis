@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { of } from 'rxjs';
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';

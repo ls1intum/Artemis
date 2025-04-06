@@ -9,9 +9,9 @@ import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercis
 import { Subscription } from 'rxjs';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { map } from 'rxjs/operators';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';

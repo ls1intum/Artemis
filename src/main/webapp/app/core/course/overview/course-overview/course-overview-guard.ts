@@ -5,7 +5,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { CourseOverviewRoutePath } from 'app/core/course/overview/courses.route';
 
 @Injectable({

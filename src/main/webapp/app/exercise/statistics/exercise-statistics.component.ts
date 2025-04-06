@@ -3,14 +3,14 @@ import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { Subscription } from 'rxjs';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseDetailStatisticsComponent } from './exercise-detail-statistic/exercise-detail-statistics.component';
-import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
+import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

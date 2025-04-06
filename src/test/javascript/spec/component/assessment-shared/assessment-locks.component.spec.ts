@@ -11,7 +11,7 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';

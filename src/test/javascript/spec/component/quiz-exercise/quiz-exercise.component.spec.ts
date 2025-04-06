@@ -4,8 +4,8 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

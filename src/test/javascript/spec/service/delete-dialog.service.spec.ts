@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { EventEmitter } from '@angular/core';
 import { Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { ButtonType } from 'app/shared/components/button.component';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
+import { ButtonType } from 'app/shared/components/button/button.component';
 
 describe('Delete Dialog Service', () => {
     let service: DeleteDialogService;

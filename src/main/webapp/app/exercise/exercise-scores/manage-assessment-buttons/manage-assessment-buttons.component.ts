@@ -11,7 +11,7 @@ import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-u
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

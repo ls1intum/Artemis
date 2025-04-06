@@ -7,7 +7,7 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { BehaviorSubject, Observable, Subject, Subscription, combineLatest, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
@@ -55,8 +55,8 @@ import { faCheckCircle, faGraduationCap } from '@fortawesome/free-solid-svg-icon
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
-import { TextSubmissionService } from 'app/text/overview/text-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';

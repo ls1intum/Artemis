@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tutor-effort-statistics.component';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';

@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { TextExerciseRowButtonsComponent } from 'app/text/manage/text-exercise/text-exercise-row-buttons.component';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseRowButtonsComponent } from 'app/text/manage/text-exercise/row-buttons/text-exercise-row-buttons.component';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('TextExercise Row Buttons Component', () => {

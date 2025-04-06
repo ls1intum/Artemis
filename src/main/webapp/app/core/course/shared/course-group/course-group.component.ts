@@ -15,10 +15,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',

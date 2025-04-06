@@ -3,7 +3,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/programming-exercise-re-evaluate-button.component';
+import { ProgrammingExerciseReEvaluateButtonComponent } from 'app/programming/shared/actions/re-evalulate-button/programming-exercise-re-evaluate-button.component';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';

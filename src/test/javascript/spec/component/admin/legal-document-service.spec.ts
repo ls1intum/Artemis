@@ -1,7 +1,7 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
-import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { LegalDocument, LegalDocumentLanguage, LegalDocumentType } from 'app/core/shared/entities/legal-document.model';
 import { PrivacyStatement } from 'app/core/shared/entities/privacy-statement.model';
 import { Imprint } from 'app/core/shared/entities/imprint.model';

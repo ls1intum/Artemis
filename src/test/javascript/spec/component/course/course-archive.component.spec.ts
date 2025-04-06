@@ -10,8 +10,8 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CourseArchiveComponent } from 'app/core/course/overview/course-archive/course-archive.component';

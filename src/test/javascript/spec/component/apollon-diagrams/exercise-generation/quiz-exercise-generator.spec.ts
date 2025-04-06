@@ -14,7 +14,7 @@ import {
     generateDragAndDropQuizExercise,
 } from 'app/quiz/manage/apollon-diagrams/exercise-generation/quiz-exercise-generator';
 import * as SVGRendererAPI from 'app/quiz/manage/apollon-diagrams/exercise-generation/svg-renderer';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';

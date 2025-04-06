@@ -27,7 +27,7 @@ import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/
 import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
-import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 
 describe('QuizExamSubmissionComponent', () => {
     let fixture: ComponentFixture<QuizExamSubmissionComponent>;

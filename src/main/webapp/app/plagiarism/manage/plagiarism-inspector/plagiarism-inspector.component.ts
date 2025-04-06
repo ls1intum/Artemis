@@ -2,7 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { downloadFile, downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismResult } from 'app/plagiarism/shared/entities/PlagiarismResult';

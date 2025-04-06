@@ -9,7 +9,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';

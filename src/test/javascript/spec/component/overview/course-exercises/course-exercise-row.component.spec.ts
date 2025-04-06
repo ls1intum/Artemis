@@ -18,7 +18,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';

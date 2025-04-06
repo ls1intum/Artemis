@@ -1,4 +1,4 @@
-import { StringCountService } from 'app/text/overview/string-count.service';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 
 describe('WordCountService', () => {
     let service: StringCountService;

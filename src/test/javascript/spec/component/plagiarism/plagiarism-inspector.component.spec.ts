@@ -5,7 +5,7 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { downloadFile } from 'app/shared/util/download.util';
 import { Range } from 'app/shared/util/utils';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

@@ -13,7 +13,7 @@ import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solut
 import { ShortAnswerMapping } from 'app/quiz/shared/entities/short-answer-mapping.model';
 import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { cloneDeep } from 'lodash-es';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import * as markdownConversionUtil from 'app/shared/util/markdown.conversion.util';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';

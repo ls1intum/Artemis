@@ -9,7 +9,7 @@ import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/shared
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
-import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/util/statistics-graph.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 

@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting, TestRequest } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SessionStorageService } from 'ngx-webstorage';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';

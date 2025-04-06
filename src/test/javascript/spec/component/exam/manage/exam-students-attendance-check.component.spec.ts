@@ -9,7 +9,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ExamStudentsAttendanceCheckComponent } from 'app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { MockDirective, MockPipe } from 'ng-mocks';

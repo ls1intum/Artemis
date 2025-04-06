@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
 import { DebugElement } from '@angular/core';
-import { TableEditableCheckboxComponent } from 'app/shared/table/table-editable-checkbox.component';
+import { TableEditableCheckboxComponent } from 'app/shared/table/editable-checkbox/table-editable-checkbox.component';
 
 describe('TableEditableFieldComponent', () => {
     let comp: TableEditableCheckboxComponent;

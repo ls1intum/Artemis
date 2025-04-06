@@ -15,7 +15,7 @@ import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.co
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
@@ -39,7 +39,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
 import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 
 @Component({
     template: '',

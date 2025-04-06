@@ -16,7 +16,7 @@ import { TranslateDirective } from '../../../shared/language/translate.directive
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';

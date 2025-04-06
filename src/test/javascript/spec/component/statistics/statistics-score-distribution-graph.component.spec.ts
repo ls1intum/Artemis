@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/statistics-score-distribution-graph.component';
+import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

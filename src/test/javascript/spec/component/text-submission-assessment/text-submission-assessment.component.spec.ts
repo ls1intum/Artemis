@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/text-submission-assessment.component';
+import { TextSubmissionAssessmentComponent } from 'app/text/manage/assess/submission-assessment/text-submission-assessment.component';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layout/assessment-layout.component';
@@ -20,7 +20,7 @@ import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angul
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextBlock, TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
@@ -40,7 +40,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
+import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';

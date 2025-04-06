@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { TextEditorComponent } from 'app/text/overview/text-editor.component';
+import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';

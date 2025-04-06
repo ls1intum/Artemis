@@ -29,7 +29,7 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';

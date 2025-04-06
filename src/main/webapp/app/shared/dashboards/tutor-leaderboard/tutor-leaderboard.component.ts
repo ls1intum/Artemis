@@ -5,8 +5,8 @@ import { Exercise, getCourseFromExercise } from 'app/exercise/shared/entities/ex
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
-import { SortDirective } from '../../sort/sort.directive';
-import { SortByDirective } from '../../sort/sort-by.directive';
+import { SortDirective } from '../../sort/directive/sort.directive';
+import { SortByDirective } from '../../sort/directive/sort-by.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

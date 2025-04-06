@@ -22,10 +22,10 @@ import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-quest
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerSpot } from 'app/quiz/shared/entities/short-answer-spot.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { QuizExerciseUpdateComponent } from 'app/quiz/manage/quiz-exercise-update.component';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { QuizExerciseUpdateComponent } from 'app/quiz/manage/update/quiz-exercise-update.component';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { advanceTo } from 'jest-date-mock';
 import dayjs from 'dayjs/esm';
@@ -37,8 +37,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { MockProvider } from 'ng-mocks';
-import { Duration } from 'app/quiz/manage/quiz-exercise-interfaces';
-import { QuizQuestionListEditComponent } from 'app/quiz/manage/quiz-question-list-edit.component';
+import { Duration } from 'app/quiz/manage/interfaces/quiz-exercise-interfaces';
+import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-question-list-edit.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 
 describe('QuizExerciseUpdateComponent', () => {

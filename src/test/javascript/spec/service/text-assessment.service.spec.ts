@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextAssessmentEvent } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -13,11 +13,11 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
-import { TextSubmissionService } from 'app/text/overview/text-submission.service';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { of } from 'rxjs';
 import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
-import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/text-submission-assessment-resolve.service';
+import { NewStudentParticipationResolver, StudentParticipationResolver } from 'app/text/manage/assess/service/text-submission-assessment-resolve.service';
 
 describe('TextAssessment Service', () => {
     let service: TextAssessmentService;

@@ -29,9 +29,9 @@ import { FileTypeService } from 'app/programming/shared/services/file-type.servi
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, ConnectionError } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChange, FileType, RenameFileChange } from '../model/code-editor.model';
-import { CodeEditorFileService } from 'app/programming/shared/code-editor/service/code-editor-file.service';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };

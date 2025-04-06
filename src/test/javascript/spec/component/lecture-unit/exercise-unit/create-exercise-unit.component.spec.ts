@@ -18,8 +18,8 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

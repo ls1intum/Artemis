@@ -3,14 +3,14 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { of } from 'rxjs';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

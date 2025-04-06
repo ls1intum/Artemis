@@ -4,7 +4,7 @@ import { filter, map, tap } from 'rxjs/operators';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { RepositoryService } from 'app/programming/shared/services/repository.service';
 import dayjs from 'dayjs/esm';
-import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
+import { BuildTimingInfo, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ResultService } from 'app/exercise/result/result.service';

@@ -14,7 +14,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExamArchiveButtonComponent, CourseExamArchiveState } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';

@@ -8,7 +8,7 @@ import { ManualTextSelectionComponent, wordSelection } from 'app/text/manage/ass
 import { SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
-import { TextSelectDirective } from 'app/text/manage/assess/text-select.directive';
+import { TextSelectDirective } from 'app/text/manage/assess/directive/text-select.directive';
 
 describe('ManualTextblockSelectionComponent', () => {
     let component: ManualTextblockSelectionComponent;

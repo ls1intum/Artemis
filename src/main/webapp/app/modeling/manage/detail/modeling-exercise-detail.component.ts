@@ -8,10 +8,10 @@ import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exerc
 import { Subscription } from 'rxjs';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingExerciseService } from '../services/modeling-exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';

@@ -8,14 +8,14 @@ import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-aeolus-build-plan',
     templateUrl: './programming-exercise-custom-aeolus-build-plan.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, NgClass, MonacoEditorComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChanges {

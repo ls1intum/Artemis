@@ -35,7 +35,7 @@ import { hasParticipationChanged } from 'app/exercise/participation/participatio
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import diff from 'html-diff-ts';
-import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { toObservable } from '@angular/core/rxjs-interop';

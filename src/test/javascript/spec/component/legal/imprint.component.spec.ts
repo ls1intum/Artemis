@@ -9,7 +9,7 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ImprintComponent } from 'app/core/legal/imprint.component';
-import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { LegalDocumentService } from 'app/core/legal/legal-document.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';

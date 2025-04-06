@@ -1,6 +1,6 @@
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -15,8 +15,8 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
-import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
+import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 const question = { id: 1, type: QuizQuestionType.MULTIPLE_CHOICE } as QuizQuestion;

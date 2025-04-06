@@ -18,14 +18,14 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
-import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
 import {
     BONUS_KEY,
     COURSE_OVERALL_POINTS_KEY,
@@ -49,9 +49,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';

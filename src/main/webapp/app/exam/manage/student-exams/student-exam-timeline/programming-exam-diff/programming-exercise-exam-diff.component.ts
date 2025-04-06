@@ -2,8 +2,8 @@ import { Component, OnDestroy, OnInit, inject, input, model, output, signal } fr
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize } from 'app/shared/components/button.component';
-import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
+import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -16,8 +16,8 @@ import { CachedRepositoryFilesService } from 'app/programming/manage/services/ca
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';

@@ -1,5 +1,5 @@
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';

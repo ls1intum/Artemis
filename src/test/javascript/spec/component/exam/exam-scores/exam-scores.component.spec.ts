@@ -20,7 +20,7 @@ import { EMPTY, of } from 'rxjs';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
+import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/modal/export-modal.component';
 import {
     BONUS_GRADE_KEY,
     EMAIL_KEY,

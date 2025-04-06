@@ -5,8 +5,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 
 describe('UsersImportButtonComponent', () => {
     let fixture: ComponentFixture<UsersImportButtonComponent>;

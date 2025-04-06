@@ -7,9 +7,9 @@ import { Competency, CompetencyTaxonomy } from 'app/atlas/shared/entities/compet
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FormArray, FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, firstValueFrom, map } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

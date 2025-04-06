@@ -2,8 +2,8 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync } from '@ang
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

@@ -3,7 +3,7 @@ import { TextblockFeedbackDropdownComponent } from 'app/text/manage/assess/textb
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { MockComponent } from 'ng-mocks';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 describe('TextblockFeedbackDropdownComponent', () => {
     let component: TextblockFeedbackDropdownComponent;

@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { DeleteUsersButtonComponent } from 'app/core/admin/user-management/delete-users-button/delete-users-button.component';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import * as globalUtils from 'app/shared/util/global.utils';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

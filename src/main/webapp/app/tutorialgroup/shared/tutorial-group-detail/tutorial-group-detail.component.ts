@@ -2,8 +2,8 @@ import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleCha
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { getDayTranslationKey } from '../weekdays';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { getDayTranslationKey } from '../util/weekdays';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faUserCheck } from '@fortawesome/free-solid-svg-icons';

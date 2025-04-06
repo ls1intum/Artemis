@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item.component';
+import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
 describe('DragItemComponent', () => {

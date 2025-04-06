@@ -109,7 +109,8 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
-                loadComponent: () => import('app/programming/overview/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
+                loadComponent: () =>
+                    import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
@@ -260,7 +261,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
-                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
+                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
@@ -272,7 +273,7 @@ export const routes: Routes = [
                     {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
-                            import('app/tutorialgroup/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
+                            import('app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
                                 (m) => m.CourseTutorialGroupDetailComponent,
                             ),
                         data: {

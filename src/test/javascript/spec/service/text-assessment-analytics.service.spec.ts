@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { throwError } from 'rxjs';
 import { Location } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';

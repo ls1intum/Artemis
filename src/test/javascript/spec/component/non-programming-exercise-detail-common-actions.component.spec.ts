@@ -4,14 +4,14 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { TextExerciseService } from 'app/text/manage/text-exercise/text-exercise.service';
+import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';

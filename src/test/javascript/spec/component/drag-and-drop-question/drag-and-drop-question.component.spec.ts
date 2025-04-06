@@ -3,12 +3,12 @@ import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mappi
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { DragAndDropQuestionComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item.component';
+import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';

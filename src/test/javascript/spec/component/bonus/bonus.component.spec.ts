@@ -14,10 +14,10 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
-import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/component/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

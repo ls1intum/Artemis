@@ -15,7 +15,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseDetailDoughnutChartComponent } from 'app/core/course/manage/detail/course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from 'app/core/course/manage/detail/course-detail-line-chart.component';
 import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -21,9 +21,9 @@ import { TranslateDirective } from '../../../shared/language/translate.directive
 import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../../shared/sort/sort.directive';
-import { SortByDirective } from '../../../shared/sort/sort-by.directive';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/delete-button.directive';
+import { SortDirective } from '../../../shared/sort/directive/sort.directive';
+import { SortByDirective } from '../../../shared/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from '../../../shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
 

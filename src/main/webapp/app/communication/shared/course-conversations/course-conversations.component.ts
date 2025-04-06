@@ -35,7 +35,7 @@ import { CourseOverviewService } from 'app/core/course/overview/services/course-
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';

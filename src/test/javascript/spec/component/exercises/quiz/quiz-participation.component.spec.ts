@@ -10,8 +10,8 @@ import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-qu
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { SubmittedAnswer } from 'app/quiz/shared/entities/submitted-answer.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { QuizParticipationComponent } from 'app/quiz/overview/quiz-participation.component';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
+import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { MockBuilder } from 'ng-mocks';
@@ -26,12 +26,12 @@ import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { QuizParticipationService } from 'app/quiz/overview/quiz-participation.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { QuizParticipationService } from 'app/quiz/overview/service/quiz-participation.service';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 
 const now = dayjs();
 const question1: QuizQuestion = {

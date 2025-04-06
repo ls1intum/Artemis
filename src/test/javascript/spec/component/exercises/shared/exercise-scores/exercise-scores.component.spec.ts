@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseScoresComponent, FilterProp } from 'app/exercise/exercise-scores/exercise-scores.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';

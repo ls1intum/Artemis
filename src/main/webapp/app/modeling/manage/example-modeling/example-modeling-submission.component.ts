@@ -29,7 +29,7 @@ import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-asses
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';

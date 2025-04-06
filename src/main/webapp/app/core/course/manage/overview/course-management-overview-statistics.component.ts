@@ -7,7 +7,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import * as shape from 'd3-shape';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-students-chart';
 

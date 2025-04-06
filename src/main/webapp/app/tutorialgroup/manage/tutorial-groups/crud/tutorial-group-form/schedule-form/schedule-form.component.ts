@@ -12,9 +12,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/ngbTimeStringAdapter';
-import { weekDays } from 'app/tutorialgroup/shared/weekdays';
-import { validTimeRange } from 'app/tutorialgroup/shared/timeRangeValidator';
+import { NgbTimeStringAdapter } from 'app/tutorialgroup/shared/util/ngbTimeStringAdapter';
+import { weekDays } from 'app/tutorialgroup/shared/util/weekdays';
+import { validTimeRange } from 'app/tutorialgroup/shared/util/timeRangeValidator';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;

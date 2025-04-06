@@ -29,11 +29,11 @@ import { AssessmentLayoutComponent } from 'app/assessment/manage/assessment-layo
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { delay } from 'rxjs/operators';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-response.model';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';

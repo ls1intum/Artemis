@@ -7,7 +7,7 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { RouterModule } from '@angular/router';
 import { TutorialGroupRowComponent } from 'app/tutorialgroup/shared/tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
-import { MeetingPatternPipe } from 'app/tutorialgroup/shared/meeting-pattern.pipe';
+import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 
 describe('TutorialGroupRowComponent', () => {
     let component: TutorialGroupRowComponent;

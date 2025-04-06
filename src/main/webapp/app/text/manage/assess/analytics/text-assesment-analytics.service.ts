@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { TextAssessmentEvent, TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';

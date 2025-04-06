@@ -12,7 +12,7 @@ import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { of, take, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

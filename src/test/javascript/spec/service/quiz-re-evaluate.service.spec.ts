@@ -1,6 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/quiz-re-evaluate.service';
+import { QuizReEvaluateService } from 'app/quiz/manage/re-evaluate/services/quiz-re-evaluate.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 

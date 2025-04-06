@@ -5,7 +5,7 @@ import { NavigationEnd } from '@angular/router';
 import { Subscription, interval, lastValueFrom } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { faAngleDown, faAngleUp, faListAlt } from '@fortawesome/free-solid-svg-icons';

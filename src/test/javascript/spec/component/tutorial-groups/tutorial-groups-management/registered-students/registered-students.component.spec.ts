@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/tutorialgroup/manage/registered-students/registered-students.component';
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';

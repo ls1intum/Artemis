@@ -36,7 +36,7 @@ import {
 } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';

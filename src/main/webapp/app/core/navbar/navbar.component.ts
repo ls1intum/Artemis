@@ -13,7 +13,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';

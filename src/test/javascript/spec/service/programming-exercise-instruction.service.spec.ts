@@ -1,5 +1,5 @@
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/service/programming-exercise-instruction.service';
+import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
 import dayjs from 'dayjs/esm';
 
 describe('ProgrammingExerciseInstructionService', () => {

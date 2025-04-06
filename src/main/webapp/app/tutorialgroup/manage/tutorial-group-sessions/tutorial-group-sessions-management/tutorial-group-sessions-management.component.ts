@@ -18,9 +18,9 @@ import { TutorialGroupSessionRowButtonsComponent } from './tutorial-group-sessio
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { captureException } from '@sentry/angular';
 import { TutorialGroupSessionsTableComponent } from 'app/tutorialgroup/shared/tutorial-group-sessions-table/tutorial-group-sessions-table.component';
-import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
-import { getDayTranslationKey } from 'app/tutorialgroup/shared/weekdays';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 
 @Component({
     selector: 'jhi-session-management',

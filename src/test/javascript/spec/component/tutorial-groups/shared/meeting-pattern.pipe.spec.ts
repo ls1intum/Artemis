@@ -1,6 +1,6 @@
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MeetingPatternPipe } from 'app/tutorialgroup/shared/meeting-pattern.pipe';
+import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
 
 describe('MeetingPatternPipe', () => {
     const translateService = {

@@ -1,4 +1,4 @@
-import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/remove-seconds.pipe';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
 
 describe('RemoveSecondsPipe', () => {
     let pipe: RemoveSecondsPipe;

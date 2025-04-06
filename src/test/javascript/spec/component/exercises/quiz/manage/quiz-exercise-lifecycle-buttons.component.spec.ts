@@ -4,12 +4,12 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
-import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/quiz-exercise-lifecycle-buttons.component';
+import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
 import { AccountService } from 'app/core/auth/account.service';

@@ -7,7 +7,7 @@ import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AsyncPipe, NgStyle } from '@angular/common';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({

@@ -3,7 +3,7 @@ import { QuizQuestionType, ScoringType } from 'app/quiz/shared/entities/quiz-que
 import { ExerciseMode, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
-import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
+import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 
 describe('Quiz Service', () => {
     let service: ArtemisQuizService;

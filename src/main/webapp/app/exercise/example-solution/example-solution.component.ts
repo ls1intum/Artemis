@@ -3,7 +3,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/with-details/header-exercise-page-with-details.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ModelingEditorComponent } from '../../modeling/shared/modeling-editor/modeling-editor.component';

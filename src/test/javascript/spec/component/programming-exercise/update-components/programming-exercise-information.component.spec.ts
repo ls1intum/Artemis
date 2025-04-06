@@ -9,7 +9,7 @@ import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';

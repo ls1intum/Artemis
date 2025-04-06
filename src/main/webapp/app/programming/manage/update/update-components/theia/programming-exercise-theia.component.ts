@@ -9,7 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-programming-exercise-theia',
     templateUrl: './programming-exercise-theia.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [FormsModule, KeyValuePipe, TranslateDirective],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {

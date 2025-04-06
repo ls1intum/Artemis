@@ -6,8 +6,8 @@ import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
 

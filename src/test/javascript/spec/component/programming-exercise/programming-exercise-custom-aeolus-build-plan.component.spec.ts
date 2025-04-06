@@ -9,7 +9,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { programmingExerciseCreationConfigMock } from './update-components/programming-exercise-creation-config-mock';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';

@@ -5,7 +5,7 @@ import { ComplaintService } from 'app/assessment/shared/services/complaint.servi
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';

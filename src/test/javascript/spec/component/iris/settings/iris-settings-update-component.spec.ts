@@ -5,7 +5,7 @@ import { IrisCourseSettings, IrisExerciseSettings, IrisGlobalSettings, IrisSetti
 import { mockSettings, mockVariants } from './mock-settings';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { firstValueFrom, of } from 'rxjs';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
