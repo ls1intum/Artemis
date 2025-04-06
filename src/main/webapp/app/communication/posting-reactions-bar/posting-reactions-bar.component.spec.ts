@@ -200,8 +200,7 @@ describe('PostingReactionsBarComponent', () => {
 
         expect(getDeleteButton()).not.toBeNull();
     });
-    // TODO: this is simply a test rename to make eslint happy. Ask the original author why we have two tests with the same name
-    it('should not display the edit option to user (even instructor) if s/he is not the author of posting with' + ' injection context', () => {
+    it('should not display the edit option to user (even instructor) if s/he is not the author of posting with given conversation', () => {
         runInInjectionContext(fixture.debugElement.injector, () => {
             component.isReadOnlyMode = input<boolean>(false);
             component.previewMode = input<boolean>(false);
