@@ -8,7 +8,7 @@ import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.mo
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { ExamScoreDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
+import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';

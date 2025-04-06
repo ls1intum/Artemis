@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/exam-scores-average-scores-graph.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/shared/entities/exam-score-dtos.model';
+import { AggregatedExerciseGroupResult, AggregatedExerciseResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';

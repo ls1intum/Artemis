@@ -8,7 +8,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { StudentExamWithGradeDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 describe('Exam Resolve', () => {
     let resolve: ExamResolve;

@@ -13,7 +13,7 @@ import {
     ExerciseGroup,
     StudentResult,
     TableState,
-} from 'app/exam/shared/entities/exam-score-dtos.model';
+} from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';

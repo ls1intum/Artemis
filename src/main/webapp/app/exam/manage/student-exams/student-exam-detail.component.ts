@@ -13,7 +13,7 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exerci
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentExamWithGradeDTO } from 'app/exam/shared/entities/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { combineLatest, takeWhile } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

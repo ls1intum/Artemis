@@ -5,7 +5,7 @@ import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, ProblemStatementUpdateEvent } from 'app/exam/overview/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/overview/events/exam-live-events-button.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamExerciseUpdateService } from 'app/exam/shared/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import dayjs from 'dayjs/esm';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -1,4 +1,4 @@
-import { ExamExerciseUpdateService } from 'app/exam/shared/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { TestBed } from '@angular/core/testing';
 
 describe('Exam Exercise Update Service Tests', () => {
