@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -23,7 +23,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
-export class PasskeySettingsComponent implements OnInit, OnDestroy {
+export class PasskeySettingsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
@@ -44,32 +44,39 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    currentUser?: User;
+    currentUser = signal<User | undefined>(undefined);
 
     isEdit = false;
 
     private authStateSubscription: Subscription;
 
-    ngOnInit() {
-        // TODO use signals and fetch registered passkeys once user object is set
-        this.authStateSubscription = this.accountService
-            .getAuthenticationState()
-            .pipe(
-                tap((user: User) => {
-                    this.currentUser = user;
-                    return this.currentUser;
-                }),
-            )
-            .subscribe();
+    constructor() {
+        effect(() => {
+            this.authStateSubscription = this.accountService
+                .getAuthenticationState()
+                .pipe(
+                    tap((user: User) => {
+                        this.currentUser.set(user);
+                        return this.currentUser;
+                    }),
+                )
+                .subscribe();
+        });
+
+        effect(() => {
+            if (this.currentUser != undefined) {
+                this.updateRegisteredPasskeys();
+            }
+        });
     }
 
     ngOnDestroy(): void {
         this.authStateSubscription.unsubscribe();
     }
 
-    async updateRegisteredPasskeys() {
-        if (this.currentUser?.id) {
-            this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys(this.currentUser?.id);
+    private async updateRegisteredPasskeys() {
+        if (this.currentUser()?.id) {
+            this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys(this.currentUser()!.id!);
         }
     }
 
@@ -88,7 +95,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const email = this.currentUser?.email;
+        const email = this.currentUser()?.email;
         if (!email) {
             alert('Email is undefined');
             return;
@@ -116,7 +123,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     }
 
     private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
-        const userId = this.currentUser?.id;
+        const userId = this.currentUser()?.id;
 
         if (!userId) {
             throw new Error('User ID is undefined');

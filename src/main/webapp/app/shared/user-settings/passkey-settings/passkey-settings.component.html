@@ -1,5 +1,5 @@
 <h1 jhiTranslate="artemisApp.userSettings.passkeys"></h1>
-@if (currentUser) {
+@if (currentUser()) {
     <div class="list-group d-block">
         <div class="list-group-item">
             <dt>
@@ -67,7 +67,7 @@
             <div class="list-group-item">
                 <dt>
                     <!--                    TODO load if user has passkeys -->
-                    @if (this.currentUser?.vcsAccessToken) {
+                    @if (this.currentUser()?.vcsAccessToken) {
                         <table class="table table-striped flex">
                             <thead class="thead-dark">
                                 <tr>
