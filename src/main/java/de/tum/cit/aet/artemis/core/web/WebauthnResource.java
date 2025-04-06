@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URISyntaxException;
+import java.util.List;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -12,11 +13,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.repository.webauthn.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
@@ -26,19 +32,30 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/core/webauthn/")
-public class PublicWebauthnResource {
+public class WebauthnResource {
 
     public static final String ENTITY_NAME = "webauthn";
 
-    private static final Logger log = LoggerFactory.getLogger(PublicWebauthnResource.class);
+    private static final Logger log = LoggerFactory.getLogger(WebauthnResource.class);
 
     private final UserRepository userRepository;
 
-    private final AuthenticationManager authenticationManager;
+    private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
-    public PublicWebauthnResource(UserRepository userRepository, AuthenticationManager authenticationManager) {
+    public WebauthnResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
         this.userRepository = userRepository;
-        this.authenticationManager = authenticationManager;
+        this.artemisUserCredentialRepository = artemisUserCredentialRepository;
+    }
+
+    @GetMapping("users/{userId}/passkeys")
+    @EnforceNothing
+    public ResponseEntity<List<PasskeyDto>> getPasskeys(@PathVariable Long userId) {
+        log.info("Retrieving passkeys for user with id: {}", userId);
+
+        var user = userRepository.getUser();
+        List<PasskeyDto> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(User.longToBytes(user.getId()));
+
+        return ResponseEntity.ok(passkeys);
     }
 
     /**

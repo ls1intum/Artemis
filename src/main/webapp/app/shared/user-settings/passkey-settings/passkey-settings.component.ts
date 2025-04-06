@@ -12,6 +12,8 @@ import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entiti
 import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/utils';
 import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
+import { PasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/passkey.dto';
+import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
 
 @Component({
     selector: 'jhi-passkey-settings',
@@ -31,8 +33,11 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private webauthnApiService = inject(WebauthnApiService);
     private webauthnService = inject(WebauthnService);
+    private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
+    private registeredPasskeys: PasskeyDto[] = [];
+
     dialogError$ = this.dialogErrorSource.asObservable();
 
     currentUser?: User;
@@ -42,6 +47,7 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
     private authStateSubscription: Subscription;
 
     ngOnInit() {
+        // TODO use signals and fetch registered passkeys once user object is set
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
@@ -57,7 +63,14 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
+    async updateRegisteredPasskeys() {
+        if (this.currentUser?.id) {
+            this.registeredPasskeys = await this.passkeySettingsApiService.getRegisteredPasskeys(this.currentUser?.id);
+        }
+    }
+
     async addNewPasskey() {
+        await this.updateRegisteredPasskeys();
         // TODO add proper error handling
         const options = await this.webauthnApiService.getRegistrationOptions();
         const credentialOptions = this.createCredentialOptions(options);
@@ -83,6 +96,8 @@ export class PasskeySettingsComponent implements OnInit, OnDestroy {
                 label: email,
             },
         });
+
+        await this.updateRegisteredPasskeys();
     }
 
     async loginWithPublicKeyCredential() {

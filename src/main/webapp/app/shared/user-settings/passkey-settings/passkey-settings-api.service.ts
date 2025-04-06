@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
-import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/register-passkey.dto';
+import { PasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/passkey.dto';
 
 @Injectable({ providedIn: 'root' })
 export class PasskeySettingsApiService extends BaseApiHttpService {
@@ -8,8 +8,8 @@ export class PasskeySettingsApiService extends BaseApiHttpService {
 
     // TODO add delete and rename endpoint
 
-    async createNewPasskey(registerPasskeyDto: RegisterPasskeyDto): Promise<void> {
-        return await this.post<void>(`${this.basePath}/signup`, registerPasskeyDto);
+    async getRegisteredPasskeys(userId: number): Promise<PasskeyDto[]> {
+        return await this.get<PasskeyDto[]>(`${this.basePath}/users/${userId}/passkeys`);
     }
 
     async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<void> {

@@ -24,6 +24,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
@@ -68,6 +69,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         log.debug("Saving user credential record: {}", credentialRecord);
     }
 
+    /**
+     * @param credentialId which is expected to equal the {@link User#getExternalId()}
+     */
     @Override
     public CredentialRecord findByCredentialId(Bytes credentialId) {
         log.info("findByCredentialId: id={}", credentialId.toBase64UrlString());
@@ -82,10 +86,20 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<CredentialRecord> findByUserId(Bytes userId) {
         log.info("findByUserId: userId={}", userId);
 
-        Optional<User> user = userRepository.findOneByLogin(userId.toBase64UrlString());
+        Optional<User> user = userRepository.findById(User.bytesToLong(userId));
 
-        return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream()
-                .map(cred -> toCredentialRecord(cred, Bytes.fromBase64(passkeyUser.getId().toString()))).collect(Collectors.toList())).orElseGet(List::of);
+        return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId()))
+                .collect(Collectors.toList())).orElseGet(List::of);
+    }
+
+    public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
+        log.info("findPasskeyDtosByUserId: userId={}", userId);
+
+        List<CredentialRecord> credentialRecords = findByUserId(userId);
+
+        return credentialRecords.stream().map(
+                credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getSignatureCount(), credential.getCreated(), credential.getLastUsed()))
+                .collect(Collectors.toList());
     }
 
     private static CredentialRecord toCredentialRecord(PasskeyCredential credential, Bytes userId) {
