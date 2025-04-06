@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer.component';
+import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { UserService } from 'app/core/user/shared/user.service';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';

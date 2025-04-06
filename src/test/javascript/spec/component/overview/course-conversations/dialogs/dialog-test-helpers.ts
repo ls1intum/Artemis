@@ -1,4 +1,4 @@
-import { AbstractDialogComponent } from 'app/communication/course-conversations/abstract-dialog.component';
+import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
 import { ComponentFixture } from '@angular/core/testing';
 
 type RequiredInputs = {

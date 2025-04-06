@@ -16,10 +16,10 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/atlas/manage/forms/common-course-competency-form.component';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ThemeService } from 'app/core/theme/shared/theme.service';

@@ -11,7 +11,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { onError } from 'app/shared/util/global.utils';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';

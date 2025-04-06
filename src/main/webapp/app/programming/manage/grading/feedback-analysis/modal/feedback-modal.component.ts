@@ -2,7 +2,7 @@ import { Component, OnInit, inject, input, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/programming/manage/grading/feedback-analysis/feedback-analysis.service';
-import { LongFeedbackTextService } from 'app/exercise/feedback/long-feedback-text.service';
+import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

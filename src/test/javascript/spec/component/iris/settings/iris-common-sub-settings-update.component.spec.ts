@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { of } from 'rxjs';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockJhiTranslateDirective } from '../../../helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FeedbackTextComponent } from 'app/exercise/feedback/text/feedback-text.component';
-import { LongFeedbackTextService } from 'app/exercise/feedback/long-feedback-text.service';
+import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { MockProvider } from 'ng-mocks';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';

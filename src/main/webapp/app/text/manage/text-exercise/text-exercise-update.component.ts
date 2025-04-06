@@ -7,7 +7,7 @@ import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-
 import { PresentationScoreComponent } from 'app/exercise/presentation-score/presentation-score.component';
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -24,7 +24,7 @@ import { EditType, SaveExerciseCommand } from 'app/exercise/exercise.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { AthenaService } from 'app/assessment/shared/athena.service';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { Observable, Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';

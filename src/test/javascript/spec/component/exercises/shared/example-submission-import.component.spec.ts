@@ -6,7 +6,7 @@ import { Submission, SubmissionType } from 'app/exercise/shared/entities/submiss
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { ExampleSubmissionImportPagingService } from 'app/exercise/example-submission/example-submission-import/example-submission-import-paging.service';
 import { ExampleSubmissionImportComponent } from 'app/exercise/example-submission/example-submission-import/example-submission-import.component';
-import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

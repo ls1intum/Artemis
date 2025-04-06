@@ -4,7 +4,7 @@ import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/e
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { PlagiarismResultsService } from 'app/plagiarism/shared/plagiarism-results.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -9,7 +9,7 @@ import { of, throwError } from 'rxjs';
 import { MockComponent } from 'ng-mocks';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/exam/shared/entities/exam-session.model';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';

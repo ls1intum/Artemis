@@ -9,8 +9,8 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';

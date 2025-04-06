@@ -6,7 +6,7 @@ import { By } from '@angular/platform-browser';
 import { CoursePrerequisitesModalComponent } from 'app/core/course/overview/course-registration/course-registration-prerequisites-modal/course-prerequisites-modal.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

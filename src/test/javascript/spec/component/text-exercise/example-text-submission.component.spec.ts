@@ -36,7 +36,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
-import { ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;

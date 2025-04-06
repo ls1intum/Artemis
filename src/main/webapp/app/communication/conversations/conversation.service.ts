@@ -9,7 +9,7 @@ import { isChannelDTO } from 'app/communication/shared/entities/conversation/cha
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
-import { getUserLabel } from 'app/communication/course-conversations/other/conversation.util';
+import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 
 type EntityArrayResponseType = HttpResponse<ConversationDTO[]>;

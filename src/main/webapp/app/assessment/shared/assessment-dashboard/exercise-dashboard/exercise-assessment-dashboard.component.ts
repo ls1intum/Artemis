@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import {
     Submission,
@@ -72,7 +72,7 @@ import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboa
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
-import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/header-exercise-page-with-details.component';
+import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
 import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';

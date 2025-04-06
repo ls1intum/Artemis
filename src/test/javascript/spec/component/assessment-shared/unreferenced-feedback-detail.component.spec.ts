@@ -4,7 +4,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { FeedbackService } from 'app/exercise/feedback/feedback.service';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

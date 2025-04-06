@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { SavedPostsComponent } from 'app/communication/course-conversations/saved-posts/saved-posts.component';
+import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
 import { SavedPostService } from 'app/communication/saved-post.service';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { EMPTY, of, throwError } from 'rxjs';
@@ -7,7 +7,7 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PostingSummaryComponent } from 'app/communication/course-conversations/posting-summary/posting-summary.component';
+import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
 
 describe('SavedPostsComponent', () => {
     let component: SavedPostsComponent;

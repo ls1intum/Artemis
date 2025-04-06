@@ -7,7 +7,7 @@ import {
     ExamWideAnnouncementEvent,
     ProblemStatementUpdateEvent,
     WorkingTimeUpdateEvent,
-} from 'app/exam/overview/exam-participation-live-events.service';
+} from 'app/exam/overview/services/exam-participation-live-events.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { input } from '@angular/core';

@@ -2,7 +2,7 @@ import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/ht
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -18,7 +18,7 @@ import { CourseArchiveComponent } from 'app/core/course/overview/course-archive/
 import { CourseCardHeaderComponent } from 'app/core/course/overview/course-card-header/course-card-header.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { CourseForArchiveDTO } from 'app/core/course/manage/course-for-archive-dto';
+import { CourseForArchiveDTO } from 'app/core/course/shared/entities/course-for-archive-dto';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';

@@ -1,5 +1,5 @@
 import { Component, HostListener, OnInit, ViewChild, inject } from '@angular/core';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -17,8 +17,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyRecommendationDetailComponent } from 'app/atlas/manage/generate-competencies/competency-recommendation-detail.component';

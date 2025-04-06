@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { CompetencyWithTailRelationDTO } from 'app/atlas/shared/entities/competency.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ImportPrerequisitesComponent } from 'app/atlas/manage/import/import-prerequisites.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';

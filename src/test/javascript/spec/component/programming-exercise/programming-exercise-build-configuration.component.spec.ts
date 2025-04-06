@@ -7,7 +7,7 @@ import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;

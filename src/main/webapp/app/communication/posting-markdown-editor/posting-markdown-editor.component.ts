@@ -20,7 +20,7 @@ import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/metis.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
-import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/core/shared/entities/course.model';
+import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/core/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -47,7 +47,7 @@ import { NgStyle } from '@angular/common';
 import { PostingEditType } from '../metis.util';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { FileService } from 'app/shared/service/file.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',

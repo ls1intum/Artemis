@@ -1,12 +1,12 @@
 import { Component, Input, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { tap } from 'rxjs/operators';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';
 import { ButtonSize } from '../button.component';

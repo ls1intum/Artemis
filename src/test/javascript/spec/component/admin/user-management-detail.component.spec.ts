@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 
-import { UserManagementDetailComponent } from 'app/core/admin/user-management/user-management-detail.component';
+import { UserManagementDetailComponent } from 'app/core/admin/user-management/detail/user-management-detail.component';
 import { User } from 'app/core/user/user.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 

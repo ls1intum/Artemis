@@ -5,7 +5,7 @@ import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import {
     Competency,
     CompetencyExerciseLink,

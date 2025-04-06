@@ -1,4 +1,4 @@
-import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/manage/assessment.service';
+import { isAllowedToModifyFeedback, isAllowedToRespondToComplaintAction } from 'app/assessment/manage/services/assessment.service';
 import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';

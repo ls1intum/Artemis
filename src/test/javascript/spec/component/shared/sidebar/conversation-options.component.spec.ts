@@ -10,7 +10,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOn
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
-import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
+import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/communication/conversations/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -18,14 +18,14 @@ import { MetisService } from 'app/communication/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
 import { MockNotificationService } from '../../../helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { ConversationDetailDialogComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { ConversationDetailDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 const examples: (() => ConversationDTO)[] = [

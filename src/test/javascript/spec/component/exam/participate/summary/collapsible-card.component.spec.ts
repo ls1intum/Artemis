@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card.component';
+import { CollapsibleCardComponent } from 'app/exam/overview/summary/collapsible-card/collapsible-card.component';
 import { By } from '@angular/platform-browser';
 
 let fixture: ComponentFixture<CollapsibleCardComponent>;

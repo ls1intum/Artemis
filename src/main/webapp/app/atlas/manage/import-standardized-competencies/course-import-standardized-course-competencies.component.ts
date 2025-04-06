@@ -18,9 +18,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { TranslateService } from '@ngx-translate/core';
 import { SortService } from 'app/shared/service/sort.service';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 

@@ -4,7 +4,7 @@ import { isEmpty, take } from 'rxjs/operators';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';

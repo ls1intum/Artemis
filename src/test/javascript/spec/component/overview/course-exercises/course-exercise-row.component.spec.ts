@@ -16,23 +16,23 @@ import { InitializationState } from 'app/exercise/shared/entities/participation/
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { RouterModule } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
-import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
-import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 
 @Component({
     template: '',

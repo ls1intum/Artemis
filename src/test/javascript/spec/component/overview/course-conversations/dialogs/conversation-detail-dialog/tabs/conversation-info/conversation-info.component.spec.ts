@@ -7,19 +7,19 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { channelRegex } from 'app/communication/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
+import { channelRegex } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConversationInfoComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
+import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

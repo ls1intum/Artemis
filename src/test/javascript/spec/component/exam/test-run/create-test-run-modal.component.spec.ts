@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { Course } from 'app/core/shared/entities/course.model';
-import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CreateTestRunModalComponent } from 'app/exam/manage/test-runs/create-test-run-modal/create-test-run-modal.component';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';

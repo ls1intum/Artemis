@@ -7,12 +7,12 @@ import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-ba
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

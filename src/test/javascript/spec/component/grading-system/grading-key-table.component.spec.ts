@@ -16,7 +16,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/assessment/shared/entities/bonus.model';
 import { HttpResponse } from '@angular/common/http';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { CourseScores, StudentScores } from 'app/core/course/manage/course-scores/course-scores';
 import { GradingKeyTableComponent } from 'app/assessment/manage/grading-system/grading-key/grading-key-table.component';

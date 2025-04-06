@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/example-submission.service';
+import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HeaderCourseComponent } from 'app/core/course/overview/header-course.component';
-import { Course } from 'app/core/shared/entities/course.model';
+import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';

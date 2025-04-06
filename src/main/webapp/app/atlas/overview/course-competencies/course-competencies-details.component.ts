@@ -23,9 +23,9 @@ import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseU
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { Course } from 'app/core/shared/entities/course.model';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -46,7 +46,7 @@ import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.compo
 @Component({
     selector: 'jhi-course-competencies-details',
     templateUrl: './course-competencies-details.component.html',
-    styleUrls: ['../../../core/course/overview/course-overview.scss'],
+    styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
     imports: [
         FireworksComponent,
         TranslateDirective,

@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import '@angular/localize/init';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';

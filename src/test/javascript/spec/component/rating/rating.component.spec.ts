@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
-import { RatingService } from 'app/assessment/shared/rating.service';
+import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { MockRatingService } from '../../helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';

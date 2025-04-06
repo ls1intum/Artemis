@@ -15,7 +15,7 @@ import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-st
 
 import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
 import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
-import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
+import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/services/exam-management-resolve.service';
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
@@ -24,7 +24,7 @@ import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/asse
 export const examManagementRoute: Routes = [
     {
         path: '',
-        loadComponent: () => import('app/exam/manage/exam-management.component').then((m) => m.ExamManagementComponent),
+        loadComponent: () => import('app/exam/manage/exam-management/exam-management.component').then((m) => m.ExamManagementComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.examManagement.title',
@@ -33,7 +33,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: 'new',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -46,7 +46,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/edit',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -68,7 +68,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId',
-        loadComponent: () => import('app/exam/manage/exams/exam-detail.component').then((m) => m.ExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/exams/detail/exam-detail.component').then((m) => m.ExamDetailComponent),
         resolve: {
             exam: ExamResolve,
         },
@@ -84,7 +84,7 @@ export const examManagementRoute: Routes = [
     // Exam Import
     {
         path: 'import/:examId',
-        loadComponent: () => import('app/exam/manage/exams/exam-update.component').then((m) => m.ExamUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exams/update/exam-update.component').then((m) => m.ExamUpdateComponent),
         resolve: {
             exam: ExamResolve,
             course: CourseResolve,
@@ -109,7 +109,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/new',
-        loadComponent: () => import('app/exam/manage/exercise-groups/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
         resolve: {
             exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
@@ -122,7 +122,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/exercise-groups/:exerciseGroupId/edit',
-        loadComponent: () => import('app/exam/manage/exercise-groups/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
+        loadComponent: () => import('app/exam/manage/exercise-groups/update/exercise-group-update.component').then((m) => m.ExerciseGroupUpdateComponent),
         resolve: {
             exam: ExamResolve,
             exerciseGroup: ExerciseGroupResolve,
@@ -214,7 +214,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs',
-        loadComponent: () => import('app/exam/manage/test-runs/test-run-management.component').then((m) => m.TestRunManagementComponent),
+        loadComponent: () => import('app/exam/manage/test-runs/test-run-management/test-run-management.component').then((m) => m.TestRunManagementComponent),
         resolve: {
             exam: ExamResolve,
         },
@@ -235,7 +235,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -247,7 +247,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component').then((m) => m.StudentExamDetailComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -259,7 +259,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/student-exams/:studentExamId/summary',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },
@@ -310,7 +310,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:testRunId/conduction',
-        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
+        loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.exam.title',
@@ -320,7 +320,7 @@ export const examManagementRoute: Routes = [
     },
     {
         path: ':examId/test-runs/:studentExamId/summary',
-        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
+        loadComponent: () => import('app/exam/manage/student-exams/student-exam-summary/student-exam-summary.component').then((m) => m.StudentExamSummaryComponent),
         resolve: {
             studentExam: StudentExamResolve,
         },

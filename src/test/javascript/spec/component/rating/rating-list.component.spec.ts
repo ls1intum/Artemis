@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingListComponent } from 'app/assessment/manage/rating/rating-list/rating-list.component';
-import { RatingService } from 'app/assessment/shared/rating.service';
+import { RatingService } from 'app/assessment/shared/services/rating.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { lastValueFrom, of } from 'rxjs';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';

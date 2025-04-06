@@ -13,7 +13,7 @@ import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.mode
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/atlas/manage/edit/edit-prerequisite.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';

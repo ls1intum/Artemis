@@ -3,7 +3,7 @@ import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/st
 
 import { AlertService } from 'app/shared/service/alert.service';
 
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

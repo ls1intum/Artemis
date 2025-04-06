@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseDetailLineChartComponent, SwitchTimeSpanDirection } from 'app/core/course/manage/detail/course-detail-line-chart.component';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

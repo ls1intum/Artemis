@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CourseManagementService } from '../../core/course/manage/course-management.service';
+import { CourseManagementService } from '../../core/course/manage/services/course-management.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
 import { AlertService } from 'app/shared/service/alert.service';

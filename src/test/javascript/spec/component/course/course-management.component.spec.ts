@@ -1,12 +1,12 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseManagementComponent } from 'app/core/course/manage/course-management.component';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementComponent } from 'app/core/course/manage/course-management/course-management.component';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
@@ -18,7 +18,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { ActivatedRoute } from '@angular/router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
-import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
+import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 
 describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;

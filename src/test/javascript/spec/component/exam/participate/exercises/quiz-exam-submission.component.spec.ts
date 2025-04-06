@@ -20,13 +20,13 @@ import { ShortAnswerQuestionComponent } from 'app/quiz/shared/questions/short-an
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideRouter } from '@angular/router';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
 import { TranslateDirective } from '../../../../../../../main/webapp/app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
 import { QuizConfiguration } from 'app/quiz/shared/entities/quiz-configuration.model';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 describe('QuizExamSubmissionComponent', () => {

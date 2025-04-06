@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyRelation, CompetencyRelationType, CourseCompetencyImportOptionsDTO, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
 
 describe('CourseCompetencyApiService', () => {

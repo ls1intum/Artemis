@@ -1,6 +1,6 @@
 import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';

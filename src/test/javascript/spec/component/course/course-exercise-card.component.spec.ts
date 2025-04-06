@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CourseExerciseCardComponent } from 'app/core/course/manage/course-exercise-card.component';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseExerciseCardComponent } from 'app/core/course/manage/course-exercise-card/course-exercise-card.component';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';

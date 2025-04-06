@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';

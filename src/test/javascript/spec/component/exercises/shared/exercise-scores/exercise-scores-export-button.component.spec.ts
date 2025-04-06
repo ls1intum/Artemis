@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/exercise-scores-export-button.component';
+import { ExerciseScoresExportButtonComponent } from 'app/exercise/exercise-scores/export-button/exercise-scores-export-button.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -9,7 +9,7 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';

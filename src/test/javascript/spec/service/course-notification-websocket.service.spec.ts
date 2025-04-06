@@ -3,11 +3,11 @@ import { CourseNotificationWebsocketService } from 'app/communication/course-not
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 
 describe('CourseNotificationWebsocketService', () => {
     let service: CourseNotificationWebsocketService;

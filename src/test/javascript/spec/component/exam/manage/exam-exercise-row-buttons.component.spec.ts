@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

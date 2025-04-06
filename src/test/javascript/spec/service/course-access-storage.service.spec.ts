@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { LocalStorageService, provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
-import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
+import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { MockLocalStorageService } from '../helpers/mocks/service/mock-local-storage.service';
 
 describe('CourseAccessStorageService', () => {

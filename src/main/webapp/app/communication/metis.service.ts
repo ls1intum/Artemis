@@ -30,7 +30,7 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { WebsocketService } from 'app/shared/service/websocket.service';

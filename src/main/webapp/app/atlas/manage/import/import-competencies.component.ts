@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, inject } from '@angular/core';
 import { ImportCourseCompetenciesComponent } from 'app/atlas/manage/import/import-course-competencies.component';
 import { onError } from 'app/shared/util/global.utils';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { CommonModule } from '@angular/common';

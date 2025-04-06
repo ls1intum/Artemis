@@ -10,7 +10,7 @@ import {
     stringifyIgnoringFields,
 } from 'app/shared/util/utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Range } from 'app/shared/util/utils';
 
 describe('Round', () => {

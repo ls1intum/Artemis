@@ -20,7 +20,7 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteUsersButtonComponent } from './delete-users-button.component';
+import { DeleteUsersButtonComponent } from './delete-users-button/delete-users-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { NgClass } from '@angular/common';
 import { SortDirective } from 'app/shared/sort/sort.directive';

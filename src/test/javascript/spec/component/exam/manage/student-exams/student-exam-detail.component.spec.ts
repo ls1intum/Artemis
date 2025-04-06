@@ -1,6 +1,6 @@
-import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail.component';
+import { StudentExamDetailComponent } from 'app/exam/manage/student-exams/student-exam-detail/student-exam-detail.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { MockProvider } from 'ng-mocks';

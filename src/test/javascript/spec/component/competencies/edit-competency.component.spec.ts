@@ -7,7 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { EditCompetencyComponent } from 'app/atlas/manage/edit/edit-competency.component';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { LectureService } from 'app/lecture/manage/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';

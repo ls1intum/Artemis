@@ -5,7 +5,7 @@ import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
@@ -14,7 +14,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';

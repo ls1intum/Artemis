@@ -4,7 +4,7 @@ import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../..
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/channel.service';
 import { GroupChatService } from 'app/communication/conversations/group-chat.service';
@@ -14,12 +14,12 @@ import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conv
 import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations/generic-confirmation-dialog/generic-confirmation-dialog.component';
-import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations/other/conversation.util';
+import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import * as ConversationPermissionUtils from 'app/communication/conversations/conversation-permissions.utils';
 import { input, runInInjectionContext } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ConversationSettingsComponent } from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
+import { ConversationSettingsComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-settings/conversation-settings.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 

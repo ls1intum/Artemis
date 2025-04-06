@@ -6,7 +6,7 @@ import { TutorialGroupRowButtonsComponent } from 'app/tutorialgroup/manage/tutor
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';

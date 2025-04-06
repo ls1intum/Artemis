@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
 import { PatternMatch, PostingContentPart, ReferenceType } from './metis.util';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { isCommunicationEnabled } from 'app/core/shared/entities/course.model';
+import { isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from '../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';

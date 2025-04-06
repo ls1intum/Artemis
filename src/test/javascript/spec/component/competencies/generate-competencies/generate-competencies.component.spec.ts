@@ -7,7 +7,7 @@ import { FormControl, FormGroup } from '@angular/forms';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -23,8 +23,8 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/atlas/manage/generate-competencies/course-description-form.component';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

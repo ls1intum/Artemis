@@ -13,7 +13,7 @@ import {
     canRemoveUsersFromConversation,
     canRevokeChannelModeratorRole,
 } from 'app/communication/conversations/conversation-permissions.utils';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 describe('ConversationPermissionUtils', () => {

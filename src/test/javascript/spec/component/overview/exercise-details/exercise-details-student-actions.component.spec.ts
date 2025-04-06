@@ -14,7 +14,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/exercise-details-student-actions.component';
+import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';

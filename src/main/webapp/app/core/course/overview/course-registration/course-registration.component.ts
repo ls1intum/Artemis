@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { Course } from 'app/core/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { faCheckCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { ASC, DESC, SORT } from 'app/shared/constants/pagination.constants';
 import { ActivatedRoute, Router } from '@angular/router';

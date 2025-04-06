@@ -3,7 +3,7 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { GradingKeyOverviewComponent } from 'app/assessment/manage/grading-system/grading-key-overview/grading-key-overview.component';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';

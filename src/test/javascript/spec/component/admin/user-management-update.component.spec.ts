@@ -3,7 +3,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of, Subject } from 'rxjs';
-import { UserManagementUpdateComponent } from 'app/core/admin/user-management/user-management-update.component';
+import { UserManagementUpdateComponent } from 'app/core/admin/user-management/update/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';

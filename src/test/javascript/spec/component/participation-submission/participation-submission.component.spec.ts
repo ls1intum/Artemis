@@ -11,7 +11,7 @@ import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';

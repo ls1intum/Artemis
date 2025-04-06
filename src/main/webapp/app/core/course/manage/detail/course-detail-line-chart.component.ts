@@ -1,10 +1,10 @@
 import { Component, Input, OnChanges, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { CourseManagementService } from '../course-management.service';
+import { CourseManagementService } from '../services/course-management.service';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faArrowLeft, faArrowRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import * as shape from 'd3-shape';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -16,7 +16,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ActiveStudentsChart } from 'app/core/course/manage/active-students-chart';
+import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-students-chart';
 
 export enum SwitchTimeSpanDirection {
     LEFT,

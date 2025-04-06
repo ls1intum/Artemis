@@ -6,12 +6,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamParticipationCoverComponent } from 'app/exam/overview/exam-cover/exam-participation-cover.component';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
 import { ExamTimerComponent } from 'app/exam/overview/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -23,13 +23,13 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
-import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/exam-live-events-button.component';
+import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;

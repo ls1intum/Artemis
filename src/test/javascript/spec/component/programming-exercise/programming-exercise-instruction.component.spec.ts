@@ -7,7 +7,7 @@ import { DebugElement, VERSION } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import dayjs from 'dayjs/esm';
 import { of, Subscription, throwError } from 'rxjs';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import {
     problemStatementBubbleSortNotExecutedHtml,

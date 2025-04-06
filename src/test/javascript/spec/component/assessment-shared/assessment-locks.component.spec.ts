@@ -16,11 +16,11 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming/manage
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { SubmissionExerciseType } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AssessmentLocksComponent', () => {

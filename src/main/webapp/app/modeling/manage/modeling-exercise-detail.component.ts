@@ -13,7 +13,7 @@ import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercis
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import dayjs from 'dayjs/esm';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';

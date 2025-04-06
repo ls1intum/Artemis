@@ -6,7 +6,7 @@ import { CourseUsersSelectorComponent } from 'app/communication/course-users-sel
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from '../../../../../../../../../main/webapp/app/communication/shared/entities/conversation/group-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../helpers/conversationExampleModels';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { By } from '@angular/platform-browser';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -14,7 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import {
     AddUsersFormData,
     ConversationAddUsersFormComponent,
-} from 'app/communication/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
+} from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 examples.forEach((activeConversation) => {

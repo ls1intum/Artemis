@@ -9,7 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { MockExerciseService } from '../../helpers/mocks/service/mock-exercise.service';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { take } from 'rxjs/operators';
 
 describe('CourseCompetencyService', () => {

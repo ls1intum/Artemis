@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course, isMessagingEnabled } from 'app/core/shared/entities/course.model';
+import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';

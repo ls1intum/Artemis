@@ -6,8 +6,8 @@ import { ExamNavigationSidebarComponent } from 'app/exam/overview/exam-navigatio
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

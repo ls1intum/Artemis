@@ -12,7 +12,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { captureException } from '@sentry/angular';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CollapsibleCardComponent } from '../collapsible-card.component';
+import { CollapsibleCardComponent } from '../collapsible-card/collapsible-card.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NoDataComponent } from 'app/shared/no-data-component';

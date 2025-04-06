@@ -9,7 +9,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 
 @Component({
     selector: 'jhi-exam-exercise-import',

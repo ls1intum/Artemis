@@ -1,5 +1,5 @@
 import { Component, effect, input } from '@angular/core';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
 @Component({
     selector: 'jhi-overview-lti-course-card',
     templateUrl: './lti-course-card.component.html',
-    styleUrls: ['../../core/course/overview/course-card.scss'],
+    styleUrls: ['../../core/course/overview/course-card/course-card.scss'],
     imports: [RouterLink, NgStyle, SecuredImageComponent],
 })
 export class LtiCourseCardComponent {

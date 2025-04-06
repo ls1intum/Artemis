@@ -4,7 +4,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject } from 'rxjs';
-import { FeedbackService } from 'app/exercise/feedback/feedback.service';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';

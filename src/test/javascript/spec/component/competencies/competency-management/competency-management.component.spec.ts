@@ -23,7 +23,7 @@ import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-setti
 import { PROFILE_IRIS } from 'app/app.constants';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
-import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,

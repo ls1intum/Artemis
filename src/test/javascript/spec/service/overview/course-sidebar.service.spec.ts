@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 
 describe('CourseSidebarService', () => {
     let service: CourseSidebarService;

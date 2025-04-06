@@ -12,7 +12,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 @Component({
     selector: 'jhi-problem-statement',
     templateUrl: './problem-statement.component.html',
-    styleUrls: ['../../course-overview.scss'],
+    styleUrls: ['../../course-overview/course-overview.scss'],
     imports: [ProgrammingExerciseInstructionComponent, TranslateDirective, HtmlForMarkdownPipe],
 })
 export class ProblemStatementComponent implements OnInit {

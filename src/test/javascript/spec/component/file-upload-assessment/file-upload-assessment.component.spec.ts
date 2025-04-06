@@ -11,7 +11,7 @@ import { FileUploadAssessmentComponent } from 'app/fileupload/manage/assess/file
 import { DebugElement } from '@angular/core';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { ComplaintService, EntityResponseType } from 'app/assessment/shared/complaint.service';
+import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';

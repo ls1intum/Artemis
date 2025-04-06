@@ -1,5 +1,5 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course, CourseForImportDTO } from 'app/core/shared/entities/course.model';
+import { Course, CourseForImportDTO } from 'app/core/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
 import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
@@ -12,7 +12,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/services/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {

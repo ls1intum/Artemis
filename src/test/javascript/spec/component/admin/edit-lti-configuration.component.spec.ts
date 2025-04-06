@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { EditLtiConfigurationComponent } from 'app/core/admin/lti-configuration/edit-lti-configuration.component';
+import { EditLtiConfigurationComponent } from 'app/core/admin/lti-configuration/edit/edit-lti-configuration.component';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';

@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
@@ -8,7 +8,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
