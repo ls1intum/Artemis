@@ -6,14 +6,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
-import { initializeDialog } from '../../../../../../../test/javascript/spec/component/overview/course-conversations/dialogs/dialog-test-helpers';
+} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { initializeDialog } from '../../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';

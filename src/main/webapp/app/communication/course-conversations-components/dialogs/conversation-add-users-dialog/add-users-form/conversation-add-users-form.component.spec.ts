@@ -5,10 +5,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from '../../../../shared/entities/conversation/group-chat.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-} from '../../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { By } from '@angular/platform-browser';

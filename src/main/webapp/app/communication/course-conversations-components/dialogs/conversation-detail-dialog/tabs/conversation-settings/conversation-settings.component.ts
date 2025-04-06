@@ -15,8 +15,8 @@ import { catchError } from 'rxjs/operators';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ChannelService } from 'app/communication/conversations/channel.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import {
     canChangeChannelArchivalState,
     canChangeChannelPrivacyState,

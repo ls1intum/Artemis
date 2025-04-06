@@ -8,11 +8,11 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { TutorialGroupsConfigurationFormStubComponent } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/stubs/tutorial-groups-configuration-form-sub.component';
+import { TutorialGroupsConfigurationFormStubComponent } from '../../../../../../../../test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-groups-configuration-form-sub.component';
 import {
     generateExampleTutorialGroupsConfiguration,
     tutorialsGroupsConfigurationToFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';

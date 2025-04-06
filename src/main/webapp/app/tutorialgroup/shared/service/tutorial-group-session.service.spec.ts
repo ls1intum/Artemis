@@ -3,7 +3,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroupSession } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupSessionService', () => {

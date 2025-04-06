@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
-import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/component/programming-exercise/update-components/programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/helpers/mocks/programming-exercise-creation-config-mock';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExerciseDifficultyComponent } from 'app/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';

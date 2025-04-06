@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { mockSettings } from '../../../../../../../test/javascript/spec/component/iris/settings/mock-settings';
+import { mockSettings } from '../../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Iris Settings Service', () => {

@@ -11,14 +11,14 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/quiz/manage/apollon-diagrams/detail/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLanguageHelper, MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import * as testClassDiagram from '../../../../../../../test/javascript/spec/util/modeling/test-models/class-diagram';
+import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ElementRef } from '@angular/core';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements

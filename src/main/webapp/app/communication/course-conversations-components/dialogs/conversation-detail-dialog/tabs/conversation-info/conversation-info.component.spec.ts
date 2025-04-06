@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+} from '../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';

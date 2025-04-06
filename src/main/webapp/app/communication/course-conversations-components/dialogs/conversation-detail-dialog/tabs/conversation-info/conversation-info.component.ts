@@ -21,8 +21,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/communication/conversations/conversation-permissions.utils';
-import { ChannelService } from 'app/communication/conversations/channel.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 
 @Component({
     selector: 'jhi-conversation-info',

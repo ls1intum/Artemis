@@ -4,8 +4,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -13,7 +13,7 @@ import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+} from '../../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { User } from 'app/core/user/user.model';

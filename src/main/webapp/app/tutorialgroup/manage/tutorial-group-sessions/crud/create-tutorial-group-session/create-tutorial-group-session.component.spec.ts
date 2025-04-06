@@ -10,9 +10,9 @@ import {
     formDataToTutorialGroupSessionDTO,
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupSessionExampleModels';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';

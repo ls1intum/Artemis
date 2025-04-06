@@ -5,7 +5,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { mockVariants } from '../../../../../../../../test/javascript/spec/component/iris/settings/mock-settings';
+import { mockVariants } from '../../../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
 import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';

@@ -14,9 +14,9 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AddUsersFormData, ConversationAddUsersFormComponent } from './add-users-form/conversation-add-users-form.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelService } from 'app/communication/conversations/channel.service';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { MAX_GROUP_CHAT_PARTICIPANTS } from 'app/communication/conversations/conversation-settings';
 
 @Component({

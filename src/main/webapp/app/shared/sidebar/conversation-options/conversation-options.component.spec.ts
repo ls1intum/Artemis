@@ -6,24 +6,20 @@ import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-op
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
 import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';

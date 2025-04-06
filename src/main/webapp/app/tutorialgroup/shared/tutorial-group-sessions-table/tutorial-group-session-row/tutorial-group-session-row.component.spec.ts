@@ -1,13 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 
-import { generateExampleTutorialGroupSession } from '../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { generateExampleTutorialGroup } from '../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { AlertService } from 'app/shared/service/alert.service';

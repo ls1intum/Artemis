@@ -5,7 +5,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { TutorialGroupRowButtonsComponent } from 'app/tutorialgroup/manage/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsManagementComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';

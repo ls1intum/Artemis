@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
-import { SavedPostService } from 'app/communication/saved-post.service';
+import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { EMPTY, of, throwError } from 'rxjs';
 import { MockComponent, MockDirective } from 'ng-mocks';

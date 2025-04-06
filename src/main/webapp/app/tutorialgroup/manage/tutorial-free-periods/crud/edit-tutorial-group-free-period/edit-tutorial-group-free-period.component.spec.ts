@@ -12,11 +12,11 @@ import {
     formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupFreePeriodExampleModel';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { generateExampleTutorialGroupsConfiguration } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfiguration } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupFreePeriodFormComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';

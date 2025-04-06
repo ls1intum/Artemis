@@ -13,7 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 
 @Component({
     selector: 'jhi-account-information',

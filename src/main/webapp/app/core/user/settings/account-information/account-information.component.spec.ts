@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountInformationComponent } from 'app/core/user/settings/account-information/account-information.component';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 
 describe('AccountInformationComponent', () => {
     let fixture: ComponentFixture<AccountInformationComponent>;

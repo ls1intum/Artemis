@@ -10,7 +10,7 @@ import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/programmi
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/component/programming-exercise/update-components/programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/helpers/mocks/programming-exercise-creation-config-mock';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { PROFILE_AEOLUS } from 'app/app.constants';
 import { Observable } from 'rxjs';

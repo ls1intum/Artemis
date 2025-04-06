@@ -13,7 +13,7 @@ import { By } from '@angular/platform-browser';
 import {
     generateExampleTutorialGroup,
     tutorialGroupToTutorialGroupFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { TutorialGroupFormComponent } from '../tutorial-group-form/tutorial-group-form.component';
 import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';

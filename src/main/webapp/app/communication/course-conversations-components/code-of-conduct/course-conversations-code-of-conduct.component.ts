@@ -6,7 +6,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 @Component({
     selector: 'jhi-course-conversations-code-of-conduct',

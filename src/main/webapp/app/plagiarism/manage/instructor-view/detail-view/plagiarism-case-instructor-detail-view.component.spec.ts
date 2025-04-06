@@ -9,7 +9,7 @@ import { Observable, ReplaySubject, of } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { Post } from 'app/communication/shared/entities/post.model';

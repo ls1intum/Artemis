@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-competencies.component';
-import { StandardizedCompetencyFilterStubComponent } from '../../../../../../test/javascript/spec/component/standardized-competencies/filter/standardized-competency-filter-stub.component';
+import { StandardizedCompetencyFilterStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/atlas/standardized-competency-filter-stub.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { StandardizedCompetencyDetailStubComponent } from '../../../../../../test/javascript/spec/component/standardized-competencies/detail/standardized-competency-detail-stub.component';
+import { StandardizedCompetencyDetailStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/atlas/standardized-competency-detail-stub.component';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
@@ -12,7 +12,7 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { KnowledgeAreaTreeStubComponent } from '../../../../../../test/javascript/spec/component/standardized-competencies/knowledge-area-tree-stub.component';
+import { KnowledgeAreaTreeStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/atlas/knowledge-area-tree-stub.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

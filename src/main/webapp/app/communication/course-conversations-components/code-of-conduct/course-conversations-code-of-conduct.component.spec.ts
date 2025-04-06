@@ -4,7 +4,7 @@ import { CourseConversationsCodeOfConductComponent } from 'app/communication/cou
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';

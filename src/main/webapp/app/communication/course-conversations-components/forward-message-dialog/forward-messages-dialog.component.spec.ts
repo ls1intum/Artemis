@@ -13,7 +13,7 @@ import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpe
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

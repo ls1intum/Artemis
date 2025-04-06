@@ -4,7 +4,7 @@ import { TutorialGroupsCourseInformationComponent } from 'app/tutorialgroup/mana
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Component, Input } from '@angular/core';
 import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

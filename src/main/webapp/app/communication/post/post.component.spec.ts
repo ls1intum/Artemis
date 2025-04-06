@@ -6,9 +6,9 @@ import { PostComponent } from 'app/communication/post/post.component';
 import { getElement } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, PageType } from 'app/communication/metis.util';
 import { MockTranslateService, TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
@@ -25,8 +25,8 @@ import {
 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
@@ -48,7 +48,7 @@ import { MockAccountService } from '../../../../../test/javascript/spec/helpers/
 import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { MockConversationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 

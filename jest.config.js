@@ -115,7 +115,9 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts'],
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
+    ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
         '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',

@@ -13,11 +13,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { CompetencyCardStubComponent } from '../../../../../../test/javascript/spec/component/competencies/competency-card-stub.component';
+import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 class MockActivatedRoute {

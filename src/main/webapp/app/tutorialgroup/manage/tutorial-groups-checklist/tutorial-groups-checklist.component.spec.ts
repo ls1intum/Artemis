@@ -11,10 +11,10 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { mockedActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/loading-indicator-container-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { generateExampleTutorialGroupsConfiguration } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfiguration } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 

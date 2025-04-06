@@ -5,14 +5,14 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { mockSettings } from '../../../../../../test/javascript/spec/component/iris/settings/mock-settings';
+import { mockSettings } from '../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
 import { of, throwError } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { MetisService } from 'app/communication/metis.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisService } from 'app/communication/service/metis.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 

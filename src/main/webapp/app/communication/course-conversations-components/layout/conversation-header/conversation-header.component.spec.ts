@@ -6,20 +6,20 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -30,7 +30,7 @@ import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpe
 import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
 import { MockMetisConversationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import {
     ConversationDetailDialogComponent,

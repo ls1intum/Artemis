@@ -6,7 +6,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
-import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';

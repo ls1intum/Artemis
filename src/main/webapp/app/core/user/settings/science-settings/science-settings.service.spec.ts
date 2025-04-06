@@ -9,7 +9,7 @@ import { ProfileService } from '../../../layouts/profiles/shared/profile.service
 import { MODULE_FEATURE_ATLAS } from '../../../../app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { Setting } from 'app/core/user/settings/user-settings.model';
 

@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
-import { PostService } from 'app/communication/post.service';
+import { PostService } from 'app/communication/service/post.service';
 import { MockPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
-import { AnswerPostService } from 'app/communication/answer-post.service';
+import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { MockAnswerPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';

@@ -7,9 +7,9 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { BehaviorSubject, of } from 'rxjs';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -17,7 +17,7 @@ import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { Directive, ElementRef, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';

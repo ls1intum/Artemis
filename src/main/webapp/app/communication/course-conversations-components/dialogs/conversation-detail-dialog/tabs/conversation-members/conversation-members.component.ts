@@ -18,7 +18,7 @@ import { ConversationMemberRowComponent } from './conversation-member-row/conver
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 
 interface SearchQuery {

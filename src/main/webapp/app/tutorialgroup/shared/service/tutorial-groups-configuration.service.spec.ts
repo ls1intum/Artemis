@@ -2,7 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroupsConfiguration } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfiguration } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { provideHttpClient } from '@angular/common/http';

@@ -61,7 +61,7 @@ import { CourseNotificationOverviewComponent } from 'app/communication/course-no
 import { CourseExercisesComponent } from '../course-exercises/course-exercises.component';
 import { CourseUnenrollmentModalComponent } from '../course-unenrollment-modal/course-unenrollment-modal.component';
 import { sortCourses } from 'app/shared/util/course.util';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';

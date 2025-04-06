@@ -14,7 +14,7 @@ import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/tu
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { LoadingIndicatorContainerStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/loading-indicator-container-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/shared/loading-indicator-container-stub.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

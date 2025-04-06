@@ -31,6 +31,7 @@ describe('UsersImportDialogComponent', () => {
     const course: Course = { id: 1 };
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
 
+    const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [FormsModule],
@@ -128,7 +129,6 @@ describe('UsersImportDialogComponent', () => {
     });
 
     describe('should read students from csv files', () => {
-        const testDir = path.join(__dirname, '../../../../util/user-import');
         const testFiles = fs.readdirSync(testDir).filter((testFile) => testFile.localeCompare('UserImportEmailOnlySampleFile.csv') !== 0);
 
         test.each(testFiles)('reading from %s', async (testFileName: string) => {
@@ -163,8 +163,6 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should read students from csv with email only', async () => {
-        const testDir = path.join(__dirname, '../../../../util/user-import');
-
         const pathToTestFile = path.join(testDir, 'UserImportEmailOnlySampleFile.csv');
         const csv = fs.readFileSync(pathToTestFile, 'utf-8');
         const event = { target: { files: [csv] } };
@@ -185,7 +183,7 @@ describe('UsersImportDialogComponent', () => {
     });
 
     it('should read students from csv with room/seat information', async () => {
-        const testDir = path.join(__dirname, '../../../../util/exam-user-import');
+        const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'exam-user-import');
         component.examUserMode = true;
 
         const pathToTestFile = path.join(testDir, 'UserImportWithRoomAndSeatInfo.csv');

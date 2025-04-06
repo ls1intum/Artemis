@@ -12,7 +12,7 @@ import { EditTutorialGroupComponent } from 'app/tutorialgroup/manage/tutorial-gr
 import {
     generateExampleTutorialGroup,
     tutorialGroupToTutorialGroupFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import '@angular/localize/init';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';

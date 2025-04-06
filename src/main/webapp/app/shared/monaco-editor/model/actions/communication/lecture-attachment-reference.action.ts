@@ -1,5 +1,5 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';

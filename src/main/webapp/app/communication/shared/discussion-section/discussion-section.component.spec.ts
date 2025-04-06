@@ -2,12 +2,12 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
-import { AnswerPostService } from 'app/communication/answer-post.service';
+import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { MockAnswerPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
-import { PostService } from 'app/communication/post.service';
+import { PostService } from 'app/communication/service/post.service';
 import { MockPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
@@ -33,13 +33,13 @@ import {
     metisPostTechSupport,
 } from '../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

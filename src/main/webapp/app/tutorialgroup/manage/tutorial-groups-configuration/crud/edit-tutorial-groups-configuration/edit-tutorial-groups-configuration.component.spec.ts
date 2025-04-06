@@ -12,7 +12,7 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
 import {
     generateExampleTutorialGroupsConfiguration,
     tutorialsGroupsConfigurationToFormData,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';

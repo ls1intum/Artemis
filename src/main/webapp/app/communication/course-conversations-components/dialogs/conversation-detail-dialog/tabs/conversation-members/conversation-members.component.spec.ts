@@ -9,14 +9,14 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import {
     generateExampleChannelDTO,
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
-} from '../../../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+} from '../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

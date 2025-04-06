@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/core/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { KnowledgeAreaTreeStubComponent } from '../../../../../../../test/javascript/spec/component/standardized-competencies/knowledge-area-tree-stub.component';
+import { KnowledgeAreaTreeStubComponent } from '../../../../../../../test/javascript/spec/helpers/stubs/atlas/knowledge-area-tree-stub.component';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';

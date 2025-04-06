@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { CourseWideSearchComponent, CourseWideSearchConfig } from 'app/communication/course-conversations-components/course-wide-search/course-wide-search.component';
-import { MetisService } from 'app/communication/metis.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisService } from 'app/communication/service/metis.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

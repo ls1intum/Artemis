@@ -12,7 +12,7 @@ import {
 import {
     generateClickSubmitButton,
     generateTestFormIsInvalidOnMissingRequiredProperty,
-} from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupFormsUtils';
+} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../../../../test/javascript/spec/helpers/on-push-change-detection.helper';
 import { Course } from 'app/core/course/shared/entities/course.model';

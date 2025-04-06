@@ -4,7 +4,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { CourseUsersSelectorComponent } from 'app/communication/course-users-selector/course-users-selector.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { initializeDialog } from '../../../../../../test/javascript/spec/component/overview/course-conversations/dialogs/dialog-test-helpers';
+import { initializeDialog } from '../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

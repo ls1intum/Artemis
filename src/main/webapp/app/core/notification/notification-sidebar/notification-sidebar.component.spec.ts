@@ -30,8 +30,8 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
 import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
-import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/service/notification-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 
 class MockFeatureToggleService implements Partial<FeatureToggleService> {
     private featureToggles = new Map<FeatureToggle, boolean>();

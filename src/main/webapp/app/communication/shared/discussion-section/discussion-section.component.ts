@@ -5,12 +5,12 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DisplayPriority, PageType, PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { Subject, combineLatest, map, takeUntil } from 'rxjs';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { HttpResponse } from '@angular/common/http';
 import { faArrowLeft, faChevronLeft, faChevronRight, faGripLinesVertical, faLongArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { CourseDiscussionDirective } from 'app/communication/course-discussion.directive';
+import { CourseDiscussionDirective } from 'app/communication/directive/course-discussion.directive';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { Channel, ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -22,7 +22,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 
 @Component({
     selector: 'jhi-discussion-section',

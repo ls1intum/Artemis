@@ -3,7 +3,7 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { generateExampleTutorialGroup } from '../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { RouterModule } from '@angular/router';
 import { TutorialGroupRowComponent } from 'app/tutorialgroup/shared/tutorial-groups-table/tutorial-group-row/tutorial-group-row.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';

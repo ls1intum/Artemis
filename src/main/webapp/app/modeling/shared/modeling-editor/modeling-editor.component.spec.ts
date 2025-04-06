@@ -8,14 +8,14 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import * as testClassDiagram from '../../../../../../test/javascript/spec/util/modeling/test-models/class-diagram';
+import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guided-tour-task.model';
 

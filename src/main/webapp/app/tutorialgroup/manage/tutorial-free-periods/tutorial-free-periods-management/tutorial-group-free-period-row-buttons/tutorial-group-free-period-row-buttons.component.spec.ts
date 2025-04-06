@@ -8,8 +8,8 @@ import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
-import { generateExampleTutorialGroupsConfiguration } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupsConfigurationExampleModels';
-import { generateExampleTutorialGroupFreePeriod } from '../../../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupFreePeriodExampleModel';
+import { generateExampleTutorialGroupsConfiguration } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupFreePeriod } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFreePeriodExampleModel';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

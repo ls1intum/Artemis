@@ -10,7 +10,7 @@ import { Renderer2 } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/component/programming-exercise/update-components/programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/helpers/mocks/programming-exercise-creation-config-mock';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { PROFILE_LOCALCI } from 'app/app.constants';

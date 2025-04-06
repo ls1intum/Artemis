@@ -9,7 +9,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs';
 import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { DummyPagingService } from '../../../../../test/javascript/spec/component/manage/dummy-paging-service';
+import { DummyPagingService } from '../../../../../test/javascript/spec/helpers/mocks/service/dummy-paging-service';
 
 describe('Exercise Paging Service', () => {
     let service: ExercisePagingService<any>;

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { mockSettings } from '../../../../../../../../test/javascript/spec/component/iris/settings/mock-settings';
+import { mockSettings } from '../../../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';

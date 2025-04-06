@@ -16,7 +16,7 @@ import { ConversationSettingsComponent } from './tabs/conversation-settings/conv
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 
 export enum ConversationDetailTabs {
     MEMBERS = 'members',

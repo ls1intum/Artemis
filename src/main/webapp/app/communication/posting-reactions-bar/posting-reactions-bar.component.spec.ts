@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement } from 'test/helpers/utils/general.utils';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ReactionService } from 'app/communication/reaction.service';
+import { ReactionService } from 'app/communication/service/reaction.service';
 import { MockReactionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
@@ -43,7 +43,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { of } from 'rxjs';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';

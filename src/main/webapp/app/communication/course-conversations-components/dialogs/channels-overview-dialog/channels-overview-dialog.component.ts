@@ -10,7 +10,7 @@ import { AbstractDialogComponent } from 'app/communication/course-conversations-
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { ChannelItemComponent } from './channel-item/channel-item.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';

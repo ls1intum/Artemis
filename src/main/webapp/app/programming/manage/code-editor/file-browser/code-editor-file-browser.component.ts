@@ -17,7 +17,7 @@ import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-
 import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
-import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/treeview/tree-view.component';
+import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import {

@@ -5,7 +5,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of } from 'rxjs';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { mockSettings } from '../../../../../../../test/javascript/spec/component/iris/settings/mock-settings';
+import { mockSettings } from '../../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
 import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { By } from '@angular/platform-browser';

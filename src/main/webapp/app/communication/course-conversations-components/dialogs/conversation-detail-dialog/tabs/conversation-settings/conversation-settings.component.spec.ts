@@ -1,16 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-} from '../../../../../../../../../test/javascript/spec/component/overview/course-conversations/helpers/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO } from '../../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal, NgbModalOptions, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ChannelService } from 'app/communication/conversations/channel.service';
-import { GroupChatService } from 'app/communication/conversations/group-chat.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

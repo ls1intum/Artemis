@@ -1,13 +1,13 @@
 import { Component, Input, QueryList, SimpleChange, SimpleChanges, ViewChild, ViewChildren } from '@angular/core';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TutorialGroupSessionRowStubComponent } from '../../../../../../test/javascript/spec/component/tutorial-groups/stubs/tutorial-group-sessions-table-stub.component';
+import { TutorialGroupSessionRowStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-group-sessions-table-stub.component';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { generateExampleTutorialGroupSession } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/component/tutorial-groups/helpers/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';

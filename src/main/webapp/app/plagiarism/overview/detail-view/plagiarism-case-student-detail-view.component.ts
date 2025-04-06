@@ -7,7 +7,7 @@ import { ActivatedRoute, Params, RouterLink } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { getCourseFromExercise, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subscription, combineLatest } from 'rxjs';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PageType } from 'app/communication/metis.util';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
