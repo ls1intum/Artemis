@@ -914,6 +914,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(receivedOnlyParticipation.getSubmissions()).isEmpty();
         assertThat(receivedOnlyParticipation.getSubmissionCount()).isZero();
 
+        // TODO jfr what we expect really? results are of course empty if no submissions see comments above
         assertThat(receivedParticipationWithResult.getResults()).containsExactlyInAnyOrder(result2, result3);
         assertThat(receivedParticipationWithResult.getSubmissions()).isEmpty();
         assertThat(receivedParticipationWithResult.getSubmissionCount()).isEqualTo(1);
@@ -1592,6 +1593,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         var actualParticipation = request.get("/api/exercise/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         var actualResults = actualParticipation.getResults();
+        // TODO jfr what we expect really? results are of course empty if no submissions see also comments above
         assertThat(actualResults).hasSize(1);
 
         var actualSubmission = (QuizSubmission) actualResults.stream().findFirst().get().getSubmission();
