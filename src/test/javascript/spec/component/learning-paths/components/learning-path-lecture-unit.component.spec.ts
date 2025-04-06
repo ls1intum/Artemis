@@ -22,7 +22,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
+import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
 
 describe('LearningPathLectureUnitComponent', () => {

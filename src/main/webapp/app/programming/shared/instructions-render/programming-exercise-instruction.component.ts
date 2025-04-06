@@ -26,7 +26,7 @@ import { TaskArray } from 'app/programming/shared/instructions-render/task/progr
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { ResultService } from 'app/exercise/result/result.service';
-import { problemStatementHasChanged } from 'app/exercise/exercise.utils';
+import { problemStatementHasChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { findLatestResult } from 'app/shared/util/utils';

@@ -1,5 +1,5 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs.component';
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective } from 'ng-mocks';

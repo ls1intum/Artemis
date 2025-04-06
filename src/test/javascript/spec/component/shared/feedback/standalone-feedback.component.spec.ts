@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { StandaloneFeedbackComponent } from 'app/exercise/feedback/standalone-feedback/standalone-feedback.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';

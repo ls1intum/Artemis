@@ -15,7 +15,7 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { RepositoryFileService } from 'app/exercise/result/repository.service';
+import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom, timeout } from 'rxjs';

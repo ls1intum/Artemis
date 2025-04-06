@@ -11,7 +11,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
 import { isExamExercise } from 'app/shared/util/utils';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';

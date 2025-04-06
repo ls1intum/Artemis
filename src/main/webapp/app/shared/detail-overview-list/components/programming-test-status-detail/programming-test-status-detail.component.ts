@@ -3,7 +3,7 @@ import type { ProgrammingTestStatusDetail } from 'app/shared/detail-overview-lis
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 

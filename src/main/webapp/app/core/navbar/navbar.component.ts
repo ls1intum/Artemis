@@ -15,7 +15,7 @@ import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkAct
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';

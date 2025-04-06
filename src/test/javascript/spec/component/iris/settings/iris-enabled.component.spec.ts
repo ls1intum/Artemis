@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { mockSettings } from './mock-settings';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
-import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled.component';
+import { IrisEnabledComponent } from 'app/iris/manage/settings/shared/iris-enabled/iris-enabled.component';
 import { MockTranslateService, TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';

@@ -12,10 +12,10 @@ import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manag
 import { ProgrammingExerciseComponent } from 'app/programming/manage/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/quiz-exercise.component';
-import { ExerciseCreateButtonsComponent } from 'app/exercise/manage/exercise-create-buttons.component';
+import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/text-exercise.component';
-import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise.component';
+import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

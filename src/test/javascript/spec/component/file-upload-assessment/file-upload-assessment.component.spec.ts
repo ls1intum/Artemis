@@ -17,7 +17,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { AssessmentAfterComplaint, ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';

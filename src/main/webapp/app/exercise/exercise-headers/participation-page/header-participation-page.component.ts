@@ -4,7 +4,7 @@ import { Exercise, IncludedInOverallScore, getCourseFromExercise, getIcon } from
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass, NgStyle } from '@angular/common';

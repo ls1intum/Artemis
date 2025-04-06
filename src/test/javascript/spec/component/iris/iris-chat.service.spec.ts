@@ -1,9 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
-import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
-import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
-import { IrisStatusService } from 'app/iris/overview/iris-status.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
+import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
+import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockProvider } from 'ng-mocks';

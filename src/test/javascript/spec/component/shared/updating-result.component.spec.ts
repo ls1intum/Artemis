@@ -8,7 +8,7 @@ import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mo
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';

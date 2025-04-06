@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistics.component';
+import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { Subscription } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
@@ -24,7 +24,7 @@ import {
     getExerciseMarkdownSolution,
     getExerciseModeDetailSection,
     getExerciseProblemDetailSection,
-} from 'app/exercise/utils';
+} from 'app/exercise/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';

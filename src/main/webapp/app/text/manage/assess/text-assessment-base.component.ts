@@ -10,7 +10,7 @@ import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.se
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { captureException } from '@sentry/angular';
 

@@ -10,11 +10,11 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from '../../../helpers/sample/iris-sample-data';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { IrisWebsocketService } from 'app/iris/overview/iris-websocket.service';
-import { IrisStatusService } from 'app/iris/overview/iris-status.service';
+import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
+import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';

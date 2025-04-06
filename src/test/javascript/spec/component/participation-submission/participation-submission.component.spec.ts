@@ -16,11 +16,11 @@ import { ParticipationSubmissionComponent } from 'app/exercise/participation-sub
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
-import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';

@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
-import { getExerciseDueDate } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { finalize } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import dayjs from 'dayjs/esm';

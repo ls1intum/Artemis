@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { LocalVCGuard } from 'app/programming/shared/localvc-guard.service';
+import { LocalVCGuard } from 'app/programming/shared/services/localvc-guard.service';
 
 describe('LocalVCGuard', () => {
     let guard: LocalVCGuard;

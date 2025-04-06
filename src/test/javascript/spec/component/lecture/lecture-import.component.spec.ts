@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { LectureImportComponent } from 'app/lecture/manage/lecture-import.component';
+import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';

@@ -8,7 +8,7 @@ import {
     isResumeExerciseAvailable,
     isStartExerciseAvailable,
     isStartPracticeAvailable,
-} from 'app/exercise/exercise.utils';
+} from 'app/exercise/util/exercise.utils';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';

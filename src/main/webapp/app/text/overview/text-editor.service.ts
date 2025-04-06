@@ -4,7 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { francAll } from 'franc-min';
 import { Language } from 'app/core/course/shared/entities/course.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Injectable({ providedIn: 'root' })
 export class TextEditorService {

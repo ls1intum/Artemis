@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
-import { IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MAT_DIALOG_DATA, MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';

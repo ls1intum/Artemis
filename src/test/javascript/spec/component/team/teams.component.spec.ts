@@ -2,8 +2,8 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TeamsComponent } from 'app/exercise/team/teams.component';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { TeamsComponent } from 'app/exercise/team/teams/teams.component';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { mockTeams, MockTeamService } from '../../helpers/mocks/service/mock-team.service';

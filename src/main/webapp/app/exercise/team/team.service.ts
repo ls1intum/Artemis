@@ -11,7 +11,7 @@ import { downloadFile } from 'app/shared/util/download.util';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Observable, Subscription } from 'rxjs';
 import { filter, map, shareReplay } from 'rxjs/operators';
-import { EntityResponseType } from 'app/exercise/exercise.service';
+import { EntityResponseType } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 
 export type TeamResponse = HttpResponse<Team>;

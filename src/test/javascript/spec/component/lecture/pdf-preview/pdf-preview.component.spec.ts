@@ -3,7 +3,7 @@ import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { AttachmentService } from 'app/lecture/manage/attachment.service';
+import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';

@@ -16,7 +16,7 @@ import { debounceTime, distinctUntilChanged, map, skip } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -31,7 +31,7 @@ import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
-import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';

@@ -1,7 +1,7 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { MetisService } from 'app/communication/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';

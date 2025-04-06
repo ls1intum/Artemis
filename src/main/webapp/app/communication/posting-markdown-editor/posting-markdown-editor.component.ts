@@ -19,7 +19,7 @@ import {
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/metis.service';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/core/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';

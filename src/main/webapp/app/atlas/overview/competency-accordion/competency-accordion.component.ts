@@ -9,7 +9,7 @@ import { round } from 'app/shared/util/utils';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { LectureUnitType, lectureUnitIcons, lectureUnitTooltips } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { isStartPracticeAvailable } from 'app/exercise/exercise.utils';
+import { isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';

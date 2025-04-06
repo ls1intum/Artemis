@@ -3,8 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { irisExercise, mockClientMessage, mockConversation, mockServerMessage } from '../../helpers/sample/iris-sample-data';
 import { IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { IrisChatHttpService } from 'app/iris/overview/iris-chat-http.service';
-import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
+import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Iris Chat Http Service', () => {

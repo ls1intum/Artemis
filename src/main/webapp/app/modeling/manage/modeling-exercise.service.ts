@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { downloadStream } from 'app/shared/util/download.util';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;

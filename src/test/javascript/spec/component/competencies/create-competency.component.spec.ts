@@ -6,7 +6,7 @@ import { of } from 'rxjs';
 import { CreateCompetencyComponent } from 'app/atlas/manage/create/create-competency.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { HttpResponse } from '@angular/common/http';
 import { Competency } from 'app/atlas/shared/entities/competency.model';

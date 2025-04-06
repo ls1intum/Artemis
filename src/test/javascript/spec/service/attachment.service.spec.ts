@@ -8,7 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentService } from 'app/lecture/manage/attachment.service';
+import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 
 describe('Attachment Service', () => {

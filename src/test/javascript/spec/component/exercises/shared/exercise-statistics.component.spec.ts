@@ -6,7 +6,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/statistics.servic
 import { of } from 'rxjs';
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';

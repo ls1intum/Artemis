@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';

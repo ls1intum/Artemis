@@ -8,7 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { CourseCardComponent } from 'app/core/course/overview/course-card/course-card.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockDirective } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';

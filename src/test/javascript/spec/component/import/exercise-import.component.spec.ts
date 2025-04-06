@@ -11,7 +11,7 @@ import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercise/import/exercise-import.component';
-import { PagingService } from 'app/exercise/manage/paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { TextExercisePagingService } from 'app/text/manage/text-exercise/text-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -22,7 +22,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
+import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 

@@ -14,7 +14,7 @@ import { Submission } from 'app/exercise/shared/entities/submission/submission.m
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ExerciseScoresComponent, FilterProp } from 'app/exercise/exercise-scores/exercise-scores.component';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

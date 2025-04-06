@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
 import { MockProvider } from 'ng-mocks';
 import { TestBed } from '@angular/core/testing';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('FeedbackUtils', () => {
     let exerciseService: ExerciseService;

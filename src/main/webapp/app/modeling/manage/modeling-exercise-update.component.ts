@@ -8,7 +8,7 @@ import { PresentationScoreComponent } from 'app/exercise/presentation-score/pres
 import { GradingInstructionsDetailsComponent } from 'app/exercise/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
@@ -19,7 +19,7 @@ import { cloneDeep, isEmpty } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseUpdateWarningService } from 'app/exercise/exercise-update-warning/exercise-update-warning.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EditType, SaveExerciseCommand } from 'app/exercise/exercise.utils';
+import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { AlertService } from 'app/shared/service/alert.service';

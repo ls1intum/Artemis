@@ -10,13 +10,13 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { get } from 'lodash-es';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Submission, SubmissionExerciseType, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faFlag, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { AssessmentWarningComponent } from 'app/assessment/manage/assessment-warning/assessment-warning.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';

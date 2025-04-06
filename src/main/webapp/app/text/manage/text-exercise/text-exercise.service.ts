@@ -5,7 +5,7 @@ import { map } from 'rxjs/operators';
 
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseServicable, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseServicable, ExerciseService } from 'app/exercise/services/exercise.service';
 import { TextPlagiarismResult } from 'app/plagiarism/shared/entities/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/plagiarism/shared/entities/PlagiarismOptions';
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';

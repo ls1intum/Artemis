@@ -3,7 +3,7 @@ import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
-import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',

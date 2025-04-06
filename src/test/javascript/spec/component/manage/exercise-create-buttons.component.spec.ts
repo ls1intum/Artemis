@@ -9,7 +9,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { ExerciseCreateButtonsComponent } from 'app/exercise/manage/exercise-create-buttons.component';
+import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
 
 describe('Exercise Create Buttons Component', () => {
     let comp: ExerciseCreateButtonsComponent;

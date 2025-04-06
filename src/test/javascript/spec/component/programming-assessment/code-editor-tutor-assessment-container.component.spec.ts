@@ -11,7 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { RepositoryFileService } from 'app/exercise/result/repository.service';
+import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';

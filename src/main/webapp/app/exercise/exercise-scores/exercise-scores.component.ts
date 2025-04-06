@@ -9,12 +9,12 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { areManualResultsAllowed } from 'app/exercise/exercise.utils';
+import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -23,7 +23,7 @@ import { faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt,
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
@@ -34,7 +34,7 @@ import { ExternalSubmissionButtonComponent } from '../external-submission/extern
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export-button.component';
-import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/submission-export-button.component';
+import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ResultComponent } from '../result/result.component';

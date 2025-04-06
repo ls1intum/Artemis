@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { HeaderExercisePageWithDetailsComponent } from '../exercise-headers/with-details/header-exercise-page-with-details.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

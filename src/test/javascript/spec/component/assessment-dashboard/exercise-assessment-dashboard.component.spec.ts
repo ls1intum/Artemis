@@ -15,7 +15,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmissionService } from 'app/text/overview/text-submission.service';

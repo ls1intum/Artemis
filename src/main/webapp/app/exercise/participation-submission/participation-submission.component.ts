@@ -7,7 +7,7 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import dayjs from 'dayjs/esm';
@@ -25,7 +25,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming/manage
 import { HttpErrorResponse } from '@angular/common/http';
 import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';

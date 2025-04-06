@@ -13,8 +13,8 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';

@@ -13,7 +13,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
-import { hasExerciseChanged } from 'app/exercise/exercise.utils';
+import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 
 /**
  * This components provides two buttons to the instructor to interact with the students' submissions:

@@ -26,7 +26,7 @@ import { every } from 'lodash-es';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/shared/util/utils';
-import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';

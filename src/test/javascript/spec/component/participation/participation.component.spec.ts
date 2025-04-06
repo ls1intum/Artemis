@@ -13,7 +13,7 @@ import { User } from 'app/core/user/user.model';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/overview/programming-submission.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

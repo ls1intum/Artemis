@@ -11,7 +11,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission.component';
+import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
 import { createFileUploadSubmission, fileUploadParticipation, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';

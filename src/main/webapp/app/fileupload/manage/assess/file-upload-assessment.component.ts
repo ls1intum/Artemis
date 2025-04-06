@@ -20,7 +20,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult, getSubmissionResultById } from 'app/exercise/shared/entities/submission/submission.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { assessmentNavigateBack } from 'app/shared/util/navigate-back.util';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';

@@ -14,7 +14,7 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercise/result/result.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';

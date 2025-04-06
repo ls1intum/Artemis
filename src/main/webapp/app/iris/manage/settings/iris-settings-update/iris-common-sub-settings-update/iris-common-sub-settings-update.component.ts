@@ -9,7 +9,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';

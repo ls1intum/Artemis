@@ -7,7 +7,7 @@ import { FormsModule } from '@angular/forms';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs.component';
+import { ExerciseImportTabsComponent } from 'app/exercise/import/exercise-import-tabs/exercise-import-tabs.component';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 
 describe('ExerciseImportWrapperComponent', () => {

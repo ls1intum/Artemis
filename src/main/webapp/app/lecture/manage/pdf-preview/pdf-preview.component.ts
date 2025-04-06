@@ -1,6 +1,6 @@
 import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { AttachmentService } from 'app/lecture/manage/attachment.service';
+import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';

@@ -14,7 +14,7 @@ import { ProgrammingSubmissionService } from 'app/programming/overview/programmi
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultComponent } from 'app/exercise/result/result.component';

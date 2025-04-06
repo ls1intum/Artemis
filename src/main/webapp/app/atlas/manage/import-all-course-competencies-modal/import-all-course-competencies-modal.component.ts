@@ -2,7 +2,7 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { PagingService } from 'app/exercise/manage/paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { Column } from 'app/shared/import/import.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import {

@@ -7,7 +7,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { HttpResponse } from '@angular/common/http';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/exercise.service';
+import { ExampleSolutionInfo, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';

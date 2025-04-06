@@ -11,7 +11,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextBlock } from 'app/text/shared/entities/text-block.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
 import { State } from 'app/text/manage/example-text-submission/example-text-submission-state.model';

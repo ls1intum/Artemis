@@ -12,7 +12,7 @@ import { ComplaintResponseService } from 'app/assessment/manage/services/complai
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;

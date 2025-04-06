@@ -142,7 +142,7 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/fileupload/overview/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
+                loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',
@@ -171,7 +171,7 @@ export const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/lecture/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
                     },
                 ],
             },
