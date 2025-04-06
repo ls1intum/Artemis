@@ -75,7 +75,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     private Boolean submitted;
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.ENUM)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "jhi_type")
     private SubmissionType type;
 

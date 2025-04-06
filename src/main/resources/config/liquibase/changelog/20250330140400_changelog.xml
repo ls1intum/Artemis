@@ -8,10 +8,10 @@
             <dbms type="postgresql"/>
         </preConditions>
         <sql>
-            CREATE TYPE post_type_enum AS ENUM ('POST', 'ANSWER');
+            CREATE TYPE PostingType AS ENUM ('POST', 'ANSWER');
         </sql>
         <sql>
-            CREATE TYPE saved_post_status_enum AS ENUM ('IN_PROGRESS', 'COMPLETED', 'ARCHIVED');
+            CREATE TYPE SavedPostStatus AS ENUM ('IN_PROGRESS', 'COMPLETED', 'ARCHIVED');
         </sql>
     </changeSet>
 
@@ -58,11 +58,11 @@
             <dbms type="postgresql"/>
         </preConditions>
         <addColumn tableName="saved_post">
-            <column name="post_type_tmp" type="post_type_enum"/>
-            <column name="status_tmp" type="saved_post_status_enum"/>
+            <column name="post_type_tmp" type="PostingType"/>
+            <column name="status_tmp" type="SavedPostStatus"/>
         </addColumn>
         <addColumn tableName="forwarded_message">
-            <column name="source_type_tmp" type="post_type_enum"/>
+            <column name="source_type_tmp" type="PostingType"/>
         </addColumn>
     </changeSet>
 
@@ -125,23 +125,23 @@
         <update tableName="saved_post">
             <column name="post_type_tmp" valueComputed="
             CASE post_type
-                WHEN 0 THEN 'POST'::post_type_enum
-                WHEN 1 THEN 'ANSWER'::post_type_enum
+                WHEN 0 THEN 'POST'::PostingType
+                WHEN 1 THEN 'ANSWER'::PostingType
             END"/>
         </update>
         <update tableName="saved_post">
             <column name="status_tmp" valueComputed="
             CASE status
-                WHEN 0 THEN 'IN_PROGRESS'::saved_post_status_enum
-                WHEN 1 THEN 'COMPLETED'::saved_post_status_enum
-                WHEN 2 THEN 'ARCHIVED'::saved_post_status_enum
+                WHEN 0 THEN 'IN_PROGRESS'::SavedPostStatus
+                WHEN 1 THEN 'COMPLETED'::SavedPostStatus
+                WHEN 2 THEN 'ARCHIVED'::SavedPostStatus
             END"/>
         </update>
         <update tableName="forwarded_message">
             <column name="source_type_tmp" valueComputed="
             CASE source_type
-                WHEN 0 THEN 'POST'::post_type_enum
-                WHEN 1 THEN 'ANSWER'::post_type_enum
+                WHEN 0 THEN 'POST'::PostingType
+                WHEN 1 THEN 'ANSWER'::PostingType
             END"/>
         </update>
     </changeSet>
@@ -163,15 +163,15 @@
         <renameColumn tableName="saved_post"
                       oldColumnName="post_type_tmp"
                       newColumnName="post_type"
-                      columnDataType="post_type_enum"/>
+                      columnDataType="PostingType"/>
         <renameColumn tableName="saved_post"
                       oldColumnName="status_tmp"
                       newColumnName="status"
-                      columnDataType="saved_post_status_enum"/>
+                      columnDataType="SavedPostStatus"/>
         <renameColumn tableName="forwarded_message"
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
-                      columnDataType="post_type_enum"/>
+                      columnDataType="PostingType"/>
         <addForeignKeyConstraint baseTableName="saved_post"
                                  baseColumnNames="user_id"
                                  constraintName="FK_SAVED_POST_USER"

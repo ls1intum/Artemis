@@ -17,7 +17,7 @@
 
         <!-- Define a named ENUM type for initialization_state -->
         <sql>
-            CREATE TYPE initialization_state_enum AS ENUM (
+            CREATE TYPE InitializationState AS ENUM (
             'UNINITIALIZED',
             'REPO_COPIED',
             'REPO_CONFIGURED',
@@ -26,13 +26,6 @@
             'BUILD_PLAN_CONFIGURED',
             'INITIALIZED',
             'FINISHED'
-        );
-        </sql>
-
-        <!-- Define a named ENUM type for discriminator -->
-        <sql>
-            CREATE TYPE participation_discriminator_enum AS ENUM (
-            'P', 'SP', 'PESP', 'SPEP', 'TPEP'
         );
         </sql>
     </changeSet>
@@ -50,14 +43,8 @@
         -->
         <sql>
             ALTER TABLE participation
-            ALTER COLUMN initialization_state TYPE initialization_state_enum
-        USING initialization_state::initialization_state_enum;
-        </sql>
-
-        <sql>
-            ALTER TABLE participation
-            ALTER COLUMN discriminator TYPE participation_discriminator_enum
-        USING discriminator::participation_discriminator_enum;
+            ALTER COLUMN initialization_state TYPE InitializationState
+        USING initialization_state::InitializationState;
         </sql>
     </changeSet>
 

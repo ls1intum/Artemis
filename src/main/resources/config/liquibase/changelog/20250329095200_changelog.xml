@@ -4,18 +4,18 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!--
       Migration to convert `jhi_type` and `discriminator` columns in `submission` table
-      from VARCHAR to ENUM. Supports PostgreSQL and MySQL.
+      from VARCHAR to ENUM. Supports PostgreSQL and MySQL, however PostgreSQL does not support discriminators.
       Brings storage and performance improvements (esp. relevant with ~8 million rows).
     -->
 
-    <!-- Step 1: Create ENUM types in PostgreSQL -->
+    <!-- Step 1: Create ENUM type in PostgreSQL -->
     <changeSet id="20250329-11-create-enums-submission-postgres" author="krusche">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
         </preConditions>
 
         <sql>
-            CREATE TYPE submission_type_enum AS ENUM (
+            CREATE TYPE SubmissionType AS ENUM (
             'MANUAL',
             'TIMEOUT',
             'TEST',
@@ -25,15 +25,9 @@
             'ILLEGAL'
         );
         </sql>
-
-        <sql>
-            CREATE TYPE submission_discriminator_enum AS ENUM (
-            'P', 'Q', 'M', 'T', 'F'
-        );
-        </sql>
     </changeSet>
 
-    <!-- Step 2: Alter PostgreSQL columns to use enum types -->
+    <!-- Step 2: Alter PostgreSQL column to use enum types -->
     <changeSet id="20250329-12-alter-columns-submission-postgres" author="krusche">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
@@ -41,14 +35,8 @@
 
         <sql>
             ALTER TABLE submission
-            ALTER COLUMN jhi_type TYPE submission_type_enum
-        USING jhi_type::submission_type_enum;
-        </sql>
-
-        <sql>
-            ALTER TABLE submission
-            ALTER COLUMN discriminator TYPE submission_discriminator_enum
-        USING discriminator::submission_discriminator_enum;
+            ALTER COLUMN jhi_type TYPE SubmissionType
+        USING jhi_type::SubmissionType;
         </sql>
     </changeSet>
 

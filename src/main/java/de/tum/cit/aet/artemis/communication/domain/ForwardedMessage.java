@@ -27,7 +27,7 @@ public class ForwardedMessage extends DomainObject {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.ENUM)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "source_type", nullable = false)
     private PostingType sourceType;
 
