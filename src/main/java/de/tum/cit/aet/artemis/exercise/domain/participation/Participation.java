@@ -69,7 +69,7 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 public abstract class Participation extends DomainObject implements ParticipationInterface {
 
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @JdbcTypeCode(SqlTypes.ENUM)
     @Column(name = "initialization_state")
     private InitializationState initializationState;
 
