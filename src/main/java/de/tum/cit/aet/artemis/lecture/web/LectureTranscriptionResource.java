@@ -158,6 +158,10 @@ public class LectureTranscriptionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
+
+        Course course = lectureUnit.getLecture().getCourse();
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
+
         Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (lectureTranscription.isEmpty()) {
             return ResponseEntity.badRequest()

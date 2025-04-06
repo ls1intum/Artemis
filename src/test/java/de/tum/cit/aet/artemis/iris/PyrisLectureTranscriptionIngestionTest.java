@@ -167,6 +167,16 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void testDeleteTranscriptionInPyrisWithInstructorOfDifferentCourse() throws Exception {
+        activateIrisFor(lecture1.getCourse());
+        irisRequestMockProvider.mockTranscriptionDeletionWebhookRunResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+        });
+        request.delete("/api/lecture/" + lecture1.getId() + "/lecture-unit/" + lectureUnit.getId() + "/transcription", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testDeleteTranscriptionInPyrisWithoutTranscription() throws Exception {
         activateIrisFor(lecture1.getCourse());
