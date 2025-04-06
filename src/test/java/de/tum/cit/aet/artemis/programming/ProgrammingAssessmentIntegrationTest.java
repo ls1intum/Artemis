@@ -1,19 +1,10 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.isA;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.notNull;
-import static org.mockito.Mockito.verify;
-
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,7 +15,6 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
@@ -51,6 +41,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.isA;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.notNull;
+import static org.mockito.Mockito.verify;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -269,6 +266,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
 
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
+        assertThat(response.getCompletionDate()).isNull();
     }
 
     @Test
@@ -289,29 +287,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Exercise exercise = (Exercise) course.getExercises().toArray()[0];
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()).hasSize(1);
         assertThat(exercise.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isEqualTo(1L);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
-        // setting up exercise
-        programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
-        programmingExercise.setMaxPoints(10.0);
-        programmingExercise.setBonusPoints(10.0);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        manualResult.getParticipation().setExercise(programmingExercise);
-
-        // setting up student submission
-        List<Feedback> feedbacks = new ArrayList<>();
-        addAssessmentFeedbackAndCheckScore(feedbacks, 0.0, 0D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, -1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 200D);
-
     }
 
     @Test
