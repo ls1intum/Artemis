@@ -644,7 +644,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission = textExerciseUtilService.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
-
+        // TODO jfr this assertion does not make sense anymore, but I am not sure if there was a valid reason why there should be
+        // 2 results diretly associated with the participation before, but only one submission with a single result otherwise.
         assertThat(participation.getResults()).hasSize(2);
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
