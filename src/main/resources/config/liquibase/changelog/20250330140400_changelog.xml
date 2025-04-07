@@ -70,6 +70,12 @@
 
     <!-- Step 4: Drop old columns and rename new ones (finalize migration) -->
     <changeSet id="20250330-04-finalize-column-replacement" author="krusche">
+        <preConditions onFail="MARK_RAN">
+            <or>
+                <dbms type="mysql"/>
+                <dbms type="h2"/>
+            </or>
+        </preConditions>
         <dropForeignKeyConstraint baseTableName="saved_post" constraintName="FK_SAVED_POST_USER"/>
         <dropIndex tableName="saved_post" indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE"/>
         <dropColumn tableName="saved_post" columnName="post_type"/>
