@@ -230,6 +230,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.atlasEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_EXAM);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
@@ -239,11 +245,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.gitBranchName = profileInfo.git.branch;
                 this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
-                this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
-                this.examEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_EXAM);
-                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-                this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
             }
         });
 
