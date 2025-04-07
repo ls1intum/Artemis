@@ -161,6 +161,14 @@ const routes: Routes = [
             pageTitle: 'artemisApp.upcomingExamsAndExercises.upcomingExamsAndExercises',
         },
     },
+    {
+        path: 'lecture-transcription-ingestion',
+        loadComponent: () => import('app/admin/lecture-transcription-ingestion/lecture-transcription-ingestion.component').then((m) => m.LectureTranscriptionIngestionComponent),
+        data: {
+            authorities: [Authority.ADMIN],
+            pageTitle: 'global.menu.admin.lectureTranscription',
+        },
+    },
     ...organizationMgmtRoute,
     ...userManagementRoute,
     ...systemNotificationManagementRoute,

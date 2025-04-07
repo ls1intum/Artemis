@@ -114,7 +114,8 @@
                 "iris": "Iris Einstellungen",
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
-                "cleanupService": "Aufräumdienst"
+                "cleanupService": "Aufräumdienst",
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
             "settings": "Einstellungen",
