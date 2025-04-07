@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from '../../components/help-icon.component';
+import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 interface NgxClickEvent {

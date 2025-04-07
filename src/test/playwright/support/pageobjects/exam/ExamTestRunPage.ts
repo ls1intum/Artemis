@@ -1,5 +1,5 @@
 import { Page } from '@playwright/test';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { UserCredentials } from '../../users';
 import { Commands } from '../../commands';

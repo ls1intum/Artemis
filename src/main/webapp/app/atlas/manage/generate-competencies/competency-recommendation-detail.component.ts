@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { CourseCompetencyValidators } from 'app/atlas/shared/entities/competency.model';
 import { faChevronRight, faPencilAlt, faSave, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CompetencyFormControlsWithViewed } from 'app/atlas/manage/generate-competencies/generate-competencies.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';

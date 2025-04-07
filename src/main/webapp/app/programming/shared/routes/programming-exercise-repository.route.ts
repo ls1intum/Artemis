@@ -1,6 +1,6 @@
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { LocalVCGuard } from 'app/programming/shared/localvc-guard.service';
+import { LocalVCGuard } from 'app/programming/shared/services/localvc-guard.service';
 
 export const repositorySubRoutes = [
     {
