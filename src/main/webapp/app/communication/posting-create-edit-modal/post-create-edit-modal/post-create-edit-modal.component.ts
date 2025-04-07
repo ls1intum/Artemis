@@ -1,5 +1,5 @@
 import { Component, OnChanges, OnInit, input } from '@angular/core';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { PostingCreateEditModalDirective } from 'app/communication/posting-create-edit-modal/posting-create-edit-modal.directive';
@@ -7,7 +7,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/communication/metis.util';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';

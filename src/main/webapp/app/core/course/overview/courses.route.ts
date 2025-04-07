@@ -5,7 +5,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 
-import { CourseOverviewGuard } from 'app/core/course/overview/course-overview-guard';
+import { CourseOverviewGuard } from 'app/core/course/overview/course-overview/course-overview-guard';
 
 export enum CourseOverviewRoutePath {
     DASHBOARD = 'dashboard',
@@ -26,7 +26,7 @@ export enum CourseOverviewRoutePath {
 export const routes: Routes = [
     {
         path: '',
-        loadComponent: () => import('app/core/course/overview/courses.component').then((m) => m.CoursesComponent),
+        loadComponent: () => import('app/core/course/overview/courses/courses.component').then((m) => m.CoursesComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.title',
@@ -66,7 +66,7 @@ export const routes: Routes = [
     },
     {
         path: ':courseId',
-        loadComponent: () => import('./course-overview.component').then((m) => m.CourseOverviewComponent),
+        loadComponent: () => import('./course-overview/course-overview.component').then((m) => m.CourseOverviewComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'overview.course',
@@ -109,7 +109,8 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
-                loadComponent: () => import('app/programming/overview/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
+                loadComponent: () =>
+                    import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.programmingExercise',
@@ -142,7 +143,7 @@ export const routes: Routes = [
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',
-                loadComponent: () => import('app/fileupload/overview/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
+                loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.fileUploadExercise',
@@ -153,7 +154,7 @@ export const routes: Routes = [
 
             {
                 path: CourseOverviewRoutePath.LECTURES,
-                loadComponent: () => import('app/lecture/shared/course-lectures.component').then((m) => m.CourseLecturesComponent),
+                loadComponent: () => import('app/lecture/shared/course-lectures/course-lectures.component').then((m) => m.CourseLecturesComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.lectures',
@@ -171,7 +172,7 @@ export const routes: Routes = [
                             showRefreshButton: true,
                         },
                         canActivate: [UserRouteAccessService],
-                        loadComponent: () => import('app/lecture/overview/course-lectures/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
+                        loadComponent: () => import('app/lecture/overview/course-lectures/details/course-lecture-details.component').then((m) => m.CourseLectureDetailsComponent),
                     },
                 ],
             },
@@ -239,7 +240,7 @@ export const routes: Routes = [
             {
                 path: CourseOverviewRoutePath.COMMUNICATION,
                 pathMatch: 'full',
-                loadComponent: () => import('app/communication/shared/course-conversations.component').then((m) => m.CourseConversationsComponent),
+                loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.communication',
@@ -260,7 +261,7 @@ export const routes: Routes = [
             },
             {
                 path: CourseOverviewRoutePath.TUTORIAL_GROUPS,
-                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
+                loadComponent: () => import('app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component').then((m) => m.CourseTutorialGroupsComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.tutorialGroups',
@@ -272,7 +273,7 @@ export const routes: Routes = [
                     {
                         path: ':tutorialGroupId',
                         loadComponent: () =>
-                            import('app/tutorialgroup/overview/tutorial-group-details/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
+                            import('app/tutorialgroup/overview/course-tutorial-group-detail/course-tutorial-group-detail.component').then(
                                 (m) => m.CourseTutorialGroupDetailComponent,
                             ),
                         data: {
@@ -298,7 +299,7 @@ export const routes: Routes = [
                 children: [
                     {
                         path: ':examId',
-                        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
+                        loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
                         data: {
                             authorities: [Authority.USER],
                             pageTitle: 'overview.exams',

@@ -3,9 +3,9 @@ import { ActivatedRoute, Router, RouterLink, RouterLinkActive, RouterOutlet } fr
 import { HttpErrorResponse } from '@angular/common/http';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Observable, Subject, Subscription, map, of } from 'rxjs';
-import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import {
     faArrowUpRightFromSquare,
@@ -29,21 +29,21 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
+import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
-import { HeaderCourseComponent } from 'app/core/course/overview/header-course.component';
+import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 
 @Component({
     selector: 'jhi-course-management-tab-bar',
