@@ -29,43 +29,41 @@ describe('CourseSidebarItemService', () => {
     describe('getManagementDefaultItems', () => {
         it('should return correct items with courseId', () => {
             const items = service.getManagementDefaultItems(courseId);
-
+            const expectedItems = [
+                {
+                    routerLink: `${courseId}`,
+                    icon: faTableCells,
+                    title: 'Overview',
+                    translation: 'artemisApp.course.overview',
+                    hidden: false,
+                    isPrefix: true,
+                },
+                {
+                    routerLink: `${courseId}/exams`,
+                    icon: faGraduationCap,
+                    title: 'Exams',
+                    testId: 'exam-tab',
+                    translation: 'artemisApp.courseOverview.menu.exams',
+                    hidden: false,
+                },
+                {
+                    routerLink: `${courseId}/exercises`,
+                    icon: faListAlt,
+                    title: 'Exercises',
+                    translation: 'artemisApp.courseOverview.menu.exercises',
+                    hidden: false,
+                },
+                {
+                    routerLink: `${courseId}/course-statistics`,
+                    icon: faChartColumn,
+                    title: 'Statistics',
+                    translation: 'artemisApp.courseOverview.menu.statistics',
+                    guidedTour: true,
+                    hidden: false,
+                },
+            ];
             expect(items.length).toBe(4);
-
-            expect(items[0]).toEqual({
-                routerLink: `${courseId}`,
-                icon: faTableCells,
-                title: 'Overview',
-                translation: 'artemisApp.course.overview',
-                hidden: false,
-                isPrefix: true,
-            });
-
-            expect(items[1]).toEqual({
-                routerLink: `${courseId}/exams`,
-                icon: faGraduationCap,
-                title: 'Exams',
-                testId: 'exam-tab',
-                translation: 'artemisApp.courseOverview.menu.exams',
-                hidden: false,
-            });
-
-            expect(items[2]).toEqual({
-                routerLink: `${courseId}/exercises`,
-                icon: faListAlt,
-                title: 'Exercises',
-                translation: 'artemisApp.courseOverview.menu.exercises',
-                hidden: false,
-            });
-
-            expect(items[3]).toEqual({
-                routerLink: `${courseId}/course-statistics`,
-                icon: faChartColumn,
-                title: 'Statistics',
-                translation: 'artemisApp.courseOverview.menu.statistics',
-                guidedTour: true,
-                hidden: false,
-            });
+            expect(items).toEqual(expectedItems);
         });
 
         it('should return correct items without courseId', () => {

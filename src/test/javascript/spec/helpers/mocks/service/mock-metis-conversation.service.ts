@@ -56,9 +56,5 @@ export class MockMetisConversationService {
 
     acceptCodeOfConduct(course: Course) {}
 
-    checkForUnreadMessages = (course: Course) => {
-        if (!course?.id) {
-            return;
-        }
-    };
+    checkForUnreadMessages = (course: Course) => {};
 }
