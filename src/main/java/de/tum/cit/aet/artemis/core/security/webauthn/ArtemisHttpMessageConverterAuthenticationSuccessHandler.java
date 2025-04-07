@@ -1,17 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.webauthnWorkaround;
-
-/*
- * Copyright 2002-2024 the original author or authors.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * https://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package de.tum.cit.aet.artemis.core.security.webauthn;
 
 import java.io.IOException;
 
@@ -36,7 +23,7 @@ import org.springframework.util.Assert;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
- * An {@link AuthenticationSuccessHandler} that writes a JSON response with the redirect
+ * An {@link AuthenticationSuccessHandler}, that sets a JWT token in the response and writes a JSON response with the redirect
  * URL and an authenticated status similar to:
  *
  * <code>
@@ -45,9 +32,6 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  *         "authenticated": true
  *     }
  * </code>
- *
- * @author Rob Winch
- * @since 6.4
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
@@ -55,13 +39,11 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     private RequestCache requestCache = new HttpSessionRequestCache();
 
-    // =========== ADJUSTED START ===========
     private final JWTCookieService jwtCookieService;
 
     public ArtemisHttpMessageConverterAuthenticationSuccessHandler(JWTCookieService jwtCookieService) {
         this.jwtCookieService = jwtCookieService;
     }
-    // =========== ADJUSTED END ===========
 
     /**
      * Sets the {@link GenericHttpMessageConverter} to write to the response. The default
@@ -91,12 +73,9 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
         final String redirectUrl = (savedRequest != null) ? savedRequest.getRedirectUrl() : request.getContextPath() + "/";
         this.requestCache.removeRequest(request, response);
 
-        // =========== ADJUSTED START ===========
-        // for our authentication process we want to send a JWT token back to the now authenticated user
-        boolean rememberMe = true;
+        boolean rememberMe = true; // means that the JWT token will be valid for a longer time (=> less often required to authenticate)
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-        // =========== ADJUSTED END ===========
 
         this.converter.write(new AuthenticationSuccess(redirectUrl), MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
     }

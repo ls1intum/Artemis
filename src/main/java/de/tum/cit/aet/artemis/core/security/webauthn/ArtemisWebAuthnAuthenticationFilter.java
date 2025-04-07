@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.webauthnWorkaround;
+package de.tum.cit.aet.artemis.core.security.webauthn;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.web.authentication.AuthenticationEntryPointFailureHandler;

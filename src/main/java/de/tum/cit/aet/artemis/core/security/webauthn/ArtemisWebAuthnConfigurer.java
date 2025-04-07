@@ -1,17 +1,4 @@
-/*
- * Copyright 2002-2024 the original author or authors.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * https://www.apache.org/licenses/LICENSE-2.0
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package de.tum.cit.aet.artemis.core.security.webauthnWorkaround;
+package de.tum.cit.aet.artemis.core.security.webauthn;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -46,11 +33,8 @@ import org.springframework.security.web.webauthn.registration.WebAuthnRegistrati
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
- * Configures WebAuthn for Spring Security applications
- *
- * @param <H> the type of builder
- * @author Rob Winch
- * @since 6.4
+ * Configures WebAuthn for Spring Security applications using a custom {@link ArtemisWebAuthnAuthenticationFilter} in
+ * contrast to the Spring Security implementation.
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
@@ -62,13 +46,11 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private boolean disableDefaultRegistrationPage = false;
 
-    // =========== ADJUSTED START ===========
     private final JWTCookieService jwtCookieService;
 
     public ArtemisWebAuthnConfigurer(JWTCookieService jwtCookieService) {
         this.jwtCookieService = jwtCookieService;
     }
-    // =========== ADJUSTED END ===========
 
     /**
      * The Relying Party id.
@@ -130,16 +112,13 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     @Override
     public void configure(H http) throws Exception {
-        UserDetailsService userDetailsService = getSharedOrBean(http, UserDetailsService.class).orElseGet(() -> {
-            throw new IllegalStateException("Missing UserDetailsService Bean");
-        });
+        UserDetailsService userDetailsService = getSharedOrBean(http, UserDetailsService.class).orElseThrow(() -> new IllegalStateException("Missing UserDetailsService Bean"));
         PublicKeyCredentialUserEntityRepository userEntities = getSharedOrBean(http, PublicKeyCredentialUserEntityRepository.class).orElse(userEntityRepository());
         UserCredentialRepository userCredentials = getSharedOrBean(http, UserCredentialRepository.class).orElse(userCredentialRepository());
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(userEntities, userCredentials);
-        // =========== ADJUSTED START ===========
-        // We want to instantiate the ArtemisWebAuthnAuthenticationFilter due to custom onAuthenticationSuccess success logic
+
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(jwtCookieService);
-        // =========== ADJUSTED END ===========
+
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
         http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentials, rpOperations), AuthorizationFilter.class);

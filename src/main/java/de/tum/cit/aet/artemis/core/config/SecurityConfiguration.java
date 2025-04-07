@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.webauthnWorkaround.ArtemisWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -232,12 +232,6 @@ public class SecurityConfiguration {
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
-            // Spring Security generates options and register endpoints for webauthn (passkey) authentication with this option
-//            .webAuthn(webauth -> webauth
-//                .allowedOrigins("http://localhost:9000")
-//                .rpId("localhost")
-//                .rpName("Artemis")
-//            );
 
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
             webAuthnConfigurer
