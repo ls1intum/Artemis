@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
  * Condition to check if the text module is enabled.
- * Based on this condition, Spring components concerning atlas functionality can be enabled or disabled.
+ * Based on this condition, Spring components concerning text functionality can be enabled or disabled.
  */
 public class TextEnabled implements Condition {
 
