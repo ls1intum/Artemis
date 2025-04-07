@@ -8,7 +8,7 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 

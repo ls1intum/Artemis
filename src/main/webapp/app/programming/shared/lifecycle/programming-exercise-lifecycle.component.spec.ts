@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { AthenaService } from 'app/assessment/shared/athena.service';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 
 describe('ProgrammingExerciseLifecycleComponent', () => {
     let comp: ProgrammingExerciseLifecycleComponent;
