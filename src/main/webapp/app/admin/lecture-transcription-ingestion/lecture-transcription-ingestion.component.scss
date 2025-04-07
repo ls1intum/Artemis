@@ -1,0 +1,16 @@
+.insert-db-container {
+    margin-top: 1rem;
+}
+
+.insert-transcription-row {
+    display: flex;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.insert-transcription-area {
+    width: min(40rem, 100%);
+    height: 5rem;
+    margin-right: 0.4rem;
+    border: 1px solid gray;
+}
