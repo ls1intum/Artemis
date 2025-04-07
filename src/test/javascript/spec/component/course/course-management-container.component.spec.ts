@@ -453,7 +453,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(eventManagerSpy).toHaveBeenCalledExactlyOnceWith({
             name: 'courseListModification',
-            content: 'Deleted a course',
+            content: 'artemisApp.course.deleted',
         });
         expect(dialogErrorSourceSpy).toHaveBeenCalledExactlyOnceWith('');
         expect(router.navigate).toHaveBeenCalledExactlyOnceWith(['/course-management']);

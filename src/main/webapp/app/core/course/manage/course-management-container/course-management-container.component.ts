@@ -25,7 +25,6 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -130,8 +129,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     facSidebar = facSidebar;
     faQuestion = faQuestion;
 
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly CachingStrategy = CachingStrategy;
     protected readonly ButtonSize = ButtonSize;
 
     async ngOnInit() {

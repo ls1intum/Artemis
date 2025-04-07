@@ -32,6 +32,8 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CachingStrategy } from 'app/shared/image/secured-image.component';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -94,6 +96,9 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     @ViewChild('controlsViewContainer', { read: ViewContainerRef }) controlsViewContainer: ViewContainerRef;
     @ViewChildren('controlsViewContainer') controlsViewContainerAsList: QueryList<ViewContainerRef>;
+
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly CachingStrategy = CachingStrategy;
 
     async ngOnInit() {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {

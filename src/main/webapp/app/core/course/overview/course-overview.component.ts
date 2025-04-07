@@ -14,8 +14,6 @@ import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, f
 import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
@@ -91,9 +89,6 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-
-    FeatureToggle = FeatureToggle;
-    CachingStrategy = CachingStrategy;
 
     async ngOnInit() {
         this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
