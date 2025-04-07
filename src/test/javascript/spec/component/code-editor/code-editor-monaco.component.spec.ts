@@ -526,6 +526,27 @@ describe('CodeEditorMonacoComponent', () => {
         expect(emitSpy).toHaveBeenCalledWith([openFeedback, closedFeedbackForFile]);
     });
 
+    it('should add not change anything if reopening feedback for a non-chosen file', () => {
+        const selectedFile = 'file1.java';
+
+        const closedFeedback1 = { reference: 'file:file2.java_line:1', text: 'closed feedback 1' } as Feedback;
+        const closedFeedback2 = { reference: 'file:file2.java_lines:2-3', text: 'closed feedback 2' } as Feedback;
+
+        fixture.componentRef.setInput('feedbacks', [closedFeedback1, closedFeedback2]);
+        fixture.componentRef.setInput('selectedFile', selectedFile);
+        const emitSpy = jest.spyOn(comp.onUpdateFeedback, 'emit');
+
+        fixture.detectChanges();
+
+        comp.feedbackInternal.set([]);
+
+        comp.refreshFeedback(selectedFile);
+
+        expect(comp.feedbackInternal()).toEqual([]);
+
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
     it('should display feedback(with multiple widgets at the same line) when viewing a tutor assessment', fakeAsync(() => {
         const addLineWidgetStub = jest.spyOn(comp.editor(), 'addLineWidget').mockImplementation();
         const selectFileInEditorStub = jest.spyOn(comp, 'selectFileInEditor').mockImplementation();
