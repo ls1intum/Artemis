@@ -12,9 +12,9 @@ import {
     getIcon,
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, finalize } from 'rxjs';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';

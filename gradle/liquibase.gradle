@@ -55,11 +55,11 @@ def liquibaseCommand(command) {
         args = [
             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
             "--referenceUsername=root",
-            "--referencePassword=12345678",
-            "--referenceUrl=jdbc:mysql://localhost:3306/Artemis?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--referencePassword=",
+            "--referenceUrl=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--username=root",
-            "--password=12345678",
-            "--url=jdbc:mysql://localhost:3306/Artemis700?useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            "--password=",
+            "--url=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--driver=com.mysql.cj.jdbc.Driver",
             command
         ]
