@@ -201,10 +201,7 @@
                         ></button>
                     }
                 </span>
-                @if (
-                    (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
-                    gradedParticipation?.initializationState === InitializationState.FINISHED
-                ) {
+                @if (allowEditing) {
                     <button
                         [id]="'open-exercise-' + exercise.id"
                         class="open-exercise"
