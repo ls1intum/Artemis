@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -351,7 +350,7 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         AtomicInteger fails = new AtomicInteger(0);
         doAnswer(invocation -> {
             if (fails.incrementAndGet() <= 2) {
-                throw new SocketException("Simulated network failure");
+                throw new NotFoundException("Simulated network failure");
             }
             return inspectImageResponse;
         }).when(inspectImageCmd).exec();
