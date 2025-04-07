@@ -69,11 +69,10 @@ public class TextAssessmentService extends AssessmentService {
         else {
             // We are the first ones to open assess this submission, we want to lock it.
             result = new Result();
-
+            result.setSubmission(textSubmission);
             resultService.createNewRatedManualResult(result);
             result.setCompletionDate(null);
             result = resultRepository.save(result);
-            result.setSubmission(textSubmission);
             textSubmission.addResult(result);
             submissionRepository.save(textSubmission);
         }
