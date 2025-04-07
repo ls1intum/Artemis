@@ -20,9 +20,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
-import { MODULE_FEATURE_TEXT } from '../../../../../../../main/webapp/app/app.constants';
-import { ProfileService } from '../../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];

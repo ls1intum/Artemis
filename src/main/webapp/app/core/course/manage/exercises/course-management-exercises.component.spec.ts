@@ -20,9 +20,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from '../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT } from '../../../../../main/webapp/app/app.constants';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
