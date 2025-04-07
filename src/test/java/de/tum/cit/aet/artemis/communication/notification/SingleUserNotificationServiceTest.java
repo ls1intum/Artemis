@@ -60,6 +60,7 @@ import java.security.GeneralSecurityException;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -84,6 +85,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -94,6 +96,8 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -163,6 +167,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
 
     @Captor
     private ArgumentCaptor<Notification> appleNotificationCaptor;
@@ -786,6 +796,61 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
         verifyRepositoryCallWithCorrectNotification(DATA_EXPORT_FAILED_TITLE);
         verifyEmail();
+    }
+
+    @Test
+    void shouldCreateNewCpcPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        exercise.setTitle("CPC Plagiarism Test Exercise");
+        plagiarismCase.setExercise(exercise);
+        plagiarismCase.setPost(post);
+
+        singleUserNotificationService.notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasNewCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 13);
+
+            assertThat(hasNewCpcPlagiarismCaseNotification).isTrue();
+
+            Optional<CourseNotification> newCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 13).findFirst();
+
+            assertThat(newCpcPlagiarismCaseNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newCpcPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateNewPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        exercise.setTitle("Plagiarism Test Exercise");
+        plagiarismCase.setPost(post);
+        plagiarismCase.setExercise(exercise);
+
+        singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasNewPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 14);
+
+            assertThat(hasNewPlagiarismCaseNotification).isTrue();
+
+            // Verify the notification was sent only to the correct user
+            Optional<CourseNotification> newPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getType() == 14).findFirst();
+
+            assertThat(newPlagiarismCaseNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     /**

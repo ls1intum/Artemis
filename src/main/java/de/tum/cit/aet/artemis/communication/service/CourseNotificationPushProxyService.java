@@ -12,6 +12,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERC
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_CPC_PLAGIARISM_CASE_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_PLAGIARISM_CASE_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
@@ -163,7 +164,8 @@ public class CourseNotificationPushProxyService {
                 notificationTarget = new NotificationTarget(NotificationTargetFactory.PLAGIARISM_DETECTED_TEXT, Long.parseLong(parameters.get("exerciseId")),
                         NotificationTargetFactory.PLAGIARISM_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
                 target = notificationTarget.toJsonString();
-                type = NEW_CPC_PLAGIARISM_CASE_STUDENT.toString();
+                type = courseNotificationDTO.notificationType().equals("newCpcPlagiarismCaseNotification") ? NEW_CPC_PLAGIARISM_CASE_STUDENT.toString()
+                        : NEW_PLAGIARISM_CASE_STUDENT.toString();
                 break;
             case "programmingBuildRunUpdateNotification":
             case "programmingTestCasesChangedNotification":
