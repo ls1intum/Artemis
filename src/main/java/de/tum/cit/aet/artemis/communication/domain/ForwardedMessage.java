@@ -10,8 +10,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Check;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
@@ -27,7 +25,6 @@ public class ForwardedMessage extends DomainObject {
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @JdbcTypeCode(SqlTypes.ENUM)
     @Column(name = "source_type", nullable = false)
     private PostingType sourceType;
 
