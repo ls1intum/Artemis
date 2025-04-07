@@ -294,6 +294,8 @@ public final class Constants {
 
     public static final String USE_EXTERNAL = "useExternal";
 
+    public static final String PASSKEY_ENABLED = "passkeyEnabled";
+
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
 
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";

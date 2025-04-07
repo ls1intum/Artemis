@@ -68,6 +68,15 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
+    @Value("${artemis.user-management.passkey.enabled:false}")
+    private boolean passkeyEnabled;
+
+    @Value("${artemis.user-management.passkey.allowedOrigins}")
+    private String allowedOrigins;
+
+    @Value("${artemis.user-management.passkey.rpId}")
+    private String rpId;
+
     private final JWTCookieService jwtCookieService;
 
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
@@ -233,13 +242,15 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
-            webAuthnConfigurer
-                .allowedOrigins("http://localhost:9000")
-                .rpId("localhost")
-                .rpName("Artemis");
-//            // FIXME use the new version and not the deprecated one
-            http.apply(webAuthnConfigurer);
+            if (passkeyEnabled) {
+                WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
+                webAuthnConfigurer
+                    .allowedOrigins(allowedOrigins)
+                    .rpId(rpId)
+                    .rpName("Artemis");
+                // FIXME use the new version and not the deprecated one
+                http.apply(webAuthnConfigurer);
+            }
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
