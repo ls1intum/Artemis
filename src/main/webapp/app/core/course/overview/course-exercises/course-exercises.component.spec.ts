@@ -32,7 +32,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
