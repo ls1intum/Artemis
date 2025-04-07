@@ -7,4 +7,6 @@ export class MockProfileService {
             activeProfiles: [],
             activeModuleFeatures: [],
         } as unknown as ProfileInfo);
+    isProfileActive: (profile: string) => boolean = () => false;
+    isFeatureActive: (feature: string) => boolean = () => false;
 }

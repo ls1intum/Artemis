@@ -135,4 +135,12 @@ export class ProfileService {
     public isProfileActive(profile: string): boolean {
         return this.profileInfo?.value?.activeProfiles?.includes(profile) ?? false;
     }
+
+    /**
+     * Check if the given module feature is active.
+     * @param moduleFeatureName The module feature to check.
+     */
+    public isFeatureActive(moduleFeatureName: string): boolean {
+        return this.profileInfo?.value.activeModuleFeatures?.includes(moduleFeatureName) ?? false;
+    }
 }
