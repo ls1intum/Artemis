@@ -45,7 +45,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private translateService = inject(TranslateService);
     private webauthnService = inject(WebauthnService);
     private webauthnApiService = inject(WebauthnApiService);
-    // private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -105,17 +104,20 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
     }
 
-    async loginWithPublicKeyCredential() {
-        const credential = await this.webauthnService.getCredential();
+    async loginWithPasskey() {
+        try {
+            const credential = await this.webauthnService.getCredential();
 
-        if (!credential || credential.type != 'public-key') {
-            alert("Credential is undefined or type is not 'public-key'");
-            return;
+            if (!credential || credential.type != 'public-key') {
+                alert("Credential is undefined or type is not 'public-key'");
+                return;
+            }
+
+            await this.webauthnApiService.loginWithPasskey(credential);
+            this.handleLoginSuccess();
+        } catch (error) {
+            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
         }
-
-        // await this.passkeySettingsApiService.loginWithPasskey(credential);
-        await this.webauthnApiService.loginWithPasskey(credential);
-        this.handleLoginSuccess();
     }
 
     /**

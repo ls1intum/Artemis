@@ -95,7 +95,10 @@
                 "addNewPasskey": "Add a passkey",
                 "label": "Label",
                 "created": "Created",
-                "lastUsed": "Last used"
+                "lastUsed": "Last used",
+                "error": {
+                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis."
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",

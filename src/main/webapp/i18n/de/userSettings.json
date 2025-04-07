@@ -95,7 +95,10 @@
                 "addNewPasskey": "Neuen Passkey hinzufügen",
                 "label": "Bezeichnung",
                 "created": "Erstellt",
-                "lastUsed": "Zuletzt verwendet"
+                "lastUsed": "Zuletzt verwendet",
+                "error": {
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast."
+                }
             },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
