@@ -49,7 +49,7 @@
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
-            [feedbacks]="showInlineFeedback && participation?.submissions?.length ? (participation.submissions[0].results?.[0]?.feedbacks ?? []) : []"
+            [feedbacks]="feedbackForSubmission()"
             [feedbackSuggestions]="feedbackSuggestions"
             [readOnlyManualFeedback]="readOnlyManualFeedback"
             [disableActions]="!editable"
