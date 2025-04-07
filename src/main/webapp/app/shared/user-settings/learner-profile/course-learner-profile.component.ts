@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { Course } from 'app/core/shared/entities/course.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
