@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';

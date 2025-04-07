@@ -5,21 +5,21 @@ import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
 import { fromPairs, toPairs } from 'lodash-es';
 import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
-import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-delete';
+import { CodeEditorFileBrowserDeleteComponent } from 'app/programming/manage/code-editor/file-browser/delete/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeEditorFileBrowserCreateNodeComponent } from './code-editor-file-browser-create-node.component';
-import { CodeEditorFileBrowserFolderComponent } from './code-editor-file-browser-folder.component';
-import { CodeEditorFileBrowserFileComponent } from './code-editor-file-browser-file.component';
+import { CodeEditorFileBrowserCreateNodeComponent } from './create-node/code-editor-file-browser-create-node.component';
+import { CodeEditorFileBrowserFolderComponent } from './folder/code-editor-file-browser-folder.component';
+import { CodeEditorFileBrowserFileComponent } from './file/code-editor-file-browser-file.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TreeItem, TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
-import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/treeview/tree-view.component';
+import { TreeViewComponent } from 'app/programming/shared/code-editor/treeview/components/tree-view/tree-view.component';
 import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/status/code-editor-status.component';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import {
     CommitState,
     CreateFileChange,
@@ -31,8 +31,8 @@ import {
     GitConflictState,
     RenameFileChange,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorFileService } from 'app/programming/shared/code-editor/service/code-editor-file.service';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
 
 export type InteractableEvent = {

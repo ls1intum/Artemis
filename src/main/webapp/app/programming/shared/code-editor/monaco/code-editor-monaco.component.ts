@@ -15,13 +15,13 @@ import {
     viewChild,
     viewChildren,
 } from '@angular/core';
-import { RepositoryFileService } from 'app/exercise/result/repository.service';
+import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { Course } from 'app/core/shared/entities/course.model';
-import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
@@ -499,5 +499,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.onUpdateFeedback.emit(this.feedbackInternal());
             this.renderFeedbackWidgets();
         }
+import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/suggestion/code-editor-tutor-assessment-inline-feedback-suggestion.component';
+import { FileTypeService } from 'app/programming/shared/services/file-type.service';
     }
 }

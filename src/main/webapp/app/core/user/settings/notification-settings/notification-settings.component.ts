@@ -5,8 +5,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { UserSettingsDirective } from 'app/core/user/settings/user-settings.directive';
-import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/core/user/settings/notification-settings/notification-settings.service';
+import { UserSettingsDirective } from 'app/core/user/settings/directive/user-settings.directive';
+import { NotificationSettingsService, reloadNotificationSideBarMessage } from 'app/core/user/settings/notification-settings/service/notification-settings.service';
 import { UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
 import { NotificationSetting } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 

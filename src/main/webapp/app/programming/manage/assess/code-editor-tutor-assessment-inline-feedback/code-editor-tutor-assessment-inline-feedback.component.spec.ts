@@ -1,0 +1,312 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockModule, MockProvider } from 'ng-mocks';
+import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
+import { Feedback, FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FeedbackType, PRELIMINARY_FEEDBACK_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
+import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { By } from '@angular/platform-browser';
+import { AlertService } from 'app/shared/service/alert.service';
+
+describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
+    let comp: CodeEditorTutorAssessmentInlineFeedbackComponent;
+    let fixture: ComponentFixture<CodeEditorTutorAssessmentInlineFeedbackComponent>;
+    let sgiService: StructuredGradingCriterionService;
+    let alertService: AlertService;
+    const fileName = 'testFile';
+    const codeLine = 1;
+
+    beforeEach(() => {
+        return TestBed.configureTestingModule({
+            imports: [MockModule(NgbTooltipModule)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockProvider(StructuredGradingCriterionService)],
+        })
+            .compileComponents()
+            .then(() => {
+                // Ignore console errors
+                console.error = () => {
+                    return false;
+                };
+                fixture = TestBed.createComponent(CodeEditorTutorAssessmentInlineFeedbackComponent);
+                comp = fixture.componentInstance;
+                // @ts-ignore
+                comp.feedback = undefined;
+                comp.readOnly = false;
+                comp.selectedFile = fileName;
+                comp.codeLine = codeLine;
+                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                alertService = fixture.debugElement.injector.get(AlertService);
+            });
+    });
+
+    it('should update feedback and emit to parent', () => {
+        const onUpdateFeedbackSpy = jest.spyOn(comp.onUpdateFeedback, 'emit');
+        comp.updateFeedback();
+
+        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+        expect(comp.feedback.type).toBe(FeedbackType.MANUAL);
+
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onUpdateFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
+    });
+
+    it('should enable edit feedback and emit to parent', () => {
+        const onEditFeedbackSpy = jest.spyOn(comp.onEditFeedback, 'emit');
+        comp.editFeedback(codeLine);
+
+        expect(onEditFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onEditFeedbackSpy).toHaveBeenCalledWith(codeLine);
+    });
+
+    it('should cancel feedback and emit to parent', () => {
+        const onCancelFeedbackSpy = jest.spyOn(comp.onCancelFeedback, 'emit');
+        comp.cancelFeedback();
+
+        expect(onCancelFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onCancelFeedbackSpy).toHaveBeenCalledWith(codeLine);
+    });
+
+    it('should delete feedback and emit to parent', () => {
+        const onDeleteFeedbackSpy = jest.spyOn(comp.onDeleteFeedback, 'emit');
+        comp.deleteFeedback(false);
+
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledOnce();
+        expect(onDeleteFeedbackSpy).toHaveBeenCalledWith(comp.feedback);
+    });
+
+    it('should update feedback with SGI and emit to parent', () => {
+        const instruction: GradingInstruction = { id: 1, credits: 2, feedback: 'test', gradingScale: 'good', instructionDescription: 'description of instruction', usageCount: 0 };
+        // Fake call as a DragEvent cannot be created programmatically
+        jest.spyOn(sgiService, 'updateFeedbackWithStructuredGradingInstructionEvent').mockImplementation(() => {
+            comp.feedback.gradingInstruction = instruction;
+            comp.feedback.credits = instruction.credits;
+        });
+        // Call spy function with empty event
+        comp.updateFeedbackOnDrop(new Event(''));
+
+        expect(comp.feedback.gradingInstruction).toEqual(instruction);
+        expect(comp.feedback.credits).toEqual(instruction.credits);
+        expect(comp.feedback.reference).toBe(`file:${fileName}_line:${codeLine}`);
+    });
+
+    it('should count feedback with one credit as positive', () => {
+        comp.feedback = new Feedback();
+        comp.feedback.credits = 1;
+
+        comp.updateFeedback();
+
+        expect(comp.feedback.positive).toBeTrue();
+    });
+
+    it('should display the feedback text properly', () => {
+        const gradingInstruction = {
+            id: 1,
+            credits: 1,
+            gradingScale: 'scale',
+            instructionDescription: 'description',
+            feedback: 'instruction feedback',
+            usageCount: 0,
+        } as GradingInstruction;
+        const feedback = {
+            id: 1,
+            detailText: 'feedback1',
+            text: 'File src/sorting/BubbleSort.java at line 4',
+            credits: 1.5,
+        } as Feedback;
+
+        let textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
+        expect(textToBeDisplayed).toBe(feedback.detailText);
+
+        feedback.gradingInstruction = gradingInstruction;
+        textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedback);
+        expect(textToBeDisplayed).toEqual(gradingInstruction.feedback + '<br>' + feedback.detailText);
+    });
+
+    it('should escape special characters', () => {
+        const feedbackWithSpecialCharacters = {
+            detailText: 'feedback <with> special characters & "',
+        } as Feedback;
+        const expectedTextToBeDisplayed = 'feedback &lt;with&gt; special characters &amp; &quot;';
+
+        const textToBeDisplayed = comp.buildFeedbackTextForCodeEditor(feedbackWithSpecialCharacters);
+        expect(textToBeDisplayed).toEqual(expectedTextToBeDisplayed);
+    });
+
+    it('should display credits and icons for positive preliminary feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: 1.5,
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement.nativeElement.textContent).toContain('1.5P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-success');
+    });
+
+    it('should display credits and icons for negative preliminary feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: -1.5,
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement.nativeElement.textContent).toContain('-1.5P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-danger');
+    });
+
+    it('should display credits and icons for neutral preliminary feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            credits: 0,
+        } as Feedback;
+        fixture.detectChanges();
+
+        const badgeElement = fixture.debugElement.query(By.css('.badge'));
+        expect(badgeElement.nativeElement.textContent).toContain('0P');
+        expect(badgeElement.nativeElement.classList).toContain('bg-warning');
+    });
+
+    it('should use the correct translation key for non-graded feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
+        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.feedback');
+        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+    });
+
+    it('should use the correct translation key for graded feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.MANUAL,
+            text: 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const headerElement = fixture.debugElement.query(By.css('.col-10 h6')).nativeElement;
+        expect(headerElement.attributes['jhiTranslate'].value).toBe('artemisApp.assessment.detail.tutorComment');
+        const paragraphElement = fixture.debugElement.query(By.css('.col-10 p')).nativeElement;
+        expect(paragraphElement.innerHTML).toContain(comp.buildFeedbackTextForCodeEditor(comp.feedback));
+    });
+
+    it('should display the correct translation key for non-graded feedback suggestion', () => {
+        comp.feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const translationElement = fixture.debugElement.query(By.css('h6[jhiTranslate="artemisApp.assessment.detail.feedback"]'));
+
+        expect(translationElement).not.toBeNull();
+        expect(translationElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.assessment.detail.feedback');
+    });
+
+    it('should display the correct translation key for graded feedback', () => {
+        comp.feedback = {
+            type: FeedbackType.MANUAL,
+            text: 'Some graded feedback',
+        } as Feedback;
+        fixture.detectChanges();
+
+        const translationElement = fixture.debugElement.query(By.css('h6[jhiTranslate="artemisApp.assessment.detail.tutorComment"]'));
+
+        expect(translationElement).not.toBeNull();
+        expect(translationElement.nativeElement.getAttribute('jhiTranslate')).toBe('artemisApp.assessment.detail.tutorComment');
+    });
+
+    describe('Close feedback button', () => {
+        it('should display the delete button with correct attributes for preliminary feedback', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC,
+                text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            } as Feedback;
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            expect(buttonElement.attributes['type']).toBe('button');
+            expect(buttonElement.attributes['aria-label']).toBe('Close');
+        });
+
+        it('should not display the delete button for feedback suggestions', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC_ADAPTED,
+                text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'feedback',
+            } as Feedback;
+            comp.feedback.text = 'some feedback';
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            expect(buttonElement).toBeFalsy();
+        });
+
+        it('should not display the delete button for tutor feedback', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.MANUAL,
+                text: FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER + 'some feedback',
+            } as Feedback;
+            fixture.detectChanges();
+
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            expect(buttonElement).toBeFalsy();
+        });
+
+        it('should call deleteFeedback method when delete button is clicked', () => {
+            comp.viewOnly = true;
+            comp.feedback = {
+                type: FeedbackType.AUTOMATIC,
+                text: PRELIMINARY_FEEDBACK_IDENTIFIER + 'feedback',
+            } as Feedback;
+            fixture.detectChanges();
+
+            jest.spyOn(comp, 'deleteFeedback');
+            const buttonElement = fixture.debugElement.query(By.css('button.btn-close.cross'));
+
+            buttonElement.nativeElement.click();
+            expect(comp.deleteFeedback).toHaveBeenCalled();
+        });
+
+        it('should emit feedback on delete', () => {
+            jest.spyOn(comp.onDeleteFeedback, 'emit');
+
+            comp.feedback = { id: 1, text: 'Test feedback' } as Feedback;
+            comp.deleteFeedback(false);
+
+            expect(comp.onDeleteFeedback.emit).toHaveBeenCalledWith(comp.feedback);
+        });
+
+        it('should not display a notification if localStorage key exists', () => {
+            jest.spyOn(alertService, 'success');
+            localStorage.getItem = jest.fn().mockReturnValueOnce(true);
+            comp.deleteFeedback(true);
+
+            expect(alertService.success).not.toHaveBeenCalled();
+        });
+
+        it('should display a success notification and set localStorage key on first delete', () => {
+            jest.spyOn(alertService, 'success');
+            localStorage.setItem = jest.fn().mockReturnValueOnce(false);
+
+            comp.deleteFeedback(true);
+
+            expect(alertService.success).toHaveBeenCalledWith('artemisApp.editor.showReopenFeedbackHint');
+            expect(localStorage.setItem).toHaveBeenCalledWith('jhi-code-editor-tutor-assessment-inline-feedback.showReopenHint', 'true');
+        });
+    });
+});

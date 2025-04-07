@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
