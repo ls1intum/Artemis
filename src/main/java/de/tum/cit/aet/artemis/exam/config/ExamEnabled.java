@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
 
 /**
  * Condition to check if the Exam module is enabled.
- * Based on this condition, Spring components concerning atlas functionality can be enabled or disabled.
+ * Based on this condition, Spring components concerning exam functionality can be enabled or disabled.
  */
 public class ExamEnabled implements Condition {
 
