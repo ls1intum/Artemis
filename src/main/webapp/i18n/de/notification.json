@@ -263,6 +263,11 @@
                 "content": "Es gibt ein neues Update in einem Build in {{exerciseTitle}}.",
                 "settingsTitle": "Build Update"
             },
+            "programmingTestCasesChangedNotification": {
+                "title": "Tests geändert",
+                "content": "Tests haben sich in {{exerciseTitle}} geändert.",
+                "settingsTitle": "Tests geändert"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

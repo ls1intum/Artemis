@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Exercise
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManualFeedbackRequestNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
@@ -318,7 +319,18 @@ public class GroupNotificationService {
      * @param exercise that has been updated
      */
     public void notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(ProgrammingExercise exercise) {
-        notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(Set.of(course.getEditorGroupName(), course.getInstructorGroupName()));
+
+            var programmingTestCasesChangedNotification = new ProgrammingTestCasesChangedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle());
+
+            courseNotificationService.sendCourseNotification(programmingTestCasesChangedNotification, recipients.stream().toList());
+        }
+        else {
+            notifyGroupsWithNotificationType(new GroupNotificationType[] { EDITOR, INSTRUCTOR }, PROGRAMMING_TEST_CASES_CHANGED, exercise, null, null);
+        }
     }
 
     /**
