@@ -30,7 +30,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entitie
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_PLAGIARISM } from '../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
