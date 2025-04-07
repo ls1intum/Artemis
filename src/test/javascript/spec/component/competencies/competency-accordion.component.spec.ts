@@ -5,10 +5,17 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencyAccordionComponent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { CompetencyMetrics, ExerciseInformation, ExerciseMetrics, LectureUnitInformation, LectureUnitStudentMetricsDTO, StudentMetrics } from 'app/entities/student-metrics.model';
+import {
+    CompetencyMetrics,
+    ExerciseInformation,
+    ExerciseMetrics,
+    LectureUnitInformation,
+    LectureUnitStudentMetricsDTO,
+    StudentMetrics,
+} from 'app/atlas/shared/entities/student-metrics.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 
 describe('CompetencyAccordionComponent', () => {
     let fixture: ComponentFixture<CompetencyAccordionComponent>;

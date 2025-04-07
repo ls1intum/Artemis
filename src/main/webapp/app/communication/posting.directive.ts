@@ -1,10 +1,10 @@
-import { Posting } from 'app/entities/metis/posting.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MetisService } from 'app/communication/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
 import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
-import { isMessagingEnabled } from 'app/entities/course.model';
+import { isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { OneToOneChatService } from 'app/communication/conversations/one-to-one-chat.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { Router } from '@angular/router';

@@ -9,8 +9,8 @@ import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'a
 import { CreateAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/create-attachment-video-unit/create-attachment-video-unit.component';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -19,7 +19,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
-import { ProfileService } from '../../../../../../main/webapp/app/shared/layouts/profiles/profile.service';
+import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 
 describe('CreateAttachmentVideoUnitComponent', () => {

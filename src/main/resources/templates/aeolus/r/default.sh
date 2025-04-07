@@ -3,7 +3,7 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 install () {
   echo '⚙️ executing install'
-  R CMD INSTALL assignment
+  Rscript -e 'remotes::install_local()'
 }
 
 run_all_tests () {

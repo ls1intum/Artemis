@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATLAS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -29,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -337,7 +336,7 @@ public class LectureResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
 
-        competencyApi.orElseThrow(() -> new ApiNotPresentException(CompetencyApi.class, PROFILE_ATLAS)).addCompetencyLinksToExerciseUnits(lecture);
+        competencyApi.orElseThrow(() -> new AtlasNotPresentException(CompetencyApi.class)).addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentVideoUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
         return ResponseEntity.ok(lecture);

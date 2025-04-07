@@ -1,4 +1,4 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 
 /**
  * Sorts an array of Course objects alphabetically by their title.

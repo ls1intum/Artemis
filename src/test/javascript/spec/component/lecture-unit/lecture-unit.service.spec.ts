@@ -1,17 +1,16 @@
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync } from '@angular/core/testing';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentVideoUnit, IngestionState } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { Attachment, AttachmentType } from 'app/entities/attachment.model';
+import { AttachmentVideoUnit, IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -21,7 +20,6 @@ describe('LectureUnitService', () => {
     let exerciseUnit: ExerciseUnit;
     let attachmentVideoUnit: AttachmentVideoUnit;
     let textUnit: TextUnit;
-    let videoUnit: VideoUnit;
     let lecture: Lecture;
     let expectedResultArray: any;
     let convertDateFromServerEntitySpy: jest.SpyInstance;
@@ -67,12 +65,6 @@ describe('LectureUnitService', () => {
         textUnit.id = 23;
         textUnit.content = 'Lorem Ipsum Text';
         textUnit.releaseDate = dayjs().year(2011).month(3).date(1);
-
-        videoUnit = new VideoUnit();
-        videoUnit.id = 15;
-        videoUnit.description = 'Lorem Ipsum Video';
-        videoUnit.source = 'test';
-        videoUnit.releaseDate = dayjs().year(2011).month(3).date(9);
     });
 
     afterEach(() => {
@@ -81,7 +73,7 @@ describe('LectureUnitService', () => {
 
     it('should receive updated order array', fakeAsync(() => {
         convertDateFromServerEntitySpy = jest.spyOn(service, 'convertLectureUnitDateFromServer');
-        const orderArray = [videoUnit, attachmentVideoUnit, textUnit, exerciseUnit];
+        const orderArray = [attachmentVideoUnit, textUnit, exerciseUnit];
         service.updateOrder(1, orderArray).subscribe((resp) => (expectedResultArray = resp));
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(orderArray);
@@ -93,14 +85,12 @@ describe('LectureUnitService', () => {
         expect(service.getLectureUnitName(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.name);
         expect(service.getLectureUnitName(exerciseUnit)).toEqual(exerciseUnit.exercise!.title);
         expect(service.getLectureUnitName(textUnit)).toEqual(textUnit.name);
-        expect(service.getLectureUnitName(videoUnit)).toEqual(videoUnit.name);
     });
 
     it('should get release date of associated element', async () => {
         expect(service.getLectureUnitReleaseDate(attachmentVideoUnit)).toEqual(attachmentVideoUnit.attachment!.releaseDate);
         expect(service.getLectureUnitReleaseDate(exerciseUnit)).toEqual(exerciseUnit.exercise!.releaseDate);
         expect(service.getLectureUnitReleaseDate(textUnit)).toEqual(textUnit.releaseDate);
-        expect(service.getLectureUnitReleaseDate(videoUnit)).toEqual(videoUnit.releaseDate);
     });
 
     it('should send a request to the server to get ngx representation of learning path', fakeAsync(() => {
@@ -132,17 +122,6 @@ describe('LectureUnitService', () => {
         exerciseUnit.visibleToStudents = false;
         service.completeLectureUnit(lecture, { lectureUnit: exerciseUnit, completed: false });
         httpMock.expectNone({ method: 'POST', url: 'api/lecture/lectures/5/lecture-units/42/completion?completed=false' });
-    }));
-
-    it('should get lecture unit by id', fakeAsync(() => {
-        service.getLectureUnitById(videoUnit.id!).subscribe();
-        httpMock.expectOne({ method: 'GET', url: `api/lecture/lecture-units/${videoUnit.id!}` });
-    }));
-
-    it('should delete lecture unit by id', fakeAsync(() => {
-        const lectureId = 5;
-        service.delete(videoUnit.id!, lectureId).subscribe();
-        httpMock.expectOne({ method: 'DELETE', url: `api/lecture/lectures/${lectureId}/lecture-units/${videoUnit.id!}` });
     }));
 
     it('should handle empty response body when converting dates from server on response array', fakeAsync(() => {

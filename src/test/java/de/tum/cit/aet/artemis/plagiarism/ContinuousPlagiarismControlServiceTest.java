@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlServ
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -93,8 +92,6 @@ class ContinuousPlagiarismControlServiceTest {
         var textPlagiarismResult = new TextPlagiarismResult();
         textPlagiarismResult.setComparisons(singleton(new PlagiarismComparison<>()));
         when(plagiarismChecksService.checkTextExercise(textExercise)).thenReturn(textPlagiarismResult);
-        var modelingPlagiarismResult = new ModelingPlagiarismResult();
-        when(plagiarismChecksService.checkModelingExercise(modelingExercise)).thenReturn(modelingPlagiarismResult);
         var programmingPlagiarismResult = new TextPlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
 
@@ -106,7 +103,6 @@ class ContinuousPlagiarismControlServiceTest {
 
         // then
         verify(plagiarismChecksService).checkTextExercise(textExercise);
-        verify(plagiarismChecksService).checkModelingExercise(modelingExercise);
         verify(plagiarismChecksService).checkProgrammingExercise(programmingExercise);
         verifyNoInteractions(plagiarismResultRepository);
     }

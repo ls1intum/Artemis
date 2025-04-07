@@ -1,17 +1,17 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AthenaService } from 'app/assessment/shared/athena.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { of } from 'rxjs';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/entities/feedback-suggestion.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
+import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { provideHttpClient } from '@angular/common/http';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('AthenaService', () => {
     let athenaService: AthenaService;
@@ -99,7 +99,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        let isAthenaEnabled: boolean | null = null;
+        let isAthenaEnabled = false;
 
         athenaService.isEnabled().subscribe((isEnabled: boolean) => {
             isAthenaEnabled = isEnabled;
@@ -114,7 +114,7 @@ describe('AthenaService', () => {
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
 
-        let isAthenaEnabled: boolean | null = null;
+        let isAthenaEnabled = false;
 
         athenaService.isEnabled().subscribe((isEnabled: boolean) => {
             isAthenaEnabled = isEnabled;
@@ -134,9 +134,9 @@ describe('AthenaService', () => {
             new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 1', 'Test Modeling Description 1', 0.0, 4321, `${elementType}:${elementID}`),
             new ModelingFeedbackSuggestion(0, 2, 2, 'Test Modeling 2', 'Test Modeling Description 2', 1.0, 4321, undefined),
         ];
-        let textResponse: TextBlockRef[] | null = null;
-        let programmingResponse: Feedback[] | null = null;
-        let modelingResponse: Feedback[] | null = null;
+        let textResponse: TextBlockRef[] = [];
+        let programmingResponse: Feedback[] = [];
+        let modelingResponse: Feedback[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -194,7 +194,7 @@ describe('AthenaService', () => {
     }));
 
     it('should return no feedback suggestions when feedback suggestions are disabled on the exercise', fakeAsync(() => {
-        let response: TextBlockRef[] | null = null;
+        let response: TextBlockRef[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -211,7 +211,7 @@ describe('AthenaService', () => {
     }));
 
     it('should return no feedback suggestions when athena is disabled on the server', fakeAsync(() => {
-        let response: TextBlockRef[] | null = null;
+        let response: TextBlockRef[] = [];
 
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -226,7 +226,7 @@ describe('AthenaService', () => {
     }));
 
     it('should return no modules when athena is disabled on the server', fakeAsync(() => {
-        let response: string[] | null = null;
+        let response: string[] = [];
 
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
@@ -245,9 +245,9 @@ describe('AthenaService', () => {
         const programmingModules = ['module_programming_1', 'module_programming_2'];
         const modelingModules = ['module_modeling_1', 'module_modeling_2'];
 
-        let textResponse: string[] | null = null;
-        let programmingResponse: string[] | null = null;
-        let modelingResponse: string[] | null = null;
+        let textResponse: string[] = [];
+        let programmingResponse: string[] = [];
+        let modelingResponse: string[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));

@@ -6,7 +6,7 @@ import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.servic
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { FinishedBuildJob } from 'app/programming/shared/entities/build-job.model';
+import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model';
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';

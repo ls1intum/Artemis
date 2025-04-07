@@ -3,14 +3,13 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { ExerciseAssessmentDashboardComponent } from 'app/exercise/dashboards/tutor/exercise-assessment-dashboard.component';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 
 import { ParticipationComponent } from 'app/exercise/participation/participation.component';
 import { ExerciseScoresComponent } from 'app/exercise/exercise-scores/exercise-scores.component';
 
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
-import { exerciseTypes } from 'app/entities/exercise.model';
+import { exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 import { ExerciseStatisticsComponent } from 'app/exercise/statistics/exercise-statistics.component';
 
@@ -20,6 +19,7 @@ import { CourseResolve, ExamResolve, ExerciseGroupResolve, StudentExamResolve } 
 import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
 import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
+import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -434,16 +434,6 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // Quiz Pool Configuration
-    {
-        path: ':examId/quiz-pool',
-        loadComponent: () => import('app/quiz/manage/quiz-pool.component').then((m) => m.QuizPoolComponent),
-        data: {
-            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     // Import File Upload Exercise
     {
         path: ':examId/exercise-groups/:exerciseGroupId/file-upload-exercises/import/:exerciseId',
@@ -592,18 +582,6 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/exercise-groups/:exerciseGroupId/modeling-exercises/:exerciseId/plagiarism',
-        loadComponent: () => import('app/plagiarism/manage/plagiarism-inspector/plagiarism-inspector.component').then((m) => m.PlagiarismInspectorComponent),
-        resolve: {
-            exercise: ModelingExerciseResolver,
-        },
-        data: {
-            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.plagiarism.plagiarismDetection',
         },
         canActivate: [UserRouteAccessService],
     },

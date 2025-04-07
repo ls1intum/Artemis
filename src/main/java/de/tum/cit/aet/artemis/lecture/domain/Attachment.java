@@ -61,8 +61,6 @@ public class Attachment extends DomainObject implements Serializable {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentVideoUnit attachmentVideoUnit;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public String getName() {
         return name;
     }

@@ -257,7 +257,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  
-  https://artemis.praktomat.cs.kit.edu  
+  https://artemis.cs.kit.edu  
   Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
   
 * **Hochschule München**  

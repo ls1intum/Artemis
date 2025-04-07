@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
@@ -133,8 +134,13 @@ public class LectureTranscriptionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "noTranscription"))
                     .body(null);
         }
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitIsNotAAttachmentVideoUnit"))
+                    .body(null);
+        }
         LectureTranscription transcriptionToIngest = transcription.get();
-        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, lectureUnit);
+        lectureService.ingestTranscriptionInPyris(transcriptionToIngest, course, lecture, (AttachmentVideoUnit) lectureUnit);
         return ResponseEntity.ok().build();
     }
 
@@ -153,6 +159,10 @@ public class LectureTranscriptionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
+
+        Course course = lectureUnit.getLecture().getCourse();
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
+
         Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (lectureTranscription.isEmpty()) {
             return ResponseEntity.badRequest()

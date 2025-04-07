@@ -1,5 +1,5 @@
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
@@ -17,11 +17,11 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { of } from 'rxjs';
-import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { MockComponent, MockInstance } from 'ng-mocks';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/course-lecture-details.component';
 import { ElementRef, signal } from '@angular/core';
 

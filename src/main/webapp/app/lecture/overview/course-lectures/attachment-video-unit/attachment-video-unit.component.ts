@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -19,11 +19,11 @@ import {
     faFileVideo,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-attachment-video-unit',

@@ -144,7 +144,14 @@
                 "chooseFile": "Choose File",
                 "fileTooBig": "File is too big! The maximum file size is 20 MB.",
                 "fileLimitation": "(max. size 20 MB)",
-                "fileLimitationTooltip": "Supported types: {{ extensions }}"
+                "fileLimitationTooltip": "Supported types: {{ extensions }}",
+                "source": "Embeddable Video URL",
+                "sourcePlaceHolder": "Enter an URL to an embeddable video",
+                "sourceRequiredValidationError": "Video URL is required",
+                "sourceURLValidationError": "Not a valid URL",
+                "urlVideoHelper": "Transform into embeddable format ",
+                "urlHelperPlaceholder": "You can enter a Video URL here and use the arrow to create the correct embeddable URL from it",
+                "urlHelperValidationError": "Automatic embed link generation is not possible for this URL"
             },
             "editAttachmentVideoUnit": {
                 "title": "Edit Attachment Unit"

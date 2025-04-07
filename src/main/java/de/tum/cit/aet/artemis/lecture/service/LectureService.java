@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
@@ -45,19 +45,19 @@ public class LectureService {
 
     private final ChannelService channelService;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi) {
+            Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
-        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
     }
@@ -150,12 +150,13 @@ public class LectureService {
      * @param updateCompetencyProgress whether the competency progress should be updated
      */
     public void delete(Lecture lecture, boolean updateCompetencyProgress) {
-        if (pyrisWebhookService.isPresent()) {
+        if (irisLectureApi.isPresent()) {
             Lecture lectureWithAttachmentVideoUnits = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lecture.getId());
             List<AttachmentVideoUnit> attachmentVideoUnitList = lectureWithAttachmentVideoUnits.getLectureUnits().stream()
                     .filter(lectureUnit -> lectureUnit instanceof AttachmentVideoUnit).map(lectureUnit -> (AttachmentVideoUnit) lectureUnit).toList();
+
             if (!attachmentVideoUnitList.isEmpty()) {
-                pyrisWebhookService.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
+                irisLectureApi.get().deleteLectureFromPyrisDB(attachmentVideoUnitList);
             }
         }
 
@@ -179,11 +180,11 @@ public class LectureService {
      * @param lectures set of lectures to be ingested
      */
     public void ingestLecturesInPyris(Set<Lecture> lectures) {
-        if (pyrisWebhookService.isPresent()) {
+        if (irisLectureApi.isPresent()) {
             List<AttachmentVideoUnit> attachmentVideoUnitList = lectures.stream().flatMap(lec -> lec.getLectureUnits().stream()).filter(unit -> unit instanceof AttachmentVideoUnit)
                     .map(unit -> (AttachmentVideoUnit) unit).toList();
             for (AttachmentVideoUnit attachmentVideoUnit : attachmentVideoUnitList) {
-                pyrisWebhookService.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
+                irisLectureApi.get().addLectureUnitToPyrisDB(attachmentVideoUnit);
             }
         }
     }
@@ -191,13 +192,13 @@ public class LectureService {
     /**
      * Ingest the transcriptions in the Pyris system
      *
-     * @param transcription Transcription to be ingested
-     * @param course        The course containing the transcription
-     * @param lecture       The lecture containing the transcription
-     * @param lectureUnit   The lecture unit containing the transcription
+     * @param transcription       Transcription to be ingested
+     * @param course              The course containing the transcription
+     * @param lecture             The lecture containing the transcription
+     * @param attachmentVideoUnit The lecture unit containing the transcription
      */
-    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, LectureUnit lectureUnit) {
-        pyrisWebhookService.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, lectureUnit));
+    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit attachmentVideoUnit) {
+        irisLectureApi.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, attachmentVideoUnit));
     }
 
     /**
@@ -206,6 +207,6 @@ public class LectureService {
      * @param existingLectureTranscription the Lecture transcription to be removed from Pyris
      */
     public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
-        pyrisWebhookService.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
+        irisLectureApi.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
     }
 }

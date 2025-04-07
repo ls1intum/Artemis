@@ -9,10 +9,10 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { of, throwError } from 'rxjs';
-import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
+import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';

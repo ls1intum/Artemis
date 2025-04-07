@@ -5,13 +5,13 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { Course } from 'app/entities/course.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Course } from 'app/core/shared/entities/course.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizStatisticsFooterComponent } from 'app/quiz/manage/statistics/quiz-statistics-footer/quiz-statistics-footer.component';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';

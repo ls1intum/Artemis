@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { FormsModule } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { WorkingTimeControlComponent } from 'app/exam/shared/working-time-control/working-time-control.component';
 import { input } from '@angular/core';
 

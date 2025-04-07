@@ -20,8 +20,7 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -44,24 +43,21 @@ public class AttachmentVideoUnitService {
 
     private final SlideRepository slideRepository;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
-
-    private final Optional<IrisSettingsRepository> irisSettingsRepository;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
     public AttachmentVideoUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<PyrisWebhookService> pyrisWebhookService,
-            Optional<IrisSettingsRepository> irisSettingsRepository, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
+            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            LectureUnitService lectureUnitService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
         this.slideRepository = slideRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
-        this.irisSettingsRepository = irisSettingsRepository;
+        this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
     }
@@ -90,9 +86,7 @@ public class AttachmentVideoUnitService {
             createAttachment(attachment, savedAttachmentVideoUnit, file, keepFilename);
         }
 
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit));
-        }
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(lecture.getCourse().getId(), List.of(savedAttachmentVideoUnit)));
         return savedAttachmentVideoUnit;
     }
 
@@ -151,9 +145,7 @@ public class AttachmentVideoUnitService {
             }
         }
 
-        if (pyrisWebhookService.isPresent() && irisSettingsRepository.isPresent()) {
-            pyrisWebhookService.get().autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit));
-        }
+        irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentVideoUnitsInPyris(savedAttachmentVideoUnit.getLecture().getCourse().getId(), List.of(savedAttachmentVideoUnit)));
 
         return savedAttachmentVideoUnit;
     }

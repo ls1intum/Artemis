@@ -87,7 +87,7 @@ public class PyrisWebhookService {
      * @param lectureUnit   The lecture unit of the transcriptions
      * @return jobToken if the job was created else null
      */
-    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, LectureUnit lectureUnit) {
+    public String addTranscriptionsToPyrisDB(LectureTranscription transcription, Course course, Lecture lecture, AttachmentVideoUnit lectureUnit) {
         if (transcription == null) {
             throw new IllegalArgumentException("Transcriptions cannot be empty");
         }
@@ -104,7 +104,8 @@ public class PyrisWebhookService {
         }
 
         PyrisTranscriptionIngestionWebhookDTO pyrisTranscriptionIngestionWebhookDTO = new PyrisTranscriptionIngestionWebhookDTO(transcription, lecture.getId(), lecture.getTitle(),
-                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId(), transcription.getLectureUnit().getName(), "");
+                course.getId(), course.getTitle(), course.getDescription(), transcription.getLectureUnit().getId(), transcription.getLectureUnit().getName(),
+                lectureUnit.getVideoSource());
 
         return executeTranscriptionAdditionWebhook(pyrisTranscriptionIngestionWebhookDTO, course, lecture, lectureUnit);
     }
@@ -134,8 +135,11 @@ public class PyrisWebhookService {
         Lecture lecture = lectureTranscription.getLectureUnit().getLecture();
         Course course = lecture.getCourse();
         LectureUnit lectureUnit = lectureTranscription.getLectureUnit();
+        if (!(lectureUnit instanceof AttachmentVideoUnit)) {
+            throw new IllegalArgumentException("Lecture Transcription must belong to an AttachmentVideoUnit");
+        }
         return executeLectureTranscriptionDeletionWebhook(new PyrisTranscriptionIngestionWebhookDTO(lectureTranscription, lecture.getId(), lecture.getTitle(), course.getId(),
-                course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), ""));
+                course.getTitle(), course.getDescription(), lectureUnit.getId(), lectureUnit.getName(), ((AttachmentVideoUnit) lectureUnit).getVideoSource()));
     }
 
     /**

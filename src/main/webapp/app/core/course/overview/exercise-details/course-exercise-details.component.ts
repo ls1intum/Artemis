@@ -3,40 +3,40 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { programmingExerciseFail, programmingExerciseSuccess } from 'app/core/guided-tour/tours/course-exercise-detail-tour';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, getIcon } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { TeamService } from 'app/exercise/team/team.service';
-import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
-import { getFirstResultWithComplaintFromResults } from 'app/entities/submission.model';
+import { getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
 import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { Complaint } from 'app/entities/complaint.model';
-import { SubmissionPolicy } from 'app/entities/submission-policy.model';
+import { Complaint } from 'app/assessment/shared/entities/complaint.model';
+import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
-import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
+import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
-import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
-import { ICER_PAPER_FLAG, PROFILE_IRIS } from 'app/app.constants';
+import { PROFILE_IRIS } from 'app/app.constants';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgClass } from '@angular/common';
@@ -47,7 +47,6 @@ import { ExerciseDetailsStudentActionsComponent } from './exercise-details-stude
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
@@ -58,7 +57,7 @@ import { DiscussionSectionComponent } from 'app/communication/shared/discussion-
 import { LtiInitializerComponent } from './lti-initializer.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AccountService } from 'app/core/auth/account.service';
+import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -110,7 +109,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private quizExerciseService = inject(QuizExerciseService);
     private complaintService = inject(ComplaintService);
     private artemisMarkdown = inject(ArtemisMarkdownService);
-    private accountService = inject(AccountService); // TODO TW: This "feature" is only temporary for a paper.
     private readonly cdr = inject(ChangeDetectorRef);
 
     readonly AssessmentType = AssessmentType;
@@ -129,7 +127,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
 
-    isChatGptWrapper: boolean = false; // TODO TW: This "feature" is only temporary for a paper.
     public learningPathMode = false;
     public exerciseId: number;
     public courseId: number;
@@ -219,14 +216,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     handleNewExercise(newExerciseDetails: ExerciseDetailsType) {
         this.exercise = newExerciseDetails.exercise;
         this.cdr.detectChanges(); // IMPORTANT: necessary to update the view after the exercise has been loaded in learning path view
-
-        // TODO TW: This "feature" is only temporary for a paper.
-        if (this.exercise.problemStatement?.includes(ICER_PAPER_FLAG)) {
-            this.accountService.identity().then((user) => {
-                this.isChatGptWrapper = user && user.id ? user.id % 3 == 0 : false;
-            });
-        }
-
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);

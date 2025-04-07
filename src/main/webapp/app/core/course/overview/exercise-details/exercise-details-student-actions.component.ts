@@ -3,33 +3,32 @@ import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/service/external-cloning.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercise/exercise.utils';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-editor-button/open-code-editor-button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RequestFeedbackButtonComponent } from './request-feedback-button/request-feedback-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
+import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
+import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 
 @Component({
     imports: [
@@ -41,7 +40,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
         CodeButtonComponent,
-        FaIconComponent,
         RequestFeedbackButtonComponent,
         ArtemisTranslatePipe,
     ],

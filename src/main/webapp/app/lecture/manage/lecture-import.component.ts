@@ -1,5 +1,5 @@
 import { Component, inject } from '@angular/core';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from '../../shared/language/translate.directive';

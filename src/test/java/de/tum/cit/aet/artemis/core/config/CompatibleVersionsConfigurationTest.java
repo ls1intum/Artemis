@@ -9,6 +9,23 @@ class CompatibleVersionsInfoConfigurationTest {
 
     @Test
     void testContribute() {
+        final var info = getInfo();
+
+        assertThat(info.getDetails()).containsKey("compatibleVersions");
+
+        Object value = info.getDetails().get("compatibleVersions");
+        assertThat(value).isInstanceOf(ArtemisCompatibleVersionsConfiguration.class);
+
+        ArtemisCompatibleVersionsConfiguration resultConfig = (ArtemisCompatibleVersionsConfiguration) value;
+
+        assertThat(resultConfig.getAndroid().getMin()).isEqualTo("1.2.0");
+        assertThat(resultConfig.getAndroid().getRecommended()).isEqualTo("1.2.0");
+
+        assertThat(resultConfig.getIos().getMin()).isEqualTo("1.6.1");
+        assertThat(resultConfig.getIos().getRecommended()).isEqualTo("1.6.1");
+    }
+
+    private static Info getInfo() {
         ArtemisCompatibleVersionsConfiguration config = new ArtemisCompatibleVersionsConfiguration();
 
         ArtemisCompatibleVersionsConfiguration.Platform android = new ArtemisCompatibleVersionsConfiguration.Platform();
@@ -25,19 +42,6 @@ class CompatibleVersionsInfoConfigurationTest {
 
         Info.Builder builder = new Info.Builder();
         contributor.contribute(builder);
-        Info info = builder.build();
-
-        assertThat(info.getDetails()).containsKey("compatibleVersions");
-
-        Object value = info.getDetails().get("compatibleVersions");
-        assertThat(value).isInstanceOf(ArtemisCompatibleVersionsConfiguration.class);
-
-        ArtemisCompatibleVersionsConfiguration resultConfig = (ArtemisCompatibleVersionsConfiguration) value;
-
-        assertThat(resultConfig.getAndroid().getMin()).isEqualTo("1.2.0");
-        assertThat(resultConfig.getAndroid().getRecommended()).isEqualTo("1.2.0");
-
-        assertThat(resultConfig.getIos().getMin()).isEqualTo("1.6.1");
-        assertThat(resultConfig.getIos().getRecommended()).isEqualTo("1.6.1");
+        return builder.build();
     }
 }

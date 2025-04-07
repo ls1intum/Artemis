@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, input } from '@angular/core';
-import { GraphColors } from 'app/entities/statistics.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { AggregatedExerciseGroupResult } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute } from '@angular/router';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/shared/util/navigation.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/shared/entities/course.model';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';

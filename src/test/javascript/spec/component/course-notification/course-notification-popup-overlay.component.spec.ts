@@ -3,9 +3,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { CourseNotificationWebsocketService } from 'app/communication/course-notification/course-notification-websocket.service';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
-import { CourseNotification } from 'app/entities/course-notification/course-notification';
-import { CourseNotificationCategory } from 'app/entities/course-notification/course-notification-category';
-import { CourseNotificationViewingStatus } from 'app/entities/course-notification/course-notification-viewing-status';
+import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
+import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
+import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -24,10 +24,19 @@ describe('CourseNotificationPopupOverlayComponent', () => {
     let componentAsAny: any;
 
     const createMockNotification = (id: number, courseId: number): CourseNotification => {
-        return new CourseNotification(id, courseId, 'newPostNotification', CourseNotificationCategory.COMMUNICATION, CourseNotificationViewingStatus.UNSEEN, dayjs(), {
-            courseTitle: 'Test Course',
-            courseIconUrl: 'test-icon-url',
-        });
+        return new CourseNotification(
+            id,
+            courseId,
+            'newPostNotification',
+            CourseNotificationCategory.COMMUNICATION,
+            CourseNotificationViewingStatus.UNSEEN,
+            dayjs(),
+            {
+                courseTitle: 'Test Course',
+                courseIconUrl: 'test-icon-url',
+            },
+            '/',
+        );
     };
 
     beforeEach(async () => {
