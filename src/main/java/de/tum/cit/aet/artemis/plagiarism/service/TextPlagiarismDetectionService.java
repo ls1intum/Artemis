@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
 import java.io.IOException;
@@ -23,7 +22,6 @@ import de.jplag.Language;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -33,6 +31,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -129,8 +128,8 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextSubmissionExportApi.class, PROFILE_CORE)).saveSubmissionToFile(submission,
-                            participantIdentifier, submissionsFolderName);
+                    textSubmissionExportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionExportApi.class)).saveSubmissionToFile(submission, participantIdentifier,
+                            submissionsFolderName);
                 }
                 catch (IOException e) {
                     log.error(e.getMessage());

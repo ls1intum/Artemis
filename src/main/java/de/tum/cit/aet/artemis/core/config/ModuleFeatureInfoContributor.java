@@ -42,6 +42,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isPlagiarismEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
         }
+        if (artemisConfigHelper.isTextExerciseEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
 }

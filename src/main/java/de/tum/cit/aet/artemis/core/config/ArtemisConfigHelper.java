@@ -31,6 +31,10 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, environment);
     }
 
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {
