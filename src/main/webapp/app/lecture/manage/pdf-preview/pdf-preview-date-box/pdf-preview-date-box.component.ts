@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';

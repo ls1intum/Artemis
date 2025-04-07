@@ -9,7 +9,7 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-previe
 import { faEye, faEyeSlash, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
