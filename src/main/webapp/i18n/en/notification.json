@@ -249,9 +249,9 @@
                 "settingsTitle": "Test duplicate warning"
             },
             "newCpcPlagiarismCaseNotification": {
-                "title": "New significant similarity",
+                "title": "New similarity",
                 "content": "{{postMarkdownContent}}",
-                "settingsTitle": "New significant similarity"
+                "settingsTitle": "New similarity"
             },
             "newPlagiarismCaseNotification": {
                 "title": "New plagiarism case",

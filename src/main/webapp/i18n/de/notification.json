@@ -249,9 +249,9 @@
                 "settingsTitle": "Test Duplikat Warnung"
             },
             "newCpcPlagiarismCaseNotification": {
-                "title": "Neue signifikante Übereinstimmung",
+                "title": "Neue Übereinstimmung",
                 "content": "{{postMarkdownContent}}",
-                "settingsTitle": "Neue signifikante Übereinstimmung"
+                "settingsTitle": "Neue Übereinstimmung"
             },
             "newPlagiarismCaseNotification": {
                 "title": "Neuer Plagiatsfall",
