@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.tutorialgroup.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME;
 
-import de.tum.cit.aet.artemis.core.api.AbstractApi;
 import de.tum.cit.aet.artemis.core.exception.ApiConditionNotPresentException;
+import de.tum.cit.aet.artemis.tutorialgroup.api.AbstractTutorialGroupApi;
 
 /**
  * Exception that an optionally autowired API is not present.
@@ -14,7 +14,7 @@ public class TutorialGroupApiNotPresentException extends ApiConditionNotPresentE
     /**
      * @param api the api class that should be present
      */
-    public TutorialGroupApiNotPresentException(Class<? extends AbstractApi> api) {
+    public TutorialGroupApiNotPresentException(Class<? extends AbstractTutorialGroupApi> api) {
         super(api, TUTORIAL_GROUP_ENABLED_PROPERTY_NAME);
     }
 }
