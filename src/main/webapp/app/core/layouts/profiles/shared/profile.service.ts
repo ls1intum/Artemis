@@ -141,6 +141,6 @@ export class ProfileService {
      * @param moduleFeatureName The module feature to check.
      */
     public isFeatureActive(moduleFeatureName: string): boolean {
-        return this.profileInfo?.value.activeModuleFeatures?.includes(moduleFeatureName) ?? false;
+        return this.profileInfo?.value?.activeModuleFeatures?.includes(moduleFeatureName) ?? false;
     }
 }
