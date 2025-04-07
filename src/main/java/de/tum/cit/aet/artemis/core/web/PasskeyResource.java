@@ -19,32 +19,31 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.ArtemisUserCredentialRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/core/webauthn/")
-public class WebauthnResource {
+@RequestMapping("api/core/passkey/")
+public class PasskeyResource {
 
-    // TODO adjust mapping
-    public static final String ENTITY_NAME = "webauthn";
+    public static final String ENTITY_NAME = "passkey";
 
-    private static final Logger log = LoggerFactory.getLogger(WebauthnResource.class);
+    private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
 
     private final UserRepository userRepository;
 
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
-    public WebauthnResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
+    public PasskeyResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
         this.userRepository = userRepository;
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
     }
 
-    @GetMapping("passkeys")
-    @EnforceNothing
+    @GetMapping("")
+    @EnforceAtLeastStudent
     public ResponseEntity<List<PasskeyDto>> getPasskeys() {
         var user = userRepository.getUser();
         log.info("Retrieving passkeys for user with id: {}", user.getId());
@@ -57,8 +56,8 @@ public class WebauthnResource {
     /**
      * @param credentialIdBase64Encoded as base64 encoded url string
      */
-    @DeleteMapping("passkeys/{credentialIdBase64Encoded}")
-    @EnforceNothing
+    @DeleteMapping("{credentialIdBase64Encoded}")
+    @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePasskey(@PathVariable String credentialIdBase64Encoded) {
         log.info("Deleting passkey with id: {}", credentialIdBase64Encoded);
 
