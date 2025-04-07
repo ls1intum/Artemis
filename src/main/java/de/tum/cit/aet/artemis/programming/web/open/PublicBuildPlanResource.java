@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.programming.web.open;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+
+import java.util.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -17,10 +21,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
-@Profile("gitlabci | jenkins")
+@Profile(PROFILE_JENKINS)
 @RestController
-// TODO: should we adapt the mapping based on the profile?
-@RequestMapping("api/public/")
+@RequestMapping("api/programming/public/")
 public class PublicBuildPlanResource {
 
     private static final Logger log = LoggerFactory.getLogger(PublicBuildPlanResource.class);
@@ -48,7 +51,7 @@ public class PublicBuildPlanResource {
         final ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Could not find connected exercise for build plan."));
 
-        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
+        if (!programmingExercise.getBuildConfig().hasBuildPlanAccessSecretSet() || !Objects.equals(secret, programmingExercise.getBuildConfig().getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
 

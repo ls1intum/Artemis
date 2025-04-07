@@ -91,31 +91,31 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
-import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseFeedbackService;
 
 /**
  * REST controller for managing Participation.
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class ParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ParticipationService participationService;
 
@@ -132,8 +132,6 @@ public class ParticipationResource {
     private final AuthorizationCheckService authCheckService;
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
-
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final UserRepository userRepository;
 
@@ -167,20 +165,22 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
-    private final TextExerciseFeedbackService textExerciseFeedbackService;
+    private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            ParticipationAuthorizationCheckService participationAuthCheckService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, AuditEventRepository auditEventRepository,
-            GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
+            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService,
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
             ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -190,7 +190,6 @@ public class ParticipationResource {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
         this.participationAuthCheckService = participationAuthCheckService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
         this.guidedTourConfiguration = guidedTourConfiguration;
@@ -207,7 +206,7 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
-        this.textExerciseFeedbackService = textExerciseFeedbackService;
+        this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
     }
 
@@ -260,12 +259,12 @@ public class ParticipationResource {
             // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
             // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
             // 3) add the task to the schedule service
-            // scheduleService.scheduleTask(exercise, ExerciseLifecycle.DUE, task);
+            // scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, task);
         }
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
-        return ResponseEntity.created(new URI("/api/participations/" + participation.getId())).body(participation);
+        return ResponseEntity.created(new URI("/api/exercise/participations/" + participation.getId())).body(participation);
     }
 
     /**
@@ -419,16 +418,17 @@ public class ParticipationResource {
         }
 
         // Process feedback request
-        StudentParticipation updatedParticipation;
-        if (exercise instanceof TextExercise) {
-            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
-        }
-        else if (exercise instanceof ModelingExercise) {
-            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);
-        }
-        else {
-            updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
-                    (ProgrammingExerciseStudentParticipation) participation, (ProgrammingExercise) exercise);
+        StudentParticipation updatedParticipation = null;
+        switch (exercise) {
+            case TextExercise textExercise -> {
+                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class));
+                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
+            }
+            case ModelingExercise modelingExercise -> updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
+            case ProgrammingExercise programmingExercise -> updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
+                    (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
+            default -> {
+            }
         }
 
         return ResponseEntity.ok().body(updatedParticipation);
@@ -586,12 +586,6 @@ public class ParticipationResource {
                 participationService.initializeTeamParticipations(participationsBeforeDueDate);
                 participationService.initializeTeamParticipations(participationsAfterDueDate);
             }
-            // when changing the individual due date after the regular due date, the repository might already have been locked
-            participationsBeforeDueDate.forEach(
-                    participation -> programmingExerciseParticipationService.unlockStudentRepositoryAndParticipation((ProgrammingExerciseStudentParticipation) participation));
-            // the new due date may be in the past, students should no longer be able to make any changes
-            participationsAfterDueDate.forEach(participation -> programmingExerciseParticipationService.lockStudentRepositoryAndParticipation(programmingExercise,
-                    (ProgrammingExerciseStudentParticipation) participation));
         }
 
         return ResponseEntity.ok().body(updatedParticipations);
@@ -675,18 +669,7 @@ public class ParticipationResource {
             participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
-            Exercise exercise = participation.getExercise();
-            exercise.setCourse(null);
-            exercise.setStudentParticipations(null);
-            exercise.setTutorParticipations(null);
-            exercise.setExampleSubmissions(null);
-            exercise.setAttachments(null);
-            exercise.setCategories(null);
-            exercise.setProblemStatement(null);
-            exercise.setPosts(null);
-            exercise.setGradingInstructions(null);
-            exercise.setDifficulty(null);
-            exercise.setMode(null);
+            final var exercise = getExercise(participation);
             switch (exercise) {
                 case ProgrammingExercise programmingExercise -> {
                     programmingExercise.setSolutionParticipation(null);
@@ -714,6 +697,22 @@ public class ParticipationResource {
         long end = System.currentTimeMillis();
         log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
+    }
+
+    private static Exercise getExercise(StudentParticipation participation) {
+        Exercise exercise = participation.getExercise();
+        exercise.setCourse(null);
+        exercise.setStudentParticipations(null);
+        exercise.setTutorParticipations(null);
+        exercise.setExampleSubmissions(null);
+        exercise.setAttachments(null);
+        exercise.setCategories(null);
+        exercise.setProblemStatement(null);
+        exercise.setPosts(null);
+        exercise.setGradingInstructions(null);
+        exercise.setDifficulty(null);
+        exercise.setMode(null);
+        return exercise;
     }
 
     /**
@@ -755,23 +754,6 @@ public class ParticipationResource {
     }
 
     /**
-     * Retrieves the latest build artifact of a given programming exercise participation
-     *
-     * @param participationId The participationId of the participation
-     * @return The latest build artifact (JAR/WAR) for the participation
-     */
-    @GetMapping("participations/{participationId}/build-artifact")
-    @EnforceAtLeastStudent
-    public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
-        log.debug("REST request to get Participation build artifact: {}", participationId);
-        ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        checkAccessPermissionOwner(participation, user);
-
-        return continuousIntegrationService.orElseThrow().retrieveLatestArtifact(participation);
-    }
-
-    /**
      * GET /exercises/:exerciseId/participation: get the user's participation for a specific exercise. Please note: 'courseId' is only included in the call for
      * API consistency, it is not actually used
      *
@@ -781,7 +763,7 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
-    @AllowedTools(ToolTokenType.SCORPIO)
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -820,6 +802,7 @@ public class ParticipationResource {
     }
 
     @Nullable
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
@@ -848,11 +831,22 @@ public class ParticipationResource {
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
-            // set view
-            var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
-            MappingJacksonValue value = new MappingJacksonValue(participation);
-            value.setSerializationView(view);
-            return value;
+
+            // TODO: Duplicate
+            Object responseDTO = null;
+            if (participation != null) {
+                if (quizExercise.isQuizEnded()) {
+                    responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+                }
+                else if (quizBatch.get().isStarted()) {
+                    responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+                }
+                else {
+                    responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+                }
+            }
+
+            return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
         }
         else {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
@@ -872,22 +866,19 @@ public class ParticipationResource {
      * DELETE /participations/:participationId : delete the "participationId" participation. This only works for student participations - other participations should not be deleted
      * here!
      *
-     * @param participationId  the participationId of the participation to delete
-     * @param deleteBuildPlan  True, if the build plan should also get deleted
-     * @param deleteRepository True, if the repository should also get deleted
+     * @param participationId the participationId of the participation to delete
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("participations/{participationId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
+    public ResponseEntity<Void> deleteParticipation(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
+        return deleteParticipation(participation, user);
     }
 
     /**
@@ -895,15 +886,12 @@ public class ParticipationResource {
      * tutorial)
      * Please note: all users can delete their own participation when it belongs to a guided tutorial
      *
-     * @param participationId  the participationId of the participation to delete
-     * @param deleteBuildPlan  True, if the build plan should also get deleted
-     * @param deleteRepository True, if the repository should also get deleted
+     * @param participationId the participationId of the participation to delete
      * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
      */
     @DeleteMapping("guided-tour/participations/{participationId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
-            @RequestParam(defaultValue = "false") boolean deleteRepository) {
+    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId) {
         StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
         if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
             throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
@@ -920,27 +908,24 @@ public class ParticipationResource {
             throw new AccessForbiddenException("Users are not allowed to delete their own participation.");
         }
 
-        return deleteParticipation(participation, deleteBuildPlan, deleteRepository, user);
+        return deleteParticipation(participation, user);
     }
 
     /**
      * delete the participation, potentially including build plan and repository and log the event in the database audit
      *
-     * @param participation    the participation to be deleted
-     * @param deleteBuildPlan  whether the build plan should be deleted as well, only relevant for programming exercises
-     * @param deleteRepository whether the repository should be deleted as well, only relevant for programming exercises
-     * @param user             the currently logged-in user who initiated the delete operation
+     * @param participation the participation to be deleted
+     * @param user          the currently logged-in user who initiated the delete operation
      * @return the response to the client
      */
     @NotNull
-    private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, boolean deleteBuildPlan, boolean deleteRepository, User user) {
+    private ResponseEntity<Void> deleteParticipation(StudentParticipation participation, User user) {
         String name = participation.getParticipantName();
-        var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + ", deleteBuildPlan: "
-                + deleteBuildPlan + ", deleteRepository: " + deleteRepository + " by " + user.getLogin();
+        var logMessage = "Delete Participation " + participation.getId() + " of exercise " + participation.getExercise().getTitle() + " for " + name + " by " + user.getLogin();
         var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_PARTICIPATION, logMessage);
         auditEventRepository.add(auditEvent);
         log.info(logMessage);
-        participationService.delete(participation.getId(), deleteBuildPlan, deleteRepository, true);
+        participationService.delete(participation.getId(), true);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "participation", name)).build();
     }
 
@@ -1057,4 +1042,5 @@ public class ParticipationResource {
 
         return participation;
     }
+
 }

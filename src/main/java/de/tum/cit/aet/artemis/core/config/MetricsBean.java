@@ -41,13 +41,14 @@ import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
+import de.tum.cit.aet.artemis.exam.api.ExamMetricsApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.MultiGauge;
@@ -89,9 +90,9 @@ public class MetricsBean {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamMetricsApi> examMetricsApi;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final CourseRepository courseRepository;
 
@@ -105,7 +106,7 @@ public class MetricsBean {
 
     private final Optional<HikariDataSource> hikariDataSource;
 
-    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
+    private final Optional<DistributedDataAccessService> localCIDistributedDataAccessService;
 
     /**
      * List that stores active usernames (users with a submission within the last 14 days) which is refreshed every 60 minutes.
@@ -176,8 +177,8 @@ public class MetricsBean {
 
     public MetricsBean(MeterRegistry meterRegistry, @Qualifier("taskScheduler") TaskScheduler scheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            StudentExamRepository studentExamRepository, ExamRepository examRepository, CourseRepository courseRepository, UserRepository userRepository,
-            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<SharedQueueManagementService> localCIBuildJobQueueService) {
+            Optional<StudentExamApi> studentExamApi, Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, UserRepository userRepository,
+            StatisticsRepository statisticsRepository, ProfileService profileService, Optional<DistributedDataAccessService> localCIBuildJobQueueService) {
         this.meterRegistry = meterRegistry;
         this.scheduler = scheduler;
         this.webSocketStats = webSocketStats;
@@ -186,13 +187,13 @@ public class MetricsBean {
         this.healthContributors = healthContributors;
         this.hikariDataSource = hikariDataSource;
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = examRepository;
-        this.studentExamRepository = studentExamRepository;
+        this.examMetricsApi = examMetricsApi;
+        this.studentExamApi = studentExamApi;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.statisticsRepository = statisticsRepository;
         this.profileService = profileService;
-        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.localCIDistributedDataAccessService = localCIBuildJobQueueService;
     }
 
     /**
@@ -292,38 +293,39 @@ public class MetricsBean {
      */
     private void registerLocalCIMetrics() {
         // Publish the number of running builds
-        Gauge.builder("artemis.global.localci.running", localCIBuildJobQueueService, MetricsBean::extractRunningBuilds).strongReference(true)
+        Gauge.builder("artemis.global.localci.running", localCIDistributedDataAccessService, MetricsBean::extractRunningBuilds).strongReference(true)
                 .description("Number of running builds").register(meterRegistry);
 
         // Publish the number of queued builds
-        Gauge.builder("artemis.global.localci.queued", localCIBuildJobQueueService, MetricsBean::extractQueuedBuilds).strongReference(true).description("Number of queued builds")
-                .register(meterRegistry);
+        Gauge.builder("artemis.global.localci.queued", localCIDistributedDataAccessService, MetricsBean::extractQueuedBuilds).strongReference(true)
+                .description("Number of queued builds").register(meterRegistry);
 
         // Publish the number of build agents
-        Gauge.builder("artemis.global.localci.agents", localCIBuildJobQueueService, MetricsBean::extractBuildAgents).strongReference(true)
+        Gauge.builder("artemis.global.localci.agents", localCIDistributedDataAccessService, MetricsBean::extractBuildAgents).strongReference(true)
                 .description("Number of active build agents").register(meterRegistry);
 
         // Publish the number of max concurrent builds
-        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIBuildJobQueueService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
+        Gauge.builder("artemis.global.localci.maxConcurrentBuilds", localCIDistributedDataAccessService, MetricsBean::extractMaxConcurrentBuilds).strongReference(true)
                 .description("Number of max concurrent builds").register(meterRegistry);
     }
 
-    private static int extractRunningBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getProcessingJobsSize).orElse(0);
+    private static int extractRunningBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getProcessingJobsSize).orElse(0);
     }
 
-    private static int extractQueuedBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getQueuedJobsSize).orElse(0);
+    private static int extractQueuedBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getQueuedJobsSize).orElse(0);
     }
 
-    private static int extractBuildAgents(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(SharedQueueManagementService::getBuildAgentInformationSize).orElse(0);
+    private static int extractBuildAgents(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(DistributedDataAccessService::getBuildAgentInformationSize).orElse(0);
     }
 
-    private static int extractMaxConcurrentBuilds(Optional<SharedQueueManagementService> sharedQueueManagementService) {
-        return sharedQueueManagementService.map(queueManagementService -> queueManagementService.getBuildAgentInformation().stream()
-                .filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED).map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs)
-                .reduce(0, Integer::sum)).orElse(0);
+    private static int extractMaxConcurrentBuilds(Optional<DistributedDataAccessService> localCIDistributedDataAccessService) {
+        return localCIDistributedDataAccessService.map(
+                dataManagementService -> dataManagementService.getBuildAgentInformation().stream().filter(agent -> agent.status() != BuildAgentInformation.BuildAgentStatus.PAUSED)
+                        .map(BuildAgentInformation::maxNumberOfConcurrentBuildJobs).reduce(0, Integer::sum))
+                .orElse(0);
     }
 
     // This is ALWAYS active on all nodes
@@ -458,11 +460,14 @@ public class MetricsBean {
                 exerciseRepository::countActiveStudentsInExercisesWithReleaseDateBetweenGroupByExerciseType);
 
         // Exam metrics
-        updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, examRepository::countExamsWithEndDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithEndDateBetween);
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            updateMultiGaugeIntegerForMinuteRanges(dueExamGauge, api::countExamsWithEndDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(dueExamStudentMultiplierGauge, api::countExamUsersInExamsWithEndDateBetween);
 
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, examRepository::countExamsWithStartDateBetween);
-        updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, examRepository::countExamUsersInExamsWithStartDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamGauge, api::countExamsWithStartDateBetween);
+            updateMultiGaugeIntegerForMinuteRanges(releaseExamStudentMultiplierGauge, api::countExamUsersInExamsWithStartDateBetween);
+        }
 
         log.debug("recalculateMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -606,15 +611,13 @@ public class MetricsBean {
 
         final List<Course> courses = courseRepository.findAllActiveWithoutTestCourses(now);
         // We set the number of students once to prevent multiple queries for the same date
-        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName())));
+        courses.forEach(course -> course.setNumberOfStudents(userRepository.countByDeletedIsFalseAndGroupsContains(course.getStudentGroupName())));
         ensureCourseInformationIsSet(courses);
 
         final List<Long> courseIds = courses.stream().mapToLong(Course::getId).boxed().toList();
-        final List<Exam> examsInActiveCourses = examRepository.findExamsInCourses(courseIds);
 
         // Update multi gauges
         updateStudentsCourseMultiGauge(courses);
-        updateStudentsExamMultiGauge(examsInActiveCourses, courses);
         updateActiveUserMultiGauge(now);
         updateActiveExerciseMultiGauge();
         updateExerciseMultiGauge();
@@ -623,8 +626,14 @@ public class MetricsBean {
         activeCoursesGauge.set(courses.size());
         coursesGauge.set((int) courseRepository.count());
 
-        activeExamsGauge.set(examRepository.countAllActiveExams(now));
-        examsGauge.set((int) examRepository.count());
+        // Exam metrics
+        if (examMetricsApi.isPresent()) {
+            ExamMetricsApi api = examMetricsApi.get();
+            final List<Exam> examsInActiveCourses = api.findExamsInCourses(courseIds);
+            updateStudentsExamMultiGauge(examsInActiveCourses, courses);
+            activeExamsGauge.set(api.countAllActiveExams(now));
+            examsGauge.set((int) api.count());
+        }
 
         log.debug("updatePublicArtemisMetrics took {}ms", System.currentTimeMillis() - startDate);
     }
@@ -654,10 +663,11 @@ public class MetricsBean {
     }
 
     private void updateStudentsExamMultiGauge(List<Exam> examsInActiveCourses, List<Course> courses) {
+        StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
         // A mutable list is required here because otherwise the values can not be updated correctly
         final List<MultiGauge.Row<?>> gauges = examsInActiveCourses.stream().map(exam -> {
             final Tags tags = getExamMetricTags(courses, exam);
-            final long studentCount = studentExamRepository.countByExamId(exam.getId());
+            final long studentCount = api.countByExamId(exam.getId());
             return MultiGauge.Row.of(tags, studentCount);
         }).collect(Collectors.toCollection(ArrayList::new));
 

@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
+import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -66,13 +67,13 @@ public class PyrisPipelineService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
-    private final LearningMetricsApi learningMetricsApi;
+    private final Optional<LearningMetricsApi> learningMetricsApi;
 
     @Value("${server.url}")
     private String artemisBaseUrl;
 
     public PyrisPipelineService(PyrisConnectorService pyrisConnectorService, PyrisJobService pyrisJobService, PyrisDTOService pyrisDTOService,
-            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, LearningMetricsApi learningMetricsApi,
+            IrisChatWebsocketService irisChatWebsocketService, CourseRepository courseRepository, Optional<LearningMetricsApi> learningMetricsApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.pyrisConnectorService = pyrisConnectorService;
         this.pyrisJobService = pyrisJobService;
@@ -188,6 +189,8 @@ public class PyrisPipelineService {
     private <T, U> void executeCourseChatPipeline(String variant, IrisCourseChatSession session, T eventObject, Class<U> eventDtoClass, Optional<String> eventVariant) {
         var courseId = session.getCourse().getId();
         var studentId = session.getUser().getId();
+        var api = learningMetricsApi.orElseThrow(() -> new AtlasNotPresentException(LearningMetricsApi.class));
+
         // @formatter:off
         executePipeline(
             "course-chat",
@@ -197,7 +200,7 @@ public class PyrisPipelineService {
                 var fullCourse = loadCourseWithParticipationOfStudent(courseId, studentId);
                 return new PyrisCourseChatPipelineExecutionDTO<>(
                     PyrisExtendedCourseDTO.of(fullCourse),
-                    learningMetricsApi.getStudentCourseMetrics(session.getUser().getId(), courseId),
+                    api.getStudentCourseMetrics(session.getUser().getId(), courseId),
                     generateEventPayloadFromObjectType(eventDtoClass, eventObject), // get the event payload DTO
                     pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                     new PyrisUserDTO(session.getUser()),

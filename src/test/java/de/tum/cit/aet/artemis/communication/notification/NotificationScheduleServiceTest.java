@@ -22,11 +22,13 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,7 +45,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     private InstanceMessageReceiveService instanceMessageReceiveService;
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -59,6 +61,9 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
 
     private Exercise exercise;
 
@@ -80,7 +85,8 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exercise.setMaxPoints(5.0);
         exerciseRepository.saveAndFlush(exercise);
 
-        sizeBefore = notificationRepository.count();
+        sizeBefore = notificationTestRepository.count();
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -91,9 +97,10 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exerciseRepository.saveAndFlush(exercise);
 
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
-        await().until(() -> notificationRepository.count() > sizeBefore);
+        await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(TIMEOUT_MS)).notifyAllGroupsAboutReleasedExercise(exercise);
         verify(mailService, timeout(TIMEOUT_MS).atLeastOnce()).sendNotification(any(), anySet(), any());
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -114,8 +121,9 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exerciseRepository.saveAndFlush(exercise);
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
-        await().until(() -> notificationRepository.count() > sizeBefore);
+        await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(exercise);
         verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 }

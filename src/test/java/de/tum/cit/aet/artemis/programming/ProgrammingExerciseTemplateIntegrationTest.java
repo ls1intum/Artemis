@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsGitlabTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingIntegrationJenkinsLocalVcTest {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTemplateIntegrationTest.class);
 
@@ -124,7 +124,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         // Use which to find all java installations on Linux
         var javaInstallations = runProcess(new ProcessBuilder("which", "-a", "java"));
         for (String path : javaInstallations) {
-            File binFolder = new File(path).getParentFile();
+            File binFolder = Path.of(path).toFile().getParentFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -139,8 +139,8 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
     private static void findAndSetJava17Mac() throws Exception {
         var alternativeInstallations = runProcess(new ProcessBuilder("/usr/libexec/java_home", "-v", "17"));
         for (String path : alternativeInstallations) {
-            File binFolder = new File(path).getParentFile();
-            binFolder = new File(binFolder, "Home/bin");
+            File binFolder = Path.of(path).toFile().getParentFile();
+            binFolder = binFolder.toPath().resolve("Home/bin").toFile();
             if (checkJavaVersion(binFolder, "./java", "-version")) {
                 return;
             }
@@ -191,21 +191,19 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         Course course = courseUtilService.addEmptyCourse();
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
 
         exerciseRepo.configureRepos("exerciseLocalRepo", "exerciseOriginRepo");
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
         auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 
     @AfterEach
     void tearDown() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        gitlabRequestMockProvider.enableMockingOfRequests();
         programmingExerciseTestService.tearDown();
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
@@ -269,7 +267,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         exercise.setProjectType(projectType);
         mockConnectorRequestsForSetup(exercise, false, true, false);
         exercise.setChannelName("exercise-pe");
-        request.postWithResponseBody("/api/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
+        request.postWithResponseBody("/api/programming/programming-exercises/setup", exercise, ProgrammingExercise.class, HttpStatus.CREATED);
 
         moveAssignmentSourcesOf(repository);
         int exitCode;

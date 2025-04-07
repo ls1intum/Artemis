@@ -57,7 +57,6 @@
             },
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",
-            "buildArtifact": "Build-Artefakt",
             "buildError": "Build Fehler:",
             "score": "Deine Bewertung ist {{score}}%",
             "scorePercentage": "Bewertung (in %)",
@@ -122,7 +121,7 @@
             "scaIssueCount": "Du hast {{issues}} Code-Issues.",
             "manualFeedbackCount": "Du hast {{feedbacks}} manuelle Feedbacks bekommen.",
             "buildLogs": {
-                "viewLogs": "Build-Logs anzeigen"
+                "viewLogs": "Logs anzeigen"
             }
         }
     }

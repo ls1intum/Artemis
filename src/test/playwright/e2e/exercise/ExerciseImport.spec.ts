@@ -1,10 +1,10 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
@@ -13,9 +13,9 @@ import { generateUUID } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 
 test.describe('Import exercises', () => {
     let course: Course;
@@ -44,6 +44,7 @@ test.describe('Import exercises', () => {
             await courseManagementExercises.importTextExercise();
             await courseManagementExercises.clickImportExercise(textExercise.id!);
 
+            await textExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(textExercise.title!);
             await expect(page.locator('#field_points')).toHaveValue(`${textExercise.maxPoints!}`);
 
@@ -74,10 +75,11 @@ test.describe('Import exercises', () => {
             await courseManagementExercises.importQuizExercise();
             await courseManagementExercises.clickImportExercise(quizExercise.id!);
 
+            await quizExerciseCreation.waitForFormToLoad();
             await expect(page.locator('#field_title')).toHaveValue(quizExercise.title!);
             await expect(page.locator('#quiz-duration-minutes')).toHaveValue(`${quizExercise.duration! / 60}`);
 
-            await quizExerciseCreation.setVisibleFrom(dayjs());
+            await quizExerciseCreation.setReleaseDate(dayjs());
 
             const importResponse = await quizExerciseCreation.import();
             const exercise: QuizExercise = await importResponse.json();
@@ -100,7 +102,7 @@ test.describe('Import exercises', () => {
                 await courseManagementExercises.importModelingExercise();
                 await courseManagementExercises.clickImportExercise(modelingExercise.id!);
 
-                await page.waitForTimeout(10000);
+                await modelingExerciseCreation.waitForFormToLoad();
                 await expect(page.locator('#field_title')).toHaveValue(modelingExercise.title!);
                 await expect(page.locator('#field_points')).toHaveValue(`${modelingExercise.maxPoints!}`);
 
@@ -131,6 +133,7 @@ test.describe('Import exercises', () => {
                 await courseManagementExercises.importProgrammingExercise();
                 await courseManagementExercises.clickImportExercise(programmingExercise.id!);
 
+                await programmingExerciseCreation.waitForFormToLoad();
                 await expect(page.locator('#field_points')).toHaveValue(`${programmingExercise.maxPoints!}`);
 
                 await programmingExerciseCreation.setTitle('Import Test');

@@ -1,6 +1,6 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 
 export class User extends Account {
     public id?: number;
@@ -15,7 +15,7 @@ export class User extends Account {
     public password?: string;
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
-    public irisAccepted?: dayjs.Dayjs;
+    public externalLLMUsageAccepted?: dayjs.Dayjs;
 
     constructor(
         id?: number,
@@ -36,7 +36,7 @@ export class User extends Account {
         imageUrl?: string,
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
-        irisAccepted?: dayjs.Dayjs,
+        externalLLMUsageAccepted?: dayjs.Dayjs,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -49,7 +49,7 @@ export class User extends Account {
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
-        this.irisAccepted = irisAccepted;
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 }
 /**

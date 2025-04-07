@@ -1,12 +1,12 @@
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { test } from '../../../support/fixtures';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 test.describe('Text exercise management', { tag: '@fast' }, () => {
     let course: Course;
@@ -32,7 +32,7 @@ test.describe('Text exercise management', { tag: '@fast' }, () => {
 
         // Fill out text exercise form
         const exerciseTitle = 'text exercise' + generateUUID();
-        await textExerciseCreation.typeTitle(exerciseTitle);
+        await textExerciseCreation.setTitle(exerciseTitle);
         await textExerciseCreation.setReleaseDate(dayjs());
         await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));

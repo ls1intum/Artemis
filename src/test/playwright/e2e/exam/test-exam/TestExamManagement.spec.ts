@@ -1,6 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
@@ -51,7 +51,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
             await examManagement.openExerciseGroups(exam.id!);
             await examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
             const textExerciseTitle = 'text' + uid;
-            await textExerciseCreation.typeTitle(textExerciseTitle);
+            await textExerciseCreation.setTitle(textExerciseTitle);
             await textExerciseCreation.typeMaxPoints(10);
             const response = await textExerciseCreation.create();
             expect(response.status()).toBe(201);

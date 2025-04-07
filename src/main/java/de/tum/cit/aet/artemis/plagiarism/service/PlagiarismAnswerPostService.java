@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -39,13 +40,17 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
+            WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
+            SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -70,9 +75,6 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
         parseUserMentions(course, answerPost.getContent());
-
-        // increase answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() + 1);
 
         // use post from database rather than user input
         answerPost.setPost(post);
@@ -156,9 +158,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         post.removeAnswerPost(answerPost);
 
-        // decrease answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() - 1);
-
         // sets the post as resolved if there exists any resolving answer
         post.setResolved(post.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
         // deletes the answerPost from database and persists updates on the post properties
@@ -221,5 +220,14 @@ public class PlagiarismAnswerPostService extends PostingService {
         if (!user.getId().equals(answerPost.getAuthor().getId())) {
             throw new AccessForbiddenException("You are not allowed to edit this post");
         }
+    }
+
+    /**
+     * Sends out a request to the SingleUserNotificationService to inform the instructor about a reply to a post related to a plagiarism case.
+     *
+     * @param post the post that has received a reply
+     */
+    public void informInstructorAboutPostReply(Post post) {
+        singleUserNotificationService.notifyInstructionAboutPlagiarismCaseReply(post.getPlagiarismCase(), post.getAuthor());
     }
 }

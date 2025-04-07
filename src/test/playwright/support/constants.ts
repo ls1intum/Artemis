@@ -1,20 +1,18 @@
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ProgrammingExerciseSubmission } from './pageobjects/exercises/programming/OnlineEditorPage';
 
 // Constants which are used in the test specs
 
 // Requests
 export const BASE_API = 'api';
-export const EXERCISE_BASE = `${BASE_API}/exercises`;
 
-export const COURSE_BASE = `${BASE_API}/courses`;
-export const COURSE_ADMIN_BASE = `${BASE_API}/admin/courses`;
+export const COURSE_ADMIN_BASE = `${BASE_API}/core/admin/courses`;
 
-export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming-exercises`;
-export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz-exercises`;
-export const TEXT_EXERCISE_BASE = `${BASE_API}/text-exercises`;
-export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling-exercises`;
-export const UPLOAD_EXERCISE_BASE = `${BASE_API}/file-upload-exercises`;
+export const PROGRAMMING_EXERCISE_BASE = `${BASE_API}/programming/programming-exercises`;
+export const QUIZ_EXERCISE_BASE = `${BASE_API}/quiz/quiz-exercises`;
+export const TEXT_EXERCISE_BASE = `${BASE_API}/text/text-exercises`;
+export const MODELING_EXERCISE_BASE = `${BASE_API}/modeling/modeling-exercises`;
+export const UPLOAD_EXERCISE_BASE = `${BASE_API}/fileupload/file-upload-exercises`;
 
 // Constants
 export const USER_ID_SELECTOR = 'USERID';

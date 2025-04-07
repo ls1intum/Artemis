@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_FILE_PATH_PREFIX;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getBaseName;
 import static org.apache.velocity.shaded.commons.io.FilenameUtils.getExtension;
@@ -45,8 +46,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -61,14 +64,14 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
+import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
+import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
-import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
-import de.tum.cit.aet.artemis.fileupload.service.FileUploadService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -91,7 +94,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class FileResource {
 
     private static final Logger log = LoggerFactory.getLogger(FileResource.class);
@@ -99,6 +102,8 @@ public class FileResource {
     private static final int DAYS_TO_CACHE = 1;
 
     private final FileService fileService;
+
+    private final FileUploadService fileUploadService;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -108,7 +113,7 @@ public class FileResource {
 
     private final SlideRepository slideRepository;
 
-    private final FileUploadSubmissionRepository fileUploadSubmissionRepository;
+    private final Optional<FileUploadApi> fileUploadApi;
 
     private final AttachmentRepository attachmentRepository;
 
@@ -116,7 +121,7 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    private final ExamUserRepository examUserRepository;
+    private final Optional<ExamUserApi> examUserApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -128,29 +133,26 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    private final FileUploadService fileUploadService;
-
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
-            LectureRepository lectureRepository, FileUploadSubmissionRepository fileUploadSubmissionRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService,
-            FileUploadService fileUploadService) {
+    public FileResource(FileUploadService fileUploadService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
+            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
+            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+        this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
-        this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.examUserRepository = examUserRepository;
+        this.examUserApi = examUserApi;
         this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
         this.courseRepository = courseRepository;
         this.lectureUnitService = lectureUnitService;
-        this.fileUploadService = fileUploadService;
+        this.fileUploadApi = fileUploadApi;
     }
 
     /**
@@ -166,7 +168,8 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String publicPath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -192,12 +195,13 @@ public class FileResource {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The file is too large. Maximum file size is " + Constants.MAX_FILE_SIZE_COMMUNICATION + " bytes.");
         }
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
-        String responsePath = filePathInformation.publicPath().toString();
+        String publicPath = filePathInformation.publicPath().toString();
 
-        fileUploadService.createFileUpload(responsePath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+        fileUploadService.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
                 FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
 
         return ResponseEntity.created(new URI(responsePath)).body(responseBody);
@@ -218,15 +222,15 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var path = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
-
-        var fileUpload = fileUploadService.findByPath("/api/files/courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
+        var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(path, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(path, filename, true);
+        return buildFileResponse(serverFilePath, filename, true);
     }
 
     /**
@@ -330,7 +334,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadSubmission submission = fileUploadSubmissionRepository.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
         // check if the participation is a StudentParticipation before the following cast
@@ -405,7 +410,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
@@ -421,7 +428,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
@@ -656,6 +665,22 @@ public class FileResource {
             log.error("Failed to download file: {} on path: {}", filename, path, ex);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
+    }
+
+    private Path getResponsePathFromPublicPath(@NotNull Path publicPath) {
+        // fail-safe to raise awareness if the public path is not correct (should not happen)
+        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
+            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
+        }
+        return Path.of(ARTEMIS_FILE_PATH_PREFIX, publicPath.toString());
+    }
+
+    private String getResponsePathFromPublicPathString(@NotNull String publicPath) {
+        // fail-safe to raise awareness if the public path is not correct (should not happen)
+        if (publicPath.startsWith(ARTEMIS_FILE_PATH_PREFIX)) {
+            throw new IllegalArgumentException("The public path should not contain the Artemis file path prefix");
+        }
+        return ARTEMIS_FILE_PATH_PREFIX + publicPath;
     }
 
     private Path getActualPathFromPublicPathString(@NotNull String publicPath) {

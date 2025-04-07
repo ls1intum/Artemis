@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.web.util.PaginationUtil;
@@ -47,7 +48,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class ConversationMessageResource {
 
     private static final Logger log = LoggerFactory.getLogger(ConversationMessageResource.class);
@@ -95,7 +96,7 @@ public class ConversationMessageResource {
         sendToUserPost.getConversation().setConversationParticipants(Collections.emptySet());
 
         log.debug("createMessage took {}", TimeLogUtil.formatDurationFrom(start));
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
+        return ResponseEntity.created(new URI("/api/cpmmunication/courses/" + courseId + "/messages/" + sendToUserPost.getId())).body(sendToUserPost);
     }
 
     /**
@@ -111,21 +112,18 @@ public class ConversationMessageResource {
     @EnforceAtLeastStudent
     public ResponseEntity<List<Post>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
-        Page<Post> coursePosts;
 
         final var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        if (postContextFilter.conversationId() != null) {
-            coursePosts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
-        }
-        else if (postContextFilter.courseWideChannelIds() != null) {
-            coursePosts = conversationMessagingService.getCourseWideMessages(pageable, postContextFilter, requestingUser, course.getId());
-        }
-        else {
-            throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
-        }
+        Page<Post> coursePosts = switch (postContextFilter) {
+            case PostContextFilterDTO filter when filter.conversationId() != null -> conversationMessagingService.getMessages(pageable, filter, requestingUser, course.getId());
+            case PostContextFilterDTO filter when filter.courseWideChannelIds() != null ->
+                conversationMessagingService.getCourseWideMessages(pageable, filter, requestingUser, course.getId());
+            default -> throw new BadRequestAlertException("Messages must be associated with a conversion", conversationMessagingService.getEntityName(), "conversationMissing");
+        };
+
         // keep the data as small as possible and avoid unnecessary information sent to the client
         // TODO: in the future we should use a DTO and send only the necessary information
         coursePosts.getContent().forEach(post -> {
@@ -164,6 +162,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody Post messagePost) {
         log.debug("PUT updateMessage invoked for course {} with post {}", courseId, messagePost.getContent());
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, messagePost);
         log.debug("updateMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedMessagePost, null, HttpStatus.OK);
@@ -182,6 +181,7 @@ public class ConversationMessageResource {
     public ResponseEntity<Void> deleteMessage(@PathVariable Long courseId, @PathVariable Long messageId) {
         log.debug("DELETE deleteMessage invoked for course {} on message {}", courseId, messageId);
         long start = System.nanoTime();
+        // Note: authorization is checked in the service method
         conversationMessagingService.deleteMessageById(courseId, messageId);
         // deletion of message posts should not trigger entity deletion alert
         log.debug("deleteMessage took {}", TimeLogUtil.formatDurationFrom(start));
@@ -200,7 +200,44 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{postId}/display-priority")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateDisplayPriority(@PathVariable Long courseId, @PathVariable Long postId, @RequestParam DisplayPriority displayPriority) {
+        // Note: authorization is checked in the service method
         Post postWithUpdatedDisplayPriority = conversationMessagingService.changeDisplayPriority(courseId, postId, displayPriority);
         return ResponseEntity.ok().body(postWithUpdatedDisplayPriority);
+    }
+
+    /**
+     * GET /courses/{courseId}/messages-source-posts : Retrieve posts by their IDs
+     *
+     * @param courseId id of the course the posts belong to
+     * @param postIds  list of IDs of the posts to retrieve
+     * @return ResponseEntity with status 200 (OK) containing the list of posts in the response body,
+     *         or with status 400 (Bad Request) if the checks on user, course or post validity fail
+     */
+    @GetMapping("courses/{courseId}/messages-source-posts")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<Post>> getSourcePostsByIds(@PathVariable Long courseId, @RequestParam List<Long> postIds) {
+        log.debug("GET getSourcePostsByIds invoked for course {} with {} posts", courseId, postIds != null ? postIds.size() : 0);
+        long start = System.nanoTime();
+
+        if (postIds == null || postIds.isEmpty()) {
+            throw new BadRequestAlertException("Post IDs cannot be null or empty", conversationMessagingService.getEntityName(), "invalidPostIds");
+        }
+
+        if (postIds.stream().anyMatch(id -> id <= 0)) {
+            throw new BadRequestAlertException("Invalid post ID found", conversationMessagingService.getEntityName(), "invalidPostId");
+        }
+
+        List<Post> posts = conversationMessagingService.getMessageByIds(postIds);
+
+        if (posts.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (posts.stream().anyMatch(post -> !post.getConversation().getCourse().getId().equals(courseId))) {
+            throw new BadRequestAlertException("Some posts do not belong to the specified course", conversationMessagingService.getEntityName(), "invalidCourse");
+        }
+
+        log.debug("getSourcePostsByIds took {}", TimeLogUtil.formatDurationFrom(start));
+        return ResponseEntity.ok().body(posts);
     }
 }

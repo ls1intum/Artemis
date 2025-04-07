@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
@@ -15,12 +14,13 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
 /**
  * Service for calculating the progress of a student in a competency.
  */
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Service
 public class CompetencyProgressService {
 

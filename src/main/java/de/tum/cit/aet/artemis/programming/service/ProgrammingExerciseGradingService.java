@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -70,7 +69,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -79,8 +78,6 @@ public class ProgrammingExerciseGradingService {
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationResultService> continuousIntegrationResultService;
-
-    private final Optional<VersionControlService> versionControlService;
 
     private final ProgrammingExerciseTestCaseRepository testCaseRepository;
 
@@ -114,18 +111,19 @@ public class ProgrammingExerciseGradingService {
 
     private final FeedbackService feedbackService;
 
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+
     public ProgrammingExerciseGradingService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository,
-            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseTestCaseRepository testCaseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<ContinuousIntegrationResultService> continuousIntegrationResultService, ProgrammingExerciseTestCaseRepository testCaseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository, ProgrammingExerciseFeedbackCreationService feedbackCreationService,
-            FeedbackService feedbackService) {
+            FeedbackService feedbackService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationResultService = continuousIntegrationResultService;
         this.resultRepository = resultRepository;
-        this.versionControlService = versionControlService;
         this.testCaseRepository = testCaseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
@@ -140,6 +138,7 @@ public class ProgrammingExerciseGradingService {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.feedbackCreationService = feedbackCreationService;
         this.feedbackService = feedbackService;
+        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -179,15 +178,10 @@ public class ProgrammingExerciseGradingService {
             // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
             final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
             latestSubmission.setBuildFailed(buildFailed);
-            // Add artifacts to submission
-            latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = exercise.getProgrammingLanguage();
-                var projectType = exercise.getProjectType();
                 var buildLogs = buildResult.extractBuildLogs();
-
-                ciResultService.extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
                 if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
@@ -224,10 +218,10 @@ public class ProgrammingExerciseGradingService {
         if (!ObjectUtils.isEmpty(branchName)) {
             String participationDefaultBranch = null;
             if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(studentParticipation);
             }
             if (StringUtils.isEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+                participationDefaultBranch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
             }
 
             if (!Objects.equals(branchName, participationDefaultBranch)) {
@@ -275,20 +269,8 @@ public class ProgrammingExerciseGradingService {
         }
         log.warn("Could not find pending ProgrammingSubmission for Commit Hash {} (Participation {}, Build Plan {}). Will create a new one subsequently...", commitHash,
                 participation.getId(), participation.getBuildPlanId());
-        // We always take the build run date as the fallback solution
+        // We always take the build run date as the fallback solution, even though it might not be 100% accurate
         ZonedDateTime submissionDate = buildResult.buildRunDate();
-        if (!ObjectUtils.isEmpty(commitHash)) {
-            try {
-                // Try to get the actual date, the push might be 10s - 3min earlier, depending on how long the build takes.
-                // Note: the whole method is a fallback in case creating the submission initially (when the user pushed the code) was not successful for whatever reason
-                // This is also the case when a new programming exercise is created and the local CI system builds and tests the template and solution repositories for the first
-                // time.
-                submissionDate = versionControlService.orElseThrow().getPushDate(participation, commitHash, null);
-            }
-            catch (VersionControlException e) {
-                log.error("Could not retrieve push date for participation {} and build plan {}", participation.getId(), participation.getBuildPlanId(), e);
-            }
-        }
         var submission = createFallbackSubmission(participation, submissionDate, commitHash);
         // Save to avoid TransientPropertyValueException.
         return programmingSubmissionRepository.save(submission);

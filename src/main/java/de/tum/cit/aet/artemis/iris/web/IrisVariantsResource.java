@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -21,9 +23,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 /**
  * REST controller for managing the variants Pyris provides.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/iris/")
 public class IrisVariantsResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisVariantsResource.class);
@@ -35,12 +37,12 @@ public class IrisVariantsResource {
     }
 
     /**
-     * GET iris/variants/{feature}: Retrieve all available variants offered by Pyris for a certain feature
+     * GET variants/{feature}: Retrieve all available variants offered by Pyris for a certain feature
      *
      * @param featureRaw the feature for which to retrieve the variants
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a List of the variants
      */
-    @GetMapping("iris/variants/{feature}")
+    @GetMapping("variants/{feature}")
     @EnforceAtLeastEditor
     public ResponseEntity<List<PyrisVariantDTO>> getAllVariants(@PathVariable("feature") String featureRaw) {
         var feature = IrisSubSettingsType.valueOf(featureRaw.toUpperCase().replace("-", "_"));

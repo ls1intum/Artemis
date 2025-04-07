@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';

@@ -3,8 +3,9 @@ package de.tum.cit.aet.artemis.programming.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +28,13 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
-import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
+import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentException;
+import de.tum.cit.aet.artemis.plagiarism.exception.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
@@ -42,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExercisePlagiarismResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExercisePlagiarismResource.class);
@@ -53,16 +55,16 @@ public class ProgrammingExercisePlagiarismResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
+    private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
-    private final PlagiarismDetectionService plagiarismDetectionService;
+    private final Optional<PlagiarismDetectionApi> plagiarismDetectionApi;
 
     public ProgrammingExercisePlagiarismResource(ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            PlagiarismResultRepository plagiarismResultRepository, PlagiarismDetectionService plagiarismDetectionService) {
+            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<PlagiarismDetectionApi> plagiarismDetectionApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
-        this.plagiarismDetectionService = plagiarismDetectionService;
+        this.plagiarismResultApi = plagiarismResultApi;
+        this.plagiarismDetectionApi = plagiarismDetectionApi;
     }
 
     /**
@@ -75,10 +77,12 @@ public class ProgrammingExercisePlagiarismResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the programming exercise with id: {}", exerciseId);
+        PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismResultApi.class));
+
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
-        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        var plagiarismResult = (TextPlagiarismResult) api.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(programmingExercise.getId());
+        api.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }
 
@@ -98,6 +102,8 @@ public class ProgrammingExercisePlagiarismResource {
     @FeatureToggle(Feature.PlagiarismChecks)
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
             @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException, IOException {
+        PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
+
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
@@ -105,7 +111,7 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Started manual plagiarism checks for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var plagiarismResult = plagiarismDetectionService.checkProgrammingExercise(programmingExercise);
+            var plagiarismResult = api.checkProgrammingExercise(programmingExercise);
             return buildPlagiarismResultResponse(plagiarismResult);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {
@@ -130,6 +136,8 @@ public class ProgrammingExercisePlagiarismResource {
     @EnforceAtLeastEditor
     public ResponseEntity<Resource> checkPlagiarismWithJPlagReport(@PathVariable long exerciseId, @RequestParam int similarityThreshold, @RequestParam int minimumScore,
             @RequestParam int minimumSize) throws IOException {
+        PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
+
         log.debug("REST request to check plagiarism for ProgrammingExercise with id: {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
@@ -138,13 +146,13 @@ public class ProgrammingExercisePlagiarismResource {
         log.info("Started manual plagiarism checks with Jplag report for programming exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(programmingExercise, similarityThreshold, minimumScore, minimumSize);
         try {
-            var zipFile = plagiarismDetectionService.checkProgrammingExerciseWithJplagReport(programmingExercise);
+            var zipFile = api.checkProgrammingExerciseWithJplagReport(programmingExercise);
             if (zipFile == null) {
                 throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison.", "Plagiarism Check",
                         "notEnoughSubmissions");
             }
 
-            var resource = new InputStreamResource(new FileInputStream(zipFile));
+            var resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
             return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
         }
         catch (ProgrammingLanguageNotSupportedForPlagiarismDetectionException e) {

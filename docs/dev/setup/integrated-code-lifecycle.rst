@@ -42,6 +42,8 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                use-external: false
            version-control:
                url: http://localhost:8080
+               # order and supported authentication mechanisms:
+               repository-authentication-mechanisms: password,token,ssh
            continuous-integration:
                # Only necessary on ARM-based systems, the default is amd64 for Intel/AMD systems
                # ARM-based systems include Apple M-series, Raspberry Pi, etc.
@@ -54,13 +56,14 @@ Create a file ``src/main/resources/config/application-local.yml`` with the follo
                fetch-registry: false
 
 The values configured here are sufficient for a basic Artemis setup that allows for running programming exercises with Integrated Code Lifecycle.
+The ``repository-authentication-mechanisms`` field configures the :ref:`Repository Authentication Mechanisms<authentication-mechanisms>`.
 
 If you are running Artemis on Windows, you also need to add a property ``artemis.continuous-integration.docker-connection-uri``
 with the value ``tcp://localhost:2375`` as shown above.
 If you are running Artemis inside of a docker container, use ``tcp://host.docker.internal:2375`` instead.
 Make sure that Artemis can access docker by activating the "Expose daemon on tcp://localhost:2375 without TLS" option under Settings > General in Docker Desktop.
 
-When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin". If this does not work, refer to the guide for the :ref:`Jenkins and GitLab Setup` to manually create an admin user in the database.
+When you start Artemis for the first time, it will automatically create an admin user called "artemis_admin".
 You can then use that admin user to create further users in Artemis' internal user management system.
 
 .. _Configure Build Management:

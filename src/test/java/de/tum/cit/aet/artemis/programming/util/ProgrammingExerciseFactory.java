@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import jakarta.annotation.Nullable;
+
 import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -107,7 +109,7 @@ public class ProgrammingExerciseFactory {
      */
     public static ProgrammingExercise generateProgrammingExerciseForExam(ExerciseGroup exerciseGroup, ProgrammingLanguage programmingLanguage) {
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
-        ExerciseFactory.populateExerciseForExam(programmingExercise, exerciseGroup);
+        populateExerciseForExam(programmingExercise, exerciseGroup);
         populateUnreleasedProgrammingExercise(programmingExercise, programmingLanguage);
         exerciseGroup.addExercise(programmingExercise);
         return programmingExercise;
@@ -139,16 +141,27 @@ public class ProgrammingExerciseFactory {
         else {
             programmingExercise.setProjectType(null);
         }
-        if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            programmingExercise.setPackageName("de.test");
-        }
-        else {
-            programmingExercise.setPackageName("testPackage");
-        }
+        String packageName = generatePackageName(programmingLanguage);
+        programmingExercise.setPackageName(packageName);
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUri = String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUri(testRepoUri);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
+    }
+
+    /**
+     * Generates a valid package name for the given programming language.
+     *
+     * @param programmingLanguage The programming language for which a package name is created.
+     * @return The package name or null if the programming language requires no package name.
+     */
+    public static @Nullable String generatePackageName(ProgrammingLanguage programmingLanguage) {
+        return switch (programmingLanguage) {
+            case JAVA, KOTLIN -> "de.test";
+            case SWIFT, GO -> "testPackage";
+            case DART -> "test_package";
+            default -> null;
+        };
     }
 
     /**
@@ -340,6 +353,9 @@ public class ProgrammingExerciseFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case CLIPPY -> "Style";
+            case DART_ANALYZE -> "LINT";
+            case ESLINT, RUBOCOP -> "Lint";
             case PMD_CPD -> "Copy/Paste Detection";
             case SWIFTLINT -> "swiftLint"; // TODO: rene: set better value after categories are better defined
             case GCC -> "Memory";
@@ -408,10 +424,10 @@ public class ProgrammingExerciseFactory {
         programmingExercise.setProgrammingLanguage(programmingLanguage);
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
-        programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
-        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
+        programmingExercise.setReleaseDate(now().plusDays(1));
+        programmingExercise.setDueDate(now().plusDays(2));
+        programmingExercise.setAssessmentDueDate(now().plusDays(3));
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
         programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
@@ -448,7 +464,8 @@ public class ProgrammingExerciseFactory {
             programmingExercise.setPackageName("de.test");
         }
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
-        programmingExercise.setTestRepositoryUri("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
+        programmingExercise.setTestRepositoryUri(
+                String.format("%s/git/%s/%s.git", artemisVersionControlUrl, programmingExercise.getProjectKey(), programmingExercise.getProjectKey() + "tests"));
         programmingExercise.setShowTestNamesToStudents(false);
         programmingExercise.getBuildConfig().setBranch(DEFAULT_BRANCH);
     }

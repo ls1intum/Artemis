@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/entities/course.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
@@ -24,7 +24,7 @@ test.describe('File upload exercise management', { tag: '@fast' }, () => {
 
         // Fill out file upload exercise form
         const exerciseTitle = 'file upload exercise' + generateUUID();
-        await fileUploadExerciseCreation.typeTitle(exerciseTitle);
+        await fileUploadExerciseCreation.setTitle(exerciseTitle);
         await fileUploadExerciseCreation.setReleaseDate(dayjs());
         await fileUploadExerciseCreation.setDueDate(dayjs().add(1, 'days'));
         await fileUploadExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));

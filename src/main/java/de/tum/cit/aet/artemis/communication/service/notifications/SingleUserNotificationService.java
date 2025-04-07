@@ -12,7 +12,11 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_R
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXAM_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR;
@@ -20,6 +24,9 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_CHANNEL_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_GROUP_CHAT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
@@ -38,6 +45,7 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.SingleUse
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -53,10 +61,12 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
@@ -64,6 +74,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -71,6 +83,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
@@ -95,10 +108,14 @@ public class SingleUserNotificationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public SingleUserNotificationService(SingleUserNotificationRepository singleUserNotificationRepository, UserRepository userRepository,
             WebsocketMessagingService websocketMessagingService, GeneralInstantNotificationService notificationService, NotificationSettingsService notificationSettingsService,
             StudentParticipationRepository studentParticipationRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
-            AuthorizationCheckService authorizationCheckService) {
+            AuthorizationCheckService authorizationCheckService, FeatureToggleService featureToggleService, CourseNotificationService courseNotificationService) {
         this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.userRepository = userRepository;
         this.websocketMessagingService = websocketMessagingService;
@@ -108,6 +125,8 @@ public class SingleUserNotificationService {
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
         this.authorizationCheckService = authorizationCheckService;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -127,7 +146,7 @@ public class SingleUserNotificationService {
             // Exercise related
             case EXERCISE_SUBMISSION_ASSESSED, FILE_SUBMISSION_SUCCESSFUL -> createNotification((Exercise) notificationSubject, notificationType, typeSpecificInformation);
             // Plagiarism related
-            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT ->
+            case NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY ->
                 createNotification((PlagiarismCase) notificationSubject, notificationType, typeSpecificInformation, author);
             // Tutorial Group related
             case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR,
@@ -145,6 +164,9 @@ public class SingleUserNotificationService {
                 createNotification(((NewReplyNotificationSubject) notificationSubject).answerPost, notificationType, ((NewReplyNotificationSubject) notificationSubject).user,
                         ((NewReplyNotificationSubject) notificationSubject).responsibleUser);
             case DATA_EXPORT_CREATED, DATA_EXPORT_FAILED -> createNotification((DataExport) notificationSubject, notificationType, typeSpecificInformation);
+            case SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED -> createNotification((UserSshPublicKey) notificationSubject, notificationType, typeSpecificInformation);
+            case VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON ->
+                createNotification(typeSpecificInformation.getVcsAccessToken(), notificationType, typeSpecificInformation);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
     }
@@ -190,7 +212,25 @@ public class SingleUserNotificationService {
      * @param recipient who should be notified
      */
     private void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
-        notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var studentParticipation = exercise.getStudentParticipations().stream().filter(participation -> participation.getStudent().orElseThrow().equals(recipient)).findFirst();
+
+            if (studentParticipation.isEmpty() || studentParticipation.get().findLatestResult() == null) {
+                return;
+            }
+
+            Double score = Objects.requireNonNull(studentParticipation.get().findLatestResult()).getScore();
+
+            var exerciseAssessedNotification = new ExerciseAssessedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), exercise.getId(),
+                    exercise.getSanitizedExerciseTitle(), exercise.getType(), exercise.getMaxPoints().longValue(), score.longValue());
+
+            courseNotificationService.sendCourseNotification(exerciseAssessedNotification, List.of(recipient));
+        }
+        else {
+            notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
+        }
     }
 
     /**
@@ -257,6 +297,63 @@ public class SingleUserNotificationService {
     }
 
     /**
+     * Notify user about the addition of an SSH key in the settings
+     *
+     * @param recipient the user to whose account the SSH key was added
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutNewlyAddedSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_ADDED, recipient, null);
+    }
+
+    /**
+     * Notify user about an upcoming expiry of an SSH key
+     *
+     * @param recipient the user of whose account the SSH key will expire soon
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutSoonExpiringSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_EXPIRES_SOON, recipient, null);
+    }
+
+    /**
+     * Notify user about the expiration of an SSH key
+     *
+     * @param recipient the user to whose account the SSH key was added
+     * @param key       the key which was added
+     */
+    public void notifyUserAboutExpiredSshKey(User recipient, UserSshPublicKey key) {
+        notifyRecipientWithNotificationType(key, SSH_KEY_HAS_EXPIRED, recipient, null);
+    }
+
+    /**
+     * Notify user about the addition of a VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutNewlyAddedVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_ADDED, recipient, null);
+    }
+
+    /**
+     * Notify user about the expiration of the VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRED, recipient, null);
+    }
+
+    /**
+     * Notify user about the upcoming expiry of the VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutSoonExpiringVcsAccessToken(User recipient) {
+        notifyRecipientWithNotificationType(null, VCS_ACCESS_TOKEN_EXPIRES_SOON, recipient, null);
+    }
+
+    /**
      * Notify student about possible plagiarism case.
      *
      * @param plagiarismCase that hold the major information for the plagiarism case
@@ -264,6 +361,10 @@ public class SingleUserNotificationService {
      */
     public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+    }
+
+    public void notifyInstructionAboutPlagiarismCaseReply(PlagiarismCase plagiarismCase, User instructor) {
+        notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_REPLY, instructor, userRepository.getUser());
     }
 
     /**
@@ -448,14 +549,15 @@ public class SingleUserNotificationService {
                 .forEach(mentionedUser -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, mentionedUser, author, CONVERSATION_USER_MENTIONED));
 
         Conversation conv = conversationService.getConversationById(post.getConversation().getId());
-        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved))
-                .forEach(userInvolved -> notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv)));
+        usersInvolved.stream().filter(userInvolved -> !mentionedUsers.contains(userInvolved) && !userInvolved.getId().equals(author.getId())).forEach(userInvolved -> {
+            notifyUserAboutNewMessageReply(savedAnswerMessage, notification, userInvolved, author, getAnswerMessageNotificationType(conv));
+        });
     }
 
     /**
      * Filters which of the mentioned users are permitted to receive a notification
      *
-     * @param mentionedUsers users mentioned in the answer message
+     * @param mentionedUsers users mentioned in the message
      * @param conversation   the conversation of the created post/notification, used for filtering
      * @return the stream of mentioned users which are permitted to receive the notification for the given conversation
      */

@@ -1,12 +1,11 @@
 package de.tum.cit.aet.artemis.atlas.service.competency;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import jakarta.ws.rs.BadRequestException;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
@@ -15,7 +14,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 /**
  * Service for managing {@link KnowledgeArea} entities.
  */
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Service
 public class KnowledgeAreaService {
 

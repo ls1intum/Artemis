@@ -3,9 +3,9 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Observable, concat, interval, of } from 'rxjs';
 import { catchError, first, tap, timeout } from 'rxjs/operators';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { SwUpdate } from '@angular/service-worker';
-import { Alert, AlertService, AlertType } from 'app/core/util/alert.service';
+import { Alert, AlertService, AlertType } from 'app/shared/service/alert.service';
 
 export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 

@@ -39,7 +39,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void initTestCase() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 1, 5, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, 5, 0, 1);
         var courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         course1 = courses.getFirst();
         exercise = course1.getExercises().iterator().next();
@@ -66,7 +66,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
             exercise.setTitle("Patterns in Software Engineering");
             exerciseRepository.save(exercise);
         }
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
+        request.delete("/api/assessment/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).as("Removed tutor participation").hasSize(4);
     }
 
@@ -75,18 +75,18 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
+        request.delete("/api/assessment/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).hasSize(4);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
+        request.delete("/api/assessment/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
 
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
-        request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
+        request.delete("/api/assessment/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
         assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).hasSize(4);
     }
 }

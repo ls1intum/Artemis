@@ -1,7 +1,0 @@
-<div [hidden]="buttonLoading">
-    @if (buttonIcon) {
-        <fa-icon #icon [icon]="buttonIcon" />
-    }
-    <span>{{ buttonLabel }}</span>
-</div>
-<fa-icon #loadingIcon [hidden]="!buttonLoading" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />

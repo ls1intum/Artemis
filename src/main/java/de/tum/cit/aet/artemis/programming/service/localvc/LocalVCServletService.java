@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.HashMap;
@@ -171,7 +170,7 @@ public class LocalVCServletService {
 
         long timeNanoStart = System.nanoTime();
         // Find the local repository depending on the name.
-        Path repositoryDir = Paths.get(localVCBasePath, repositoryPath);
+        Path repositoryDir = Path.of(localVCBasePath, repositoryPath);
 
         log.debug("Path to resolve repository from: {}", repositoryDir);
         if (!Files.exists(repositoryDir)) {
@@ -426,7 +425,8 @@ public class LocalVCServletService {
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
-        return new LocalVCRepositoryUri(request.getRequestURL().toString().replace("/info/refs", ""));
+        var urlString = request.getRequestURL().toString().replace("/info/refs", "");
+        return new LocalVCRepositoryUri(Path.of(urlString), localVCBaseUrl);
     }
 
     private LocalVCRepositoryUri parseRepositoryUri(Path repositoryPath) {
@@ -669,7 +669,7 @@ public class LocalVCServletService {
         String projectKey = localVCRepositoryUri.getProjectKey();
         ProgrammingExercise exercise = cachedExercise.orElseGet(() -> getProgrammingExercise(projectKey));
         ProgrammingExerciseParticipation participation;
-        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName, exercise);
+        RepositoryType repositoryType = getRepositoryTypeWithoutAuxiliary(repositoryTypeOrUserName);
 
         try {
             participation = cachedParticipation.orElseGet(() -> programmingExerciseParticipationService
@@ -820,19 +820,13 @@ public class LocalVCServletService {
         }
     }
 
-    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals("exercise")) {
-            return RepositoryType.TEMPLATE;
-        }
-        else if (repositoryTypeOrUserName.equals("solution")) {
-            return RepositoryType.SOLUTION;
-        }
-        else if (repositoryTypeOrUserName.equals("tests")) {
-            return RepositoryType.TESTS;
-        }
-        else {
-            return RepositoryType.USER;
-        }
+    private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
+        return switch (repositoryTypeOrUserName) {
+            case "exercise" -> RepositoryType.TEMPLATE;
+            case "solution" -> RepositoryType.SOLUTION;
+            case "tests" -> RepositoryType.TESTS;
+            default -> RepositoryType.USER;
+        };
     }
 
     /**

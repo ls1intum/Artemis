@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.service.learningpath;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,10 +12,11 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
@@ -65,7 +64,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository
  * <li>and retrieval of ngx graph representations.</li>
  * </ul>
  */
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Service
 public class LearningPathService {
 
@@ -132,6 +131,7 @@ public class LearningPathService {
      */
     public void generateLearningPaths(@NotNull Course course) {
         Set<User> students = userRepository.getStudentsWithLearnerProfile(course);
+        courseLearnerProfileService.createCourseLearnerProfiles(course, students);
         generateLearningPaths(course, students);
     }
 
@@ -401,7 +401,7 @@ public class LearningPathService {
      * @return the navigation overview
      */
     public LearningPathNavigationOverviewDTO getLearningPathNavigationOverview(long learningPathId) {
-        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(learningPathId);
+        var learningPath = findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         if (!userRepository.getUser().equals(learningPath.getUser())) {
             throw new AccessForbiddenException("You are not allowed to access this learning path");
         }
@@ -417,8 +417,17 @@ public class LearningPathService {
      * @param learningPathId the id of the learning path to fetch
      * @return the learning path with fetched data
      */
-    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersById(long learningPathId) {
-        LearningPath learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesByIdElseThrow(learningPathId);
+    public LearningPath findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(long learningPathId) {
+        Optional<LearningPath> optionalLearningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileById(learningPathId);
+        LearningPath learningPath;
+        if (optionalLearningPath.isEmpty()) {
+            LearningPath learningPathWithCourse = learningPathRepository.findWithEagerCourseByIdElseThrow(learningPathId);
+            courseLearnerProfileService.createCourseLearnerProfile(learningPathWithCourse.getCourse(), learningPathWithCourse.getUser());
+            learningPath = learningPathRepository.findWithCompetenciesAndLectureUnitsAndExercisesAndLearnerProfileByIdElseThrow(learningPathId);
+        }
+        else {
+            learningPath = optionalLearningPath.get();
+        }
 
         // Remove exercises that are not visible to students
         learningPath.getCompetencies().forEach(competency -> competency

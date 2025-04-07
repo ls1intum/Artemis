@@ -1,0 +1,56 @@
+import { Component, effect, inject, input, signal, viewChild } from '@angular/core';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
+import { CompetencyRelationDTO, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
+
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { CourseCompetencyRelationFormComponent } from 'app/atlas/manage/course-competency-relation-form/course-competency-relation-form.component';
+import { CourseCompetenciesRelationGraphComponent } from '../course-competencies-relation-graph/course-competencies-relation-graph.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+
+@Component({
+    selector: 'jhi-course-competencies-relation-modal',
+    imports: [CourseCompetenciesRelationGraphComponent, CourseCompetencyRelationFormComponent, TranslateDirective],
+    templateUrl: './course-competencies-relation-modal.component.html',
+    styleUrl: './course-competencies-relation-modal.component.scss',
+})
+export class CourseCompetenciesRelationModalComponent {
+    private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
+    private readonly alertService = inject(AlertService);
+    private readonly activeModal = inject(NgbActiveModal);
+
+    private readonly courseCompetencyRelationFormComponent = viewChild.required(CourseCompetencyRelationFormComponent);
+
+    readonly courseId = input.required<number>();
+    readonly courseCompetencies = input.required<CourseCompetency[]>();
+
+    readonly selectedRelationId = signal<number | undefined>(undefined);
+
+    readonly isLoading = signal<boolean>(false);
+    readonly relations = signal<CompetencyRelationDTO[]>([]);
+
+    constructor() {
+        effect(() => this.loadRelations(this.courseId()));
+    }
+
+    private async loadRelations(courseId: number): Promise<void> {
+        try {
+            this.isLoading.set(true);
+            const relations = await this.courseCompetencyApiService.getCourseCompetencyRelationsByCourseId(courseId);
+            this.relations.set(relations);
+        } catch (error) {
+            onError(this.alertService, error);
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    protected selectCourseCompetency(courseCompetencyId: number) {
+        this.courseCompetencyRelationFormComponent().selectCourseCompetency(courseCompetencyId);
+    }
+
+    protected closeModal(): void {
+        this.activeModal.close();
+    }
+}

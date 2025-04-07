@@ -1,35 +1,34 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
-import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
-import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
-import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
+import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
+import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { CodeEditorInstructorAndEditorContainerComponent } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
-import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import {
     CodeEditorBuildLogService,
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
-} from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ResultService } from 'app/exercises/shared/result/result.service';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { Result } from 'app/entities/result.model';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { ResultService } from 'app/exercise/result/result.service';
+import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
+import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ParticipationService } from 'app/exercise/participation/participation.service';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
 import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
@@ -39,36 +38,37 @@ import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
-import { WebsocketService } from 'app/core/websocket/websocket.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
-import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/exercises/programming/manage/status/programming-exercise-instructor-exercise-status.component';
-import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
+import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
+import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
-import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
-import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
-import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
+import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
+import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
+import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
-import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
+import { CodeEditorInstructionsComponent } from 'app/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
-import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
-import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
+import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
+import { ResultComponent } from 'app/exercise/result/result.component';
+import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
+import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
+import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
-import { REPOSITORY } from 'app/exercises/programming/manage/code-editor/code-editor-instructor-base-container.component';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
@@ -99,7 +99,7 @@ describe('CodeEditorInstructorIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ArtemisTestModule, MockModule(NgbTooltipModule)],
+            imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
                 CodeEditorContainerComponent,
@@ -145,6 +145,8 @@ describe('CodeEditorInstructorIntegration', () => {
                 MockProvider(ProfileService, {
                     getProfileInfo: () => of(mockProfileInfo),
                 }),
+                provideHttpClient(),
+                provideHttpClientTesting(),
             ],
         })
             .compileComponents()
@@ -211,9 +213,9 @@ describe('CodeEditorInstructorIntegration', () => {
         getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
     });
 
-    const initContainer = (exercise: ProgrammingExercise) => {
+    const initContainer = (exercise: ProgrammingExercise, routeParams?: any) => {
         comp.ngOnInit();
-        routeSubject.next({ exerciseId: 1 });
+        routeSubject.next({ exerciseId: 1, ...routeParams });
         expect(comp.codeEditorContainer).toBeUndefined(); // Have to use this as it's a component
         expect(findWithParticipationsStub).toHaveBeenCalledOnce();
         expect(findWithParticipationsStub).toHaveBeenCalledWith(exercise.id);
@@ -250,7 +252,7 @@ describe('CodeEditorInstructorIntegration', () => {
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.PARTICIPATION, exercise.templateParticipation]);
         expect(comp.exercise).toEqual(exercise);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEMPLATE);
+        expect(comp.selectedRepository).toBe(RepositoryType.TEMPLATE);
         expect(comp.selectedParticipation).toEqual(comp.selectedParticipation);
         expect(comp.loadingState).toBe(comp.LOADING_STATE.CLEAR);
         expect(comp.domainChangeSubscription).toBeDefined(); // External complex object
@@ -305,16 +307,16 @@ describe('CodeEditorInstructorIntegration', () => {
         } as ProgrammingExercise;
         const setDomainSpy = jest.spyOn(domainService, 'setDomain');
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/test');
+        (comp.router as MockRouter).setUrl(`code-editor/TESTS`);
         comp.ngOnDestroy();
-        initContainer(exercise);
+        initContainer(exercise, { repositoryType: 'TESTS' });
 
         findWithParticipationsSubject.next({ body: exercise });
 
         expect(setDomainSpy).toHaveBeenCalledOnce();
         expect(setDomainSpy).toHaveBeenCalledWith([DomainType.TEST_REPOSITORY, exercise]);
         expect(comp.selectedParticipation).toEqual(exercise.templateParticipation);
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.TEST);
+        expect(comp.selectedRepository).toBe(RepositoryType.TESTS);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
 
@@ -328,7 +330,7 @@ describe('CodeEditorInstructorIntegration', () => {
     });
 
     const checkSolutionRepository = (exercise: ProgrammingExercise) => {
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.SOLUTION);
+        expect(comp.selectedRepository).toBe(RepositoryType.SOLUTION);
         expect(comp.selectedParticipation).toEqual(exercise.solutionParticipation);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
@@ -354,14 +356,15 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // Start with assignment repository
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/2');
+        (comp.router as MockRouter).setUrl(`code-editor/USER/2`);
+
         comp.ngOnInit();
-        routeSubject.next({ exerciseId: 1, participationId: 2 });
+        routeSubject.next({ exerciseId: 1, repositoryId: 2, repositoryType: 'USER' });
         findWithParticipationsSubject.next({ body: exercise });
 
         containerFixture.detectChanges();
 
-        expect(comp.selectedRepository).toBe(comp.REPOSITORY.ASSIGNMENT);
+        expect(comp.selectedRepository).toBe(RepositoryType.ASSIGNMENT);
         expect(comp.selectedParticipation).toEqual(exercise.studentParticipations[0]);
         expect(comp.codeEditorContainer).toBeDefined(); // Have to use this as it's a component
         expect(comp.editableInstructions).toBeDefined(); // Have to use this as it's a component
@@ -372,8 +375,8 @@ describe('CodeEditorInstructorIntegration', () => {
 
         // New select solution repository
         // @ts-ignore
-        (comp.router as MockRouter).setUrl('code-editor-instructor/1/4');
-        routeSubject.next({ exerciseId: 1, participationId: 4 });
+        (comp.router as MockRouter).setUrl('code-editor/SOLUTION/4');
+        routeSubject.next({ exerciseId: 1, repositoryId: 4 });
 
         containerFixture.detectChanges();
 
@@ -429,73 +432,65 @@ describe('CodeEditorInstructorIntegration', () => {
         });
 
         it('should navigate to template participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectTemplateParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.templateParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TEMPLATE, exercise.templateParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to template participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectTemplateParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.templateParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TEMPLATE, exercise.templateParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to solution participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectSolutionParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.solutionParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, exercise.solutionParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to solution participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectSolutionParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.solutionParticipation!.id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.SOLUTION, exercise.solutionParticipation!.id], expect.any(Object));
         });
 
         it('should navigate to assignment participation repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectAssignmentParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', exercise.studentParticipations![0].id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.USER, exercise.studentParticipations![0].id], expect.any(Object));
         });
 
         it('should navigate to assignment participation repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectAssignmentParticipation();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', exercise.studentParticipations![0].id], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.USER, exercise.studentParticipations![0].id], expect.any(Object));
         });
 
         it('should navigate to test repository from auxiliary repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectTestRepository();
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', 'test'], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.any(Object));
         });
 
         it('should navigate to test repository from test repository', () => {
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectTestRepository();
-            expect(navigateSpy).toHaveBeenCalledWith(['..', 'test'], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.TESTS, 'test'], expect.any(Object));
         });
 
         it('should navigate to auxiliary repository with provided repositoryId', () => {
             const repositoryId = 4;
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
+            comp.selectedRepository = RepositoryType.AUXILIARY;
             comp.selectAuxiliaryRepository(repositoryId);
-            expect(navigateSpy).toHaveBeenCalledWith(['../..', 'auxiliary', repositoryId], expect.any(Object));
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.AUXILIARY, repositoryId], expect.any(Object));
         });
 
         it('should navigate to auxiliary repository from test repository', () => {
             const repositoryId = 4;
-            comp.selectedRepository = REPOSITORY.TEST;
+            comp.selectedRepository = RepositoryType.TESTS;
             comp.selectAuxiliaryRepository(repositoryId);
-            expect(navigateSpy).toHaveBeenCalledWith(['..', 'auxiliary', repositoryId], expect.any(Object));
-        });
-
-        it('should return the correct navigation path based on selected repository', () => {
-            comp.selectedRepository = REPOSITORY.AUXILIARY;
-            expect(comp.up()).toBe('../..');
-
-            comp.selectedRepository = REPOSITORY.TEST; // Or any other non-auxiliary value
-            expect(comp.up()).toBe('..');
+            expect(navigateSpy).toHaveBeenCalledWith(['../..', RepositoryType.AUXILIARY, repositoryId], expect.any(Object));
         });
     });
 });

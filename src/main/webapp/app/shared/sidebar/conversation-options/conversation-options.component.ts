@@ -1,28 +1,29 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
-import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { faEllipsisVertical, faEye, faEyeSlash, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { ConversationDTO, shouldNotifyRecipient } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { catchError, mergeWith } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
-import { AlertService } from 'app/core/util/alert.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
+import { MetisService } from 'app/communication/service/metis.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink } from '@angular/router';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
-} from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -58,8 +59,8 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faEllipsisVertical = faEllipsisVertical;
     faHeartSolid = faHearthSolid;
     faHeartRegular = faHeartRegular;
-    faEye = faEye;
-    faEyeSlash = faEyeSlash;
+    faBoxArchive = faBoxArchive;
+    faBoxOpen = faBoxOpen;
     faVolumeXmark = faVolumeXmark;
     faVolumeUp = faVolumeUp;
     faGear = faGear;
@@ -79,7 +80,7 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
     }
 
-    onHiddenClicked(event: MouseEvent) {
+    onArchiveClicked(event: MouseEvent) {
         event.stopPropagation();
         if (!this.course.id || !this.conversation.id) {
             return;

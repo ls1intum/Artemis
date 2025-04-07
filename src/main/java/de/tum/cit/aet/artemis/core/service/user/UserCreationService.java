@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)
@@ -69,22 +68,19 @@ public class UserCreationService {
 
     private final OrganizationRepository organizationRepository;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private final CacheManager cacheManager;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository, LearnerProfileApi learnerProfileApi) {
+            Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
+            Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
         this.courseRepository = courseRepository;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
@@ -147,7 +143,8 @@ public class UserCreationService {
             log.warn("Could not retrieve matching organizations from pattern: {}", pse.getMessage());
         }
         newUser = saveUser(newUser);
-        learnerProfileApi.createProfile(newUser);
+        final User finalNewUser = newUser;
+        learnerProfileApi.ifPresent(api -> api.createProfile(finalNewUser));
         log.debug("Created user: {}", newUser);
         return newUser;
     }
@@ -196,12 +193,11 @@ public class UserCreationService {
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
-        learnerProfileApi.createProfile(user);
+        learnerProfileApi.ifPresent(api -> api.createProfile(user));
 
         log.debug("Created Information for User: {}", user);
         return user;
@@ -244,7 +240,6 @@ public class UserCreationService {
             user.setImageUrl(imageUrl);
             saveUser(user);
             log.info("Changed Information for User: {}", user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null));
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, null));
         });
     }
@@ -317,7 +312,6 @@ public class UserCreationService {
         userRepository.save(user);
 
         optionalCIUserManagementService.ifPresent(service -> service.updateUser(user, newPassword));
-        optionalVcsUserManagementService.ifPresent(service -> service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), newPassword));
 
         return newPassword;
     }

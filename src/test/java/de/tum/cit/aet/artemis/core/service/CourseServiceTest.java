@@ -318,7 +318,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         }
         StudentDTO dto2 = new StudentDTO(null, null, null, null, null);
 
-        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
+        List<StudentDTO> registrationFailures = request.postListWithResponseBody("/api/core/courses/" + course1.getId() + "/" + user + "s", List.of(dto1, dto2), StudentDTO.class,
                 HttpStatus.OK);
         assertThat(registrationFailures).containsExactly(dto2);
     }
@@ -340,8 +340,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         Result result = participationUtilService.createSubmissionAndResult(participation, 1L, true);
         createBuildJob(programmingExercise, course, participation, result);
 
-        course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
-        var summary = courseService.getDeletionSummary(course);
+        var summary = courseService.getDeletionSummary(course.getId());
         assertThat(summary.numberOfCommunicationPosts()).isEqualTo(1L);
         assertThat(summary.numberOfAnswerPosts()).isEqualTo(1L);
         assertThat(summary.numberOfBuilds()).isEqualTo(1L);

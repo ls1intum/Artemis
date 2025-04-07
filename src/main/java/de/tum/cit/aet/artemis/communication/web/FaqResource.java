@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/communication/")
 public class FaqResource {
 
     private static final Logger log = LoggerFactory.getLogger(FaqResource.class);
@@ -94,7 +94,7 @@ public class FaqResource {
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
         faqService.autoIngestFaqsIntoPyris(courseId, savedFaq);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
+        return ResponseEntity.created(new URI("/api/communication/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
     /**
@@ -192,7 +192,7 @@ public class FaqResource {
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
-        log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
+        log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
         checkShouldAccessNotAccepted(faqState, courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());

@@ -1,5 +1,5 @@
 import { TranslateService } from '@ngx-translate/core';
-import { MetisService } from 'app/shared/metis/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { TextEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action-with-options.model';
 import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';

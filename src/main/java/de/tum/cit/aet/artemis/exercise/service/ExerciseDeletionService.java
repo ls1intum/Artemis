@@ -22,24 +22,23 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.text.api.TextApi;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 
 /**
  * Service Implementation for managing Exercise.
@@ -54,13 +53,11 @@ public class ExerciseDeletionService {
 
     private final ProgrammingExerciseService programmingExerciseService;
 
-    private final ModelingExerciseService modelingExerciseService;
-
     private final QuizExerciseService quizExerciseService;
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
@@ -70,39 +67,38 @@ public class ExerciseDeletionService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
+    private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
-    private final TextExerciseService textExerciseService;
+    private final Optional<TextApi> textApi;
 
     private final ChannelRepository channelRepository;
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
-            TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, TextExerciseService textExerciseService,
-            ChannelRepository channelRepository, ChannelService channelService, CompetencyProgressApi competencyProgressApi, Optional<IrisSettingsService> irisSettingsService) {
+            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
+            ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi, LectureUnitService lectureUnitService,
+            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
-        this.modelingExerciseService = modelingExerciseService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textExerciseService = textExerciseService;
+        this.plagiarismResultApi = plagiarismResultApi;
+        this.textApi = textApi;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
     }
 
     /**
@@ -141,13 +137,11 @@ public class ExerciseDeletionService {
     /**
      * Delete the exercise by id and all its participations.
      *
-     * @param exerciseId                   the exercise to be deleted
-     * @param deleteStudentReposBuildPlans whether the student repos and build plans should be deleted (can be true for programming exercises and should be false for all other
-     *                                         exercise types)
-     * @param deleteBaseReposBuildPlans    whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
-     *                                         all other exercise types)
+     * @param exerciseId                the exercise to be deleted
+     * @param deleteBaseReposBuildPlans whether the template and solution repos and build plans should be deleted (can be true for programming exercises and should be false for
+     *                                      all other exercise types)
      */
-    public void delete(long exerciseId, boolean deleteStudentReposBuildPlans, boolean deleteBaseReposBuildPlans) {
+    public void delete(long exerciseId, boolean deleteBaseReposBuildPlans) {
         var exercise = exerciseRepository.findWithCompetenciesByIdElseThrow(exerciseId);
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
         log.info("Request to delete {} with id {}", exercise.getClass().getSimpleName(), exerciseId);
@@ -157,16 +151,9 @@ public class ExerciseDeletionService {
         channelService.deleteChannel(exerciseChannel);
         log.info("Deleting the channel took {}", TimeLogUtil.formatDurationFrom(start));
 
-        if (exercise instanceof ModelingExercise modelingExercise) {
-            log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
-
-            modelingExerciseService.deleteClustersAndElements(modelingExercise);
-            modelingExerciseService.cancelScheduledOperations(exerciseId);
-        }
-
         if (exercise instanceof TextExercise) {
             log.info("Cancel scheduled operations of exercise {}", exercise.getId());
-            textExerciseService.cancelScheduledOperations(exerciseId);
+            textApi.ifPresent(api -> api.cancelScheduledOperations(exerciseId));
         }
 
         // delete all exercise units linking to the exercise
@@ -175,15 +162,15 @@ public class ExerciseDeletionService {
             lectureUnitService.removeLectureUnit(exerciseUnit);
         }
 
-        if (irisSettingsService.isPresent()) {
-            irisSettingsService.get().deleteSettingsFor(exercise);
+        if (irisSettingsApi.isPresent()) {
+            irisSettingsApi.get().deleteSettingsFor(exercise);
         }
 
         // delete all plagiarism results belonging to this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exerciseId));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, deleteStudentReposBuildPlans, deleteStudentReposBuildPlans, false);
+        participationService.deleteAllByExercise(exercise, false);
 
         // clean up the many-to-many relationship to avoid problems when deleting the entities but not the relationship table
         exercise = exerciseRepository.findByIdWithEagerExampleSubmissionsElseThrow(exerciseId);
@@ -194,12 +181,13 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Set<StudentExam> studentExams = api.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : studentExams) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
                     studentExam.removeExercise(exercise);
-                    studentExamRepository.save(studentExam);
+                    api.save(studentExam);
                 }
             }
         }
@@ -214,7 +202,10 @@ public class ExerciseDeletionService {
             exerciseRepository.delete(exercise);
         }
 
-        competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(competencyProgressApi::updateProgressByCompetencyAsync);
+        if (competencyProgressApi.isPresent()) {
+            var api = competencyProgressApi.get();
+            competencyLinks.stream().map(CompetencyExerciseLink::getCompetency).forEach(api::updateProgressByCompetencyAsync);
+        }
     }
 
     /**
@@ -240,9 +231,9 @@ public class ExerciseDeletionService {
      */
     public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
         // delete all plagiarism results for this exercise
-        plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
+        plagiarismResultApi.ifPresent(api -> api.deletePlagiarismResultsByExerciseId(exercise.getId()));
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
-        participationService.deleteAllByExercise(exercise, true, true, true);
+        participationService.deleteAllByExercise(exercise, true);
     }
 }

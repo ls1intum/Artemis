@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.plagiarism.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService.hasMinimumScore;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,9 +30,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
+import de.tum.cit.aet.artemis.text.api.TextSubmissionExportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -40,7 +41,7 @@ public class TextPlagiarismDetectionService {
 
     private static final Logger log = LoggerFactory.getLogger(TextPlagiarismDetectionService.class);
 
-    private final TextSubmissionExportService textSubmissionExportService;
+    private final Optional<TextSubmissionExportApi> textSubmissionExportApi;
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
@@ -48,9 +49,9 @@ public class TextPlagiarismDetectionService {
 
     private final PlagiarismService plagiarismService;
 
-    public TextPlagiarismDetectionService(TextSubmissionExportService textSubmissionExportService, PlagiarismWebsocketService plagiarismWebsocketService,
+    public TextPlagiarismDetectionService(Optional<TextSubmissionExportApi> textSubmissionExportApi, PlagiarismWebsocketService plagiarismWebsocketService,
             PlagiarismCacheService plagiarismCacheService, PlagiarismService plagiarismService) {
-        this.textSubmissionExportService = textSubmissionExportService;
+        this.textSubmissionExportApi = textSubmissionExportApi;
         this.plagiarismWebsocketService = plagiarismWebsocketService;
         this.plagiarismCacheService = plagiarismCacheService;
         this.plagiarismService = plagiarismService;
@@ -99,7 +100,7 @@ public class TextPlagiarismDetectionService {
 
             // TODO: why do we have such a strange folder name?
             final var submissionsFolderName = "./tmp/submissions";
-            final var submissionFolderFile = new File(submissionsFolderName);
+            final var submissionFolderFile = Path.of(submissionsFolderName).toFile();
             submissionFolderFile.mkdirs();
 
             final List<TextSubmission> textSubmissions = textSubmissionsForComparison(textExercise, minimumScore, minimumSize);
@@ -127,7 +128,8 @@ public class TextPlagiarismDetectionService {
                 }
 
                 try {
-                    textSubmissionExportService.saveSubmissionToFile(submission, participantIdentifier, submissionsFolderName);
+                    textSubmissionExportApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionExportApi.class)).saveSubmissionToFile(submission, participantIdentifier,
+                            submissionsFolderName);
                 }
                 catch (IOException e) {
                     log.error(e.getMessage());

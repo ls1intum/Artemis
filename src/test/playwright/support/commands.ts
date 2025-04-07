@@ -1,7 +1,6 @@
 import { UserCredentials } from './users';
-import { BASE_API } from './constants';
 import { Locator, Page, expect } from '@playwright/test';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 
 /**
@@ -23,7 +22,7 @@ export class Commands {
             .cookies()
             .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
         if (!jwtCookie) {
-            const response = await page.request.post(`${BASE_API}/public/authenticate`, {
+            const response = await page.request.post(`api/core/public/authenticate`, {
                 data: {
                     username,
                     password,
@@ -47,7 +46,7 @@ export class Commands {
     };
 
     static logout = async (page: Page): Promise<void> => {
-        await page.request.post(`${BASE_API}/public/logout`);
+        await page.request.post(`api/core/public/logout`);
     };
 
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 2000, timeout = 20000) => {

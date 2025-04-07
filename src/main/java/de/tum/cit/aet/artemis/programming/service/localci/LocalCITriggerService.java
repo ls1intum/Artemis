@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
@@ -8,18 +8,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import jakarta.annotation.PostConstruct;
-
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
@@ -41,8 +34,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildStatisticsRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -52,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfig
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 
 /**
  * Service for triggering builds on the local CI system.
@@ -75,7 +71,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private static final Logger log = LoggerFactory.getLogger(LocalCITriggerService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final AeolusTemplateService aeolusTemplateService;
 
@@ -87,7 +83,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
@@ -99,33 +95,31 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository;
 
-    private IQueue<BuildJobQueueItem> queue;
-
-    private IMap<String, ZonedDateTime> dockerImageCleanupInfo;
-
     private final ExerciseDateService exerciseDateService;
 
     private final ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService;
+
+    private final BuildJobRepository buildJobRepository;
 
     private static final int DEFAULT_BUILD_DURATION = 17;
 
     // Arbitrary value to ensure that the build duration is always a bit higher than the actual build duration
     private static final double BUILD_DURATION_SAFETY_FACTOR = 1.1;
 
-    public LocalCITriggerService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, AeolusTemplateService aeolusTemplateService,
+    public LocalCITriggerService(DistributedDataAccessService distributedDataAccessService, AeolusTemplateService aeolusTemplateService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
+            LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<LocalVCGitBranchService> localVCGitBranchService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService,
-            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService,
+            ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService, BuildJobRepository buildJobRepository,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository) {
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
-        this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.localCIBuildConfigurationService = localCIBuildConfigurationService;
         this.gitService = gitService;
@@ -134,18 +128,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.buildScriptProviderService = buildScriptProviderService;
         this.programmingExerciseBuildConfigService = programmingExerciseBuildConfigService;
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.dockerImageCleanupInfo = this.hazelcastInstance.getMap("dockerImageCleanupInfo");
+        this.buildJobRepository = buildJobRepository;
     }
 
     /**
      * Add a new build job to the queue managed by the ExecutorService and process the returned result.
      *
      * @param participation the participation of the repository which should be built and tested.
+     * @param triggerAll    true if this build was triggered as part of a trigger all request. Currently only used for Local CI.
      * @throws LocalCIException if the build job could not be added to the queue.
      */
     @Override
@@ -222,17 +212,21 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         BuildJobQueueItem buildJobQueueItem = new BuildJobQueueItem(buildJobId, participation.getBuildPlanId(), buildAgent, participation.getId(), courseId,
                 programmingExercise.getId(), 0, priority, null, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        queue.add(buildJobQueueItem);
+        // Save the build job before adding it to the queue to ensure it exists in the database.
+        // This prevents potential race conditions where a build agent pulls the job from the queue very quickly before it is persisted,
+        // leading to a failed update operation due to a missing record.
+        buildJobRepository.save(new BuildJob(buildJobQueueItem, BuildStatus.QUEUED, null));
+        distributedDataAccessService.getDistributedQueuedJobs().add(buildJobQueueItem);
         log.info("Added build job {} for exercise {} and participation {} with priority {} to the queue", buildJobId, programmingExercise.getShortName(), participation.getId(),
                 priority);
 
-        dockerImageCleanupInfo.put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
+        distributedDataAccessService.getDistributedDockerImageCleanupInfo().put(buildConfig.dockerImage(), jobTimingInfo.submissionDate());
     }
 
     // -------Helper methods for triggerBuild()-------
 
     private List<String> getTestResultPaths(Windfile windfile) {
-        return windfile.results().stream().map(result -> LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
+        return windfile.results().stream().map(result -> LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/" + result.path()).toList();
     }
 
     /**
@@ -302,7 +296,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingExerciseBuildConfig buildConfig) {
         String branch;
         try {
-            branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
+            branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(participation);
         }
         catch (LocalVCInternalException e) {
             throw new LocalCIException("Error while getting branch of participation", e);

@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.assessment.util;
 
 import static org.assertj.core.api.Assertions.fail;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.FileReader;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
@@ -29,6 +32,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class GradingScaleUtilService {
 
     @Autowired
@@ -200,11 +204,12 @@ public class GradingScaleUtilService {
      *
      * @param path The path to the csv file.
      * @return The list of String arrays.
-     * @throws Exception if an error occurs while reading the csv file.
+     * @throws IOException if an error occurs while reading the csv file.
      */
-    public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
+    public List<String[]> loadPercentagesAndGrades(String path) throws IOException {
 
-        try (var reader = new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8); var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT)) {
+        try (var reader = Files.newBufferedReader(ResourceUtils.getFile("classpath:" + path).toPath(), StandardCharsets.UTF_8);
+                var csvParser = CSVParser.parse(reader, CSVFormat.DEFAULT)) {
             var rows = csvParser.getRecords();
             rows.removeFirst(); // remove header
 

@@ -1,0 +1,21 @@
+<div class="feedback-text">
+    @if (!previewText) {
+        <p>{{ feedback.text }}</p>
+    } @else {
+        @if (isCollapsed) {
+            <div>
+                <div class="d-inline fa-angle" (click)="debounceToggleCollapse()">
+                    <fa-icon [icon]="faAngleRight" />
+                    <strong> ({{ 'artemisApp.result.seeMore' | artemisTranslate }}) </strong>
+                </div>
+                <!-- Only show first line as preview -->
+                <p>{{ previewText }}</p>
+            </div>
+        } @else {
+            <div>
+                <fa-icon class="fa-angle" [icon]="faAngleDown" (click)="debounceToggleCollapse()" />
+                <jhi-feedback-text [feedback]="feedback" />
+            </div>
+        }
+    }
+</div>

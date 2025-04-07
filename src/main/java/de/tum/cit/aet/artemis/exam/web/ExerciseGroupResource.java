@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exam/")
 public class ExerciseGroupResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);
@@ -117,7 +117,7 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().getLast();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/exam/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
     }
 
     /**
@@ -209,19 +209,17 @@ public class ExerciseGroupResource {
     /**
      * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id.
      *
-     * @param courseId                     the course to which the exercise group belongs to
-     * @param examId                       the exam to which the exercise group belongs to
-     * @param exerciseGroupId              the id of the exercise group to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
-     *                                         and LocalCI, it does not make sense to keep these artifacts
-     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
-     *                                         LocalCI, it does not make sense to keep these artifacts
+     * @param courseId                  the course to which the exercise group belongs to
+     * @param examId                    the exam to which the exercise group belongs to
+     * @param exerciseGroupId           the id of the exercise group to delete
+     * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                      LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
-            @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
+            @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
 
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
@@ -233,7 +231,7 @@ public class ExerciseGroupResource {
         log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+            exerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
 
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.

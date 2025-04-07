@@ -212,10 +212,6 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             "exerciseGroups.exercises.teamAssignmentConfig" })
     Optional<Exam> findWithExerciseGroupsAndExercisesAndExerciseDetailsById(long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups", "exerciseGroups.exercises", "exerciseGroups.exercises.studentParticipations",
-            "exerciseGroups.exercises.studentParticipations.submissions" })
-    Optional<Exam> findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(long examId);
-
     @EntityGraph(type = LOAD, attributePaths = { "examUsers" })
     Optional<Exam> findWithExamUsersById(long examId);
 
@@ -385,7 +381,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
-    long countByCourse_Id(Long courseId);
+    long countByCourse_Id(long courseId);
 
     /**
      * Returns the title of the exam with the given id.

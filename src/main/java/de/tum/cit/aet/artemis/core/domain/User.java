@@ -46,11 +46,9 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**
@@ -101,7 +99,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @NotNull
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false; // default value
+    private boolean deleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -134,7 +132,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private ZonedDateTime hideNotificationsUntil = null;
 
     @Column(name = "is_internal", nullable = false)
-    private boolean isInternal = true;          // default value
+    private boolean internal = true;          // default value
 
     /**
      * The token the user can use to authenticate with the VCS.
@@ -149,9 +147,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * The expiry date of the VCS access token.
      * This is used for checking if a access token needs to be renewed.
-     *
-     * @see VcsTokenRenewalService
-     * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
      */
     @Nullable
     @JsonIgnore
@@ -167,7 +162,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private Set<SavedPost> savedPosts = new HashSet<>();
+    private final Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
@@ -210,8 +205,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<PushNotificationDeviceConfiguration> pushNotificationDeviceConfigurations = new HashSet<>();
 
     @Nullable
-    @Column(name = "iris_accepted")
-    private ZonedDateTime irisAccepted = null;
+    @Column(name = "external_llm_usage_accepted")
+    private ZonedDateTime externalLLMUsageAccepted = null;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("user")
@@ -483,19 +478,19 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public boolean isInternal() {
-        return isInternal;
+        return internal;
     }
 
     public void setInternal(boolean internal) {
-        isInternal = internal;
+        this.internal = internal;
     }
 
     public boolean isDeleted() {
-        return isDeleted;
+        return deleted;
     }
 
     public void setDeleted(boolean deleted) {
-        isDeleted = deleted;
+        this.deleted = deleted;
     }
 
     @Nullable
@@ -533,25 +528,25 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     @Nullable
-    public ZonedDateTime getIrisAcceptedTimestamp() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMUsageAcceptedTimestamp() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setIrisAcceptedTimestamp(@Nullable ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
+    public void setExternalLLMUsageAcceptedTimestamp(@Nullable ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
-    public boolean hasAcceptedIris() {
-        return irisAccepted != null;
+    public boolean hasAcceptedExternalLLMUsage() {
+        return externalLLMUsageAccepted != null;
     }
 
     /**
-     * Checks if the user has accepted the Iris privacy policy.
+     * Checks if the user has accepted the external LLM privacy policy.
      * If not, an {@link AccessForbiddenException} is thrown.
      */
-    public void hasAcceptedIrisElseThrow() {
-        if (irisAccepted == null) {
-            throw new AccessForbiddenException("The user has not accepted the Iris privacy policy yet.");
+    public void hasAcceptedExternalLLMUsageElseThrow() {
+        if (externalLLMUsageAccepted == null) {
+            throw new AccessForbiddenException("The user has not accepted the external LLM privacy policy yet.");
         }
     }
 

@@ -2,13 +2,10 @@ import { Component, EventEmitter, OnInit, Output, ViewChild, inject } from '@ang
 import { NgbActiveModal, NgbModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { faBackward, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+
 import { FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { Observable, OperatorFunction, Subject, merge } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 import {
     DifficultyFilterOption,
@@ -19,26 +16,21 @@ import {
     FilterDetails,
     FilterOption,
     RangeFilter,
-} from 'app/types/exercise-filter';
+} from 'app/shared/types/exercise-filter';
 import { satisfiesFilters } from 'app/shared/exercise-filter/exercise-filter-modal.helper';
-import { DifficultyLevel, ExerciseType } from 'app/entities/exercise.model';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { DifficultyLevel, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { isRangeFilterApplied } from 'app/shared/sidebar/sidebar.helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 @Component({
     selector: 'jhi-exercise-filter-modal',
     templateUrl: './exercise-filter-modal.component.html',
     styleUrls: ['./exercise-filter-modal.component.scss'],
-    imports: [
-        FormsModule,
-        ReactiveFormsModule,
-        FontAwesomeModule,
-        ArtemisSharedCommonModule,
-        ArtemisSharedComponentModule,
-        CustomExerciseCategoryBadgeComponent,
-        RangeSliderComponent,
-        NgbModule,
-    ],
+    imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, CustomExerciseCategoryBadgeComponent, RangeSliderComponent, NgbModule, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExerciseFilterModalComponent implements OnInit {
     private activeModal = inject(NgbActiveModal);

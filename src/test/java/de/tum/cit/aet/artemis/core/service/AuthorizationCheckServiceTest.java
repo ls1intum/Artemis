@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "authorizationservice";
 
@@ -210,8 +210,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
         @Autowired
         private CourseTestRepository courseRepository;
 
-        private User student;
-
         private Course getCourseForUnenrollmentAllowedTest() {
             var course = courseUtilService.createCourse();
             course.setUnenrollmentEnabled(true);
@@ -221,11 +219,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
             course.setEndDate(ZonedDateTime.now().plusDays(6));
             course.setStudentGroupName("test-students");
             return course;
-        }
-
-        @BeforeEach
-        void setUp() {
-            this.student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test

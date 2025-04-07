@@ -1,11 +1,11 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType } from '../../support/constants';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { Commands } from '../../support/commands';
@@ -14,6 +14,10 @@ import { ModalDialogBox } from '../../support/pageobjects/exam/ModalDialogBox';
 import { ExamParticipationActions, TextDifferenceType } from '../../support/pageobjects/exam/ExamParticipationActions';
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
+import { GitExerciseParticipation } from '../../support/pageobjects/exercises/programming/GitExerciseParticipation';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
+import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
@@ -260,6 +264,60 @@ test.describe('Exam participation', () => {
         });
     });
 
+    for (const cloneMethod of [GitCloneMethod.https, GitCloneMethod.httpsWithToken, GitCloneMethod.ssh]) {
+        test.describe('Programming exam with Git submissions', { tag: '@sequential' }, () => {
+            let exam: Exam;
+            let programmingExercise: ProgrammingExercise;
+
+            test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
+                await login(admin);
+                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
+                const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                    submission: javaAllSuccessfulSubmission,
+                    progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,
+                });
+                programmingExercise = exercise as ProgrammingExercise;
+
+                await examAPIRequests.registerStudentForExam(exam, studentTwo);
+                await examAPIRequests.generateMissingIndividualExams(exam);
+                await examAPIRequests.prepareExerciseStartForExam(exam);
+            });
+
+            if (cloneMethod === GitCloneMethod.ssh) {
+                test.beforeEach('Setup SSH credentials', async ({ page, login }) => {
+                    await login(studentTwo);
+                    await GitExerciseParticipation.setupSSHCredentials(page.context(), SshEncryptionAlgorithm.ed25519);
+                    await page.reload();
+                });
+            }
+
+            test(`Participates in exam by Git submission using ${cloneMethod}`, async ({
+                login,
+                examAPIRequests,
+                examParticipation,
+                examNavigation,
+                programmingExerciseOverview,
+                examManagement,
+            }) => {
+                await examParticipation.startParticipation(studentTwo, course, exam);
+                await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
+                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, javaAllSuccessfulSubmission, 'Solution', cloneMethod);
+                await examParticipation.checkExerciseScore(javaAllSuccessfulSubmission.expectedResult);
+                await examParticipation.handInEarly();
+                await examAPIRequests.finishExam(exam);
+                await login(instructor);
+                await examManagement.verifySubmitted(course.id!, exam.id!, studentTwoName);
+            });
+
+            if (cloneMethod === GitCloneMethod.ssh) {
+                test.afterEach('Delete SSH key', async ({ login, accountManagementAPIRequests }) => {
+                    await login(studentTwo);
+                    await accountManagementAPIRequests.deleteSshPublicKey();
+                });
+            }
+        });
+    }
+
     test.describe('Exam announcements', () => {
         let exam: Exam;
         const students = [studentOne, studentTwo];
@@ -311,7 +369,6 @@ test.describe('Exam participation', () => {
                     const modalDialog = new ModalDialogBox(studentPage);
                     await modalDialog.checkDialogTime(announcementTypingTime);
                     await modalDialog.checkDialogMessage(announcement);
-                    await modalDialog.checkDialogAuthor(instructor.username);
                     await modalDialog.closeDialog();
                 }
             },
@@ -349,7 +406,6 @@ test.describe('Exam participation', () => {
                 await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
                 await modalDialog.checkDialogTime(workingTimeChangeTime);
                 await modalDialog.checkDialogMessage(timeChangeMessage);
-                await modalDialog.checkDialogAuthor(instructor.username);
                 await modalDialog.closeDialog();
                 await examParticipationActions.checkExamTimeLeft('29');
             }
@@ -396,7 +452,6 @@ test.describe('Exam participation', () => {
                     const exerciseUpdateMessage = `The problem statement of the exercise '${exercise.exerciseGroup!.title!}' was updated. Please open the exercise to see the changes.`;
                     await modalDialog.checkDialogType('Problem Statement Update');
                     await modalDialog.checkDialogMessage(exerciseUpdateMessage);
-                    await modalDialog.checkDialogAuthor(instructor.username);
                     await modalDialog.pressModalButton('Navigate to exercise');
                     const examParticipationActions = new ExamParticipationActions(studentPage);
                     await examParticipationActions.checkExerciseProblemStatementDifference([

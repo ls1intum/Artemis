@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.programming.icl.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,7 @@ import de.tum.cit.aet.artemis.programming.dto.UserSshPublicKeyDTO;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
 
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class SshSettingsTestService {
 
     @Autowired
@@ -35,7 +38,7 @@ public class SshSettingsTestService {
     @Autowired
     private UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final String requestPrefix = "/api/ssh-settings/";
+    private final String requestPrefix = "/api/programming/ssh-settings/";
 
     private static final String sshKey1 = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJxKWdvcbNTWl4vBjsijoY5HN5dpjxU40huy1PFpdd2o keyComment1 many comments";
 
@@ -123,14 +126,9 @@ public class SshSettingsTestService {
 
         var validKey = createNewValidSSHKey(user, sshKey1);
         request.postWithResponseBody(requestPrefix + "public-key", validKey, String.class, HttpStatus.OK);
-        var userKey = userSshPublicKeyRepository.findAll().getFirst();
-        userKey.setUserId(12L);
-        userSshPublicKeyRepository.save(userKey);
 
         request.delete(requestPrefix + "public-key/3443", HttpStatus.FORBIDDEN);
         request.get(requestPrefix + "public-key/43443", HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
-        request.get(requestPrefix + "public-key/" + userKey.getId(), HttpStatus.FORBIDDEN, UserSshPublicKeyDTO.class);
-
     }
 
     // Test

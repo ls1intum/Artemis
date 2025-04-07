@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -22,13 +25,15 @@ import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionReposit
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * REST controller for managing {@link IrisTextExerciseChatSession}.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/text-exercise-chat/")
 public class IrisTextExerciseChatSessionResource {
@@ -39,20 +44,20 @@ public class IrisTextExerciseChatSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
 
     private final IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository;
 
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
-            TextExerciseRepository textExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
+            Optional<TextRepositoryApi> textRepositoryApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.textExerciseRepository = textExerciseRepository;
+        this.textRepositoryApi = textRepositoryApi;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
     }
 
@@ -65,7 +70,7 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions/current")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long exerciseId) throws URISyntaxException {
-        var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
@@ -93,12 +98,12 @@ public class IrisTextExerciseChatSessionResource {
     @PostMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<IrisTextExerciseChatSession> createSessionForExercise(@PathVariable Long exerciseId) throws URISyntaxException {
-        var textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        var textExercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(textExercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();
@@ -115,12 +120,12 @@ public class IrisTextExerciseChatSessionResource {
     @GetMapping("{exerciseId}/sessions")
     @EnforceAtLeastStudentInExercise
     public ResponseEntity<List<IrisTextExerciseChatSession>> getAllSessions(@PathVariable Long exerciseId) {
-        var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(exerciseId);
         validateExercise(exercise);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?

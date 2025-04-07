@@ -1,14 +1,13 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -17,9 +16,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @Service
 public class TextSubmissionExportService extends SubmissionExportService {
 
@@ -35,7 +35,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
                 writer.write(((TextSubmission) submission).getText());
             }
         }
@@ -50,14 +50,13 @@ public class TextSubmissionExportService extends SubmissionExportService {
      */
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
         String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
+        Path submissionPath = Path.of(submissionsFolderName, submissionFileName);
 
-        File submissionExportFile = new File(submissionsFolderName, submissionFileName);
-
-        if (!submissionExportFile.exists()) {
-            submissionExportFile.createNewFile();
+        if (!Files.exists(submissionPath)) {
+            Files.createFile(submissionPath);
         }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile, StandardCharsets.UTF_8))) {
+        try (BufferedWriter writer = Files.newBufferedWriter(submissionPath, StandardCharsets.UTF_8)) {
             writer.write(submission.getText());
         }
     }

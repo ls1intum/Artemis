@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.lti.service.LtiService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -56,7 +56,7 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class UserResource {
 
     private static final Logger log = LoggerFactory.getLogger(UserResource.class);
@@ -65,14 +65,14 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final Optional<LtiService> ltiService;
+    private final Optional<LtiApi> ltiApi;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiApi> ltiApi) {
         this.userRepository = userRepository;
         this.userService = userService;
-        this.ltiService = ltiService;
+        this.ltiApi = ltiApi;
         this.userCreationService = userCreationService;
     }
 
@@ -100,7 +100,7 @@ public class UserResource {
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
             user.setCreatedDate(null);
-            user.setIrisAccepted(null);
+            user.setExternalLLMUsageAccepted(null);
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -144,7 +144,7 @@ public class UserResource {
         if (user.getActivated()) {
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
         }
-        if ((ltiService.isPresent() && !ltiService.get().isLtiCreatedUser(user)) || !user.isInternal()) {
+        if ((ltiApi.isPresent() && !ltiApi.get().isLtiCreatedUser(user)) || !user.isInternal()) {
             user.setActivated(true);
             userRepository.save(user);
             return ResponseEntity.ok().body(new UserInitializationDTO(null));
@@ -155,18 +155,19 @@ public class UserResource {
     }
 
     /**
-     * PUT users/accept-iris : sets the irisAccepted flag for the user to ZonedDateTime.now()
+     * PUT users/accept-external-llm-usage : sets the externalLLMUsageAccepted flag for the user to ZonedDateTime.now()
      *
-     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found), or with status 400 (Bad Request) if Iris was already accepted
+     * @return the ResponseEntity with status 200 (OK), with status 404 (Not Found),
+     *         or with status 400 (Bad Request) if external LLM usage was already accepted
      */
-    @PutMapping("users/accept-iris")
+    @PutMapping("users/accept-external-llm-usage")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> setIrisAcceptedToTimestamp() {
+    public ResponseEntity<Void> setExternalLLMUsageAcceptedToTimestamp() {
         User user = userRepository.getUser();
-        if (user.getIrisAcceptedTimestamp() != null) {
+        if (user.getExternalLLMUsageAcceptedTimestamp() != null) {
             return ResponseEntity.badRequest().build();
         }
-        userRepository.updateIrisAcceptedToDate(user.getId(), ZonedDateTime.now());
+        userRepository.updateExternalLLMUsageAcceptedToDate(user.getId(), ZonedDateTime.now());
         return ResponseEntity.ok().build();
     }
 }

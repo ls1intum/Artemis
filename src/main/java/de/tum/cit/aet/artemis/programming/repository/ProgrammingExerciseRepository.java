@@ -124,9 +124,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     List<ProgrammingExercise> findWithSubmissionPolicyByProjectKey(String projectKey);
 
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
-    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
-
     /**
      * Finds one programming exercise including its submission policy by the exercise's project key.
      *
@@ -506,6 +503,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
+    @Query("""
+            SELECT DISTINCT p.id
+            FROM ProgrammingExercise p
+            WHERE p.exerciseGroup.exam.id = :examId
+            """)
+    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
+
     // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
     @Query("""
             SELECT pe
@@ -739,18 +743,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findForCreationByIdElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findForCreationById(programmingExerciseId), programmingExerciseId);
-    }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded build config.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

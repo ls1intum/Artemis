@@ -1,0 +1,85 @@
+@if (course() && activeConversation()) {
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-auto">
+                @if (canAddUsersToConversation(activeConversation()!)) {
+                    <button type="button" class="btn btn-outline-secondary addUsers" (click)="openAddUsersDialog($event)">
+                        <fa-icon [icon]="faUserPlus" />
+                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.addUsers' | artemisTranslate }}
+                    </button>
+                }
+            </div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-8">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <fa-icon [icon]="faMagnifyingGlass" size="xs" />
+                    </span>
+                    <input
+                        (input)="onSearchQueryInput($event)"
+                        [placeholder]="'artemisApp.dialogs.conversationDetail.memberTab.findMembers' | artemisTranslate"
+                        class="form-control"
+                        id="searchQuery"
+                        type="text"
+                    />
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="input-group">
+                    <label class="input-group-text" for="searchFilter" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.filter"></label>
+                    <select (ngModelChange)="onFilterChange($event)" [ngModel]="selectedFilter" class="form-select form-select" id="searchFilter">
+                        <option id="allFilter" [value]="ALL" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.allFilter"></option>
+                        <option id="instructorFilter" [value]="INSTRUCTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.instructorFilter"></option>
+                        <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.tutorFilter"></option>
+                        <option id="studentFilter" [value]="STUDENT_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.studentFilter"></option>
+                        @if (isChannel(activeConversation()!)) {
+                            <option [value]="CHANNEL_MODERATOR_FILTER_OPTION" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter"></option>
+                        }
+                    </select>
+                </div>
+            </div>
+            @if (isSearching) {
+                <div class="col-12">
+                    <small class="form-text text-body-secondary d-inline-block" jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.searching"></small>
+                </div>
+            }
+        </div>
+        @if (members && members.length > 0) {
+            <div class="row mt-2">
+                <div class="col-12">
+                    <ul class="list-group">
+                        @for (user of members; track trackIdentity(i, user); let i = $index) {
+                            <li
+                                class="list-group-item"
+                                [id]="'user-' + user.id"
+                                jhi-conversation-member-row
+                                [conversationMember]="user"
+                                [activeConversation]="activeConversation()!"
+                                [course]="course()"
+                                (changePerformed)="onChangePerformed()"
+                                (onUserNameClicked)="userNameClicked.emit($event)"
+                            ></li>
+                        }
+                    </ul>
+                </div>
+                <div class="col-12">
+                    <div class="d-flex justify-content-center">
+                        <jhi-item-count [params]="{ page: page, totalItems: totalItems, itemsPerPage: itemsPerPage }" />
+                    </div>
+                    <div class="d-flex justify-content-center">
+                        <ngb-pagination
+                            [collectionSize]="totalItems"
+                            [(page)]="page"
+                            [pageSize]="itemsPerPage"
+                            [maxSize]="5"
+                            [rotate]="true"
+                            [boundaryLinks]="true"
+                            (pageChange)="transition()"
+                        />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

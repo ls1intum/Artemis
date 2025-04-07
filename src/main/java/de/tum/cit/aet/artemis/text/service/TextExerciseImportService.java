@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,7 +13,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -34,6 +32,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextBlockType;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -41,7 +40,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @Service
 public class TextExerciseImportService extends ExerciseImportService {
 
@@ -57,14 +56,14 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final ChannelService channelService;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ExerciseService exerciseService;
 
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
-            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService, CompetencyProgressApi competencyProgressApi,
-            ExerciseService exerciseService) {
+            TextSubmissionRepository textSubmissionRepository, ChannelService channelService, FeedbackService feedbackService,
+            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
@@ -100,7 +99,7 @@ public class TextExerciseImportService extends ExerciseImportService {
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(newTextExercise);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(newTextExercise));
 
         return newExercise;
     }

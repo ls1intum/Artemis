@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -9,7 +7,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
@@ -37,11 +36,11 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.
  */
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.StandardizedCompetencies)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/atlas/admin/")
 public class AdminStandardizedCompetencyResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminStandardizedCompetencyResource.class);
@@ -56,7 +55,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * POST api/admin/standardized-competencies : Creates a new standardized competency
+     * POST admin/standardized-competencies : Creates a new standardized competency
      *
      * @param competency the standardized competency that should be created
      * @return the ResponseEntity with status 201 (Created) and with body containing the new standardized competency
@@ -72,7 +71,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * PUT api/admin/standardized-competencies/{competencyId} : Updates an existing standardized competency
+     * PUT admin/standardized-competencies/{competencyId} : Updates an existing standardized competency
      *
      * @param competencyId the id of the competency that should be updated
      * @param competency   the updated competency
@@ -89,7 +88,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * DELETE api/admin/standardized-competencies/{competencyId} : Deletes a standardized competency
+     * DELETE admin/standardized-competencies/{competencyId} : Deletes a standardized competency
      *
      * @param competencyId the id of the competency that should be deleted
      * @return the ResponseEntity with status 200 (OK)
@@ -104,7 +103,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * POST api/admin/standardized-competencies/knowledge-areas : Creates a new knowledge area
+     * POST admin/standardized-competencies/knowledge-areas : Creates a new knowledge area
      *
      * @param knowledgeArea the knowledge area that should be created
      * @return the ResponseEntity with status 201 (Created) and with body containing the new knowledge area
@@ -121,7 +120,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * PUT api/admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Updates an existing knowledge area
+     * PUT admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Updates an existing knowledge area
      *
      * @param knowledgeAreaId the id of the knowledge area that should be updated
      * @param knowledgeArea   the updated knowledge area
@@ -137,7 +136,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * DELETE api/admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Deletes a knowledge area
+     * DELETE admin/standardized-competencies/knowledge-areas/{knowledgeAreaId} : Deletes a knowledge area
      *
      * @param knowledgeAreaId the id of the knowledge area that should be deleted
      * @return the ResponseEntity with status 200 (OK)
@@ -152,7 +151,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * PUT api/admin/standardized-competencies/import : Imports a catalog of standardized competencies, knowledge areas and sources
+     * PUT admin/standardized-competencies/import : Imports a catalog of standardized competencies, knowledge areas and sources
      *
      * @param standardizedCompetencyCatalogDTO the DTO containing the standardized competency catalog
      * @return the ResponseEntity with status 200 (OK)
@@ -167,7 +166,7 @@ public class AdminStandardizedCompetencyResource {
     }
 
     /**
-     * GET api/admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
+     * GET admin/standardized-competencies/export : Exports the catalog of standardized competencies, knowledge areas and sources of this Artemis instance
      *
      * @return the ResponseEntity with status 200 (OK) and the body containing the JSON string of the standardized competency catalog
      */

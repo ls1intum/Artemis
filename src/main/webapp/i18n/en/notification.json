@@ -107,6 +107,7 @@
                 "newPlagiarismCaseStudent": "New plagiarism case",
                 "newPlagiarismCaseStudentSignificantSimilarity": "New significant similarity",
                 "plagiarismCaseVerdictStudent": "Verdict for your plagiarism case",
+                "plagiarismCaseReply": "Reply from Student on Plagiarism Case",
                 "tutorialGroupRegistrationStudent": "You have been registered to a tutorial group",
                 "tutorialGroupDeregistrationStudent": "You have been deregistered from a tutorial group",
                 "tutorialGroupRegistrationTutor": "A student has been registered to your tutorial group",
@@ -123,7 +124,13 @@
                 "addUserGroupChat": "You have been added to a group chat",
                 "createGroupChat": "New group chat",
                 "dataExportCreated": "Data export created",
-                "dataExportFailed": "Data export failed"
+                "dataExportFailed": "Data export failed",
+                "sshKeyAdded": "New SSH key added",
+                "sshKeyExpiresSoon": "SSH key will expire soon",
+                "sshKeyHasExpired": "SSH key has expired",
+                "vcsAccessTokenAdded": "New VCS access token added",
+                "vcsAccessTokenExpired": "VCS access token has expired",
+                "vcsAccessTokenExpiresSoon": "VCS access token will expire soon"
             },
             "text": {
                 "newReplyForExercisePost": "Your post regarding exercise \"{{ placeholderValues.8 }}\" in the course \"{{ placeholderValues.0 }}\" got a new reply: \"{{ placeholderValues.5 }}\"",
@@ -134,6 +141,7 @@
                 "newPlagiarismCaseStudent": "New plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",
                 "newPlagiarismCaseStudentSignificantSimilarity": "New significant similarity concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\".",
                 "plagiarismCaseVerdictStudent": "Your plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" has a verdict.",
+                "plagiarismCaseReply": "The plagiarism case concerning the {{ placeholderValues.1 }} exercise \"{{ placeholderValues.2 }}\" got a reply.",
                 "tutorialGroupRegistrationStudent": "You have been registered to the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
                 "tutorialGroupDeregistrationStudent": "You have been deregistered from the tutorial group {{ placeholderValues.1 }} by {{ placeholderValues.2 }}.",
                 "tutorialGroupRegistrationTutor": "The student {{ placeholderValues.1 }} has been registered to your tutorial group {{ placeholderValues.2 }} by {{ placeholderValues.3 }}.",
@@ -150,7 +158,13 @@
                 "addUserGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "createGroupChat": "You have been added to a new group chat by {{ placeholderValues.1 }} in course {{ placeholderValues.0 }}.",
                 "dataExportCreated": "Your data export has been created and can be downloaded.",
-                "dataExportFailed": "Your data export could not be created. Please try again later."
+                "dataExportFailed": "Your data export could not be created. Please try again later.",
+                "sshKeyAdded": "You have successfully added a new SSH key",
+                "sshKeyExpiresSoon": "Your SSH key with the label \"{{ placeholderValues.0 }}\" will expire on {{ placeholderValues.1 }}.",
+                "sshKeyHasExpired": "Your SSH key with the label \"{{ placeholderValues.0 }}\" has expired on {{ placeholderValues.1 }}.",
+                "vcsAccessTokenAdded": "You have successfully added a new VCS access token",
+                "vcsAccessTokenExpired": "Your personal version control access token has expired.",
+                "vcsAccessTokenExpiresSoon": "Your personal version control access token will expire in one week."
             }
         },
         "tutorialGroupNotification": {
@@ -171,6 +185,122 @@
                 "newMessageChannel": "New message in channel \"{{ placeholderValues.3 }}\" in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
                 "newMessageGroupChat": "New message in group chat in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
                 "newMessageDirect": "New direct message in course \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
+            }
+        },
+        "courseNotification": {
+            "newPostNotification": {
+                "title": "New message",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New message"
+            },
+            "newAnswerNotification": {
+                "title": "New thread answer",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "New thread answer"
+            },
+            "newMentionNotification": {
+                "title": "You were mentioned",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "You were mentioned"
+            },
+            "newAnnouncementNotification": {
+                "title": "New announcement",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New announcement"
+            },
+            "newExerciseNotification": {
+                "title": "New exercise",
+                "content": "{{exerciseTitle}} has been released.",
+                "settingsTitle": "New exercise"
+            },
+            "exerciseOpenForPracticeNotification": {
+                "title": "Exercise open for practice",
+                "content": "{{exerciseTitle}} is now open for practice.",
+                "settingsTitle": "Exercise open for practice"
+            },
+            "exerciseAssessedNotification": {
+                "title": "Exercise assessed",
+                "content": "{{exerciseTitle}} has been assessed.",
+                "settingsTitle": "Exercise assessed"
+            },
+            "exerciseUpdatedNotification": {
+                "title": "Exercise updated",
+                "content": "{{exerciseTitle}} was updated.",
+                "settingsTitle": "Exercise updated"
+            },
+            "quizExerciseStartedNotification": {
+                "title": "Quiz exercise started",
+                "content": "{{exerciseTitle}} just started.",
+                "settingsTitle": "Quiz exercise started"
+            },
+            "attachmentChangedNotification": {
+                "title": "Attachment changed",
+                "content": "An attachment in {{unitName}} changed.",
+                "settingsTitle": "Attachment changed"
+            },
+            "newManualFeedbackRequestNotification": {
+                "title": "Feedback requested",
+                "content": "Feedback was requested in {{exerciseTitle}}.",
+                "settingsTitle": "Feedback requested"
+            },
+            "temporal": {
+                "now": "Now",
+                "oneHourAgo": "1 hour ago.",
+                "hoursAgo": "{{hours}} hours ago.",
+                "today": "{{hour}}:{{minute}}",
+                "yesterday": "Yesterday, {{hour}}:{{minute}}",
+                "thisWeek": "{{day}}, {{hour}}:{{minute}}",
+                "date": "{{date}}"
+            },
+            "weekdays": {
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            },
+            "overview": {
+                "title": "Notifications",
+                "emptyTitle": "All done!",
+                "settingsTooltip": "Go to settings",
+                "archiveAllTooltip": "Clear all notifications",
+                "emptyMessage": "Currently there are no notifications for this category."
+            },
+            "category": {
+                "general": "General",
+                "communication": "Communication"
+            },
+            "setting": {
+                "headline": "Notifications"
+            },
+            "channel": {
+                "email": "E-Mail",
+                "webapp": "Webapp",
+                "push": "Push"
+            },
+            "popup": {
+                "collapseToggle": "Collapse"
+            },
+            "preset": {
+                "dropdown": "Setting",
+                "defaultUserCourseNotificationSettingPreset": {
+                    "title": "Default",
+                    "description": "Receive only essential notifications about the course."
+                },
+                "ignoreUserCourseNotificationSettingPreset": {
+                    "title": "Ignore all",
+                    "description": "Receive no notifications for the course."
+                },
+                "allActivityUserCourseNotificationSettingPreset": {
+                    "title": "All activity",
+                    "description": "Receive all notifications to stay on track at all times."
+                },
+                "customUserCourseNotificationSettingPreset": {
+                    "title": "Custom",
+                    "description": "Set the settings to your specific needs. You may always change this."
+                }
             }
         }
     }

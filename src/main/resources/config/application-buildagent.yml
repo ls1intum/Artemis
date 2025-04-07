@@ -7,6 +7,11 @@
 # This configuration overrides the application.yml file.
 # ===================================================================
 artemis:
+    atlas:
+      enabled: false
+    text:
+      enabled: false
+
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download
     version-control:
@@ -40,6 +45,10 @@ artemis:
         build-logs:
             max-lines-per-job: 10000
             max-chars-per-line: 1024
+        container-flags-limit:
+            max-cpu-count: 4
+            max-memory: 8096
+            max-memory-swap: 8096
     git:
         name: Artemis
         email: artemis@xcit.tum.de

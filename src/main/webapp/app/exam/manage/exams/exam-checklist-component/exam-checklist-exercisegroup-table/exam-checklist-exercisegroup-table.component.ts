@@ -1,12 +1,12 @@
-import { Component, Input, OnChanges } from '@angular/core';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { ExerciseType, getIcon, getIconTooltip } from 'app/entities/exercise.model';
-import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
+import { Component, OnChanges, input } from '@angular/core';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { ExerciseType, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseGroupVariantColumn } from 'app/exam/shared/entities/exercise-group-variant-column.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
@@ -16,8 +16,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, NgbTooltip, FaIconComponent, NoDataComponent, ArtemisTranslatePipe],
 })
 export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
-    @Input() quizExamMaxPoints: number;
-    @Input() exerciseGroups: ExerciseGroup[];
+    quizExamMaxPoints = input.required<number>();
+    exerciseGroups = input.required<ExerciseGroup[]>();
     exerciseGroupVariantColumns: ExerciseGroupVariantColumn[] = [];
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
@@ -28,9 +28,9 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
 
     ngOnChanges() {
         this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
-        if (this.exerciseGroups) {
+        if (this.exerciseGroups()) {
             let exerciseGroupIndex = 1;
-            this.exerciseGroups.forEach((exerciseGroup) => {
+            this.exerciseGroups()!.forEach((exerciseGroup) => {
                 const exerciseGroupVariantColumn = new ExerciseGroupVariantColumn();
                 exerciseGroupVariantColumn.exerciseGroupTitle = exerciseGroup.title;
                 exerciseGroupVariantColumn.indexExerciseGroup = exerciseGroupIndex;

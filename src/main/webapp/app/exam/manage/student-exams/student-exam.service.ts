@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 
 type EntityResponseType = HttpResponse<StudentExam>;
 type EntityArrayResponseType = HttpResponse<StudentExam[]>;
@@ -13,7 +13,7 @@ export class StudentExamService {
     private http = inject(HttpClient);
     private accountService = inject(AccountService);
 
-    public resourceUrl = 'api/courses';
+    public resourceUrl = 'api/exam/courses';
 
     /**
      * Find a student exam on the server using a GET request.

@@ -3,11 +3,9 @@ package de.tum.cit.aet.artemis.exam.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent;
@@ -66,15 +64,13 @@ public class ExamLiveEventsService {
      *
      * @param exam    the exam to send the announcement to.
      * @param message The message to send.
-     * @param sentBy  The user who sent the message.
      * @return The created event.
      */
-    public ExamWideAnnouncementEvent createAndDistributeExamAnnouncementEvent(Exam exam, String message, User sentBy) {
+    public ExamWideAnnouncementEvent createAndDistributeExamAnnouncementEvent(Exam exam, String message) {
         var event = new ExamWideAnnouncementEvent();
 
         // Common fields
         event.setExamId(exam.getId());
-        event.setCreatedBy(sentBy.getName());
 
         // Specific fields
         event.setTextContent(message);
@@ -87,16 +83,14 @@ public class ExamLiveEventsService {
      *
      * @param studentExam The student exam the where the popup should be shown
      * @param message     The message to send.
-     * @param sentBy      The user who sent the message.
      * @return The created event.
      */
-    public ExamAttendanceCheckEvent createAndSendExamAttendanceCheckEvent(StudentExam studentExam, String message, User sentBy) {
+    public ExamAttendanceCheckEvent createAndSendExamAttendanceCheckEvent(StudentExam studentExam, String message) {
         var event = new ExamAttendanceCheckEvent();
 
         // Common fields
         event.setExamId(studentExam.getExam().getId());
         event.setStudentExamId(studentExam.getId());
-        event.setCreatedBy(sentBy.getName());
 
         // specific fields
         event.setTextContent(message);
@@ -111,15 +105,13 @@ public class ExamLiveEventsService {
      * @param newWorkingTime The new working time in seconds
      * @param oldWorkingTime The old working time in seconds
      * @param courseWide     set to true if this event is caused by a course wide update that affects all students; false otherwise
-     * @param sentBy         The user who performed the update
      */
-    public void createAndSendWorkingTimeUpdateEvent(StudentExam studentExam, int newWorkingTime, int oldWorkingTime, boolean courseWide, User sentBy) {
+    public void createAndSendWorkingTimeUpdateEvent(StudentExam studentExam, int newWorkingTime, int oldWorkingTime, boolean courseWide) {
         var event = new WorkingTimeUpdateEvent();
 
         // Common fields
         event.setExamId(studentExam.getExam().getId());
         event.setStudentExamId(studentExam.getId());
-        event.setCreatedBy(sentBy.getName());
 
         // Specific fields
         event.setNewWorkingTime(newWorkingTime);
@@ -132,15 +124,13 @@ public class ExamLiveEventsService {
     /**
      * Send a problem statement update to all affected students.
      *
-     * @param exercise   The exam exercise the problem statement was updated for
-     * @param message    The message to send
-     * @param instructor The user who performed the update
+     * @param exercise The exam exercise the problem statement was updated for
+     * @param message  The message to send
      */
-    @Async
-    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message, User instructor) {
+    public void createAndSendProblemStatementUpdateEvent(Exercise exercise, String message) {
         Exam exam = exercise.getExam();
         studentExamRepository.findAllWithExercisesByExamId(exam.getId()).stream().filter(studentExam -> studentExam.getExercises().contains(exercise))
-                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message, instructor));
+                .forEach(studentExam -> this.createAndSendProblemStatementUpdateEvent(studentExam, exercise, message));
     }
 
     /**
@@ -149,15 +139,13 @@ public class ExamLiveEventsService {
      * @param studentExam The student exam containing the exercise with updated problem statement
      * @param exercise    The updated exercise
      * @param message     The message to send
-     * @param sentBy      The user who performed the update
      */
-    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message, User sentBy) {
+    public void createAndSendProblemStatementUpdateEvent(StudentExam studentExam, Exercise exercise, String message) {
         var event = new ProblemStatementUpdateEvent();
 
         // Common fields
         event.setExamId(studentExam.getExam().getId());
         event.setStudentExamId(studentExam.getId());
-        event.setCreatedBy(sentBy.getName());
 
         // Specific fields
         event.setTextContent(message);

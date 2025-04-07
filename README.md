@@ -31,7 +31,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Interactive:** Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.
    * **Independent**: Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...)
    * **Local and online**: Students can participate locally in their preferred IDE or in the online code editor (without any setup)
-   * **Manual reviews** are possible directly in the online code editor or in [Orion](https://github.com/ls1intum/Orion)
+   * **Manual reviews** are possible directly in the online code editor
    * **Policies**: Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.
    * **Grading**: Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results
    * **Secure**: Test cases and student code run in Docker environments on build agents. Test frameworks such as [Ares](https://github.com/ls1intum/Ares) simplify the creation of structural and dynamic tests and prevent that students can cheat.
@@ -159,10 +159,8 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend using the [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
 
-Artemis can also be set up in conjunction with external tools for version control and continuous integration:
-1. [LocalVC and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-localvc-setup)
-2. [GitLab and Jenkins (deprecated)](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
-3. [GitLab and GitLab CI (experimental and deprecated)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
+Artemis can also be set up in conjunction with external tools for continuous integration:
+[LocalVC and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-localvc-setup)
 
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
@@ -181,7 +179,7 @@ To build and optimize the Artemis application for production, run:
 This will create a Artemis-<version>.war file in the folder `build/libs`. The build command compiles the TypeScript into JavaScript files, concatenates and minifies the created files (including HTML and CSS files). It will also modify `index.html` so it references these new files. To ensure everything worked, run the following command to start the application on your local computer:
 
 ```shell
-java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local
+java -jar build/libs/*.war --spring.profiles.active=dev,localci,localvc,artemis,scheduling,buildagent,core,local,atlas
 ```
 
 (You might need to copy a yml file into the folder build/libs before, also see [development setup](https://docs.artemis.cit.tum.de/dev/setup/))
@@ -193,7 +191,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-7.10.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.0.war
 ```
 
 ## Architecture
@@ -259,7 +257,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  
-  https://artemis.praktomat.cs.kit.edu  
+  https://artemis.cs.kit.edu  
   Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
   
 * **Hochschule München**  

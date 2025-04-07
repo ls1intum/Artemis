@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -169,7 +169,6 @@ public class GitService extends AbstractGitService {
      * Get the URI for a {@link VcsRepositoryUri}. This either retrieves the SSH URI, if SSH is used, the HTTP(S) URI, or the path to the repository's folder if the local VCS is
      * used.
      * This method is for internal use (getting the URI for cloning the repository into the Artemis file system).
-     * For GitLab, the URI is the same internally as the one that is used by the students to clone the repository using their local Git client.
      * For the local VCS however, the repository is cloned from the folder defined in the environment variable "artemis.version-control.local-vcs-repo-path".
      *
      * @param vcsRepositoryUri the {@link VcsRepositoryUri} for which to get the URI
@@ -320,10 +319,10 @@ public class GitService extends AbstractGitService {
         return getOrCheckoutRepository(repoUri, repoUri, localPath, pullOnGet, defaultBranch);
     }
 
-    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUrl, boolean pullOnGet)
+    public Repository getOrCheckoutRepositoryIntoTargetDirectory(VcsRepositoryUri repoUri, VcsRepositoryUri targetUri, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
-        Path localPath = getDefaultLocalPathOfRepo(targetUrl);
-        return getOrCheckoutRepository(repoUri, targetUrl, localPath, pullOnGet);
+        Path localPath = getDefaultLocalPathOfRepo(targetUri);
+        return getOrCheckoutRepository(repoUri, targetUri, localPath, pullOnGet);
     }
 
     public Repository getOrCheckoutRepository(VcsRepositoryUri repoUri, Path localPath, boolean pullOnGet) throws GitAPIException, GitException, InvalidPathException {
@@ -342,7 +341,7 @@ public class GitService extends AbstractGitService {
      * @throws GitException         if the same repository is attempted to be cloned multiple times.
      * @throws InvalidPathException if the repository could not be checked out Because it contains unmappable characters.
      */
-    public Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
+    private Repository getOrCheckoutRepository(VcsRepositoryUri sourceRepoUri, VcsRepositoryUri targetRepoUri, Path localPath, boolean pullOnGet)
             throws GitAPIException, GitException, InvalidPathException {
         return getOrCheckoutRepository(sourceRepoUri, targetRepoUri, localPath, pullOnGet, defaultBranch);
     }
@@ -791,8 +790,8 @@ public class GitService extends AbstractGitService {
             else {
                 log.debug("Last valid submission is not present for participation");
                 // Get last commit before due date
-                Date since = Date.from(Instant.EPOCH);
-                Date until = Date.from(filterLateSubmissionsDate.toInstant());
+                Instant since = Instant.EPOCH;
+                Instant until = filterLateSubmissionsDate.toInstant();
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
                 RevCommit latestCommitBeforeDueDate = commits.iterator().next();
@@ -894,7 +893,7 @@ public class GitService extends AbstractGitService {
                 // Only commit amend if head changed; cherry-picking empty commits does nothing
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
-                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
+                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhenAsInstant(), authorIdent.getZoneId());
                     GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
@@ -980,6 +979,7 @@ public class GitService extends AbstractGitService {
      *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
      *                          </p>
      */
+    @NotNull
     public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
@@ -1015,20 +1015,20 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Lists all files and directories within the given repository, excluding symbolic links.
+     * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
-     * It supports bare and checked-out repositories.
+     * It only supports checked-out repositories (not bare ones)
      * <p>
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
      *
-     * @param repo The repository to scan for files and directories.
+     * @param repo         The repository to scan for files and directories.
+     * @param omitBinaries do not include binaries to reduce payload size
      * @return A {@link Map} where each key is a {@link File} object representing a file or directory, and each value is
      *         the corresponding {@link FileType} (FILE or FOLDER). The map excludes symbolic links.
      */
-    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+    public Map<File, FileType> listFilesAndFolders(Repository repo, boolean omitBinaries) {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
-
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
 
@@ -1036,9 +1036,13 @@ public class GitService extends AbstractGitService {
             File nextFile = new File(itr.next(), repo);
             Path nextPath = nextFile.toPath();
 
-            // filter out symlinks
             if (Files.isSymbolicLink(nextPath)) {
                 log.warn("Found a symlink {} in the git repository {}. Do not allow access!", nextPath, repo);
+                continue;
+            }
+
+            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
+                log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }
 
@@ -1047,14 +1051,18 @@ public class GitService extends AbstractGitService {
         return files;
     }
 
+    public Map<File, FileType> listFilesAndFolders(Repository repo) {
+        return listFilesAndFolders(repo, false);
+    }
+
     /**
-     * List all files in the repository. In an empty git repo, this method returns 0.
+     * List all files in the repository. In an empty git repo, this method returns en empty list.
      *
      * @param repo Local Repository Object.
      * @return Collection of File objects
      */
     @NotNull
-    public Collection<File> listFiles(Repository repo) {
+    public Collection<File> getFiles(Repository repo) {
         // Check if list of files is already cached
         if (repo.getFiles() == null) {
             FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
@@ -1098,7 +1106,7 @@ public class GitService extends AbstractGitService {
      * @return True if the status is clean
      * @throws GitAPIException if the state of the repository could not be retrieved.
      */
-    public boolean isClean(Repository repo) throws GitAPIException {
+    public boolean isWorkingCopyClean(Repository repo) throws GitAPIException {
         try (Git git = new Git(repo)) {
             Status status = git.status().call();
             return status.isClean();

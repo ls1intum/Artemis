@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,11 +20,16 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
@@ -35,7 +39,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/quiz/")
 public class QuizParticipationResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizParticipationResource.class);
@@ -72,7 +76,7 @@ public class QuizParticipationResource {
      */
     @PostMapping("quiz-exercises/{exerciseId}/start-participation")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<MappingJacksonValue> startParticipation(@PathVariable Long exerciseId) {
+    public ResponseEntity<StudentQuizParticipationDTO> startParticipation(@PathVariable Long exerciseId) {
         log.debug("REST request to start quiz exercise participation : {}", exerciseId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
@@ -101,9 +105,21 @@ public class QuizParticipationResource {
         participation.setResults(Set.of(result));
         participation.setExercise(exercise);
 
-        var view = exercise.viewForStudentsInQuizExercise(quizBatch.orElse(null));
-        MappingJacksonValue value = new MappingJacksonValue(participation);
-        value.setSerializationView(view);
-        return new ResponseEntity<>(value, HttpStatus.OK);
+        StudentQuizParticipationDTO responseDTO;
+        if (exercise.isQuizEnded()) {
+            responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        }
+        else if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
+            responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+        }
+        else {
+            responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+        }
+
+        if (responseDTO == null) {
+            throw new InternalServerErrorException("Error starting quiz participation");
+        }
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }
+
 }

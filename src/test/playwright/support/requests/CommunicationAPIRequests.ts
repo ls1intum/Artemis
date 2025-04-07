@@ -1,13 +1,12 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Page } from '@playwright/test';
-import { COURSE_BASE } from '../constants';
-import { Channel, ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel, ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { UserCredentials } from '../users';
-import { Post } from 'app/entities/metis/post.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 /**
  * A class which encapsulates all API requests related to communications.
@@ -41,7 +40,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/messages`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/messages`, { data });
         return response.json();
     }
 
@@ -63,7 +62,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'channel',
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/channels`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/channels`, { data });
         return response.json();
     }
 
@@ -74,7 +73,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<ChannelDTO[]> with the course-wide channels of the course.
      */
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
-        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/conversations`);
+        const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
         // @ts-ignore
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
@@ -88,7 +87,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<Channel> with the channel of the exercise.
      */
     async getExerciseChannel(courseId: number, exerciseId: number): Promise<Channel> {
-        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/exercises/${exerciseId}/channel`);
+        const response = await this.page.request.get(`api/communication/courses/${courseId}/exercises/${exerciseId}/channel`);
         return response.json();
     }
 
@@ -100,7 +99,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<Channel> with the channel of the lecture.
      */
     async getLectureChannel(courseId: number, lectureId: number): Promise<Channel> {
-        const response = await this.page.request.get(`${COURSE_BASE}/${courseId}/lectures/${lectureId}/channel`);
+        const response = await this.page.request.get(`api/communication/courses/${courseId}/lectures/${lectureId}/channel`);
         return response.json();
     }
 
@@ -112,7 +111,7 @@ export class CommunicationAPIRequests {
      * @returns Promise<GroupChat> representing the group chat created.
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/group-chats`, { data: users });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: users });
         return response.json();
     }
 
@@ -135,7 +134,7 @@ export class CommunicationAPIRequests {
             displayPriority: 'NONE',
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/messages`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/messages`, { data });
         return response.json();
     }
 
@@ -163,7 +162,7 @@ export class CommunicationAPIRequests {
             name,
             type: 'groupChat',
         };
-        await this.page.request.put(`${COURSE_BASE}/${course.id}/group-chats/${groupChat.id}`, { data });
+        await this.page.request.put(`api/communication/courses/${course.id}/group-chats/${groupChat.id}`, { data });
     }
 
     /**
@@ -175,7 +174,7 @@ export class CommunicationAPIRequests {
      */
     async joinUserIntoChannel(course: Course, channelId: number, user: UserCredentials) {
         const data = [user.username];
-        await this.page.request.post(`${COURSE_BASE}/${course.id}/channels/${channelId}/register`, { data });
+        await this.page.request.post(`api/communication/courses/${course.id}/channels/${channelId}/register`, { data });
     }
 
     /**
@@ -192,7 +191,7 @@ export class CommunicationAPIRequests {
             post,
             resolvesPost: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/answer-messages`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/answer-messages`, { data });
         return response.json();
     }
 
@@ -218,7 +217,7 @@ export class CommunicationAPIRequests {
             title,
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/posts`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
         return response.json();
     }
 
@@ -243,7 +242,7 @@ export class CommunicationAPIRequests {
             title,
             visibleForStudents: true,
         };
-        const response = await this.page.request.post(`${COURSE_BASE}/${course.id}/posts`, { data });
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/posts`, { data });
         return response.json();
     }
 }

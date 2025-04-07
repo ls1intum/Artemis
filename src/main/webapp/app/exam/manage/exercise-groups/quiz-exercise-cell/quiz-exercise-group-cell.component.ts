@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Component, input } from '@angular/core';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-group-cell',
@@ -9,10 +9,5 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 })
 export class QuizExerciseGroupCellComponent {
     exerciseType = ExerciseType;
-    quizExercise: QuizExercise;
-
-    @Input()
-    set exercise(exercise: Exercise) {
-        this.quizExercise = exercise as QuizExercise;
-    }
+    exercise = input.required<QuizExercise>();
 }

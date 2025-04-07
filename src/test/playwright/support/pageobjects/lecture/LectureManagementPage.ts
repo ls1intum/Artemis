@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import dayjs from 'dayjs';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import { BASE_API } from '../../constants';
 
@@ -30,7 +30,7 @@ export class LectureManagementPage {
         await this.getLecture(lecture.id!).locator('#delete-lecture').click();
         await expect(this.page.locator('#delete')).toBeDisabled();
         await this.page.fill('#confirm-entity-name', lecture.title!);
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/lectures/*`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/lecture/lectures/*`);
         await this.page.click('#delete');
         return await responsePromise;
     }
@@ -121,7 +121,7 @@ export class LectureManagementPage {
      * @returns A promise that resolves with the response of the submit action.
      */
     async submitUnit(buttonId = '#submitButton') {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/lectures/*/*`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/lecture/lectures/*/*`);
         await this.page.click(buttonId);
         await responsePromise;
     }

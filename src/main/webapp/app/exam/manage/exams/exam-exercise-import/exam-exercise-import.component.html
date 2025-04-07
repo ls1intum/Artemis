@@ -15,7 +15,7 @@
     </thead>
     <tbody>
         <!-- Exercise Group as rows -->
-        @for (exerciseGroup of exam.exerciseGroups; track exerciseGroup.id) {
+        @for (exerciseGroup of exam().exerciseGroups; track exerciseGroup.id) {
             <tr [class.exerciseGroupNotSelected]="!exerciseGroupContainsExercises(exerciseGroup)">
                 <td>
                     <!-- Display general exercise group settings (name, mandatory) to the left -->
@@ -90,6 +90,7 @@
                                             <input
                                                 type="checkbox"
                                                 class="form-check-input"
+                                                [disabled]="!isExerciseTypeEnabled(exercise.type)"
                                                 [checked]="exerciseIsSelected(exercise, exerciseGroup)"
                                                 (click)="onSelectExercise(exercise, exerciseGroup)"
                                             />

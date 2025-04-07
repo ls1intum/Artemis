@@ -1,10 +1,10 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/entities/course.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import fileUploadExerciseTemplate from '../../fixtures/exercise/file-upload/template.json';
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling/submission.json';
@@ -17,9 +17,6 @@ import shortAnswerSubmissionTemplate from '../../fixtures/exercise/quiz/short_an
 import quizTemplate from '../../fixtures/exercise/quiz/template.json';
 import textExerciseTemplate from '../../fixtures/exercise/text/template.json';
 import {
-    BASE_API,
-    COURSE_BASE,
-    EXERCISE_BASE,
     Exercise,
     ExerciseMode,
     ExerciseType,
@@ -33,14 +30,14 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Team } from 'app/entities/team.model';
-import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
+import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { TeamAssignmentConfig } from 'app/exercise/shared/entities/team/team-assignment-config.model';
 import { ProgrammingExerciseSubmission } from '../pageobjects/exercises/programming/OnlineEditorPage';
 import { Fixtures } from '../../fixtures/fixtures';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
@@ -201,11 +198,11 @@ export class ExerciseAPIRequests {
                 };
             }),
         );
-        await this.page.request.put(`${BASE_API}/repository/${repositoryId}/files?commit=yes`, { data });
+        await this.page.request.put(`api/programming/repository/${repositoryId}/files?commit=yes`, { data });
     }
 
     async createProgrammingExerciseFile(repositoryId: number, filename: string) {
-        return await this.page.request.post(`${BASE_API}/repository/${repositoryId}/file?file=${filename}`);
+        return await this.page.request.post(`api/programming/repository/${repositoryId}/file?file=${filename}`);
     }
 
     /**
@@ -277,7 +274,7 @@ export class ExerciseAPIRequests {
      * @param createNewSubmission - Whether to create a new submission or update an existing one (optional, default: true).
      */
     async makeTextExerciseSubmission(exerciseId: number, text: string, createNewSubmission = true) {
-        const url = `${EXERCISE_BASE}/${exerciseId}/text-submissions`;
+        const url = `api/text/exercises/${exerciseId}/text-submissions`;
         const data = { submissionExerciseType: 'text', text };
 
         if (createNewSubmission) {
@@ -321,7 +318,7 @@ export class ExerciseAPIRequests {
      * @param file - The file content of the submission.
      */
     async makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
-        await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/file-upload-submissions`, {
+        await this.page.request.post(`api/fileupload/exercises/${exerciseId}/file-upload-submissions`, {
             data: { submissionExerciseType: 'file-upload', file },
         });
     }
@@ -390,7 +387,7 @@ export class ExerciseAPIRequests {
      * @param participation - The participation data for the submission.
      */
     async makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
-        return this.page.request.put(`${EXERCISE_BASE}/${exerciseID}/modeling-submissions`, {
+        return this.page.request.put(`api/modeling/exercises/${exerciseID}/modeling-submissions`, {
             data: {
                 ...modelingExerciseSubmissionTemplate,
                 id: participation.submissions![0].id,
@@ -505,7 +502,7 @@ export class ExerciseAPIRequests {
      * @param exam - The exam for which to evaluate the quiz exercises.
      */
     async evaluateExamQuizzes(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
+        await this.page.request.post(`api/exam/courses/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`);
     }
 
     /**
@@ -526,7 +523,7 @@ export class ExerciseAPIRequests {
             ...multipleChoiceSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: multipleChoiceSubmission });
     }
 
     /**
@@ -558,7 +555,7 @@ export class ExerciseAPIRequests {
             ...shortAnswerSubmissionTemplate,
             submittedAnswers,
         };
-        await this.page.request.post(`${EXERCISE_BASE}/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
+        await this.page.request.post(`api/quiz/exercises/${quizExercise.id}/submissions/live?submit=true`, { data: shortAnswerSubmission });
     }
 
     /**
@@ -568,7 +565,7 @@ export class ExerciseAPIRequests {
      * @returns A Promise<StudentParticipation> representing the student participation.
      */
     async getExerciseParticipation(exerciseId: number): Promise<StudentParticipation> {
-        const response = await this.page.request.get(`${EXERCISE_BASE}/${exerciseId}/participation`);
+        const response = await this.page.request.get(`api/exercise/exercises/${exerciseId}/participation`);
         return response.json();
     }
 
@@ -579,7 +576,7 @@ export class ExerciseAPIRequests {
      * @returns APIResponse representing the API request response.
      */
     async startExerciseParticipation(exerciseId: number) {
-        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/participations`);
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/participations`);
     }
 
     private async updateProgrammingExerciseTestCaseVisibility(
@@ -637,6 +634,6 @@ export class ExerciseAPIRequests {
             students,
             owner: tutor,
         };
-        return await this.page.request.post(`${EXERCISE_BASE}/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
     }
 }

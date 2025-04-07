@@ -2,13 +2,14 @@ package de.tum.cit.aet.artemis.athena.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.athena.dto.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.FeedbackBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.ModelingExerciseDTO;
@@ -27,9 +28,11 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.api.TextApi;
+import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
@@ -41,18 +44,15 @@ public class AthenaDTOConverterService {
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    private final TextBlockRepository textBlockRepository;
-
-    private final TextExerciseRepository textExerciseRepository;
+    private final Optional<TextRepositoryApi> textRepositoryApi;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    public AthenaDTOConverterService(TextBlockRepository textBlockRepository, TextExerciseRepository textExerciseRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, GradingCriterionRepository gradingCriterionRepository) {
-        this.textBlockRepository = textBlockRepository;
-        this.textExerciseRepository = textExerciseRepository;
+    public AthenaDTOConverterService(Optional<TextRepositoryApi> textRepositoryApi, ProgrammingExerciseRepository programmingExerciseRepository,
+            GradingCriterionRepository gradingCriterionRepository) {
+        this.textRepositoryApi = textRepositoryApi;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
     }
@@ -67,7 +67,7 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 // Fetch text exercise with grade criteria
-                var textExercise = textExerciseRepository.findWithGradingCriteriaByIdElseThrow(exercise.getId());
+                var textExercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findWithGradingCriteriaByIdElseThrow(exercise.getId());
                 return TextExerciseDTO.of(textExercise);
             }
             case PROGRAMMING -> {
@@ -117,8 +117,8 @@ public class AthenaDTOConverterService {
         switch (exercise.getExerciseType()) {
             case TEXT -> {
                 TextBlock feedbackTextBlock = null;
-                if (feedback.getReference() != null) {
-                    feedbackTextBlock = textBlockRepository.findById(feedback.getReference()).orElse(null);
+                if (feedback.getReference() != null && textRepositoryApi.isPresent()) {
+                    feedbackTextBlock = textRepositoryApi.get().findById(feedback.getReference()).orElse(null);
                 }
                 return TextFeedbackDTO.of(exercise.getId(), submissionId, feedback, feedbackTextBlock);
             }

@@ -2,7 +2,7 @@ import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } fr
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { AlertService } from 'app/core/util/alert.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable()
 export class NotificationInterceptor implements HttpInterceptor {
@@ -20,12 +20,12 @@ export class NotificationInterceptor implements HttpInterceptor {
         return next.handle(request).pipe(
             tap((event: HttpEvent<any>) => {
                 if (event instanceof HttpResponse) {
-                    let alert: string | null = null;
-                    let alertParams: string | null = null;
+                    let alert: string | undefined = undefined;
+                    let alertParams: string | undefined = undefined;
 
                     event.headers.keys().forEach((entry) => {
                         if (entry.toLowerCase().endsWith('app-alert')) {
-                            alert = event.headers.get(entry);
+                            alert = event.headers.get(entry) || undefined;
                         } else if (entry.toLowerCase().endsWith('app-params')) {
                             alertParams = decodeURIComponent(event.headers.get(entry)!.replace(/\+/g, ' '));
                         }

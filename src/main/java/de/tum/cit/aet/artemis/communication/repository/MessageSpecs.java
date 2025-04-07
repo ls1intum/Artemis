@@ -15,6 +15,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
+import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Post_;
@@ -195,14 +196,6 @@ public class MessageSpecs {
                     // sort by creation date
                     sortCriterion = root.get(Post_.CREATION_DATE);
                 }
-                else if (postSortCriterion == PostSortCriterion.ANSWER_COUNT) {
-                    // sort by answer count
-                    sortCriterion = root.get(Post_.ANSWER_COUNT);
-                }
-                else if (postSortCriterion == PostSortCriterion.VOTES) {
-                    // sort by votes via voteEmojiCount
-                    sortCriterion = root.get(Post_.VOTE_COUNT);
-                }
 
                 orderList.add(sortingOrder == SortingOrder.ASCENDING ? criteriaBuilder.asc(sortCriterion) : criteriaBuilder.desc(sortCriterion));
                 query.orderBy(orderList);
@@ -223,6 +216,21 @@ public class MessageSpecs {
         return (root, query, criteriaBuilder) -> {
             query.groupBy(root.get(Post_.ID));
             return null;
+        };
+    }
+
+    /**
+     * Specification to fetch only pinned Posts (DisplayPriority = PINNED)
+     *
+     * @param pinnedOnly whether only pinned posts should be fetched
+     * @return specification used to chain DB operations
+     */
+    public static Specification<Post> getPinnedSpecification(boolean pinnedOnly) {
+        return (root, query, criteriaBuilder) -> {
+            if (!pinnedOnly) {
+                return null;
+            }
+            return criteriaBuilder.equal(root.get(Post_.DISPLAY_PRIORITY), DisplayPriority.PINNED.name());
         };
     }
 }

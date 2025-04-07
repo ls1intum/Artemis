@@ -1,11 +1,11 @@
-import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 
 test.describe('Text exercise participation', { tag: '@fast' }, () => {
     let course: Course;

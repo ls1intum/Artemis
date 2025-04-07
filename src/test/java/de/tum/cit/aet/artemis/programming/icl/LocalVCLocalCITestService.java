@@ -5,32 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Fail.fail;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.mock;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.eclipse.jgit.api.FetchCommand;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PushCommand;
@@ -38,19 +23,14 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.RefSpec;
-import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
-import com.github.dockerjava.api.command.InspectImageCmd;
-import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
@@ -75,6 +55,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * This class contains helper methods for all tests of the local VC and local CI system..
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class LocalVCLocalCITestService {
 
     @Autowired
@@ -136,111 +117,6 @@ public class LocalVCLocalCITestService {
 
         log.debug("Created participation with id: {}", participation.getId());
         return participation;
-    }
-
-    /**
-     * Mock dockerClient.copyArchiveFromContainerCmd() such that it returns the XMLs containing the test results.
-     *
-     * @param dockerClient          the DockerClient to mock.
-     * @param mockedTestResultsPath the path to the directory containing the test results in the resources folder.
-     * @param testResultsPath       the path to the directory containing the test results inside the container.
-     */
-    public void mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) throws IOException {
-        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromTestResultsFolder(mockedTestResultsPath));
-    }
-
-    /**
-     * Overloaded version of mockTestResults(DockerClient dockerClient, Path mockedTestResultsPath, String testResultsPath) that allows to mock multiple test result folders.
-     *
-     * @param dockerClient           the DockerClient to mock.
-     * @param mockedTestResultsPaths the paths to the directories containing the test results in the resources folder.
-     * @param testResultsPath        the path to the directory containing the test results inside the container.
-     */
-    public void mockTestResults(DockerClient dockerClient, List<Path> mockedTestResultsPaths, String testResultsPath) throws IOException {
-        mockInputStreamReturnedFromContainer(dockerClient, testResultsPath, createMapFromMultipleTestResultFolders(mockedTestResultsPaths));
-    }
-
-    /**
-     * Mocks the inspection of the image returned by dockerClient.inspectImageCmd(String imageId).exec().
-     * The mocked image inspection will have the architecture "amd64" to pass the check in LocalCIBuildService.
-     *
-     * @param dockerClient the DockerClient to mock.
-     */
-    public void mockInspectImage(DockerClient dockerClient) {
-        InspectImageResponse inspectImageResponse = new InspectImageResponse();
-        inspectImageResponse.withArch("amd64");
-
-        InspectImageCmd inspectImageCmd = mock(InspectImageCmd.class);
-        doReturn(inspectImageCmd).when(dockerClient).inspectImageCmd(anyString());
-        doReturn(inspectImageResponse).when(inspectImageCmd).exec();
-    }
-
-    /**
-     * Mocks the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
-     *
-     * @param dockerClient         the DockerClient to mock.
-     * @param resourceRegexPattern the regex pattern that the resource path must match. The resource path is the path of the file or directory inside the container.
-     * @param dataToReturn         the data to return inside the InputStream in form of a map. Each entry of the map will be one TarArchiveEntry with the key denoting the
-     *                                 tarArchiveEntry.name() and the value being the content of the TarArchiveEntry. There can be up to two dataToReturn entries, in which case
-     *                                 the first call to "copyArchiveFromContainerCmd().exec()" will return the first entry, and the second call will return the second entry.
-     * @throws IOException if the InputStream cannot be created.
-     */
-    @SafeVarargs
-    public final void mockInputStreamReturnedFromContainer(DockerClient dockerClient, String resourceRegexPattern, Map<String, String>... dataToReturn) throws IOException {
-        // Mock dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec()
-        CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
-        ArgumentMatcher<String> expectedPathMatcher = path -> path.matches(resourceRegexPattern);
-        doReturn(copyArchiveFromContainerCmd).when(dockerClient).copyArchiveFromContainerCmd(anyString(), argThat(expectedPathMatcher));
-
-        if (dataToReturn.length == 0) {
-            throw new IllegalArgumentException("At least one dataToReturn entry must be provided.");
-        }
-
-        if (dataToReturn.length > 2) {
-            throw new IllegalArgumentException("At most two dataToReturn entries are supported.");
-        }
-
-        if (dataToReturn.length == 1) {
-            // If only one dataToReturn entry is provided, return it for every call to "copyArchiveFromContainerCmd().exec()"
-            doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0])).when(copyArchiveFromContainerCmd).exec();
-        }
-        else {
-            // If two dataToReturn entries are provided, return the first one for the first call to "copyArchiveFromContainerCmd().exec()" and the second one for the second call to
-            // "copyArchiveFromContainerCmd().exec()"
-            doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[0])).doReturn(createInputStreamForTarArchiveFromMap(dataToReturn[1])).when(copyArchiveFromContainerCmd)
-                    .exec();
-        }
-    }
-
-    /**
-     * Create a BufferedInputStream from a map. Each entry of the map will be one TarArchiveEntry with the key denoting the tarArchiveEntry.name() and the value being the
-     * content.
-     * The returned InputStream can be used to mock the InputStream returned by dockerClient.copyArchiveFromContainerCmd(String containerId, String resource).exec().
-     *
-     * @param dataMap the data to return inside the InputStream in form of a map.
-     * @return the BufferedInputStream.
-     * @throws IOException if any interaction with the TarArchiveOutputStream fails.
-     */
-    public BufferedInputStream createInputStreamForTarArchiveFromMap(Map<String, String> dataMap) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        TarArchiveOutputStream tarArchiveOutputStream = new TarArchiveOutputStream(byteArrayOutputStream);
-
-        for (Map.Entry<String, String> entry : dataMap.entrySet()) {
-            String filePath = entry.getKey();
-            String content = entry.getValue();
-
-            byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
-
-            TarArchiveEntry tarEntry = new TarArchiveEntry(filePath);
-            tarEntry.setSize(contentBytes.length);
-            tarArchiveOutputStream.putArchiveEntry(tarEntry);
-            tarArchiveOutputStream.write(contentBytes);
-            tarArchiveOutputStream.closeArchiveEntry();
-        }
-
-        tarArchiveOutputStream.close();
-
-        return new BufferedInputStream(new ByteArrayInputStream(byteArrayOutputStream.toByteArray()));
     }
 
     /**
@@ -313,7 +189,7 @@ public class LocalVCLocalCITestService {
     private Path createRepositoryFolderInTempDirectory(String projectKey, String repositorySlug) throws IOException {
         String tempDir = System.getProperty("java.io.tmpdir");
 
-        Path projectFolder = Paths.get(tempDir, projectKey);
+        Path projectFolder = Path.of(tempDir, projectKey);
 
         // Create the project folder if it does not exist.
         if (!Files.exists(projectFolder)) {
@@ -356,63 +232,6 @@ public class LocalVCLocalCITestService {
     public String constructLocalVCUrl(String username, String password, String projectKey, String repositorySlug) {
         return "http://" + username + (!password.isEmpty() ? ":" : "") + password + (!username.isEmpty() ? "@" : "") + "localhost:" + port + "/git/" + projectKey.toUpperCase()
                 + "/" + repositorySlug + ".git";
-    }
-
-    /**
-     * Create a map from the files in a folder containing test results.
-     * This map contains one entry for each file in the folder, the key being the file path and the value being the content of the file in case it is an XML file.
-     * This map is used by localVCLocalCITestService.mockInputStreamReturnedFromContainer() to mock the InputStream returned by dockerClient.copyArchiveFromContainerCmd() and thus
-     * mocks the retrieval of test results from the Docker container.
-     *
-     * @param testResultsPath Path to the folder containing the test results.
-     * @return Map containing the file paths and the content of the files.
-     */
-    public Map<String, String> createMapFromTestResultsFolder(Path testResultsPath) throws IOException {
-        Map<String, String> resultMap = new HashMap<>();
-        String testResultsPathString = testResultsPath.toString();
-
-        if (Files.isDirectory(testResultsPath)) {
-            Files.walkFileTree(testResultsPath, new SimpleFileVisitor<>() {
-
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                    if (!attrs.isDirectory()) {
-                        String key = file.toString().replace(testResultsPathString, "test");
-                        String value;
-                        if (file.getFileName().toString().endsWith(".xml")) {
-                            value = new String(Files.readAllBytes(file));
-                        }
-                        else {
-                            value = "dummy-data";
-                        }
-                        resultMap.put(key, value);
-                    }
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-        }
-        else {
-            // If it's a file, handle it directly
-            String key = testResultsPath.toString();
-            String value = Files.isRegularFile(testResultsPath) && testResultsPath.toString().endsWith(".xml") ? new String(Files.readAllBytes(testResultsPath)) : "dummy-data";
-            resultMap.put(key, value);
-        }
-
-        return resultMap;
-    }
-
-    /**
-     * Overloaded version of createMapFromTestResultsFolder(Path testResultsPath) that allows to create a map from multiple test result folders.
-     *
-     * @param testResultsPaths Paths to the folders containing the test results.
-     * @return Map containing the file paths and the content of the files.
-     */
-    public Map<String, String> createMapFromMultipleTestResultFolders(List<Path> testResultsPaths) throws IOException {
-        Map<String, String> resultMap = new HashMap<>();
-        for (Path testResultsPath : testResultsPaths) {
-            resultMap.putAll(createMapFromTestResultsFolder(testResultsPath));
-        }
-        return resultMap;
     }
 
     /**

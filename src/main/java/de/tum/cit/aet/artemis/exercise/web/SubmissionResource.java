@@ -43,7 +43,6 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 /**
@@ -51,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/exercise/")
 public class SubmissionResource {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionResource.class);
@@ -77,13 +76,11 @@ public class SubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
     private final SubmissionVersionRepository submissionVersionRepository;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, SubmissionVersionRepository submissionVersionRepository) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -92,7 +89,6 @@ public class SubmissionResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.submissionVersionRepository = submissionVersionRepository;
     }
 
@@ -124,7 +120,6 @@ public class SubmissionResource {
         if (submission.get() instanceof ProgrammingSubmission programmingSubmission) {
             buildLogEntryService.deleteBuildLogEntriesForProgrammingSubmission(programmingSubmission);
         }
-        buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(submissionId);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, submissionId.toString())).build();

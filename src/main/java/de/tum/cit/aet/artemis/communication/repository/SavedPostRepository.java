@@ -36,15 +36,15 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
     Long countByUserId(Long userId);
 
     /***
-     * Get a single saved post by user id, connected post/answer post id and posting type. Not cached.
+     * Get all saved post by user id, connected post/answer post id and posting type. Not cached.
      *
      * @param userId   of the bookmark
      * @param postId   of the bookmark
      * @param postType of the bookmark
      *
-     * @return The saved post if exists, null otherwise.
+     * @return The saved posts if they exist.
      */
-    SavedPost findSavedPostByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
+    List<SavedPost> findSavedPostsByUserIdAndPostIdAndPostType(Long userId, Long postId, PostingType postType);
 
     /***
      * Get all saved posts by connected post/answer post id and posting type. Not cached.
@@ -65,12 +65,13 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      * @return List of ids of posts/answer posts of the given user, filtered by the given post type.
      */
     @Query("""
-                SELECT s.postId
-                FROM SavedPost s
-                WHERE s.user.id = :userId AND s.postType = :postType
+            SELECT s.postId
+            FROM SavedPost s
+            WHERE s.user.id = :userId
+                AND s.postType = :postType
             """)
-    @Cacheable(key = "'saved_post_type_' + #postType.getDatabaseKey() + '_' + #userId")
-    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") Long userId, @Param("postType") PostingType postType);
+    @Cacheable(key = "'saved_post_type_' + #postType + '_' + #userId")
+    List<Long> findSavedPostIdsByUserIdAndPostType(@Param("userId") long userId, @Param("postType") PostingType postType);
 
     /***
      * Query all saved posts of a user by status. E.g. for displaying the saved posts. Cached by user id and status.
@@ -80,8 +81,15 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
      *
      * @return List of saved posts of the given user, filtered by the given status.
      */
-    @Cacheable(key = "'saved_post_status_' + #status.getDatabaseKey() + '_' + #userId")
-    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(Long userId, SavedPostStatus status);
+    @Query("""
+            SELECT new SavedPost(sp.user, sp.postId, sp.postType, sp.status, sp.completedAt)
+            FROM SavedPost sp
+            WHERE sp.user.id = :userId
+                AND sp.status = :status
+            ORDER BY sp.completedAt DESC, sp.id DESC
+            """)
+    @Cacheable(key = "'saved_post_status_' + #status + '_' + #userId")
+    List<SavedPost> findSavedPostsByUserIdAndStatusOrderByCompletedAtDescIdDesc(@Param("userId") long userId, @Param("status") SavedPostStatus status);
 
     /***
      * Query all SavedPosts for a certain user. Not cached.
@@ -103,51 +111,63 @@ public interface SavedPostRepository extends ArtemisJpaRepository<SavedPost, Lon
 
     /***
      * Saving should clear the cached queries for a given user
-     * The value "saved_post_type_0" represents a post, given by the enum {{@link PostingType}}
-     * The value "saved_post_type_1" represents an answer post, given by the enum {{@link PostingType}}
-     * The value "saved_post_status_0" represents in progress, given by the enum {{@link SavedPostStatus}}
-     * The value "saved_post_status_1" represents in completed, given by the enum {{@link SavedPostStatus}}
-     * The value "saved_post_status_2" represents in archived, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_type_POST" represents a post, given by the enum {{@link PostingType}}
+     * The value "saved_post_type_ANSWER" represents an answer post, given by the enum {{@link PostingType}}
+     * The value "saved_post_status_IN_PROGRESS" represents in progress, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_status_COMPLETED" represents in completed, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_status_ARCHIVED" represents in archived, given by the enum {{@link SavedPostStatus}}
      *
      * @param savedPost to create / update
      *
      * @return Newly stored saved post
      */
-    @Caching(evict = { @CacheEvict(key = "'saved_post_type_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
+    @Caching(evict = { @CacheEvict(key = "'saved_post_type_POST_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_ANSWER_' + #savedPost.user.id"),
+            @CacheEvict(key = "'saved_post_status_IN_PROGRESS_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_COMPLETED_' + #savedPost.user.id"),
+            @CacheEvict(key = "'saved_post_status_ARCHIVED_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     <S extends SavedPost> S save(S savedPost);
 
     /***
      * Deleting should clear the cached queries for a given user
-     * The value "saved_post_type_0" represents a post, given by the enum {{@link PostingType}}
-     * The value "saved_post_type_1" represents an answer post, given by the enum {{@link PostingType}}
-     * The value "saved_post_status_0" represents in progress, given by the enum {{@link SavedPostStatus}}
-     * The value "saved_post_status_1" represents in completed, given by the enum {{@link SavedPostStatus}}
-     * The value "saved_post_status_2" represents in archived, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_type_POST" represents a post, given by the enum {{@link PostingType}}
+     * The value "saved_post_type_ANSWER" represents an answer post, given by the enum {{@link PostingType}}
+     * The value "saved_post_status_IN_PROGRESS" represents in progress, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_status_COMPLETED" represents in completed, given by the enum {{@link SavedPostStatus}}
+     * The value "saved_post_status_ARCHIVED" represents in archived, given by the enum {{@link SavedPostStatus}}
      *
      * @param savedPost to delete
      */
-    @Caching(evict = { @CacheEvict(key = "'saved_post_type_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_0_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_1_' + #savedPost.user.id"),
-            @CacheEvict(key = "'saved_post_status_2_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
+    @Caching(evict = { @CacheEvict(key = "'saved_post_type_POST_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_type_ANSWER_' + #savedPost.user.id"),
+            @CacheEvict(key = "'saved_post_status_IN_PROGRESS_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_status_COMPLETED_' + #savedPost.user.id"),
+            @CacheEvict(key = "'saved_post_status_ARCHIVED_' + #savedPost.user.id"), @CacheEvict(key = "'saved_post_count_' + #savedPost.user.id"), })
     @Override
     void delete(SavedPost savedPost);
 
     /***
-     * The value "sp.postType = 0" represents a post, given by the enum {{@link PostingType}}
+     * Search for orphaned post references. This is used to find saved posts that do not have a post entity connected to them.
      *
      * @return List of saved posts that do not have a post entity connected to them
      */
-    @Query("SELECT sp FROM SavedPost sp " + "LEFT JOIN Post p ON sp.postId = p.id " + "WHERE sp.postType = 0 AND p.id IS NULL")
+    @Query("""
+            SELECT sp
+            FROM SavedPost sp
+                LEFT JOIN Post p ON sp.postId = p.id
+            WHERE sp.postType = de.tum.cit.aet.artemis.communication.domain.PostingType.POST
+                AND p.id IS NULL
+            """)
     List<SavedPost> findOrphanedPostReferences();
 
     /***
-     * The value "sp.postType = 1" represents an answer post, given by the enum {{@link PostingType}}
+     * Search for orphaned answer post references. This is used to find saved posts that do not have an answer post entity connected to them.
      *
      * @return List of saved posts that do not have an answer post entity connected to them
      */
-    @Query("SELECT sp FROM SavedPost sp " + "LEFT JOIN AnswerPost ap ON sp.postId = ap.id " + "WHERE sp.postType = 1 AND ap.id IS NULL")
+    @Query("""
+            SELECT sp
+            FROM SavedPost sp
+                LEFT JOIN AnswerPost ap ON sp.postId = ap.id
+            WHERE sp.postType = de.tum.cit.aet.artemis.communication.domain.PostingType.ANSWER
+                AND ap.id IS NULL
+            """)
     List<SavedPost> findOrphanedAnswerReferences();
 }

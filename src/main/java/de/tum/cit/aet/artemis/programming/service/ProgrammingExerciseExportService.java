@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
@@ -160,7 +159,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
                 }
             });
 
-            // Export the build plan of a programming exercise, if one exists. Only relevant for Gitlab/Jenkins or Gitlab/GitlabCI setups.
+            // Export the build plan of a programming exercise, if one exists. Only relevant for Jenkins setups.
             var buildPlan = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
             if (buildPlan.isPresent()) {
                 Path buildPlanPath = exportDir.orElseThrow().resolve(BUILD_PLAN_FILE_NAME);
@@ -540,7 +539,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
             if (!clonePath.toFile().exists()) {
                 Files.createDirectories(clonePath);
             }
-            String assignmentPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
+            String assignmentPath = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(exercise.getProgrammingLanguage());
             FileUtils.deleteDirectory(clonePath.resolve(assignmentPath).toFile());
             gitService.getOrCheckoutRepository(exercise.getVcsSolutionRepositoryUri(), clonePath.resolve(assignmentPath), true);
             for (AuxiliaryRepository auxRepo : exercise.getAuxiliaryRepositoriesForBuildPlan()) {
@@ -853,7 +852,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToMavenProjectName(Repository repo, String participantIdentifier, String pomFilePath) {
         try {
-            File pomFile = new File(pomFilePath);
+            File pomFile = Path.of(pomFilePath).toFile();
             // check if file exists and full file name is pom.xml and not just the file ending.
             if (!pomFile.exists() || !pomFile.getName().equals("pom.xml")) {
                 return;
@@ -889,7 +888,7 @@ public class ProgrammingExerciseExportService extends ExerciseWithSubmissionsExp
 
     private void addParticipantIdentifierToEclipseProjectName(Repository repo, String participantIdentifier, String eclipseProjectFilePath) {
         try {
-            File eclipseProjectFile = new File(eclipseProjectFilePath);
+            File eclipseProjectFile = Path.of(eclipseProjectFilePath).toFile();
             // Check if file exists and full file name is .project and not just the file ending.
             if (!eclipseProjectFile.exists() || !eclipseProjectFile.getName().equals(".project")) {
                 return;

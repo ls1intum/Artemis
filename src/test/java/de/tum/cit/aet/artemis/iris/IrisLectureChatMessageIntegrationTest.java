@@ -73,8 +73,6 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     @Autowired
     private LectureUtilService lectureUtilService;
 
-    private Course course;
-
     private Lecture lecture;
 
     private AtomicBoolean pipelineDone;
@@ -88,7 +86,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
-        course = courseUtilService.createCourse();
+        Course course = courseUtilService.createCourse();
         lecture = lectureUtilService.createLecture(course, ZonedDateTime.now());
 
         activateIrisGlobally();
@@ -397,7 +395,7 @@ class IrisLectureChatMessageIntegrationTest extends AbstractIrisIntegrationTest 
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, List<String> suggestions) throws Exception {
         var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobId))));
-        request.postWithoutResponseBody("/api/public/pyris/pipelines/lecture-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, suggestions, null),
+        request.postWithoutResponseBody("/api/iris/public/pyris/pipelines/lecture-chat/runs/" + jobId + "/status", new PyrisChatStatusUpdateDTO(result, stages, suggestions, null),
                 HttpStatus.OK, headers);
     }
 }

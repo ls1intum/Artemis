@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
 import { BASE_API } from '../../../constants';
-import { QuizBatch } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 export class QuizExerciseOverviewPage {
     private readonly page: Page;
@@ -15,7 +15,7 @@ export class QuizExerciseOverviewPage {
      * @returns The created quiz batch.
      */
     async addQuizBatch(exerciseId: number): Promise<QuizBatch> {
-        const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz-exercises/${exerciseId}/add-batch`);
+        const responsePromise = this.page.waitForResponse(`${BASE_API}/quiz/quiz-exercises/${exerciseId}/add-batch`);
         await this.page.locator(`#instructor-quiz-add-${exerciseId}`).click();
         const response = await responsePromise;
         return await response.json();

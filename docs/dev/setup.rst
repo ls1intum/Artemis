@@ -32,10 +32,10 @@ following dependencies/tools on your machine:
 2. `MySQL Database Server 9 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL 17 <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=22.10.0 < 23) to compile
+3. `node <https://nodejs.org/en/download>`__: We use node LTS (>=22.14.0 < 23) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=10.8.0) to
+4. `npm <https://nodejs.org/en/download>`__: We use npm (>=11.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
 5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
@@ -47,8 +47,6 @@ following dependencies/tools on your machine:
 
    * :ref:`Integrated Code Lifecycle Setup <Integrated Code Lifecycle Setup>`
    * :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>`
-   * :ref:`GitLab and Jenkins <Jenkins and GitLab Setup>` (deprecated)
-   * :ref:`GitLab and GitLab CI <GitLab CI and GitLab Setup>` (experimental, not yet production ready)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -76,8 +74,6 @@ following dependencies/tools on your machine:
    setup/client
    setup/integrated-code-lifecycle
    setup/jenkins-localvc
-   setup/jenkins-gitlab
-   setup/gitlabci-gitlab
    setup/aeolus
    setup/common-problems
    setup/docker-compose

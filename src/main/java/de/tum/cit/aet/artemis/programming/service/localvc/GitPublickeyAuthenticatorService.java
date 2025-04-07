@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.repository.UserSshPublicKeyRepository;
-import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 
@@ -34,19 +34,19 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserRepository userRepository;
 
-    private final Optional<SharedQueueManagementService> localCIBuildJobQueueService;
+    private final Optional<DistributedDataAccessService> localCIDistributedDataAccessService;
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final int AUTHENTICATION_FAILED_CODE = 10;
+    private static final int AUTHENTICATION_FAILED_CODE = 10;
 
     @Value("${server.url}")
     private String artemisServerUrl;
 
-    public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<SharedQueueManagementService> localCIBuildJobQueueService,
+    public GitPublickeyAuthenticatorService(UserRepository userRepository, Optional<DistributedDataAccessService> localCIDistributedDataAccessService,
             UserSshPublicKeyRepository userSshPublicKeyRepository) {
         this.userRepository = userRepository;
-        this.localCIBuildJobQueueService = localCIBuildJobQueueService;
+        this.localCIDistributedDataAccessService = localCIDistributedDataAccessService;
         this.userSshPublicKeyRepository = userSshPublicKeyRepository;
     }
 
@@ -112,9 +112,9 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
      * @return true if the authentication succeeds, and false if it doesn't
      */
     private boolean authenticateBuildAgent(PublicKey providedKey, ServerSession session) {
-        if (localCIBuildJobQueueService.isPresent()) {
+        if (localCIDistributedDataAccessService.isPresent()) {
             // Find the build agent that matches the provided key
-            Optional<BuildAgentInformation> matchingAgent = localCIBuildJobQueueService.get().getBuildAgentInformation().stream()
+            Optional<BuildAgentInformation> matchingAgent = localCIDistributedDataAccessService.get().getBuildAgentInformation().stream()
                     .filter(agent -> checkPublicKeyMatchesBuildAgentPublicKey(agent, providedKey)).findFirst();
 
             if (matchingAgent.isPresent()) {

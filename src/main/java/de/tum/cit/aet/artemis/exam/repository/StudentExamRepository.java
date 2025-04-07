@@ -27,10 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.service.ExamQuizQuestionsGenerator;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Spring Data JPA repository for the StudentExam entity.
@@ -42,15 +40,19 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
     Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "studentParticipations" })
+    Optional<StudentExam> findWithExercisesAndStudentParticipationsById(Long studentExamId);
+
     @Query("""
             SELECT se
             FROM StudentExam se
                 LEFT JOIN FETCH se.exercises e
                 LEFT JOIN FETCH e.submissionPolicy
                 LEFT JOIN FETCH se.examSessions
+                LEFT JOIN FETCH se.studentParticipations
             WHERE se.id = :studentExamId
             """)
-    Optional<StudentExam> findWithExercisesSubmissionPolicyAndSessionsById(@Param("studentExamId") long studentExamId);
+    Optional<StudentExam> findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(@Param("studentExamId") long studentExamId);
 
     @Query("""
             SELECT DISTINCT se
@@ -135,10 +137,19 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             SELECT COUNT(se)
             FROM StudentExam se
             WHERE se.exam.id = :examId
+            	AND (se.started = FALSE OR se.started IS NULL)
+            	AND se.testRun = FALSE
+            """)
+    long countStudentExamsNotStartedByExamIdIgnoreTestRuns(@Param("examId") long examId);
+
+    @Query("""
+            SELECT COUNT(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.started = TRUE
             	AND se.testRun = FALSE
             """)
-    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+    long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     @Query("""
             SELECT COUNT(se)
@@ -147,7 +158,7 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.submitted = TRUE
             	AND se.testRun = FALSE
             """)
-    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
+    long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
     /**
      * It might happen that multiple test exams exist for a combination of userId/examId, that's why we return a set here.
@@ -189,6 +200,50 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
+
+    Optional<StudentExam> findFirstByExamIdAndUserIdOrderByCreatedDateDesc(long examId, long userId);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+            JOIN se.studentParticipations p
+            WHERE se.exam.id = :examId
+                AND p.id = :participationId
+            """)
+    Optional<StudentExam> findByExamIdAndParticipationId(@Param("examId") long examId, @Param("participationId") long participationId);
+
+    /**
+     * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
+     *
+     * @param examId id of the exam
+     * @param userId id of the user
+     * @return the student exam
+     * @throws EntityNotFoundException if no student exams could be found
+     */
+    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId) {
+        return getValueElseThrow(this.findFirstByExamIdAndUserIdOrderByCreatedDateDesc(examId, userId));
+    }
+
+    /**
+     * Retrieves the submission status of a student exam.
+     * <p>
+     * This query fetches the {@code submitted} status of a {@link StudentExam} for a given student
+     * and exam. The result is wrapped in an {@link Optional} to handle cases where no matching
+     * record exists.
+     * </p>
+     *
+     * @param examId The ID of the exam.
+     * @param userId The ID of the user (student).
+     * @return An {@link Optional} containing {@code true} if the student has submitted the exam,
+     *         {@code false} if not, or an empty {@code Optional} if no record is found.
+     */
+    @Query("""
+            SELECT se.submitted
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
+            	AND se.user.id = :userId
+            """)
+    Optional<Boolean> isSubmitted(@Param("examId") long examId, @Param("userId") long userId);
 
     /**
      * Checks if any StudentExam exists for the given user (student) id in the given course.
@@ -245,8 +300,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             """)
     Set<StudentExam> findAllUnsubmittedWithExercisesByExamId(@Param("examId") Long examId);
 
-    List<StudentExam> findAllByExamId(Long examId);
-
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);
 
     @Query("""
@@ -257,7 +310,17 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
                 AND se.exam.testExam = TRUE
                 AND se.testRun = FALSE
             """)
-    List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT se
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.exam.id = :examId
+                AND se.exam.testExam = TRUE
+                AND se.testRun = FALSE
+            """)
+    List<StudentExam> findStudentExamsForTestExamsByUserIdAndExamId(@Param("userId") Long userId, @Param("examId") Long examId);
 
     @Query("""
             SELECT DISTINCT se
@@ -317,26 +380,30 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
         return getValueElseThrow(findWithExercisesById(studentExamId), studentExamId);
     }
 
+    @NotNull
+    default StudentExam findByIdWithExercisesAndStudentParticipationsElseThrow(Long studentExamId) {
+        return getValueElseThrow(findWithExercisesAndStudentParticipationsById(studentExamId));
+    }
+
     /**
-     * Get one student exam by id with exercises, programming exercise submission policy and sessions
+     * Get one student exam by id with exercises, sessions and student participations
      *
      * @param studentExamId the id of the student exam
-     * @return the student exam with exercises
+     * @return the student exam with exercises, sessions and student participations
      */
     @NotNull
-    default StudentExam findByIdWithExercisesSubmissionPolicyAndSessionsElseThrow(Long studentExamId) {
-        return getValueElseThrow(findWithExercisesSubmissionPolicyAndSessionsById(studentExamId), studentExamId);
+    default StudentExam findByIdWithExercisesAndSessionsAndStudentParticipationsElseThrow(Long studentExamId) {
+        return getValueElseThrow(findWithExercisesSubmissionPolicySessionsAndStudentParticipationsById(studentExamId), studentExamId);
     }
 
     /**
      * Generates random exams for each user in the given users set and saves them.
      *
-     * @param exam                       exam for which the individual student exams will be generated
-     * @param users                      users for which the individual exams will be generated
-     * @param examQuizQuestionsGenerator generator to generate quiz questions for the exam
+     * @param exam  exam for which the individual student exams will be generated
+     * @param users users for which the individual exams will be generated
      * @return List of StudentExams generated for the given users
      */
-    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, ExamQuizQuestionsGenerator examQuizQuestionsGenerator) {
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
 
@@ -382,8 +449,6 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
             if (Boolean.TRUE.equals(exam.getRandomizeExerciseOrder())) {
                 Collections.shuffle(studentExam.getExercises());
             }
-            List<QuizQuestion> quizQuestions = examQuizQuestionsGenerator.generateQuizQuestionsForExam(exam.getId());
-            studentExam.setQuizQuestions(quizQuestions);
 
             studentExams.add(studentExam);
         }

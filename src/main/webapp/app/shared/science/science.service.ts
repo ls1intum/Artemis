@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
-import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 
 @Injectable({ providedIn: 'root' })
 export class ScienceService {
@@ -12,7 +12,7 @@ export class ScienceService {
     private scienceSettingsService = inject(ScienceSettingsService);
     private accountService = inject(AccountService);
 
-    private resourceURL = 'api';
+    private resourceURL = 'api/atlas';
 
     private featureToggleActive = false;
 

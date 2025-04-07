@@ -8,7 +8,10 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -24,4 +27,9 @@ public interface CourseTestRepository extends CourseRepository {
     default Course findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
         return getValueElseThrow(findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId), courseId);
     }
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE Course c SET c.semester = NULL WHERE c.semester IS NOT NULL")
+    void clearSemester();
 }

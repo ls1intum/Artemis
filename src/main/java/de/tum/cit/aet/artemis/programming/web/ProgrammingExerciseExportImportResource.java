@@ -4,9 +4,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,7 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -65,7 +65,8 @@ import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -89,14 +90,12 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.ProgrammingExercises)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/programming/")
 public class ProgrammingExerciseExportImportResource {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseExportImportResource.class);
 
     private static final String ENTITY_NAME = "programmingExercise";
-
-    private final CompetencyProgressApi competencyProgressApi;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -121,7 +120,7 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
-    private final ExamAccessService examAccessService;
+    private final Optional<ExamAccessApi> examAccessApi;
 
     private final CourseRepository courseRepository;
 
@@ -129,7 +128,9 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ConsistencyCheckService consistencyCheckService;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final Optional<AthenaApi> athenaApi;
+
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final ProgrammingExerciseService programmingExerciseService;
 
@@ -137,9 +138,9 @@ public class ProgrammingExerciseExportImportResource {
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
-            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, Optional<ExamAccessApi> examAccessApi, CourseRepository courseRepository,
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, Optional<AthenaApi> athenaApi,
+            Optional<CompetencyProgressApi> competencyProgressApi, ProgrammingExerciseService programmingExerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -150,11 +151,11 @@ public class ProgrammingExerciseExportImportResource {
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
-        this.examAccessService = examAccessService;
+        this.examAccessApi = examAccessApi;
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
         this.programmingExerciseService = programmingExerciseService;
     }
@@ -245,7 +246,7 @@ public class ProgrammingExerciseExportImportResource {
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
         // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
+            athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
         }
         catch (BadRequestAlertException e) {
             newExercise.setFeedbackSuggestionModule(null);
@@ -262,7 +263,7 @@ public class ProgrammingExerciseExportImportResource {
             importedProgrammingExercise.setSolutionParticipation(null);
             importedProgrammingExercise.setTasks(null);
 
-            competencyProgressApi.updateProgressByLearningObjectAsync(importedProgrammingExercise);
+            competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(importedProgrammingExercise));
 
             return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, importedProgrammingExercise.getTitle()))
                     .body(importedProgrammingExercise);
@@ -334,14 +335,14 @@ public class ProgrammingExerciseExportImportResource {
             log.error("Error while exporting programming exercise with id {} for instructor", exerciseId, e);
             throw new InternalServerErrorException("Error while exporting programming exercise with id " + exerciseId + " for instructor");
         }
-        var finalZipFile = path.toFile();
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(finalZipFile));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(path));
 
         log.info("Export of the programming exercise {} with title '{}' was successful in {}.", programmingExercise.getId(), programmingExercise.getTitle(),
                 formatDurationFrom(start));
 
-        return ResponseEntity.ok().contentLength(finalZipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", finalZipFile.getName()).body(resource);
+        final var zipFile = path.toFile();
+        return ResponseEntity.ok().contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName()).body(resource);
     }
 
     /**
@@ -402,7 +403,7 @@ public class ProgrammingExerciseExportImportResource {
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile.get()));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.get().toPath()));
 
         log.info("Export of the repository of type {} programming exercise {} with title '{}' was successful in {}.", repositoryName, exercise.getId(), exercise.getTitle(),
                 formatDurationFrom(startTime));
@@ -511,7 +512,7 @@ public class ProgrammingExerciseExportImportResource {
                     "There was an error on the server and the zip file could not be created.")).body(null);
         }
 
-        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        InputStreamResource resource = new InputStreamResource(Files.newInputStream(zipFile.toPath()));
 
         log.info("Export {} student repositories of programming exercise {} with title '{}' was successful in {}.", exportedStudentParticipations.size(),
                 programmingExercise.getId(), programmingExercise.getTitle(), formatDurationFrom(start));
@@ -533,7 +534,8 @@ public class ProgrammingExerciseExportImportResource {
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (programmingExercise.isExamExercise()) {
-            examAccessService.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            api.checkExamExerciseForExampleSolutionAccessElseThrow(programmingExercise);
         }
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(atLeastRole, programmingExercise, null);

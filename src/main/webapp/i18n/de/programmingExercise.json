@@ -110,8 +110,8 @@
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
             "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
-            "customizeBuildPlan": "Build Skript anpassen",
-            "customizeBuildPlanWithAeolus": "Build Skript anpassen",
+            "customizeBuildPlan": "Build Konfiguration anpassen",
+            "customizeBuildPlanWithAeolus": "Build Konfiguration anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",
             "runActionAlways": "Immer ausführen, auch wenn andere Aktionen fehlschlagen",
             "script": "Build Script",
@@ -391,6 +391,7 @@
                         "regexValidationErrorName": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten. Nur Artemis kann Kanäle erstellen, die mit $ beginnen.",
                         "requiredValidationErrorDescription": "Die Kanalbeschreibung ist ein Pflichtfeld.",
                         "maxLengthValidationErrorDescription": "Kanalbeschreibung kann max {{ max }} Zeichen lang sein!",
+                        "dueDate": "Das Abgabedatum der Übung ist noch nicht erreicht. Bitte beachte, dass das Ergebnis daher noch nicht endgültig ist und sich die betroffenen Studierenden in Zukunft ändern könnten. Zudem ist das Feedback möglicherweise noch nicht für Studierende sichtbar, falls es versteckte Testfälle in der Übung gibt. Bitte überprüfe, ob du dennoch einen Feedback-Kanal erstellen möchtest!",
                         "confirmationModal": {
                             "header": "Kanal Erstellen bestätigen",
                             "confirmationMessage": "Bist du sicher, dass du diesen Kanal erstellen möchten? Dies wird einen Kanal mit <strong>{{count}}</strong> Student(en) erstellen.",
@@ -544,9 +545,6 @@
                 "submissionBuildPlan": "Abgabe-Build-Plan",
                 "solutionBuildPlan": "Lösungs-Build-Plan"
             },
-            "orion": {
-                "openEditor": "Editor Öffnen"
-            },
             "reEvaluate": "Alle erneut bewerten",
             "reEvaluateTooltip": "Neubewertung der letzten automatischen Ergebnisse aller Teilnahmen. Manuelle Bewertungen sind davon nicht betroffen.",
             "reEvaluateSuccessful": "{{number}} automatischen Ergebnisse wurden erfolgreich aktualisiert, einschließlich der Vorlage und der Lösung.",
@@ -556,12 +554,6 @@
                 "errorReadButton": "Ok",
                 "errorOccurred": "Die folgende Aufgaben konnten nicht bearbeitet werden:"
             },
-            "unlockAllRepositories": "Alle Repositories entsperren",
-            "lockAllRepositories": "Alle Repositories sperren",
-            "unlockAllRepositoriesModalText": "Alle Repositories werden sofort entsperrt! Studierende können sofort wieder pushen, auch wenn die Aufgabe schon vorbei ist!\n\nDiese Operation wird automatisch ausgeführt, sobald Studierende mit der Bearbeitung beginnen. Nutze diese Option daher nur, falls das automatische Entsperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich gesperrt wurden!",
-            "lockAllRepositoriesModalText": "Alle Repositories werden sofort gesperrt! Studierende werden nicht mehr pushen können, auch wenn die Aufgabe noch läuft!\n\nDie Operation wird automatisch am Ende der Aufgabe ausgeführt, sofern 'Testlauf nach der Einreichungsfrist' oder 'Manuelle Review' aktiviert ist. Nutze diese Option daher nur, falls das automatische Sperren nicht korrekt ausgeführt wurde oder falls die Repositories versehentlich entsperrt wurden!",
-            "unlockAllRepositoriesSuccess": "Die Repositories werden nun entsperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
-            "lockAllRepositoriesSuccess": "Die Repositories werden nun gesperrt. Bitte habe ein wenig Geduld. Du erhältst bald eine Benachrichtigung, ob der Vorgang erfolgreich war.",
             "auxiliaryRepository": {
                 "error": "Es gibt ein Problem mit den Hilfs-Repositories!",
                 "addAuxiliaryRepository": "Hilfs-Repository anlegen",
@@ -694,16 +686,6 @@
             "customizeBuildPlansWithAeolusTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "customizeBuildPlansTooltip": "Aktiviere diese Option, um das Docker Image und das Build Skript anzupassen, das auf Artemis für jede Einreichung in einem Docker Container ausgeführt wird.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
-            "buildLogStatistics": {
-                "title": "Durchschnittliche Statistiken der Build-Logs",
-                "numberOfBuilds": "# Builds",
-                "agentSetupDuration": "Einrichtung Buildagent",
-                "testDuration": "Testausführung",
-                "scaDuration": "Statische Codeanalyse",
-                "totalJobDuration": "kompletter Job",
-                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
-                "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
-            },
             "studentDownloadTestsTooltip": "Hier kannst du die Tests runterladen. Die Beispiellösung wird automatisch an der Stelle eingefügt an der du deine Lösung platzieren musst, um diese zu testen.",
             "commitInfo": {
                 "title": "Commit-Informationen",
@@ -742,6 +724,18 @@
                     "description": "Umgebungsvariablen zum Docker-Container hinzufügen. Jeder Schlüssel und Wert sollte nicht länger als 1000 Zeichen sein.",
                     "addEnvVar": "Umgebungsvariable hinzufügen",
                     "removeEnvVar": "Entfernen"
+                },
+                "cpuCount": {
+                    "label": "Anzahl der CPUs bearbeiten",
+                    "help": "Die Anzahl der CPUs, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memory": {
+                    "label": "Maximale Arbeitsspeichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Arbeitsspeichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
+                },
+                "memorySwap": {
+                    "label": "Maximale Swap-Speichergröße bearbeiten (in MB)",
+                    "help": "Die maximale Größe des Swap-Speichers, die der Docker-Container verwenden kann. Weitere Informationen findest du in der Docker-Dokumentation."
                 }
             },
             "artemisIntelligence": {

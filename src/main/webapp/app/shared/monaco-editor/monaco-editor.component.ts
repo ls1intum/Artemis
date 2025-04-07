@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
@@ -8,13 +7,14 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
-import GraphemeSplitter from 'grapheme-splitter';
+import Graphemer from 'graphemer';
 
 import { EmojiConvertor } from 'emoji-js';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
+import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -157,43 +157,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             this.onBlurEditor.emit();
         });
 
-        this.customBackspaceCommandId =
-            this._editor.addCommand(monaco.KeyCode.Backspace, () => {
-                const model = this._editor.getModel();
-                const selection = this._editor.getSelection();
-                if (!model || !selection) return;
+        this._editor.onDidFocusEditorText(() => {
+            this.registerCustomBackspaceAction(this._editor);
+        });
 
-                if (!selection.isEmpty()) {
-                    this._editor.trigger('keyboard', 'deleteLeft', null);
-                    return;
-                }
-
-                const lineNumber = selection.startLineNumber;
-                const column = selection.startColumn;
-                const lineContent = model.getLineContent(lineNumber);
-
-                const textBeforeCursor = lineContent.substring(0, column - 1);
-                const splitter = new GraphemeSplitter();
-                const graphemes = splitter.splitGraphemes(textBeforeCursor);
-
-                if (graphemes.length === 0) return;
-
-                graphemes.pop();
-                const newTextBeforeCursor = graphemes.join('');
-                const textAfterCursor = lineContent.substring(column - 1);
-
-                const newLineContent = newTextBeforeCursor + textAfterCursor;
-                model.pushEditOperations(
-                    [],
-                    [
-                        {
-                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
-                            text: newLineContent,
-                        },
-                    ],
-                    () => null,
-                );
-            }) || undefined;
+        this.registerCustomBackspaceAction(this._editor);
     }
 
     ngOnDestroy() {
@@ -487,5 +455,56 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     public getCustomBackspaceCommandId(): string | undefined {
         return this.customBackspaceCommandId;
+    }
+
+    /**
+     * Registers a custom backspace command that deletes the last grapheme cluster when pressing backspace.
+     * @param editor The editor to register the command for.
+     */
+    private registerCustomBackspaceAction(editor: monaco.editor.IStandaloneCodeEditor) {
+        this.customBackspaceCommandId =
+            editor.addCommand(monaco.KeyCode.Backspace, () => {
+                const model = editor.getModel();
+                const selection = editor.getSelection();
+                if (!model || !selection) return;
+
+                if (!selection.isEmpty()) {
+                    editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
+
+                const lineNumber = selection.startLineNumber;
+                const column = selection.startColumn;
+                const lineContent = model.getLineContent(lineNumber);
+
+                const textBeforeCursor = lineContent.substring(0, column - 1);
+                const splitter = new Graphemer();
+                const graphemes = splitter.splitGraphemes(textBeforeCursor);
+
+                if (textBeforeCursor.length === 0) {
+                    editor.trigger('keyboard', 'deleteLeft', null);
+                    return;
+                }
+
+                const lastGrapheme = graphemes.pop();
+                const deletedLength = lastGrapheme?.length ?? 1;
+                const newTextBeforeCursor = graphemes.join('');
+                const textAfterCursor = lineContent.substring(column - 1);
+
+                const newLineContent = newTextBeforeCursor + textAfterCursor;
+
+                model.pushEditOperations(
+                    [],
+                    [
+                        {
+                            range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
+                            text: newLineContent,
+                        },
+                    ],
+                    () => null,
+                );
+                const newCursorPosition = column - deletedLength;
+                editor.setSelection(new monaco.Range(lineNumber, newCursorPosition, lineNumber, newCursorPosition));
+            }) || undefined;
     }
 }

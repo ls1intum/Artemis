@@ -217,7 +217,11 @@
             },
             "errors": {
                 "exerciseNotFound": "This exercise was not found",
-                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!"
+                "projectTypeCouldNotBeDetermined": "The project type could not be determined, please switch to the advanced mode to manually define it!",
+                "deactivatedExerciseType": {
+                    "label": "Deactivated exercise type",
+                    "tooltip": "This exercise type is currently deactivated. Editing is currently not supported. You should contact the Artemis-hosting system administration."
+                }
             },
             "form": {
                 "title": {
@@ -241,7 +245,8 @@
                         "KOTLIN": "The package name must consist of one or more valid Kotlin identifiers separated by '.', e.g. \"net.kotlin\"!",
                         "SWIFT": "The package name must consist of one or more valid Swift identifiers without any separator, e.g. \"SwiftEx\"!",
                         "JAVA_BLACKBOX": "The package name must be a valid Java identifier. In addition, no dots are allowed in the package name of DejaGnu projects",
-                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\"."
+                        "GO": "The package name must be a valid Go identifier, e.g. \"exercise\".",
+                        "DART": "The package name must be a lowercase Dart identifier, e.g. \"exercise01\"."
                     }
                 },
                 "points": {

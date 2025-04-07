@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.team;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -7,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
@@ -22,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
  * Service responsible for initializing the database with specific testdata related to teams for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class TeamUtilService {
 
     @Autowired
@@ -58,10 +62,6 @@ public class TeamUtilService {
         team.setStudents(new HashSet<>(students));
         if (owner != null) {
             team.setOwner(owner);
-        }
-        if (creatorLogin != null) {
-            team.setCreatedBy(creatorLogin);
-            team.setLastModifiedBy(creatorLogin);
         }
         return team;
     }

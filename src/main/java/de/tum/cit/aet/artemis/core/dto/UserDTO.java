@@ -60,7 +60,7 @@ public class UserDTO extends AuditingEntityDTO {
     @Size(min = 2, max = 6)
     private String langKey;
 
-    private boolean isInternal;
+    private boolean internal;
 
     private ZonedDateTime lastNotificationRead;
 
@@ -76,7 +76,7 @@ public class UserDTO extends AuditingEntityDTO {
 
     private ZonedDateTime vcsAccessTokenExpiryDate;
 
-    private ZonedDateTime irisAccepted;
+    private ZonedDateTime externalLLMUsageAccepted;
 
     public UserDTO() {
         // Empty constructor needed for Jackson.
@@ -85,12 +85,13 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(), user.getIrisAcceptedTimestamp());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(),
+                user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
-            String langKey, boolean isInternal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime irisAccepted) {
+            String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
+            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -102,7 +103,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.activated = activated;
         this.imageUrl = imageUrl;
         this.langKey = langKey;
-        this.isInternal = isInternal;
+        this.internal = internal;
         this.setCreatedBy(createdBy);
         this.setCreatedDate(createdDate);
         this.setLastModifiedBy(lastModifiedBy);
@@ -114,7 +115,7 @@ public class UserDTO extends AuditingEntityDTO {
         this.groups = groups;
         this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
-        this.irisAccepted = irisAccepted;
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 
     public Long getId() {
@@ -267,18 +268,18 @@ public class UserDTO extends AuditingEntityDTO {
     }
 
     public boolean isInternal() {
-        return isInternal;
+        return internal;
     }
 
     public void setInternal(boolean internal) {
-        isInternal = internal;
+        this.internal = internal;
     }
 
-    public ZonedDateTime getIrisAccepted() {
-        return irisAccepted;
+    public ZonedDateTime getExternalLLMUsageAccepted() {
+        return externalLLMUsageAccepted;
     }
 
-    public void setIrisAccepted(ZonedDateTime irisAccepted) {
-        this.irisAccepted = irisAccepted;
+    public void setExternalLLMUsageAccepted(ZonedDateTime externalLLMUsageAccepted) {
+        this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
 }

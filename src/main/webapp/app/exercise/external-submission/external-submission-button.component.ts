@@ -1,0 +1,44 @@
+import { Component, Input, inject } from '@angular/core';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+
+@Component({
+    selector: 'jhi-external-submission',
+    template: `
+        @if (!exercise.teamMode) {
+            <jhi-button
+                [btnType]="ButtonType.WARNING"
+                [btnSize]="ButtonSize.SMALL"
+                [icon]="faPlus"
+                [title]="'entity.action.addExternalSubmission'"
+                (onClick)="openExternalSubmissionDialog($event)"
+            />
+        }
+    `,
+    imports: [ButtonComponent],
+})
+export class ExternalSubmissionButtonComponent {
+    private modalService = inject(NgbModal);
+
+    ButtonType = ButtonType;
+    ButtonSize = ButtonSize;
+
+    @Input() exercise: Exercise;
+
+    // Icons
+    faPlus = faPlus;
+
+    /**
+     * Opens modal window for external exercise submission.
+     * @param { MouseEvent } event
+     */
+    openExternalSubmissionDialog(event: MouseEvent) {
+        event.stopPropagation();
+        const modalRef: NgbModalRef = this.modalService.open(ExternalSubmissionDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exercise = this.exercise;
+    }
+}

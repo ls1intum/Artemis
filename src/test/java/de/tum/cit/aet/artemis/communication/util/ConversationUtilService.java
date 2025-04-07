@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -12,6 +13,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -52,6 +54,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
  * Service responsible for initializing the database with specific testdata related to conversations for use in integration tests.
  */
 @Service
+@Profile(SPRING_PROFILE_TEST)
 public class ConversationUtilService {
 
     private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
@@ -340,7 +343,6 @@ public class ConversationUtilService {
         answerPost.setPost(post);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
-        post.setAnswerCount(post.getAnswerCount() + 1);
         return answerPosts;
     }
 
@@ -360,7 +362,6 @@ public class ConversationUtilService {
         answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
-        post.setAnswerCount(post.getAnswerCount() + 1);
         post.setResolved(true);
         return answerPosts;
     }

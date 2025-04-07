@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -12,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
@@ -44,9 +43,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/atlas/")
 public class CompetencyResource {
 
     @Value("${jhipster.clientApp.name}")
@@ -137,7 +136,7 @@ public class CompetencyResource {
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + persistedCompetency.getId())).body(persistedCompetency);
     }
 
     /**
@@ -159,7 +158,7 @@ public class CompetencyResource {
 
         var createdCompetencies = competencyService.createCompetencies(competencies, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(createdCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(createdCompetencies);
     }
 
     /**
@@ -191,7 +190,7 @@ public class CompetencyResource {
         Set<CompetencyWithTailRelationDTO> createdCompetencies = competencyService.importCompetencies(course, Set.of(competencyToImport), importOptions);
         Competency createdCompetency = (Competency) createdCompetencies.iterator().next().competency();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/" + createdCompetency.getId())).body(createdCompetency);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/" + createdCompetency.getId())).body(createdCompetency);
     }
 
     /**
@@ -226,7 +225,7 @@ public class CompetencyResource {
 
         Set<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importCompetencies(course, competenciesToImport, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     /**
@@ -256,7 +255,7 @@ public class CompetencyResource {
         var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
         Set<CompetencyWithTailRelationDTO> importedCompetencies = competencyService.importCompetencies(targetCourse, competencies, importOptions);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies);
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/")).body(importedCompetencies);
     }
 
     /**
@@ -276,7 +275,8 @@ public class CompetencyResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var importedCompetencies = competencyService.importStandardizedCompetencies(competencyIdsToImport, course);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/competencies/")).body(importedCompetencies.stream().map(CompetencyImportResponseDTO::of).toList());
+        return ResponseEntity.created(new URI("/api/atlas/courses/" + courseId + "/competencies/"))
+                .body(importedCompetencies.stream().map(CompetencyImportResponseDTO::of).toList());
     }
 
     /**

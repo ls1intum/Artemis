@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/entities/exam/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -21,6 +21,6 @@ export class SuspiciousSessionsService {
         if (options.ipSubnet) {
             params = params.set('ipSubnet', options.ipSubnet);
         }
-        return this.http.get<SuspiciousExamSessions[]>(`api/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
+        return this.http.get<SuspiciousExamSessions[]>(`api/exam/courses/${courseId}/exams/${examId}/suspicious-sessions`, { params });
     }
 }

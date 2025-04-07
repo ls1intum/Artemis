@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.text.web.admin;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,15 +11,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 
 /**
  * REST controller for administrating TextAssessmentEventResource.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @EnforceAdmin
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/text/admin/")
 public class AdminTextAssessmentEventResource {
 
     private final TextAssessmentEventRepository textAssessmentEventRepository;

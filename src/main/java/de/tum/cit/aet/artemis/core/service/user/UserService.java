@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.ScienceEventApi;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
+import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -53,7 +55,6 @@ import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
-import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.GuidedTourSettingsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -67,7 +68,7 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
+import de.tum.cit.aet.artemis.programming.service.sshuserkeys.UserSshPublicKeyService;
 import tech.jhipster.security.RandomUtil;
 
 /**
@@ -98,8 +99,6 @@ public class UserService {
 
     private final Optional<LdapUserService> ldapUserService;
 
-    private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
-
     private final Optional<CIUserManagementService> optionalCIUserManagementService;
 
     private final CacheManager cacheManager;
@@ -112,19 +111,26 @@ public class UserService {
 
     private final FileService fileService;
 
-    private final ScienceEventApi scienceEventApi;
+    private final Optional<ScienceEventApi> scienceEventApi;
 
     private final ParticipationVcsAccessTokenService participationVCSAccessTokenService;
 
-    private final LearnerProfileApi learnerProfileApi;
+    private final Optional<LearnerProfileApi> learnerProfileApi;
 
     private final SavedPostRepository savedPostRepository;
 
+    private final UserSshPublicKeyService userSshPublicKeyService;
+
+    private final CourseNotificationSettingService courseNotificationSettingService;
+
+    private final UserCourseNotificationStatusService userCourseNotificationStatusService;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            InstanceMessageSendService instanceMessageSendService, FileService fileService, ScienceEventApi scienceEventApi,
-            ParticipationVcsAccessTokenService participationVCSAccessTokenService, LearnerProfileApi learnerProfileApi, SavedPostRepository savedPostRepository) {
+            Optional<CIUserManagementService> optionalCIUserManagementService, InstanceMessageSendService instanceMessageSendService, FileService fileService,
+            Optional<ScienceEventApi> scienceEventApi, ParticipationVcsAccessTokenService participationVCSAccessTokenService, Optional<LearnerProfileApi> learnerProfileApi,
+            SavedPostRepository savedPostRepository, UserSshPublicKeyService userSshPublicKeyService, CourseNotificationSettingService courseNotificationSettingService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -133,7 +139,6 @@ public class UserService {
         this.ldapUserService = ldapUserService;
         this.guidedTourSettingsRepository = guidedTourSettingsRepository;
         this.passwordService = passwordService;
-        this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.fileService = fileService;
@@ -141,6 +146,9 @@ public class UserService {
         this.participationVCSAccessTokenService = participationVCSAccessTokenService;
         this.learnerProfileApi = learnerProfileApi;
         this.savedPostRepository = savedPostRepository;
+        this.userSshPublicKeyService = userSshPublicKeyService;
+        this.courseNotificationSettingService = courseNotificationSettingService;
+        this.userCourseNotificationStatusService = userCourseNotificationStatusService;
     }
 
     /**
@@ -165,26 +173,31 @@ public class UserService {
                 }
                 else {
                     log.info("Create internal admin user {}", artemisInternalAdminUsername.get());
-                    ManagedUserVM userDto = new ManagedUserVM();
-                    userDto.setLogin(artemisInternalAdminUsername.get());
-                    userDto.setPassword(artemisInternalAdminPassword.get());
-                    userDto.setActivated(true);
-                    userDto.setFirstName("Administrator");
-                    userDto.setLastName("Administrator");
-                    userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
-                    userDto.setLangKey("en");
-                    userDto.setCreatedBy("system");
-                    userDto.setLastModifiedBy("system");
-                    // needs to be mutable --> new HashSet<>(Set.of(...))
-                    userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
-                    userDto.setGroups(new HashSet<>());
-                    userCreationService.createUser(userDto);
+                    final var managedUserVM = createManagedUserVm(artemisInternalAdminUsername.get(), artemisInternalAdminPassword.get());
+                    userCreationService.createUser(managedUserVM);
                 }
             }
         }
         catch (Exception ex) {
             log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
         }
+    }
+
+    private ManagedUserVM createManagedUserVm(String login, String password) {
+        ManagedUserVM userDto = new ManagedUserVM();
+        userDto.setLogin(login);
+        userDto.setPassword(password);
+        userDto.setActivated(true);
+        userDto.setFirstName("Administrator");
+        userDto.setLastName("Administrator");
+        userDto.setEmail(artemisInternalAdminEmail.orElse("admin@localhost"));
+        userDto.setLangKey("en");
+        userDto.setCreatedBy("system");
+        userDto.setLastModifiedBy("system");
+        // needs to be mutable --> new HashSet<>(Set.of(...))
+        userDto.setAuthorities(new HashSet<>(Set.of(ADMIN.getAuthority(), STUDENT.getAuthority())));
+        userDto.setGroups(new HashSet<>());
+        return userDto;
     }
 
     /**
@@ -209,7 +222,6 @@ public class UserService {
     public void activateUser(User user) {
         // Cancel automatic removal of the user since it's activated.
         instanceMessageSendService.sendCancelRemoveNonActivatedUserSchedule(user.getId());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.activateUser(user.getLogin()));
         // activate given user for the registration key.
         userCreationService.activateUser(user);
     }
@@ -228,7 +240,6 @@ public class UserService {
             user.setResetKey(null);
             user.setResetDate(null);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, newPassword));
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
             return user;
         });
@@ -295,7 +306,7 @@ public class UserService {
         Optional<User> optionalExistingUser = userRepository.findOneWithGroupsByLogin(userDTO.getLogin().toLowerCase());
         if (optionalExistingUser.isPresent()) {
             User existingUser = optionalExistingUser.get();
-            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser, password);
+            return handleRegisterUserWithSameLoginAsExistingUser(newUser, existingUser);
         }
 
         // Find user that has the same email
@@ -316,22 +327,6 @@ public class UserService {
         // we need to save first so that the user can be found in the database in the subsequent method
         User savedNonActivatedUser = saveUser(newUser);
 
-        // Create an account on the VCS. If it fails, abort registration.
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> {
-            try {
-                vcsUserManagementService.createVcsUser(savedNonActivatedUser, password);
-                vcsUserManagementService.deactivateUser(savedNonActivatedUser.getLogin());
-            }
-            catch (VersionControlException e) {
-                log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
-                participationVCSAccessTokenService.deleteAllByUserId(savedNonActivatedUser.getId());
-                userRepository.delete(savedNonActivatedUser);
-                clearUserCaches(savedNonActivatedUser);
-                userRepository.flush();
-                throw e;
-            }
-        });
-
         // Automatically remove the user if it wasn't activated after a certain amount of time.
         instanceMessageSendService.sendRemoveNonActivatedUserSchedule(savedNonActivatedUser.getId());
 
@@ -345,10 +340,9 @@ public class UserService {
      *
      * @param newUser      the new user
      * @param existingUser the existing user
-     * @param password     the entered raw password
      * @return the existing non-activated user in Artemis.
      */
-    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser, String password) {
+    private User handleRegisterUserWithSameLoginAsExistingUser(User newUser, User existingUser) {
         // An account with the same login is already activated.
         if (existingUser.getActivated()) {
             throw new UsernameAlreadyUsedException();
@@ -361,8 +355,6 @@ public class UserService {
             // Update the existing user and VCS
             newUser.setId(existingUser.getId());
             User updatedExistingUser = userRepository.save(newUser);
-            optionalVcsUserManagementService
-                    .ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(existingUser.getLogin(), updatedExistingUser, Set.of(), Set.of(), password));
 
             // Post-pone the cleaning up of the account
             instanceMessageSendService.sendRemoveNonActivatedUserSchedule(updatedExistingUser.getId());
@@ -446,7 +438,7 @@ public class UserService {
     }
 
     /**
-     * Updates the user (and synchronizes its password) and its groups in the connected version control system (e.g. GitLab if available).
+     * Updates the user (and synchronizes its password) and its groups in the connected continuous integration system (e.g. Jenkins if available).
      * Also updates the user groups in the used authentication provider (like {@link LdapAuthenticationProvider}).
      *
      * @param oldUserLogin The username of the user. If the username is updated in the user object, it must be the one before the update in order to find the user in the VCS
@@ -460,7 +452,6 @@ public class UserService {
         final var updatedGroups = user.getGroups();
         final var removedGroups = oldGroups.stream().filter(group -> !updatedGroups.contains(group)).collect(Collectors.toSet());
         final var addedGroups = updatedGroups.stream().filter(group -> !oldGroups.contains(group)).collect(Collectors.toSet());
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(oldUserLogin, user, removedGroups, addedGroups, newPassword));
         optionalCIUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateUserAndGroups(oldUserLogin, user, newPassword, addedGroups, removedGroups));
     }
@@ -473,7 +464,8 @@ public class UserService {
     public void softDeleteUser(String login) {
         userRepository.findOneWithGroupsByLogin(login).ifPresent(user -> {
             participationVCSAccessTokenService.deleteAllByUserId(user.getId());
-            learnerProfileApi.deleteProfile(user);
+            learnerProfileApi.ifPresent(api -> api.deleteProfile(user));
+            userSshPublicKeyService.deleteAllByUserId(user.getId());
             user.setDeleted(true);
             user.setLearnerProfile(null);
             anonymizeUser(user);
@@ -510,11 +502,14 @@ public class UserService {
             savedPostRepository.deleteAll(savedPostsOfUser);
         }
 
+        userCourseNotificationStatusService.deleteAllForUser(user.getId());
+        courseNotificationSettingService.deleteAllForUser(user.getId());
+
         userRepository.save(user);
         clearUserCaches(user);
         userRepository.flush();
 
-        scienceEventApi.renameIdentity(originalLogin, anonymizedLogin);
+        scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
@@ -551,7 +546,6 @@ public class UserService {
             String newPasswordHash = passwordService.hashPassword(newPassword);
             user.setPassword(newPasswordHash);
             saveUser(user);
-            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, null, null, newPassword));
             optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.updateUser(user, newPassword));
 
             log.debug("Changed password for User: {}", user);
@@ -656,7 +650,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
+        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);
@@ -665,15 +659,14 @@ public class UserService {
     }
 
     /**
-     * add the user to the specified group and update in VCS (like GitLab) if used, and registers the user to necessary channels
+     * Add the user to the specified group and update in CIS (like Jenkins) if used, and registers the user to necessary channels
      *
      * @param user  the user
      * @param group the group
      */
     public void addUserToGroup(User user, String group) {
         addUserToGroupInternal(user, group); // internal Artemis database
-        // e.g. Gitlab: TODO: include the role to distinguish more cases
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(), Set.of(group)));
+        // e.g. Jenkins
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.addUserToGroups(user.getLogin(), Set.of(group)));
     }
 
@@ -700,14 +693,12 @@ public class UserService {
      */
     public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
-        // e.g. Gitlab
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
         // e.g. Jenkins
         optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));
     }
 
     /**
-     * remove the user from the specified group and update in VCS (like GitLab) if used
+     * remove the user from the specified group
      *
      * @param user  the user
      * @param group the group

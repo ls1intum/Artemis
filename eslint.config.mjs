@@ -117,6 +117,17 @@ export default tseslint.config(
                     ignoreDeclarationSort: true,
                 },
             ],
+            'no-restricted-imports': [
+                'error',
+                {
+                    paths: [
+                        {
+                            name: 'dayjs',
+                            message: "Please import from 'dayjs/esm' instead."
+                        }
+                    ]
+                }
+            ]
         },
     },
     {
@@ -132,7 +143,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**'],
+        files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,

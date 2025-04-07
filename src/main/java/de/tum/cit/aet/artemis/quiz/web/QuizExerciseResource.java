@@ -68,7 +68,8 @@ import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
@@ -94,7 +95,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/quiz/")
 public class QuizExerciseResource {
 
     private static final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);
@@ -122,7 +123,7 @@ public class QuizExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -148,15 +149,15 @@ public class QuizExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final CompetencyProgressApi competencyProgressApi;
+    private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     public QuizExerciseResource(QuizExerciseService quizExerciseService, QuizMessagingService quizMessagingService, QuizExerciseRepository quizExerciseRepository,
             UserRepository userRepository, CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
-            ExamDateService examDateService, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
+            Optional<ExamDateApi> examDateApi, InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, GroupNotificationService groupNotificationService,
             GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
             QuizBatchRepository quizBatchRepository, FileService fileService, ChannelService channelService, ChannelRepository channelRepository,
-            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, CompetencyProgressApi competencyProgressApi) {
+            QuizSubmissionService quizSubmissionService, QuizResultService quizResultService, Optional<CompetencyProgressApi> competencyProgressApi) {
         this.quizExerciseService = quizExerciseService;
         this.quizMessagingService = quizMessagingService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -164,7 +165,7 @@ public class QuizExerciseResource {
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizStatisticService = quizStatisticService;
         this.quizExerciseImportService = quizExerciseImportService;
@@ -241,9 +242,9 @@ public class QuizExerciseResource {
 
         channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
 
-        competencyProgressApi.updateProgressByLearningObjectAsync(result);
+        competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
+        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
     }
 
@@ -308,7 +309,8 @@ public class QuizExerciseResource {
         if (updatedChannel != null) {
             quizExercise.setChannelName(updatedChannel.getName());
         }
-        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(quizExercise));
+        QuizExercise finalQuizExercise = quizExercise;
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -684,7 +686,7 @@ public class QuizExerciseResource {
 
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(quizExerciseId, false, false);
+        exerciseDeletionService.delete(quizExerciseId, false);
         quizExerciseService.cancelScheduledQuiz(quizExerciseId);
 
         fileService.deleteFiles(imagesToDelete);
@@ -713,8 +715,9 @@ public class QuizExerciseResource {
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
                         "examOfQuizExerciseNotEnded");
@@ -796,7 +799,7 @@ public class QuizExerciseResource {
         final var originalQuizExercise = quizExerciseRepository.findByIdElseThrow(sourceExerciseId);
         QuizExercise newQuizExercise = quizExerciseImportService.importQuizExercise(originalQuizExercise, importedExercise, files);
 
-        return ResponseEntity.created(new URI("/api/quiz-exercises/" + newQuizExercise.getId()))
+        return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + newQuizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newQuizExercise.getId().toString())).body(newQuizExercise);
     }
 

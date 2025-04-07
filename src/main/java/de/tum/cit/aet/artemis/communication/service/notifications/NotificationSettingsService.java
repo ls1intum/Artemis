@@ -29,9 +29,13 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_P
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_COURSE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_EXERCISE_POST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_REPLY_FOR_LECTURE_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_REPLY;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_EXPIRES_SOON;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.SSH_KEY_HAS_EXPIRED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
@@ -41,13 +45,18 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTOR
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UPDATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_ADDED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.VCS_ACCESS_TOKEN_EXPIRES_SOON;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -134,6 +143,19 @@ public class NotificationSettingsService {
 
     public static final String NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED = "notification.user-notification.data-export-failed";
 
+    // ssh user notification settings group
+    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED = "notification.user-notification.ssh-key-added";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON = "notification.user-notification.ssh-key-expires-soon";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED = "notification.user-notification.ssh-key-has-expired";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED = "notification.user-notification.vcs-access-token-added";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED = "notification.user-notification.vcs-access-token-expired";
+
+    public static final String NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON = "notification.user-notification.vcs-access-token-expires-soon";
+
     // if webapp or email is not explicitly set for a specific setting -> no support for this communication channel for this setting
     // this has to match the properties in the notification settings structure file on the client that hides the related UI elements
     public static final Set<NotificationSetting> DEFAULT_NOTIFICATION_SETTINGS = new HashSet<>(Arrays.asList(
@@ -173,53 +195,81 @@ public class NotificationSettingsService {
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE),
             // user mention notification setting group
             new NotificationSetting(true, false, true, NOTIFICATION__USER_NOTIFICATION__USER_MENTION),
-            // data export notification setting (cannot be overridden by user)
+            // data export and SSH notification setting (cannot be overridden by user)
             new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED),
-            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED)));
+            new NotificationSetting(true, true, true, NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED),
+            new NotificationSetting(true, true, false, NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON)));
 
     /**
      * This is the place where the mapping between SettingId and NotificationTypes happens on the server side
      * Each SettingId can be based on multiple different NotificationTypes
      */
-    private static final Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Map.ofEntries(
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED, new NotificationType[] { EXERCISE_SUBMISSION_ASSESSED }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, new NotificationType[] { EXERCISE_RELEASED }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[] { EXERCISE_PRACTICE }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[] { NEW_EXERCISE_POST }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[] { NEW_REPLY_FOR_EXERCISE_POST }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL, new NotificationType[] { FILE_SUBMISSION_SUCCESSFUL }),
-            Map.entry(NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER, new NotificationType[] { QUIZ_EXERCISE_STARTED }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[] { ATTACHMENT_CHANGE }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[] { NEW_LECTURE_POST }),
-            Map.entry(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[] { NEW_REPLY_FOR_LECTURE_POST }),
-            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
-            Map.entry(NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST, new NotificationType[] { NEW_EXAM_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[] { NEW_COURSE_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[] { NEW_REPLY_FOR_COURSE_POST }),
-            Map.entry(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[] { NEW_ANNOUNCEMENT_POST }),
-            Map.entry(NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[] { PROGRAMMING_TEST_CASES_CHANGED }),
-            Map.entry(NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[] { EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED }),
-            Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE, new NotificationType[] { TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED }),
-            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
-                    new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR }),
-            Map.entry(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
-                    new NotificationType[] { TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT }),
-            Map.entry(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[] { TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE,
-                    new NotificationType[] { CONVERSATION_NEW_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT, CONVERSATION_ADD_USER_GROUP_CHAT,
-                            CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[] { CONVERSATION_NEW_REPLY_MESSAGE }),
-            Map.entry(NOTIFICATION__USER_NOTIFICATION__USER_MENTION, new NotificationType[] { CONVERSATION_USER_MENTIONED }));
+    // @formatter:off
+    private static final Map<String, NotificationType[]> NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP;
+
+    static {
+        Map<String, NotificationType[]> map = new HashMap<>();
+
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED, new NotificationType[]{EXERCISE_SUBMISSION_ASSESSED});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED, new NotificationType[]{EXERCISE_RELEASED});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE, new NotificationType[]{EXERCISE_PRACTICE});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_EXERCISE_POST, new NotificationType[]{NEW_EXERCISE_POST});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__NEW_REPLY_FOR_EXERCISE_POST, new NotificationType[]{NEW_REPLY_FOR_EXERCISE_POST});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__FILE_SUBMISSION_SUCCESSFUL, new NotificationType[]{FILE_SUBMISSION_SUCCESSFUL});
+        map.put(NOTIFICATION__EXERCISE_NOTIFICATION__QUIZ_START_REMINDER, new NotificationType[]{QUIZ_EXERCISE_STARTED});
+        map.put(NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES, new NotificationType[]{ATTACHMENT_CHANGE});
+        map.put(NOTIFICATION__LECTURE_NOTIFICATION__NEW_LECTURE_POST, new NotificationType[]{NEW_LECTURE_POST});
+        map.put(NOTIFICATION__LECTURE_NOTIFICATION__NEW_REPLY_FOR_LECTURE_POST, new NotificationType[]{NEW_REPLY_FOR_LECTURE_POST});
+        map.put(NOTIFICATION__EXAM_NOTIFICATION__NEW_EXAM_POST, new NotificationType[]{NEW_EXAM_POST});
+        map.put(NOTIFICATION__EXAM_NOTIFICATION__NEW_REPLY_FOR_EXAM_POST, new NotificationType[]{NEW_EXAM_POST});
+        map.put(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_COURSE_POST, new NotificationType[]{NEW_COURSE_POST});
+        map.put(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_REPLY_FOR_COURSE_POST, new NotificationType[]{NEW_REPLY_FOR_COURSE_POST});
+        map.put(NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST, new NotificationType[]{NEW_ANNOUNCEMENT_POST});
+        map.put(NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED, new NotificationType[]{PROGRAMMING_TEST_CASES_CHANGED});
+        map.put(NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED, new NotificationType[]{EXAM_ARCHIVE_STARTED, COURSE_ARCHIVE_STARTED});
+        map.put(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE, new NotificationType[]{TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED});
+        map.put(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION, new NotificationType[]{
+            TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR
+        });
+        map.put(NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION, new NotificationType[]{
+            TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT
+        });
+        map.put(NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN, new NotificationType[]{TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED});
+        map.put(NOTIFICATION__USER_NOTIFICATION__CONVERSATION_NEW_MESSAGE, new NotificationType[]{
+            CONVERSATION_NEW_MESSAGE, CONVERSATION_CREATE_ONE_TO_ONE_CHAT, CONVERSATION_CREATE_GROUP_CHAT,
+            CONVERSATION_ADD_USER_GROUP_CHAT, CONVERSATION_ADD_USER_CHANNEL,
+            CONVERSATION_REMOVE_USER_GROUP_CHAT, CONVERSATION_REMOVE_USER_CHANNEL
+        });
+        map.put(NOTIFICATION__USER_NOTIFICATION__NEW_REPLY_IN_CONVERSATION_MESSAGE, new NotificationType[]{CONVERSATION_NEW_REPLY_MESSAGE});
+        map.put(NOTIFICATION__USER_NOTIFICATION__USER_MENTION, new NotificationType[]{CONVERSATION_USER_MENTIONED});
+
+        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_ADDED, new NotificationType[] { SSH_KEY_ADDED });
+        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_EXPIRES_SOON, new NotificationType[] { SSH_KEY_EXPIRES_SOON });
+        map.put(NOTIFICATION_USER_NOTIFICATION_SSH_KEY_HAS_EXPIRED, new NotificationType[] { SSH_KEY_HAS_EXPIRED });
+        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_ADDED, new NotificationType[] { VCS_ACCESS_TOKEN_ADDED });
+        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRED, new NotificationType[] { VCS_ACCESS_TOKEN_EXPIRED });
+        map.put(NOTIFICATION_USER_NOTIFICATION_VCS_ACCESS_TOKEN_EXPIRES_SOON, new NotificationType[] { VCS_ACCESS_TOKEN_EXPIRES_SOON });
+
+        NOTIFICATION_SETTING_ID_TO_NOTIFICATION_TYPES_MAP = Collections.unmodifiableMap(map);
+    }
+    // @formatter:on
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
-    // Please adapt the above docs if you change the supported notification types
+    // Please adapt the above docs if you change the supported notification types.
+    // Note: When adding new types here, please create issues in the artemis-ios and artemis-android repos, so that these new notifcations can be displayed!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_INSTANT_NOTIFICATION_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE,
             NEW_ANNOUNCEMENT_POST, FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, NEW_CPC_PLAGIARISM_CASE_STUDENT,
-            PLAGIARISM_CASE_VERDICT_STUDENT, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR,
-            TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED, TUTORIAL_GROUP_ASSIGNED,
-            TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXERCISE_POST,
-            QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE);
+            PLAGIARISM_CASE_VERDICT_STUDENT, PLAGIARISM_CASE_REPLY, TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR,
+            TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_DELETED, TUTORIAL_GROUP_UPDATED,
+            TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST,
+            NEW_REPLY_FOR_EXERCISE_POST, QUIZ_EXERCISE_STARTED, DATA_EXPORT_CREATED, DATA_EXPORT_FAILED, CONVERSATION_NEW_MESSAGE, CONVERSATION_NEW_REPLY_MESSAGE,
+            CONVERSATION_USER_MENTIONED, SSH_KEY_ADDED, SSH_KEY_EXPIRES_SOON, SSH_KEY_HAS_EXPIRED, VCS_ACCESS_TOKEN_ADDED, VCS_ACCESS_TOKEN_EXPIRED, VCS_ACCESS_TOKEN_EXPIRES_SOON);
 
     // More information on supported notification types can be found here: https://docs.artemis.cit.tum.de/user/notifications/
     // Please adapt the above docs if you change the supported notification types
@@ -256,14 +306,14 @@ public class NotificationSettingsService {
             NotificationSettingsCommunicationChannel communicationChannel) {
         NotificationType type = findCorrespondingNotificationType(notification.getTitle());
 
-        Set<NotificationSetting> decidedNotificationSettings = notificationSettingRepository
-                .findAllNotificationSettingsForRecipientsWithId(users.stream().map(DomainObject::getId).toList());
-        Set<NotificationSetting> notificationSettings = new HashSet<>(decidedNotificationSettings);
+        var userIds = users.stream().map(DomainObject::getId).toList();
+        Map<Long, Set<NotificationSetting>> userToNotificationSettingsMap = notificationSettingRepository.findAllNotificationSettingsForRecipientsWithId(userIds).stream()
+                .collect(Collectors.groupingBy(setting -> setting.getUser().getId(), Collectors.toCollection(HashSet::new)));
 
         return users.stream().filter(user -> {
+            Set<NotificationSetting> notificationSettings = userToNotificationSettingsMap.getOrDefault(user.getId(), new HashSet<>());
             // for those notification types that are not explicitly set by the user, we use the default settings
-            Set<String> decidedIds = decidedNotificationSettings.stream().filter(notificationSetting -> notificationSetting.getUser().getId().equals(user.getId()))
-                    .map(NotificationSetting::getSettingId).collect(Collectors.toSet());
+            Set<String> decidedIds = notificationSettings.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet());
             for (NotificationSetting defaultSetting : DEFAULT_NOTIFICATION_SETTINGS) {
                 if (!decidedIds.contains(defaultSetting.getSettingId())) {
                     notificationSettings
@@ -349,65 +399,54 @@ public class NotificationSettingsService {
     }
 
     /**
-     * Extracts the settingsIds of a notification settings set
-     * E.g. used to compare two sets of notification settings based on setting id
+     * Compares two notification settings sets based on their notification setting IDs.
      *
-     * @param notificationSettings set which setting ids should be extracted
-     * @return a set of settings ids
+     * @param notificationSettingsA the first set
+     * @param notificationSettingsB the second set
+     * @return true if both sets have the same notification setting IDs, otherwise false
      */
-    private Set<String> extractSettingsIdsFromNotificationSettingsSet(Set<NotificationSetting> notificationSettings) {
-        Set<String> settingsIds = new HashSet<>();
-        notificationSettings.forEach(setting -> settingsIds.add(setting.getSettingId()));
-        return settingsIds;
+    private boolean haveSameNotificationSettingIds(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
+        return Objects.equals(notificationSettingsA.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()),
+                notificationSettingsB.stream().map(NotificationSetting::getSettingId).collect(Collectors.toSet()));
     }
 
     /**
-     * Compares two notification settings sets based on their notification setting ids
+     * Checks and updates the personal notification settings retrieved from the DB.
+     * If the loaded set is empty, use default settings.
+     * If the loaded set has different setting IDs than the default settings, merge both sets.
      *
-     * @param notificationSettingsA is the first set
-     * @param notificationSettingsB is the second set
-     * @return true if the notification setting ids of both are the same else return false
-     */
-    private boolean compareTwoNotificationSettingsSetsBasedOnSettingsId(Set<NotificationSetting> notificationSettingsA, Set<NotificationSetting> notificationSettingsB) {
-        Set<String> settingIdsA = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsA);
-        Set<String> settingIdsB = extractSettingsIdsFromNotificationSettingsSet(notificationSettingsB);
-        return settingIdsA.equals(settingIdsB);
-    }
-
-    /**
-     * Checks the personal notificationSettings retrieved from the DB.
-     * If the loaded set is empty substitute it with the default settings
-     * If the loaded set has different notification setting ids than the default settings both sets have to be merged
-     *
-     * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
-     * @param user                     the user for which the settings should be loaded
-     * @return the updated and correct notification settings
+     * @param userNotificationSettings The notification settings retrieved from the DB for the user (it's important that the entities are not detached).
+     * @param user                     The user for whom the settings should be checked.
+     * @return The updated and correct notification settings.
      */
     public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
+        var defaultSettings = DEFAULT_NOTIFICATION_SETTINGS;
         if (userNotificationSettings.isEmpty()) {
-            return DEFAULT_NOTIFICATION_SETTINGS;
+            return defaultSettings;
         }
-        // default settings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
 
-        if (!compareTwoNotificationSettingsSetsBasedOnSettingsId(userNotificationSettings, DEFAULT_NOTIFICATION_SETTINGS)) {
-            Set<NotificationSetting> updatedDefaultNotificationSettings = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
-
-            userNotificationSettings.forEach(userNotificationSetting -> DEFAULT_NOTIFICATION_SETTINGS.forEach(defaultSetting -> {
-                if (defaultSetting.getSettingId().equals(userNotificationSetting.getSettingId())) {
-                    updatedDefaultNotificationSettings.remove(defaultSetting);
-                    updatedDefaultNotificationSettings.add(userNotificationSetting);
-                }
-            }));
-
-            updatedDefaultNotificationSettings.forEach(userNotificationSetting -> userNotificationSetting.setUser(user));
-            // update DB to fix inconsistencies and avoid redundant future merges
-            // first remove all settings of the current user in the DB
-            notificationSettingRepository.deleteAll(userNotificationSettings);
-            // save correct merge to DB
-            notificationSettingRepository.saveAll(updatedDefaultNotificationSettings);
-            return updatedDefaultNotificationSettings;
+        // If all default settings are available in the database, return them
+        if (haveSameNotificationSettingIds(userNotificationSettings, defaultSettings)) {
+            return userNotificationSettings;
         }
-        return userNotificationSettings;
+
+        Map<String, NotificationSetting> settingsMap = userNotificationSettings.stream().collect(Collectors.toMap(NotificationSetting::getSettingId, setting -> setting));
+
+        // defaultSettings might have changed (e.g. number of settings) -> need to merge the saved settings with default ones (else errors appear)
+        //
+        // Merge user-specific settings with default settings:
+        // - If the user already has a setting with the same ID, use the user’s version.
+        // - If the user doesn’t have a specific setting, fall back to the default version.
+        Set<NotificationSetting> mergedSettings = defaultSettings.stream().map(defaultSetting -> settingsMap.getOrDefault(defaultSetting.getSettingId(), defaultSetting))
+                .collect(Collectors.toSet());
+
+        // Assign user reference to the updated settings
+        mergedSettings.forEach(setting -> setting.setUser(user));
+
+        // Save only **new or updated** settings, avoiding unnecessary deletes
+        notificationSettingRepository.saveAll(mergedSettings);
+
+        return mergedSettings;
     }
 
     /**

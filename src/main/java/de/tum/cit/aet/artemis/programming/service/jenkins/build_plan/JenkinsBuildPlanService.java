@@ -130,8 +130,7 @@ public class JenkinsBuildPlanService {
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         final String buildPlanUrl = jenkinsPipelineScriptCreator.generateBuildPlanURL(exercise);
         final boolean checkoutSolution = exercise.getBuildConfig().getCheckoutSolutionRepository();
-        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUris, checkoutSolution,
-                buildPlanUrl);
+        final Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, internalRepositoryUris, checkoutSolution, buildPlanUrl);
 
         final String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;
@@ -172,8 +171,8 @@ public class JenkinsBuildPlanService {
             throw new UnsupportedOperationException("Xcode templates are not available for Jenkins.");
         }
         return switch (programmingLanguage) {
-            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, RUBY -> jenkinsBuildPlanCreator;
-            case VHDL, ASSEMBLER, OCAML, SQL, MATLAB, POWERSHELL, ADA, DART, PHP ->
+            case JAVA, KOTLIN, PYTHON, C, HASKELL, SWIFT, EMPTY, RUST, JAVASCRIPT, R, C_PLUS_PLUS, TYPESCRIPT, C_SHARP, GO, BASH, RUBY, DART -> jenkinsBuildPlanCreator;
+            case VHDL, ASSEMBLER, OCAML, SQL, MATLAB, POWERSHELL, ADA, PHP ->
                 throw new UnsupportedOperationException(programmingLanguage + " templates are not available for Jenkins.");
         };
     }
@@ -398,11 +397,11 @@ public class JenkinsBuildPlanService {
         try {
             // Retrieve the TAs and instructors that will be given access to the plan of the programming exercise
             Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
+            var teachingAssistants = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream()
                     .map(User::getLogin).collect(Collectors.toSet());
-            var editors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
+            var editors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()).stream().map(User::getLogin)
                     .collect(Collectors.toSet());
-            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
+            var instructors = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()).stream().map(User::getLogin)
                     .collect(Collectors.toSet());
 
             // The build plan of the exercise is inside the course folder

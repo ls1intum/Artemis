@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -49,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessT
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/core/")
 public class AccountResource {
 
     public static final String ENTITY_NAME = "user";
@@ -66,15 +67,18 @@ public class AccountResource {
 
     private final FileService fileService;
 
+    private final SingleUserNotificationService singleUserNotificationService;
+
     private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService,
-            FileService fileService) {
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService, FileService fileService,
+            SingleUserNotificationService singleUserNotificationService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.accountService = accountService;
         this.fileService = fileService;
+        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**
@@ -142,6 +146,7 @@ public class AccountResource {
 
         userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
+        singleUserNotificationService.notifyUserAboutNewlyAddedVcsAccessToken(user);
         user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());

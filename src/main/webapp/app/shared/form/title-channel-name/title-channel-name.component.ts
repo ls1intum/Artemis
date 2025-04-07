@@ -1,10 +1,10 @@
 import { AfterViewInit, Component, Input, OnDestroy, OnInit, ViewChild, computed, effect, input, output, signal, viewChild } from '@angular/core';
 import { ControlContainer, FormsModule, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
-import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
-import { TranslateDirective } from '../../language/translate.directive';
+import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
-import { HelpIconComponent } from '../../components/help-icon.component';
+import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-title-channel-name',
@@ -111,7 +111,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     formatChannelName(newName: string, allowDuplicateHyphens = true, removeTrailingHyphens = false) {
-        const specialCharacters = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
+        const specialCharacters: RegExp = allowDuplicateHyphens ? /[^a-z0-9-]+/g : /[^a-z0-9]+/g;
         const trailingHyphens = removeTrailingHyphens ? /-$/ : new RegExp('[]');
         this.channelName = newName.toLowerCase().replaceAll(specialCharacters, '-').replace(trailingHyphens, '').slice(0, 30);
         this.channelNameChange.emit(this.channelName);

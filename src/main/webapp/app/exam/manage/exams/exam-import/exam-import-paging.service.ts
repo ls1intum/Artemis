@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Exam } from 'app/entities/exam/exam.model';
-import { PagingService } from 'app/exercises/shared/manage/paging.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,11 +12,7 @@ type EntityResponseType = SearchResult<Exam>;
 export class ExamImportPagingService extends PagingService<Exam> {
     private http = inject(HttpClient);
 
-    private static readonly RESOURCE_URL = 'api/exams';
-
-    constructor() {
-        super();
-    }
+    private static readonly RESOURCE_URL = 'api/exam/exams';
 
     /**
      * Method to get (possible) exams for import from the server

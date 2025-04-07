@@ -11,6 +11,9 @@
             "showMultipleAnswers": "Show {{ number }} replies",
             "multipleAnswers": "{{ number }} Replies",
             "showSingleAnswer": "Show 1 reply",
+            "showing": "Showing ",
+            "singlePinned": "1 pinned message",
+            "multiplePinned": "{{ number }} pinned messages",
             "singleAnswer": "1 Reply",
             "collapseAnswers": "Hide replies",
             "savePosting": "Save",
@@ -68,7 +71,7 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for a message across all channels (Ctrl/Cmd + K)",
+                "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + K)",
                 "sortedByDate": "Sorted by Date",
                 "postContextFilter": "Show messages for:",
                 "one_extra_context": "other",
@@ -86,9 +89,7 @@
                 "sortPostsBy": "Sort by:",
                 "sortDescending": "Descending",
                 "sortAscending": "Ascending",
-                "ANSWER_COUNT": "Replies",
                 "CREATION_DATE": "Date",
-                "VOTES": "Votes (➕)",
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
@@ -98,9 +99,9 @@
                 "mobileDisclaimer": "Please select a conversation first.",
                 "mobileDisclaimerCallToAction": "Select conversation",
                 "savedPosts": "Saved Messages",
-                "progress": "In Progress",
-                "completed": "Completed",
-                "archived": "Archived",
+                "IN_PROGRESS": "In Progress",
+                "COMPLETED": "Completed",
+                "ARCHIVED": "Archived",
                 "emptySavedPosts": "There is nothing here yet. Bookmark messages and they will appear here.",
                 "deleteNoticeSavedPosts": "Archived and completed bookmarks will be removed after 100 days."
             },
@@ -140,6 +141,7 @@
                 "editMessage": "Edit message",
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
+                "forwardMessage": "Forward message",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
                 "bookmarkPost": "Save post for later",
@@ -165,6 +167,15 @@
                 "tutor": "Tutor: Responsible for helping users with their questions about the course and exercises.",
                 "student": "Student: Takes courses, participates in exercises, and asks questions.",
                 "deleted": "Deleted: This user was deleted."
+            },
+            "forward": {
+                "forwardMessage": "Forward this message",
+                "addMessage": "Add a message",
+                "searchBar": "Search by name or channel",
+                "viewConversation": "View conversation",
+                "forwardedFrom": "Forwarded from",
+                "showLess": "Show less",
+                "showMore": "Show more"
             }
         }
     }

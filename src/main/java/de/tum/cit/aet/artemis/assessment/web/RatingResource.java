@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 @Validated
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class RatingResource {
 
     private static final String ENTITY_NAME = "rating";

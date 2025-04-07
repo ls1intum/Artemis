@@ -63,7 +63,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -91,7 +92,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
@@ -105,14 +106,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            ExamRepository examRepository) {
+            Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
     }
 
     @Override
@@ -137,7 +138,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     .setTcpClient(tcpClient);
         }
         else {
-            log.debug("Did NOT enable StompBrokerRelay for WebSocket messages");
+            log.info("Did NOT enable StompBrokerRelay for WebSocket messages. Use simple integrated broker instead.");
             config.enableSimpleBroker("/topic").setHeartbeatValue(new long[] { 10000, 20000 }).setTaskScheduler(messageBrokerTaskScheduler);
         }
     }
@@ -174,11 +175,17 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         DefaultHandshakeHandler handshakeHandler = defaultHandshakeHandler();
-        // NOTE: by setting a WebSocketTransportHandler we disable http poll, http stream and other exotic workarounds and only support real websocket connections.
-        // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         WebSocketTransportHandler webSocketTransportHandler = new WebSocketTransportHandler(handshakeHandler);
-        registry.addEndpoint("/websocket").setAllowedOriginPatterns("*").withSockJS().setTransportHandlers(webSocketTransportHandler)
-                .setInterceptors(httpSessionHandshakeInterceptor());
+        // @formatter:off
+        registry
+            // NOTE: clients can connect using sockjs via 'ws://{artemis-url}/websocket' or without sockjs using 'ws://{artemis-url}/websocket/websocket'
+            .addEndpoint("/websocket")
+            .setAllowedOriginPatterns("*")
+            // TODO: in the future, we should deactivate the option to connect with sockjs, because this is not needed any more
+            .withSockJS()
+            .setTransportHandlers(webSocketTransportHandler)
+            .setInterceptors(httpSessionHandshakeInterceptor());
+        // @formatter:on
     }
 
     @Override
@@ -202,6 +209,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             public boolean beforeHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler,
                     @NotNull Map<String, Object> attributes) {
+                log.debug("beforeHandshake: {}, {}, {}", request, response, wsHandler);
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     try {
                         attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
@@ -217,6 +225,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             @Override
             public void afterHandshake(@NotNull ServerHttpRequest request, @NotNull ServerHttpResponse response, @NotNull WebSocketHandler wsHandler, Exception exception) {
+                log.debug("afterHandshake: {}, {}, {}", request, response, wsHandler);
                 if (exception != null) {
                     log.warn("Exception occurred in WS.afterHandshake", exception);
                 }
@@ -230,12 +239,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
             @Override
             protected Principal determineUser(@NotNull ServerHttpRequest request, @NotNull WebSocketHandler wsHandler, @NotNull Map<String, Object> attributes) {
                 Principal principal = request.getPrincipal();
+                log.debug("determineUser: {}", principal);
                 if (principal == null) {
                     Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
                     authorities.add(new SimpleGrantedAuthority(Role.ANONYMOUS.getAuthority()));
                     principal = new AnonymousAuthenticationToken("WebsocketConfiguration", "anonymous", authorities);
                 }
-                log.debug("determineUser: {}", principal);
                 return principal;
             }
         };
@@ -252,6 +261,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          */
         @Override
         public Message<?> preSend(@NotNull Message<?> message, @NotNull MessageChannel channel) {
+            log.debug("preSend: {}, channel: {}", message, channel);
             StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(message);
             Principal principal = headerAccessor.getUser();
             String destination = headerAccessor.getDestination();
@@ -283,6 +293,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
          * @return flag whether subscription is allowed
          */
         private boolean allowSubscription(@Nullable Principal principal, String destination) {
+            log.debug("{} wants to subscribe to {}", principal != null ? principal.getName() : "Anonymous", destination);
             /*
              * IMPORTANT: Avoid database calls in this method as much as possible (e.g. checking if the user
              * is an instructor in a course)
@@ -324,7 +335,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
-                var exam = examRepository.findByIdElseThrow(examId.get());
+                ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+                var exam = api.findByIdElseThrow(examId.get());
                 return authorizationCheckService.isAtLeastInstructorInCourse(login, exam.getCourse().getId());
             }
             return true;

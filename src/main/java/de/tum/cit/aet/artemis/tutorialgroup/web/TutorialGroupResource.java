@@ -73,7 +73,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 @Profile(PROFILE_CORE)
 @FeatureToggle(Feature.TutorialGroups)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/tutorialgroup/")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$";
@@ -264,7 +264,7 @@ public class TutorialGroupResource {
             tutorialGroupChannelManagementService.createChannelForTutorialGroup(persistedTutorialGroup);
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
+        return ResponseEntity.created(new URI("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId()))
                 .body(TutorialGroup.preventCircularJsonConversion(persistedTutorialGroup));
     }
 
@@ -542,7 +542,7 @@ public class TutorialGroupResource {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        String csvContent = "";
+        String csvContent;
         try {
             csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
         }

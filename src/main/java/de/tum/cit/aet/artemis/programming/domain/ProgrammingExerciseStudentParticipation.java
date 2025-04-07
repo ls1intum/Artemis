@@ -6,12 +6,9 @@ import jakarta.persistence.Entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -19,28 +16,13 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class ProgrammingExerciseStudentParticipation extends StudentParticipation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
-    @JsonView(QuizView.Before.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")
-    @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
     @Column(name = "branch")
-    @JsonView(QuizView.Before.class)
     private String branch;
-
-    /**
-     * Defines if the participation is locked, i.e. if the student can currently not make any submissions.
-     * This takes into account: the start date of the exercise (or the exam), the (individual) due date, and the lock repository policy.
-     * Course exercise practice repositories and instructor exam test run repositories will never be locked.
-     * <p>
-     * Important: this boolean flag must only be used for course programming exercises and is irrelevant for exam programming exercises!!!
-     *
-     */
-    @Column(name = "locked")
-    @JsonView(QuizView.Before.class)
-    private boolean locked;
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -72,8 +54,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     /**
      * Getter for the stored default branch of the participation.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation)} if you are not sure that the value was already
-     * set in the Artemis database
      *
      * @return the name of the default branch or null if not yet stored in Artemis
      */
@@ -83,15 +63,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setBranch(String branch) {
         this.branch = branch;
-    }
-
-    @Override
-    public boolean isLocked() {
-        return locked;
-    }
-
-    public void setLocked(boolean locked) {
-        this.locked = locked;
     }
 
     @Override

@@ -2,7 +2,8 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -35,13 +36,12 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.PullResponseItem;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * Service for Docker related operations in local CI
@@ -56,7 +56,7 @@ public class BuildAgentDockerService {
 
     private final BuildAgentConfiguration buildAgentConfiguration;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final DistributedDataAccessService distributedDataAccessService;
 
     private final BuildJobContainerService buildJobContainerService;
 
@@ -89,10 +89,10 @@ public class BuildAgentDockerService {
     @Value("${artemis.continuous-integration.image-architecture:amd64}")
     private String imageArchitecture;
 
-    public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
+    public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
             BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
-        this.hazelcastInstance = hazelcastInstance;
+        this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobContainerService = buildJobContainerService;
         this.taskScheduler = taskScheduler;
     }
@@ -317,7 +317,7 @@ public class BuildAgentDockerService {
         Set<String> imageNames = getUnusedDockerImages();
 
         // Get map of docker images and their last build dates
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        Map<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDockerImageCleanupInfoMap();
 
         // Delete images that have not been used for more than imageExpiryDays days
         for (String dockerImage : dockerImageCleanupInfo.keySet()) {
@@ -353,8 +353,8 @@ public class BuildAgentDockerService {
 
         try {
             // Get the Docker root directory to check disk space.
-            File dockerRootDirectory = new File(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
-            long usableSpace = dockerRootDirectory.getUsableSpace();
+            Path dockerRootDirectory = Path.of(Objects.requireNonNullElse(dockerClient.infoCmd().exec().getDockerRootDir(), "/"));
+            long usableSpace = Files.getFileStore(dockerRootDirectory).getUsableSpace();
 
             long threshold = convertMegabytesToBytes(imageCleanupDiskSpaceThresholdMb);
 
@@ -363,7 +363,7 @@ public class BuildAgentDockerService {
             }
 
             // Get map of docker images and their last build dates
-            IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+            Map<String, ZonedDateTime> dockerImageCleanupInfo = distributedDataAccessService.getDockerImageCleanupInfoMap();
 
             // Get unused images
             Set<String> unusedImages = getUnusedDockerImages();
@@ -385,7 +385,7 @@ public class BuildAgentDockerService {
                     log.info("Remove oldest docker image {} to cleanup disk space to avoid filling up the hard disk", oldestImage.getKey());
                     try {
                         dockerClient.removeImageCmd(oldestImage.getKey()).exec();
-                        usableSpace = dockerRootDirectory.getUsableSpace();
+                        usableSpace = Files.getFileStore(dockerRootDirectory).getUsableSpace();
                         deleteAttempts--;
                     }
                     catch (NotFoundException e) {

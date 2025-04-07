@@ -1,0 +1,71 @@
+@if (!!participation()?.exercise) {
+    <jhi-request-feedback-button class="me-3" [exercise]="participation()!.exercise!" />
+}
+@if (isInCourseManagement) {
+    <a class="btn btn-secondary navbar-btn me-3 open-repository-button" [routerLink]="repositoryLink" target="_blank" rel="noopener noreferrer">
+        <fa-icon [icon]="faExternalLink" />
+        <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"></span>
+    </a>
+}
+@if (commitState === CommitState.CONFLICT) {
+    <div>
+        <button
+            id="resolve_conflict_button"
+            type="button"
+            class="btn btn-danger navbar-btn me-3"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [overwriteDisabled]="disableActions"
+            (click)="resetRepository()"
+            [ngbTooltip]="'artemisApp.editor.conflict.resetRepository' | artemisTranslate"
+        >
+            @if (isResolvingConflict) {
+                <span>
+                    <fa-icon [icon]="faCircleNotch" animation="spin" />
+                    <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
+                </span>
+            } @else {
+                <fa-icon [icon]="faTimes" />
+                <span jhiTranslate="artemisApp.editor.conflict.resolveConflict"></span>
+            }
+        </button>
+    </div>
+} @else {
+    <button
+        id="refresh_button"
+        type="button"
+        class="btn btn-primary navbar-btn me-3"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [overwriteDisabled]="disableActions || editorState === EditorState.REFRESHING || editorState === EditorState.SAVING || commitState === CommitState.COMMITTING"
+        (click)="onRefresh()"
+        [ngbTooltip]="'artemisApp.editor.refresh.refreshFilesDescription' | artemisTranslate"
+    >
+        @if (editorState === EditorState.REFRESHING) {
+            <span>
+                <fa-icon [icon]="faCircleNotch" animation="spin" />
+                <span jhiTranslate="artemisApp.editor.refreshing"></span>
+            </span>
+        } @else {
+            <fa-icon [icon]="faSync" />
+            <span jhiTranslate="artemisApp.editor.refresh.performRefresh"></span>
+        }
+    </button>
+    <button
+        id="submit_button"
+        type="button"
+        class="guided-tour-submit-button btn btn-success navbar-btn"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [overwriteDisabled]="
+            disableActions ||
+            editorState === EditorState.REFRESHING ||
+            editorState === EditorState.SAVING ||
+            (commitState !== CommitState.UNCOMMITTED_CHANGES && commitState !== CommitState.CLEAN)
+        "
+        (click)="commit()"
+        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+    >
+        <span>
+            <fa-icon [icon]="farPlayCircle" />
+            <span jhiTranslate="artemisApp.editor.submit"></span>
+        </span>
+    </button>
+}

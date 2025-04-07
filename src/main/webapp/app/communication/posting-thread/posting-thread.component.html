@@ -1,0 +1,19 @@
+<div class="mx-0">
+    <jhi-post
+        [readOnlyMode]="readOnlyMode"
+        [lastReadDate]="lastReadDate"
+        [posting]="post"
+        [isConsecutive]="isConsecutive || false"
+        [forwardedPosts]="forwardedPosts() || []"
+        [forwardedAnswerPosts]="forwardedAnswerPosts() || []"
+        [showAnswers]="showAnswers"
+        [isCommunicationPage]="isCommunicationPage"
+        [showChannelReference]="showChannelReference"
+        [hasChannelModerationRights]="hasChannelModerationRights"
+        (openThread)="openThread.emit(post)"
+        (onNavigateToPost)="onTriggerNavigateToPost($event)"
+    />
+</div>
+@if (!isCommunicationPage) {
+    <div class="post-separation-line mb-2"></div>
+}

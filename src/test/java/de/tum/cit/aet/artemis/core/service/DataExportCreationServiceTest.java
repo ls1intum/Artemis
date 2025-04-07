@@ -12,7 +12,6 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -62,7 +61,7 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -76,17 +75,15 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
 
     private static final String FILE_FORMAT_TXT = ".txt";
 
     private static final String FILE_FORMAT_PDF = ".pdf";
-
-    private static final String FILE_FORMAT_ZIP = ".zip";
 
     private static final String FILE_FORMAT_CSV = ".csv";
 
@@ -112,7 +109,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     private ScienceUtilService scienceUtilService;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
@@ -217,7 +214,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void assertCommunicationDataCsvFile(Path courseDirPath) {
@@ -271,7 +268,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
         var quizSubmission = quizExerciseUtilService.addQuizExerciseToCourseWithParticipationAndSubmissionForUser(course1, TEST_PREFIX + "student1", assessmentDueDateInTheFuture);
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 3.0, true, ZonedDateTime.now().minusMinutes(2));
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         ProgrammingExercise programmingExercise;
         if (assessmentDueDateInTheFuture) {
             programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course1, false, ZonedDateTime.now().plusMinutes(1));
@@ -347,7 +344,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         var userForExport = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var course = courseUtilService.createCourseWithCustomStudentUserGroupWithExamAndExerciseGroupAndExercisesAndGradingScale(userForExport, TEST_PREFIX + "student",
                 courseShortName, true, true);
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         var exam = course.getExams().iterator().next();
         exam = examRepository.findWithExerciseGroupsExercisesParticipationsAndSubmissionsById(exam.getId()).orElseThrow();
         var studentExam = examUtilService.addStudentExamWithUser(exam, userForExport);
@@ -545,14 +542,14 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void addOnlyAnswerPostReactionInCourse(Course course) {
         var loginUser2 = TEST_PREFIX + "student2";
         conversationUtilService.addMessageWithReplyAndReactionInOneToOneChatOfCourseForUser(loginUser2, course, "student 2 message");
         var answerPosts = answerPostRepository.findAnswerPostsByAuthorId(userUtilService.getUserByLogin(loginUser2).getId());
-        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.getFirst());
+        conversationUtilService.addReactionForUserToAnswerPost(TEST_PREFIX + "student1", answerPosts.iterator().next());
     }
 
     @Test
@@ -571,7 +568,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         getExerciseDirectoryPaths(examDirPath).forEach(this::assertNoResultsFile);
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     @Test
@@ -594,7 +591,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private void addOnlyAnswerPostInCourse(Course course) {
@@ -650,7 +647,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
         }
 
         org.apache.commons.io.FileUtils.deleteDirectory(extractedZipDirPath.toFile());
-        org.apache.commons.io.FileUtils.delete(new File(dataExportFromDb.getFilePath()));
+        org.apache.commons.io.FileUtils.delete(Path.of(dataExportFromDb.getFilePath()).toFile());
     }
 
     private DataExport initDataExport() {

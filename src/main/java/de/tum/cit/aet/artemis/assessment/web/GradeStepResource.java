@@ -30,18 +30,19 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.api.ExamRepositoryApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 
 /**
  * REST controller for managing grade steps of a grading scale
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/assessment/")
 public class GradeStepResource {
 
     private static final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
@@ -54,24 +55,24 @@ public class GradeStepResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamRepository examRepository;
+    private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final UserRepository userRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
     public GradeStepResource(GradingScaleRepository gradingScaleRepository, GradeStepRepository gradeStepRepository, AuthorizationCheckService authCheckService,
-            CourseRepository courseRepository, ExamRepository examRepository, UserRepository userRepository, PlagiarismCaseRepository plagiarismCaseRepository,
+            CourseRepository courseRepository, Optional<ExamRepositoryApi> examRepositoryApi, UserRepository userRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi,
             StudentParticipationRepository studentParticipationRepository) {
         this.gradingScaleRepository = gradingScaleRepository;
         this.gradeStepRepository = gradeStepRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
+        this.examRepositoryApi = examRepositoryApi;
         this.userRepository = userRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
@@ -106,9 +107,11 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeStepsDTO> getAllGradeStepsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all grade steps for exam: {}", examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         GradingScale gradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
@@ -138,6 +141,8 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForCourse(@PathVariable Long courseId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
         log.debug("REST request to get grade step {} for course: {}", gradeStepId, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -157,6 +162,8 @@ public class GradeStepResource {
     @GetMapping("courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<GradeStep> getGradeStepsByIdForExam(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long gradeStepId) {
+        // TODO: no client usages found, is it even used anymore?
+
         log.debug("REST request to get grade step {} for exam: {}", gradeStepId, examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         gradingScaleRepository.findByExamIdOrElseThrow(examId);
@@ -189,7 +196,7 @@ public class GradeStepResource {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getNoParticipationGradeOrDefault());
         }
-        else if (plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, user.getId()).stream()
+        else if (plagiarismCaseApi.isPresent() && plagiarismCaseApi.get().findByCourseIdAndStudentId(courseId, user.getId()).stream()
                 .anyMatch(plagiarismCase -> PlagiarismVerdict.PLAGIARISM.equals(plagiarismCase.getVerdict()))) {
             gradeStep = new GradeStep();
             gradeStep.setGradeName(gradingScale.getPlagiarismGradeOrDefault());
@@ -213,10 +220,12 @@ public class GradeStepResource {
     @EnforceAtLeastStudent
     public ResponseEntity<GradeDTO> getGradeStepByPercentageForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam Double gradePercentage) {
         log.debug("REST request to get grade step for grade percentage {} for exam: {}", gradePercentage, examId);
+        ExamRepositoryApi api = examRepositoryApi.orElseThrow(() -> new ExamApiNotPresentException(ExamRepositoryApi.class));
+
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-        Exam exam = examRepository.findByIdElseThrow(examId);
+        Exam exam = api.findByIdElseThrow(examId);
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         boolean isInstructor = authCheckService.isAtLeastInstructorInCourse(course, user);
         if (gradingScale.isEmpty()) {

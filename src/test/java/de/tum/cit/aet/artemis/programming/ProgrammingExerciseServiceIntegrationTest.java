@@ -28,7 +28,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
     private static final String TEST_PREFIX = "progexserviceintegration";
 
-    private static final String BASE_RESOURCE = "/api/programming-exercises";
+    private static final String BASE_RESOURCE = "/api/programming/programming-exercises";
 
     private Course additionalEmptyCourse;
 
@@ -98,14 +98,14 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
-        request.post("/api/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
+        request.post("/api/programming/programming-exercises/import/" + programmingExercise.getId(), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -169,7 +169,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
     private void testCourseAndExamFilters(boolean withSCA, String programmingExerciseTitle) throws Exception {
         programmingExerciseUtilService.addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, withSCA);
         programmingExerciseUtilService.addCourseExamExerciseGroupWithOneProgrammingExercise(programmingExerciseTitle + "-Morpork", programmingExerciseTitle + "Morpork", false);
-        exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming-exercises", programmingExerciseTitle);
+        exerciseIntegrationTestService.testCourseAndExamFilters("/api/programming/programming-exercises", programmingExerciseTitle);
         testSCAFilter(programmingExerciseTitle, withSCA);
     }
 
@@ -178,7 +178,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
         var filters = pageableSearchUtilService.searchMapping(search);
 
         // We should get both exercises when we don't filter for SCA only (other endpoint)
-        var result = request.getSearchResult("/api/programming-exercises", HttpStatus.OK, ProgrammingExercise.class, filters);
+        var result = request.getSearchResult("/api/programming/programming-exercises", HttpStatus.OK, ProgrammingExercise.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(2);
 
         filters = pageableSearchUtilService.searchMapping(search);
@@ -186,7 +186,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractProgrammingInteg
 
         // The exam exercise is always created with SCA deactivated
         // expectSca true -> 1 result, false -> 0 results
-        result = request.getSearchResult("/api/programming-exercises/with-sca", HttpStatus.OK, ProgrammingExercise.class, filters);
+        result = request.getSearchResult("/api/programming/programming-exercises/with-sca", HttpStatus.OK, ProgrammingExercise.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 

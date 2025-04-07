@@ -42,6 +42,15 @@ public final class Constants {
     public static final int MAX_ENVIRONMENT_VARIABLES_DOCKER_FLAG_LENGTH = 1000;
 
     /**
+     * The default REST/URL-path prefix for accessing file uploads.
+     * Don't use this constant elsewhere than in the Presentation-Layer to reduce
+     * coupling between the persistence layer {@link de.tum.cit.aet.artemis.core.domain.DomainObject }) and the
+     * presentation layer ({@link org.springframework.web.bind.annotation.RestController}).
+     * There might be exceptions if the path can be considered part of the business logic, and not presentation.
+     */
+    public static final String ARTEMIS_FILE_PATH_PREFIX = "/api/core/files/";
+
+    /**
      * This constant determines how many seconds after the exercise due dates submissions will still be considered rated.
      * Submissions after the grace period exceeded will be flagged as illegal.
      * <p>
@@ -60,7 +69,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -70,7 +79,7 @@ public final class Constants {
 
     public static final String SUBMISSION_PROCESSING_TOPIC = "/topic" + SUBMISSION_PROCESSING;
 
-    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/public/athena/programming-exercises/";
+    public static final String ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH = "/api/athena/public/programming-exercises/";
 
     // short names should have at least 3 characters and must start with a letter
     public static final String SHORT_NAME_REGEX = "^[a-zA-Z][a-zA-Z0-9]{2,}";
@@ -135,17 +144,9 @@ public final class Constants {
 
     public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
 
-    public static final String PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION = "When removing the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
-
     public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
 
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were locked successfully.";
-
     public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully.";
-
-    public static final String PROGRAMMING_EXERCISE_FAILED_UNLOCK_OPERATIONS_NOTIFICATION = "When adding the write permissions for the student repositories, not all operations were successful. Number of failed operations: ";
-
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION = "The student repositories for this programming exercise were unlocked successfully.";
 
     /**
      * Maximum length in the database for the feedback detail text.
@@ -208,8 +209,6 @@ public final class Constants {
 
     // same constant as in the client
     public static final int EXAM_START_WAIT_TIME_MINUTES = 5;
-
-    public static final int EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES = 1;
 
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
@@ -287,6 +286,12 @@ public final class Constants {
 
     public static final String INSTRUCTOR_BUILD_TIMEOUT_DEFAULT_OPTION = "buildTimeoutDefault";
 
+    public static final String DOCKER_FLAG_CPUS = "defaultContainerCpuCount";
+
+    public static final String DOCKER_FLAG_MEMORY_MB = "defaultContainerMemoryLimitInMB";
+
+    public static final String DOCKER_FLAG_MEMORY_SWAP_MB = "defaultContainerMemorySwapLimitInMB";
+
     public static final String USE_EXTERNAL = "useExternal";
 
     public static final String EXTERNAL_CREDENTIAL_PROVIDER = "externalCredentialProvider";
@@ -300,12 +305,12 @@ public final class Constants {
     public static final String PUSH_NOTIFICATION_ENCRYPTION_ALGORITHM = "AES/CBC/PKCS5Padding";
 
     /**
-     * The name of the Spring profile used to choose the local VC system instead of GitLab.
+     * The name of the Spring profile used to choose the local VC system.
      */
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
+     * The name of the Spring profile used to choose the local CI system.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
@@ -313,6 +318,8 @@ public final class Constants {
      * The name of the Spring profile used to process build jobs in a local CI setup.
      */
     public static final String PROFILE_BUILDAGENT = "buildagent";
+
+    public static final String PROFILE_TEST_BUILDAGENT = "buildagent-test";
 
     /**
      * The name of the Spring profile used to process build jobs in a Jenkins setup.
@@ -361,16 +368,47 @@ public final class Constants {
 
     public static final String PROFILE_SCHEDULING = "scheduling";
 
+    public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
+
     /**
      * The name of the Spring profile used for Theia as an external online IDE.
      */
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * The name of the profile for integration independent tests
+     */
+    public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
+
+    /**
      * The InfoContributor's detail key for the Theia Portal URL
      */
-
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
+
+    /**
+     * The InfoContributor's detail key for the active module features.
+     */
+    public static final String ACTIVE_MODULE_FEATURES = "activeModuleFeatures";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the module feature used for Text Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
+     * The name of the property used to enable or disable Atlas functionality.
+     */
+    public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable text exercise functionality.
+     */
+    public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
@@ -395,15 +433,15 @@ public final class Constants {
     /**
      * The directory in the docker container in which the build script is executed
      */
-    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+    public static final String LOCAL_CI_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * The directory in the docker container in which the results can be found
      */
-    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
+    public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
-     * The directory to which repositories temporarely get cloned for the build job execution
+     * The directory to which repositories temporarily get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
 
@@ -411,11 +449,6 @@ public final class Constants {
      * Minimum score for a result to be considered successful and shown in green
      */
     public static final int MIN_SCORE_GREEN = 80;
-
-    /**
-     * Minimum score for a result to be considered partially successful and shown in orange
-     */
-    public static final int MIN_SCORE_ORANGE = 40;
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
 
@@ -428,9 +461,6 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
-
-    // TODO TW: This "feature" is only temporary for a paper.
-    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
 
     private Constants() {
     }

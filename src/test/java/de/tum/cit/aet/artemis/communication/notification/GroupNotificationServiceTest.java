@@ -37,6 +37,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,21 +45,25 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -76,13 +81,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private static final String TEST_PREFIX = "groupnotificationservice";
 
     @Autowired
-    private NotificationRepository notificationRepository;
+    private NotificationTestRepository notificationTestRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
-    private ExamRepository examRepository;
+    private ExamTestRepository examRepository;
 
     @Autowired
     private GroupNotificationScheduleService groupNotificationScheduleService;
@@ -99,6 +104,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
+
     private Exercise exercise;
 
     private Exercise updatedExercise;
@@ -113,13 +124,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String LECTURE_TITLE = "lecture title";
 
-    private Post post;
-
     private static final String POST_TITLE = "post title";
 
     private static final String POST_CONTENT = "post content";
-
-    private AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
 
@@ -216,13 +223,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         channel.setId(123L);
         channel.setName("test");
 
-        post = new Post();
+        Post post = new Post();
         post.setConversation(channel);
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
-        answerPost = new AnswerPost();
+        AnswerPost answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
@@ -231,12 +238,14 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // store the current notification count to let tests work even if notifications are created in other tests
-        notificationCountBeforeTest = notificationRepository.findAll().size();
+        notificationCountBeforeTest = notificationTestRepository.findAll().size();
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @AfterEach
     void tearDown() {
-        notificationRepository.deleteAllInBatch();
+        notificationTestRepository.deleteAllInBatch();
     }
 
     /**
@@ -262,11 +271,11 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
         await().untilAsserted(
-                () -> assertThat(notificationRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
+                () -> assertThat(notificationTestRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
                         .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
 
-        List<Notification> capturedNotifications = notificationRepository.findAll();
-        Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
+        List<Notification> capturedNotifications = notificationTestRepository.findAll();
+        Notification lastCapturedNotification = capturedNotifications.getLast();
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
@@ -440,10 +449,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
      */
     @Test
     void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
-        var countBefore = notificationRepository.count();
+        var countBefore = notificationTestRepository.count();
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        var countAfter = notificationRepository.count();
+        var countAfter = notificationTestRepository.count();
         assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
     }
 
@@ -581,5 +590,137 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
         verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
+    }
+
+    @Test
+    void shouldCreateAttachmentChangeNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        lecture = new Lecture();
+        lecture.setCourse(course);
+
+        attachment.setReleaseDate(CURRENT_TIME);
+        attachment.setLecture(lecture);
+
+        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasAttachmentChangeNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 10);
+
+            assertThat(hasAttachmentChangeNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateExercisePracticeNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasExercisePracticeNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 6);
+
+            assertThat(hasExercisePracticeNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateQuizExerciseStartedNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasQuizStartedNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 9);
+
+            assertThat(hasQuizStartedNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateExerciseUpdateNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasExerciseUpdateNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 8);
+
+            assertThat(hasExerciseUpdateNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateExerciseUpdateForEditorsAndInstructorsWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasExerciseUpdateNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 8);
+
+            assertThat(hasExerciseUpdateNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateExerciseReleasedNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasExerciseReleasedNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 5);
+
+            assertThat(hasExerciseReleasedNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateNewFeedbackRequestNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(exercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasNewFeedbackRequestNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 11);
+
+            assertThat(hasNewFeedbackRequestNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 }

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -29,9 +28,6 @@ import de.tum.cit.aet.artemis.exercise.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.web.TeamResource;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -41,18 +37,11 @@ public class TeamService {
 
     private final UserRepository userRepository;
 
-    private final Optional<VersionControlService> versionControlService;
-
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
     private final ParticipationService participationService;
 
-    public TeamService(TeamRepository teamRepository, UserRepository userRepository, Optional<VersionControlService> versionControlService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ParticipationService participationService) {
+    public TeamService(TeamRepository teamRepository, UserRepository userRepository, ParticipationService participationService) {
         this.teamRepository = teamRepository;
         this.userRepository = userRepository;
-        this.versionControlService = versionControlService;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.participationService = participationService;
     }
 
@@ -78,30 +67,6 @@ public class TeamService {
 
         // Annotate to which team the user is already assigned to for the given exercise (null if not assigned)
         return users.stream().map(user -> TeamSearchUserDTO.of(user, userIdToTeamIdMap.get(user.getId()))).toList();
-    }
-
-    /**
-     * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
-     *
-     * @param exerciseId   Id of the exercise to which the team belongs
-     * @param existingTeam Old team before update
-     * @param updatedTeam  New team after update
-     */
-    public void updateRepositoryMembersIfNeeded(Long exerciseId, Team existingTeam, Team updatedTeam) {
-        var optionalParticipation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, existingTeam.getId());
-
-        optionalParticipation.ifPresent(participation -> {
-            // Users in the existing team that are no longer in the updated team need to be removed
-            Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
-            usersToRemove.removeAll(updatedTeam.getStudents());
-            usersToRemove.forEach(user -> versionControlService.orElseThrow().removeMemberFromRepository(participation.getVcsRepositoryUri(), user));
-
-            // Users in the updated team that were not yet part of the existing team need to be added
-            Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
-            usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(
-                    user -> versionControlService.orElseThrow().addMemberToRepository(participation.getVcsRepositoryUri(), user, VersionControlRepositoryPermission.REPO_WRITE));
-        });
     }
 
     /**
@@ -210,7 +175,7 @@ public class TeamService {
         // Check group name is not null, a list of logins is given and it is not empty
         if (groupName != null && logins != null && !logins.isEmpty()) {
             // Find all users whose login is in the given login list and who have the given group name
-            existingStudentsWithLogin = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
+            existingStudentsWithLogin = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(groupName, new HashSet<>(logins));
             // Get the list of logins of found users
             Set<String> existingLogins = existingStudentsWithLogin.stream().map(User::getLogin).collect(Collectors.toCollection(HashSet::new));
             // Add logins that are in given login list but not in found users to notFoundLogins
@@ -243,7 +208,7 @@ public class TeamService {
         // Check group name is not null, list of logins is given, list of registration numbers is given and it is not empty
         if (groupName != null && logins != null && registrationNumbers != null && !registrationNumbers.isEmpty()) {
             // Find all users whose login is in the given registration number list and who have the given group name
-            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
+            existingStudentsWithRegistrationNumber = userRepository.findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(groupName,
                     new HashSet<>(registrationNumbers));
             // Find users whose login is in given logins
             Set<String> loginsSet = new HashSet<>(logins);

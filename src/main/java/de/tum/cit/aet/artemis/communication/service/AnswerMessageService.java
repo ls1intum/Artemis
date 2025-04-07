@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -15,6 +18,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -23,7 +28,6 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationMessageReposi
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
@@ -35,6 +39,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -54,16 +60,19 @@ public class AnswerMessageService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    private final PostRepository postRepository;
+    private final FeatureToggleService featureToggleService;
 
-    private final ConversationRepository conversationRepository;
+    private final CourseNotificationService courseNotificationService;
+
+    private final PostRepository postRepository;
 
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(SingleUserNotificationService singleUserNotificationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
             UserRepository userRepository, AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository,
             ConversationService conversationService, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SavedPostRepository savedPostRepository,
             WebsocketMessagingService websocketMessagingService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, ConversationRepository conversationRepository) {
+            ChannelAuthorizationService channelAuthorizationService, PostRepository postRepository, FeatureToggleService featureToggleService,
+            CourseNotificationService courseNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.answerPostRepository = answerPostRepository;
@@ -72,7 +81,8 @@ public class AnswerMessageService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
-        this.conversationRepository = conversationRepository;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -92,8 +102,10 @@ public class AnswerMessageService extends PostingService {
             throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
         }
 
-        Conversation conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(answerMessage.getPost().getConversation().getId(), author, Optional.empty())
-                .orElse(conversationRepository.findByIdElseThrow(answerMessage.getPost().getConversation().getId()));
+        var conversationId = answerMessage.getPost().getConversation().getId();
+        // For group chats we need the participants to generate the conversation title
+        var conversation = conversationService.isMemberOrCreateForCourseWideElseThrow(conversationId, author, Optional.empty())
+                .orElse(conversationService.loadConversationWithParticipantsIfGroupChat(conversationId));
 
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         var course = preCheckUserAndCourseForMessaging(author, courseId);
@@ -114,6 +126,38 @@ public class AnswerMessageService extends PostingService {
         savedAnswerMessage.getPost().setConversation(conversation);
         setAuthorRoleForPosting(savedAnswerMessage, course);
         SingleUserNotification notification = singleUserNotificationService.createNotificationAboutNewMessageReply(savedAnswerMessage, author, conversation);
+
+        if (this.featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var newAnswerNotification = new NewAnswerNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                    post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(), answerMessage.getCreationDate().toString(),
+                    answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(), answerMessage.getId(),
+                    conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+
+            var usersInvolved = conversationMessageRepository.findUsersWhoRepliedInMessage(post.getId());
+            usersInvolved.add(post.getAuthor());
+
+            var notificationRecipientsList = getNotificationRecipients(conversation).toList();
+
+            var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(mentionedUsers, conversation)
+                    .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), answerMessage.getAuthor().getId())).toList();
+
+            // We only send notifications to users that are part of the conversation, did not mute or hide it and if they were not mentioned (since they get a separate notification
+            // for that)
+            var filteredUsersInvolved = usersInvolved.stream().filter(user -> notificationRecipientsList.stream()
+                    .anyMatch(recipient -> recipient.userId() == user.getId() && recipient.userId() != answerMessage.getAuthor().getId() && !recipient.isConversationHidden()
+                            && !recipient.isConversationMuted() && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> recipient.userId() == mentionedUser.getId())))
+                    .collect(Collectors.toCollection(ArrayList::new));
+
+            this.courseNotificationService.sendCourseNotification(newAnswerNotification, filteredUsersInvolved);
+
+            var mentionCourseNotification = new NewMentionNotification(courseId, conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
+                    answerMessage.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), answerMessage.getContent(),
+                    answerMessage.getCreationDate().toString(), answerMessage.getAuthor().getName(), answerMessage.getAuthor().getId(), answerMessage.getAuthor().getImageUrl(),
+                    answerMessage.getId(), conversation.getHumanReadableNameForReceiver(answerMessage.getAuthor()), conversationId);
+
+            this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+        }
+
         this.preparePostAndBroadcast(savedAnswerMessage, course, notification);
         this.singleUserNotificationService.notifyInvolvedUsersAboutNewMessageReply(post, notification, mentionedUsers, savedAnswerMessage, author);
         return savedAnswerMessage;
@@ -233,6 +277,10 @@ public class AnswerMessageService extends PostingService {
      */
     public AnswerPost findById(Long answerMessageId) {
         return answerPostRepository.findAnswerMessageByIdElseThrow(answerMessageId);
+    }
+
+    public List<AnswerPost> findByIdIn(List<Long> answerMessageIds) {
+        return answerPostRepository.findByIdIn(answerMessageIds);
     }
 
     /**

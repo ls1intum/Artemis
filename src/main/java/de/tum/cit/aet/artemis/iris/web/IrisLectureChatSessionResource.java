@@ -103,7 +103,7 @@ public class IrisLectureChatSessionResource {
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var session = irisLectureChatSessionRepository.save(new IrisLectureChatSession(lecture, user));
         var uriString = "/api/iris/sessions/" + session.getId();
@@ -126,7 +126,7 @@ public class IrisLectureChatSessionResource {
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.LECTURE_CHAT, lecture.getCourse());
-        user.hasAcceptedIrisElseThrow();
+        user.hasAcceptedExternalLLMUsageElseThrow();
 
         var sessions = irisLectureChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lecture.getId(), user.getId());
         // Access check might not even be necessary here -> see comments in hasAccess method
