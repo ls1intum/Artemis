@@ -16,12 +16,19 @@ import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { of } from 'rxjs';
 
 type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
 
 describe('Exam Exercise Import Component', () => {
     let component: ExamExerciseImportComponent;
     let fixture: ComponentFixture<ExamExerciseImportComponent>;
+
+    let profileService: ProfileService;
+    let getProfileInfoSub: jest.SpyInstance;
 
     // Initializing one Exercise Group per Exercise Type
     const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
@@ -68,12 +75,19 @@ describe('Exam Exercise Import Component', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), FontAwesomeTestingModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExamExerciseImportComponent);
                 component = fixture.componentInstance;
+
+                profileService = TestBed.inject(ProfileService);
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
             });
     });
 
