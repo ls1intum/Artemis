@@ -5,10 +5,10 @@ import { Observable } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { AsyncPipe, NgStyle } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AthenaService } from 'app/assessment/shared/athena.service';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 
 @Component({
     selector: 'jhi-exercise-preliminary-feedback-options',
