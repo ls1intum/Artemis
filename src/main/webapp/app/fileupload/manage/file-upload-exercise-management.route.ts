@@ -3,12 +3,12 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/file-upload-exercise-management-resolve.service';
+import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/services/file-upload-exercise-management-resolve.service';
 
 export const routes: Routes = [
     {
         path: 'file-upload-exercises/new',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -20,7 +20,7 @@ export const routes: Routes = [
     },
     {
         path: 'file-upload-exercises/:exerciseId/import',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -33,7 +33,7 @@ export const routes: Routes = [
 
     {
         path: 'file-upload-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/fileupload/manage/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
+        loadComponent: () => import('app/fileupload/manage/update/file-upload-exercise-update.component').then((m) => m.FileUploadExerciseUpdateComponent),
         resolve: {
             fileUploadExercise: FileUploadExerciseManagementResolve,
         },
@@ -45,7 +45,7 @@ export const routes: Routes = [
     },
     {
         path: 'file-upload-exercises/:exerciseId',
-        loadComponent: () => import('./file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
+        loadComponent: () => import('./exercise-details/file-upload-exercise-detail.component').then((m) => m.FileUploadExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',

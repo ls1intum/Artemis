@@ -1,4 +1,4 @@
-import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { VOTE_EMOJI_ID } from 'app/communication/metis.util';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';

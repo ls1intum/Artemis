@@ -16,7 +16,7 @@ import { CompetencySelectionComponent } from 'app/atlas/shared/competency-select
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         NgbAlert,

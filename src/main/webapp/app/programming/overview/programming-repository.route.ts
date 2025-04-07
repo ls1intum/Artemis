@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { LocalVCGuard } from 'app/programming/shared/localvc-guard.service';
+import { LocalVCGuard } from 'app/programming/shared/services/localvc-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const routes: Routes = [
