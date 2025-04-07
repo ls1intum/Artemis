@@ -68,6 +68,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -155,6 +157,8 @@ public class TextExerciseResource {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
@@ -167,7 +171,7 @@ public class TextExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi) {
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -192,6 +196,7 @@ public class TextExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.athenaApi = athenaApi;
+        this.examAccessApi = examAccessApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
     }
@@ -414,8 +419,9 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
-            throw new AccessForbiddenException();
+        if (textExercise.isExamExercise()) {
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            api.checkIfAllowedToGetExamResult(textExercise, participation, user);
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
