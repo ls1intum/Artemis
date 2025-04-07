@@ -13,6 +13,7 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_A
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_CPC_PLAGIARISM_CASE_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_PLAGIARISM_CASE_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
@@ -176,6 +177,14 @@ public class CourseNotificationPushProxyService {
                 target = notificationTarget.toJsonString();
                 type = courseNotificationDTO.notificationType().equals("programmingBuildRunUpdateNotification") ? PROGRAMMING_BUILD_RUN_UPDATE.toString()
                         : PROGRAMMING_TEST_CASES_CHANGED.toString();
+                break;
+            case "plagiarismCaseVerdictNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseType"), parameters.get("exerciseTitle"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.PLAGIARISM_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.PLAGIARISM_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = PLAGIARISM_CASE_VERDICT_STUDENT.toString();
                 break;
             default:
                 return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));

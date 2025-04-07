@@ -811,7 +811,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
 
-            boolean hasNewCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+            var hasNewCpcPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
                     .anyMatch(notification -> notification.getType() == 13);
 
             assertThat(hasNewCpcPlagiarismCaseNotification).isTrue();
@@ -838,7 +838,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
 
-            boolean hasNewPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+            var hasNewPlagiarismCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
                     .anyMatch(notification -> notification.getType() == 14);
 
             assertThat(hasNewPlagiarismCaseNotification).isTrue();
@@ -848,6 +848,34 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
             assertThat(newPlagiarismCaseNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreatePlagiarismCaseVerdictNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        exercise.setTitle("Plagiarism Test Exercise");
+        plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
+        plagiarismCase.setPost(post);
+        plagiarismCase.setExercise(exercise);
+
+        singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            var hasNewPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 17);
+
+            assertThat(hasNewPlagiarismVerdictNotification).isTrue();
+
+            var newPlagiarismVerdictNotification = notifications.stream().filter(notification -> notification.getType() == 17).findFirst();
+
+            assertThat(newPlagiarismVerdictNotification).isPresent();
+            assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismVerdictNotification.get().getId(), user.getId())).isTrue();
         });
 
         featureToggleService.disableFeature(Feature.CourseSpecificNotifications);

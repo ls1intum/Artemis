@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManua
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.PlagiarismCaseVerdictNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
@@ -57,6 +58,8 @@ public class IgnoreUserCourseNotificationSettingPreset extends UserCourseNotific
                 Map.entry(ProgrammingBuildRunUpdateNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
                 Map.entry(ProgrammingTestCasesChangedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(PlagiarismCaseVerdictNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
     }
 }
