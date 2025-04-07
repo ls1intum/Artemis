@@ -34,7 +34,7 @@ import { MockTranslateService } from '../../../../../../../../test/javascript/sp
 import { MockActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_TEXT } from '../../../../../../main/webapp/app/app.constants';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;

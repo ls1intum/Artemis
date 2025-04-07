@@ -17,8 +17,8 @@ import { MockTranslateService } from '../../../../../../../test/javascript/spec/
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_TEXT } from '../../../../../../main/webapp/app/app.constants';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { of } from 'rxjs';
 
 type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;

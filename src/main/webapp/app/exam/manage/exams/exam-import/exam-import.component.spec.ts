@@ -22,9 +22,9 @@ import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from '../../../../../../main/webapp/app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_TEXT } from '../../../../../../main/webapp/app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
