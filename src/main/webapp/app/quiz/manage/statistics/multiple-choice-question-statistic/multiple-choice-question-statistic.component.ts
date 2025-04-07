@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
-import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MultipleChoiceQuestionStatistic } from 'app/quiz/shared/entities/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';

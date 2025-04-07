@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
 import dayjs from 'dayjs';

@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncap
 import { Observable, Subject, of } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { Course, CourseGroup } from 'app/core/shared/entities/course.model';
+import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
@@ -15,10 +15,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RouterLink } from '@angular/router';
 import { addPublicFilePrefix } from 'app/app.constants';
-import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
+import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',
