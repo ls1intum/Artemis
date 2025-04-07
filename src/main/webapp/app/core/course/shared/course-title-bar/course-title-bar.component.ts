@@ -23,7 +23,6 @@ export class CourseTitleBarComponent {
 
     toggleSidebar = output<void>();
 
-    // Icons
     facSidebar = facSidebar;
     faChevronRight = faChevronRight;
 }
