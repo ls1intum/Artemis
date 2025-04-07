@@ -6,7 +6,7 @@ import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/diffic
 @Component({
     selector: 'jhi-programming-exercise-difficulty',
     templateUrl: './programming-exercise-difficulty.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [TranslateDirective, DifficultyPickerComponent],
 })
 export class ProgrammingExerciseDifficultyComponent {

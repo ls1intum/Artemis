@@ -1,17 +1,17 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { ExerciseService } from 'app/exercise/exercise.service';
 import { forkJoin } from 'rxjs';
@@ -43,7 +43,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
