@@ -27,24 +27,15 @@ import {
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { facSidebar } from 'app/shared/icons/icons';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
-import { CourseManagementExercisesComponent } from 'app/core/course/manage/course-management-exercises.component';
-import { LectureComponent } from 'app/lecture/manage/lecture.component';
-import { CourseManagementStatisticsComponent } from 'app/core/course/manage/course-management-statistics.component';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/manage/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { TutorialGroupsChecklistComponent } from 'app/tutorialgroup/manage/tutorial-groups-checklist/tutorial-groups-checklist.component';
 import { CompetencyManagementComponent } from 'app/atlas/manage/competency-management/competency-management.component';
@@ -54,7 +45,16 @@ import { CourseScoresComponent } from 'app/core/course/manage/course-scores/cour
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { BuildQueueComponent } from 'app/buildagent/build-queue/build-queue.component';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
-import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
+import { ExamManagementComponent } from 'app/exam/manage/exam-management/exam-management.component';
+import { CourseManagementExercisesComponent } from 'app/core/course/manage/exercises/course-management-exercises.component';
+import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
+import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-management-container',

@@ -20,13 +20,7 @@ import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
 import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
-import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { sortCourses } from 'app/shared/util/course.util';
@@ -34,6 +28,12 @@ import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sideba
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { CourseAccessStorageService } from '../services/course-access-storage.service';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 
 /**
  * Base class that contains common functionality for course container components.

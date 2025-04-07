@@ -186,7 +186,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'communication',
-                        loadComponent: () => import('app/communication/shared/course-conversations.component').then((m) => m.CourseConversationsComponent),
+                        loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
                         data: {
                             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'overview.communication',

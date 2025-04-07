@@ -14,38 +14,24 @@ import dayjs from 'dayjs/esm';
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
-import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { CourseAccessStorageService } from 'app/core/course/shared/course-access-storage.service';
-import { CourseSidebarService } from 'app/core/course/overview/course-sidebar.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { CourseAdminService } from 'app/core/course/manage/course-admin.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
@@ -54,10 +40,26 @@ import { CourseManagementContainerComponent } from 'app/core/course/manage/cours
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
-import { MockMetisConversationService } from '../../helpers/mocks/service/mock-metis-conversation.service';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');

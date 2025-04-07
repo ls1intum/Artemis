@@ -11,29 +11,29 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
-import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
-import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
 import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { TeamService } from 'app/exercise/team/team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
-import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';
 import { CourseExamsComponent } from 'app/exam/shared/course-exams/course-exams.component';
-import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups.component';
-import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
+import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-tutorial-groups/course-tutorial-groups.component';
+import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
 
 @Component({
     selector: 'jhi-course-overview',
