@@ -1,70 +1,64 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { IrisChatService } from 'app/iris/overview/iris-chat.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { of, Subject } from 'rxjs';
+import { of } from 'rxjs';
 import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { mockSettings } from '../settings/mock-settings';
+import { MockProvider } from 'ng-mocks';
+import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
     let componentRef: ComponentRef<TutorSuggestionComponent>;
     let fixture: ComponentFixture<TutorSuggestionComponent>;
-    let chatServiceMock: any;
-    let profileServiceMock: any;
-    let irisSettingsServiceMock: any;
+    let irisSettingsService: IrisSettingsService;
+    let profileService: ProfileService;
+    let chatService: IrisChatService;
+    const irisSettings = mockSettings();
 
     beforeEach(async () => {
-        chatServiceMock = {
-            switchTo: jest.fn(),
-            sessionId$: new Subject<number>(),
-            currentMessages: jest.fn().mockReturnValue(of([])),
-            requestTutorSuggestion: jest.fn().mockReturnValue(of(undefined)),
-        };
-
-        profileServiceMock = {
-            getProfileInfo: jest.fn().mockReturnValue(of({ activeProfiles: ['iris'] })),
-        };
-
-        irisSettingsServiceMock = {
-            getCombinedCourseSettings: jest.fn().mockReturnValue(of({ irisTutorSuggestionSettings: { enabled: true } })),
-        };
-
         await TestBed.configureTestingModule({
             imports: [TutorSuggestionComponent],
-            providers: [
-                { provide: IrisChatService, useValue: chatServiceMock },
-                { provide: ProfileService, useValue: profileServiceMock },
-                { provide: IrisSettingsService, useValue: irisSettingsServiceMock },
-            ],
+            providers: [MockProvider(IrisChatService), MockProvider(IrisSettingsService), MockProvider(ProfileService)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorSuggestionComponent);
         component = fixture.componentInstance;
         componentRef = fixture.componentRef;
 
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        profileService = TestBed.inject(ProfileService);
+        chatService = TestBed.inject(IrisChatService);
+
         componentRef.setInput('post', { id: 1 } as any);
         componentRef.setInput('course', { id: 1 } as any);
-
-        fixture.detectChanges(); // triggers ngOnInit
     });
 
     it('should initialize and switch chat service if IRIS is enabled', () => {
-        expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
+        fixture.detectChanges();
+        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
     });
 
     it('should initialize properly in ngOnInit and load settings', fakeAsync(() => {
+        const getCourseSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+        const profileServiceMock = jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        const switchToSpy = jest.spyOn(chatService, 'switchTo').mockReturnValue(undefined);
         fixture.detectChanges();
         tick();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsServiceMock.getCombinedCourseSettings).toHaveBeenCalledWith(1);
-        expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
+        expect(profileServiceMock).toHaveBeenCalledOnce();
+        expect(getCourseSettingsSpy).toHaveBeenCalledOnce();
+        expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
     }));
 
     describe('should set irisEnabled to ', () => {
         it('false if Iris profile is not enabled', fakeAsync(() => {
-            profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -80,7 +74,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('false if settings are not available', fakeAsync(() => {
-            irisSettingsServiceMock.getCombinedCourseSettings.mockReturnValue(of(null));
+            jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(undefined));
 
             fixture = TestBed.createComponent(TutorSuggestionComponent);
             component = fixture.componentInstance;
@@ -126,6 +120,8 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('true if all conditions are met', fakeAsync(() => {
+            jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+            jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
             fixture.detectChanges();
             tick();
             expect(component['irisEnabled']).toBe(true);
@@ -133,39 +129,46 @@ describe('TutorSuggestionComponent', () => {
     });
 
     it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
+        const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+        jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentError').mockReturnValue(of());
+        (chatService as any).sessionId$ = of(123);
         component['irisEnabled'] = true;
         component.ngOnChanges();
-        chatServiceMock.sessionId$.next(123);
         tick();
-        expect(chatServiceMock.requestTutorSuggestion).toHaveBeenCalled();
-    }));
-
-    it('should react to emitted sessionId', fakeAsync(() => {
-        component['irisEnabled'] = true;
-        component.ngOnChanges();
-        chatServiceMock.sessionId$.next(456);
-        tick();
-        expect(chatServiceMock.requestTutorSuggestion).toHaveBeenCalled();
+        expect(requestTutorSuggestionSpy).toHaveBeenCalled();
     }));
 
     it('should unsubscribe from all services on destroy', () => {
-        const profileUnsubSpy = jest.spyOn(component['profileSubscription'], 'unsubscribe');
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
+        jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentError').mockReturnValue(of());
+        jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+        (chatService as any).sessionId$ = of(123);
+        component.ngOnInit();
         const irisUnsubSpy = jest.spyOn(component['irisSettingsSubscription'], 'unsubscribe');
         const msgUnsubSpy = jest.spyOn(component['messagesSubscription'], 'unsubscribe');
+        const stagesUnsubSpy = jest.spyOn(component['stagesSubscription'], 'unsubscribe');
+        const errorUnsubSpy = jest.spyOn(component['errorSubscription'], 'unsubscribe');
+        const tutorSuggestionUnsubSpy = jest.spyOn(component['tutorSuggestionSubscription'], 'unsubscribe');
 
         component.ngOnDestroy();
 
-        expect(profileUnsubSpy).toHaveBeenCalled();
         expect(irisUnsubSpy).toHaveBeenCalled();
         expect(msgUnsubSpy).toHaveBeenCalled();
+        expect(stagesUnsubSpy).toHaveBeenCalled();
+        expect(errorUnsubSpy).toHaveBeenCalled();
+        expect(tutorSuggestionUnsubSpy).toHaveBeenCalled();
     });
 
     it('should update suggestion in fetchMessages if last message is from LLM', fakeAsync(() => {
-        const mockMessages = [
-            { id: 1, sender: 'USER' },
-            { id: 2, sender: 'LLM' },
-        ];
-        chatServiceMock.currentMessages.mockReturnValue(of(mockMessages));
+        const mockMessages = [{ id: 1, sender: 'USER' } as IrisMessage, { id: 2, sender: 'LLM' } as IrisMessage];
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+        jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
+        jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         component['fetchMessages']();
         tick();
         expect(component.suggestion).toEqual(mockMessages[1]);

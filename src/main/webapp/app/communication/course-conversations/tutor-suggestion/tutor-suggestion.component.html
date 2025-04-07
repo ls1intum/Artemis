@@ -13,7 +13,20 @@
                         }
                     </div>
                 }
+            } @else {
+                @if (error) {
+                    <div class="iris-suggestion-text">
+                        <fa-icon [icon]="faCircleXmark" />
+                        {{ error }}
+                    </div>
+                } @else {
+                    <div class="iris-suggestion-text">
+                        <fa-icon [icon]="faArrowsRotate" animation="spin" />
+                        Loading suggestion
+                    </div>
+                }
             }
+            <jhi-chat-status-bar [stages]="stages" />
         </div>
     </div>
 }

@@ -11,6 +11,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Course } from 'app/core/shared/entities/course.model';
 import { Post } from 'app/communication/shared/entities/post.model';
+import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
+import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -20,7 +25,7 @@ import { Post } from 'app/communication/shared/entities/post.model';
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe],
+    imports: [IrisLogoComponent, AsPipe, FaIconComponent, ChatStatusBarComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
@@ -28,33 +33,48 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     private irisSettingsService = inject(IrisSettingsService);
 
     messagesSubscription: Subscription;
-    profileSubscription: Subscription;
     irisSettingsSubscription: Subscription;
+    tutorSuggestionSubscription: Subscription;
+    stagesSubscription: Subscription;
+    errorSubscription: Subscription;
 
     messages: IrisMessage[];
     suggestion: IrisMessage | undefined;
+
+    stages?: IrisStageDTO[] = [];
+    error?: IrisErrorMessageKey;
 
     irisEnabled = false;
 
     post = input<Post>();
     course = input<Course>();
 
+    faArrowsRotate = faArrowsRotate;
+    faCircleXmark = faCircleXmark;
+
     ngOnInit(): void {
         const post = this.post();
         const course = this.course();
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
-                if (course?.id && post) {
-                    this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
-                        if (this.irisEnabled) {
-                            this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
-                            this.fetchMessages();
-                        }
-                    });
+        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+            return;
+        }
+        if (course?.id && post) {
+            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(course.id).subscribe((settings) => {
+                this.irisEnabled = !!settings?.irisTutorSuggestionSettings?.enabled;
+                if (this.irisEnabled) {
+                    this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                    this.chatService.sessionId$
+                        .pipe(
+                            filter((id): id is number => !!id), // Ensuring that id is not null or undefined
+                            take(1),
+                        )
+                        .subscribe(() => {
+                            this.requestSuggestion();
+                        });
+                    this.fetchMessages();
                 }
-            }
-        });
+            });
+        }
     }
 
     ngOnChanges(): void {
@@ -80,8 +100,10 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnDestroy() {
         this.messagesSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
+        this.tutorSuggestionSubscription?.unsubscribe();
+        this.stagesSubscription?.unsubscribe();
+        this.errorSubscription?.unsubscribe();
     }
 
     /**
@@ -91,7 +113,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     requestSuggestion(): void {
         const post = this.post();
         if (post) {
-            this.chatService.requestTutorSuggestion(post).subscribe();
+            this.tutorSuggestionSubscription = this.chatService.requestTutorSuggestion(post).subscribe();
         }
     }
 
@@ -105,6 +127,10 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
             }
             this.messages = messages;
         });
+        this.stagesSubscription = this.chatService.currentStages().subscribe((stages) => {
+            this.stages = stages;
+        });
+        this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
 
     protected readonly IrisLogoSize = IrisLogoSize;
