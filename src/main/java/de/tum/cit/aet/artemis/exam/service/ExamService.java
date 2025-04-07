@@ -634,10 +634,10 @@ public class ExamService {
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
+                    lastSubmission.setResults(List.of(latestResult));
                 }
                 participation.setSubmissions(Set.of(lastSubmission));
             }
-            lastSubmission.setResults(null);
         }
     }
 
