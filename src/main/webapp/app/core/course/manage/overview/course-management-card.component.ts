@@ -124,10 +124,8 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
-            this.lectureEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_LECTURE);
-        });
+        this.atlasEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_ATLAS);
+        this.lectureEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_LECTURE);
     }
 
     ngOnChanges() {
