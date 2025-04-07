@@ -2,12 +2,12 @@ import { AfterViewChecked, ChangeDetectorRef, Component, Input, OnChanges, OnIni
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Observable } from 'rxjs';
-import { AthenaService } from 'app/assessment/shared/athena.service';
+import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AsyncPipe, NgStyle } from '@angular/common';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({

@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Post } from 'app/communication/shared/entities/post.model';
