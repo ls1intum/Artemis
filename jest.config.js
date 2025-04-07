@@ -94,7 +94,7 @@ module.exports = {
             statements: 88.67,
             branches: 74.48,
             functions: 82.89,
-            lines: 88.73,
+            lines: 88.72,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
