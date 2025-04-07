@@ -20,16 +20,24 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('Course Management Exercises Component', () => {
     let comp: CourseManagementExercisesComponent;
     let fixture: ComponentFixture<CourseManagementExercisesComponent>;
+
+    let profileService: ProfileService;
+    let getProfileInfoSub: jest.SpyInstance;
+
     const course = new Course();
     course.id = 123;
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
     const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             declarations: [
@@ -53,12 +61,20 @@ describe('Course Management Exercises Component', () => {
                     useValue: route,
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        }).compileComponents();
-        fixture = TestBed.createComponent(CourseManagementExercisesComponent);
-        comp = fixture.componentInstance;
+        })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(CourseManagementExercisesComponent);
+                comp = fixture.componentInstance;
+
+                profileService = TestBed.inject(ProfileService);
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+            });
     });
 
     afterEach(() => {
