@@ -54,8 +54,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findByIdWithEagerAssessor(@Param("resultId") long resultId);
 
-    List<Result> findBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
-
     @EntityGraph(type = LOAD, attributePaths = "submission")
     List<Result> findAllBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 

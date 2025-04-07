@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.test_repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,6 +26,8 @@ public interface ResultTestRepository extends ResultRepository {
 
     @EntityGraph(type = LOAD, attributePaths = "feedbacks")
     Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
+
+    List<Result> findBySubmissionParticipationIdOrderByCompletionDateDesc(long participationId);
 
     default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
         return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
