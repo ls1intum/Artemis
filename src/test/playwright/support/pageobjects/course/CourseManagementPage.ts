@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Management page.

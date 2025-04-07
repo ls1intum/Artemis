@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { NgClass } from '@angular/common';

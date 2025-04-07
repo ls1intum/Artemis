@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Observable, catchError, map, of, throwError } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CoursePrerequisitesButtonComponent } from '../course-prerequisites-button/course-prerequisites-button.component';

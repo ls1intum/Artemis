@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { BehaviorSubject, EMPTY, Observable } from 'rxjs';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';

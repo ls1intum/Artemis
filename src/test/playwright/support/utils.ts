@@ -5,7 +5,7 @@ import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, TIME_FORMAT 
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
