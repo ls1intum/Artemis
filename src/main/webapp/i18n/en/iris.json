@@ -126,7 +126,8 @@
                 "allFaqsError": "Error while sending all Faqs to Pyris",
                 "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
                 "pyrisUnavailable": "Pyris is currently unavailable.",
-                "pyrisError": "An error occurred while getting ingestion state from Pyris."
+                "pyrisError": "An error occurred while getting ingestion state from Pyris.",
+                "transcriptionIngestionError": "Error while sending a lecture transcription to Pyris"
             }
         }
     }
