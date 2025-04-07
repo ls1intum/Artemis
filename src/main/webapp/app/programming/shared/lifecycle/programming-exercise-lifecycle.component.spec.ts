@@ -30,6 +30,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
     const afterDueDate = dayjs().add(7, 'days');
     const exampleSolutionPublicationDate = dayjs().add(9, 'days');
     let exercise: ProgrammingExercise;
+    let athenaService: AthenaService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
