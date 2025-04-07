@@ -4,10 +4,10 @@ import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { NgClass, NgStyle } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { IncludedInScoreBadgeComponent } from '../../exercise/exercise-headers/included-in-score-badge.component';
-import { DifficultyBadgeComponent } from '../../exercise/exercise-headers/difficulty-badge.component';
+import { IncludedInScoreBadgeComponent } from '../exercise-headers/included-in-score-badge/included-in-score-badge.component';
+import { DifficultyBadgeComponent } from '../exercise-headers/difficulty-badge/difficulty-badge.component';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 interface ShowTagsConfig {

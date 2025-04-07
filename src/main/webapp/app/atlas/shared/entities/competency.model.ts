@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';

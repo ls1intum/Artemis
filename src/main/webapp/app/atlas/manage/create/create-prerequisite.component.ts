@@ -6,7 +6,7 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { CreateCourseCompetencyComponent } from 'app/atlas/manage/create/create-course-competency.component';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';

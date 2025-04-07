@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';

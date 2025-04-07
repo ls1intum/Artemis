@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
-import { generate } from 'app/quiz/manage/temp-id';
+import { generate } from 'app/quiz/manage/util/temp-id';
 
 export interface CanBecomeInvalid {
     invalid: boolean;
