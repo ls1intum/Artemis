@@ -27,7 +27,7 @@ import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-to
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
-import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
+import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures.component';

@@ -15,7 +15,7 @@ import {
     faTableCells,
     faUserCheck,
 } from '@fortawesome/free-solid-svg-icons';
-import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
+import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 
 describe('CourseSidebarItemService', () => {
     let service: CourseSidebarItemService;

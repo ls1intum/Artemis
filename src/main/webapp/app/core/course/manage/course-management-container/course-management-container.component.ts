@@ -34,7 +34,7 @@ import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.
 import { facSidebar } from 'app/shared/icons/icons';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
-import { CourseSidebarItemService } from 'app/core/course/shared/sidebar-item.service';
+import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 import { MetisConversationService } from 'app/communication/metis-conversation.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
