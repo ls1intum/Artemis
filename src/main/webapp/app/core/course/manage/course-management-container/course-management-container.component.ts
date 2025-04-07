@@ -130,10 +130,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     facSidebar = facSidebar;
     faQuestion = faQuestion;
 
-    FeatureToggle = FeatureToggle;
-    CachingStrategy = CachingStrategy;
-    ButtonSize = ButtonSize;
-    isCommunicationEnabled = isCommunicationEnabled;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly CachingStrategy = CachingStrategy;
+    protected readonly ButtonSize = ButtonSize;
 
     async ngOnInit() {
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
@@ -160,7 +159,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private subscribeToCourseUpdates(courseId: number) {
         this.courseSub?.unsubscribe();
         this.courseSub = this.courseManagementService.find(courseId).subscribe((courseResponse) => {
-            this.course.set(courseResponse.body!);
+            if (courseResponse.body) {
+                this.course.set(courseResponse.body!);
+            }
             this.sidebarItems.set(this.getSidebarItems());
             this.updateRecentlyAccessedCourses().catch();
         });
@@ -226,12 +227,16 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         const sidebarItems: SidebarItem[] = [];
         const currentCourse = this.course();
 
+        if (!currentCourse) {
+            return [];
+        }
+
         sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
-        if (currentCourse?.isAtLeastEditor) {
+        if (currentCourse.isAtLeastEditor) {
             sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastInstructor && this.irisEnabled()) {
+        if (currentCourse.isAtLeastInstructor && this.irisEnabled()) {
             sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
 
@@ -239,32 +244,32 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
 
-        if (currentCourse?.tutorialGroupsConfiguration || currentCourse?.isAtLeastInstructor) {
+        if (currentCourse.tutorialGroupsConfiguration || currentCourse.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled()) {
+        if (currentCourse.isAtLeastInstructor && this.atlasEnabled()) {
             sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastInstructor && this.atlasEnabled() && this.learningPathsActive()) {
+        if (currentCourse.isAtLeastInstructor && this.atlasEnabled() && this.learningPathsActive()) {
             sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
         }
 
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
 
-        if (currentCourse?.isAtLeastInstructor) {
+        if (currentCourse.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getScoresItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastTutor && currentCourse?.faqEnabled) {
+        if (currentCourse.isAtLeastTutor && currentCourse.faqEnabled) {
             sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
 
-        if (currentCourse?.isAtLeastInstructor && this.localCIActive()) {
+        if (currentCourse.isAtLeastInstructor && this.localCIActive()) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
-        if (this.ltiEnabled() && currentCourse?.onlineCourse && currentCourse?.isAtLeastInstructor) {
+        if (this.ltiEnabled() && currentCourse.onlineCourse && currentCourse.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }
 
@@ -342,7 +347,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',
-                    content: 'Deleted a course',
+                    content: 'artemisApp.course.deleted',
                 });
                 this.dialogErrorSource.next('');
                 this.router.navigate(['/course-management']);

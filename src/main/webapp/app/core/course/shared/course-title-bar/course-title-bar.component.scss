@@ -13,7 +13,6 @@
     &:focus {
         border-color: transparent;
     }
-
     transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 
@@ -26,7 +25,6 @@
     height: 100%;
     z-index: -2;
     position: absolute;
-
     transition: background-color $transition-color-length ease-in-out;
 }
 
@@ -38,7 +36,6 @@
     opacity: 0;
     z-index: -1;
     background-color: var(--module-bg);
-
     transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 
@@ -75,7 +72,6 @@
     display: inline-block;
     overflow: hidden;
     margin-left: 0.3rem;
-
     transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
 }
 

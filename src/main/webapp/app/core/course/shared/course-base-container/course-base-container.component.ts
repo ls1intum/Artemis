@@ -45,8 +45,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected courseStorageService = inject(CourseStorageService);
     protected route = inject(ActivatedRoute);
     protected changeDetectorRef = inject(ChangeDetectorRef);
-    metisConversationService = inject(MetisConversationService);
-    router = inject(Router);
+    protected metisConversationService = inject(MetisConversationService);
+    protected router = inject(Router);
     protected courseAccessStorageService = inject(CourseAccessStorageService);
     protected profileService = inject(ProfileService);
     protected ltiService = inject(LtiService);
@@ -61,7 +61,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected loadCourseSubscription?: Subscription;
     dashboardSubscription: Subscription;
 
-    // Common state properties using signals
     courseId = signal<number>(0);
     course = signal<Course | undefined>(undefined);
     courses = signal<Course[] | undefined>(undefined);
@@ -87,7 +86,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     conversationServiceInstantiated = signal<boolean>(false);
     checkedForUnreadMessages = signal<boolean>(false);
 
-    // Controls handling properties
     protected controlsEmbeddedView?: EmbeddedViewRef<any>;
     controls = signal<TemplateRef<any> | undefined>(undefined);
     public controlConfiguration = signal<BarControlConfiguration | undefined>(undefined);
@@ -144,7 +142,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         });
     }
 
-    // Abstract methods to be implemented by child classes
     abstract handleCourseIdChange(courseId: number): void;
 
     protected abstract getSidebarItems(): SidebarItem[];
@@ -159,7 +156,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     abstract switchCourse(course: Course): void;
 
     ngAfterViewInit() {
-        // Check if controls mount point is available, if not, wait for it
         if (this.controlsViewContainer) {
             this.tryRenderControls();
         } else {
@@ -226,7 +222,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             });
         }
 
-        // Handle component specific activations in child classes
         this.handleComponentActivation(componentRef);
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
@@ -300,19 +295,16 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     }
 
     getPageTitle(): void {
-        // Get the most deeply active route
         let activeRoute = this.route.snapshot;
         while (activeRoute.firstChild) {
             activeRoute = activeRoute.firstChild;
         }
 
-        // Now get the page title from the most deeply active route
         const routePageTitle: string = activeRoute.data?.pageTitle;
 
         if (routePageTitle) {
             this.pageTitle.set(routePageTitle);
         } else {
-            // Fallback if no page title found
             this.pageTitle.set('');
         }
     }
