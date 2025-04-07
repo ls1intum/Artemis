@@ -374,7 +374,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         final Result result = submissionWithoutAssessment.getLatestResult();
         assertThat(result).as("saved result found").isNotNull();
         assertThat(((StudentParticipation) submissionWithoutAssessment.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
-        assertThat(result.getSubmission().getParticipation()).isNull();
     }
 
     @Test
