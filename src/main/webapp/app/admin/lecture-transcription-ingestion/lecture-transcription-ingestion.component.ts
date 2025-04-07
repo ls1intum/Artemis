@@ -1,15 +1,14 @@
 import { Component, inject } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FormsModule } from '@angular/forms';
-import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/lecture-transcription.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { LectureTranscriptionService } from 'app/admin/lecture-transcription-ingestion/service/lecture-transcription.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 
 @Component({
     selector: 'jhi-lecture-transcription-ingestion',
     templateUrl: './lecture-transcription-ingestion.component.html',
     styleUrl: './lecture-transcription-ingestion.component.scss',
-    standalone: true,
     imports: [FormsModule, ButtonComponent],
 })
 export class LectureTranscriptionIngestionComponent {
