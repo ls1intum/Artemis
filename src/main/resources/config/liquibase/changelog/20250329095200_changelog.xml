@@ -4,43 +4,11 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <!--
       Migration to convert `jhi_type` and `discriminator` columns in `submission` table
-      from VARCHAR to ENUM. Supports PostgreSQL and MySQL, however PostgreSQL does not support discriminators.
+      from VARCHAR to ENUM. Supports only MySQL.
       Brings storage and performance improvements (esp. relevant with ~8 million rows).
     -->
 
-    <!-- Step 1: Create ENUM type in PostgreSQL -->
-    <changeSet id="20250329-11-create-enums-submission-postgres" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql"/>
-        </preConditions>
-
-        <sql>
-            CREATE TYPE SubmissionType AS ENUM (
-            'MANUAL',
-            'TIMEOUT',
-            'TEST',
-            'OTHER',
-            'INSTRUCTOR',
-            'EXTERNAL',
-            'ILLEGAL'
-        );
-        </sql>
-    </changeSet>
-
-    <!-- Step 2: Alter PostgreSQL column to use enum types -->
-    <changeSet id="20250329-12-alter-columns-submission-postgres" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql"/>
-        </preConditions>
-
-        <sql>
-            ALTER TABLE submission
-            ALTER COLUMN jhi_type TYPE SubmissionType
-        USING jhi_type::SubmissionType;
-        </sql>
-    </changeSet>
-
-    <!-- Step 3: Alter MySQL columns using inline ENUM syntax -->
+    <!-- Alter MySQL columns using inline ENUM syntax -->
     <changeSet id="20250329-13-alter-columns-submission-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
             <or>
