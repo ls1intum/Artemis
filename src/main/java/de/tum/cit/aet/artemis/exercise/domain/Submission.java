@@ -130,7 +130,9 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @JsonIgnore
     public Result getLatestResult() {
         if (results != null && !results.isEmpty()) {
-            return results.getLast();
+            Result latestResult = results.getLast();
+            latestResult.setSubmission(this);
+            return latestResult;
         }
         return null;
     }

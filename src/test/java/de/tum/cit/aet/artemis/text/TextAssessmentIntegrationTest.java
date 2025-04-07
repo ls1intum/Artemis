@@ -531,7 +531,6 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);
         var submission = participation.getSubmissions().iterator().next();
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(participation.getResults()).hasSize(2);
     }
 
     @Test
@@ -1238,7 +1237,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLatestResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
