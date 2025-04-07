@@ -121,6 +121,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     submission.participation = participation;
     submission.id = 1234;
     submission.latestResult = result;
+    participation.submissions = [submission];
 
     const unassessedSubmission = new ProgrammingSubmission();
     unassessedSubmission.id = 12;

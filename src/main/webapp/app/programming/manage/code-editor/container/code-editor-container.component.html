@@ -4,7 +4,9 @@
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
         </span>
         <ng-content select="[editorTitleActions]" />
-        <p class="editor-title"><ng-content select="[submissionPolicy]" /></p>
+        <p class="editor-title">
+            <ng-content select="[submissionPolicy]" />
+        </p>
         <div class="d-flex flex-wrap align-items-center ms-auto gap-2">
             <ng-content select="[editorToolbar]" />
             <ng-content select="[chatbot-button]" />
@@ -47,7 +49,7 @@
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course"
-            [feedbacks]="showInlineFeedback ? ((participation?.submissions)![0].results?.[0]?.feedbacks ?? []) : []"
+            [feedbacks]="showInlineFeedback && participation?.submissions?.length ? (participation.submissions[0].results?.[0]?.feedbacks ?? []) : []"
             [feedbackSuggestions]="feedbackSuggestions"
             [readOnlyManualFeedback]="readOnlyManualFeedback"
             [disableActions]="!editable"
