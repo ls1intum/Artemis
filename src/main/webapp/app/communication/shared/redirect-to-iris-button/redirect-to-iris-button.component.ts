@@ -43,7 +43,7 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
     TEXT = IrisLogoSize.TEXT;
 
     ngOnInit(): void {
-        const isIrisActive = this.profileService.isProfileActive(PROFILE_IRIS);
+        const isIrisActive = this.profileService.isProfileActive()(PROFILE_IRIS);
         this.irisEnabled.set(isIrisActive);
         if (!isIrisActive) {
             return;
