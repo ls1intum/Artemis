@@ -19,10 +19,12 @@ import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -59,6 +61,12 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.addEmptyCourse();
         course.setAccuracyOfScores(1);
+        var exercise = new TextExercise().course(course);
+        ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
+        participation.setExercise(exercise);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        result.setSubmission(submission);
     }
 
     @Test
@@ -133,10 +141,12 @@ class ResultTest extends AbstractSpringIntegrationIndependentTest {
 
         ProgrammingExerciseStudentParticipation participation = new ProgrammingExerciseStudentParticipation();
         participation.setExercise(exercise);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        result.setSubmission(submission);
         result.setFeedbacks(new ArrayList<>(List.of(tst1, tst2)));
 
         result.filterSensitiveFeedbacks(true);
-
         assertThat(result.getFeedbacks()).hasSize(2).allMatch(feedback -> feedback.getTestCase().getTestName() == null);
     }
 
