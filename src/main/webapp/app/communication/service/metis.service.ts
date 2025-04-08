@@ -178,7 +178,7 @@ export class MetisService implements OnDestroy {
         if (
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
-            postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
+            postContextFilter?.conversationIds !== this.currentPostContextFilter?.conversationIds ||
             this.hasDifferentContexts(postContextFilter) ||
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
@@ -311,7 +311,7 @@ export class MetisService implements OnDestroy {
     public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
         const pinnedFilter: PostContextFilter = {
             courseId: this.courseId,
-            conversationId: conversationId,
+            conversationIds: [conversationId],
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
             pinnedOnly: true,
@@ -658,15 +658,13 @@ export class MetisService implements OnDestroy {
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
-        const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
+        const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
+        const postIsPrivate = !!this.currentPostContextFilter.filterToCourseWide && !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
-        const postIsNotFromSelectedCourseWideChannels =
-            this.currentPostContextFilter.courseWideChannelIds?.length !== undefined &&
-            (!getAsChannelDTO(postDTO.post.conversation)?.isCourseWide ||
-                (this.currentPostContextFilter.courseWideChannelIds.length > 0 && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId)));
 
-        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotFromCurrentPlagiarismCase) {
+        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
 
@@ -697,8 +695,8 @@ export class MetisService implements OnDestroy {
                     }
                 }
 
-                if (this.currentPostContextFilter.conversationId && postDTO.post.author?.id !== this.user.id) {
-                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationId).subscribe();
+                if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
+                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds[0]).subscribe();
                 }
 
                 this.addTags(postDTO.post.tags);
@@ -897,10 +895,10 @@ export class MetisService implements OnDestroy {
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {
-        this.currentPostContextFilter.courseWideChannelIds?.sort((a, b) => a - b);
-        other.courseWideChannelIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.conversationIds?.sort((a, b) => a - b);
+        other.conversationIds?.sort((a, b) => a - b);
 
-        return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+        return this.currentPostContextFilter.conversationIds?.toString() !== other.conversationIds?.toString();
     }
 
     /**
