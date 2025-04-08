@@ -826,6 +826,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetMessagesForPrivateConversationId_Forbidden() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        var oneToOneChat = directPost.getConversation();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", oneToOneChat.getId().toString());
+        params.add("size", "50");
+
+        request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.FORBIDDEN, Post.class, params);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldIncludeDirectMessagesWhenFindingMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
