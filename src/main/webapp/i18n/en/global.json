@@ -91,6 +91,7 @@
                 "password": "Password",
                 "sessions": "Sessions",
                 "login": "Sign in",
+                "loginWithPasskey": "Sign in with a passkey",
                 "logout": "Sign out",
                 "register": "Register"
             },

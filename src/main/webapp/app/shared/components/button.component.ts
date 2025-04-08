@@ -55,6 +55,8 @@ export enum TooltipPlacement {
     imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ButtonComponent {
+    protected readonly faCircleNotch = faCircleNotch;
+
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
     // Fa-icon name.
@@ -72,7 +74,4 @@ export class ButtonComponent {
     @Input() shouldToggle = false;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
-
-    // Icons
-    readonly faCircleNotch = faCircleNotch;
 }

@@ -103,17 +103,21 @@
                                 }
                                 <span jhiTranslate="login.form.button"></span>
                             </button>
-                            <jhi-button
-                                class="d-flex"
-                                id="passkey-login-button"
-                                [btnType]="ButtonType.PRIMARY"
-                                [btnSize]="ButtonSize.SMALL"
-                                title="Login with passkey"
-                                type="button"
-                                (onClick)="loginWithPasskey()"
-                            />
                         </div>
                     </form>
+                    <div class="d-flex align-items-center my-3">
+                        <div class="flex-grow-1 border-top"></div>
+                        <span class="mx-3 text-muted">Or</span>
+                        <div class="flex-grow-1 border-top"></div>
+                    </div>
+                    <jhi-button
+                        id="passkey-login-button"
+                        [btnType]="ButtonType.SECONDARY"
+                        [icon]="faKey"
+                        title="global.menu.account.loginWithPasskey"
+                        type="button"
+                        (onClick)="loginWithPasskey()"
+                    />
                     <div class="text-center">
                         @if (isRegistrationEnabled) {
                             <div>

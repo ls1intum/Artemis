@@ -10,7 +10,7 @@ import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 
 import { FormsModule } from '@angular/forms';
@@ -30,6 +30,7 @@ import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/weba
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
     protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
 
