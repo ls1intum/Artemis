@@ -8,6 +8,7 @@ import angularTemplateParser from '@angular-eslint/template-parser';
 import angular from 'angular-eslint';
 import tseslint from 'typescript-eslint';
 import eslint from '@eslint/js';
+import boundaries from 'eslint-plugin-boundaries';
 
 export default tseslint.config(
     {
@@ -185,4 +186,74 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+    {
+        files: ['src/main/webapp/app/**/*.ts'],
+        plugins: {
+            boundaries
+        },
+        settings: {
+            // Define element types based on module folder structure.
+            "boundaries/elements": [
+                // For modules with three subfolders (overview, manage, shared):
+                {
+                    type: "module-overview",
+                    pattern: "src/main/webapp/app/*/overview/**",
+                    capture: ["module"]
+                },
+                {
+                    type: "module-manage",
+                    pattern: "src/main/webapp/app/*/manage/**",
+                    capture: ["module"]
+                },
+                {
+                    type: "module-shared",
+                    pattern: "src/main/webapp/app/*/shared/**",
+                    capture: ["module"]
+                },
+                // For flat modules, split into internal vs. shared.
+                // Assume that flat modules place their shared code in a subfolder named `shared`
+                // and that anything outside that folder is considered internal.
+                {
+                    type: "module-flat-shared",
+                    pattern: "src/main/webapp/app/{core,buildagent,communication}/shared/**",
+                    capture: ["module"]
+                },
+                {
+                    type: "module-flat-internal",
+                    pattern: "src/main/webapp/app/{core,buildagent,communication}/**",
+                    // Exclude the shared folder from being considered “internal”
+                    // (Some plugins support an “ignore” property; if not, you can use a pattern that excludes it.)
+                    ignore: "src/main/webapp/app/{core,buildagent,communication}/shared/**",
+                    capture: ["module"]
+                },
+                // Global shared module – treated as unrestricted
+                {
+                    type: "global-shared",
+                    pattern: "src/main/webapp/app/shared/**"
+                }
+            ]
+        },
+        rules: {
+            // Enforce boundaries with custom rules:
+            "boundaries/element-types": ["error", {
+                default: "allow",
+                rules: [
+                    // 1. Prevent a file in a module's overview from importing from its own manage folder, and vice versa.
+                    { from: "module-overview", disallow: ["module-manage", { module: "${from.module}" }] },
+                    { from: "module-manage",   disallow: ["module-overview", { module: "${from.module}" }] },
+
+                    // 2. Overview or manage files must only import from the shared folder of any module.
+                    //    Disallow cross-module import of overview, manage, or flat module files.
+                    {
+                        from: ["module-overview", "module-manage"],
+                        disallow: [
+                            ["module-overview", { module: "!${from.module}" }],
+                            ["module-manage",   { module: "!${from.module}" }],
+                            ["module-flat",     { module: "!${from.module}" }]
+                        ]
+                    }
+                ]
+            }]
+        }
+    }
 );
