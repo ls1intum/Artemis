@@ -5,7 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faBan, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
 import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
@@ -32,7 +32,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
-    protected readonly faEdit = faEdit;
+    protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
     protected readonly faBan = faBan;
