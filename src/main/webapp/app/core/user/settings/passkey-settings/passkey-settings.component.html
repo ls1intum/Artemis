@@ -34,7 +34,14 @@
                                     {{ passkey.lastUsed | artemisDate }}
                                 </td>
                                 <td>
-                                    <button jhiDeleteButton (delete)="deletePasskey(passkey)" [disabled]="isDeletingPasskey" [dialogError]="dialogError$">
+                                    <button
+                                        jhiDeleteButton
+                                        (delete)="deletePasskey(passkey)"
+                                        [disabled]="isDeletingPasskey"
+                                        [dialogError]="dialogError$"
+                                        deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
+                                        [fetchEntitySummary]="getDeleteSummary(passkey)"
+                                    >
                                         <fa-icon [icon]="faTrash" />
                                     </button>
                                 </td>

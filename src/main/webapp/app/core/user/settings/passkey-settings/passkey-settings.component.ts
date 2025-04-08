@@ -7,15 +7,16 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
-import { Subject, Subscription, tap } from 'rxjs';
+import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/utils';
 import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { getOS } from 'app/shared/util/os-detector.util';
+import { TranslateService } from '@ngx-translate/core';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -41,6 +42,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private webauthnApiService = inject(WebauthnApiService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
+    private translateService = inject(TranslateService);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -50,6 +52,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     currentUser = signal<User | undefined>(undefined);
 
+    deleteMessage = '';
     isDeletingPasskey = false;
 
     private authStateSubscription: Subscription;
@@ -143,6 +146,24 @@ export class PasskeySettingsComponent implements OnDestroy {
                 userVerification: 'discouraged', // a little less secure than 'preferred' or 'required', but more user-friendly
             },
         };
+    }
+
+    getDeleteMessage(passkey: PasskeyDto) {
+        return this.translateService.instant('artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion', { passkeyLabel: passkey.label });
+    }
+
+    getDeleteSummary(passkey: PasskeyDto | undefined): Observable<EntitySummary> | undefined {
+        if (!passkey) {
+            return undefined; // Explicitly return undefined if passkey is not provided
+        }
+
+        const summary: EntitySummary = {
+            'artemisApp.userSettings.passkeySettingsPage.label': passkey.label,
+            'artemisApp.userSettings.passkeySettingsPage.created': passkey.created,
+            'artemisApp.userSettings.passkeySettingsPage.lastUsed': passkey.lastUsed,
+        };
+
+        return of(summary); // Return an Observable<EntitySummary> if passkey is valid
     }
 
     async deletePasskey(passkey: PasskeyDto) {

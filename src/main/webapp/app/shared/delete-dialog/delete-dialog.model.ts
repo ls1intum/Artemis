@@ -20,7 +20,7 @@ export enum ActionType {
  * Key is i18n key, value is the value that will be displayed
  */
 export interface EntitySummary {
-    [key: string]: number | boolean | undefined;
+    [key: string]: string | number | boolean | undefined;
 }
 
 /**

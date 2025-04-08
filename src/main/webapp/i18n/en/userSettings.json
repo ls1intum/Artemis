@@ -91,7 +91,7 @@
                 "learnMore": "Learn more about passkeys.",
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "actions": "Actions",
-                "deletePasskeyQuestion": "Do you really want to delete your passkey {passkeyName} for passwordless authentication with Artemis?",
+                "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
                 "noPasskeyRegistered": "You have not registered any passkeys with Artemis yet.",
                 "addNewPasskey": "Add a passkey",
                 "label": "Label",
