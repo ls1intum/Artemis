@@ -11,7 +11,6 @@ import { Subject, Subscription, tap } from 'rxjs';
 import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/utils';
-import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -40,7 +39,6 @@ export class PasskeySettingsComponent implements OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private webauthnApiService = inject(WebauthnApiService);
-    private webauthnService = inject(WebauthnService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
 
     private dialogErrorSource = new Subject<string>();
@@ -59,7 +57,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.loadCurrentUser();
 
         effect(() => {
-            this.loadPasskeysWhenUserDetailsChange();
+            this.loadPasskeysWhenUserDetailsChange().then();
         });
     }
 
@@ -79,17 +77,11 @@ export class PasskeySettingsComponent implements OnDestroy {
                 throw new Error('User or Username is not defined');
             }
             const options = await this.webauthnApiService.getRegistrationOptions();
-            const credentialOptions = this.createCredentialOptions(options, user);
 
+            const credentialOptions = this.createCredentialOptions(options, user);
             const credential = await navigator.credentials.create({
                 publicKey: credentialOptions,
             });
-
-            if (!credential) {
-                // TODO check if server fails here anyways
-                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
-                throw new Error('Invalid credential');
-            }
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {
@@ -105,17 +97,6 @@ export class PasskeySettingsComponent implements OnDestroy {
             }
         }
         await this.updateRegisteredPasskeys();
-    }
-
-    async loginWithPublicKeyCredential() {
-        const credential = await this.webauthnService.getCredential();
-
-        if (!credential || credential.type != 'public-key') {
-            alert("Credential is undefined or type is not 'public-key'");
-            return;
-        }
-
-        await this.webauthnApiService.loginWithPasskey(credential);
     }
 
     private loadCurrentUser() {
@@ -173,10 +154,5 @@ export class PasskeySettingsComponent implements OnDestroy {
         }
         this.isDeletingPasskey = false;
         this.dialogErrorSource.next('');
-    }
-
-    editPasskey() {
-        // TODO
-        this.alertService.addErrorAlert('Not implemented yet');
     }
 }

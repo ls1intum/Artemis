@@ -1,6 +1,7 @@
 export type RegisterPasskeyDto = {
     publicKey: {
-        credential: Credential;
+        /** should always be defined, otherwise the server won't accept the passkey registration */
+        credential: Credential | null;
         label: string;
     };
 };
