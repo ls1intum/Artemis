@@ -28,7 +28,9 @@
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
-        <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">Are you sure you want to delete?</p>
+        <p [jhiTranslate]="deleteQuestion" [translateValues]="translateValues">
+            <span jhiTranslate="entity.action.deleteQuestion"></span>
+        </p>
 
         @if (entitySummaryTitle) {
             <b [jhiTranslate]="entitySummaryTitle"></b>

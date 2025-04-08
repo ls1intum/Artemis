@@ -32,7 +32,7 @@
                 [jhiTranslate]="'artemisApp.exerciseActions.resetRepository.question' + (practiceParticipation ? 'Practice' : 'Graded')"
                 [translateValues]="{ title: exercise.title }"
             >
-                Are you sure you want to delete?
+                <span jhiTranslate="entity.action.deleteQuestion"></span>
             </p>
             @if (exercise.title) {
                 <jhi-confirm-entity-name

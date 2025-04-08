@@ -205,6 +205,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "deleteQuestion": "Are you sure you want to delete?",
             "noButtonTextDelete": "",
             "unlink": "Unlink",
             "confirm": "Confirm",

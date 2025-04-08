@@ -202,6 +202,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
