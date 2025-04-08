@@ -96,7 +96,7 @@ public abstract class CourseCompetency extends BaseCompetency {
     private CourseCompetency linkedCourseCompetency;
 
     @OneToMany(mappedBy = "competency", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CompetencyJol> competencyJols = new HashSet<>();
+    private final Set<CompetencyJol> competencyJols = new HashSet<>();
 
     public abstract String getType();
 

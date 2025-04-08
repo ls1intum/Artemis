@@ -340,7 +340,7 @@ export class CourseNotificationService {
         const isYesterday = now.subtract(1, 'day').format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
         const isSameWeek = now.startOf('week').isBefore(date) && now.endOf('week').isAfter(date);
 
-        let key = '';
+        let key: string;
 
         if (diffMinutes <= 5) {
             key = 'now';

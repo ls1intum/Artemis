@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerQuestionStatistic } from 'app/quiz/shared/entities/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';

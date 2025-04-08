@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -63,7 +63,7 @@ public class LectureUnitService {
 
     private final SlideRepository slideRepository;
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
+    private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
@@ -72,14 +72,14 @@ public class LectureUnitService {
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<PyrisWebhookService> pyrisWebhookService, Optional<CompetencyProgressApi> competencyProgressApi,
+            FileService fileService, SlideRepository slideRepository, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        this.pyrisWebhookService = pyrisWebhookService;
+        this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
         this.competencyRelationApi = competencyRelationApi;
@@ -171,7 +171,7 @@ public class LectureUnitService {
                 for (Slide slide : slides) {
                     fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
                 }
-                pyrisWebhookService.ifPresent(service -> service.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
+                irisLectureApi.ifPresent(api -> api.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
                 slideRepository.deleteAll(slides);
             }
         }
@@ -245,11 +245,11 @@ public class LectureUnitService {
         if (!(lectureUnit instanceof AttachmentUnit)) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        if (pyrisWebhookService.isEmpty()) {
+        if (irisLectureApi.isEmpty()) {
             log.error("Could not send Lecture Unit to Pyris: Pyris webhook service is not available, check if IRIS is enabled.");
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).build();
         }
-        boolean isIngested = pyrisWebhookService.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
+        boolean isIngested = irisLectureApi.get().addLectureUnitToPyrisDB((AttachmentUnit) lectureUnit) != null;
         return ResponseEntity.status(isIngested ? HttpStatus.OK : HttpStatus.BAD_REQUEST).build();
     }
 

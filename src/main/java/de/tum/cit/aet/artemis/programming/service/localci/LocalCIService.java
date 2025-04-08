@@ -80,7 +80,7 @@ public class LocalCIService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         // Empty implementation. Not needed for local CI.
     }
 

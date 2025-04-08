@@ -5,7 +5,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 export const routes: Routes = [
     {
         path: 'live',
-        loadComponent: () => import('./quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -15,7 +15,7 @@ export const routes: Routes = [
     },
     {
         path: 'practice',
-        loadComponent: () => import('./quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('./participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [],
             pageTitle: 'artemisApp.quizExercise.home.title',

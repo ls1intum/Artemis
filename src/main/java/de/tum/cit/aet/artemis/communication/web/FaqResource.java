@@ -192,7 +192,7 @@ public class FaqResource {
     @GetMapping("courses/{courseId}/faq-state/{faqState}")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<Set<FaqDTO>> getAllFaqsForCourseByStatus(@PathVariable Long courseId, @PathVariable FaqState faqState) {
-        log.debug("REST request to get all Faqs for the course with id : " + courseId + "and status " + faqState, courseId);
+        log.debug("REST request to get all Faqs for the course with id {} and status {}", courseId, faqState);
         checkShouldAccessNotAccepted(faqState, courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, faqState);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
