@@ -5,7 +5,7 @@ import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/manage/lecture-units/online-resource-dto.model';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';

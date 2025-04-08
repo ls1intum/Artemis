@@ -14,13 +14,13 @@ import {
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PostingDirective } from 'app/communication/posting.directive';
-import { MetisService } from 'app/communication/metis.service';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { MetisService } from 'app/communication/service/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -37,7 +37,7 @@ import { PostingReactionsBarComponent } from 'app/communication/posting-reaction
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 
