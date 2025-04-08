@@ -95,7 +95,7 @@ Extension Services
 Artemis allows extension with several additional services, such as:
 
 - Mobile notifications via **Hermes**
-- Automatic feedback generation using large language models (e.g., **Iris/Pyris**)
+- Automatic feedback generation using large language models (e.g., **Iris/Athena**)
 - And more...
 
 The setup for these additional services is described as part of the :ref:`extension service setup <extensions_setup>`.
