@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
@@ -26,7 +27,7 @@ public class AddedToChannelNotification extends CourseNotification {
     public AddedToChannelNotification(Long courseId, String courseTitle, String courseImageUrl, String channelModerator, String channelName, Long channelId) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.channelModerator = channelModerator;
-        this.channelName = channelName;
+        this.channelName = Objects.requireNonNullElse(channelName, "Group Chat");
         this.channelId = channelId;
     }
 

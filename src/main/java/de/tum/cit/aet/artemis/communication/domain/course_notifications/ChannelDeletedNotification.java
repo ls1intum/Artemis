@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
@@ -24,7 +25,7 @@ public class ChannelDeletedNotification extends CourseNotification {
     public ChannelDeletedNotification(Long courseId, String courseTitle, String courseImageUrl, String deletingUser, String channelName) {
         super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.deletingUser = deletingUser;
-        this.channelName = channelName;
+        this.channelName = Objects.requireNonNullElse(channelName, "Group Chat");
     }
 
     /**

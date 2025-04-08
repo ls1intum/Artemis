@@ -248,6 +248,17 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         var createdChannel = channelService.createChannel(course, channelDTO.toChannel(), Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+
+        if (createdChannel.getIsCourseWide() && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), createdChannel.getName(),
+                    createdChannel.getId());
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(
+                    Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
+
+            courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                    recipients.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
+        }
+
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 

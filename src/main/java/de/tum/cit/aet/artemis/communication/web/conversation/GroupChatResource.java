@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -108,8 +109,18 @@ public class GroupChatResource extends ConversationManagementResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
-        chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
-                NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
+
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), groupChat.getName(),
+                    groupChat.getId());
+
+            courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                    chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
+        }
+        else {
+            chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
+                    NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
+        }
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
