@@ -17,109 +17,111 @@
                     </div>
                 }
                 <div class="login-form">
-                    <form (change)="inputChange($event)" (ngSubmit)="login()" class="mb-5" name="loginForm" role="form">
-                        <div class="form-group">
-                            @if (authenticationError) {
-                                <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
-                                    <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
-                                </div>
-                            }
-                        </div>
-                        <div class="form-group pb-2">
-                            <label class="mb-2" for="username" jhiTranslate="global.form.username"></label>
-                            <input
-                                #usernameForm="ngModel"
-                                [(ngModel)]="username"
-                                [ngModelOptions]="{ updateOn: 'change' }"
-                                [pattern]="usernameRegexPattern"
-                                autocomplete="username"
-                                class="form-control"
-                                id="username"
-                                name="username"
-                                [placeholder]="usernamePlaceholderTranslated"
-                                [minlength]="USERNAME_MIN_LENGTH"
-                                [maxLength]="USERNAME_MAX_LENGTH"
-                                (ngModelChange)="checkFormValidity()"
-                                (blur)="usernameTouched = true"
-                                type="text"
-                                tabindex="1"
-                            />
-                            @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
-                                <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
-                            }
-                        </div>
-                        <div class="form-group">
-                            <div class="d-flex mb-2">
-                                <label for="password" jhiTranslate="login.form.password"></label>
-                                <div class="ms-auto">
-                                    <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request" tabindex="4"></a>
-                                </div>
+                    <div class="mb-5">
+                        <form (change)="inputChange($event)" (ngSubmit)="login()" name="loginForm" role="form">
+                            <div class="form-group">
+                                @if (authenticationError) {
+                                    <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
+                                        <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
+                                    </div>
+                                }
                             </div>
-                            <input
-                                #passwordForm="ngModel"
-                                [(ngModel)]="password"
-                                [ngModelOptions]="{ updateOn: 'change' }"
-                                autocomplete="current-password"
-                                class="form-control"
-                                id="password"
-                                name="password"
-                                type="password"
-                                [minlength]="PASSWORD_MIN_LENGTH"
-                                [maxLength]="PASSWORD_MAX_LENGTH"
-                                (ngModelChange)="checkFormValidity()"
-                                (blur)="passwordTouched = true"
-                                tabindex="2"
-                            />
-                            @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
-                                <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
-                            }
-                        </div>
-                        <div class="form-group">
-                            <div class="form-check">
-                                <label class="form-check-label" for="rememberMe">
-                                    <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
-                                    <span jhiTranslate="login.form.rememberme"></span>
-                                </label>
+                            <div class="form-group pb-2">
+                                <label class="mb-2" for="username" jhiTranslate="global.form.username"></label>
+                                <input
+                                    #usernameForm="ngModel"
+                                    [(ngModel)]="username"
+                                    [ngModelOptions]="{ updateOn: 'change' }"
+                                    [pattern]="usernameRegexPattern"
+                                    autocomplete="username"
+                                    class="form-control"
+                                    id="username"
+                                    name="username"
+                                    [placeholder]="usernamePlaceholderTranslated"
+                                    [minlength]="USERNAME_MIN_LENGTH"
+                                    [maxLength]="USERNAME_MAX_LENGTH"
+                                    (ngModelChange)="checkFormValidity()"
+                                    (blur)="usernameTouched = true"
+                                    type="text"
+                                    tabindex="1"
+                                />
+                                @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
+                                    <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
+                                }
                             </div>
-                            @if (needsToAcceptTerms) {
+                            <div class="form-group">
+                                <div class="d-flex mb-2">
+                                    <label for="password" jhiTranslate="login.form.password"></label>
+                                    <div class="ms-auto">
+                                        <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request" tabindex="4"></a>
+                                    </div>
+                                </div>
+                                <input
+                                    #passwordForm="ngModel"
+                                    [(ngModel)]="password"
+                                    [ngModelOptions]="{ updateOn: 'change' }"
+                                    autocomplete="current-password"
+                                    class="form-control"
+                                    id="password"
+                                    name="password"
+                                    type="password"
+                                    [minlength]="PASSWORD_MIN_LENGTH"
+                                    [maxLength]="PASSWORD_MAX_LENGTH"
+                                    (ngModelChange)="checkFormValidity()"
+                                    (blur)="passwordTouched = true"
+                                    tabindex="2"
+                                />
+                                @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
+                                    <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
+                                }
+                            </div>
+                            <div class="form-group">
                                 <div class="form-check">
-                                    <label class="form-check-label" for="acceptTerms">
-                                        <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
-                                        <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
+                                    <label class="form-check-label" for="rememberMe">
+                                        <input [(ngModel)]="rememberMe" checked class="form-check-input" id="rememberMe" name="rememberMe" type="checkbox" />
+                                        <span jhiTranslate="login.form.rememberme"></span>
                                     </label>
                                 </div>
-                            }
-                        </div>
-                        <div class="btn-toolbar">
-                            <button
-                                [disabled]="isSubmittingLogin || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
-                                class="btn btn-primary w-100"
-                                id="login-button"
-                                type="submit"
-                                tabindex="3"
-                            >
-                                @if (isSubmittingLogin) {
-                                    <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                @if (needsToAcceptTerms) {
+                                    <div class="form-check">
+                                        <label class="form-check-label" for="acceptTerms">
+                                            <input [(ngModel)]="userAcceptedTerms" checked class="form-check-input" id="acceptTerms" name="acceptTerms" type="checkbox" />
+                                            <a [routerLink]="['privacy']" jhiTranslate="login.form.acceptTerms"></a>
+                                        </label>
+                                    </div>
                                 }
-                                <span jhiTranslate="login.form.button"></span>
-                            </button>
+                            </div>
+                            <div class="btn-toolbar">
+                                <button
+                                    [disabled]="isSubmittingLogin || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
+                                    class="btn btn-primary w-100"
+                                    id="login-button"
+                                    type="submit"
+                                    tabindex="3"
+                                >
+                                    @if (isSubmittingLogin) {
+                                        <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
+                                    }
+                                    <span jhiTranslate="login.form.button"></span>
+                                </button>
+                            </div>
+                        </form>
+                        <div class="d-flex align-items-center my-3">
+                            <div class="flex-grow-1 border-top"></div>
+                            <span class="mx-3 text-muted">Or</span>
+                            <div class="flex-grow-1 border-top"></div>
                         </div>
-                    </form>
-                    <div class="d-flex align-items-center my-3">
-                        <div class="flex-grow-1 border-top"></div>
-                        <span class="mx-3 text-muted">Or</span>
-                        <div class="flex-grow-1 border-top"></div>
+                        <jhi-button
+                            class="d-flex"
+                            id="passkey-login-button"
+                            [btnType]="ButtonType.PRIMARY_OUTLINE"
+                            [fullWidth]="true"
+                            [icon]="faKey"
+                            title="global.menu.account.loginWithPasskey"
+                            type="button"
+                            (onClick)="loginWithPasskey()"
+                        />
                     </div>
-                    <jhi-button
-                        class="d-flex"
-                        id="passkey-login-button"
-                        [btnType]="ButtonType.PRIMARY_OUTLINE"
-                        [fullWidth]="true"
-                        [icon]="faKey"
-                        title="global.menu.account.loginWithPasskey"
-                        type="button"
-                        (onClick)="loginWithPasskey()"
-                    />
                     <div class="text-center">
                         @if (isRegistrationEnabled) {
                             <div>
