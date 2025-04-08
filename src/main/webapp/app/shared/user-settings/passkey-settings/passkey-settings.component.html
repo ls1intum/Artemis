@@ -37,25 +37,6 @@
                                     <button jhiDeleteButton (delete)="deletePasskey(passkey)" [disabled]="isDeletingPasskey" [dialogError]="dialogError$">
                                         <fa-icon [icon]="faTrash" />
                                     </button>
-                                    <!--                            <button-->
-                                    <!--                                [disabled]="false"-->
-                                    <!--                                [actionType]="ActionType.Remove"-->
-                                    <!--                                [entityTitle]="exam.title || ''"-->
-                                    <!--                                [renderButtonText]="false"-->
-                                    <!--                                [buttonSize]="ButtonSize.MEDIUM"-->
-                                    <!--                                jhiDeleteButton-->
-                                    <!--                                class="btn btn-primary ms-auto"-->
-                                    <!--                                deleteQuestion="artemisApp.studentExams.removeAllStudents.question"-->
-                                    <!--                                (delete)="removeAllStudents($event)"-->
-                                    <!--                                [dialogError]="dialogError$"-->
-                                    <!--                                [additionalChecks]="{-->
-                                    <!--                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',-->
-                                    <!--                    }"-->
-                                    <!--                                deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"-->
-                                    <!--                            >-->
-                                    <!--                                <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>-->
-                                    <!--                                <fa-icon [icon]="faUserSlash" />-->
-                                    <!--                            </button>-->
                                 </td>
                             </tr>
                         }
