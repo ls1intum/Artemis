@@ -66,6 +66,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     credentials: Credentials;
     isRegistrationEnabled = false;
     isPasswordLoginDisabled = false;
+    isPasskeyEnabled = false;
     loading = true;
     mainElementFocused = false;
 
@@ -128,6 +129,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private initializeWithProfileInfo(profileInfo: ProfileInfo) {
         this.profileInfo = profileInfo;
         this.externalUserManagementActive = false;
+        this.isPasskeyEnabled = profileInfo.passkeyEnabled;
 
         this.accountName = profileInfo.accountName;
         if (profileInfo.allowedLdapUsernamePattern) {
