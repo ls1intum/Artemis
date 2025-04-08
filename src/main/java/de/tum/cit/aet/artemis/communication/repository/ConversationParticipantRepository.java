@@ -91,7 +91,7 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
             WHERE conversation.id IN :conversationIds
                 AND conversation.course.id = :courseId
                 AND (
-                    (conversationParticipant.user.id = :userId AND conversationParticipant.conversation.id = conversation.id)
+                    (conversationParticipant.user.id = :userId)
                     OR (TYPE(conversation) = Channel AND TREAT(conversation AS Channel).isCourseWide = TRUE)
                 )
             """)
