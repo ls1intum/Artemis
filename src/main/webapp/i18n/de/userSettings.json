@@ -97,7 +97,9 @@
                 "created": "Erstellt",
                 "lastUsed": "Zuletzt verwendet",
                 "error": {
-                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast."
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
+                    "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
+                    "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut."
                 }
             },
             "accountInformationPage": {

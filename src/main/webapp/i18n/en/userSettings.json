@@ -97,7 +97,9 @@
                 "created": "Created",
                 "lastUsed": "Last used",
                 "error": {
-                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis."
+                    "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
+                    "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
+                    "registration": "The passkey could not be registered. Please try again."
                 }
             },
             "accountInformationPage": {

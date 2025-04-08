@@ -17,6 +17,11 @@ import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-sett
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 
+const InvalidStateError = {
+    name: 'InvalidStateError',
+    authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode: 11,
+};
+
 @Component({
     selector: 'jhi-passkey-settings',
     imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ButtonComponent],
@@ -67,33 +72,38 @@ export class PasskeySettingsComponent implements OnDestroy {
     }
 
     async addNewPasskey() {
-        await this.updateRegisteredPasskeys();
-        // TODO add proper error handling
-        const options = await this.webauthnApiService.getRegistrationOptions();
-        const credentialOptions = this.createCredentialOptions(options);
+        try {
+            const user = this.currentUser();
+            if (!user) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new Error('User or Username is not defined');
+            }
+            const options = await this.webauthnApiService.getRegistrationOptions();
+            const credentialOptions = this.createCredentialOptions(options, user);
 
-        const credential = await navigator.credentials.create({
-            publicKey: credentialOptions,
-        });
+            const credential = await navigator.credentials.create({
+                publicKey: credentialOptions,
+            });
 
-        if (!credential) {
-            alert('Credential is undefined');
-            return;
+            if (!credential) {
+                // TODO check if server fails here anyways
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new Error('Invalid credential');
+            }
+
+            await this.webauthnApiService.registerPasskey({
+                publicKey: {
+                    credential: credential,
+                    label: user.email ?? user.id?.toString() ?? 'Artemis Passkey',
+                },
+            });
+        } catch (error) {
+            if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
+            }
         }
-
-        const email = this.currentUser()?.email;
-        if (!email) {
-            alert('Email is undefined');
-            return;
-        }
-
-        await this.webauthnApiService.registerPasskey({
-            publicKey: {
-                credential: credential,
-                label: email,
-            },
-        });
-
         await this.updateRegisteredPasskeys();
     }
 
@@ -126,20 +136,19 @@ export class PasskeySettingsComponent implements OnDestroy {
         }
     }
 
-    private createCredentialOptions(options: PasskeyOptions): PublicKeyCredentialCreationOptions {
-        const userId = this.currentUser()?.id;
+    private createCredentialOptions(options: PasskeyOptions, user: User): PublicKeyCredentialCreationOptions {
+        const username = user.email;
 
-        if (!userId) {
-            throw new Error('User ID is undefined');
+        if (!user.id || !username) {
+            throw new Error('Invalid credential');
         }
-        const username = '' + userId; // TODO adjust properly
 
         // TODO verify values are set properly
         return {
             ...options,
             challenge: decodeBase64url(options.challenge),
             user: {
-                id: new TextEncoder().encode(userId.toString()),
+                id: new TextEncoder().encode(user.id.toString()),
                 name: username,
                 displayName: username,
             },
@@ -149,7 +158,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             })),
             authenticatorSelection: {
                 requireResidentKey: true,
-                userVerification: 'discouraged',
+                userVerification: 'discouraged', // a little less secure than 'preferred' or 'required', but more user-friendly
             },
         };
     }
