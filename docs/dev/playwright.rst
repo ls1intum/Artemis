@@ -421,12 +421,12 @@ Functionalities Covered
      - **Description**
    * - **Courses**
      - Course Management
-     - Creating, editing, deleting courses; managing course students
+     - Creating, editing, deleting courses; adding/removing students from a course
    * -
      - Course Exercise
      - Tests filtering exercises based on their title.
    * -
-     - Course Messages
+     - Course Communication
      - Messaging within courses, including channel creation, student participation, and message interactions.
    * - **Exams**
      - Exam Management
