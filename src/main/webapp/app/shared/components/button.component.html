@@ -1,4 +1,5 @@
 <button
+    [class.w-100]="fullWidth()"
     [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
     [type]="shouldSubmit ? 'submit' : 'button'"
     [ngbTooltip]="tooltip | artemisTranslate"
