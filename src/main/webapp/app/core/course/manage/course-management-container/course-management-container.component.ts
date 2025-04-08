@@ -55,6 +55,7 @@ import { CourseManagementStatisticsComponent } from 'app/core/course/manage/stat
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared/components/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -306,33 +307,27 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     fetchCourseDeletionSummary(): Observable<EntitySummary> {
-        if (this.course()?.id === undefined) {
+        const courseId = this.course()?.id;
+        if (!courseId) {
             return of({});
         }
 
-        return this.courseAdminService.getDeletionSummary(this.course()!.id!).pipe(
-            map((response) => {
-                const summary = response.body;
-
-                if (summary === null) {
-                    return {};
-                }
-
-                return {
-                    ...this.getExistingSummaryEntries(),
-                    'artemisApp.course.delete.summary.numberExams': summary.numberExams,
-                    'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
-                    'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
-                    'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
-                    'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
-                    'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
-                    'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
-                    'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
-                    'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
-                    'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
-                };
-            }),
-        );
+        return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
+    }
+    private combineSummary(summary: CourseDeletionSummaryDTO) {
+        return {
+            ...this.getExistingSummaryEntries(),
+            'artemisApp.course.delete.summary.numberExams': summary.numberExams,
+            'artemisApp.course.delete.summary.numberLectures': summary.numberLectures,
+            'artemisApp.course.delete.summary.numberProgrammingExercises': summary.numberProgrammingExercises,
+            'artemisApp.course.delete.summary.numberTextExercises': summary.numberTextExercises,
+            'artemisApp.course.delete.summary.numberFileUploadExercises': summary.numberFileUploadExercises,
+            'artemisApp.course.delete.summary.numberQuizExercises': summary.numberQuizExercises,
+            'artemisApp.course.delete.summary.numberModelingExercises': summary.numberModelingExercises,
+            'artemisApp.course.delete.summary.numberBuilds': summary.numberOfBuilds,
+            'artemisApp.course.delete.summary.numberCommunicationPosts': summary.numberOfCommunicationPosts,
+            'artemisApp.course.delete.summary.numberAnswerPosts': summary.numberOfAnswerPosts,
+        };
     }
 
     /**
