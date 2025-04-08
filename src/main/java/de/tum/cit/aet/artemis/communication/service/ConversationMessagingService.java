@@ -367,7 +367,7 @@ public class ConversationMessagingService extends PostingService {
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
         List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
-        conversationService.isMemberOrCreateForCourseWideElseThrow(conversationIds, requestingUser, Optional.of(ZonedDateTime.now()));
+        conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId);
 
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);

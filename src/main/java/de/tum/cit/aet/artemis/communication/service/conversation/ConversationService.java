@@ -157,22 +157,6 @@ public class ConversationService {
     }
 
     /**
-     * Checks whether the user is a member of the given conversations.
-     *
-     * @param conversationIds the ids of the conversations
-     * @param user            the user
-     * @param lastReadDate    Optional date being used for a newly created participant to set the last-read date
-     * @return the conversation that has been loaded
-     */
-    public List<Conversation> isMemberOrCreateForCourseWideElseThrow(List<Long> conversationIds, User user, Optional<ZonedDateTime> lastReadDate) {
-        List<Conversation> conversations = new ArrayList<>();
-        for (Long conversationId : conversationIds) {
-            isMemberOrCreateForCourseWideElseThrow(conversationId, user, lastReadDate).ifPresent(conversations::add);
-        }
-        return conversations;
-    }
-
-    /**
      * In certain use cases, we need the conversation participants to generate the human-readable name for a group chat.
      *
      * @param conversationId the id of the conversation
