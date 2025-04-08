@@ -4,7 +4,7 @@ import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settin
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/button/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
@@ -19,7 +19,7 @@ import {
     IrisTutorSuggestionSubSettings,
 } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisCommonSubSettingsUpdateComponent } from './iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { FormsModule } from '@angular/forms';

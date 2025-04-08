@@ -8,14 +8,14 @@ import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalR
 import { User } from 'app/core/user/user.model';
 import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';

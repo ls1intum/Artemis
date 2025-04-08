@@ -14,7 +14,7 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
-import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

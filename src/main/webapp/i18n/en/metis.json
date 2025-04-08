@@ -71,7 +71,7 @@
             },
             "overview": {
                 "title": "Posts",
-                "searchBarDefault": "Search for a message across all channels (Ctrl/Cmd + K)",
+                "searchBarDefault": "Search for a message across all channels, direct chats and groups (Ctrl/Cmd + K)",
                 "sortedByDate": "Sorted by Date",
                 "postContextFilter": "Show messages for:",
                 "one_extra_context": "other",

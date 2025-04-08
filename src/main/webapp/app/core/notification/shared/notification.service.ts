@@ -40,18 +40,18 @@ import {
     QUIZ_EXERCISE_STARTED_TEXT,
     QUIZ_EXERCISE_STARTED_TITLE,
 } from 'app/core/shared/entities/notification.model';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/shared/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { MetisPostAction, MetisWebsocketChannelPrefix, RouteComponents } from 'app/communication/metis.util';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/notification-settings.service';
+import { NotificationSettingsService } from 'app/core/user/settings/notification-settings/service/notification-settings.service';
 
 const notificationsPerPage = 25;
 

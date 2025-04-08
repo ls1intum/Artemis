@@ -1,4 +1,4 @@
-import { ServerDateService } from 'app/shared/server-date.service';
+import { ServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { HttpClient } from '@angular/common/http';
 
