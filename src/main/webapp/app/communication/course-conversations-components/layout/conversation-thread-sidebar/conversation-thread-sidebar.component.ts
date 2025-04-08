@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',

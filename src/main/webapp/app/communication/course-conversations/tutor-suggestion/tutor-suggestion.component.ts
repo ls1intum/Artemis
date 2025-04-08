@@ -1,5 +1,4 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription } from 'rxjs';
 import { filter, take } from 'rxjs/operators';
@@ -9,13 +8,14 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
-import { Course } from 'app/core/shared/entities/course.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 /**
  * Component to display the tutor suggestion in the chat

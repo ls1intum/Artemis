@@ -1,14 +1,13 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
-import { IrisChatService } from 'app/iris/overview/iris-chat.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { of } from 'rxjs';
-import { ChatServiceMode } from 'app/iris/overview/iris-chat.service';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { mockSettings } from '../settings/mock-settings';
 import { MockProvider } from 'ng-mocks';
 import { IrisMessage } from 'app/iris/shared/entities/iris-message.model';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { mockSettings } from 'test/helpers/mocks/iris/mock-settings';
 
 describe('TutorSuggestionComponent', () => {
     let component: TutorSuggestionComponent;
@@ -56,7 +55,7 @@ describe('TutorSuggestionComponent', () => {
         expect(switchToSpy).toHaveBeenCalledWith(ChatServiceMode.TUTOR_SUGGESTION, 1);
     }));
 
-    describe('should set irisEnabled to ', () => {
+    describe('should set irisEnabled to', () => {
         it('false if Iris profile is not enabled', fakeAsync(() => {
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(false);
 
@@ -70,7 +69,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             tick();
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']).toBeFalse();
         }));
 
         it('false if settings are not available', fakeAsync(() => {
@@ -86,7 +85,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             tick();
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']).toBeFalse();
         }));
 
         it('false if course id is not available', fakeAsync(() => {
@@ -101,7 +100,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             tick();
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']).toBeFalse();
         }));
 
         it('false if post id is not available', fakeAsync(() => {
@@ -116,7 +115,7 @@ describe('TutorSuggestionComponent', () => {
             fixture.detectChanges();
             tick();
 
-            expect(component['irisEnabled']).toBe(false);
+            expect(component['irisEnabled']).toBeFalse();
         }));
 
         it('true if all conditions are met', fakeAsync(() => {
@@ -124,7 +123,7 @@ describe('TutorSuggestionComponent', () => {
             jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
             fixture.detectChanges();
             tick();
-            expect(component['irisEnabled']).toBe(true);
+            expect(component['irisEnabled']).toBeTrue();
         }));
     });
 
