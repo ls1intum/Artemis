@@ -81,7 +81,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<CredentialRecord> findByUserId(Bytes userId) {
         log.info("findByUserId: userId={}", userId);
 
-        Optional<User> user = userRepository.findById(User.bytesToLong(userId));
+        // FIXME - the userId format is not clear yet and seems to change after server startup
+        // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId it also seems to be
+        log.warn("findByUserId not implemented yet, the format of the userId is not clear yet");
+        // Optional<User> user = userRepository.findOneByLogin(userId.toBase64UrlString());
+        Optional<User> user = Optional.empty();
 
         return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId()))
                 .collect(Collectors.toList())).orElseGet(List::of);
@@ -90,7 +94,10 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
         log.info("findPasskeyDtosByUserId: userId={}", userId);
 
-        List<CredentialRecord> credentialRecords = findByUserId(userId);
+        Optional<User> user = userRepository.findById(User.bytesToLong(userId));
+
+        List<CredentialRecord> credentialRecords = user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream()
+                .map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).collect(Collectors.toList())).orElseGet(List::of);
 
         return credentialRecords.stream()
                 .map(credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
