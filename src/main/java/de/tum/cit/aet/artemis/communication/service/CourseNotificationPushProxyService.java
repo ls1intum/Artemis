@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_DELETE_CHANNEL;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_NEW_MESSAGE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_NEW_REPLY_MESSAGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_USER_MENTIONED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_RELEASED;
@@ -143,6 +146,24 @@ public class CourseNotificationPushProxyService {
                         NotificationTargetFactory.COURSES_TEXT);
                 target = notificationTarget.toJsonString();
                 type = ATTACHMENT_CHANGE.toString();
+                break;
+            case "channelDeletedNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("channelName"), parameters.get("deletingUser"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.CONVERSATION_DELETION_TEXT, Long.parseLong(parameters.get("courseId")),
+                        NotificationTargetFactory.CONVERSATION_DELETION_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = CONVERSATION_DELETE_CHANNEL.toString();
+                break;
+            case "addedToChannelNotification":
+            case "removedFromChannelNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("channelName"), parameters.get("channelModerator"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.COURSE_MANAGEMENT_TEXT, Long.parseLong(parameters.get("channelId")),
+                        NotificationTargetFactory.COURSE_MANAGEMENT_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = courseNotificationDTO.notificationType().equals("addedToChannelNotification") ? CONVERSATION_ADD_USER_CHANNEL.toString()
+                        : CONVERSATION_REMOVE_USER_CHANNEL.toString();
                 break;
             default:
                 return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));

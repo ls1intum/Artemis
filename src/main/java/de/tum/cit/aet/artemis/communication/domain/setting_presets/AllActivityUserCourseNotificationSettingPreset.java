@@ -4,7 +4,9 @@ import java.util.Map;
 
 import de.tum.cit.aet.artemis.communication.annotations.CourseNotificationSettingPreset;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
@@ -15,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManua
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 
 @CourseNotificationSettingPreset(2)
 public class AllActivityUserCourseNotificationSettingPreset extends UserCourseNotificationSettingPreset {
@@ -41,6 +44,12 @@ public class AllActivityUserCourseNotificationSettingPreset extends UserCourseNo
                 Map.entry(AttachmentChangedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
                 Map.entry(NewManualFeedbackRequestNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(ChannelDeletedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(AddedToChannelNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(RemovedFromChannelNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)));
     }
 }

@@ -243,6 +243,21 @@
                 "content": "In {{exerciseTitle}} wird Feedback benötigt.",
                 "settingsTitle": "Feedback benötigt"
             },
+            "channelDeletedNotification": {
+                "title": "Kanal gelöscht",
+                "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",
+                "settingsTitle": "Kanal gelöscht"
+            },
+            "addedToChannelNotification": {
+                "title": "Kanal beigetreten",
+                "content": "Du bist {{channelName}} in {{courseTitle}} beigetreten.",
+                "settingsTitle": "Kanal beigetreten"
+            },
+            "removedFromChannelNotification": {
+                "title": "Aus Kanal entfernt",
+                "content": "Du wurdest aus {{channelName}} in {{courseTitle}} entfernt.",
+                "settingsTitle": "Aus Kanal entfernt"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

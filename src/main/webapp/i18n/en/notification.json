@@ -243,6 +243,21 @@
                 "content": "Feedback was requested in {{exerciseTitle}}.",
                 "settingsTitle": "Feedback requested"
             },
+            "channelDeletedNotification": {
+                "title": "Channel deleted",
+                "content": "{{channelName}} was deleted in {{courseTitle}}.",
+                "settingsTitle": "Feedback requested"
+            },
+            "addedToChannelNotification": {
+                "title": "Added to channel",
+                "content": "You were added to {{channelName}} in {{courseTitle}}.",
+                "settingsTitle": "Added to channel"
+            },
+            "removedFromChannelNotification": {
+                "title": "Removed from channel",
+                "content": "You were removed from {{channelName}} in {{courseTitle}}.",
+                "settingsTitle": "Removed from channel"
+            },
             "temporal": {
                 "now": "Now",
                 "oneHourAgo": "1 hour ago.",
