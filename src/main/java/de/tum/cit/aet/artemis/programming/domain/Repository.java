@@ -49,8 +49,13 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
      * @return true if the file is valid.
      */
     public boolean isValidFile(java.io.File file) {
+        if (file == null) {
+            return false;
+        }
+
+        boolean isDotGitFolder = file.isDirectory() && file.getName().equals(".git");
         boolean containsDotGitFolder = file.getAbsoluteFile().getParentFile().getPath().contains(".git");
-        if (file == null || file.getPath().contains("../") || containsDotGitFolder) {
+        if (file.getPath().contains("../") || isDotGitFolder || containsDotGitFolder) {
             return false;
         }
 
