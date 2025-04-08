@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/utils';
 
 @Injectable({ providedIn: 'root' })

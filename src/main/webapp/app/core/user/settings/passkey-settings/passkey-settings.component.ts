@@ -8,12 +8,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Subject, Subscription, tap } from 'rxjs';
-import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
-import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
+import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { decodeBase64url } from 'app/shared/util/utils';
-import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
-import { PasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/passkey.dto';
-import { PasskeySettingsApiService } from 'app/shared/user-settings/passkey-settings/passkey-settings-api.service';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
+import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
+import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 

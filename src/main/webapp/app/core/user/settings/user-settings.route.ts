@@ -82,7 +82,7 @@ export const routes: Routes = [
             },
             {
                 path: 'passkeys',
-                loadComponent: () => import('app/shared/user-settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
+                loadComponent: () => import('app/core/user/settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
                 data: {
                     pageTitle: 'artemisApp.userSettings.categories.PASSKEYS',
                 },

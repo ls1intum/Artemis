@@ -1,8 +1,8 @@
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
-import { PasskeyOptions } from 'app/shared/user-settings/passkey-settings/entities/passkey-options.model';
+import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { Injectable } from '@angular/core';
-import { RegisterPasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/register-passkey.dto';
-import { PasskeyLoginResponseDto } from 'app/shared/user-settings/passkey-settings/dto/passkey-login-response.dto';
+import { RegisterPasskeyDto } from 'app/core/user/settings/passkey-settings/dto/register-passkey.dto';
+import { PasskeyLoginResponseDto } from 'app/core/user/settings/passkey-settings/dto/passkey-login-response.dto';
 
 /**
  * Note: [WebAuthn4j](https://github.com/webauthn4j/webauthn4j) exposes the endpoints, the endpoints are not explicitly defined in a resource

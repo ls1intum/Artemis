@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
-import { PasskeyDto } from 'app/shared/user-settings/passkey-settings/dto/passkey.dto';
+import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 
 @Injectable({ providedIn: 'root' })
 export class PasskeySettingsApiService extends BaseApiHttpService {

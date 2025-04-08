@@ -18,9 +18,9 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { WebauthnService } from 'app/shared/user-settings/passkey-settings/webauthn.service';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { WebauthnApiService } from 'app/shared/user-settings/passkey-settings/webauthn-api.service';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 
 @Component({
     selector: 'jhi-home',
