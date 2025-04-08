@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { NgClass } from '@angular/common';

@@ -3,9 +3,9 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { ProgrammingExerciseResolve } from 'app/programming/manage/programming-exercise-resolve.service';
+import { ProgrammingExerciseResolve } from 'app/programming/manage/services/programming-exercise-resolve.service';
 import { repositorySubRoutes } from 'app/programming/shared/routes/programming-exercise-repository.route';
-import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container.component';
+import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 
 export const routes: Routes = [
     {
@@ -58,7 +58,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId',
-        loadComponent: () => import('app/programming/manage/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
+        loadComponent: () => import('app/programming/manage/detail/programming-exercise-detail.component').then((m) => m.ProgrammingExerciseDetailComponent),
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },
@@ -82,7 +82,8 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/grading/:tab',
-        loadComponent: () => import('app/programming/manage/grading/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
+        loadComponent: () =>
+            import('app/programming/manage/grading/configure/programming-exercise-configure-grading.component').then((m) => m.ProgrammingExerciseConfigureGradingComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.programmingExercise.home.title',
@@ -107,7 +108,7 @@ export const routes: Routes = [
     },
     {
         path: 'programming-exercises/:exerciseId/edit-build-plan',
-        loadComponent: () => import('app/programming/manage/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
+        loadComponent: () => import('app/programming/manage/build-plan-editor/build-plan-editor.component').then((m) => m.BuildPlanEditorComponent),
         resolve: {
             exercise: ProgrammingExerciseResolve,
         },

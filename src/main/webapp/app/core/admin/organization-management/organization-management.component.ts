@@ -7,7 +7,7 @@ import { faEye, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-ic
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 @Component({
     selector: 'jhi-organization-management',

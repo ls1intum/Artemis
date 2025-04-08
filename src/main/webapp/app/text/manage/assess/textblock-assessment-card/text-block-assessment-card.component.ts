@@ -5,7 +5,7 @@ import { StructuredGradingCriterionService } from 'app/exercise/structured-gradi
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
-import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assesment-analytics.service';
+import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { ActivatedRoute } from '@angular/router';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 
