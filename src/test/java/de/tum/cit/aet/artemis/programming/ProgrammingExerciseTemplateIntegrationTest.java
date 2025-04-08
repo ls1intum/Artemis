@@ -197,7 +197,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractProgrammingInte
         solutionRepo.configureRepos("solutionLocalRepo", "solutionOriginRepo");
         auxRepo.configureRepos("auxLocalRepo", "auxOriginRepo");
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         programmingExerciseTestService.setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
     }
 

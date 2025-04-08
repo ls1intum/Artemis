@@ -92,4 +92,7 @@ export class Commands {
 
         throw new Error('Timed out while waiting for build to finish.');
     };
+    static toggleSidebar = async (page: Page) => {
+        await page.keyboard.press('Control+m');
+    };
 }

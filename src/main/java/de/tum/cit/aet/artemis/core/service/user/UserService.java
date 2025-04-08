@@ -650,7 +650,7 @@ public class UserService {
      */
     public void removeGroupFromUsers(String groupName) {
         log.info("Remove group {} from users", groupName);
-        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
+        Set<User> users = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupName);
         log.info("Found {} users with group {}", users.size(), groupName);
         for (User user : users) {
             user.getGroups().remove(groupName);

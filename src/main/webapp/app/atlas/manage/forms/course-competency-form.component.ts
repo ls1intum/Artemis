@@ -6,7 +6,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 
 /**
  * Async Validator to make sure that a competency title is unique within a course
