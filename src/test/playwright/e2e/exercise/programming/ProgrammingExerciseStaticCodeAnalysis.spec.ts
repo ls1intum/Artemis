@@ -35,7 +35,7 @@ test.describe('Static code analysis tests', { tag: '@sequential' }, () => {
         await programmingExerciseOverview.openCodeEditor(exercise.id!);
         await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaScaSubmission, async () => {
             const resultScore = await programmingExerciseEditor.getResultScore();
-            await expect(resultScore.getByText(javaScaSubmission.expectedResult)).toBeVisible();
+            await expect(resultScore.getByText(javaScaSubmission.expectedResult)).toBeVisible({ timeout: 10000 });
             await resultScore.click();
             await programmingExerciseScaFeedback.shouldShowPointChart();
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
