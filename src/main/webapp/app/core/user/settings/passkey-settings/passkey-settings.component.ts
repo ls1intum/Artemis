@@ -15,6 +15,7 @@ import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { getOS } from 'app/shared/util/os-detector.util';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -86,7 +87,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             await this.webauthnApiService.registerPasskey({
                 publicKey: {
                     credential: credential,
-                    label: user.email ?? user.id?.toString() ?? 'Artemis Passkey',
+                    label: `${user.email} - ${getOS()}`,
                 },
             });
         } catch (error) {

@@ -86,7 +86,8 @@
                 "actions": "Aktionen"
             },
             "passkeySettingsPage": {
-                "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Sie können als Passwortersatz oder als 2FA-Methode verwendet werden.",
+                "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Passkeys können als Passwortersatz verwendet werden.",
+                "onlyOnePerAuthenticator": "Du kannst nur einen Passkey pro Authentifikator für diese Seite registrieren (z. B. einen in Apple Keychain und einen anderen im Google Password Manager, etc.). Das Erstellen eines zweiten Passkeys mit dem gleichen Authentifikator wird den ersten registrierten Passkey überschreiben, den du manuell in Artemis entfernen musst.",
                 "learnMore": "Erfahre mehr über Passkeys.",
                 "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
                 "actions": "Aktionen",
