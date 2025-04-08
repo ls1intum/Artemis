@@ -224,81 +224,54 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     override getSidebarItems(): SidebarItem[] {
         const sidebarItems: SidebarItem[] = [];
         const currentCourse = this.course();
+
         if (!currentCourse) {
             return [];
         }
+
         sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
-        this.addLectureItemWhenEditor(currentCourse, sidebarItems);
-        this.addIrisSettingsItemWhenInstructorAndIrisEnabled(currentCourse, sidebarItems);
-        this.addCommunicationItemWhenEnabled(currentCourse, sidebarItems);
-        this.addTutorialGroupItemWhenInstructorOrExistingTutorialGroupConfig(currentCourse, sidebarItems);
-
-        this.addAtlasItemsWhenInstructorAndAtlasEnabled(currentCourse, sidebarItems);
-        this.addScoresAndAssessmentItem(sidebarItems, currentCourse);
-
-        this.addFaqItemWhenEditor(currentCourse, sidebarItems);
-        this.addBuildOverviewAndLtiItemWhenInstructor(currentCourse, sidebarItems);
-
-        return sidebarItems;
-    }
-
-    private addBuildOverviewAndLtiItemWhenInstructor(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (!currentCourse.isAtLeastInstructor) {
-            return;
+        if (currentCourse.isAtLeastEditor) {
+            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
-        if (this.localCIActive()) {
-            sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
-        }
-        if (this.ltiEnabled() && currentCourse.onlineCourse) {
-            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
-        }
-    }
 
-    private addFaqItemWhenEditor(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastTutor && currentCourse.faqEnabled) {
-            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
+        if (currentCourse.isAtLeastInstructor && this.irisEnabled()) {
+            sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
-    }
 
-    private addScoresAndAssessmentItem(sidebarItems: SidebarItem[], currentCourse: Course) {
+        if (currentCourse && isCommunicationEnabled(currentCourse)) {
+            sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
+        }
+
+        if (currentCourse.tutorialGroupsConfiguration || currentCourse.isAtLeastInstructor) {
+            sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
+        }
+
+        if (currentCourse.isAtLeastInstructor && this.atlasEnabled()) {
+            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
+        }
+
+        if (currentCourse.isAtLeastInstructor && this.atlasEnabled() && this.learningPathsActive()) {
+            sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
+        }
+
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
 
         if (currentCourse.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getScoresItem(this.courseId()));
         }
-    }
 
-    private addAtlasItemsWhenInstructorAndAtlasEnabled(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor && this.atlasEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
-            if (this.learningPathsActive()) {
-                sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
-            }
+        if (currentCourse.isAtLeastTutor && currentCourse.faqEnabled) {
+            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
-    }
 
-    private addTutorialGroupItemWhenInstructorOrExistingTutorialGroupConfig(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.tutorialGroupsConfiguration || currentCourse.isAtLeastInstructor) {
-            sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
+        if (currentCourse.isAtLeastInstructor && this.localCIActive()) {
+            sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
-    }
+        if (this.ltiEnabled() && currentCourse.onlineCourse && currentCourse.isAtLeastInstructor) {
+            sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
+        }
 
-    private addCommunicationItemWhenEnabled(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse && isCommunicationEnabled(currentCourse)) {
-            sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
-        }
-    }
-
-    private addIrisSettingsItemWhenInstructorAndIrisEnabled(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor && this.irisEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
-        }
-    }
-
-    private addLectureItemWhenEditor(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastEditor) {
-            sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
-        }
+        return sidebarItems;
     }
 
     ngOnDestroy() {
@@ -341,7 +314,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
     }
-
     private combineSummary(summary: CourseDeletionSummaryDTO) {
         return {
             ...this.getExistingSummaryEntries(),
