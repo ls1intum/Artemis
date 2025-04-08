@@ -221,10 +221,19 @@ jobs:
           script: |
             const prNumber = ${{ steps.find-pr.outputs.pr_number }};
             const testSummary = `${{ steps.test-reporter.outputs.summary }} ${{ steps.test-reporter.outputs.detailed_summary }}`;
+            const targetUrl = process.env.TARGET_URL;
+            const commentBody = `
+            ### End-to-End (E2E) Test Results Summary
+
+              ${testSummary}
+
+              👉 [View workflow run here](${targetUrl})
+              `.trim();
+
 
             github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: prNumber,
-                body: `### End-to-End (E2E) Test Results Summary\n\n${testSummary}`
+                body: commentBody
               });
