@@ -26,12 +26,13 @@ export class UserSettingsContainerComponent implements OnInit {
 
     currentUser?: User;
     localVCEnabled = true;
+    isPasskeyEnabled = false;
     isAtLeastTutor = false;
-    passkeysEnabled = true;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.isPasskeyEnabled = profileInfo.passkeyEnabled;
         });
 
         this.accountService

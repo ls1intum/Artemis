@@ -84,10 +84,8 @@ export const routes: Routes = [
                 path: 'passkeys',
                 loadComponent: () => import('app/shared/user-settings/passkey-settings/passkey-settings.component').then((m) => m.PasskeySettingsComponent),
                 data: {
-                    authorities: IS_AT_LEAST_TUTOR,
                     pageTitle: 'artemisApp.userSettings.categories.PASSKEYS',
                 },
-                canActivate: [UserRouteAccessService],
             },
             {
                 path: 'ide-preferences',

@@ -42,6 +42,7 @@ export class ProfileInfo {
     public textAssessmentAnalyticsEnabled?: boolean;
     public studentExamStoreSessionData?: boolean;
     public useExternal: boolean;
+    public passkeyEnabled: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: Map<string, string>;
     public git: {

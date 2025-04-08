@@ -76,6 +76,7 @@ export class ProfileService {
                         profileInfo.studentExamStoreSessionData = data.studentExamStoreSessionData;
 
                         profileInfo.useExternal = data.useExternal;
+                        profileInfo.passkeyEnabled = data.passkeyEnabled;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
                         profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
 
