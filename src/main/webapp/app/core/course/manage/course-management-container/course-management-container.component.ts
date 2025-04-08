@@ -228,31 +228,33 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (!currentCourse) {
             return [];
         }
+        const isInstructor = currentCourse.isAtLeastInstructor;
 
         sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
+
         if (currentCourse.isAtLeastEditor) {
             sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
+        const nonInstructorItems: SidebarItem[] = [];
 
-        const isInstructor = currentCourse.isAtLeastInstructor;
+        const communicationItem = this.addCommunicationsItem(currentCourse);
+        const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
+        this.addAssessmentItem(nonInstructorItems);
+        this.addFaqItem(currentCourse, nonInstructorItems);
+        nonInstructorItems.unshift(...communicationItem, ...tutorialGroupItem);
+        sidebarItems.push(...nonInstructorItems);
+        if (isInstructor) {
+            const irisItems = this.getIrisSettingsItem();
+            const atlasItems = this.getAtlasItems();
+            const scoresItem = this.getScoresItem();
+            const buildAndLtiItems: SidebarItem[] = [];
+            this.addBuildQueueItem(currentCourse, buildAndLtiItems);
+            this.addLtiItem(currentCourse, buildAndLtiItems);
 
-        if (isInstructor) {
-            this.addIrisSettingsItem(sidebarItems);
-        }
-        this.addCommunicationsItem(currentCourse, sidebarItems);
-        this.addTutorialGroupsItem(currentCourse, isInstructor, sidebarItems);
-
-        if (isInstructor) {
-            this.addAtlasItems(sidebarItems);
-        }
-        this.addAssessmentItem(sidebarItems);
-        if (isInstructor) {
-            this.addScoresItem(sidebarItems);
-        }
-        this.addFaqItem(currentCourse, sidebarItems);
-        if (isInstructor) {
-            this.addBuildQueueItem(currentCourse, sidebarItems);
-            this.addLtiItem(currentCourse, sidebarItems);
+            sidebarItems.splice(3, 0, ...irisItems); // After lectures
+            sidebarItems.splice(5 + irisItems.length + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems); // After tutorial groups
+            sidebarItems.splice(6 + irisItems.length + tutorialGroupItem.length + communicationItem.length + atlasItems.length, 0, ...scoresItem); // After assessment
+            sidebarItems.push(...buildAndLtiItems); // At the end
         }
 
         return sidebarItems;
@@ -280,35 +282,43 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         sidebarItems.push(this.sidebarItemService.getAssessmentDashboardItem(this.courseId()));
     }
 
-    private addScoresItem(sidebarItems: SidebarItem[]) {
-        sidebarItems.push(this.sidebarItemService.getScoresItem(this.courseId()));
+    private getScoresItem() {
+        return [this.sidebarItemService.getScoresItem(this.courseId())];
     }
 
-    private addAtlasItems(sidebarItems: SidebarItem[]) {
+    private getAtlasItems() {
+        const atlasItems: SidebarItem[] = [];
         if (this.atlasEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
+            atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
             if (this.learningPathsActive()) {
-                sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
+                atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
             }
         }
+        return atlasItems;
     }
 
-    private addTutorialGroupsItem(currentCourse: Course, isInstructor = false, sidebarItems: SidebarItem[]) {
+    private addTutorialGroupsItem(currentCourse: Course, isInstructor = false) {
+        const tutorialGroupsItem: SidebarItem[] = [];
         if (currentCourse.tutorialGroupsConfiguration || isInstructor) {
-            sidebarItems.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
+            tutorialGroupsItem.push(this.sidebarItemService.getTutorialGroupsItem(this.courseId()));
         }
+        return tutorialGroupsItem;
     }
 
-    private addCommunicationsItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
+    private addCommunicationsItem(currentCourse: Course) {
+        const communicationItem: SidebarItem[] = [];
         if (isCommunicationEnabled(currentCourse)) {
-            sidebarItems.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
+            communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         }
+        return communicationItem;
     }
 
-    private addIrisSettingsItem(sidebarItems: SidebarItem[]) {
+    private getIrisSettingsItem() {
+        const irisItems: SidebarItem[] = [];
         if (this.irisEnabled()) {
-            sidebarItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
+            irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
+        return irisItems;
     }
 
     ngOnDestroy() {
@@ -351,6 +361,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         return this.courseAdminService.getDeletionSummary(courseId).pipe(map((response) => (response.body ? this.combineSummary(response.body) : {})));
     }
+
     private combineSummary(summary: CourseDeletionSummaryDTO) {
         return {
             ...this.getExistingSummaryEntries(),
