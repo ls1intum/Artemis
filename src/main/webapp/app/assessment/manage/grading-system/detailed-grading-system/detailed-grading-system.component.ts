@@ -7,8 +7,8 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-detailed-grading-system',

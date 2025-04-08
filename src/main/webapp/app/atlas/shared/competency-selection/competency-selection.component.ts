@@ -12,13 +12,13 @@ import {
     getIcon,
 } from 'app/atlas/shared/entities/competency.model';
 import { ActivatedRoute } from '@angular/router';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription, finalize } from 'rxjs';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATLAS } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
@@ -73,7 +73,7 @@ export class CompetencySelectionComponent implements OnInit, ControlValueAccesso
     ngOnInit(): void {
         // it's an explicit design decision to not clutter every component that uses this component with the need to check if the atlas profile is enabled
         this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
+            const atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
             if (atlasEnabled) {
                 this.initialize();
             }

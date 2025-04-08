@@ -4,7 +4,7 @@ import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CustomNotIncludedInValidatorDirective } from '../../validators/custom-not-included-in-validator.directive';
-import { HelpIconComponent } from '../../components/help-icon.component';
+import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-title-channel-name',

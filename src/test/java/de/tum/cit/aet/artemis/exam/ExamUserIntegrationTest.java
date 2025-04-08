@@ -109,7 +109,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);
         exam1 = examRepository.save(exam1);
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
@@ -162,13 +162,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
     void testUploadExamUserImages() throws Exception {
         // registration number is important for the test, exam users should have same registration number as in the test pdf file
         // student2 already exists in the exam and there is no need to add it again
-        List<ExamUserDTO> examUserDTOs = new ArrayList<>();
-        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "");
-        ExamUserDTO examUserDTO4 = new ExamUserDTO(TEST_PREFIX + "student4", "", "", "03756885", "", "", "102", "11", true, true, true, true, "");
-        examUserDTOs.add(examUserDTO1);
-        examUserDTOs.add(examUserDTO3);
-        examUserDTOs.add(examUserDTO4);
+        final var examUserDTOs = getExamUserDTOS();
 
         // add students to exam with respective registration numbers, same as in pdf test file
         List<ExamUserDTO> responseNotFoundExamUsers = request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students",
@@ -191,7 +185,7 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
             assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
 
-        // reupload the same file, should not change anything
+        // re-upload the same file, should not change anything
 
         // upload exam user images
         imageUploadResponse = request.performMvcRequest(buildUploadExamUserImages(course1.getId(), exam1.getId())).andExpect(status().isOk()).andReturn();
@@ -208,6 +202,17 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
             String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, examUser.getStudentImagePath());
             assertThat(request.getFile(requestUrl, HttpStatus.OK)).isNotEmpty();
         }
+    }
+
+    private static List<ExamUserDTO> getExamUserDTOS() {
+        List<ExamUserDTO> examUserDTOs = new ArrayList<>();
+        ExamUserDTO examUserDTO1 = new ExamUserDTO(TEST_PREFIX + "student1", "", "", "03756882", "", "", "101", "11", true, true, true, true, "");
+        ExamUserDTO examUserDTO3 = new ExamUserDTO(TEST_PREFIX + "student3", "", "", "03756884", "", "", "101", "11", true, true, true, true, "");
+        ExamUserDTO examUserDTO4 = new ExamUserDTO(TEST_PREFIX + "student4", "", "", "03756885", "", "", "102", "11", true, true, true, true, "");
+        examUserDTOs.add(examUserDTO1);
+        examUserDTOs.add(examUserDTO3);
+        examUserDTOs.add(examUserDTO4);
+        return examUserDTOs;
     }
 
     @Test
