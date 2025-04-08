@@ -72,6 +72,8 @@ export class IrisChatService implements OnDestroy {
     protected start() {
         if (this.accountService.userIdentity?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
             this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
+        } else if (this.sessionCreationIdentifier?.includes(ChatServiceMode.TUTOR_SUGGESTION)) {
+            this.getCurrentSessionOrCreate().subscribe(this.handleNewSession());
         }
     }
 

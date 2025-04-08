@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -12,6 +13,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
@@ -41,17 +45,17 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    private final IrisMessageService irisMessageService;
+    private final AuthorizationCheckService authCheckService;
 
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService) {
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.irisMessageService = irisMessageService;
+        this.authCheckService = authCheckService;
     }
 
     @Override
@@ -85,7 +89,10 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
-        // TODO: Implement
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, irisSession.getPost().getCoursePostingBelongsTo(), user);
+        if (!Objects.equals(irisSession.getUser(), user)) {
+            throw new AccessForbiddenException("Iris Session", irisSession.getId());
+        }
     }
 
     @Override
