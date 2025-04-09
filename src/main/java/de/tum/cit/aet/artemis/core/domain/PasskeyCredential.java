@@ -56,6 +56,9 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     @Column(name = "uv_initialized")
     private Boolean uvInitialized;
 
+    /**
+     * Describes how the authenticator communicates with the client device (implications on MitM attacks, reliability, etc.).
+     */
     @Column(name = "transports")
     @Convert(converter = AuthenticatorTransportConverter.class)
     private Set<AuthenticatorTransport> transports;
