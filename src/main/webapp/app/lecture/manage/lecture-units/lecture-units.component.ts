@@ -12,13 +12,13 @@ import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lectur
 import { onError } from 'app/shared/util/global.utils';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
-import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/lecture-unit-management.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
-import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
-import { OnlineUnitService } from 'app/lecture/manage/lecture-units/onlineUnit.service';
+import { LectureUnitManagementComponent } from 'app/lecture/manage/lecture-units/management/lecture-unit-management.component';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/services/textUnit.service';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/services/videoUnit.service';
+import { OnlineUnitService } from 'app/lecture/manage/lecture-units/services/onlineUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

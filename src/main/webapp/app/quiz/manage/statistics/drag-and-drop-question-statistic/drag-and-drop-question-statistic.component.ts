@@ -1,8 +1,8 @@
 import { Component, ViewEncapsulation, inject } from '@angular/core';
-import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item.component';
-import { QuizStatisticUtil } from 'app/quiz/shared/quiz-statistic-util.service';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DragItemComponent } from 'app/quiz/shared/questions/drag-and-drop-question/drag-item/drag-item.component';
+import { QuizStatisticUtil } from 'app/quiz/shared/service/quiz-statistic-util.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragAndDropQuestionStatistic } from 'app/quiz/shared/entities/drag-and-drop-question-statistic.model';
 import { DropLocation } from 'app/quiz/shared/entities/drop-location.model';

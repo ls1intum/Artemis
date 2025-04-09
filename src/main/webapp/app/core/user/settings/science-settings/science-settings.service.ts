@@ -5,7 +5,7 @@ import { Observable, ReplaySubject } from 'rxjs';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
-import { UserSettingsService } from 'app/core/user/settings/user-settings.service';
+import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { Setting } from 'app/core/user/settings/user-settings.model';
 

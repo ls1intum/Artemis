@@ -1,13 +1,13 @@
 import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { CourseManagementResolve } from 'app/core/course/manage/course-management-resolve.service';
-import { AttachmentUnitResolve } from 'app/lecture/manage/lecture-units/lecture-unit-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
+import { AttachmentUnitResolve } from 'app/lecture/manage/lecture-units/services/lecture-unit-management-resolve.service';
 
 export const lectureUnitRoute: Routes = [
     {
         path: 'unit-management',
-        loadComponent: () => import('app/lecture/manage/lecture-units/lecture-unit-management.component').then((m) => m.LectureUnitManagementComponent),
+        loadComponent: () => import('app/lecture/manage/lecture-units/management/lecture-unit-management.component').then((m) => m.LectureUnitManagementComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.lectureUnit.home.title',

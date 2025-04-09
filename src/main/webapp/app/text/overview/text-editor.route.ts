@@ -7,7 +7,7 @@ import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 export const textEditorRoute: Routes = [
     {
         path: 'participate/:participationId',
-        loadComponent: () => import('./text-editor.component').then((m) => m.TextEditorComponent),
+        loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.textExercise.home.title',
@@ -17,7 +17,7 @@ export const textEditorRoute: Routes = [
     },
     {
         path: 'participate/:participationId/submission/:submissionId',
-        loadComponent: () => import('./text-editor.component').then((m) => m.TextEditorComponent),
+        loadComponent: () => import('./text-editor/text-editor.component').then((m) => m.TextEditorComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.textExercise.home.title',
