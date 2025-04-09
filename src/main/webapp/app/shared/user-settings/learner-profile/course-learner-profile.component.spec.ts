@@ -8,11 +8,11 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseLearnerProfileDTO } from 'app/learner-profile/shared/entities/learner-profile.model';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 
 describe('CourseLearnerProfileComponent', () => {
@@ -36,7 +36,7 @@ describe('CourseLearnerProfileComponent', () => {
         message: 'error.courseLearnerProfileNotFound',
         params: 'courseLearnerProfile',
     };
-    let errorHeaders = {
+    const errorHeaders = {
         'x-artemisapp-error': 'error.courseLearnerProfileNotFound',
         'x-artemisapp-params': 'courseLearnerProfile',
     };
@@ -129,15 +129,15 @@ describe('CourseLearnerProfileComponent', () => {
     });
 
     it('should select active course', () => {
-        let course = 1;
+        const course = 1;
         selectCourse(course);
-        let changeEvent = new Event('change', { bubbles: true, cancelable: false });
+        const changeEvent = new Event('change', { bubbles: true, cancelable: false });
         selector.dispatchEvent(changeEvent);
         expect(component.activeCourse).toBe(course);
     });
 
     function setupUpdateTest(course: number): CourseLearnerProfileDTO {
-        let newProfile = profiles[course];
+        const newProfile = profiles[course];
         newProfile['repetitionIntensity'] = 1;
         newProfile['aimForGradeOrBonus'] = 2;
         newProfile['timeInvestment'] = 3;
@@ -170,14 +170,14 @@ describe('CourseLearnerProfileComponent', () => {
 
     describe('Making put requests', () => {
         it('should update profile on successful request', () => {
-            let course = 1;
-            let profile = setupUpdateTest(course);
+            const course = 1;
+            const profile = setupUpdateTest(course);
             validateUpdate(course, profile);
         });
 
         it('should error on bad request', () => {
-            let course = 1;
-            let profile = setupUpdateTest(course);
+            const course = 1;
+            const profile = setupUpdateTest(course);
             validateError(course, profile);
         });
     });

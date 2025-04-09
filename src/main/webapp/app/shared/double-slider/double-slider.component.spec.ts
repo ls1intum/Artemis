@@ -38,7 +38,7 @@ describe('DoubleSliderComponent', () => {
     });
 
     it('should update signal after change', async () => {
-        let val = 2;
+        const val = 2;
         fixture.nativeElement.querySelector('#currentSlider').value = val;
 
         fixture.detectChanges();
