@@ -146,7 +146,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     getDeleteSummary(passkey: PasskeyDto | undefined): Observable<EntitySummary> | undefined {
         if (!passkey) {
-            return undefined; // Explicitly return undefined if passkey is not provided
+            return undefined;
         }
 
         const summary: EntitySummary = {
@@ -155,7 +155,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             'artemisApp.userSettings.passkeySettingsPage.lastUsed': passkey.lastUsed,
         };
 
-        return of(summary); // Return an Observable<EntitySummary> if passkey is valid
+        return of(summary);
     }
 
     async deletePasskey(passkey: PasskeyDto) {
