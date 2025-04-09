@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { decodeBase64url } from 'app/shared/util/utils';
+import { decodeBase64url } from 'app/shared/util/base64.util';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
@@ -9,8 +9,6 @@ export class WebauthnService {
     async getCredential(): Promise<PublicKeyCredential | undefined> {
         const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
 
-        // TODO verify what is base64url encoded and what is not
-        // we need to decode the base64url encoded challenge
         const assertionOptions: PublicKeyCredentialRequestOptions = {
             challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
             timeout: publicKeyCredentialOptions.timeout,

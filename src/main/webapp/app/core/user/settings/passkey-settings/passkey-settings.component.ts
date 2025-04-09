@@ -8,7 +8,6 @@ import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { decodeBase64url } from 'app/shared/util/utils';
 import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -17,6 +16,7 @@ import { getOS } from 'app/shared/util/os-detector.util';
 import { TranslateService } from '@ngx-translate/core';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { decodeBase64url } from 'app/shared/util/base64.util';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
