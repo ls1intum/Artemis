@@ -105,7 +105,7 @@ public class AttachmentService {
      * @param hiddenSlides List of hidden slides
      * @return Byte array containing the student version PDF
      */
-    private byte[] generateStudentVersionPdf(File originalPdf, List<Slide> hiddenSlides) throws IOException {
+    byte[] generateStudentVersionPdf(File originalPdf, List<Slide> hiddenSlides) throws IOException {
         try (PDDocument doc = Loader.loadPDF(originalPdf)) {
             hiddenSlides.stream().map(Slide::getSlideNumber).map(slideNumber -> slideNumber - 1).sorted(Comparator.reverseOrder()).forEach(doc::removePage);
 
