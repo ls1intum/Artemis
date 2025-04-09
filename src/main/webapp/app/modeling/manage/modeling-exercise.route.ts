@@ -3,12 +3,12 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 
 import { Authority } from 'app/shared/constants/authority.constants';
 
-import { ModelingExerciseResolver } from 'app/modeling/manage/modeling-exercise-resolver.service';
+import { ModelingExerciseResolver } from 'app/modeling/manage/services/modeling-exercise-resolver.service';
 
 export const routes: Routes = [
     {
         path: 'modeling-exercises/new',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -20,7 +20,7 @@ export const routes: Routes = [
     },
     {
         path: 'modeling-exercises/:exerciseId/edit',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -32,7 +32,7 @@ export const routes: Routes = [
     },
     {
         path: 'modeling-exercises/:exerciseId/import',
-        loadComponent: () => import('app/modeling/manage/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
+        loadComponent: () => import('app/modeling/manage/update/modeling-exercise-update.component').then((m) => m.ModelingExerciseUpdateComponent),
         resolve: {
             modelingExercise: ModelingExerciseResolver,
         },
@@ -44,7 +44,7 @@ export const routes: Routes = [
     },
     {
         path: 'modeling-exercises/:exerciseId',
-        loadComponent: () => import('./modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
+        loadComponent: () => import('./detail/modeling-exercise-detail.component').then((m) => m.ModelingExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.modelingExercise.home.title',

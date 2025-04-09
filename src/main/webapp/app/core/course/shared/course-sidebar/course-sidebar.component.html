@@ -155,6 +155,7 @@
         }"
         [routerLink]="sidebarItem.routerLink"
         routerLinkActive="active"
+        [routerLinkActiveOptions]="sidebarItem?.isPrefix ? { exact: true } : { exact: false }"
         [jhiFeatureToggleHide]="sidebarItem.featureToggle"
         [title]="sidebarItem.title"
         (click)="itemsDrop?.close()"

@@ -269,7 +269,8 @@
             "imageCropper": {
                 "title": "Bild zuschneiden",
                 "uploadTitle": "Ein Bild hinzufügen"
-            }
+            },
+            "overview": "Übersicht"
         },
         "courseStatistics": {
             "statistics": "Statistiken",

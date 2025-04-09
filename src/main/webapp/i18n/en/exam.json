@@ -675,6 +675,10 @@
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
+                    "noDeactivatedExerciseTypes": {
+                        "label": "No deactivated exercise types",
+                        "tooltip": "There is at least one exercise with a currently deactivated exercise type. Deleting these exercise types is currently not supported, only the complete exercise group. You should contact the Artemis-hosting system administration."
+                    },
                     "leastoneexercisegroup": "At least one exercise group",
                     "numberofexercisegroupsequal": "Number of exercises in the exam equals the number of exercise groups",
                     "numberofexercisegroupsinbetween": "Number of exercises in the exam is between the number of mandatory exercise groups and the total number of exercise groups",
