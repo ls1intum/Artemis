@@ -5,14 +5,14 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities
 
 import { Subject } from 'rxjs';
 import { FormsModule, NgModel } from '@angular/forms';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-programming-exercise-edit-checkout-directories',
     imports: [HelpIconComponent, TranslateDirective, FormsModule],
     templateUrl: './programming-exercise-edit-checkout-directories.component.html',
-    styleUrls: ['../../../manage/programming-exercise-form.scss'],
+    styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     programmingExercise = input.required<ProgrammingExercise>();

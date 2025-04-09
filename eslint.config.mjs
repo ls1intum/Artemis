@@ -144,7 +144,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**'],
+        files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,

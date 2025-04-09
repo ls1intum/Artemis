@@ -4,7 +4,7 @@ import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { faChartBar, faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import dayjs from 'dayjs/esm';
@@ -21,6 +21,10 @@ import { ExamEditWorkingTimeComponent } from './exam-edit-workingtime-dialog/exa
 import { ExamLiveAnnouncementCreateButtonComponent } from './exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -36,6 +40,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         ExamLiveAnnouncementCreateButtonComponent,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        HelpIconComponent,
     ],
 })
 export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
@@ -44,6 +49,9 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private studentExamService = inject(StudentExamService);
+    private profileService = inject(ProfileService);
+
+    private profileSubscription: Subscription | null;
 
     exam = input.required<Exam>();
     getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
@@ -68,6 +76,8 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
 
     numberOfSubmitted = 0;
     numberOfStarted = 0;
+
+    disabledExercises: Exercise[] = [];
 
     // Icons
     faEye = faEye;
@@ -94,6 +104,13 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
+        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.disabledExercises =
+                this.exam()
+                    .exerciseGroups?.flatMap((group) => group.exercises)
+                    .filter((exercise) => exercise !== undefined)
+                    .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
+        });
     }
 
     ngOnChanges() {
@@ -128,6 +145,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }
+        this.profileSubscription?.unsubscribe();
     }
 
     /**
@@ -186,6 +204,16 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 endDate = endDate.add(this.exam().gracePeriod!, 'seconds');
             }
             this.isExamOver = endDate.isBefore(dayjs());
+        }
+    }
+
+    private isExerciseTypeEnabled(activeModuleFeatures: string[], exerciseType?: ExerciseType) {
+        switch (exerciseType) {
+            case ExerciseType.TEXT:
+                return activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
+            // For now, all exercises are enabled by default
+            default:
+                return true;
         }
     }
 }

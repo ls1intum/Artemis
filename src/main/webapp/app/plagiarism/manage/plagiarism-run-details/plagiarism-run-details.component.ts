@@ -6,7 +6,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { PlagiarismResultStats } from 'app/plagiarism/shared/entities/PlagiarismResultDTO';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { DatePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

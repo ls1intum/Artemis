@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 
 @Component({

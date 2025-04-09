@@ -14,13 +14,13 @@ import {
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { PostingDirective } from 'app/communication/posting.directive';
-import { MetisService } from 'app/communication/metis.service';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
+import { MetisService } from 'app/communication/service/metis.service';
 import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { Course, isCommunicationEnabled } from 'app/core/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -37,7 +37,7 @@ import { PostingReactionsBarComponent } from 'app/communication/posting-reaction
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { throwError } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
 
@@ -85,6 +85,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
+    searchQuery = input<string>('');
     showAnswers = model<boolean>(false);
 
     openThread = output<void>();
@@ -99,6 +100,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     routerLink: RouteComponents;
     queryParams = {};
     showAnnouncementIcon = false;
+    showSearchResultInAnswersHint = false;
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
@@ -217,9 +219,24 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.pageType = this.metisService.getPageType();
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
         this.fetchForwardedMessages();
+    }
+
+    updateShowSearchResultInAnswersHint() {
+        const searchQuery = this.searchQuery()?.toLowerCase();
+        if (!searchQuery) {
+            this.showSearchResultInAnswersHint = false;
+            return;
+        }
+
+        this.showSearchResultInAnswersHint =
+            this.posting.answers?.some((answer) => {
+                const answerContent = answer.content?.toLowerCase();
+                return answerContent?.includes(searchQuery);
+            }) ?? false;
     }
 
     fetchForwardedMessages(): void {
@@ -253,6 +270,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
         this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
     }

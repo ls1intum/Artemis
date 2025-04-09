@@ -1,4 +1,4 @@
-import { ExamLiveEvent, ExamLiveEventType } from 'app/exam/overview/exam-participation-live-events.service';
+import { ExamLiveEvent, ExamLiveEventType } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { Observable, of } from 'rxjs';
 
 export class MockExamParticipationLiveEventsService {

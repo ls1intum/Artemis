@@ -1,13 +1,13 @@
 import { Component, Input, OnDestroy, inject, signal } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/shared/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button/button.component';
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal.component';
+import { GitDiffReportModalComponent } from 'app/programming/shared/git-diff-report/git-diff-report-modal/git-diff-report-modal.component';
 
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

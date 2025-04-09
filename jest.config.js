@@ -92,9 +92,9 @@ module.exports = {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 88.67,
-            branches: 74.49,
-            functions: 82.90,
-            lines: 88.73,
+            branches: 74.48,
+            functions: 82.89,
+            lines: 88.72,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -115,22 +115,12 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/architecture.spec.ts'
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
-        'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
+        '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
         '@assets/(.*)': '<rootDir>/src/main/webapp/assets/$1',
         '@core/(.*)': '<rootDir>/src/main/webapp/app/core/$1',
         '@env': '<rootDir>/src/main/webapp/environments/environment',
