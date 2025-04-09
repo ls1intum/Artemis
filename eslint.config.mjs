@@ -186,4 +186,6 @@ export default tseslint.config(
             '@angular-eslint/template/prefer-self-closing-tags': 'error',
         },
     },
+
+    
 );
