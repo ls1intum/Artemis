@@ -1,14 +1,20 @@
 package de.tum.cit.aet.artemis.core.domain;
 
 import java.time.Instant;
+import java.util.Set;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+
+import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
+
+import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 
 @Entity
 @Table(name = "passkey_credential")
@@ -21,9 +27,6 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     @Column(name = "label")
     private String label;
 
-    /**
-     * Currently only "public-key" is supported, but it is recommended to keep this field for future compatibility.
-     */
     @Enumerated(EnumType.STRING)
     @Column(name = "credential_type")
     private PasskeyType credentialType;
@@ -48,12 +51,9 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     @Column(name = "uv_initialized")
     private Boolean uvInitialized;
 
-    /**
-     * Describes how the authenticator communicates with the client device (implications on MitM attacks, reliability, etc.).
-     * For possible values see {@link com.webauthn4j.data.AuthenticatorTransport}
-     */
     @Column(name = "transports")
-    private String transports;
+    @Convert(converter = AuthenticatorTransportConverter.class)
+    private Set<AuthenticatorTransport> transports;
 
     /**
      * If true, credential backups are allowed (lockout protection)
@@ -133,11 +133,11 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.uvInitialized = uvInitialized;
     }
 
-    public String getTransports() {
+    public Set<AuthenticatorTransport> getTransports() {
         return transports;
     }
 
-    public void setTransports(String transports) {
+    public void setTransports(Set<AuthenticatorTransport> transports) {
         this.transports = transports;
     }
 

@@ -6,13 +6,10 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
@@ -117,7 +114,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
             .publicKey(ImmutablePublicKeyCose.fromBase64(credential.getPublicKeyCose()))
             .signatureCount(credential.getSignatureCount())
             .uvInitialized(credential.getUvInitialized())
-            .transports(asTransportSet(credential.getTransports()))
+            .transports(credential.getTransports())
             .backupEligible(credential.getBackupEligible())
             .backupState(credential.getBackupState())
             .attestationObject(Bytes.fromBase64(credential.getAttestationObject()))
@@ -125,13 +122,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
             .created(credential.getCreatedDate())
             .build();
         // @formatter:on
-    }
-
-    private static Set<AuthenticatorTransport> asTransportSet(String transports) {
-        if (transports == null || transports.isEmpty()) {
-            return Set.of();
-        }
-        return Set.of(transports.split(",")).stream().map(AuthenticatorTransport::valueOf).collect(Collectors.toSet());
     }
 
     private static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
@@ -142,7 +132,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setPublicKeyCose(Base64.getUrlEncoder().encodeToString(credentialRecord.getPublicKey().getBytes()));
         credential.setSignatureCount(credentialRecord.getSignatureCount());
         credential.setUvInitialized(credentialRecord.isUvInitialized());
-        credential.setTransports(credentialRecord.getTransports().stream().map(AuthenticatorTransport::getValue).collect(Collectors.joining(",")));
+        credential.setTransports(credentialRecord.getTransports());
         credential.setBackupEligible(credentialRecord.isBackupEligible());
         credential.setBackupState(credentialRecord.isBackupState());
         credential.setAttestationObject(credentialRecord.getAttestationObject().toBase64UrlString());
