@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angul
 import { Subject, takeUntil } from 'rxjs';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -172,15 +172,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         };
     }
 
-    conversationIsAnnouncement(conversation: ConversationDTO) {
-        // TODO: move logic to backend: when filter for unresolved, exclude announcement channels
-        if (conversation.type === 'channel') {
-            const channel = conversation as ChannelDTO;
-            return channel.isAnnouncementChannel;
-        }
-        return false;
-    }
-
     postsTrackByFn = (index: number, post: Post): number => post.id!;
 
     setPostForThread(post: Post) {
@@ -208,9 +199,9 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     onSelectContext(): void {
         const searchConfig = this.courseWideSearchConfig();
         if (!searchConfig) return;
+        searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
-        searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);

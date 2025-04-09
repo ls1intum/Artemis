@@ -156,7 +156,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
-    channelSearchCollapsed = true;
 
     conversationSelected = true;
     sidebarData: SidebarData;
