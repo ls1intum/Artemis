@@ -37,7 +37,8 @@
             <column name="backup_state" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="attestation_object" type="text"/>
+<!--            TODO bytea in postgres-->
+            <column name="attestation_object" type="blob"/>
             <column name="last_used" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
@@ -56,6 +57,7 @@
         <createIndex indexName="userId_index" tableName="passkey_credential">
             <column name="user_id"/>
         </createIndex>
+        <!-- Create index for credential_id -->
         <createIndex indexName="credential_id_index" tableName="passkey_credential">
             <column name="credential_id"/>
         </createIndex>
