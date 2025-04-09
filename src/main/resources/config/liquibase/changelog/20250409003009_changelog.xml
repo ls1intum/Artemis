@@ -28,7 +28,7 @@
             <column name="uv_initialized" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="transports" type="varchar(255)" defaultValue="">
+            <column name="transports" type="varchar(50)" defaultValue="">
                 <constraints nullable="false"/>
             </column>
             <column name="backup_eligible" type="boolean" defaultValue="false">
