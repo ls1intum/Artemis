@@ -73,6 +73,9 @@ export class ProgrammingExamSummaryComponent implements OnInit {
         this.routerLink = this.router.url;
 
         this.result = this.participation.submissions![0].results![0];
+        // TODO this is not a a perfect solution.
+        this.result.submission = this.submission;
+        this.result.submission.participation = this.participation;
         this.commitHash = this.submission?.commitHash?.slice(0, 11);
         this.isInCourseManagement = this.router.url.includes('course-management');
         const isBuilding = false;
