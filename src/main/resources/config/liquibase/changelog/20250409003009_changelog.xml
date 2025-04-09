@@ -10,7 +10,7 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="label" type="varchar(255)"/>
+            <column name="label" type="varchar(100)"/>
 <!--            TODO fix for postgres -->
             <column name="credential_type" type="enum('public-key')">
                 <constraints nullable="false"/>
