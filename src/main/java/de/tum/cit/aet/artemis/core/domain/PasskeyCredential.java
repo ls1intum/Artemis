@@ -13,9 +13,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
+import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.PublicKeyCose;
 
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
 
 @Entity
@@ -75,7 +77,8 @@ public class PasskeyCredential extends AbstractAuditingEntity {
      * For more info see {@link com.webauthn4j.data.attestation.AttestationObject}
      */
     @Column(name = "attestation_object")
-    private String attestationObject;
+    @Convert(converter = BytesConverter.class)
+    private Bytes attestationObject;
 
     @Column(name = "last_used")
     private Instant lastUsed;
@@ -160,11 +163,11 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.backupState = backupState;
     }
 
-    public String getAttestationObject() {
+    public Bytes getAttestationObject() {
         return attestationObject;
     }
 
-    public void setAttestationObject(String attestationObject) {
+    public void setAttestationObject(Bytes attestationObject) {
         this.attestationObject = attestationObject;
     }
 

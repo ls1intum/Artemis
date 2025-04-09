@@ -115,7 +115,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
             .transports(credential.getTransports())
             .backupEligible(credential.getBackupEligible())
             .backupState(credential.getBackupState())
-            .attestationObject(Bytes.fromBase64(credential.getAttestationObject()))
+            .attestationObject(credential.getAttestationObject())
             .lastUsed(credential.getLastUsed())
             .created(credential.getCreatedDate())
             .build();
@@ -133,7 +133,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setTransports(credentialRecord.getTransports());
         credential.setBackupEligible(credentialRecord.isBackupEligible());
         credential.setBackupState(credentialRecord.isBackupState());
-        credential.setAttestationObject(credentialRecord.getAttestationObject().toBase64UrlString());
+        credential.setAttestationObject(credentialRecord.getAttestationObject());
         credential.setLastUsed(credentialRecord.getLastUsed());
         credential.setCreatedDate(credentialRecord.getCreated());
 
