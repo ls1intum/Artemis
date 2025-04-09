@@ -88,6 +88,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                 .orElseGet(List::of);
     }
 
+    /**
+     * @param userId of the user for which the passkeys should be found
+     */
     public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
         log.info("findPasskeyDtosByUserId: userId={}", userId);
 

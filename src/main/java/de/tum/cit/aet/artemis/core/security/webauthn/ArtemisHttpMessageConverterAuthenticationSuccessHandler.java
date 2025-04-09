@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -41,6 +42,8 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     /**
      * @see org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler#setConverter
+     *
+     * @param converter the {@link GenericHttpMessageConverter} to use. Cannot be null.
      */
     public void setConverter(HttpMessageConverter<Object> converter) {
         Assert.notNull(converter, "converter cannot be null");
@@ -49,6 +52,8 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
 
     /**
      * @see org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler#setRequestCache
+     *
+     * @param requestCache the {@link RequestCache} to use. Cannot be null
      */
     public void setRequestCache(RequestCache requestCache) {
         Assert.notNull(requestCache, "requestCache cannot be null");

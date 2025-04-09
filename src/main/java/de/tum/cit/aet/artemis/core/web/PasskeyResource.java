@@ -45,11 +45,25 @@ public class PasskeyResource {
     @Value("${artemis.user-management.passkey.enabled:false}")
     public boolean enabled;
 
+    /**
+     * REST controller for managing passkeys.
+     * Provides endpoints for retrieving and deleting passkeys associated with a user.
+     *
+     * This controller is only active when the "core" profile is enabled.
+     *
+     * @param userRepository                  for accessing user data
+     * @param artemisUserCredentialRepository for managing user credentials
+     */
     public PasskeyResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
         this.userRepository = userRepository;
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
     }
 
+    /**
+     * Checks if the passkey feature is enabled.
+     *
+     * @throws NotAllowedException if the passkey feature is not enabled
+     */
     private void checkIfPasskeyFeatureIsEnabled() throws NotAllowedException {
         if (!enabled) {
             log.info("If you want to enable the passkey feature, please set the property '{}' to true in your application properties.", Constants.PASSKEY_ENABLED_PROPERTY_NAME);

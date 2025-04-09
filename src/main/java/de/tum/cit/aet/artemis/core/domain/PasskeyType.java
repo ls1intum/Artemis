@@ -19,6 +19,10 @@ public enum PasskeyType {
         return this.name();
     }
 
+    /**
+     * @param label in kebab-case
+     * @return PasskeyType for the given label
+     */
     public static PasskeyType fromLabel(String label) {
         for (PasskeyType type : PasskeyType.values()) {
             if (type.label.equals(label)) {
