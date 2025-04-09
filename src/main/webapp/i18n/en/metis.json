@@ -89,6 +89,7 @@
                     "lecture": "Lectures",
                     "exam": "Exams"
                 },
+                "filterToCourseWide": "Course-wide",
                 "filterToUnresolved": "Unresolved",
                 "filterToOwn": "Own",
                 "filterToAnsweredOrReacted": "Reacted",

@@ -82,6 +82,7 @@
                 "postContextFilter": "Zeige Nachrichten in:",
                 "one_extra_context": "weiterer",
                 "multiple_extra_contexts": "weitere",
+                "filterToCourseWide": "Kursweit",
                 "filterToUnresolved": "Ungeklärt",
                 "filterToOwn": "Eigene",
                 "filterToAnsweredOrReacted": "Reagiert",
