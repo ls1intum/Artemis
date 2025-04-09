@@ -270,6 +270,7 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.settings',
             guidedTour: false,
             hidden: false,
+            testId: 'course-settings',
         };
     }
 }

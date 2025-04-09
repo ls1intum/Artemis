@@ -93,7 +93,7 @@ export class CourseManagementPage {
     }
 
     async clickEditCourse() {
-        await this.page.locator('#edit-course').click();
+        await this.page.locator('#course-settings').click();
     }
 
     async updateCourse(course: Course) {
