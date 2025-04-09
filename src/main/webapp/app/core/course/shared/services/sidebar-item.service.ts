@@ -259,6 +259,7 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.settings',
             guidedTour: false,
             hidden: false,
+            bottom: true,
         };
     }
     getCourseSettingsItem(courseId: number): SidebarItem {
