@@ -287,7 +287,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course?.id,
-            conversationId: this._activeConversation?.id,
+            conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,

@@ -56,6 +56,7 @@ describe('CourseWideSearchComponent', () => {
     const courseWideSearchConfig = new CourseWideSearchConfig();
     courseWideSearchConfig.searchTerm = '';
     courseWideSearchConfig.filterToUnresolved = false;
+    courseWideSearchConfig.filterToCourseWide = false;
     courseWideSearchConfig.filterToOwn = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
     courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
@@ -122,9 +123,11 @@ describe('CourseWideSearchComponent', () => {
         const conversationsOfUser = conversationDtoArray.map((conversation) => conversation.id);
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
-            courseWideChannelIds: conversationsOfUser,
+            conversationIds: conversationsOfUser,
             searchText: undefined,
             filterToUnresolved: false,
+            authorIds: undefined,
+            filterToCourseWide: false,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
             page: 0,
@@ -147,8 +150,9 @@ describe('CourseWideSearchComponent', () => {
 
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
-            courseWideChannelIds: conversationsOfUser,
+            conversationIds: conversationsOfUser,
             searchText: courseWideSearchConfig.searchTerm,
+            filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
             filterToUnresolved: courseWideSearchConfig.filterToUnresolved,
             filterToOwn: courseWideSearchConfig.filterToOwn,
             filterToAnsweredOrReacted: courseWideSearchConfig.filterToAnsweredOrReacted,
