@@ -3,6 +3,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import {
     faChalkboardUser,
     faChartColumn,
+    faCog,
     faComments,
     faFlag,
     faGraduationCap,
@@ -14,7 +15,6 @@ import {
     faTable,
     faTableCells,
     faUserCheck,
-    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 
@@ -320,10 +320,11 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: `${courseId}/settings`,
-                icon: faWrench,
+                icon: faCog,
                 title: 'Settings',
                 translation: 'artemisApp.courseOverview.menu.settings',
                 testId: 'course-settings',
+                bottom: true,
                 hidden: false,
                 guidedTour: false,
             });
