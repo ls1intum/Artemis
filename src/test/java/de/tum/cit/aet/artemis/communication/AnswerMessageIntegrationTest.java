@@ -80,6 +80,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     private List<Post> existingCourseWideMessages;
 
+    private List<Long> existingCourseWideChannelIds;
+
     private Long courseId;
 
     private User student1;
@@ -101,6 +103,10 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         existingCourseWideMessages = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
                 .toList();
+
+        // filters course wide channels
+        existingCourseWideChannelIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+                .map(post -> post.getConversation().getId()).distinct().toList();
 
         // get all existing posts with answers in exercise context
         List<Post> existingPostsWithAnswersInExercise = existingConversationPostsWithAnswers.stream()
@@ -413,8 +419,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     void testGetCourseWideMessages_WithUnresolvedPosts() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideChannelIds", "");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         params.add("filterToUnresolved", "true");
+        params.add("filterToCourseWide", "true");
         params.add("size", "50");
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -429,11 +436,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithOwnAndUnresolvedPosts() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        // authorIds containing the current user id & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("authorIds", String.valueOf(userId));
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
         params.add("size", "50");
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -448,11 +457,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseWideMessages_WithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        // authorIds containing the current user id & filterToUnresolved set true; will fetch all unresolved posts of current user
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("authorIds", String.valueOf(userId));
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -470,7 +481,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -486,10 +498,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("authorIds", String.valueOf(userId));
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -508,7 +522,8 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
         params.add("filterToUnresolved", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -525,11 +540,13 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("filterToOwn", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("filterToUnresolved", "true");
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -546,10 +563,12 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
-        params.add("filterToOwn", "true");
-        params.add("courseWideChannelIds", "");
+        params.add("authorIds", String.valueOf(userId));
+        params.add("filterToCourseWide", "true");
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
 
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
