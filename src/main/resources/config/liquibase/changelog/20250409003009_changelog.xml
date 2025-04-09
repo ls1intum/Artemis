@@ -29,14 +29,14 @@
             <column name="backup_state" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_used" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+            <column name="last_used" type="datetime(3)" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <!-- Fields for AbstractAuditingEntity -->
             <column name="created_by" type="varchar(45)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
+            <column name="created_date" type="datetime(3)" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <column name="last_modified_by" type="varchar(45)"/>
