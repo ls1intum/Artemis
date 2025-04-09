@@ -797,24 +797,43 @@ export class MetisService implements OnDestroy {
      * Retrieves the source posts for a given set of post IDs.
      *
      * @param postIds - An array of numeric post IDs to retrieve source posts for.
-     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid or not existent.
      */
-    getSourcePostsByIds(postIds: number[]) {
-        if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
-        else return;
+    getSourcePostsByIds(postIds: number[]): Observable<Post[] | undefined> {
+        if (postIds) {
+            return this.postService.getSourcePostsByIds(this.courseId, postIds).pipe(
+                catchError((error) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(() => error);
+                }),
+            );
+        } else {
+            return of(undefined);
+        }
     }
 
     /**
      * Retrieves the source answer posts for a given set of answer post IDs.
      *
      * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
-     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid or not existent.
      */
-    getSourceAnswerPostsByIds(answerPostIds: number[]) {
-        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
-        else return;
+    getSourceAnswerPostsByIds(answerPostIds: number[]): Observable<AnswerPost[] | undefined> {
+        if (answerPostIds) {
+            return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds).pipe(
+                catchError((error) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(() => error);
+                }),
+            );
+        } else {
+            return of(undefined);
+        }
     }
-
     /**
      * Creates forwarded messages by associating original posts with a target conversation.
      *
