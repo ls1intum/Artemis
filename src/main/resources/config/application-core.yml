@@ -3,6 +3,11 @@ artemis:
         enabled: true
     text:
         enabled: true
+    user-management:
+      passkey:
+        enabled: false
+        allowedOrigins: 'https://artemis.tum.de/' # ensures that only trusted parties can create and authenticate with passkeys (comma separated)
+        rpId: 'artemis.tum.de' # Relying Party Identifier, typically the domain of the website that is using WebAuthn for authentication
 
 spring:
     liquibase:
@@ -37,10 +42,3 @@ management:
             logback: true
             process: true
             system: true
-
-artemis:
-  user-management:
-    passkey:
-      enabled: false
-      allowedOrigins: 'https://artemis.tum.de/' # ensures that only trusted parties can create and authenticate with passkeys (comma separated)
-      rpId: 'artemis.tum.de' # Relying Party Identifier, typically the domain of the website that is using WebAuthn for authentication
