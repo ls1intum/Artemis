@@ -4,6 +4,8 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -22,8 +24,9 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     /**
      * Currently only "public-key" is supported, but it is recommended to keep this field for future compatibility.
      */
+    @Enumerated(EnumType.STRING)
     @Column(name = "credential_type")
-    private String credentialType;
+    private PasskeyType credentialType;
 
     @Column(name = "credential_id")
     private String credentialId;
@@ -90,11 +93,11 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.label = label;
     }
 
-    public String getCredentialType() {
+    public PasskeyType getCredentialType() {
         return credentialType;
     }
 
-    public void setCredentialType(String credentialType) {
+    public void setCredentialType(PasskeyType credentialType) {
         this.credentialType = credentialType;
     }
 

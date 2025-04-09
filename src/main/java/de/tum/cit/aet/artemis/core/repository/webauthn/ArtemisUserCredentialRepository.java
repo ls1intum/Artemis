@@ -22,6 +22,7 @@ import org.springframework.security.web.webauthn.management.UserCredentialReposi
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
+import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
@@ -111,7 +112,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         return ImmutableCredentialRecord.builder()
             .userEntityUserId(userId)
             .label(credential.getLabel())
-            .credentialType(PublicKeyCredentialType.valueOf(credential.getCredentialType()))
+            .credentialType(PublicKeyCredentialType.valueOf(credential.getCredentialType().label()))
             .credentialId(Bytes.fromBase64(credential.getCredentialId()))
             .publicKey(ImmutablePublicKeyCose.fromBase64(credential.getPublicKeyCose()))
             .signatureCount(credential.getSignatureCount())
@@ -136,7 +137,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     private static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
         credential.setUser(user);
         credential.setLabel(credentialRecord.getLabel());
-        credential.setCredentialType(credentialRecord.getCredentialType().getValue());
+        credential.setCredentialType(PasskeyType.fromLabel(credentialRecord.getCredentialType().getValue()));
         credential.setCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
         credential.setPublicKeyCose(Base64.getUrlEncoder().encodeToString(credentialRecord.getPublicKey().getBytes()));
         credential.setSignatureCount(credentialRecord.getSignatureCount());

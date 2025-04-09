@@ -12,7 +12,7 @@
             </column>
             <column name="label" type="varchar(100)"/>
 <!--            TODO fix for postgres -->
-            <column name="credential_type" type="enum('public-key')">
+            <column name="credential_type" type="enum('PUBLIC_KEY')">
                 <constraints nullable="false"/>
             </column>
             <column name="credential_id" type="varchar(64)">
