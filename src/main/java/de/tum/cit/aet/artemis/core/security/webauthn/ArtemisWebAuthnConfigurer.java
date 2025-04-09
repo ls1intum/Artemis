@@ -34,7 +34,12 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
  * Configures WebAuthn for Spring Security applications using a custom {@link ArtemisWebAuthnAuthenticationFilter} in
- * contrast to the Spring Security implementation.
+ * because contrast to the Spring Security implementation we want to set a JWT in the response.
+ *
+ * @see WebAuthnConfigurer on which this class is based and which can probably replace this custom class once a
+ *      configuration of the in {@link WebAuthnAuthenticationFilter} configured
+ *      {@link org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler}
+ *      can be modified / overwriten by specifying a bean.
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
@@ -175,12 +180,8 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private WebAuthnRelyingPartyOperations webAuthnRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
         Optional<WebAuthnRelyingPartyOperations> webauthnOperationsBean = getBeanOrNull(WebAuthnRelyingPartyOperations.class);
-        if (webauthnOperationsBean.isPresent()) {
-            return webauthnOperationsBean.get();
-        }
-        Webauthn4JRelyingPartyOperations result = new Webauthn4JRelyingPartyOperations(userEntities, userCredentials,
-                PublicKeyCredentialRpEntity.builder().id(this.rpId).name(this.rpName).build(), this.allowedOrigins);
-        return result;
+        return webauthnOperationsBean.orElseGet(() -> new Webauthn4JRelyingPartyOperations(userEntities, userCredentials,
+                PublicKeyCredentialRpEntity.builder().id(this.rpId).name(this.rpName).build(), this.allowedOrigins));
     }
 
 }

@@ -10,5 +10,4 @@ the Spring Security Webauthn interface does not seem to offer a built-in customi
 `ArtemisWebAuthnConfigurer` is a modification of the SpringSecurity `WebAuthnConfigurer` as we want to define a custom 
 `HttpMessageConverterAuthenticationSuccessHandler.onAuthenticationSuccess`.
 If Spring Security adds a customization option (which I would assume to happen in the near future), we might be able to 
-directly use the SpringSecurity `WebAuthnConfigurer` (e.g. in `SecurityConfiguration` or by adding a Bean with a certain
-interface might be sufficient to achieve the same behaviour).
+directly use the SpringSecurity `WebAuthnConfigurer`.
