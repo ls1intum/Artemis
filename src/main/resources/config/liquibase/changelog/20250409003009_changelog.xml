@@ -77,24 +77,12 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="20250409-2a-add-columns-with-differing-format-postgresql-add-enum" author="florian-glombik">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql"/>
-        </preConditions>
-
-        <sql>
-            CREATE TYPE passkey_type_enum AS ENUM (
-                'PUBLIC_KEY'
-            );
-        </sql>
-    </changeSet>
-
-    <changeSet id="20250409-2b-add-columns-with-differing-format-postgresql-create-columns" author="florian-glombik">
+    <changeSet id="20250409-2b-add-columns-with-differing-format-postgresql" author="florian-glombik">
         <preConditions onFail="MARK_RAN">
             <dbms type="postgresql"/>
         </preConditions>
         <addColumn tableName="passkey_credential">
-            <column name="credential_type" type="varchar(32)">
+            <column name="credential_type" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
             <column name="public_key_cose" type="bytea">
@@ -102,16 +90,5 @@
             </column>
             <column name="attestation_object" type="bytea"/>
         </addColumn>
-    </changeSet>
-
-    <changeSet id="20250409-2c-add-columns-with-differing-format-postgresql-use-enum-properly" author="florian-glombik">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql"/>
-        </preConditions>
-        <sql>
-            ALTER TABLE passkey_credential
-            ALTER COLUMN credential_type TYPE passkey_type_enum
-            USING credential_type::passkey_type_enum;
-        </sql>
     </changeSet>
 </databaseChangeLog>
