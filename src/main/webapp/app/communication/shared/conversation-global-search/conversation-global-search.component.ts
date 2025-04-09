@@ -1,19 +1,19 @@
 import { Component, ElementRef, HostListener, OnDestroy, ViewChild, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
 import { isChannelDTO } from '../entities/conversation/channel.model';
 import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from '../entities/conversation/one-to-one-chat.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Subject, catchError, map, of, takeUntil } from 'rxjs';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 
 export interface ConversationGlobalSearchConfig {
     searchTerm: string;
