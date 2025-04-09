@@ -15,7 +15,7 @@
             <column name="credential_type" type="enum('public-key')">
                 <constraints nullable="false"/>
             </column>
-            <column name="credential_id" type="varchar(255)">
+            <column name="credential_id" type="varchar(64)">
                 <constraints nullable="false" unique="true"/>
             </column>
 <!--            TODO bytea in postgres -->
