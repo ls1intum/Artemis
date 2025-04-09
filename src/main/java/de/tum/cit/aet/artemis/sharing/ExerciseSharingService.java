@@ -253,7 +253,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * Retrieves the Exercise-Details file from a Sharing basket
+     * Retrieves the Exercise-Details file from a Sharing basket.
      *
      * @param sharingInfo of the basket to extract the problem statement from
      * @return The content of the Exercise-Details file
@@ -295,26 +295,27 @@ public class ExerciseSharingService {
             return null;
         }
 
-        ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);
+        try (ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);) {
 
-        ZipEntry entry;
-        while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
-            Matcher matcher = matchingPattern.matcher(entry.getName());
-            if (matcher.find()) {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                byte[] buffer = new byte[102400];
-                int bytesRead;
-                while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
-                    baos.write(buffer, 0, bytesRead);
+            ZipEntry entry;
+            while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
+                Matcher matcher = matchingPattern.matcher(entry.getName());
+                if (matcher.find()) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    byte[] buffer = new byte[102400];
+                    int bytesRead;
+                    while ((bytesRead = zippedRepositoryStream.read(buffer)) != -1) {
+                        baos.write(buffer, 0, bytesRead);
+                    }
+                    String entryContent = baos.toString(StandardCharsets.UTF_8);
+                    baos.close();
+                    zippedRepositoryStream.closeEntry();
+                    return entryContent;
                 }
-                String entryContent = baos.toString(StandardCharsets.UTF_8);
-                baos.close();
                 zippedRepositoryStream.closeEntry();
-                return entryContent;
             }
-            zippedRepositoryStream.closeEntry();
+            return null; // Not found
         }
-        return null; // Not found
     }
 
     /**

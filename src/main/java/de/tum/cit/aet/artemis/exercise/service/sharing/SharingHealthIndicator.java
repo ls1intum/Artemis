@@ -7,18 +7,20 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 import org.springframework.boot.actuate.health.Health;
-import org.springframework.boot.actuate.health.HealthContributor;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
+/**
+ * health indicator that shows the status of the sharing platform connector.
+ */
 @Component
 @Profile("sharing")
-public class SharingHealthIndicator implements HealthContributor, HealthIndicator {
+public class SharingHealthIndicator implements HealthIndicator {
 
-    public static final ZoneId UTC = ZoneId.of("UTC");
+    private static final ZoneId UTC = ZoneId.of("UTC");
 
-    public static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
+    private static final DateTimeFormatter TIME_STAMP_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm:ss");
 
     protected final SharingConnectorService sharingConnectorService;
 
@@ -27,6 +29,10 @@ public class SharingHealthIndicator implements HealthContributor, HealthIndicato
         this.sharingConnectorService = sharingConnectorService;
     }
 
+    /**
+     * returns the main health status (up/down or unknown if config request from sharing platform is to long ago), together
+     * with a list of the 10 last log events for the sharing connector.
+     */
     @Override
     public Health health() {
         SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();

@@ -76,7 +76,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     @BeforeEach
     void startUp() throws Exception {
-        sharingPlatformMockProvider.connectRequestFromSharingPlattform();
+        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
     @AfterEach
@@ -92,8 +92,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         String content = result.getResponse().getContentAsString();
         assertThat(content).isEqualTo("true");
     }
-
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
     /**
      * tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
@@ -123,6 +121,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
 
+        final ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+
         ShoppingBasket sb = objectMapper.readerFor(ShoppingBasket.class).readValue(content);
         assertThat(sb.userInfo.email).isEqualTo("michael.breu@uibk.ac.at");
         return SAMPLE_BASKET_TOKEN;
@@ -148,30 +148,31 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
                 "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()).contentType(MediaType.APPLICATION_JSON)).andExpect(status().isNotFound());
     }
 
-    private MockHttpServletRequestBuilder addCorrectChecksum(MockHttpServletRequestBuilder request, String... params) {
-        Map<String, String> paramsToCheckSum = new HashMap<>();
+    private Map<String, String> parseParamsToMap(String... params) {
+        Map<String, String> paramsMap = new HashMap<>();
         assertThat(params.length % 2).isEqualTo(0).describedAs("paramList must contain even elements");
-
         for (int i = 0; i < params.length; i = i + 2) {
             String paramName = params[i];
             String paramValue = params[i + 1];
-            paramsToCheckSum.put(paramName, paramValue);
-            request.queryParam(paramName, paramValue);
+            paramsMap.put(paramName, paramValue);
         }
-        String checkSum = SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
-        request.queryParam("checksum", checkSum);
-        return request;
+        return paramsMap;
     }
 
     private String calculateCorrectChecksum(String... params) {
-        Map<String, String> paramsToCheckSum = new HashMap<>();
-        assertThat(params.length % 2).isEqualTo(0).describedAs("paramList must contain even elements");
-        for (int i = 0; i < params.length; i = i + 2) {
-            String paramName = params[i];
-            String paramValue = params[i + 1];
-            paramsToCheckSum.put(paramName, paramValue);
-        }
+        Map<String, String> paramsToCheckSum = parseParamsToMap(params);
         return SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
+    }
+
+    private MockHttpServletRequestBuilder addCorrectChecksum(MockHttpServletRequestBuilder request, String... params) {
+        Map<String, String> paramsToCheckSum = parseParamsToMap(params);
+
+        // Add params to request
+        paramsToCheckSum.forEach((paramName, paramValue) -> request.queryParam(paramName, paramValue));
+
+        String checkSum = SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
+        request.queryParam("checksum", checkSum);
+        return request;
     }
 
     /**

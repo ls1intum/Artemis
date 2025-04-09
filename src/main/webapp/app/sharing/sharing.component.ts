@@ -17,7 +17,11 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgStyle } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { take } from 'rxjs';
 
+/**
+ * controls the import of an exercise from the sharing platform.
+ */
 @Component({
     selector: 'jhi-sharing',
     templateUrl: './sharing.component.html',
@@ -26,14 +30,31 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     standalone: true,
 })
 export class SharingComponent implements OnInit {
+    /**
+     * list of courses to import to
+     */
     courses: Course[];
 
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    /** for sorting course table */
     reverse: boolean = false;
+    /** for sorting course table */
     predicate: string;
+    /**
+     * the shopping basket imported from the sharing platform
+     */
     shoppingBasket: ShoppingBasket;
+    /**
+     * holder for all data needed to import the exercise
+     */
     sharingInfo: SharingInfo = new SharingInfo();
+    /**
+     * the selected course
+     */
     selectedCourse: Course;
+    /**
+     * flag for instructor role test
+     */
     isInstructor = false;
 
     // Icons
@@ -52,6 +73,9 @@ export class SharingComponent implements OnInit {
         this.predicate = 'id';
     }
 
+    /**
+     * @returns the expiration data of the shopping basket
+     */
     getTokenExpiryDate(): Date {
         if (this.shoppingBasket) {
             return new Date(this.shoppingBasket.tokenValidUntil);
@@ -70,17 +94,26 @@ export class SharingComponent implements OnInit {
         });
     }
 
+    /**
+     * course selection event handler
+     * @param course selected course
+     */
     onCourseSelected(course: Course): void {
         this.selectedCourse = course;
     }
 
+    /**
+     * the id of the course
+     * @returns the id of the course
+     */
     courseId(): number {
-        if (this.selectedCourse && this.selectedCourse.id) {
-            return this.selectedCourse.id;
-        }
-        return 0;
+        return this.selectedCourse?.id ?? 0;
     }
 
+    /**
+     * exercise selection event handler
+     * @param index the index of the selected exercise in basket
+     */
     onExerciseSelected(index: number): void {
         this.sharingInfo.selectedExercise = index;
     }
@@ -94,10 +127,16 @@ export class SharingComponent implements OnInit {
         return item.id;
     }
 
+    /**
+     * sorts the course table
+     */
     sortRows() {
         this.sortService.sortByProperty(this.courses, this.predicate, this.reverse);
     }
 
+    /**
+     * finally navigates to the import page
+     */
     navigateToImportFromSharing() {
         const importBaseRoute = ['/course-management', this.courseId(), 'programming-exercises'];
         importBaseRoute.push('import-from-sharing');
@@ -126,15 +165,20 @@ export class SharingComponent implements OnInit {
      * Initialises the sharing page for import
      */
     ngOnInit(): void {
-        this.route.params.subscribe((params) => {
+        this.route.params.pipe(take(1)).subscribe((params) => {
             this.sharingInfo.basketToken = params['basketToken'];
         });
-        this.route.queryParams.subscribe((qparams: Params) => {
+        this.route.queryParams.pipe(take(1)).subscribe((qparams: Params) => {
             this.sharingInfo.returnURL = qparams['returnURL'];
             this.sharingInfo.apiBaseURL = qparams['apiBaseURL'];
             this.sharingInfo.checksum = qparams['checksum'];
-            this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe((res: ShoppingBasket) => {
-                this.shoppingBasket = res;
+            this.programmingExerciseSharingService.getSharedExercises(this.sharingInfo).subscribe({
+                next: (res: ShoppingBasket) => {
+                    this.shoppingBasket = res;
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.sharing.error.loadingBasket', { message: error.message });
+                },
             });
         });
         this.userRouteAccessService.checkLogin([Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN], this.router.url).then((isLoggedIn) => {

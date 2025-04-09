@@ -60,6 +60,13 @@ public class RestTemplateConfiguration {
         return createRestTemplate();
     }
 
+    /**
+     * Creates a RestTemplate with short timeouts that can be used to communicate with the Sharing Platform.
+     * Just needed to have an independent rest template.
+     * Especially when mocked for tests.
+     *
+     * @return a RestTemplate with short timeouts for sharing platform integration
+     */
     @Bean
     @Profile(PROFILE_SHARING)
     public RestTemplate sharingRestTemplate() {

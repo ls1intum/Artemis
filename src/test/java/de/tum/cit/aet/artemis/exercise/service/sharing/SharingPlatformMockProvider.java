@@ -14,7 +14,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * provides infrastructure to set up and shutdown
@@ -46,7 +47,7 @@ public class SharingPlatformMockProvider {
     public SharingPlatformMockProvider() {
     }
 
-    public SharingPluginConfig connectRequestFromSharingPlattform() throws Exception {
+    public SharingPluginConfig connectRequestFromSharingPlatform() throws Exception {
         MvcResult result = restMockMvc
                 .perform(get("/api/sharing/config").queryParam("apiBaseUrl", SHARING_BASEURL_PLUGIN).queryParam("installationName", TEST_INSTALLATION_NAME)
                         .header("Authorization", sharingApiKey).contentType(MediaType.APPLICATION_JSON))
@@ -71,7 +72,7 @@ public class SharingPlatformMockProvider {
      */
     public void mockStatus(boolean success) throws Exception {
         if (success) {
-            connectRequestFromSharingPlattform();
+            connectRequestFromSharingPlatform();
         }
         else {
             reset();

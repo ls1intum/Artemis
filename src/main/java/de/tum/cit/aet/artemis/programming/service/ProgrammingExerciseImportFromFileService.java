@@ -108,7 +108,11 @@ public class ProgrammingExerciseImportFromFileService {
             if (isImportFromSharing) {
                 // Exercises from Sharing are currently exported in a different zip structure containing an additional dir
                 try (Stream<Path> walk = Files.walk(importExerciseDir)) {
-                    importExerciseDir = walk.filter(Files::isDirectory).toList().getFirst();
+                    List<Path> directories = walk.filter(Files::isDirectory).toList();
+                    if (directories.isEmpty()) {
+                        throw new BadRequestAlertException("No directories found for Sharing import", "programmingExercise", "noSharingDirFound");
+                    }
+                    importExerciseDir = directories.get(0);
                 }
             }
 

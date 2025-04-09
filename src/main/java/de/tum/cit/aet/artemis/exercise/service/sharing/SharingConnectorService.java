@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.service.sharing;
 
-import static java.util.concurrent.Executors.newFixedThreadPool;
-
 import java.net.URL;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,7 +62,7 @@ public class SharingConnectorService {
         }
 
         @Override
-        public boolean add(HealthStatus e) {
+        public synchronized boolean add(HealthStatus e) {
             if (this.size() >= HEALTH_HISTORY_LIMIT) {
                 this.remove(0); // Remove the oldest element
             }
@@ -231,9 +231,13 @@ public class SharingConnectorService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void triggerSharingReinitAfterApplicationStart() {
-        // we have to trigger sharing plattform reinitialization asynchronously,
-        // because otherwise the main thread is blocked!
-        newFixedThreadPool(1).execute(this::triggerReinit);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+
+        executor.submit(() -> {
+            triggerReinit();
+        });
+
+        executor.shutdown();
     }
 
     /**

@@ -44,8 +44,6 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
         return TEST_PREFIX;
     }
 
-    // public static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken.json";
-
     public static final String TEST_CALLBACK_URL = "http://testing/xyz1";
 
     @Autowired
@@ -56,7 +54,7 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     @BeforeEach
     void startUp() throws Exception {
-        sharingPlatformMockProvider.connectRequestFromSharingPlattform();
+        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
     @AfterEach

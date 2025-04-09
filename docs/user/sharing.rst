@@ -63,7 +63,7 @@ Finally you should add the creators of the exercise. The first row should be pre
 The sharing platform distinguishes between creators/authors and publishers. The publishers are those that take care for publishing on the sharing platform, however
 may not necessarily coincide with the creators/authors.
 
-The full metadata is listed on this page <https://search.sharing-codeability.uibk.ac.at/pages/en/publishers/howto>_. It comprises more data
+The full metadata is listed on `this page <https://search.sharing-codeability.uibk.ac.at/pages/en/publishers/howto>`_. It comprises more data
 than listed in this short page. You are welcome to add further data, however you have to edit it in the metadata.yaml file of your git repository.
 
 If all required meta data is correct, you can import the exercise into the sharing platform by hitting the submit-Button.

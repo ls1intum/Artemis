@@ -23,7 +23,7 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @BeforeEach
     void startUp() throws Exception {
-        sharingPlatformMockProvider.connectRequestFromSharingPlattform();
+        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
     @AfterEach
@@ -32,7 +32,7 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Test
-    void trivialTests() {
+    void testConfigurationPropertiesAndApiKeyBehavior() {
         assertThat(sharingConnectorService.getInstallationName()).isEqualTo(SharingPlatformMockProvider.TEST_INSTALLATION_NAME);
         assertThat(sharingConnectorService.getSharingApiBaseUrlOrNull()).isNotNull();
         assertThat(sharingConnectorService.isSharingApiBaseUrlPresent()).isTrue();
@@ -47,6 +47,9 @@ class SharingConnectorServiceTest extends AbstractSpringIntegrationIndependentTe
     @Test
     void validateApiKey() {
         assertThat(sharingConnectorService.validate(null)).isFalse();
+        /*
+         * just a huge key to trigger an valdiation error
+         */
         String hugeKey = "huge" + "0123456789".repeat(50);
 
         assertThat(sharingConnectorService.validate(hugeKey)).isFalse();

@@ -26,7 +26,6 @@ describe('SharingComponent', () => {
     let httpMock: HttpTestingController;
     let accountService: AccountService;
     let alertService: AlertService;
-    //    let accountServiceStub: jest.SpyInstance;
 
     const route = {
         params: of({ basketToken: 'someBasketToken' }),
@@ -73,7 +72,7 @@ describe('SharingComponent', () => {
         { id: 2, title: 'testCouse 2' },
     ];
 
-    it('straight process', fakeAsync(() => {
+    it('loads baskets and courses, selects one, and navigates to import page', fakeAsync(() => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         fixture.detectChanges();
         tick();
@@ -99,7 +98,7 @@ describe('SharingComponent', () => {
         expect(fixture.componentInstance.selectedCourse).toStrictEqual(courses[0]);
         expect(fixture.componentInstance.courseId()).toStrictEqual(1);
         expect(fixture.componentInstance.trackId(0, courses[0])).toStrictEqual(1);
-        fixture.componentInstance.sortRows(); // not really a good test
+        fixture.componentInstance.sortRows(); // just for coverage ;-)
 
         // further actions -> select exercise
 
@@ -134,7 +133,7 @@ describe('SharingComponent', () => {
         expect(errorSpy).toHaveBeenCalledOnce();
     }));
 
-    it('trivial basketInfoTests', fakeAsync(() => {
+    it(' basketInfo validation', fakeAsync(() => {
         let sharingInfo: SharingInfo = new SharingInfo();
 
         sharingInfo.basketToken = 'someBasketToken';

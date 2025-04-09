@@ -24,7 +24,7 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @BeforeEach
     void startUp() throws Exception {
-        sharingPlatformMockProvider.connectRequestFromSharingPlattform();
+        sharingPlatformMockProvider.connectRequestFromSharingPlatform();
     }
 
     @AfterEach
@@ -34,12 +34,6 @@ class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTes
 
     @Test
     void validationFailure() {
-        assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
-        assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isNull();
-    }
-
-    @Test
-    void requestValidationTests() {
         assertThat(exerciseSharingService.validate("invalidToken", "invalid sec")).isFalse();
         assertThat(exerciseSharingService.getExportedExerciseByToken("invalidToken")).isNull();
     }

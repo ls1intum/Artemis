@@ -97,6 +97,7 @@ public class ExerciseSharingResource {
             return ResponseUtil.wrapOrNotFound(sharingInfoDTO);
         }
         else {
+            log.warn("Checksum validation failed for basketToken={}", basketToken);
             return ResponseEntity.badRequest().body(null);
         }
     }
@@ -107,6 +108,7 @@ public class ExerciseSharingResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
     @PostMapping("/sharing/setup-import")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR','EDITOR','ADMIN')")
     public ResponseEntity<ProgrammingExercise> setUpFromSharingImport(@RequestBody SharingSetupInfo sharingSetupInfo)
             throws GitAPIException, SharingException, IOException, URISyntaxException {
         ProgrammingExercise exercise = programmingExerciseImportFromSharingService.importProgrammingExerciseFromSharing(sharingSetupInfo);
@@ -121,6 +123,9 @@ public class ExerciseSharingResource {
      */
     @PostMapping("/sharing/import/basket/problemStatement")
     public ResponseEntity<String> getProblemStatement(@RequestBody SharingInfoDTO sharingInfo) throws IOException {
+        if (!sharingInfo.checkChecksum(sharingConnectorService.getSharingApiKeyOrNull())) {
+            return ResponseEntity.badRequest().body(null);
+        }
         String problemStatement = this.exerciseSharingService.getProblemStatementFromBasket(sharingInfo);
         return ResponseEntity.ok().body(problemStatement);
     }
