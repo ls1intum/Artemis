@@ -5,68 +5,14 @@
     <!-- 
       Migration to convert `initialization_state` and `discriminator` columns
       from VARCHAR to ENUM types. This improves data integrity and saves disk space.
-      The migration supports both PostgreSQL and MySQL with conditional logic.
+      The migration supports only MySQL with conditional logic.
     -->
-
-    <!-- Step 1: Create ENUM types in PostgreSQL -->
-    <changeSet id="20250329-01-create-enums-postgres" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <!-- Ensure this step only runs on PostgreSQL -->
-            <dbms type="postgresql"/>
-        </preConditions>
-
-        <!-- Define a named ENUM type for initialization_state -->
-        <sql>
-            CREATE TYPE initialization_state_enum AS ENUM (
-            'UNINITIALIZED',
-            'REPO_COPIED',
-            'REPO_CONFIGURED',
-            'INACTIVE',
-            'BUILD_PLAN_COPIED',
-            'BUILD_PLAN_CONFIGURED',
-            'INITIALIZED',
-            'FINISHED'
-        );
-        </sql>
-
-        <!-- Define a named ENUM type for discriminator -->
-        <sql>
-            CREATE TYPE participation_discriminator_enum AS ENUM (
-            'P', 'SP', 'PESP', 'SPEP', 'TPEP'
-        );
-        </sql>
-    </changeSet>
-
-    <!-- Step 2: Update columns to use the new ENUM types in PostgreSQL -->
-    <changeSet id="20250329-02-alter-columns-postgres" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <!-- Ensure this step only runs on PostgreSQL -->
-            <dbms type="postgresql"/>
-        </preConditions>
-
-        <!-- 
-          ALTER COLUMN to use the ENUM type.
-          `USING ...::enum_type` ensures correct casting from existing VARCHAR values.
-        -->
-        <sql>
-            ALTER TABLE participation
-            ALTER COLUMN initialization_state TYPE initialization_state_enum
-        USING initialization_state::initialization_state_enum;
-        </sql>
-
-        <sql>
-            ALTER TABLE participation
-            ALTER COLUMN discriminator TYPE participation_discriminator_enum
-        USING discriminator::participation_discriminator_enum;
-        </sql>
-    </changeSet>
-
-    <!-- Step 3: Use simplified enum syntax for MySQL -->
+    <!-- Use simplified enum syntax for MySQL -->
     <changeSet id="20250329-03-alter-columns-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
             <!-- Ensure this step only runs on MySQL and H2 -->
             <or>
-                <dbms type="postgresql"/>
+                <dbms type="mysql"/>
                 <dbms type="h2"/>
             </or>
         </preConditions>
