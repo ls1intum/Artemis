@@ -9,7 +9,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
@@ -25,13 +24,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 /**
  * An {@link AuthenticationSuccessHandler}, that sets a JWT token in the response and writes a JSON response with the redirect
  * URL and an authenticated status similar to:
- *
- * <code>
- *     {
- *         "redirectUrl": "/user/profile",
- *         "authenticated": true
- *     }
- * </code>
+ * <br>
+ * Implementation Oriented at {@link org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler}, see implementation for more information
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
@@ -46,10 +40,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
     }
 
     /**
-     * Sets the {@link GenericHttpMessageConverter} to write to the response. The default
-     * is {@link MappingJackson2HttpMessageConverter}.
-     *
-     * @param converter the {@link GenericHttpMessageConverter} to use. Cannot be null.
+     * @see org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler#setConverter
      */
     public void setConverter(HttpMessageConverter<Object> converter) {
         Assert.notNull(converter, "converter cannot be null");
@@ -57,10 +48,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
     }
 
     /**
-     * Sets the {@link RequestCache} to use. The default is
-     * {@link HttpSessionRequestCache}.
-     *
-     * @param requestCache the {@link RequestCache} to use. Cannot be null
+     * @see org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler#setRequestCache
      */
     public void setRequestCache(RequestCache requestCache) {
         Assert.notNull(requestCache, "requestCache cannot be null");
@@ -81,11 +69,7 @@ public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler imple
     }
 
     /**
-     * A response object used to write the JSON response for successful authentication.
-     *
-     * NOTE: We should be careful about writing {@link Authentication} or
-     * {@link Authentication#getPrincipal()} to the response since it contains
-     * credentials.
+     * @see org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler.AuthenticationSuccess
      */
     public static final class AuthenticationSuccess {
 
