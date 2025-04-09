@@ -322,9 +322,10 @@ describe('CourseSidebarItemService', () => {
                 routerLink: `${courseId}/settings`,
                 icon: faWrench,
                 title: 'Settings',
-                translation: 'artemisApp.course.settings.title',
-                testId: 'settings',
+                translation: 'artemisApp.courseOverview.menu.settings',
+                testId: 'course-settings',
                 hidden: false,
+                guidedTour: false,
             });
         });
     });
