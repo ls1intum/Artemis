@@ -176,43 +176,6 @@ export function removeSpecialCharacters(input: string): string {
     return input.replace(/[^a-zA-Z0-9]/g, '');
 }
 
-// /**
-//  * Decodes a base64 URL-encoded string.
-//  *
-//  * @param base64Url to decode.
-//  * @param isUrlSafe If true, replaces URL-safe characters with standard base64 characters before decoding.
-//  *                  Base64 URL encoding replaces certain characters to make the encoded string safe for use in URLs ('+' is replaced with '-', '/' is replaced with '_').
-//  * @returns The decoded data as a BufferSource.
-//  */
-// export function base64UrlDecode(base64Url: string, isUrlSafe: boolean = false): BufferSource {
-//     if (isUrlSafe) {
-//         base64Url = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-//     }
-//     const pad = base64Url.length % 4;
-//     if (pad) {
-//         base64Url += new Array(5 - pad).join('=');
-//     }
-//     const binaryString = Buffer.from(base64Url, 'base64').toString('binary');
-//     const len = binaryString.length;
-//     const bytes = new Uint8Array(len);
-//     for (let i = 0; i < len; i++) {
-//         bytes[i] = binaryString.charCodeAt(i);
-//     }
-//     return bytes.buffer;
-// }
-
-// src/app/webauthn/base64url.js
-/**
- * Encodes a string to base64 URL-encoded format.
- *
- * @param input The string to encode.
- * @returns The base64 URL-encoded string.
- */
-// export function base64UrlEncode(input: string): string {
-//     const base64 = Buffer.from(input).toString('base64');
-//     return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-// }
-
 const lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
 const reverseLookup = new Uint8Array(256);
 

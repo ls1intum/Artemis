@@ -36,5 +36,4 @@ public class WebsocketSecurityConfiguration {
         return messages.build();
         // @formatter:on
     }
-
 }

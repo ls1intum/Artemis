@@ -36,5 +36,5 @@ artemis:
   user-management:
     passkey:
       enabled: false
-      allowedOrigins: 'https://artemis.tum.de/' # ensures that only from trusted parties can create and authenticate with passkeys (comma separated)
+      allowedOrigins: 'https://artemis.tum.de/' # ensures that only trusted parties can create and authenticate with passkeys (comma separated)
       rpId: 'artemis.tum.de' # Relying Party Identifier, typically the domain of the website that is using WebAuthn for authentication

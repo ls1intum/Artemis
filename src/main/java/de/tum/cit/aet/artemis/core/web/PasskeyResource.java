@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/core/passkey/")
 public class PasskeyResource {
 
+    // TODO disable the endpoints as well if webAuthn is disabled
+
     public static final String ENTITY_NAME = "passkey";
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);

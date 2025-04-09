@@ -11,10 +11,6 @@ artemis:
     bcrypt-salt-rounds: 4  # We don't need secure passwords for testing. Lower rounds will speed up tests. 4 ist the lowest allowed round count.
     user-management:
         use-external: true
-        passkey:
-            enabled: true
-            allowedOrigins: 'http://localhost:9000'
-            rpId: 'localhost'
         external:
             url: https://user-management.fake.fake
             user: fake-username-um
