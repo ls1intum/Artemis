@@ -413,6 +413,11 @@ public final class Constants {
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
+     * The name of the property used to enable or disable the passkey authentication functionality.
+     */
+    public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;

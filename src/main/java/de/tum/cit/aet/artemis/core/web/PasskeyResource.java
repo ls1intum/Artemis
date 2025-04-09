@@ -4,8 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import jakarta.ws.rs.NotAllowedException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.web.webauthn.api.Bytes;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -29,8 +34,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/core/passkey/")
 public class PasskeyResource {
 
-    // TODO disable the endpoints as well if webAuthn is disabled
-
     public static final String ENTITY_NAME = "passkey";
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
@@ -39,15 +42,27 @@ public class PasskeyResource {
 
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
+    @Value("${artemis.user-management.passkey.enabled:false}")
+    public boolean enabled;
+
     public PasskeyResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
         this.userRepository = userRepository;
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
     }
 
+    private void checkIfPasskeyFeatureIsEnabled() throws NotAllowedException {
+        if (!enabled) {
+            log.info("If you want to enable the passkey feature, please set the property '{}' to true in your application properties.", Constants.PASSKEY_ENABLED_PROPERTY_NAME);
+            throw new NotAllowedException("Passkey feature is not enabled");
+        }
+    }
+
     @GetMapping("user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PasskeyDto>> getPasskeys() {
-        var user = userRepository.getUser();
+        checkIfPasskeyFeatureIsEnabled();
+
+        User user = userRepository.getUser();
         log.info("Retrieving passkeys for user with id: {}", user.getId());
 
         List<PasskeyDto> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(BytesConverter.longToBytes(user.getId()));
@@ -62,6 +77,7 @@ public class PasskeyResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePasskey(@PathVariable String credentialIdBase64Encoded) {
         log.info("Deleting passkey with id: {}", credentialIdBase64Encoded);
+        checkIfPasskeyFeatureIsEnabled();
 
         Bytes credentialId = Bytes.fromBase64(credentialIdBase64Encoded);
         artemisUserCredentialRepository.delete(credentialId);
