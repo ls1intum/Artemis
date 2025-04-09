@@ -563,7 +563,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * In our case the external id matches our internal id, but it is expected in a different format
      *
-     * @return the external id of the user
+     * @return the external id of the user, or null if the id is null
      */
     public Bytes getExternalId() {
         if (this.getId() == null) {

@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 public class PasskeyInfoContributor implements InfoContributor {
 
     @Value("${artemis.user-management.passkey.enabled:false}")
-    public boolean enabled;
+    private boolean enabled;
 
     @Override
     public void contribute(Info.Builder builder) {

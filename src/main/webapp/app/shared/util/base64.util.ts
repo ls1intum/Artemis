@@ -1,3 +1,11 @@
+/**
+ * Decodes a base64url encoded string into an ArrayBuffer.
+ * Base64url is a URL-safe variant of base64 that uses '-' instead of '+' and '_' instead of '/'.
+ *
+ * @param base64url - The base64url encoded string to decode
+ * @returns The decoded data as ArrayBuffer
+ * @throws Error if the input is not a valid base64url string
+ */
 export function decodeBase64url(base64url: any): ArrayBuffer {
     const lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
     const reverseLookup = new Uint8Array(256);
