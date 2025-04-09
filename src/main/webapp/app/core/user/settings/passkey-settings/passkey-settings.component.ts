@@ -1,8 +1,6 @@
 import { Component, OnDestroy, effect, inject, signal } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -17,6 +15,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { getOS } from 'app/shared/util/os-detector.util';
 import { TranslateService } from '@ngx-translate/core';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -25,7 +25,7 @@ const InvalidStateError = {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, DeleteButtonDirective, FaIconComponent, ArtemisDatePipe, ButtonComponent],
+    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
