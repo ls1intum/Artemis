@@ -35,7 +35,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.webauthn.api.Bytes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -150,7 +149,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     /**
      * The expiry date of the VCS access token.
-     * This is used for checking if a access token needs to be renewed.
+     * This is used for checking if an access token needs to be renewed.
      *
      * @see VcsTokenRenewalService
      * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
@@ -585,12 +584,5 @@ public class User extends AbstractAuditingEntity implements Participant {
         byte[] decodedBytes = Base64.getDecoder().decode(value.toBase64UrlString());
         String decodedString = new String(decodedBytes);
         return Long.parseLong(decodedString);
-    }
-
-    public static UserDetails toUserDetails(de.tum.cit.aet.artemis.core.domain.User user) {
-        return new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(), user.getActivated(), true, // accountNonExpired
-                true, // credentialsNonExpired
-                true, // accountNonLocked
-                user.getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList());
     }
 }
