@@ -30,6 +30,17 @@
                                 <input
                                     class="form-check-input"
                                     type="checkbox"
+                                    formControlName="filterToCourseWide"
+                                    name="filterToCourseWide"
+                                    id="filterToCourseWide"
+                                    (change)="onSelectContext()"
+                                />
+                                <label for="filterToCourseWide" class="p-0">CourseWide</label>
+                            </div>
+                            <div class="col-auto p-0 ps-2">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
                                     formControlName="filterToUnresolved"
                                     name="filterToUnresolved"
                                     id="filterToUnresolved"

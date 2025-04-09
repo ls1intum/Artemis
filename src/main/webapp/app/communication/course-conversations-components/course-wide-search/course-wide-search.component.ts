@@ -59,6 +59,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     public isFetchingPosts = true;
     totalNumberOfPosts = 0;
     posts: Post[] = [];
+    private allConversationIds: number[] = [];
     previousScrollDistanceFromTop: number;
     page = 1;
 
@@ -99,6 +100,9 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         });
         this.metisService.totalNumberOfPosts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((totalNumberOfPosts: number) => {
             this.totalNumberOfPosts = totalNumberOfPosts;
+        });
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
+            this.allConversationIds = conversations.map((conversation) => conversation.id!);
         });
     }
 
@@ -143,13 +147,19 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     private refreshMetisConversationPostContextFilter(): void {
         const searchConfig = this.courseWideSearchConfig();
-        // TODO: make use of new searchConfig with selectedConversations and selectedAuthors
 
         if (!searchConfig) return;
+
+        let conversationIds = searchConfig.selectedConversations?.map((conversation) => conversation.id!);
+        if (!conversationIds || conversationIds.length === 0) {
+            conversationIds = this.allConversationIds;
+        }
 
         this.currentPostContextFilter = {
             courseId: this.course?.id,
             searchText: searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined,
+            authorIds: searchConfig.selectedAuthors?.map((author) => author.id!),
+            conversationIds: conversationIds,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
@@ -160,14 +170,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             page: this.page - 1,
             pageSize: 50,
         };
-        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.conversationIds = conversations
-                .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
-                .map((conversation) => conversation.id!);
-        });
     }
 
     conversationIsAnnouncement(conversation: ConversationDTO) {
+        // TODO: move logic to backend: when filter for unresolved, exclude announcement channels
         if (conversation.type === 'channel') {
             const channel = conversation as ChannelDTO;
             return channel.isAnnouncementChannel;
@@ -182,15 +188,12 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
-        // We want to search across all conversations, but only load public posts on init
-        const searchConfig = this.courseWideSearchConfig();
-        const searchText = searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined;
-        this.courseWideSearchConfig().filterToCourseWide = !(searchText && searchText.length > 0);
         this.commandMetisToFetchPosts(true);
     }
 
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
+            filterToCourseWide: true,
             filterToUnresolved: false,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
@@ -207,6 +210,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         if (!searchConfig) return;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
         searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
+        searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);

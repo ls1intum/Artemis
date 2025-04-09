@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -180,6 +180,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     // set undefined so nothing gets displayed until isCodeOfConductAccepted is loaded
     isCodeOfConductAccepted?: boolean;
     isCodeOfConductPresented = false;
+
+    courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
 
     courseWideSearchConfig: CourseWideSearchConfig;
 
@@ -425,8 +427,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onSearch(searchInfo: ConversationGlobalSearchConfig) {
         if (this.isMobile) {
-            // For handling mobile navigation
-            if (searchInfo?.searchTerm || searchInfo?.selectedConversations) {
+            const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations || searchInfo?.selectedAuthors;
+            if (isSearchNonEmpty) {
                 this.courseSidebarService.closeSidebar();
             } else {
                 this.courseSidebarService.openSidebar();
@@ -440,6 +442,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.searchTerm = searchInfo.searchTerm;
         this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
         this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.courseWideSearch()?.onSearch();
     }
 
     prepareSidebarData() {
