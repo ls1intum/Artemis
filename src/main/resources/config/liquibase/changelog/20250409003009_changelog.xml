@@ -2,26 +2,18 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <changeSet id="20250409003009" author="krusche">
+    <changeSet id="20250409-1-create-passkey-credential-table" author="florian-glombik">
         <createTable tableName="passkey_credential">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
+            <column name="credential_id" type="varchar(32)">
+                <constraints nullable="false" unique="true"/>
+            </column>
             <column name="user_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="label" type="varchar(100)"/>
-<!--            TODO fix for postgres -->
-            <column name="credential_type" type="enum('PUBLIC_KEY')">
-                <constraints nullable="false"/>
-            </column>
-            <column name="credential_id" type="varchar(64)">
-                <constraints nullable="false" unique="true"/>
-            </column>
-<!--            TODO bytea in postgres -->
-            <column name="public_key_cose" type="blob">
-                <constraints nullable="false"/>
-            </column>
+            <column name="label" type="varchar(64)"/>
             <column name="signature_count" type="bigint" defaultValue="0">
                 <constraints nullable="false"/>
             </column>
@@ -37,13 +29,11 @@
             <column name="backup_state" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
-<!--            TODO bytea in postgres-->
-            <column name="attestation_object" type="blob"/>
             <column name="last_used" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
             <!-- Fields for AbstractAuditingEntity -->
-            <column name="created_by" type="varchar(50)">
+            <column name="created_by" type="varchar(45)">
                 <constraints nullable="false"/>
             </column>
             <column name="created_date" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
@@ -70,5 +60,58 @@
                 referencedTableName="jhi_user"
                 referencedColumnNames="id"
                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="20250409-2-add-columns-with-differing-format-mysql" author="florian-glombik">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="mysql"/>
+        </preConditions>
+        <addColumn tableName="passkey_credential">
+            <column name="credential_type" type="enum('PUBLIC_KEY')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key_cose" type="blob">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attestation_object" type="blob"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20250409-2a-add-columns-with-differing-format-postgresql-add-enum" author="florian-glombik">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql>
+            CREATE TYPE passkey_type_enum AS ENUM (
+                'PUBLIC_KEY'
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="20250409-2b-add-columns-with-differing-format-postgresql-create-columns" author="florian-glombik">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <addColumn tableName="passkey_credential">
+            <column name="credential_type" type="varchar(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key_cose" type="bytea">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attestation_object" type="bytea"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20250409-2c-add-columns-with-differing-format-postgresql-use-enum-properly" author="florian-glombik">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql"/>
+        </preConditions>
+        <sql>
+            ALTER TABLE passkey_credential
+            ALTER COLUMN credential_type TYPE passkey_type_enum
+            USING credential_type::passkey_type_enum;
+        </sql>
     </changeSet>
 </databaseChangeLog>
