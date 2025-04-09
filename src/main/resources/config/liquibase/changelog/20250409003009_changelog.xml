@@ -3,9 +3,7 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
     <changeSet id="20250324170527" author="krusche">
-        <!-- Create passkey_credential table -->
         <createTable tableName="passkey_credential">
-            <!-- TODO add more enums if possible-->
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
@@ -16,11 +14,11 @@
             <column name="credential_type" type="varchar(255)">
                 <constraints nullable="false"/>
             </column>
-            <!-- TODO better type possible? -->
             <column name="credential_id" type="varchar(255)">
                 <constraints nullable="false" unique="true"/>
             </column>
-            <column name="public_key_cose" type="text">
+<!--            TODO bytea in postgres -->
+            <column name="public_key_cose" type="blob">
                 <constraints nullable="false"/>
             </column>
             <column name="signature_count" type="bigint" defaultValue="0">
@@ -42,9 +40,6 @@
             <column name="last_used" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>
-            <column name="created" type="timestamp" defaultValueComputed="CURRENT_TIMESTAMP">
-                <constraints nullable="false"/>
-            </column>
             <!-- Fields for AbstractAuditingEntity -->
             <column name="created_by" type="varchar(50)">
                 <constraints nullable="false"/>
@@ -59,6 +54,9 @@
         <!-- Create index for userId -->
         <createIndex indexName="userId_index" tableName="passkey_credential">
             <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="credential_id_index" tableName="passkey_credential">
+            <column name="credential_id"/>
         </createIndex>
 
         <!-- Add foreign key constraint for userId referencing jhi_user -->
