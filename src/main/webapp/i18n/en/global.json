@@ -114,7 +114,8 @@
                 "iris": "Iris Settings",
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
-                "cleanupService": "Cleanup Service"
+                "cleanupService": "Cleanup Service",
+                "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
             "settings": "Settings",
@@ -354,7 +355,8 @@
         "communication": "Communication",
         "archive": "Course archive",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiarism Cases"
+        "plagiarismCases": "Plagiarism Cases",
+        "settings": "Settings"
     },
     "connectionStatus": {
         "connected": "Connected",

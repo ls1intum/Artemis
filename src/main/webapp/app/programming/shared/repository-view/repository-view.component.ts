@@ -12,7 +12,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -20,10 +20,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-student-repo-download.component';
-import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-instructor-repo-download.component';
+import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/programming/shared/actions/student-repo-download/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/programming/shared/actions/instructor-repo-download/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { DomainType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 @Component({

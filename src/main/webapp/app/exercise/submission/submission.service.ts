@@ -8,11 +8,11 @@ import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
-import { ComplaintResponseService } from 'app/assessment/manage/complaint-response.service';
+import { ComplaintResponseService } from 'app/assessment/manage/services/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
