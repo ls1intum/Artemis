@@ -13,8 +13,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
+import org.springframework.security.web.webauthn.api.PublicKeyCose;
 
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
+import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
 
 @Entity
 @Table(name = "passkey_credential")
@@ -35,7 +37,8 @@ public class PasskeyCredential extends AbstractAuditingEntity {
     private String credentialId;
 
     @Column(name = "public_key_cose")
-    private String publicKeyCose;
+    @Convert(converter = PublicKeyCoseConverter.class)
+    private PublicKeyCose publicKeyCose;
 
     /**
      * Used to prevent replay attacks by keeping track of the number of signatures made with this credential.
@@ -109,11 +112,11 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.credentialId = credentialId;
     }
 
-    public String getPublicKeyCose() {
+    public PublicKeyCose getPublicKeyCose() {
         return publicKeyCose;
     }
 
-    public void setPublicKeyCose(String publicKeyCose) {
+    public void setPublicKeyCose(PublicKeyCose publicKeyCose) {
         this.publicKeyCose = publicKeyCose;
     }
 

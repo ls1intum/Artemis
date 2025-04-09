@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.repository.webauthn;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.Base64;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
-import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCose;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.stereotype.Repository;
@@ -111,7 +109,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
             .label(credential.getLabel())
             .credentialType(PublicKeyCredentialType.valueOf(credential.getCredentialType().label()))
             .credentialId(Bytes.fromBase64(credential.getCredentialId()))
-            .publicKey(ImmutablePublicKeyCose.fromBase64(credential.getPublicKeyCose()))
+            .publicKey(credential.getPublicKeyCose())
             .signatureCount(credential.getSignatureCount())
             .uvInitialized(credential.getUvInitialized())
             .transports(credential.getTransports())
@@ -129,7 +127,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         credential.setLabel(credentialRecord.getLabel());
         credential.setCredentialType(PasskeyType.fromLabel(credentialRecord.getCredentialType().getValue()));
         credential.setCredentialId(credentialRecord.getCredentialId().toBase64UrlString());
-        credential.setPublicKeyCose(Base64.getUrlEncoder().encodeToString(credentialRecord.getPublicKey().getBytes()));
+        credential.setPublicKeyCose(credentialRecord.getPublicKey());
         credential.setSignatureCount(credentialRecord.getSignatureCount());
         credential.setUvInitialized(credentialRecord.isUvInitialized());
         credential.setTransports(credentialRecord.getTransports());
