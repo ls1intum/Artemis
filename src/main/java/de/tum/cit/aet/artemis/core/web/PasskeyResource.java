@@ -42,7 +42,7 @@ public class PasskeyResource {
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
     }
 
-    @GetMapping("")
+    @GetMapping("/user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PasskeyDto>> getPasskeys() {
         var user = userRepository.getUser();

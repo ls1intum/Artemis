@@ -7,7 +7,7 @@ export class PasskeySettingsApiService extends BaseApiHttpService {
     private readonly basePath = `core/passkey`;
 
     async getRegisteredPasskeys(): Promise<PasskeyDto[]> {
-        return await this.get<PasskeyDto[]>(`${this.basePath}/`);
+        return await this.get<PasskeyDto[]>(`${this.basePath}/user`);
     }
 
     async deletePasskey(credentialId: string): Promise<void> {
