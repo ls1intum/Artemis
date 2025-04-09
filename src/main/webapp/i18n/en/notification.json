@@ -246,7 +246,7 @@
             "channelDeletedNotification": {
                 "title": "Channel deleted",
                 "content": "{{channelName}} was deleted in {{courseTitle}}.",
-                "settingsTitle": "Feedback requested"
+                "settingsTitle": "Channel deleted"
             },
             "addedToChannelNotification": {
                 "title": "Added to channel",
