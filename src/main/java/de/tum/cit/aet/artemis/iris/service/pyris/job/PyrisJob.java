@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.job;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -16,6 +17,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public interface PyrisJob extends Serializable {
 
+    @Serial
     long serialVersionUID = 1L;
 
     boolean canAccess(Course course);
