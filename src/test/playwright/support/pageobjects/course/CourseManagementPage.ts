@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
 import { UserCredentials } from '../../users';
 import { COURSE_ADMIN_BASE } from '../../constants';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Management page.
@@ -161,16 +161,8 @@ export class CourseManagementPage {
      * Retrieves the locator for the course header title.
      * @returns The locator for the course header title.
      */
-    getCourseHeaderTitle() {
-        return this.page.locator('#course-header-title');
-    }
-
-    /**
-     * Retrieves the locator for the course header description.
-     * @returns The locator for the course header description.
-     */
-    getCourseHeaderDescription() {
-        return this.page.locator('#course-header-description');
+    getCourseSidebarTitle() {
+        return this.page.locator('#test-course-title');
     }
 
     /**

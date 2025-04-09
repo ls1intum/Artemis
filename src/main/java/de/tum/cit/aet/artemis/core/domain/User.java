@@ -48,7 +48,6 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -102,7 +101,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @NotNull
     @Column(name = "is_deleted", nullable = false)
-    private boolean isDeleted = false; // default value
+    private boolean deleted = false; // default value
 
     @Size(min = 2, max = 6)
     @Column(name = "lang_key", length = 6)
@@ -135,7 +134,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private ZonedDateTime hideNotificationsUntil = null;
 
     @Column(name = "is_internal", nullable = false)
-    private boolean isInternal = true;          // default value
+    private boolean internal = true;          // default value
 
     /**
      * The token the user can use to authenticate with the VCS.
@@ -150,9 +149,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     /**
      * The expiry date of the VCS access token.
      * This is used for checking if an access token needs to be renewed.
-     *
-     * @see VcsTokenRenewalService
-     * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
      */
     @Nullable
     @JsonIgnore
@@ -168,7 +164,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private Set<SavedPost> savedPosts = new HashSet<>();
+    private final Set<SavedPost> savedPosts = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
@@ -484,19 +480,19 @@ public class User extends AbstractAuditingEntity implements Participant {
     }
 
     public boolean isInternal() {
-        return isInternal;
+        return internal;
     }
 
     public void setInternal(boolean internal) {
-        isInternal = internal;
+        this.internal = internal;
     }
 
     public boolean isDeleted() {
-        return isDeleted;
+        return deleted;
     }
 
     public void setDeleted(boolean deleted) {
-        isDeleted = deleted;
+        this.deleted = deleted;
     }
 
     @Nullable

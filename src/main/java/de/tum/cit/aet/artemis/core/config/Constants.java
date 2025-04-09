@@ -69,7 +69,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/assessment/public/programming-exercises/new-result";
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming/public/programming-exercises/new-result";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -349,11 +349,6 @@ public final class Constants {
     public static final String PROFILE_ATHENA = "athena";
 
     /**
-     * The name of the Spring profile used for Atlas functionality.
-     */
-    public static final String PROFILE_ATLAS = "atlas";
-
-    /**
      * The name of the Spring profile used for Athena functionality.
      */
     public static final String PROFILE_APOLLON = "apollon";
@@ -393,6 +388,31 @@ public final class Constants {
     public static final String THEIA_PORTAL_URL = "theiaPortalURL";
 
     /**
+     * The InfoContributor's detail key for the active module features.
+     */
+    public static final String ACTIVE_MODULE_FEATURES = "activeModuleFeatures";
+
+    /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_ATLAS = "atlas";
+
+    /**
+     * The name of the module feature used for Text Exercise functionality.
+     */
+    public static final String MODULE_FEATURE_TEXT = "text";
+
+    /**
+     * The name of the property used to enable or disable Atlas functionality.
+     */
+    public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
+
+    /**
+     * The name of the property used to enable or disable text exercise functionality.
+     */
+    public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
     public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
@@ -415,15 +435,15 @@ public final class Constants {
     /**
      * The directory in the docker container in which the build script is executed
      */
-    public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";
+    public static final String LOCAL_CI_WORKING_DIRECTORY = "/var/tmp";
 
     /**
      * The directory in the docker container in which the results can be found
      */
-    public static final String LOCALCI_RESULTS_DIRECTORY = "/results";
+    public static final String LOCAL_CI_RESULTS_DIRECTORY = "/results";
 
     /**
-     * The directory to which repositories temporarely get cloned for the build job execution
+     * The directory to which repositories temporarily get cloned for the build job execution
      */
     public static final String CHECKED_OUT_REPOS_TEMP_DIR = "checked-out-repos";
 
@@ -431,11 +451,6 @@ public final class Constants {
      * Minimum score for a result to be considered successful and shown in green
      */
     public static final int MIN_SCORE_GREEN = 80;
-
-    /**
-     * Minimum score for a result to be considered partially successful and shown in orange
-     */
-    public static final int MIN_SCORE_ORANGE = 40;
 
     public static final String ASSIGNMENT_REPO_PLACEHOLDER = "${studentWorkingDirectory}";
 
@@ -448,9 +463,6 @@ public final class Constants {
     public static final String ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH = "${studentWorkingDirectoryNoSlash}";
 
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
-
-    // TODO TW: This "feature" is only temporary for a paper.
-    public static final String ICER_PAPER_FLAG = "ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc";
 
     private Constants() {
     }

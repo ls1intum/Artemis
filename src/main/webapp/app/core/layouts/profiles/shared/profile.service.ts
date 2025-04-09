@@ -29,6 +29,7 @@ export class ProfileService {
                         const data = res.body!;
                         const profileInfo = new ProfileInfo();
                         profileInfo.activeProfiles = data.activeProfiles;
+                        profileInfo.activeModuleFeatures = data.activeModuleFeatures;
                         const displayRibbonOnProfiles = data.ribbonEnv?.split(',') ?? [];
 
                         this.mapGuidedTourConfig(data, profileInfo);
@@ -126,5 +127,13 @@ export class ProfileService {
             profileInfo.saml2.passwordLoginDisabled = data.saml2['password-login-disabled'] || false;
             profileInfo.saml2.enablePassword = data.saml2['enable-password'] || false;
         }
+    }
+
+    /**
+     * Check if the given profile is active.
+     * @param profile The profile to check.
+     */
+    public isProfileActive(profile: string): boolean {
+        return this.profileInfo?.value?.activeProfiles?.includes(profile) ?? false;
     }
 }

@@ -1,6 +1,0 @@
-@if (irisEnabled()) {
-    <button [disabled]="disabled()" [ngClass]="extraClass()" class="btn btn-sm btn-outline-secondary" id="redirect-iris" type="button" (click)="redirectToIris()">
-        <jhi-iris-logo [hidden]="buttonLoading()" [size]="TEXT" id="redirect-to-iris-img" />
-        <fa-icon #loadingIcon [hidden]="!buttonLoading()" animation="spin" [icon]="faCircleNotch" class="posting-btn-loading-icon" />
-    </button>
-}

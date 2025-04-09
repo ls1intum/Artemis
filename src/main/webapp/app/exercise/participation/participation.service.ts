@@ -8,18 +8,13 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/shared/util/date.utils';
 import dayjs from 'dayjs/esm';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
-export type EntityBlobResponseType = HttpResponse<Blob>;
-export type BuildArtifact = {
-    fileName: string;
-    fileContent: Blob;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationService {

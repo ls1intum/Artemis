@@ -1,3 +1,9 @@
+artemis:
+    atlas:
+        enabled: true
+    text:
+        enabled: true
+
 spring:
     liquibase:
         enabled: true
