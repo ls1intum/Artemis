@@ -131,6 +131,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
 
+        if (this.sharingInfo) {
+            isEditFieldDisplayedMapping[ProgrammingExerciseInputField.SHORT_NAME] = true;
+        }
+
         return isEditFieldDisplayedMapping;
     });
 

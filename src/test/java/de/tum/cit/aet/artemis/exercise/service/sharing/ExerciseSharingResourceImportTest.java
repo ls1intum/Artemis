@@ -168,7 +168,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         Map<String, String> paramsToCheckSum = parseParamsToMap(params);
 
         // Add params to request
-        paramsToCheckSum.forEach((paramName, paramValue) -> request.queryParam(paramName, paramValue));
+        paramsToCheckSum.forEach(request::queryParam);
 
         String checkSum = SecretChecksumCalculator.calculateChecksum(paramsToCheckSum, sharingApiKey);
         request.queryParam("checksum", checkSum);
@@ -207,7 +207,7 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setReturnURL(TEST_RETURN_URL);
         sharingInfo.setBasketToken(basketToken);
         sharingInfo.setChecksum(calculateCorrectChecksum("returnURL", TEST_RETURN_URL, "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()));
-
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         MvcResult result = restMockMvc.perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andDo(print())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
@@ -231,6 +231,8 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setReturnURL(TEST_RETURN_URL);
         sharingInfo.setBasketToken("Some Basket Token");
         sharingInfo.setChecksum("Invalid Checksum");
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
         restMockMvc.perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
