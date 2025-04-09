@@ -265,9 +265,6 @@ dependencies {
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
-    // Support CBOR serialization and deserialization for passkey and webauthn4j
-    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-cbor:${fasterxml_version}"
-
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }
 
