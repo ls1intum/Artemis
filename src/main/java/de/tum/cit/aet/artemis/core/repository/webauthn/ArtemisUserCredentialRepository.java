@@ -30,17 +30,17 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisUserCredentialRepository.class);
 
+    private final ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository;
+
     private final PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     private final UserRepository userRepository;
 
-    private final ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository;
-
-    public ArtemisUserCredentialRepository(PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository,
-            ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository) {
+    public ArtemisUserCredentialRepository(ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository,
+            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository) {
+        this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.userRepository = userRepository;
-        this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
     }
 
     @Override
@@ -53,12 +53,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public void save(CredentialRecord credentialRecord) {
         artemisPublicKeyCredentialUserEntityRepository.findArtemisUserById(credentialRecord.getUserEntityUserId()).ifPresent(user -> {
             passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString())
-                    .map((existingCredential) -> passkeyCredentialsRepository.save(toPasskeyCredential(existingCredential, credentialRecord, user)))
+                    .map(existingCredential -> passkeyCredentialsRepository.save(toPasskeyCredential(existingCredential, credentialRecord, user)))
                     .orElseGet(() -> passkeyCredentialsRepository.save(toPasskeyCredential(credentialRecord, user)));
 
             log.info("save: user={}, externalId={}, label={}", user.getName(), user.getExternalId(), credentialRecord.getLabel());
         });
-        log.debug("Saving user credential record: {}", credentialRecord);
     }
 
     /**
@@ -80,7 +79,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
         // FIXME - the userId format is not clear yet and seems to change after server startup
         // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId it also seems to be
-        log.warn("findByUserId not implemented yet, the format of the userId is not clear yet");
+        log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
         // Optional<User> user = userRepository.findOneByLogin(userId.toBase64UrlString());
         Optional<User> user = Optional.empty();
 
