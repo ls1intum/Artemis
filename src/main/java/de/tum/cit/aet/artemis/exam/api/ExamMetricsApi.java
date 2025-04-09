@@ -9,7 +9,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 
@@ -51,7 +51,7 @@ public class ExamMetricsApi extends AbstractExamApi {
         return examRepository.count();
     }
 
-    public Set<CourseContentCount> countVisibleExams(Set<Long> courseIds, ZonedDateTime now) {
+    public Set<CourseContentCountDTO> countVisibleExams(Set<Long> courseIds, ZonedDateTime now) {
         return examRepository.countVisibleExams(courseIds, now);
     }
 

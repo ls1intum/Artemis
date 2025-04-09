@@ -23,7 +23,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -82,7 +82,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     Set<Exam> findByCourseIdForUser(@Param("courseId") Long courseId, @Param("userId") long userId, @Param("groupNames") Set<String> groupNames, @Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(
                 COUNT(e.id),
                 e.course.id
             )
@@ -91,7 +91,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND e.visibleDate <= :now
             GROUP BY e.course.id
             """)
-    Set<CourseContentCount> countVisibleExams(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
+    Set<CourseContentCountDTO> countVisibleExams(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     @Query("""
             SELECT exam

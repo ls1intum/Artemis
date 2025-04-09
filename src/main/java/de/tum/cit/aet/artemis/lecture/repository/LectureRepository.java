@@ -16,7 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -206,7 +206,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(
                 COUNT(l.id),
                 l.course.id
             )
@@ -215,7 +215,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
             GROUP BY l.course.id
             """)
-    Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
+    Set<CourseContentCountDTO> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     long countByCourse_Id(long courseId);
 }
