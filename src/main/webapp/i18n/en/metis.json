@@ -96,6 +96,7 @@
                 "ANNOUNCEMENT": "Announcement",
                 "allPublicMessages": "All Public Messages",
                 "searchResults": "Search Results for '{{ search }}'",
+                "searchResultInAnswersHint": "Search result in replies",
                 "mobileDisclaimer": "Please select a conversation first.",
                 "mobileDisclaimerCallToAction": "Select conversation",
                 "savedPosts": "Saved Messages",

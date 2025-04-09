@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, NgTemplateOutlet, SlicePipe } from '@angular/common';
@@ -16,8 +15,10 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { SimpleChange } from '@angular/core';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
@@ -125,10 +126,9 @@ describe('CourseSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should initialize visible/hidden items on component initialization', () => {
+    it('should initialize visible/hidden items on  sidebar update', () => {
         const updateVisibleNavbarItemsSpy = jest.spyOn(component, 'updateVisibleNavbarItems');
-
-        component.ngOnInit();
+        component.ngOnChanges({ sidebarItems: new SimpleChange([], mockSidebarItems, true) });
 
         expect(updateVisibleNavbarItemsSpy).toHaveBeenCalledWith(window.innerHeight);
     });
