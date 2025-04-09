@@ -812,6 +812,18 @@ describe('Metis Service', () => {
         tick();
     }));
 
+    it('should return undefined if no source post is found with the given ids (404 error)', fakeAsync(() => {
+        const postIds = [4, 5, 6];
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        metisService.getSourcePostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        tick();
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        expect(result).toBeUndefined();
+    }));
+
     it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', fakeAsync(() => {
         const postServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
         const answerPostIds = [7, 8, 9];
@@ -820,6 +832,18 @@ describe('Metis Service', () => {
 
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], answerPostIds);
         tick();
+    }));
+
+    it('should return undefined if no source answer post is found with the given ids (404 error)', fakeAsync(() => {
+        const postIds = [4, 5, 6];
+        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        metisService.getSourceAnswerPostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        tick();
+        expect(answerPostServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        expect(result).toBeUndefined();
     }));
 
     it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
