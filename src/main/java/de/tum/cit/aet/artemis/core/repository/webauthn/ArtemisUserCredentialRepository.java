@@ -87,8 +87,9 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         // Optional<User> user = userRepository.findOneByLogin(userId.toBase64UrlString());
         Optional<User> user = Optional.empty();
 
-        return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId()))
-                .collect(Collectors.toList())).orElseGet(List::of);
+        return user.map(
+                passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
+                .orElseGet(List::of);
     }
 
     public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
@@ -96,12 +97,13 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
         Optional<User> user = userRepository.findById(User.bytesToLong(userId));
 
-        List<CredentialRecord> credentialRecords = user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream()
-                .map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).collect(Collectors.toList())).orElseGet(List::of);
+        List<CredentialRecord> credentialRecords = user.map(
+                passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
+                .orElseGet(List::of);
 
         return credentialRecords.stream()
                 .map(credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private static CredentialRecord toCredentialRecord(PasskeyCredential credential, Bytes userId) {
