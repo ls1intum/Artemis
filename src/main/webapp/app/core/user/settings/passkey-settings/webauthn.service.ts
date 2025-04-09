@@ -31,7 +31,6 @@ export class WebauthnService {
         };
 
         const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
-        // TODO find a better way than a cast
         return credential as PublicKeyCredential | undefined;
     }
 }

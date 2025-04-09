@@ -6,14 +6,12 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
-import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { getOS } from 'app/shared/util/os-detector.util';
-import { TranslateService } from '@ngx-translate/core';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { decodeBase64url } from 'app/shared/util/base64.util';
@@ -42,7 +40,6 @@ export class PasskeySettingsComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private webauthnApiService = inject(WebauthnApiService);
     private passkeySettingsApiService = inject(PasskeySettingsApiService);
-    private translateService = inject(TranslateService);
 
     private dialogErrorSource = new Subject<string>();
 
@@ -121,14 +118,13 @@ export class PasskeySettingsComponent implements OnDestroy {
         }
     }
 
-    private createCredentialOptions(options: PasskeyOptions, user: User): PublicKeyCredentialCreationOptions {
+    private createCredentialOptions(options: PublicKeyCredentialCreationOptions, user: User): PublicKeyCredentialCreationOptions {
         const username = user.email;
 
         if (!user.id || !username) {
             throw new Error('Invalid credential');
         }
 
-        // TODO verify values are set properly
         return {
             ...options,
             challenge: decodeBase64url(options.challenge),
@@ -137,7 +133,7 @@ export class PasskeySettingsComponent implements OnDestroy {
                 name: username,
                 displayName: username,
             },
-            excludeCredentials: options.excludeCredentials.map((credential) => ({
+            excludeCredentials: options.excludeCredentials?.map((credential) => ({
                 ...credential,
                 id: decodeBase64url(credential.id),
             })),
@@ -146,10 +142,6 @@ export class PasskeySettingsComponent implements OnDestroy {
                 userVerification: 'discouraged', // a little less secure than 'preferred' or 'required', but more user-friendly
             },
         };
-    }
-
-    getDeleteMessage(passkey: PasskeyDto) {
-        return this.translateService.instant('artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion', { passkeyLabel: passkey.label });
     }
 
     getDeleteSummary(passkey: PasskeyDto | undefined): Observable<EntitySummary> | undefined {
