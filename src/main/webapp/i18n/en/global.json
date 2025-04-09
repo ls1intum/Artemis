@@ -355,7 +355,8 @@
         "communication": "Communication",
         "archive": "Course archive",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiarism Cases"
+        "plagiarismCases": "Plagiarism Cases",
+        "settings": "Settings"
     },
     "connectionStatus": {
         "connected": "Connected",
