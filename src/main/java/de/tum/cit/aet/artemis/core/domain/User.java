@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -47,6 +46,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -567,18 +567,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         if (this.getId() == null) {
             return null;
         }
-        return longToBytes(this.getId());
-    }
-
-    // TODO add comment
-    public static Bytes longToBytes(Long value) {
-        String userIdAsBase64 = Base64.getEncoder().encodeToString(value.toString().getBytes());
-        return Bytes.fromBase64(userIdAsBase64);
-    }
-
-    public static Long bytesToLong(Bytes value) {
-        byte[] decodedBytes = Base64.getDecoder().decode(value.toBase64UrlString());
-        String decodedString = new String(decodedBytes);
-        return Long.parseLong(decodedString);
+        return BytesConverter.longToBytes(this.getId());
     }
 }

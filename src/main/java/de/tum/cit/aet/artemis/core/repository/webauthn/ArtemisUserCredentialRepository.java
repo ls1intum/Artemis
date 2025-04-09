@@ -19,6 +19,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -91,7 +92,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
         log.info("findPasskeyDtosByUserId: userId={}", userId);
 
-        Optional<User> user = userRepository.findById(User.bytesToLong(userId));
+        Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 
         List<CredentialRecord> credentialRecords = user.map(
                 passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())

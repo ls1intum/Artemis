@@ -14,6 +14,7 @@ import org.springframework.security.web.webauthn.management.PublicKeyCredentialU
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Profile(PROFILE_CORE)
@@ -29,7 +30,7 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
     }
 
     public Optional<User> findArtemisUserById(Bytes id) {
-        Long userId = User.bytesToLong(id);
+        Long userId = BytesConverter.bytesToLong(id);
         return userRepository.findById(userId);
     }
 
