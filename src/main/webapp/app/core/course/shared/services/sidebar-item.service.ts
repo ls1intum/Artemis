@@ -19,6 +19,7 @@ import {
     faTable,
     faTableCells,
     faUserCheck,
+    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -256,6 +257,16 @@ export class CourseSidebarItemService {
             featureToggle: FeatureToggle.CourseSpecificNotifications,
             icon: faCog,
             title: 'Notification Settings',
+            translation: 'artemisApp.courseOverview.menu.settings',
+            guidedTour: false,
+            hidden: false,
+        };
+    }
+    getCourseSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/settings`,
+            icon: faWrench,
+            title: 'Settings',
             translation: 'artemisApp.courseOverview.menu.settings',
             guidedTour: false,
             hidden: false,

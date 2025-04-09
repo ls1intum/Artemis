@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { filter, map } from 'rxjs/operators';
 import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -90,7 +90,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private eventSubscriber: Subscription;
     private featureToggleSub: Subscription;
     private courseSub?: Subscription;
+    private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
+    isOverviewPage = signal(false);
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -137,10 +139,16 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
         });
+        this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
+            const currentUrl = this.router.url;
+            const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
+            this.isOverviewPage.set(isDetailsPage);
+        });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
             this.learningPathsActive.set(isActive);
         });
+
         await super.ngOnInit();
 
         // Subscribe to course modifications and reload the course after a change.
@@ -254,7 +262,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.splice(3, 0, ...irisItems); // After lectures
             sidebarItems.splice(5 + irisItems.length + tutorialGroupItem.length + communicationItem.length, 0, ...atlasItems); // After tutorial groups
             sidebarItems.splice(6 + irisItems.length + tutorialGroupItem.length + communicationItem.length + atlasItems.length, 0, ...scoresItem); // After assessment
-            sidebarItems.push(...buildAndLtiItems); // At the end
+            sidebarItems.push(...buildAndLtiItems); // At the end but before settings
+            sidebarItems.push(this.sidebarItemService.getCourseSettingsItem(this.courseId()));
         }
 
         return sidebarItems;
@@ -325,6 +334,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         super.ngOnDestroy();
         this.eventManager.destroy(this.eventSubscriber);
         this.featureToggleSub?.unsubscribe();
+        this.urlSubscription?.unsubscribe();
         this.courseSub?.unsubscribe();
     }
 

@@ -14,6 +14,7 @@ import {
     faTable,
     faTableCells,
     faUserCheck,
+    faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 
@@ -312,6 +313,19 @@ describe('CourseSidebarItemService', () => {
             const item = service.getNotificationSettingsItem();
 
             expect(item.featureToggle).toBe(FeatureToggle.CourseSpecificNotifications);
+        });
+
+        it('getCourseSettingsItem should return correct item', () => {
+            const item = service.getCourseSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/settings`,
+                icon: faWrench,
+                title: 'Settings',
+                translation: 'artemisApp.course.settings.title',
+                testId: 'settings',
+                hidden: false,
+            });
         });
     });
 });
