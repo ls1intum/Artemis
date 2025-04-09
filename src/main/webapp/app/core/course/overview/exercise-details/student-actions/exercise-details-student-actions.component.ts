@@ -30,7 +30,6 @@ import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exerc
 import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({

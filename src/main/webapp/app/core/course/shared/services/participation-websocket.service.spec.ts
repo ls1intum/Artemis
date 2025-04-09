@@ -5,11 +5,9 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { MockWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
-import { MockParticipationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation.service';
-import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
-import { MockParticipationService } from '../helpers/mocks/service/mock-participation.service';
-import { getAllResultsOfAllSubmissions, Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: WebsocketService;
@@ -225,7 +223,6 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should attach the result to participation if the participation has undefined for results value', () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { submissions, ...participationWithoutResult } = participation;
 
         participationWebsocketService.subscribeForLatestResultOfParticipation(participationWithoutResult.id!, true);

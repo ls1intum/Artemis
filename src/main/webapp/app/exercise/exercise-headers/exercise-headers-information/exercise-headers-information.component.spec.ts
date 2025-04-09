@@ -11,17 +11,14 @@ import dayjs from 'dayjs/esm';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { LockRepositoryPolicy, SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { getAllResultsOfAllSubmissions, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
+import { SubmissionType, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHeadersInformationComponent', () => {

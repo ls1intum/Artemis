@@ -22,11 +22,8 @@ import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.mo
 import { TeamService } from 'app/exercise/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
-import { getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
 import { getAllResultsOfAllSubmissions, getFirstResultWithComplaintFromResults } from 'app/exercise/shared/entities/submission/submission.model';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';

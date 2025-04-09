@@ -14,7 +14,6 @@ import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';

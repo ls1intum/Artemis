@@ -9,7 +9,6 @@ import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/progr
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
-import { ArtemisQuizService } from 'app/quiz/shared/quiz.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
