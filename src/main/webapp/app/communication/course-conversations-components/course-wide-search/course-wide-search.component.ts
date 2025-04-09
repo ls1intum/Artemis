@@ -75,7 +75,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.subscribeToMetis();
         this.resetFormGroup();
         this.cdr.detectChanges();
-        this.onSearch();
+        this.commandMetisToFetchPosts(true);
     }
 
     ngAfterViewInit() {
@@ -149,6 +149,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             courseId: this.course?.id,
             searchText: searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
+            filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
             filterToOwn: searchConfig.filterToOwn,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
@@ -158,7 +159,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             pageSize: 50,
         };
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDTO[]) => {
-            this.currentPostContextFilter!.courseWideChannelIds = conversations
+            this.currentPostContextFilter!.conversationIds = conversations
                 .filter((conversation) => !(this.currentPostContextFilter?.filterToUnresolved && this.conversationIsAnnouncement(conversation)))
                 .map((conversation) => conversation.id!);
         });
@@ -179,6 +180,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     }
 
     onSearch() {
+        // We want to search across all conversations, but only load public posts on init
+        const searchConfig = this.courseWideSearchConfig();
+        const searchText = searchConfig.searchTerm ? searchConfig.searchTerm.trim() : undefined;
+        this.courseWideSearchConfig().filterToCourseWide = !(searchText && searchText.length > 0);
         this.commandMetisToFetchPosts(true);
     }
 
@@ -202,7 +207,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
-        this.onSearch();
+        this.commandMetisToFetchPosts(true);
     }
 
     protected onTriggerNavigateToPost(post: Posting) {
@@ -212,6 +217,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
 export class CourseWideSearchConfig {
     searchTerm: string;
+    filterToCourseWide: boolean;
     filterToUnresolved: boolean;
     filterToOwn: boolean;
     filterToAnsweredOrReacted: boolean;
