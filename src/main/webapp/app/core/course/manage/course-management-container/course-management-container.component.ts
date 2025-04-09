@@ -138,11 +138,10 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
+            this.checkIfOverviewPage();
         });
         this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            const currentUrl = this.router.url;
-            const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
-            this.isOverviewPage.set(isDetailsPage);
+            this.checkIfOverviewPage();
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -155,6 +154,12 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.eventSubscriber = this.eventManager.subscribe('courseModification', () => {
             this.subscribeToCourseUpdates(this.courseId()!);
         });
+    }
+
+    private checkIfOverviewPage() {
+        const currentUrl = this.router.url;
+        const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
+        this.isOverviewPage.set(isDetailsPage);
     }
 
     handleCourseIdChange(courseId: number): void {
