@@ -55,15 +55,17 @@ public class SecurityConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
 
-    private final TokenProvider tokenProvider;
+    private final CorsFilter corsFilter;
+
+    private final Optional<CustomLti13Configurer> customLti13Configurer;
+
+    private final JWTCookieService jwtCookieService;
 
     private final PasswordService passwordService;
 
-    private final CorsFilter corsFilter;
-
     private final ProfileService profileService;
 
-    private final Optional<CustomLti13Configurer> customLti13Configurer;
+    private final TokenProvider tokenProvider;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
@@ -77,16 +79,14 @@ public class SecurityConfiguration {
     @Value("${artemis.user-management.passkey.rpId}")
     private String rpId;
 
-    private final JWTCookieService jwtCookieService;
-
     public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
             Optional<CustomLti13Configurer> customLti13Configurer, JWTCookieService jwtCookieService) {
-        this.tokenProvider = tokenProvider;
-        this.passwordService = passwordService;
         this.corsFilter = corsFilter;
-        this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
         this.jwtCookieService = jwtCookieService;
+        this.passwordService = passwordService;
+        this.profileService = profileService;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -222,7 +222,6 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
-                    .requestMatchers("/api/core/webauthn/authenticate").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -244,12 +243,12 @@ public class SecurityConfiguration {
 
             if (passkeyEnabled) {
                 WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
-                webAuthnConfigurer
-                    .allowedOrigins(allowedOrigins)
-                    .rpId(rpId)
-                    .rpName("Artemis");
-                // FIXME use the new version and not the deprecated one
-                http.apply(webAuthnConfigurer);
+                http.with(webAuthnConfigurer, configurer -> {
+                    configurer
+                        .allowedOrigins(allowedOrigins)
+                        .rpId(rpId)
+                        .rpName("Artemis");
+                });
             }
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
