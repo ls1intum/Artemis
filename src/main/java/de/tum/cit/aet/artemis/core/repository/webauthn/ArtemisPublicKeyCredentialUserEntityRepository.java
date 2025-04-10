@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 @Repository
 public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKeyCredentialUserEntityRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(ArtemisUserCredentialRepository.class);
+    private static final Logger log = LoggerFactory.getLogger(ArtemisPublicKeyCredentialUserEntityRepository.class);
 
     private final UserRepository userRepository;
 
