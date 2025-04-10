@@ -11,6 +11,8 @@ artemis:
       enabled: false
     exam:
       enabled: false
+    text:
+      enabled: false
 
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download

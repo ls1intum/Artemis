@@ -32,6 +32,16 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(EXAM_ENABLED_PROPERTY_NAME, environment);
     }
 
+    /**
+     * Check if the text module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the text module is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {

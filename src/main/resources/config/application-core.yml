@@ -3,6 +3,8 @@ artemis:
         enabled: true
     exam:
         enabled: true
+    text:
+        enabled: true
 
 spring:
     liquibase:

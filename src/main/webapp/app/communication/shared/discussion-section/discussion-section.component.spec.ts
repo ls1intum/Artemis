@@ -264,7 +264,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDTO.id } as PostContextFilter,
+            { ...component.currentPostContextFilter, conversationIds: [metisExerciseChannelDTO.id] } as PostContextFilter,
             true,
             metisExerciseChannelDTO,
         );
@@ -279,7 +279,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDTO.id },
+            { ...component.currentPostContextFilter, conversationIds: [metisLectureChannelDTO.id] },
             true,
             metisLectureChannelDTO,
         );
