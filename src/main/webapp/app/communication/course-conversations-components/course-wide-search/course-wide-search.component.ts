@@ -207,7 +207,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
 
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
-            filterToCourseWide: true,
+            filterToCourseWide: false,
             filterToUnresolved: false,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,

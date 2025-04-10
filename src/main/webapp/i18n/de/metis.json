@@ -101,7 +101,7 @@
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
                 "ANNOUNCEMENT": "Ankündigung",
-                "allPublicMessages": "Alle öffentlichen Nachrichten",
+                "allMessages": "Alle Nachrichten",
                 "searchResults": "Suchergebnisse für {{ search }}",
                 "searchResultInAnswersHint": "Suchergebnis in Antworten",
                 "mobileDisclaimer": "Bitte erst eine Konversation auswählen.",

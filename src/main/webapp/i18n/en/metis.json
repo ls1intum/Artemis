@@ -101,7 +101,7 @@
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
                 "ANNOUNCEMENT": "Announcement",
-                "allPublicMessages": "All Public Messages",
+                "allMessages": "All Messages",
                 "searchResults": "Search Results for '{{ search }}'",
                 "searchResultInAnswersHint": "Search result in replies",
                 "mobileDisclaimer": "Please select a conversation first.",
