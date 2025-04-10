@@ -19,10 +19,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
@@ -47,20 +49,23 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final AuthorizationCheckService authCheckService;
 
+    private final IrisSettingsService irisSettingsService;
+
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService) {
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
         this.authCheckService = authCheckService;
+        this.irisSettingsService = irisSettingsService;
     }
 
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
-        // TODO: Implement
+        builder.withCourse(session.getPost().getCoursePostingBelongsTo().getId());
     }
 
     @Override
@@ -97,6 +102,6 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
-        // TODO: Implement after settings are implemented
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, irisSession.getPost().getCoursePostingBelongsTo());
     }
 }
