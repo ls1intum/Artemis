@@ -51,13 +51,26 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     @Override
     public void save(CredentialRecord credentialRecord) {
-        artemisPublicKeyCredentialUserEntityRepository.findArtemisUserById(credentialRecord.getUserEntityUserId()).ifPresent(user -> {
-            passkeyCredentialsRepository.findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString())
-                    .map(existingCredential -> passkeyCredentialsRepository.save(toPasskeyCredential(existingCredential, credentialRecord, user)))
-                    .orElseGet(() -> passkeyCredentialsRepository.save(toPasskeyCredential(credentialRecord, user)));
+        // @formatter:off
+        artemisPublicKeyCredentialUserEntityRepository
+                .findArtemisUserById(credentialRecord.getUserEntityUserId())
+                .ifPresent(user -> {
+                    passkeyCredentialsRepository
+                            .findByCredentialId(credentialRecord.getCredentialId().toBase64UrlString())
+                            .map(existingCredential ->
+                                    passkeyCredentialsRepository.save(
+                                            toPasskeyCredential(existingCredential, credentialRecord, user)
+                                    )
+                            )
+                            .orElseGet(() ->
+                                    passkeyCredentialsRepository.save(
+                                            toPasskeyCredential(credentialRecord, user)
+                                    )
+                            );
 
-            log.info("save: user={}, externalId={}, label={}", user.getName(), user.getExternalId(), credentialRecord.getLabel());
-        });
+                    log.info("save: user={}, externalId={}, label={}", user.getName(), user.getExternalId(), credentialRecord.getLabel());
+                });
+        // @formatter:on
     }
 
     /**
