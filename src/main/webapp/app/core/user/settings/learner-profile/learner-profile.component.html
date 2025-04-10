@@ -1,0 +1,77 @@
+<div class="d-flex justify-content-between">
+    <div>
+        <h1 jhiTranslate="artemisApp.learnerProfile.title"></h1>
+        <div class="d-flex userSettings-info">
+            <fa-icon class="ng-fa-icon" [icon]="faInfoCircle" />
+            <span class="ps-1" jhiTranslate="artemisApp.learnerProfile.description"></span>
+        </div>
+    </div>
+    @if (settingsChanged) {
+        <div class="d-flex align-items-center">
+            <button type="button" class="btn btn-primary" (click)="save()">
+                <fa-icon class="ng-fa-icon" [icon]="faSave" />
+                <span jhiTranslate="entity.action.save"></span>
+            </button>
+        </div>
+    }
+</div>
+
+<div class="list-group d-block">
+    <div class="list-group-item">
+        <h3 jhiTranslate="artemisApp.learnerProfile.feedback.title"></h3>
+        <div class="preference-section">
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.description"></p>
+            <mat-slider min="1" max="5" step="1" [discrete]="true">
+                <input
+                    matSliderThumb
+                    [value]="learnerProfile.feedbackPracticalTheoretical"
+                    (valueChange)="learnerProfile.feedbackPracticalTheoretical = $event"
+                    (change)="onSliderChange()"
+                />
+            </mat-slider>
+            <div class="labels">
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.practical"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.theoretical"></span>
+            </div>
+        </div>
+        <div class="preference-section">
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.feedbackCreativeGuidance.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.feedbackCreativeGuidance.description"></p>
+            <mat-slider min="1" max="5" step="1" [discrete]="true" showTickMarks>
+                <input matSliderThumb [(ngModel)]="learnerProfile.feedbackCreativeGuidance" (change)="onSliderChange()" />
+            </mat-slider>
+            <div class="labels">
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackCreativeGuidance.creative"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackCreativeGuidance.focused"></span>
+            </div>
+        </div>
+        <div class="preference-section">
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.feedbackFollowupSummary.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.feedbackFollowupSummary.description"></p>
+            <mat-slider min="1" max="5" step="1" [discrete]="true">
+                <input
+                    matSliderThumb
+                    [value]="learnerProfile.feedbackFollowupSummary"
+                    (valueChange)="learnerProfile.feedbackFollowupSummary = $event"
+                    (change)="onSliderChange()"
+                />
+            </mat-slider>
+            <div class="labels">
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackFollowupSummary.followUp"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackFollowupSummary.summary"></span>
+            </div>
+        </div>
+        <div class="preference-section">
+            <dt jhiTranslate="artemisApp.learnerProfile.feedback.feedbackBriefDetailed.title"></dt>
+            <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.feedbackBriefDetailed.description"></p>
+            <mat-slider min="1" max="5" step="1" [discrete]="true">
+                <input matSliderThumb [value]="learnerProfile.feedbackBriefDetailed" (valueChange)="learnerProfile.feedbackBriefDetailed = $event" (change)="onSliderChange()" />
+            </mat-slider>
+            <div class="labels">
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackBriefDetailed.brief"></span>
+                <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackBriefDetailed.detailed"></span>
+            </div>
+        </div>
+    </div>
+</div>

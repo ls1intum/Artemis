@@ -26,6 +26,13 @@ export const routes: Routes = [
                 },
             },
             {
+                path: 'profile',
+                loadComponent: () => import('app/core/user/settings/learner-profile/learner-profile.component').then((m) => m.LearnerProfileComponent),
+                data: {
+                    pageTitle: 'artemisApp.userSettings.learnerProfile',
+                },
+            },
+            {
                 path: 'notifications',
                 loadComponent: () => import('app/core/user/settings/notification-settings/notification-settings.component').then((m) => m.NotificationSettingsComponent),
                 data: {

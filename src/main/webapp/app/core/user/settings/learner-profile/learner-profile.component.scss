@@ -1,0 +1,64 @@
+.preference-section {
+    margin-bottom: 32px;
+
+    .text-muted {
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+
+    mat-slider {
+        width: 98%;
+        margin-bottom: 8px;
+
+        ::ng-deep {
+            .mdc-slider__thumb {
+                border-radius: 50% !important;
+                width: 24px !important;
+                height: 24px !important;
+                background-color: var(--bs-primary) !important;
+                top: 8px !important;
+            }
+
+            .mdc-slider__track {
+                height: 8px !important;
+                border-radius: 5px !important;
+                margin: 0 -12px !important;
+            }
+
+            .mdc-slider__track--inactive {
+                background-color: #e0e0e0 !important;
+                border-radius: 5px !important;
+            }
+
+            .mdc-slider__track--active {
+                background-color: var(--bs-primary) !important;
+                border-radius: 5px !important;
+            }
+
+            .mdc-slider__thumb-knob {
+                border-radius: 100% !important;
+                width: 24px !important;
+                height: 24px !important;
+            }
+        }
+    }
+
+    .labels {
+        display: flex;
+        justify-content: space-between;
+        color: #666;
+        font-size: 0.9rem;
+    }
+}
+
+.btn-primary {
+    padding: 8px 24px;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: darken(#007bff, 5%);
+    }
+}
