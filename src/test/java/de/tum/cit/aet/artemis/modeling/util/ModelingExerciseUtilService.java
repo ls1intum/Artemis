@@ -425,6 +425,7 @@ public class ModelingExerciseUtilService {
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
         result.setAssessor(userUtilService.getUserByLogin(login));
+        resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
     }
 }
