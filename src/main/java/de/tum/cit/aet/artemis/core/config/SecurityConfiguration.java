@@ -84,7 +84,7 @@ public class SecurityConfiguration {
     @Value("${artemis.user-management.passkey.allowedOrigins}")
     private String allowedOrigins;
 
-    @Value("${artemis.user-management.passkey.rpId}")
+    @Value("${artemis.user-management.passkey.rp-id}")
     private String rpId;
 
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,

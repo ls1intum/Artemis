@@ -5,9 +5,9 @@ artemis:
         enabled: true
     user-management:
       passkey:
-        enabled: false
+        enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
         allowedOrigins: 'https://artemis.tum.de/' # ensures that only trusted parties can create and authenticate with passkeys (comma separated)
-        rpId: 'artemis.tum.de' # Relying Party Identifier, typically the domain of the website that is using WebAuthn for authentication
+        rp-id: 'artemis.tum.de' # Relying Party Identifier, typically the domain of the website that is using WebAuthn for authentication
 
 spring:
     liquibase:
