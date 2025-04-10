@@ -692,16 +692,6 @@
             "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
-            "buildLogStatistics": {
-                "title": "Average build log statistics",
-                "numberOfBuilds": "# Builds",
-                "agentSetupDuration": "Setup build agent",
-                "testDuration": "Test execution",
-                "scaDuration": "Static Code Analysis",
-                "totalJobDuration": "Total Job",
-                "dependenciesDownloadedCount": "Number of downloaded dependencies",
-                "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
-            },
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
             "commitInfo": {
                 "title": "Commit Information",

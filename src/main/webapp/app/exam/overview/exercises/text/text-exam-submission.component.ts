@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, input, output } from '@angular/core';
-import { TextEditorService } from 'app/text/overview/text-editor.service';
+import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
-import { StringCountService } from 'app/text/overview/string-count.service';
+import { StringCountService } from 'app/text/overview/service/string-count.service';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
@@ -11,7 +11,7 @@ import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ExerciseSaveButtonComponent } from '../exercise-save-button/exercise-save-button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { FormsModule } from '@angular/forms';

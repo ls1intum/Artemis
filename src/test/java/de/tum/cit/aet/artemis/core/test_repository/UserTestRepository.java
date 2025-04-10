@@ -26,21 +26,21 @@ public interface UserTestRepository extends UserRepository {
     Set<User> findAllByGroupsNotEmpty();
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
+    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalse();
 
     @Query("""
             SELECT user.id
             FROM User user
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
             """)
-    List<Long> findUserIdsByIsDeletedIsFalse(Pageable pageable);
+    List<Long> findUserIdsByDeletedIsFalse(Pageable pageable);
 
     @Query("""
             SELECT COUNT(user)
             FROM User user
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
             """)
-    long countUsersByIsDeletedIsFalse();
+    long countUsersByDeletedIsFalse();
 
     /**
      * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
@@ -49,13 +49,13 @@ public interface UserTestRepository extends UserRepository {
      * @param pageable the pagination information.
      * @return a paginated list of {@link User} entities that are not marked as deleted. If no entities are found, returns an empty page.
      */
-    default Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable) {
-        List<Long> ids = findUserIdsByIsDeletedIsFalse(pageable);
+    default Page<User> findAllWithGroupsByDeletedIsFalse(Pageable pageable) {
+        List<Long> ids = findUserIdsByDeletedIsFalse(pageable);
         if (ids.isEmpty()) {
             return Page.empty(pageable);
         }
         List<User> users = findUsersWithGroupsByIdIn(ids);
-        long total = countUsersByIsDeletedIsFalse();
+        long total = countUsersByDeletedIsFalse();
         return new PageImpl<>(users, pageable, total);
     }
 

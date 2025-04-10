@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
 import java.net.URI;
@@ -16,7 +15,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -69,6 +68,8 @@ import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -79,11 +80,13 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismDetectionApi;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
+import de.tum.cit.aet.artemis.plagiarism.exception.PlagiarismApiNotPresentException;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -94,7 +97,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
 /**
  * REST controller for managing TextExercise.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @RestController
 @RequestMapping("api/text/")
 public class TextExerciseResource {
@@ -116,7 +119,7 @@ public class TextExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
+    private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
     private final TextExerciseRepository textExerciseRepository;
 
@@ -144,7 +147,7 @@ public class TextExerciseResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
-    private final PlagiarismDetectionService plagiarismDetectionService;
+    private final Optional<PlagiarismDetectionApi> plagiarismDetectionApi;
 
     private final CourseRepository courseRepository;
 
@@ -154,22 +157,24 @@ public class TextExerciseResource {
 
     private final Optional<AthenaApi> athenaApi;
 
+    private final Optional<ExamAccessApi> examAccessApi;
+
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
-            ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
+            ExerciseDeletionService exerciseDeletionService, Optional<PlagiarismResultApi> plagiarismResultApi, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
+            InstanceMessageSendService instanceMessageSendService, Optional<PlagiarismDetectionApi> plagiarismDetectionApi, CourseRepository courseRepository,
             ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<IrisSettingsApi> irisSettingsApi) {
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<ExamAccessApi> examAccessApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
+        this.plagiarismResultApi = plagiarismResultApi;
         this.textBlockRepository = textBlockRepository;
         this.textExerciseService = textExerciseService;
         this.textExerciseRepository = textExerciseRepository;
@@ -186,11 +191,12 @@ public class TextExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.instanceMessageSendService = instanceMessageSendService;
-        this.plagiarismDetectionService = plagiarismDetectionService;
+        this.plagiarismDetectionApi = plagiarismDetectionApi;
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.athenaApi = athenaApi;
+        this.examAccessApi = examAccessApi;
         this.competencyProgressApi = competencyProgressApi;
         this.irisSettingsApi = irisSettingsApi;
     }
@@ -413,8 +419,9 @@ public class TextExerciseResource {
         }
 
         // Exam exercises cannot be seen by students between the endDate and the publishResultDate
-        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
-            throw new AccessForbiddenException();
+        if (textExercise.isExamExercise()) {
+            ExamAccessApi api = examAccessApi.orElseThrow(() -> new ExamApiNotPresentException(ExamAccessApi.class));
+            api.checkIfAllowedToGetExamResult(textExercise, participation, user);
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
@@ -578,10 +585,12 @@ public class TextExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
+        PlagiarismResultApi api = plagiarismResultApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismResultApi.class));
+
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        var plagiarismResult = (TextPlagiarismResult) api.findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        api.prepareResultForClient(plagiarismResult);
         return buildPlagiarismResultResponse(plagiarismResult);
     }
 
@@ -601,13 +610,15 @@ public class TextExerciseResource {
     @EnforceAtLeastEditor
     public ResponseEntity<PlagiarismResultDTO<TextPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
             @RequestParam int minimumScore, @RequestParam int minimumSize) throws ExitException {
+        PlagiarismDetectionApi api = plagiarismDetectionApi.orElseThrow(() -> new PlagiarismApiNotPresentException(PlagiarismDetectionApi.class));
+
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
 
         long start = System.nanoTime();
         log.info("Started manual plagiarism checks for text exercise: exerciseId={}.", exerciseId);
         PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(textExercise, similarityThreshold, minimumScore, minimumSize);
-        var plagiarismResult = plagiarismDetectionService.checkTextExercise(textExercise);
+        var plagiarismResult = api.checkTextExercise(textExercise);
         log.info("Finished manual plagiarism checks for text exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
         return buildPlagiarismResultResponse(plagiarismResult);
     }

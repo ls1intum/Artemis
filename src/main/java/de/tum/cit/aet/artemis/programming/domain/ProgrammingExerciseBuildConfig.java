@@ -20,7 +20,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
-import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 
 @Entity
 @Table(name = "programming_exercise_build_config")
@@ -110,8 +109,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     }
 
     /**
-     * Getter for the stored default branch of the exercise.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfExercise(ProgrammingExercise)} if you are not sure that the value was already set in the Artemis database
      *
      * @return the name of the default branch or null if not yet stored in Artemis
      */

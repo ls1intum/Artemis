@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
@@ -32,7 +32,7 @@ public class RepositoryParticipationService {
 
     private final RepositoryAccessService repositoryAccessService;
 
-    private final Optional<VersionControlService> versionControlService;
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
 
     /**
      * Constructor for the RepositoryParticipationService.
@@ -42,12 +42,12 @@ public class RepositoryParticipationService {
      * @param userRepository          the user repository
      */
     public RepositoryParticipationService(ParticipationRepository participationRepository, GitService gitService, UserRepository userRepository,
-            RepositoryAccessService repositoryAccessService, Optional<VersionControlService> versionControlService) {
+            RepositoryAccessService repositoryAccessService, Optional<LocalVCGitBranchService> localVCGitBranchService) {
         this.participationRepository = participationRepository;
         this.gitService = gitService;
         this.userRepository = userRepository;
         this.repositoryAccessService = repositoryAccessService;
-        this.versionControlService = versionControlService;
+        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     /**
@@ -87,7 +87,7 @@ public class RepositoryParticipationService {
             return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet);
         }
         else {
-            String branch = versionControlService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
+            String branch = localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfParticipation(programmingParticipation);
             return gitService.getOrCheckoutRepository(repositoryUri, pullOnGet, branch);
         }
     }
