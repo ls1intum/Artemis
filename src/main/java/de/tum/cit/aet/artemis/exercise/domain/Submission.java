@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -128,11 +129,14 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @Nullable
     @JsonIgnore
+    // TODO I'm not sure if id is the right field to order, but that's the best I came up with
     public Result getLatestResult() {
         if (results != null && !results.isEmpty()) {
-            Result latestResult = results.getLast();
+            Result latestResult = results.stream().max(Comparator.comparing(Result::getId)).get();
+
             latestResult.setSubmission(this);
             return latestResult;
+
         }
         return null;
     }
