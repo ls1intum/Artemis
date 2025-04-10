@@ -1,5 +1,7 @@
 import { Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
+// @ts-expect-error – TS does not know vite's ?url query parameter
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
@@ -34,6 +36,7 @@ export class PdfPreviewThumbnailGridComponent {
     private readonly alertService = inject(AlertService);
 
     constructor() {
+        PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
         effect(() => {
             this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
         });
