@@ -53,7 +53,7 @@ jhi-secured-image {
 }
 
 .double-arrow {
-    transform: translate(180px);
+    transform: translateX(calc(100% - 30px)); // Position relative to container width
     transition: transform ease 0.3s;
     cursor: pointer;
     width: 30px;
