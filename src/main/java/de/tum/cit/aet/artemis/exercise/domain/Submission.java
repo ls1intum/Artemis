@@ -132,7 +132,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     // TODO I'm not sure if id is the right field to order, but that's the best I came up with
     public Result getLatestResult() {
         if (results != null && !results.isEmpty()) {
-            Result latestResult = results.stream().max(Comparator.comparing(Result::getId)).get();
+            Result latestResult = results.stream().filter(Objects::nonNull).filter(result -> result.getId() != null).max(Comparator.comparing(Result::getId)).orElseThrow();
 
             latestResult.setSubmission(this);
             return latestResult;

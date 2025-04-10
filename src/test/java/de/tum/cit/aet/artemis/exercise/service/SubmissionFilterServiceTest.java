@@ -266,10 +266,13 @@ class SubmissionFilterServiceTest extends AbstractSpringIntegrationIndependentTe
         var submissionWithManualAssessment = new ProgrammingSubmission();
         submissionWithManualAssessment.setId(2L);
         var firstResult = new Result().rated(true).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-
+        firstResult.setId(1L);
         var secondResult = new Result().rated(true).score(1.0).completionDate(ZonedDateTime.now().plusHours(1)).assessmentType(AssessmentType.AUTOMATIC);
+        secondResult.setId(2L);
         var retriggeredSecondResult = new Result().rated(true).score(1.0).completionDate(ZonedDateTime.now().plusHours(1).plusMinutes(30)).assessmentType(AssessmentType.AUTOMATIC);
+        retriggeredSecondResult.setId(3L);
         var secondResultWithManualAssessment = new Result().score(2.0).rated(true).completionDate(ZonedDateTime.now().plusHours(2)).assessmentType(AssessmentType.SEMI_AUTOMATIC);
+        secondResultWithManualAssessment.setId(4L);
 
         submissionWithoutManualAssessment.setResults(List.of(firstResult));
         submissionWithManualAssessment.setResults(List.of(secondResult, retriggeredSecondResult, secondResultWithManualAssessment));
