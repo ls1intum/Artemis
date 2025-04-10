@@ -37,8 +37,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/core/passkey/")
 public class PasskeyResource {
 
-    public static final String ENTITY_NAME = "passkey";
-
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
 
     private final UserRepository userRepository;
