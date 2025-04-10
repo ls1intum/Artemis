@@ -481,13 +481,13 @@ The table contains all annotations for the corresponding minimum role including 
 +------------------+----------------------------------------+--------------------------+----------------------+
 | ADMIN            | @EnforceAdmin                          | /api/{module}/admin/     | {module}.web.admin   |
 +------------------+----------------------------------------+--------------------------+----------------------+
-| INSTRUCTOR       | @EnforceAtLeastInstructorInResource    | /api/{module}/           | {module}.web         |
+| INSTRUCTOR       | @EnforceAtLeastInstructor              | /api/{module}/           | {module}.web         |
 +------------------+----------------------------------------+--------------------------+----------------------+
-| EDITOR           | @EnforceAtLeastEditorInResource        | /api/{module}/           | {module}.web         |
+| EDITOR           | @EnforceAtLeastEditor                  | /api/{module}/           | {module}.web         |
 +------------------+----------------------------------------+--------------------------+----------------------+
-| TA               | @EnforceAtLeastTutorInResource         | /api/{module}/           | {module}.web         |
+| TA               | @EnforceAtLeastTutor                   | /api/{module}/           | {module}.web         |
 +------------------+----------------------------------------+--------------------------+----------------------+
-| USER             | @EnforceAtLeastStudentInResource       | /api/{module}/           | {module}.web         |
+| USER             | @EnforceAtLeastStudent                 | /api/{module}/           | {module}.web         |
 +------------------+----------------------------------------+--------------------------+----------------------+
 | ANONYMOUS        | @EnforceNothing                        | /api/{module}/public/    | {module}.web.open    |
 +------------------+----------------------------------------+--------------------------+----------------------+
