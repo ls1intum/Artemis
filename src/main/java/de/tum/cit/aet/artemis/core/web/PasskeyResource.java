@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
+import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -69,13 +69,13 @@ public class PasskeyResource {
 
     @GetMapping("user")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PasskeyDto>> getPasskeys() {
+    public ResponseEntity<List<PasskeyDTO>> getPasskeys() {
         checkIfPasskeyFeatureIsEnabled();
 
         User user = userRepository.getUser();
         log.info("Retrieving passkeys for user with id: {}", user.getId());
 
-        List<PasskeyDto> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(BytesConverter.longToBytes(user.getId()));
+        List<PasskeyDTO> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(BytesConverter.longToBytes(user.getId()));
 
         return ResponseEntity.ok(passkeys);
     }

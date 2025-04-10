@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
-import de.tum.cit.aet.artemis.core.dto.PasskeyDto;
+import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
@@ -104,7 +104,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     /**
      * @param userId of the user for which the passkeys should be found
      */
-    public List<PasskeyDto> findPasskeyDtosByUserId(Bytes userId) {
+    public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
         log.info("findPasskeyDtosByUserId: userId={}", userId);
 
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
@@ -114,7 +114,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                 .orElseGet(List::of);
 
         return credentialRecords.stream()
-                .map(credential -> new PasskeyDto(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
+                .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
                 .toList();
     }
 
