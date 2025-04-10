@@ -15,11 +15,11 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface LLMTokenUsageTraceRepository extends ArtemisJpaRepository<LLMTokenUsageTrace, Long> {
 
     @Query("""
-                SELECT COALESCE(ROUND(SUM((req.numInputTokens * req.costPerMillionInputTokens / 1000000) +
-                                (req.numOutputTokens * req.costPerMillionOutputTokens / 1000000)), 2), 0.0)
-                FROM LLMTokenUsageRequest req
-                JOIN req.trace trace
-                WHERE trace.courseId = :courseId
+            SELECT COALESCE(ROUND(SUM((req.numInputTokens * req.costPerMillionInputTokens / 1000000) +
+                            (req.numOutputTokens * req.costPerMillionOutputTokens / 1000000)), 2), 0.0)
+            FROM LLMTokenUsageRequest req
+            JOIN req.trace trace
+            WHERE trace.courseId = :courseId
             """)
     Double calculateTotalLlmCostInEurForCourse(@Param("courseId") Long courseId);
 }
