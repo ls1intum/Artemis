@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
  * Provides endpoints for retrieving and deleting passkeys associated with a user.
- *
+ * <p>
  * This controller is only active when the "core" profile is enabled.
  */
 @Profile(PROFILE_CORE)
@@ -108,15 +108,14 @@ public class PasskeyResource {
         User currentUser = userRepository.getUser();
         Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
-        if (credentialToBeDeleted.isPresent()) {
-            boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
-            if (!isUserAllowedToDeletePasskey) {
-                log.warn("User with id {} tried to delete credential with id {} of other user", currentUser.getId(), credentialId);
-                return ResponseEntity.notFound().build();
-            }
-        }
-        else {
+        if (credentialToBeDeleted.isEmpty()) {
             log.warn("Credential with id {} not found in the repository", credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
+        if (!isUserAllowedToDeletePasskey) {
+            log.warn("User with id {} tried to delete credential with id {} of other user", currentUser.getId(), credentialId);
             return ResponseEntity.notFound().build();
         }
 
