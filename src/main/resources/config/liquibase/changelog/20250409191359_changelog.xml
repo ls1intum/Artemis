@@ -4,18 +4,10 @@
 
     <changeSet id="20250409191359-1" author="artemis">
         <addColumn tableName="learner_profile">
-            <column name="feedback_practical_theoretical" type="int" defaultValue="3">
-                <constraints nullable="false" checkConstraint="feedback_practical_theoretical_check" checkConstraintName="feedback_practical_theoretical_check" checkConstraintDefinition="feedback_practical_theoretical >= 1 AND feedback_practical_theoretical <= 5"/>
-            </column>
-            <column name="feedback_creative_guidance" type="int" defaultValue="3">
-                <constraints nullable="false" checkConstraint="feedback_creative_guidance_check" checkConstraintName="feedback_creative_guidance_check" checkConstraintDefinition="feedback_creative_guidance >= 1 AND feedback_creative_guidance <= 5"/>
-            </column>
-            <column name="feedback_followup_summary" type="int" defaultValue="3">
-                <constraints nullable="false" checkConstraint="feedback_followup_summary_check" checkConstraintName="feedback_followup_summary_check" checkConstraintDefinition="feedback_followup_summary >= 1 AND feedback_followup_summary <= 5"/>
-            </column>
-            <column name="feedback_brief_detailed" type="int" defaultValue="3">
-                <constraints nullable="false" checkConstraint="feedback_brief_detailed_check" checkConstraintName="feedback_brief_detailed_check" checkConstraintDefinition="feedback_brief_detailed >= 1 AND feedback_brief_detailed <= 5"/>
-            </column>
+            <column name="feedback_practical_theoretical" type="int" defaultValue="3"/>
+            <column name="feedback_creative_guidance" type="int" defaultValue="3"/>
+            <column name="feedback_followup_summary" type="int" defaultValue="3"/>
+            <column name="feedback_brief_detailed" type="int" defaultValue="3"/>
         </addColumn>
     </changeSet>
 
