@@ -43,9 +43,9 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
-    private String rpId;
+    private String relyingPartyId;
 
-    private String rpName;
+    private String relyingPartyName;
 
     private Set<String> allowedOrigins = new HashSet<>();
 
@@ -60,11 +60,11 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     /**
      * The Relying Party id.
      *
-     * @param rpId the relying party id
+     * @param relyingPartyId the relying party id
      * @return the {@link ArtemisWebAuthnConfigurer} for further customization
      */
-    public ArtemisWebAuthnConfigurer<H> rpId(String rpId) {
-        this.rpId = rpId;
+    public ArtemisWebAuthnConfigurer<H> rpId(String relyingPartyId) {
+        this.relyingPartyId = relyingPartyId;
         return this;
     }
 
@@ -75,7 +75,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
      * @return the {@link ArtemisWebAuthnConfigurer} for further customization
      */
     public ArtemisWebAuthnConfigurer<H> rpName(String rpName) {
-        this.rpName = rpName;
+        this.relyingPartyName = rpName;
         return this;
     }
 
@@ -181,7 +181,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     private WebAuthnRelyingPartyOperations webAuthnRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
         Optional<WebAuthnRelyingPartyOperations> webauthnOperationsBean = getBeanOrNull(WebAuthnRelyingPartyOperations.class);
         return webauthnOperationsBean.orElseGet(() -> new Webauthn4JRelyingPartyOperations(userEntities, userCredentials,
-                PublicKeyCredentialRpEntity.builder().id(this.rpId).name(this.rpName).build(), this.allowedOrigins));
+                PublicKeyCredentialRpEntity.builder().id(this.relyingPartyId).name(this.relyingPartyName).build(), this.allowedOrigins));
     }
 
 }
