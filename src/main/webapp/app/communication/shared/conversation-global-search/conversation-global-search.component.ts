@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, ViewChild, input, output } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, input, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
@@ -55,7 +55,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     onSearch = output<ConversationGlobalSearchConfig>();
     onSelectionChange = output<ConversationGlobalSearchConfig>();
 
-    @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
+    readonly searchElement = viewChild<ElementRef>('searchInput');
 
     fullSearchTerm = '';
     searchTermWithoutPrefix = '';
@@ -223,7 +223,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     focusInput(): void {
         setTimeout(() => {
             if (this.searchElement) {
-                this.searchElement.nativeElement.focus();
+                this.searchElement()!.nativeElement.focus();
             }
         }, 0);
     }
@@ -294,7 +294,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
         // Close dropdown when clicking outside
-        if (this.searchElement && !this.searchElement.nativeElement.contains(event.target)) {
+        if (this.searchElement && !this.searchElement()!.nativeElement.contains(event.target)) {
             this.closeDropdown();
         }
     }

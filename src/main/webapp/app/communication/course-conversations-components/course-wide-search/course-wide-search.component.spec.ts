@@ -126,7 +126,7 @@ describe('CourseWideSearchComponent', () => {
             conversationIds: conversationsOfUser,
             searchText: undefined,
             filterToUnresolved: false,
-            authorIds: undefined,
+            authorIds: [],
             filterToCourseWide: false,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
@@ -151,6 +151,7 @@ describe('CourseWideSearchComponent', () => {
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
             conversationIds: conversationsOfUser,
+            authorIds: [],
             searchText: courseWideSearchConfig.searchTerm,
             filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
             filterToUnresolved: courseWideSearchConfig.filterToUnresolved,

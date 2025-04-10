@@ -25,7 +25,6 @@ import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { getElement } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';
@@ -45,6 +44,7 @@ import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ConversationGlobalSearchComponent } from 'app/communication/shared/conversation-global-search/conversation-global-search.component';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -86,6 +86,7 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        MockInstance(ConversationGlobalSearchComponent, 'searchElement', signal([new ElementRef(document.createElement('div'))]));
         MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
         const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
         MockInstance(ConversationThreadSidebarComponent, 'expandTooltip', signal(dummyTooltip));
@@ -105,6 +106,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ButtonComponent),
                     MockComponent(SidebarComponent),
                     MockComponent(CourseWideSearchComponent),
+                    MockComponent(ConversationGlobalSearchComponent),
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
@@ -324,28 +326,16 @@ examples.forEach((activeConversation) => {
             expect(acceptCodeOfConductSpy).toHaveBeenCalledOnce();
         });
 
-        it('should initialize the course-wide search text correctly', () => {
-            fixture.detectChanges();
-            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-            expect(searchInput.textContent).toBe('');
-        });
-
-        it('should update the course-wide search text correctly given an input', () => {
-            fixture.detectChanges();
-            const searchInput = getElement(fixture.debugElement, 'input[name=searchText]');
-            searchInput.value = 'test input';
-            searchInput.dispatchEvent(new Event('input'));
-            fixture.detectChanges();
-            expect(component.courseWideSearchTerm).toBe('test input');
-        });
-
         it('should set search text in the courseWideSearchConfig correctly', () => {
             fixture.detectChanges();
             component.initializeCourseWideSearchConfig();
-            component.courseWideSearchTerm = 'test';
-            component.onSearch();
+            component.onSearch({
+                searchTerm: 'test',
+                selectedAuthors: [],
+                selectedConversations: [],
+            });
             fixture.detectChanges();
-            expect(component.courseWideSearchConfig.searchTerm).toBe(component.courseWideSearchTerm);
+            expect(component.courseWideSearchConfig.searchTerm).toBe('test');
         });
 
         it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
@@ -390,8 +380,11 @@ examples.forEach((activeConversation) => {
             const openSidebarSpy = jest.spyOn(courseSidebarService, 'openSidebar');
             fixture.detectChanges();
             component.isMobile = true;
-            component.courseWideSearchTerm = '';
-            component.onSearch();
+            component.onSearch({
+                searchTerm: '',
+                selectedAuthors: [],
+                selectedConversations: [],
+            });
             expect(openSidebarSpy).toHaveBeenCalled();
         });
 

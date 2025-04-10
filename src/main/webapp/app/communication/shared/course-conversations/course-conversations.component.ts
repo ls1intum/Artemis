@@ -426,7 +426,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     onSearch(searchInfo: ConversationGlobalSearchConfig) {
         if (this.isMobile) {
-            const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations || searchInfo?.selectedAuthors;
+            const isSearchNonEmpty = searchInfo?.searchTerm || searchInfo?.selectedConversations.length > 0 || searchInfo?.selectedAuthors.length > 0;
             if (isSearchNonEmpty) {
                 this.courseSidebarService.closeSidebar();
             } else {
