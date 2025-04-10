@@ -20,9 +20,9 @@ public interface PasskeyCredentialsRepository extends ArtemisJpaRepository<Passk
     Optional<PasskeyCredential> findByCredentialId(String credentialId);
 
     @Query("""
-                SELECT credential
-                FROM PasskeyCredential credential
-                WHERE credential.user.id = :userId
+            SELECT credential
+            FROM PasskeyCredential credential
+            WHERE credential.user.id = :userId
             """)
     List<PasskeyCredential> findByUser(@Param("userId") long userId);
 }
