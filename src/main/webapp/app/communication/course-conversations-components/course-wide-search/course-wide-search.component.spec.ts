@@ -60,6 +60,8 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.filterToOwn = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
     courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+    courseWideSearchConfig.selectedConversations = [];
+    courseWideSearchConfig.selectedAuthors = [];
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -140,17 +142,18 @@ describe('CourseWideSearchComponent', () => {
 
     it('should update currentPostContextFilter correctly', fakeAsync(() => {
         component.ngOnInit();
-        const conversationsOfUser = conversationDtoArray.map((conversation) => conversation.id);
+        const conversation = conversationDtoArray[0];
 
         courseWideSearchConfig.searchTerm = 'test';
         courseWideSearchConfig.filterToOwn = true;
+        courseWideSearchConfig.selectedConversations = [conversation];
         component.onSearch();
         tick();
         fixture.detectChanges();
 
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
-            conversationIds: conversationsOfUser,
+            conversationIds: [conversation.id],
             authorIds: [],
             searchText: courseWideSearchConfig.searchTerm,
             filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
@@ -165,6 +168,24 @@ describe('CourseWideSearchComponent', () => {
         });
     }));
 
+    it('should set conversationIds back to all conversations if no conversation is selected', fakeAsync(() => {
+        component.ngOnInit();
+        const singleConversation = conversationDtoArray[0];
+        const allConversationIds = conversationDtoArray.map((conversation) => conversation.id);
+
+        courseWideSearchConfig.selectedConversations = [singleConversation];
+        component.onSearch();
+        tick();
+        fixture.detectChanges();
+        expect(component.currentPostContextFilter?.conversationIds).toEqual([singleConversation.id]);
+
+        courseWideSearchConfig.selectedConversations = [];
+        component.onSearch();
+        tick();
+        fixture.detectChanges();
+        expect(component.currentPostContextFilter?.conversationIds).toEqual(allConversationIds);
+    }));
+
     it('should fetch posts on next page fetch', fakeAsync(() => {
         const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
         fixture.componentRef.setInput('courseWideSearchConfig', courseWideSearchConfig);
@@ -176,14 +197,67 @@ describe('CourseWideSearchComponent', () => {
     it('should initialize formGroup correctly', fakeAsync(() => {
         component.ngOnInit();
         tick();
+        expect(component.formGroup.get('filterToCourseWide')?.value).toBeFalse();
         expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
     }));
 
+    it('Should update filter setting when filterToCourseWide checkbox is checked', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToCourseWide: true,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToCourseWide]');
+        filterResolvedCheckbox.dispatchEvent(new Event('change'));
+        tick();
+        fixture.detectChanges();
+        expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeTrue();
+        expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
+        expect(component.courseWideSearchConfig()?.filterToOwn).toBeFalse();
+        expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
+    }));
+
+    it('should disable the filterToCourseWide if a conversation is selected', fakeAsync(() => {
+        fixture.detectChanges();
+        component.formGroup.patchValue({
+            filterToCourseWide: true,
+            filterToUnresolved: false,
+            filterToOwn: false,
+            filterToAnsweredOrReacted: false,
+        });
+        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.onSearchConfigSelectionChange();
+        fixture.detectChanges();
+
+        const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
+        expect(filterResolvedCheckbox.disabled).toBeTrue();
+        expect(filterResolvedCheckbox.value).toBeFalse();
+    }));
+
+    it('should re-enable the filterToCourseWide if no conversation is selected', fakeAsync(() => {
+        fixture.detectChanges();
+        component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
+        component.onSearchConfigSelectionChange();
+        fixture.detectChanges();
+
+        const filterResolvedCheckbox = component.formGroup.get('filterToCourseWide')!;
+        expect(filterResolvedCheckbox.disabled).toBeTrue();
+
+        component.courseWideSearchConfig().selectedConversations = [];
+        component.onSearchConfigSelectionChange();
+        fixture.detectChanges();
+
+        expect(filterResolvedCheckbox.disabled).toBeFalse();
+    }));
+
     it('Should update filter setting when filterToUnresolved checkbox is checked', fakeAsync(() => {
         fixture.detectChanges();
         component.formGroup.patchValue({
+            filterToCourseWide: false,
             filterToUnresolved: true,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
@@ -192,6 +266,7 @@ describe('CourseWideSearchComponent', () => {
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
+        expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToOwn).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
