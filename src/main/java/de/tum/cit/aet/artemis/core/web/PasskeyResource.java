@@ -39,20 +39,21 @@ public class PasskeyResource {
 
     private static final Logger log = LoggerFactory.getLogger(PasskeyResource.class);
 
-    private final UserRepository userRepository;
-
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
-    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
-    public boolean enabled;
+    private final boolean enabled;
+
+    private final UserRepository userRepository;
 
     /**
      * @param userRepository                  for accessing user data
      * @param artemisUserCredentialRepository for managing user credentials
      */
-    public PasskeyResource(UserRepository userRepository, ArtemisUserCredentialRepository artemisUserCredentialRepository) {
-        this.userRepository = userRepository;
+    public PasskeyResource(ArtemisUserCredentialRepository artemisUserCredentialRepository, @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}") boolean enabled,
+            UserRepository userRepository) {
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
+        this.enabled = enabled;
+        this.userRepository = userRepository;
     }
 
     /**
