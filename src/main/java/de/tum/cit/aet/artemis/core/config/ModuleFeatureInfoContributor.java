@@ -39,6 +39,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isAtlasEnabled(environment)) {
             enabledArtemisFeatures.add(MODULE_FEATURE_ATLAS);
         }
+        if (artemisConfigHelper.isTextExerciseEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
         if (artemisConfigHelper.isTutorialGroupEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
         }

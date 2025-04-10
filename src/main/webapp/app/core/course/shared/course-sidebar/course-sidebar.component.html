@@ -1,4 +1,3 @@
-<!-- Sidebar Component Template -->
 <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed() }">
     <div>
         <!-- Course Icon + Title -->
@@ -31,7 +30,7 @@
         <div>
             <hr class="mt-0" />
             <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
-                @for (sidebarItem of sidebarItems(); track sidebarItem.routerLink) {
+                @for (sidebarItem of sidebarItemsTop(); track sidebarItem.routerLink) {
                     <li class="nav-item" [hidden]="sidebarItem.hidden">
                         <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                     </li>
@@ -89,76 +88,114 @@
                 </li>
             </div>
         }
-        <a
-            [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications"
-            class="nav-link nav-link-sidebar px-3 py-2"
-            id="navSettings"
-            routerLink="settings"
-            routerLinkActive="active"
-            (click)="itemsDrop?.close()"
-        >
-            <fa-icon [fixedWidth]="true" [icon]="faCog" class="ms-2 me-3" />
-            <span [ngClass]="{ invisible: isNavbarCollapsed() }" class="d-none d-lg-inline-block" jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
-        </a>
-        <!-- Collapse Chevron -->
-        <div
-            class="double-arrow mb-2"
-            [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
-            [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
-            (click)="toggleCollapseState.emit()"
-        >
-            <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
-                <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
-                <fa-icon class="fa-xs" [icon]="faChevronRight" />
-            </div>
+
+        <div class="navbar-nav mb-2">
+            @for (bottomItem of sidebarItemsBottom(); track bottomItem.routerLink; let isLast = $last) {
+                <li class="nav-item" [hidden]="bottomItem.hidden">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <a
+                            class="nav-link nav-link-sidebar px-3 py-2"
+                            [id]="bottomItem.testId ?? ''"
+                            [ngClass]="{
+                                'guided-tour': bottomItem.guidedTour,
+                                newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
+                                collapsed: isNavbarCollapsed(),
+                            }"
+                            [routerLink]="bottomItem.routerLink"
+                            routerLinkActive="active"
+                            [routerLinkActiveOptions]="bottomItem?.isPrefix ? { exact: true } : { exact: false }"
+                            [jhiFeatureToggleHide]="bottomItem.featureToggle"
+                            [title]="bottomItem.title"
+                            (click)="itemsDrop?.close()"
+                        >
+                            <div class="d-flex align-items-center">
+                                @if (bottomItem.icon) {
+                                    <fa-icon [fixedWidth]="true" [icon]="bottomItem.icon" class="ms-2 me-3" />
+                                }
+                                @if (!isNavbarCollapsed()) {
+                                    <span class="auto-collapse text-truncate" [jhiTranslate]="bottomItem.translation"></span>
+                                }
+                            </div>
+                        </a>
+                        @if (isLast && !isNavbarCollapsed()) {
+                            <div
+                                class="double-arrow px-2"
+                                [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                                [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
+                                (click)="toggleCollapseState.emit()"
+                            >
+                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                                    <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </li>
+            }
+
+            @if (isNavbarCollapsed() || !sidebarItemsBottom().length) {
+                <div
+                    class="double-arrow mb-2"
+                    [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                    [ngbTooltip]="(isNavbarCollapsed() ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
+                    (click)="toggleCollapseState.emit()"
+                >
+                    <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                        <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                        <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                    </div>
+                </div>
+            }
         </div>
     </div>
+
+    <!-- TEMPLATES -->
+    <ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
+        @if (courseImage) {
+            <div class="d-flex align-items-center justify-content-center">
+                <jhi-secured-image [src]="courseImage" />
+            </div>
+        } @else {
+            <div class="course-circle d-flex align-items-center justify-content-center">
+                <span class="fs-4">{{ courseTitle | slice: 0 : 1 }}</span>
+            </div>
+        }
+    </ng-template>
+
+    <ng-template #navIconAndText let-sidebarItem>
+        @if (sidebarItem.icon) {
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
+        }
+        @if (!isNavbarCollapsed()) {
+            <span class="auto-collapse" [jhiTranslate]="sidebarItem.translation"></span>
+        }
+    </ng-template>
+
+    <ng-template #navIconAndTextHidden let-sidebarItem>
+        @if (sidebarItem.icon) {
+            <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
+            <span [jhiTranslate]="sidebarItem.translation"></span>
+        }
+    </ng-template>
+
+    <ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
+        <a
+            class="nav-link nav-link-sidebar px-3 py-2"
+            [id]="sidebarItem.testId ?? ''"
+            [ngClass]="{
+                'guided-tour': sidebarItem.guidedTour,
+                newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',
+                collapsed: isNavbarCollapsed(),
+            }"
+            [routerLink]="sidebarItem.routerLink"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="sidebarItem?.isPrefix ? { exact: true } : { exact: false }"
+            [jhiFeatureToggleHide]="sidebarItem.featureToggle"
+            [title]="sidebarItem.title"
+            (click)="itemsDrop?.close()"
+        >
+            <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
+        </a>
+    </ng-template>
 </div>
-
-<!-- TEMPLATES -->
-<ng-template #courseImage let-courseImage let-courseTitle="courseTitle">
-    @if (courseImage) {
-        <div class="d-flex align-items-center justify-content-center">
-            <jhi-secured-image [src]="courseImage" />
-        </div>
-    } @else {
-        <div class="course-circle d-flex align-items-center justify-content-center">
-            <span class="fs-4">{{ courseTitle | slice: 0 : 1 }}</span>
-        </div>
-    }
-</ng-template>
-
-<ng-template #navIconAndText let-sidebarItem>
-    @if (sidebarItem.icon) {
-        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
-    }
-    @if (!isNavbarCollapsed()) {
-        <span class="auto-collapse" [jhiTranslate]="sidebarItem.translation"></span>
-    }
-</ng-template>
-
-<ng-template #navIconAndTextHidden let-sidebarItem>
-    @if (sidebarItem.icon) {
-        <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" class="ms-2 me-3" />
-        <span [jhiTranslate]="sidebarItem.translation"></span>
-    }
-</ng-template>
-
-<ng-template #navItem let-sidebarItem let-iconTextTemplate="iconTextTemplate">
-    <a
-        class="nav-link nav-link-sidebar px-3 py-2"
-        [id]="sidebarItem.testId ?? ''"
-        [ngClass]="{
-            'guided-tour': sidebarItem.guidedTour,
-            newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',
-            collapsed: isNavbarCollapsed(),
-        }"
-        [routerLink]="sidebarItem.routerLink"
-        routerLinkActive="active"
-        [jhiFeatureToggleHide]="sidebarItem.featureToggle"
-        [title]="sidebarItem.title"
-        (click)="itemsDrop?.close()"
-    >
-        <ng-template *ngTemplateOutlet="iconTextTemplate; context: { $implicit: sidebarItem }" />
-    </a>
-</ng-template>

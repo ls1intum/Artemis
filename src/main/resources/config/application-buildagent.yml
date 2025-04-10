@@ -9,6 +9,8 @@
 artemis:
     atlas:
       enabled: false
+    text:
+      enabled: false
     tutorialgroup:
       enabled: false
 

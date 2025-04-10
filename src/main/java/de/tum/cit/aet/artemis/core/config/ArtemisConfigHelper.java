@@ -22,6 +22,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the text module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the text module is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the tutorial group feature is enabled.
      *
      * @param environment the Spring environment

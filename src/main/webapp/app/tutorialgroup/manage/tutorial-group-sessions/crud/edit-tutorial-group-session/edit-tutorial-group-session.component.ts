@@ -4,7 +4,7 @@ import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Subject } from 'rxjs';
@@ -12,7 +12,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 import { captureException } from '@sentry/angular';
-import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/services/tutorial-group-session.service';
+import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
