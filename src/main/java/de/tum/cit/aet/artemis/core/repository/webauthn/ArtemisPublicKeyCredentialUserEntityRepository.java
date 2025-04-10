@@ -17,6 +17,22 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
+/**
+ * Repository implementation for managing {@link PublicKeyCredentialUserEntity} entities.
+ * This class implements the {@link PublicKeyCredentialUserEntityRepository} interface, which will be called by
+ * <a href="https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html">Spring Security WebAuthn</a> to persist passkeys.
+ * <p>
+ * This class provides methods to find and map users to WebAuthn-compatible credential user entities.
+ * It integrates with the {@link UserRepository} to retrieve user information from the database.
+ * </p>
+ * <p>
+ * Note: {@code save} and {@code delete} are not implemented and should use the {@link UserRepository} instead.
+ * </p>
+ *
+ * @see PublicKeyCredentialUserEntityRepository
+ * @see UserRepository
+ * @see de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer
+ */
 @Profile(PROFILE_CORE)
 @Repository
 public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKeyCredentialUserEntityRepository {

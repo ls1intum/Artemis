@@ -24,6 +24,22 @@ import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
+/**
+ * Repository implementation for managing user credentials in the context of WebAuthn authentication.
+ * <p>
+ * This class implements the {@link UserCredentialRepository} interface and provides methods to save, delete,
+ * and retrieve credential records associated with users. It integrates with the {@link ArtemisPublicKeyCredentialUserEntityRepository},
+ * {@link PasskeyCredentialsRepository}, and {@link UserRepository} to manage credential data and user associations.
+ * </p>
+ * <p>
+ * Note: The {@code findByUserId} method, which will be called from Spring Security WebAuthn implementation will is not fully implemented due to unclear user ID format.
+ * </p>
+ *
+ * @see UserCredentialRepository
+ * @see ArtemisPublicKeyCredentialUserEntityRepository
+ * @see PasskeyCredentialsRepository
+ * @see UserRepository
+ */
 @Profile(PROFILE_CORE)
 @Repository
 public class ArtemisUserCredentialRepository implements UserCredentialRepository {
@@ -49,6 +65,15 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).ifPresent(passkeyCredentialsRepository::delete);
     }
 
+    /**
+     * Saves a given credential record by associating it with an existing user and persisting it in the repository.
+     * <p>
+     * If a credential with the same ID already exists, it will be updated with the new data. Otherwise, a new credential
+     * will be created and saved.
+     * </p>
+     *
+     * @param credentialRecord the credential record to be saved, containing information about the credential and its associated user
+     */
     @Override
     public void save(CredentialRecord credentialRecord) {
         // @formatter:off
@@ -86,16 +111,25 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         }).orElse(null);
     }
 
+    /**
+     * <p>
+     * Finds all credential records associated with a given user ID.
+     * </p>
+     * <b>IMPORTANT: The userId format is not clear yet, and this method will always return an empty list.
+     * This method will be called from Spring Security WebAuthn implementation when registering a new passkey and when authenticating.</b>
+     *
+     * @param userId to search for a user.
+     * @return list of {@link CredentialRecord} associated with the user.
+     */
     @Override
     public List<CredentialRecord> findByUserId(Bytes userId) {
         log.info("findByUserId: userId={}", userId);
 
-        // FIXME - the userId format is not clear yet and seems to change after server startup
-        // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId it also seems to be
+        // FIXME - the userId format is not clear yet
+        // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId
         log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
-        // Optional<User> user = userRepository.findOneByLogin(userId.toBase64UrlString());
-        Optional<User> user = Optional.empty();
 
+        Optional<User> user = Optional.empty();
         return user.map(
                 passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
                 .orElseGet(List::of);
