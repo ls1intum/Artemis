@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Optional;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -68,8 +69,8 @@ public class ProgrammingExerciseImportFromSharingService {
         if (sharingSetupInfo.getExercise() == null) {
             throw new SharingException("Exercise is null?");
         }
-        SharingMultipartZipFile zipFile = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
-        if (zipFile == null) {
+        Optional<SharingMultipartZipFile> zipFileO = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
+        if (zipFileO.isEmpty()) {
             throw new SharingException("Failed to retrieve exercise zip file from sharing platform");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -77,6 +78,13 @@ public class ProgrammingExerciseImportFromSharingService {
         if (sharingSetupInfo.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {
             sharingSetupInfo.getExercise().setCourse(sharingSetupInfo.getCourse());
         }
-        return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFile, sharingSetupInfo.getCourse(), user, true);
+        try {
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFileO.get(), sharingSetupInfo.getCourse(),
+                    user, true);
+        }
+        catch (Exception e) {
+            log.error("Cannot create exercise", e);
+            throw e;
+        }
     }
 }

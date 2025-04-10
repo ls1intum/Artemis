@@ -71,7 +71,7 @@ public class ExerciseSharingResource {
     private final ProgrammingExerciseImportFromSharingService programmingExerciseImportFromSharingService;
 
     /**
-     * constuctor for spring
+     * constructor for spring
      *
      * @param exerciseSharingService                      the sharing service
      * @param sharingConnectorService                     the sharing connector service
@@ -104,6 +104,7 @@ public class ExerciseSharingResource {
 
     /**
      * GET .../sharing/setup-import
+     * sets up the imported exercise as a ProgrammingExercise.
      *
      * @return the ResponseEntity with status 200 (OK) and with body the programming exercise, or with status 404 (Not Found)
      */
@@ -127,12 +128,11 @@ public class ExerciseSharingResource {
             return ResponseEntity.badRequest().body(null);
         }
         String problemStatement = this.exerciseSharingService.getProblemStatementFromBasket(sharingInfo);
-        return ResponseEntity.ok().body(problemStatement);
+        return ResponseEntity.ok().contentType(MediaType.TEXT_PLAIN).body(problemStatement);
     }
 
     /**
      * GET .../sharing/import/basket/exerciseDetails : get exercise details of the exercise defined in sharingInfo.
-     * TODO: why seems result identical to getProblemStatement?
      *
      * @param sharingInfo the sharing info (with exercise position in basket)
      * @return the ResponseEntity with status 200 (OK) and with body the problem statement, or with status 404 (Not Found)
@@ -173,12 +173,13 @@ public class ExerciseSharingResource {
      *
      * @param token in base64 format and used to retrieve the exercise
      * @return a stream of the zip file
-     * @throws FileNotFoundException if zip file does not exist any more
+     * @throws FileNotFoundException if zip file does not exist anymore
      */
     @GetMapping(SHARINGEXPORT_RESOURCE_PATH + "/{token}")
     // Custom Key validation is applied
     public ResponseEntity<Resource> exportExerciseToSharing(@PathVariable("token") String token, @RequestParam("sec") String sec) throws FileNotFoundException {
         if (sec.isEmpty() || !exerciseSharingService.validate(token, sec)) {
+            log.warn("Security Token {} is not valid", sec);
             return ResponseEntity.status(401).body(null);
         }
         File zipFile = exerciseSharingService.getExportedExerciseByToken(token);

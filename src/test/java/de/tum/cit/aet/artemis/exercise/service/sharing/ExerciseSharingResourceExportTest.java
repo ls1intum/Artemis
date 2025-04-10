@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
-    private static final String TEST_PREFIX = "exerciseSharingExportTests";
+    private static final String TEST_PREFIX = "exercisesharingexporttests";
 
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -126,9 +126,9 @@ class ExerciseSharingResourceExportTest extends AbstractProgrammingIntegrationLo
 
     private static @NotNull MockHttpServletRequestBuilder convertToGetRequestBuilder(String exerciseUrl) throws URISyntaxException {
         URI exerciseUri = new URI(exerciseUrl);
-        List<NameValuePair> paramsExerciseUri = URLEncodedUtils.parse(exerciseUri.getQuery(), StandardCharsets.UTF_8);
+        List<NameValuePair> paramsExerciseUri = URLEncodedUtils.parse(exerciseUri, StandardCharsets.UTF_8);
 
-        // reconstruct correct request with parameters from exerciseUri
+        // reconstruct request with correctly encoded parameters from exerciseUri
         MockHttpServletRequestBuilder requestBuilder = get(exerciseUri.getPath());
         for (NameValuePair param : paramsExerciseUri) {
             requestBuilder = requestBuilder.queryParam(param.getName(), param.getValue());

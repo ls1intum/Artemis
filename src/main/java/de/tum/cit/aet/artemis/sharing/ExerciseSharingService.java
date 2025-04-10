@@ -176,7 +176,7 @@ public class ExerciseSharingService {
     /**
      * simple loading cache for file with 1 hour timeout.
      */
-    private final LoadingCache<Pair<SharingInfoDTO, Integer>, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(10000).expireAfterAccess(1, TimeUnit.HOURS)
+    private final LoadingCache<Pair<SharingInfoDTO, Integer>, File> repositoryCache = CacheBuilder.newBuilder().maximumSize(100).expireAfterAccess(1, TimeUnit.HOURS)
             .removalListener(notification -> {
                 File f = (File) notification.getValue();
                 if (f != null) {
@@ -212,10 +212,18 @@ public class ExerciseSharingService {
                 }
             });
 
-    public SharingMultipartZipFile getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
+    /**
+     * access to the repository cache. For test purpose only
+     *
+     * @return repository cache
+     */
+    public LoadingCache<Pair<SharingInfoDTO, Integer>, File> getRepositoryCache() {
+        return repositoryCache;
+    }
+
+    public Optional<SharingMultipartZipFile> getCachedBasketItem(SharingInfoDTO sharingInfo) throws IOException, SharingException {
         int itemPosition = sharingInfo.getExercisePosition();
-        Optional<SharingMultipartZipFile> basketItem = getBasketItem(sharingInfo, itemPosition);
-        return basketItem.orElse(null);
+        return getBasketItem(sharingInfo, itemPosition);
     }
 
     /**
@@ -239,16 +247,20 @@ public class ExerciseSharingService {
      * @return The content of the Problem-Statement file
      */
     public String getProblemStatementFromBasket(SharingInfoDTO sharingInfo) {
-        Pattern pattern = Pattern.compile("^(Problem-Statement|exercise\\.md)$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("^(Problem-Statement|exercise).*\\.md$", Pattern.CASE_INSENSITIVE);
 
         try {
-            String problemStatement = this.getEntryFromBasket(pattern, sharingInfo);
+            Optional<String> entryFromBasket = this.getEntryFromBasket(pattern, sharingInfo);
+            if (entryFromBasket.isEmpty()) {
+                throw new NotFoundException("Could not retrieve problem statement from imported exercise");
+            }
+            String problemStatement = entryFromBasket.get();
             // The Basket comes from the sharing platform, however the problem statement comes from a git repository.
             // A malicious user manipulate the problem statement, and insert malicious code.
             return Objects.requireNonNullElse(org.springframework.web.util.HtmlUtils.htmlEscape(problemStatement), "No Problem Statement found!");
         }
         catch (Exception e) {
-            throw new NotFoundException("Could not retrieve problem statement from imported exercise");
+            throw new NotFoundException("Could not retrieve problem statement from imported exercise", e);
         }
     }
 
@@ -266,13 +278,17 @@ public class ExerciseSharingService {
         objectMapper.findAndRegisterModules();
 
         try {
-            String exerciseDetailString = this.getEntryFromBasket(pattern, sharingInfo);
+            Optional<String> entryFromBasket = this.getEntryFromBasket(pattern, sharingInfo);
+            if (entryFromBasket.isEmpty())
+                throw new NotFoundException("Could not retrieve exercise details from imported exercise");
+
+            String exerciseDetailString = entryFromBasket.get();
             ProgrammingExercise exerciseDetails = objectMapper.readValue(new StringReader(exerciseDetailString), ProgrammingExercise.class);
             exerciseDetails.setId(null);
             return exerciseDetails;
         }
         catch (Exception e) {
-            throw new NotFoundException("Could not retrieve exercise details from imported exercise", null, e);
+            throw new NotFoundException("Could not retrieve exercise details from imported exercise", e);
         }
     }
 
@@ -285,14 +301,18 @@ public class ExerciseSharingService {
      * @return The content of the entry, or null if not found.
      * @throws IOException if a reading error occurs
      */
-    public String getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
+    public Optional<String> getEntryFromBasket(Pattern matchingPattern, SharingInfoDTO sharingInfo) throws IOException {
         InputStream repositoryStream;
         try {
-            repositoryStream = this.getCachedBasketItem(sharingInfo).getInputStream();
+            Optional<SharingMultipartZipFile> cachedBasketItem = this.getCachedBasketItem(sharingInfo);
+            if (cachedBasketItem.isEmpty()) {
+                return Optional.empty();
+            }
+            repositoryStream = cachedBasketItem.get().getInputStream();
         }
         catch (IOException | SharingException e) {
             log.error("Cannot read input Template for {}", sharingInfo.getBasketToken(), e);
-            return null;
+            return Optional.empty();
         }
 
         try (ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);) {
@@ -310,7 +330,7 @@ public class ExerciseSharingService {
                     String entryContent = baos.toString(StandardCharsets.UTF_8);
                     baos.close();
                     zippedRepositoryStream.closeEntry();
-                    return entryContent;
+                    return Optional.of(entryContent);
                 }
                 zippedRepositoryStream.closeEntry();
             }
@@ -372,7 +392,7 @@ public class ExerciseSharingService {
     }
 
     /**
-     * just to secure token for integrity
+     * just to secure token for integrity.
      *
      * @param base64token the token (already base64 encoded
      * @return returns HMAC-Hash
@@ -405,8 +425,11 @@ public class ExerciseSharingService {
      * @return true, iff hash is correct
      */
     public boolean validate(String base64token, String sec) {
+        // we have to take care that the base64 encoded token may contain a + sign, which may be converted to a space
+        // not sure whether this may be an effect of our testing environment
+        String sanitzedSec = sec.replace(' ', '+');
         String computedHMAC = createHMAC(base64token);
-        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sec.getBytes(StandardCharsets.UTF_8));
+        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sanitzedSec.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

@@ -1,6 +1,14 @@
 package de.tum.cit.aet.artemis.exercise.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -11,22 +19,28 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
 import org.codeability.sharing.plugins.api.ShoppingBasket;
 import org.codeability.sharing.plugins.api.util.SecretChecksumCalculator;
+import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.test.web.client.ResponseActions;
@@ -38,19 +52,36 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
+import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 
 /**
  * this class tests all import features of the ExerciseSharingResource class
  */
 class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "exerciseSharingImportTests";
+    private static final String TEST_PREFIX = "exercisesharingimporttests";
+
+    public static final String INSTRUCTORNAME = TEST_PREFIX + "instructor1";
 
     public static final String SAMPLE_BASKET_TOKEN = "sampleBasketToken.json";
 
@@ -67,6 +98,28 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private SharingConnectorService sharingConnectorService;
+
+    // Util Services
+    @Autowired
+    protected ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    protected UserUtilService userUtilService;
+
+    @Autowired
+    private ExerciseSharingService exerciseSharingService;
+
+    @MockitoBean
+    private ProgrammingLanguageFeatureService programmingLanguageFeatureService;
+
+    @MockitoBean
+    private VersionControlService versionControlService;
+
+    @MockitoBean
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    @MockitoBean
+    private ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
     @Autowired
     @Qualifier("sharingRestTemplate")
@@ -101,6 +154,30 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportBasket() throws Exception {
         importBasket();
+    }
+
+    /**
+     * tests the import of a basket from the sharing platform. This test is also reused for priming of other tests
+     *
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testImportBasketFail() throws Exception {
+        String sampleBasket = IOUtils.toString(Objects.requireNonNull(this.getClass().getResource("./basket/sampleBasket.json")), StandardCharsets.UTF_8);
+
+        URI basketURI = new URI(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN + "/basket/" + SAMPLE_BASKET_TOKEN);
+        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
+        builder.ignoreExpectOrder(true);
+        mockServer = builder.build();
+
+        final ResponseActions responseActions = mockServer.expect(ExpectedCount.once(), requestTo(basketURI)).andExpect(method(HttpMethod.GET));
+        responseActions.andRespond(MockRestResponseCreators.withBadRequest());
+
+        restMockMvc
+                .perform(addCorrectChecksum(get("/api/sharing/import/basket").queryParam("basketToken", SAMPLE_BASKET_TOKEN), "returnURL", TEST_RETURN_URL, "apiBaseURL",
+                        SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN).contentType(MediaType.APPLICATION_JSON))
+                /* .andDo(print()) */
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON)).andExpect(status().isNotFound());
     }
 
     private String importBasket() throws Exception {
@@ -177,7 +254,6 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
 
     /**
      * tests the import of a basket from the sharing platform
-     *
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -188,8 +264,12 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importExerciseInfos() throws Exception {
+    @WithMockUser(username = INSTRUCTORNAME + "1", roles = "INSTRUCTOR")
+    void importExerciseCompleteProcess() throws Exception {
+        userUtilService.addInstructor("Sharing", INSTRUCTORNAME); // unfortunatelly this utility extends the username by "1"
+        User instructor = userUtilService.getUserByLogin(INSTRUCTORNAME + "1");
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
         String basketToken = importBasket();
 
@@ -207,19 +287,122 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setReturnURL(TEST_RETURN_URL);
         sharingInfo.setBasketToken(basketToken);
         sharingInfo.setChecksum(calculateCorrectChecksum("returnURL", TEST_RETURN_URL, "apiBaseURL", sharingConnectorService.getSharingApiBaseUrlOrNull().toString()));
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        MvcResult result = restMockMvc.perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(sharingInfo)).accept(MediaType.APPLICATION_JSON)).andDo(print())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
-        String content = result.getResponse().getContentAsString();
 
+        Course course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
+
+        // get Exercise Details
+
+        MvcResult resultED = restMockMvc
+                .perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+                        .accept(MediaType.APPLICATION_JSON)) /* .andDo(print()) */
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+        String contentED = resultED.getResponse().getContentAsString();
         ObjectMapper programmingExerciseObjectMapper = new ObjectMapper();
         programmingExerciseObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         programmingExerciseObjectMapper.findAndRegisterModules();
 
-        ProgrammingExercise exercise = programmingExerciseObjectMapper.readerFor(ProgrammingExercise.class).readValue(content);
+        ProgrammingExercise exercise = programmingExerciseObjectMapper.readerFor(ProgrammingExercise.class).readValue(contentED);
         assertThat(exercise.getTitle()).isEqualTo("JUnit IO Tests");
         assertThat(exercise.getProgrammingLanguage()).isEqualTo(ProgrammingLanguage.JAVA);
+
+        // get Problem Statement
+        MvcResult resultPS = restMockMvc
+                .perform(post("/api/sharing/import/basket/problemStatement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+                        .accept(MediaType.APPLICATION_JSON))/* .andDo(print()) */
+                .andExpect(content().contentType(MediaType.TEXT_PLAIN)).andExpect(status().isOk()).andReturn();
+        // Zip file is cached, no extra request to sharing platform required!
+        String contentPS = resultPS.getResponse().getContentAsString();
+        assertThat(contentPS).startsWith("# Simpler IO Test");
+
+        SharingSetupInfo setupInfo = new SharingSetupInfo(exercise, course1, sharingInfo);
+
+        // last step: do Exercise Import
+        makeCourseJSONSerializable(course1);
+        // just deactivate programmingLanguageFeatureService validation
+        ProgrammingLanguageFeature trivialProgrammingLanguageFeatures = new ProgrammingLanguageFeature(exercise.getProgrammingLanguage(), true, false, false, true, false,
+                List.of(ProjectType.PLAIN_MAVEN), false);
+        when(programmingLanguageFeatureService.getProgrammingLanguageFeatures(any())).thenReturn(trivialProgrammingLanguageFeatures);
+        // mock gitService et all.
+        when(versionControlService.checkIfProjectExists(eq(exercise.getProjectKey()), eq(exercise.getProjectName()))).thenReturn(false);
+        when(continuousIntegrationService.checkIfProjectExists(eq(exercise.getProjectKey()), eq(exercise.getProjectName()))).thenReturn(null);
+        // when(continuousIntegrationService.createProjectForExercise(any()));
+        when(continuousIntegrationService.copyBuildPlan(any(), anyString(), any(), anyString(), anyString(), anyBoolean())).thenReturn("");
+        // when(continuousIntegrationService.givePlanPermissions(any(), anyString()))
+        // when(continuousIntegrationService.enablePlan(any(), any()));
+
+        when(versionControlService.getDefaultBranchOfArtemis()).thenReturn("main");
+        when(versionControlService.getCloneRepositoryUri(eq(exercise.getProjectKey()), any())).thenReturn(new VcsRepositoryUri("http://some.cloneurl"));
+
+        doAnswer(invocation -> {
+            VcsRepositoryUri uri = invocation.getArgument(0, VcsRepositoryUri.class);
+            Repository mockedRepository = Mockito.mock(Repository.class);
+            Mockito.when(mockedRepository.getLocalPath()).thenReturn(Files.createTempDirectory("sharingImportTest" + uri.hashCode()));
+            return mockedRepository;
+        }).when(gitService).getOrCheckoutRepository(any(), anyBoolean());
+
+        doNothing().when(gitService).stageAllChanges(any());
+        doNothing().when(gitService).commitAndPush(any(), anyString(), anyBoolean(), any());
+        doReturn(List.of()).when(gitService).getFiles(any());
+        doAnswer(invocation -> ObjectId.fromString("419a93c002688aeb7a5fd3badada7f263c1926ba")).when(gitService).getLastCommitHash(any());
+        // doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+
+        String setupInfoJsonString = objectMapper.writeValueAsString(setupInfo);
+        MvcResult resultPE = restMockMvc
+                .perform(post("/api/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(setupInfoJsonString).accept(MediaType.APPLICATION_JSON)).andDo(print())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk()).andReturn();
+
+        // finally cleanup the cache
+        exerciseSharingService.getRepositoryCache().asMap().forEach((key, value) -> {
+            exerciseSharingService.getRepositoryCache().invalidate(key);
+        });
+        exerciseSharingService.getRepositoryCache().cleanUp();
+    }
+
+    private static void makeCourseJSONSerializable(Course course1) {
+        course1.setCompetencies(Set.of());
+        course1.setLearningPaths(Set.of());
+        course1.setTutorialGroups(Set.of());
+        course1.setExams(Set.of());
+        course1.setOrganizations(Set.of());
+        course1.setPrerequisites(Set.of());
+        course1.setFaqs(Set.of());
+
+        course1.getExercises().forEach(e -> {
+            e.setCompetencyLinks(null);
+            e.setCategories(Set.of());
+            e.setTeams(Set.of());
+            e.setGradingCriteria(Set.of());
+            e.setStudentParticipations(Set.of());
+            e.setTutorParticipations(Set.of());
+            e.setExampleSubmissions(Set.of());
+            e.setAttachments(Set.of());
+            e.setPosts(Set.of());
+            e.setPlagiarismCases(Set.of());
+            if (e instanceof ProgrammingExercise) {
+                ProgrammingExercise pe = (ProgrammingExercise) e;
+                pe.setAuxiliaryRepositories(List.of());
+                pe.setTemplateParticipation(null);
+                pe.setSolutionParticipation(null);
+                pe.setTestCases(Set.of());
+                pe.setTasks(List.of());
+                pe.setStaticCodeAnalysisCategories(Set.of());
+                pe.setBuildConfig(null);
+            }
+        }); // just to make it json serializable
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void setUpWithMissingExercise() throws Exception {
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+
+        SharingSetupInfo emptySetupInfo = new SharingSetupInfo(null, null, null);
+
+        // last step: do Exercise Import
+        restMockMvc.perform(post("/api/sharing/setup-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(emptySetupInfo))
+                .accept(MediaType.APPLICATION_JSON)).andDo(print()).andExpect(status().is5xxServerError());
+
     }
 
     @Test
@@ -232,9 +415,25 @@ class ExerciseSharingResourceImportTest extends AbstractSpringIntegrationIndepen
         sharingInfo.setBasketToken("Some Basket Token");
         sharingInfo.setChecksum("Invalid Checksum");
 
-        ObjectMapper objectMapper = new ObjectMapper().registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
         restMockMvc.perform(post("/api/sharing/import/basket/exerciseDetails").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importProblemStatementWrongChecksum() throws Exception {
+
+        SharingInfoDTO sharingInfo = new SharingInfoDTO();
+        sharingInfo.setApiBaseURL(SharingPlatformMockProvider.SHARING_BASEURL_PLUGIN);
+        sharingInfo.setReturnURL(TEST_RETURN_URL);
+        sharingInfo.setBasketToken("Some Basket Token");
+        sharingInfo.setChecksum("Invalid Checksum");
+
+        ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+
+        restMockMvc.perform(post("/api/sharing/import/basket/problemStatement").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(sharingInfo))
                 .accept(MediaType.APPLICATION_JSON)).andExpect(status().isBadRequest());
     }
 
