@@ -16,12 +16,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     imports: [FormsModule, TranslateDirective, MatSliderModule, FontAwesomeModule],
 })
 export class LearnerProfileComponent implements OnInit {
-    learnerProfile: LearnerProfileDTO = {
-        feedbackPracticalTheoretical: 3,
-        feedbackCreativeGuidance: 3,
-        feedbackFollowupSummary: 3,
-        feedbackBriefDetailed: 3,
-    };
+    learnerProfile: LearnerProfileDTO = new LearnerProfileDTO();
     settingsChanged = false;
     isSaving = false;
     private readonly learnerProfileApiService = inject(LearnerProfileApiService);

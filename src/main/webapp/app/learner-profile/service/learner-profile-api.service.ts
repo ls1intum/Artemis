@@ -7,13 +7,13 @@ import { HttpClient } from '@angular/common/http';
 @Injectable({ providedIn: 'root' })
 export class LearnerProfileApiService extends BaseApiHttpService {
     private http = inject(HttpClient);
-    private resourceUrl = 'atlas/learner-profile';
+    private resourceUrl = 'api/atlas/learner-profiles';
 
     getLearnerProfileForCurrentUser(): Observable<LearnerProfileDTO> {
         return this.http.get<LearnerProfileDTO>(`${this.resourceUrl}`);
     }
 
     putUpdatedLearnerProfile(learnerProfile: LearnerProfileDTO): Observable<LearnerProfileDTO> {
-        return this.http.put<LearnerProfileDTO>(`${this.resourceUrl}`, learnerProfile);
+        return this.http.put<LearnerProfileDTO>(`${this.resourceUrl}/${learnerProfile.id}`, learnerProfile);
     }
 }

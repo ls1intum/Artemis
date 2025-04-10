@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LearnerProfile extends DomainObject {
 
+    public static final String ENTITY_NAME = "learnerProfile";
+
     @JsonIgnoreProperties("learnerProfile")
     @OneToOne(mappedBy = "learnerProfile", cascade = CascadeType.PERSIST)
     private User user;
