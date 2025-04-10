@@ -1,4 +1,4 @@
-export type PasskeyDto = {
+export interface PasskeyDto {
     /**
      * The credential ID of the passkey, encoded in Base64url format.
      */
@@ -14,4 +14,4 @@ export type PasskeyDto = {
      * ISO 8601 date string
      */
     lastUsed: string;
-};
+}
