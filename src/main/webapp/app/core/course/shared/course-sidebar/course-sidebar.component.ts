@@ -27,6 +27,7 @@ export interface SidebarItem {
     featureToggle?: FeatureToggle;
     hidden: boolean;
     isPrefix?: boolean;
+    bottom?: boolean;
 }
 
 @Component({
@@ -53,6 +54,9 @@ export interface SidebarItem {
 export class CourseSidebarComponent implements OnChanges {
     course = input<Course | undefined>();
     courses = input<Course[] | undefined>();
+    sidebarItemsTop = signal<SidebarItem[]>([]);
+    sidebarItemsBottom = signal<SidebarItem[]>([]);
+    lastItemBottom = signal<SidebarItem | undefined>(undefined);
     sidebarItems = input<SidebarItem[]>([]);
     courseActionItems = input<CourseActionItem[]>([]);
     isNavbarCollapsed = input<boolean>(false);
@@ -83,6 +87,8 @@ export class CourseSidebarComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['sidebarItems']) {
             this.updateVisibleNavbarItems(window.innerHeight);
+            this.sidebarItemsTop.set(this.sidebarItems().filter((item) => !item.bottom));
+            this.sidebarItemsBottom.set(this.sidebarItems().filter((item) => item.bottom));
         }
     }
 
