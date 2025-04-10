@@ -17,8 +17,6 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsFilter;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationProvider;
-import org.springframework.security.web.webauthn.management.MapPublicKeyCredentialUserEntityRepository;
-import org.springframework.security.web.webauthn.management.MapUserCredentialRepository;
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
@@ -52,9 +50,19 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final JWTCookieService jwtCookieService;
 
-    public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
+    private final PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository;
+
+    private final UserCredentialRepository userCredentialRepository;
+
+    private final UserDetailsService userDetailsService;
+
+    public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService, UserDetailsService userDetailsService,
+            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
+        this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
+        this.userCredentialRepository = userCredentialRepository;
+        this.userDetailsService = userDetailsService;
     }
 
     /**
@@ -104,23 +112,14 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     @Override
     public void configure(H http) throws Exception {
-        UserDetailsService userDetailsService = getSharedOrBean(http, UserDetailsService.class).orElseThrow(() -> new IllegalStateException("Missing UserDetailsService Bean"));
-        PublicKeyCredentialUserEntityRepository userEntities = getSharedOrBean(http, PublicKeyCredentialUserEntityRepository.class).orElse(userEntityRepository());
-        UserCredentialRepository userCredentials = getSharedOrBean(http, UserCredentialRepository.class).orElse(userCredentialRepository());
-        WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(userEntities, userCredentials);
-
+        WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(converter, jwtCookieService);
 
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
-        http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentials, rpOperations), AuthorizationFilter.class);
+        http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentialRepository, rpOperations), AuthorizationFilter.class);
         http.addFilterBefore(new PublicKeyCredentialCreationOptionsFilter(rpOperations), AuthorizationFilter.class);
         http.addFilterBefore(new PublicKeyCredentialRequestOptionsFilter(rpOperations), AuthorizationFilter.class);
-    }
-
-    private <C> Optional<C> getSharedOrBean(H http, Class<C> type) {
-        C shared = http.getSharedObject(type);
-        return Optional.ofNullable(shared).or(() -> getBeanOrNull(type));
     }
 
     private <T> Optional<T> getBeanOrNull(Class<T> type) {
@@ -134,14 +133,6 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         catch (NoSuchBeanDefinitionException ex) {
             return Optional.empty();
         }
-    }
-
-    private MapUserCredentialRepository userCredentialRepository() {
-        return new MapUserCredentialRepository();
-    }
-
-    private PublicKeyCredentialUserEntityRepository userEntityRepository() {
-        return new MapPublicKeyCredentialUserEntityRepository();
     }
 
     private WebAuthnRelyingPartyOperations webAuthnRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
