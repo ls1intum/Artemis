@@ -76,7 +76,8 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify slide is still hidden (scheduled for future)
         Slide updatedSlide = slideRepository.findById(slideWithFutureHidden.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden()).isEqualTo(futureDate);
+
+        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(futureDate.truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Test
@@ -129,7 +130,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Verify slide is still hidden (scheduled for future) since cancelScheduledUnhiding
         // only cancels the task but doesn't modify the slide
         Slide updatedSlide = slideRepository.findById(slideWithFutureHidden.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden()).isEqualTo(futureDate);
+        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(futureDate.truncatedTo(ChronoUnit.MILLIS));
     }
 
 }

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -93,7 +94,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify the slide was updated
         Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden()).isEqualTo(newDueDate);
+        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(newDueDate.truncatedTo(ChronoUnit.MILLIS));
     }
 
     @Test
@@ -122,6 +123,6 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify the slide hasn't changed
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden()).isEqualTo(dueDate);
+        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(dueDate.truncatedTo(ChronoUnit.MILLIS));
     }
 }
