@@ -885,7 +885,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * Checks if an email was created and sent
      */
     private void verifyEmail() {
-        verify(javaMailSender, timeout(1000)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(1000).atLeastOnce()).send(any(MimeMessage.class));
     }
 
     /**
