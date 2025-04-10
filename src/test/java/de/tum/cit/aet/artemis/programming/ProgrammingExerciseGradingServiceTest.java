@@ -239,7 +239,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test1, test3";
-        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
         verify(javaMailSender, timeout(4000)).send(any(MimeMessage.class));
     }
 

@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationPa
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -74,10 +75,13 @@ class CourseNotificationServiceTest {
     @Mock
     private CourseNotificationEmailService emailService;
 
+    @Mock
+    private FeatureToggleService featureToggleService;
+
     @BeforeEach
     void setUp() {
         courseNotificationService = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
-                courseNotificationParameterRepository, userCourseNotificationStatusService, userRepository, webappService, pushService, emailService);
+                courseNotificationParameterRepository, userCourseNotificationStatusService, featureToggleService, webappService, pushService, emailService);
     }
 
     @Test

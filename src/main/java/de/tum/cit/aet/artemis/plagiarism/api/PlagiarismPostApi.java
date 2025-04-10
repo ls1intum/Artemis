@@ -10,7 +10,6 @@ import org.springframework.stereotype.Controller;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -42,8 +41,8 @@ public class PlagiarismPostApi extends AbstractPlagiarismApi {
         plagiarismAnswerPostService.preparePostForBroadcast(post);
     }
 
-    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
-        plagiarismAnswerPostService.preparePostAndBroadcast(updatedAnswerPost, course, notification);
+    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
+        plagiarismAnswerPostService.preparePostAndBroadcast(updatedAnswerPost, course);
     }
 
     public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {

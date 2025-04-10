@@ -1,29 +1,5 @@
 package de.tum.cit.aet.artemis.communication.notification;
 
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_FAILED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_FINISHED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_FAILED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_FINISHED;
-import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.ATTACHMENT_CHANGE_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.COURSE_ARCHIVE_FAILED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.COURSE_ARCHIVE_FINISHED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.COURSE_ARCHIVE_STARTED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.DUPLICATE_TEST_CASE_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXAM_ARCHIVE_FAILED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXAM_ARCHIVE_FINISHED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXAM_ARCHIVE_STARTED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXERCISE_PRACTICE_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXERCISE_RELEASED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.EXERCISE_UPDATED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.ILLEGAL_SUBMISSION_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PROGRAMMING_TEST_CASES_CHANGED_TITLE;
-import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.QUIZ_EXERCISE_STARTED_TITLE;
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED;
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE;
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -34,25 +10,20 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
@@ -60,7 +31,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -82,12 +52,6 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "groupnotificationservice";
-
-    @Autowired
-    private NotificationTestRepository notificationTestRepository;
-
-    @Autowired
-    private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
     private ExamTestRepository examRepository;
@@ -140,13 +104,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String COURSE_TITLE = "course title";
 
-    private Exam exam;
-
     private User student;
 
     private User instructor;
-
-    private int notificationCountBeforeTest;
 
     // Problem statement of an exam exercise where the length is larger than the allowed max notification target size in the db
     // allowed <= 255, this one has ~ 500
@@ -157,8 +117,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             + "sed diam voluptua. At vero eos et accusam et justo duo dolores et e";
 
     private Attachment attachment;
-
-    private List<String> archiveErrors;
 
     private static final String NOTIFICATION_TEXT = "notificationText";
 
@@ -196,9 +154,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         instructor.setGroups(Set.of(TEST_PREFIX + "instructors"));
         userRepository.save(instructor);
 
-        archiveErrors = new ArrayList<>();
-
-        exam = examUtilService.addExam(course);
+        Exam exam = examUtilService.addExam(course);
         examRepository.save(exam);
 
         lecture = new Lecture();
@@ -243,48 +199,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
-        // store the current notification count to let tests work even if notifications are created in other tests
-        notificationCountBeforeTest = notificationTestRepository.findAll().size();
-
         featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-    }
-
-    @AfterEach
-    void tearDown() {
-        notificationTestRepository.deleteAllInBatch();
-    }
-
-    /**
-     * Auxiliary method that checks if the groupNotificationRepository was called successfully with the correct notification (type)
-     *
-     * @param numberOfGroupsAndCalls    indicates the expected number of notifications created/saved.
-     *                                      This number depends on the number of different groups. For each different group one separate call is needed.
-     * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
-     * @return last captured notification
-     */
-    private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
-        return verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(numberOfGroupsAndCalls, expectedNotificationTitle, 0);
-    }
-
-    /**
-     * Auxiliary method that checks if the groupNotificationRepository was called successfully with the correct notification (type)
-     *
-     * @param numberOfGroupsAndCalls    indicates the expected number of notifications created/saved.
-     *                                      This number depends on the number of different groups. For each different group one separate call is needed.
-     * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
-     * @param index                     the notification at this index (counting from the end of the notifications list) gets returned
-     * @return the captured notification at the given index
-     */
-    private Notification verifyRepositoryCallWithCorrectNotificationAndReturnNotificationAtIndex(int numberOfGroupsAndCalls, String expectedNotificationTitle, int index) {
-        await().untilAsserted(
-                () -> assertThat(notificationTestRepository.findAll()).as("The number of created notifications should be the same as the number of notified groups/authorities")
-                        .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
-
-        List<Notification> capturedNotifications = notificationTestRepository.findAll();
-        Notification lastCapturedNotification = capturedNotifications.getLast();
-        assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
-
-        return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
@@ -297,7 +212,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Test
     void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
     }
 
     /**
@@ -307,7 +222,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
     }
 
     /**
@@ -317,7 +232,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
     }
 
     /**
@@ -327,9 +242,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
-        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService, never()).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
+        verify(groupNotificationService).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any());
     }
 
     /// CheckNotificationForExerciseRelease
@@ -422,182 +337,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         testCheckNotificationForExerciseReleaseHelper(FUTURE_TIME, FUTURISTIC_TIME, false, true, false, true);
     }
 
-    /// General notifyGroupX Tests
-
-    /**
-     * Auxiliary method that creates and saves the needed notification setting for email testing
-     *
-     * @param user                          who should be notified / receive an email
-     * @param notificationSettingIdentifier of the corresponding notification type
-     */
-    private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
-        NotificationSetting notificationSetting = new NotificationSetting(user, true, true, true, notificationSettingIdentifier);
-        notificationSettingRepository.save(notificationSetting);
-    }
-
-    /**
-     * Checks if an email was created and send
-     */
-    private void verifyEmail() {
-        verify(javaMailSender, timeout(1500)).createMimeMessage();
-    }
-
-    /**
-     * Checks if a push to android and iOS was created and send
-     */
-    private void verifyPush(Notification notification, Set<User> users, Object notificationSubject) {
-        verify(applePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
-        verify(firebasePushNotificationService, timeout(1500)).sendNotification(notification, users, notificationSubject);
-    }
-
-    /**
-     * Test for notifyStudentGroupAboutAttachmentChange method with a future release date
-     */
-    @Test
-    void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
-        var countBefore = notificationTestRepository.count();
-        attachment.setReleaseDate(FUTURE_TIME);
-        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        var countAfter = notificationTestRepository.count();
-        assertThat(countAfter).as("No notification should be created/saved").isEqualTo(countBefore);
-    }
-
-    /**
-     * Test for notifyStudentGroupAboutAttachmentChange method with a non future release date
-     */
-    @Test
-    void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
-        lecture = new Lecture();
-        lecture.setCourse(course);
-
-        attachment.setReleaseDate(CURRENT_TIME);
-        attachment.setLecture(lecture);
-
-        prepareNotificationSettingForTest(student, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
-
-        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
-        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ATTACHMENT_CHANGE_TITLE);
-
-        verifyEmail();
-        verifyPush(notification, Set.of(student), attachment);
-    }
-
-    @Test
-    void testNotifyStudentGroupAboutExercisePractice() {
-        prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
-        groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
-        Notification notification = verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXERCISE_PRACTICE_TITLE);
-
-        verifyEmail();
-        verifyPush(notification, Set.of(student), exercise);
-    }
-
-    @Test
-    void testNotifyStudentGroupAboutQuizExerciseStart() {
-        groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
-    }
-
-    @Test
-    void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
-        groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(3, EXERCISE_UPDATED_TITLE);
-    }
-
-    @Test
-    void testNotifyAllGroupsAboutReleasedExercise() {
-        prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
-        groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
-        verify(javaMailSender, timeout(1500).atLeastOnce()).createMimeMessage();
-    }
-
-    @Test
-    void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
-        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, EXERCISE_UPDATED_TITLE);
-    }
-
-    @Test
-    void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
-        groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, DUPLICATE_TEST_CASE_TITLE);
-    }
-
-    @Test
-    void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
-        groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, ILLEGAL_SUBMISSION_TITLE);
-    }
-
-    /**
-     * Test for notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise method
-     */
-    @Test
-    void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
-        prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED);
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
-    }
-
-    // Course Archiving
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveStarted
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveStarted() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_STARTED_TITLE);
-    }
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveFailed
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFailed() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_FAILED_TITLE);
-    }
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveFinished
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFinished() {
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, COURSE_ARCHIVE_FINISHED_TITLE);
-    }
-
-    // Exam Archiving
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveStarted
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveStarted() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_STARTED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_STARTED_TITLE);
-    }
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveFailed
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FAILED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
-    }
-
-    /**
-     * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveFinished
-     */
-    @Test
-    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
-        verifyRepositoryCallWithCorrectNotificationAndReturnNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
-    }
-
     @Test
     void shouldCreateAttachmentChangeNotificationWhenCourseSpecificNotificationsEnabled() {
         featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
@@ -608,7 +347,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         attachment.setReleaseDate(CURRENT_TIME);
         attachment.setLecture(lecture);
 
-        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
+        groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -618,8 +357,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasAttachmentChangeNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -636,8 +373,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasExercisePracticeNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -654,15 +389,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasQuizStartedNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateExerciseUpdateNotificationWhenCourseSpecificNotificationsEnabled() {
         featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
 
-        groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -672,15 +405,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasExerciseUpdateNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateExerciseUpdateForEditorsAndInstructorsWhenCourseSpecificNotificationsEnabled() {
         featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
 
-        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -690,8 +421,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasExerciseUpdateNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -708,8 +437,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasExerciseReleasedNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -726,8 +453,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasNewFeedbackRequestNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -738,7 +463,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         exercise.setDueDate(FUTURISTIC_TIME);
         exerciseRepository.save(exercise);
 
-        groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(exercise, NOTIFICATION_TEXT);
+        groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -748,8 +473,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
             assertThat(hasDuplicateTestCaseNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -780,8 +503,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             assertThat(recipientIds).contains(instructor.getId());
             assertThat(recipientIds).doesNotContain(student.getId());
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -791,7 +512,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         programmingExercise.setCourse(course);
         String notificationText = "Build run status has been updated";
 
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, notificationText);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
             List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -813,7 +534,5 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             assertThat(recipientIds).contains(instructor.getId());
             assertThat(recipientIds).doesNotContain(student.getId());
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 }

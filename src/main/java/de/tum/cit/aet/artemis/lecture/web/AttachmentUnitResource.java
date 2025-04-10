@@ -133,7 +133,7 @@ public class AttachmentUnitResource {
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename);
 
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment());
         }
 
         return ResponseEntity.ok(savedAttachmentUnit);
