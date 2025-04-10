@@ -243,6 +243,36 @@
                 "content": "In {{exerciseTitle}} wird Feedback benötigt.",
                 "settingsTitle": "Feedback benötigt"
             },
+            "duplicateTestCaseNotification": {
+                "title": "Test Duplikat Warnung",
+                "content": "In {{exerciseTitle}} wurde ein Test Duplikat entdeckt.",
+                "settingsTitle": "Test Duplikat Warnung"
+            },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "Neue Übereinstimmung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue Übereinstimmung"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "Neuer Plagiatsfall",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neuer Plagiatsfall"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build Update",
+                "content": "Es gibt ein neues Update in einem Build in {{exerciseTitle}}.",
+                "settingsTitle": "Build Update"
+            },
+            "programmingTestCasesChangedNotification": {
+                "title": "Tests geändert",
+                "content": "Tests haben sich in {{exerciseTitle}} geändert.",
+                "settingsTitle": "Tests geändert"
+            },
+            "plagiarismCaseVerdictNotification": {
+                "title": "Plagiat Beurteilung",
+                "content": "Neue Beurteilung zu einem Plagiatsfall in {{exerciseTitle}}.",
+                "settingsTitle": "Plagiat Beurteilung"
+            },
             "channelDeletedNotification": {
                 "title": "Kanal gelöscht",
                 "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",

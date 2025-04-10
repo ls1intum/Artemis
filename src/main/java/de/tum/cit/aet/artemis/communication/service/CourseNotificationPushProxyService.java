@@ -7,12 +7,18 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVE
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_NEW_REPLY_MESSAGE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_REMOVE_USER_CHANNEL;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_USER_MENTIONED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DUPLICATE_TEST_CASE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_RELEASED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_UPDATED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_CPC_PLAGIARISM_CASE_STUDENT;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_MANUAL_FEEDBACK_REQUEST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_PLAGIARISM_CASE_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGIARISM_CASE_VERDICT_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
@@ -164,6 +170,42 @@ public class CourseNotificationPushProxyService {
                 target = notificationTarget.toJsonString();
                 type = courseNotificationDTO.notificationType().equals("addedToChannelNotification") ? CONVERSATION_ADD_USER_CHANNEL.toString()
                         : CONVERSATION_REMOVE_USER_CHANNEL.toString();
+                break;
+            case "duplicateTestCaseNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseTitle") };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = DUPLICATE_TEST_CASE.toString();
+                break;
+            case "newCpcPlagiarismCaseNotification":
+            case "newPlagiarismCaseNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseType"), parameters.get("exerciseTitle"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.PLAGIARISM_DETECTED_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.PLAGIARISM_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = courseNotificationDTO.notificationType().equals("newCpcPlagiarismCaseNotification") ? NEW_CPC_PLAGIARISM_CASE_STUDENT.toString()
+                        : NEW_PLAGIARISM_CASE_STUDENT.toString();
+                break;
+            case "programmingBuildRunUpdateNotification":
+            case "programmingTestCasesChangedNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseTitle"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = courseNotificationDTO.notificationType().equals("programmingBuildRunUpdateNotification") ? PROGRAMMING_BUILD_RUN_UPDATE.toString()
+                        : PROGRAMMING_TEST_CASES_CHANGED.toString();
+                break;
+            case "plagiarismCaseVerdictNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("exerciseType"), parameters.get("exerciseTitle"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.PLAGIARISM_TEXT, Long.parseLong(parameters.get("exerciseId")),
+                        NotificationTargetFactory.PLAGIARISM_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = PLAGIARISM_CASE_VERDICT_STUDENT.toString();
                 break;
             default:
                 return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));

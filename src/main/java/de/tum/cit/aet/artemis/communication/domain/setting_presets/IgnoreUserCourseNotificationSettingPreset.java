@@ -7,15 +7,21 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseUpdatedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswerNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewExerciseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewManualFeedbackRequestNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPlagiarismCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.PlagiarismCaseVerdictNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 
@@ -51,6 +57,18 @@ public class IgnoreUserCourseNotificationSettingPreset extends UserCourseNotific
                 Map.entry(AddedToChannelNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
                 Map.entry(RemovedFromChannelNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(DuplicateTestCaseNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(NewCpcPlagiarismCaseNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(NewPlagiarismCaseNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(ProgrammingBuildRunUpdateNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(ProgrammingTestCasesChangedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)),
+                Map.entry(PlagiarismCaseVerdictNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, false, NotificationChannelOption.PUSH, false)));
     }
 }

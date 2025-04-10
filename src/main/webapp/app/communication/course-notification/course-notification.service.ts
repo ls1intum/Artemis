@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { faComments, faRectangleList } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -35,6 +35,12 @@ export class CourseNotificationService {
         channelDeletedNotification: faComments,
         addedToChannelNotification: faComments,
         removedFromChannelNotification: faComments,
+        duplicateTestCaseNotification: faTriangleExclamation,
+        newCpcPlagiarismCaseNotification: faRectangleList,
+        newPlagiarismCaseNotification: faRectangleList,
+        programmingBuildRunUpdateNotification: faRectangleList,
+        programmingTestCasesChangedNotification: faRectangleList,
+        plagiarismCaseVerdictNotification: faRectangleList,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -52,6 +58,12 @@ export class CourseNotificationService {
         channelDeletedNotification: [CourseNotificationChannel.EMAIL],
         addedToChannelNotification: [CourseNotificationChannel.EMAIL],
         removedFromChannelNotification: [CourseNotificationChannel.EMAIL],
+        duplicateTestCaseNotification: [],
+        newCpcPlagiarismCaseNotification: [],
+        newPlagiarismCaseNotification: [],
+        programmingBuildRunUpdateNotification: [CourseNotificationChannel.EMAIL],
+        programmingTestCasesChangedNotification: [CourseNotificationChannel.EMAIL],
+        plagiarismCaseVerdictNotification: [],
     };
 
     // Parameter keys that should be rendered as markdown
