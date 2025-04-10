@@ -29,14 +29,14 @@
             <column name="backup_state" type="boolean" defaultValue="false">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_used" type="datetime(3)" defaultValueComputed="CURRENT_TIMESTAMP">
+            <column name="last_used" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
             <!-- Fields for AbstractAuditingEntity -->
             <column name="created_by" type="varchar(45)">
                 <constraints nullable="false"/>
             </column>
-            <column name="created_date" type="datetime(3)" defaultValueComputed="CURRENT_TIMESTAMP">
+            <column name="created_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="last_modified_by" type="varchar(45)"/>
@@ -70,10 +70,10 @@
             <column name="credential_type" type="enum('PUBLIC_KEY')">
                 <constraints nullable="false"/>
             </column>
-            <column name="public_key_cose" type="blob">
+            <column name="public_key_cose" type="varbinary(256)">
                 <constraints nullable="false"/>
             </column>
-            <column name="attestation_object" type="blob"/>
+            <column name="attestation_object" type="varbinary(256)"/>
         </addColumn>
     </changeSet>
 
