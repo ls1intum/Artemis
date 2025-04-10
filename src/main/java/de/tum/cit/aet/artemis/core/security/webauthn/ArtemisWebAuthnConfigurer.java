@@ -39,6 +39,9 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
+    /**
+     * Typically the domain of the website that is using WebAuthn for authentication.
+     */
     private String relyingPartyId;
 
     private String relyingPartyName;
