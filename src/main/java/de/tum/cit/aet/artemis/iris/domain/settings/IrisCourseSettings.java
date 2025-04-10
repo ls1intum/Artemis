@@ -54,7 +54,7 @@ public class IrisCourseSettings extends IrisSettings {
 
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "iris_tutor_suggestion_settings_id")
-    private IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings;
+    private IrisTutorSuggestionSubSettings irisTutorSuggestionSettings;
 
     public Course getCourse() {
         return course;
@@ -136,11 +136,11 @@ public class IrisCourseSettings extends IrisSettings {
 
     @Override
     public IrisTutorSuggestionSubSettings getIrisTutorSuggestionSettings() {
-        return irisTutorSuggestionSubSettings;
+        return irisTutorSuggestionSettings;
     }
 
     @Override
     public void setIrisTutorSuggestionSettings(IrisTutorSuggestionSubSettings irisTutorSuggestionSubSettings) {
-        this.irisTutorSuggestionSubSettings = irisTutorSuggestionSubSettings;
+        this.irisTutorSuggestionSettings = irisTutorSuggestionSubSettings;
     }
 }
