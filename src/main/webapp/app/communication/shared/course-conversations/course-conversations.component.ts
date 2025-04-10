@@ -444,6 +444,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearch()?.onSearch();
     }
 
+    onSelectionChange(searchInfo: ConversationGlobalSearchConfig) {
+        this.courseWideSearchConfig.selectedConversations = searchInfo.selectedConversations;
+        this.courseWideSearchConfig.selectedAuthors = searchInfo.selectedAuthors;
+        this.courseWideSearch()?.onSearchConfigSelectionChange();
+
+        // We don't update the searchTerm here because that should only happen on explicit search
+        // and we don't trigger a search automatically to avoid excessive API calls
+    }
+
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {

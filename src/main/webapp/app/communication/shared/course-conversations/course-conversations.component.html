@@ -1,6 +1,11 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div [hidden]="!isCodeOfConductAccepted">
-        <jhi-conversation-global-search [conversations]="conversationsOfUser" [courseId]="course?.id" (onSearch)="onSearch($event)" />
+        <jhi-conversation-global-search
+            [conversations]="conversationsOfUser"
+            [courseId]="course?.id"
+            (onSearch)="onSearch($event)"
+            (onSelectionChange)="onSelectionChange($event)"
+        />
     </div>
 
     <!-- only display after isCodeOfConductAccepted is loaded and set to false -->

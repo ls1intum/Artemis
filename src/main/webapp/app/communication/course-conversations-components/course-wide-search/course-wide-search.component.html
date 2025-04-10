@@ -34,6 +34,7 @@
                                     name="filterToCourseWide"
                                     id="filterToCourseWide"
                                     (change)="onSelectContext()"
+                                    [attr.disabled]="formGroup.get('filterToCourseWide')?.disabled ? '' : null"
                                 />
                                 <label for="filterToCourseWide" class="p-0" jhiTranslate="artemisApp.metis.overview.filterToCourseWide"></label>
                             </div>

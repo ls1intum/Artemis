@@ -182,6 +182,29 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.commandMetisToFetchPosts(true);
     }
 
+    /**
+     * Monitor the search config for changes to selected conversations
+     */
+    onSearchConfigSelectionChange(): void {
+        const config = this.courseWideSearchConfig();
+        if (!config) return;
+
+        const hasSelectedConversations = config.selectedConversations?.length > 0;
+
+        const filterToCourseWideControl = this.formGroup?.get('filterToCourseWide');
+        if (filterToCourseWideControl) {
+            if (hasSelectedConversations) {
+                // When conversations are selected, disable the courseWide checkbox and set to false
+                filterToCourseWideControl.setValue(false);
+                filterToCourseWideControl.disable();
+            } else {
+                filterToCourseWideControl.enable();
+            }
+
+            config.filterToCourseWide = filterToCourseWideControl.value;
+        }
+    }
+
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             filterToCourseWide: true,

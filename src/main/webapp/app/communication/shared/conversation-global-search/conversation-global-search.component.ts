@@ -53,6 +53,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
     onSearch = output<ConversationGlobalSearchConfig>();
+    onSelectionChange = output<ConversationGlobalSearchConfig>();
 
     @ViewChild('searchInput', { static: false }) searchElement?: ElementRef;
 
@@ -87,6 +88,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
         this.fullSearchTerm = '';
         this.selectedConversations = [];
         this.selectedAuthors = [];
+        this.emitSelectionChange();
     }
 
     filterItems(event: Event): void {
@@ -192,6 +194,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                 this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
+                this.emitSelectionChange();
             }
         } else if (option.type === 'user') {
             const user = this.filteredUsers.find((user) => user.id === option.id);
@@ -200,6 +203,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                 this.closeDropdown();
                 this.fullSearchTerm = '';
                 this.focusInput();
+                this.emitSelectionChange();
             }
         }
     }
@@ -207,11 +211,13 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     removeSelectedChannel(conversation: ConversationDTO): void {
         this.selectedConversations = this.selectedConversations.filter((conv) => conv.id !== conversation.id);
         this.focusInput();
+        this.emitSelectionChange();
     }
 
     removeSelectedAuthor(author: UserPublicInfoDTO): void {
         this.selectedAuthors = this.selectedAuthors.filter((user) => user.id !== author.id);
         this.focusInput();
+        this.emitSelectionChange();
     }
 
     focusInput(): void {
@@ -229,8 +235,17 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     focusWithSelectedConversation(conversation: ConversationDTO | undefined): void {
         if (conversation) {
             this.selectedConversations = [conversation];
+            this.emitSelectionChange();
         }
         this.focusInput();
+    }
+
+    private emitSelectionChange(): void {
+        this.onSelectionChange.emit({
+            searchTerm: this.fullSearchTerm,
+            selectedConversations: this.selectedConversations,
+            selectedAuthors: this.selectedAuthors,
+        });
     }
 
     onTriggerSearch() {
