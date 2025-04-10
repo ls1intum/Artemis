@@ -1,0 +1,36 @@
+{
+    "artemisApp": {
+        "learnerProfile": {
+            "title": "Einstellungen des Lernerprofils",
+            "description": "Anpassen Sie Ihre Lernerfahrung, indem Sie Ihre Präferenzen für das Feedback-Stil anpassen.",
+            "feedback": {
+                "title": "Feedback-Einstellungen",
+                "description": "Wählen Sie Ihre bevorzugte Art von Feedback aus - von kurz und knackig bis detailliert und ausführlich.",
+                "feedbackPracticalTheoretical": {
+                    "title": "Praktisch vs. Theoretisch",
+                    "practical": "Praktisch",
+                    "theoretical": "Theoretisch",
+                    "description": "Stellen Sie ein, wie Sie lieber Feedback erhalten möchten - von konkreten Beispielen und Anwendungen bis hin zu theoretischen Konzepten und Erklärungen."
+                },
+                "feedbackCreativeGuidance": {
+                    "title": "Kreative Erkundung vs. fokussierte Anleitung",
+                    "creative": "Kreativ",
+                    "focused": "Fokussiert",
+                    "description": "Wählen Sie zwischen Aufforderungen, die zum Erforschen verschiedener Ansätze ermutigen, und gezielter Anleitung entlang eines klaren Pfades."
+                },
+                "feedbackFollowupSummary": {
+                    "title": "Follow-up-Fragen vs. Zusammenfassung",
+                    "followUp": "Follow-up",
+                    "summary": "Zusammenfassung",
+                    "description": "Wählen Sie aus, ob Sie ein Feedback bevorzugen, das zum Weiterdenken anregt, oder klare Schlussfolgerungen, die das Thema abschließen."
+                },
+                "feedbackBriefDetailed": {
+                    "title": "Kurz vs. Ausführlich",
+                    "brief": "Kurz",
+                    "detailed": "Ausführlich",
+                    "description": "Wählen Sie zwischen einem knappen Feedback oder ausführlichen Erklärungen mit mehr Kontext und Hintergrundinformationen."
+                }
+            }
+        }
+    }
+}

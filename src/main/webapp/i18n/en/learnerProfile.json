@@ -1,0 +1,36 @@
+{
+    "artemisApp": {
+        "learnerProfile": {
+            "title": "Learner Profile Settings",
+            "description": "Customize your learning experience by adjusting your preferences.",
+            "feedback": {
+                "title": "Feedback Preferences",
+                "description": "Choose your preferred style of feedback - from concise to detailed, or from follow-up questions to summaries.",
+                "feedbackPracticalTheoretical": {
+                    "title": "Practical vs. Theoretical",
+                    "description": "Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations.",
+                    "practical": "Practical",
+                    "theoretical": "Theoretical"
+                },
+                "feedbackCreativeGuidance": {
+                    "title": "Creative Exploration vs. Focused Guidance",
+                    "description": "Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path.",
+                    "creative": "Creative",
+                    "focused": "Focused"
+                },
+                "feedbackFollowupSummary": {
+                    "title": "Follow-up Questions vs. Summary",
+                    "description": "Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic.",
+                    "followUp": "Follow-up",
+                    "summary": "Summary"
+                },
+                "feedbackBriefDetailed": {
+                    "title": "Brief vs. Detailed",
+                    "description": "Choose between concise feedback or detailed explanations with more context and background information.",
+                    "brief": "Brief",
+                    "detailed": "Detailed"
+                }
+            }
+        }
+    }
+}
