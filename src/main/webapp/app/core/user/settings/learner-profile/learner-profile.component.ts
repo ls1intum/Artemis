@@ -26,6 +26,8 @@ export class LearnerProfileComponent implements OnInit {
     faInfoCircle = faInfoCircle;
     faSave = faSave;
 
+    hideTooltip = () => '';
+
     ngOnInit(): void {
         this.learnerProfileApiService.getLearnerProfileForCurrentUser().subscribe((learnerProfile: LearnerProfileDTO) => {
             this.learnerProfile = learnerProfile;
