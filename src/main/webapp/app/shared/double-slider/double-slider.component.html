@@ -4,6 +4,11 @@
     </div>
     <div class="sliders_control">
         <input id="initialSlider" class="form-range" type="range" [value]="initialValue()" min="{{ min() }}" max="{{ max() }}" disabled />
-        <input id="currentSlider" class="form-range" type="range" value="{{ currentValue() }}" min="{{ min() }}" max="{{ max() }}" (change)="onChange($event)" />
+        <input id="currentSlider" class="form-range" type="range" value="{{ currentValue() }}" min="{{ min() }}" max="{{ max() }}" (change)="onChange($event)" list="rating" />
+
+        <datalist id="rating" style="--list-length: 2">
+            <option value="{{ min() }}">{{ min() }}</option>
+            <option value="{{ max() }}">{{ max() }}</option>
+        </datalist>
     </div>
 </div>

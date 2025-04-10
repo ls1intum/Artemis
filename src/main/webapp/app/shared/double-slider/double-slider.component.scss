@@ -33,3 +33,13 @@ input[type='range'] {
 #currentSlider::-moz-range-track {
     background-color: transparent;
 }
+
+datalist {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+datalist > option {
+    margin-top: 1.25em;
+}
