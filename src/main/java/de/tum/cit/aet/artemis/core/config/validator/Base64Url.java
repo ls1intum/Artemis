@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto.validator;
+package de.tum.cit.aet.artemis.core.config.validator;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

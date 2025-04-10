@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.dto.validator.Base64Url;
+import de.tum.cit.aet.artemis.core.config.validator.Base64Url;
 
 /**
  * DTO for passkey information.
