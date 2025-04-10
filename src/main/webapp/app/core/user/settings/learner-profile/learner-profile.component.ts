@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CourseLearnerProfileComponent } from 'app/shared/user-settings/learner-profile/course-learner-profile.component';
+import { CourseLearnerProfileComponent } from 'app/core/user/settings/learner-profile/course-learner-profile.component';
 
 @Component({
     selector: 'jhi-learner-profile',

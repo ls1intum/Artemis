@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DoubleSliderComponent } from 'app/shared/double-slider/double-slider.component';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { LearnerProfileApiService } from 'app/learner-profile/service/learner-profile-api.service';
@@ -12,7 +12,7 @@ import { NgClass } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-course-learner-profile',
