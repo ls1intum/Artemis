@@ -18,7 +18,7 @@ import {
     generateExampleGroupChatDTO,
     generateOneToOneChatDTO,
 } from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
-import { Directive, ElementRef, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
+import { Directive, EventEmitter, Input, Output, QueryList, input, runInInjectionContext } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -127,24 +127,6 @@ examples.forEach((activeConversation) => {
             component.course = course;
             component._activeConversation = activeConversation;
             component.posts = [examplePost];
-        }));
-
-        it('should fetch posts on search input and clear search again on clear button press', fakeAsync(() => {
-            const getFilteredPostSpy = jest.spyOn(metisService, 'getFilteredPosts');
-            const inputField = fixture.debugElement.query(By.css('#searchInput'));
-            inputField.nativeElement.value = 'test';
-            inputField.nativeElement.dispatchEvent(new Event('input'));
-            tick(301);
-            expect(component.searchText).toBe('test');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
-            fixture.detectChanges();
-
-            getFilteredPostSpy.mockClear();
-            const clearButton = fixture.debugElement.query(By.css('#clearSearchButton'));
-            clearButton.nativeElement.click();
-            tick(301);
-            expect(component.searchText).toBe('');
-            expect(getFilteredPostSpy).toHaveBeenCalledOnce();
         }));
 
         it('should fetch posts on next page fetch', fakeAsync(() => {
@@ -521,9 +503,6 @@ examples.forEach((activeConversation) => {
 
             component._activeConversation = { id: 123, type: ConversationType.CHANNEL };
             component.course = { id: 1 } as Course;
-            component.searchInput = {
-                nativeElement: { value: '' },
-            } as ElementRef;
 
             component['onActiveConversationChange']();
             tick();
