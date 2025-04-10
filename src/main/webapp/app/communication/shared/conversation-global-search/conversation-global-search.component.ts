@@ -308,8 +308,8 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
-    protected readonly SearchMode = SearchMode;
-    protected readonly UserSearchStatus = UserSearchStatus;
+    readonly SearchMode = SearchMode;
+    readonly UserSearchStatus = UserSearchStatus;
     protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
     protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
 }
