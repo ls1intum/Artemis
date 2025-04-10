@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.core.security.webauthn;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -12,10 +11,7 @@ import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
-import org.springframework.security.web.authentication.ui.DefaultResourcesFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsFilter;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
@@ -129,27 +125,6 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentials, rpOperations), AuthorizationFilter.class);
         http.addFilterBefore(new PublicKeyCredentialCreationOptionsFilter(rpOperations), AuthorizationFilter.class);
         http.addFilterBefore(new PublicKeyCredentialRequestOptionsFilter(rpOperations), AuthorizationFilter.class);
-
-        DefaultLoginPageGeneratingFilter loginPageGeneratingFilter = http.getSharedObject(DefaultLoginPageGeneratingFilter.class);
-        boolean isLoginPageEnabled = loginPageGeneratingFilter != null && loginPageGeneratingFilter.isEnabled();
-        if (isLoginPageEnabled) {
-            loginPageGeneratingFilter.setPasskeysEnabled(true);
-            loginPageGeneratingFilter.setResolveHeaders((request) -> {
-                CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-                return Map.of(csrfToken.getHeaderName(), csrfToken.getToken());
-            });
-        }
-
-        if (!this.disableDefaultRegistrationPage) {
-            http.addFilterAfter(new DefaultWebAuthnRegistrationPageGeneratingFilter(userEntities, userCredentials), AuthorizationFilter.class);
-            if (!isLoginPageEnabled) {
-                http.addFilter(DefaultResourcesFilter.css());
-            }
-        }
-
-        if (isLoginPageEnabled || !this.disableDefaultRegistrationPage) {
-            http.addFilter(DefaultResourcesFilter.webauthn());
-        }
     }
 
     private <C> Optional<C> getSharedOrBean(H http, Class<C> type) {
