@@ -58,6 +58,7 @@ describe('CodeButtonComponent', () => {
         buildPlanURLTemplate: '',
         commitHashURLTemplate: '',
         contact: '',
+        passkeyEnabled: false,
         externalUserManagementName: '',
         externalUserManagementURL: '',
         repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],

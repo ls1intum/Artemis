@@ -183,6 +183,7 @@ describe('ProfileService', () => {
         externalUserManagementURL: '',
         contact: 'artemis@xcit.tum.de',
         registrationEnabled: true,
+        passkeyEnabled: false,
         needsToAcceptTerms: false,
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
