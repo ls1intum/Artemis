@@ -111,7 +111,7 @@ public class PasskeyResource {
         if (credentialToBeDeleted.isPresent()) {
             boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
             if (!isUserAllowedToDeletePasskey) {
-                log.warn("User {} tried to delete credential with id {} of other user", credentialId, currentUser.getId());
+                log.warn("User with id {} tried to delete credential with id {} of other user", currentUser.getId(), credentialId);
                 return ResponseEntity.notFound().build();
             }
         }
