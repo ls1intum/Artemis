@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.ws.rs.NotAllowedException;
 
@@ -19,9 +20,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
+import de.tum.cit.aet.artemis.core.dto.validator.Base64Url;
+import de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.ArtemisUserCredentialRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -45,15 +49,18 @@ public class PasskeyResource {
 
     private final UserRepository userRepository;
 
+    private final PasskeyCredentialsRepository passkeyCredentialsRepository;
+
     /**
      * @param userRepository                  for accessing user data
      * @param artemisUserCredentialRepository for managing user credentials
      */
     public PasskeyResource(ArtemisUserCredentialRepository artemisUserCredentialRepository, @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}") boolean enabled,
-            UserRepository userRepository) {
+            UserRepository userRepository, PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.artemisUserCredentialRepository = artemisUserCredentialRepository;
         this.enabled = enabled;
         this.userRepository = userRepository;
+        this.passkeyCredentialsRepository = passkeyCredentialsRepository;
     }
 
     /**
@@ -68,6 +75,11 @@ public class PasskeyResource {
         }
     }
 
+    /**
+     * GET /passkey/user : retrieve all passkeys for the current user
+     *
+     * @return list of {@link PasskeyDTO} that contains the passkeys of the current user
+     */
     @GetMapping("user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PasskeyDTO>> getPasskeys() {
@@ -82,25 +94,33 @@ public class PasskeyResource {
     }
 
     /**
-     * Deletes a passkey associated with the given credential ID.
+     * DELETE /passkey/:credentialId : delete passkey with matching id for current user
      *
-     * This endpoint allows users to delete a specific passkey by providing its
-     * Base64-encoded credential ID. The passkey feature must be enabled for this
-     * operation to succeed.
-     *
-     * @param credentialIdBase64Encoded of the passkey to delete
-     * @return a {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
-     * @throws NotAllowedException if the passkey feature is disabled
+     * @param credentialId of the passkey to be deleted
+     * @return {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
      */
-    @DeleteMapping("{credentialIdBase64Encoded}")
+    @DeleteMapping("{credentialId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deletePasskey(@PathVariable String credentialIdBase64Encoded) {
-        log.info("Deleting passkey with id: {}", credentialIdBase64Encoded);
+    public ResponseEntity<Void> deletePasskey(@PathVariable @Base64Url String credentialId) {
+        log.info("Deleting passkey with id: {}", credentialId);
         checkIfPasskeyFeatureIsEnabled();
 
-        Bytes credentialId = Bytes.fromBase64(credentialIdBase64Encoded);
-        artemisUserCredentialRepository.delete(credentialId);
+        User currentUser = userRepository.getUser();
+        Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
+        if (credentialToBeDeleted.isPresent()) {
+            boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
+            if (!isUserAllowedToDeletePasskey) {
+                log.warn("User {} tried to delete credential with id {} of other user", credentialId, currentUser.getId());
+                return ResponseEntity.notFound().build();
+            }
+        }
+        else {
+            log.warn("Credential with id {} not found in the repository", credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        artemisUserCredentialRepository.delete(Bytes.fromBase64(credentialId));
         return ResponseEntity.noContent().build();
     }
 }
