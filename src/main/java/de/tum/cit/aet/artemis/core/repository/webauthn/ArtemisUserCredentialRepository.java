@@ -127,9 +127,10 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
         // FIXME - the userId format is not clear yet
         // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId
+        // Maybe related to ArtemisPublicKeyCredentialUserEntityRepository.save - could be the case that the options requests sets a temporary userId
         log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
 
-        Optional<User> user = Optional.empty();
+        Optional<User> user = Optional.empty(); // TODO properly retrieve the user
         return user.map(
                 passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
                 .orElseGet(List::of);

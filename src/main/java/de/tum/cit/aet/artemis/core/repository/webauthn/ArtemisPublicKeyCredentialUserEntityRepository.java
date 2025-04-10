@@ -22,8 +22,9 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * This class implements the {@link PublicKeyCredentialUserEntityRepository} interface, which will be called by
  * <a href="https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html">Spring Security WebAuthn</a> to persist passkeys.
  * <p>
- * This class provides methods to find and map users to WebAuthn-compatible credential user entities.
- * It integrates with the {@link UserRepository} to retrieve user information from the database.
+ * In our case the user UserEntity is {@link User}, but we cannot directly implement the interface there as {@link de.tum.cit.aet.artemis.exercise.domain.participation.Participant}
+ * is implemented by {@link User} and the declarations for the method {@link de.tum.cit.aet.artemis.exercise.domain.participation.Participant#getId} and
+ * {@link PublicKeyCredentialUserEntity#getId()} clash.
  * </p>
  * <p>
  * Note: {@code save} and {@code delete} are not implemented and should use the {@link UserRepository} instead.
