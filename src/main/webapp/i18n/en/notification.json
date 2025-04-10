@@ -288,6 +288,31 @@
                 "content": "You were removed from {{channelName}} in {{courseTitle}}.",
                 "settingsTitle": "Removed from channel"
             },
+            "tutorialGroupAssignedNotification": {
+                "title": "Tutorial assigned",
+                "content": "You were assigned to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial assigned"
+            },
+            "tutorialGroupUnassignedNotification": {
+                "title": "Tutorial unassigned",
+                "content": "You were unassigned from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial unassigned"
+            },
+            "registeredToTutorialGroupNotification": {
+                "title": "Tutorial registration",
+                "content": "You were registered to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial registration"
+            },
+            "deregisteredFromTutorialGroupNotification": {
+                "title": "Tutorial deregistration",
+                "content": "You were deregistered from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial deregistration"
+            },
+            "tutorialGroupDeletedNotification": {
+                "title": "Tutorial deleted",
+                "content": "Tutorial group {{groupTitle}} was deleted.",
+                "settingsTitle": "Tutorial deleted"
+            },
             "temporal": {
                 "now": "Now",
                 "oneHourAgo": "1 hour ago.",

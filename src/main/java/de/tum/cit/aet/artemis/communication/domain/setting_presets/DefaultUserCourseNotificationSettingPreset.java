@@ -7,6 +7,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AttachmentChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.DuplicateTestCaseNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseOpenForPracticeNotification;
@@ -23,7 +24,11 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.Plagiari
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingBuildRunUpdateNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ProgrammingTestCasesChangedNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.QuizExerciseStartedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupAssignedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupDeletedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupUnassignedNotification;
 
 @CourseNotificationSettingPreset(1)
 public class DefaultUserCourseNotificationSettingPreset extends UserCourseNotificationSettingPreset {
@@ -69,6 +74,16 @@ public class DefaultUserCourseNotificationSettingPreset extends UserCourseNotifi
                 Map.entry(ProgrammingTestCasesChangedNotification.class,
                         Map.of(NotificationChannelOption.EMAIL, false, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)),
                 Map.entry(PlagiarismCaseVerdictNotification.class,
-                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, false)));
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(TutorialGroupAssignedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(TutorialGroupUnassignedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(RegisteredToTutorialGroupNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(DeregisteredFromTutorialGroupNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)),
+                Map.entry(TutorialGroupDeletedNotification.class,
+                        Map.of(NotificationChannelOption.EMAIL, true, NotificationChannelOption.WEBAPP, true, NotificationChannelOption.PUSH, true)));
     }
 }

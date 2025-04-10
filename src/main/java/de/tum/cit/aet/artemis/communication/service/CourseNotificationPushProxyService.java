@@ -20,6 +20,11 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PLAGI
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_BUILD_RUN_UPDATE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_ASSIGNED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
@@ -206,6 +211,24 @@ public class CourseNotificationPushProxyService {
                         NotificationTargetFactory.PLAGIARISM_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
                 target = notificationTarget.toJsonString();
                 type = PLAGIARISM_CASE_VERDICT_STUDENT.toString();
+                break;
+            case "tutorialGroupAssignedNotification":
+            case "tutorialGroupUnassignedNotification":
+            case "registeredToTutorialGroupNotification":
+            case "deregisteredFromTutorialGroupNotification":
+            case "tutorialGroupDeletedNotification":
+                notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("groupTitle"), parameters.get("moderatorName"), };
+
+                notificationTarget = new NotificationTarget(NotificationTargetFactory.TUTORIAL_GROUPS_TEXT, Long.parseLong(parameters.get("groupId")),
+                        NotificationTargetFactory.TUTORIAL_GROUPS_TEXT, courseNotificationDTO.courseId(), NotificationTargetFactory.COURSES_TEXT);
+                target = notificationTarget.toJsonString();
+                type = switch (courseNotificationDTO.notificationType()) {
+                    case "tutorialGroupAssignedNotification" -> TUTORIAL_GROUP_ASSIGNED.toString();
+                    case "tutorialGroupUnassignedNotification" -> TUTORIAL_GROUP_UNASSIGNED.toString();
+                    case "registeredToTutorialGroupNotification" -> TUTORIAL_GROUP_REGISTRATION_STUDENT.toString();
+                    case "deregisteredFromTutorialGroupNotification" -> TUTORIAL_GROUP_DEREGISTRATION_STUDENT.toString();
+                    default -> TUTORIAL_GROUP_DELETED.toString();
+                };
                 break;
             default:
                 return new PushNotificationDataDTO(new CourseNotificationSerializedDTO(courseNotificationDTO));
