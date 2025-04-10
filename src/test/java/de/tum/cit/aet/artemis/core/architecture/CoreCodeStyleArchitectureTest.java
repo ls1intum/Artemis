@@ -11,11 +11,11 @@ class CoreCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoAsAnnotatedRecordThreshold() {
-        return 10;
+        return 9;
     }
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 10;
+        return 9;
     }
 }
