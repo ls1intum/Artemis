@@ -396,8 +396,8 @@ public class SubmissionService {
         Result result = new Result();
         result.setSubmission(submission);
         submission.addResult(result);
-        submissionRepository.save(submission);
         result = resultRepository.save(result);
+        submissionRepository.save(submission);
         return result;
     }
 
