@@ -1,6 +1,6 @@
 import { Component, ElementRef, HostListener, OnDestroy, input, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
 import { isChannelDTO } from '../entities/conversation/channel.model';
 import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
@@ -14,6 +14,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 export interface ConversationGlobalSearchConfig {
     searchTerm: string;
@@ -47,7 +48,7 @@ enum UserSearchStatus {
     selector: 'jhi-conversation-global-search',
     templateUrl: './conversation-global-search.component.html',
     styleUrls: ['./conversation-global-search.component.scss'],
-    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent],
+    imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
 })
 export class ConversationGlobalSearchComponent implements OnDestroy {
     conversations = input<ConversationDTO[]>([]);
@@ -73,6 +74,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     // Icons
     faTimes = faTimes;
+    faQuestionCircle = faQuestionCircle;
     faSearch = faSearch;
     faSpinner = faSpinner;
     readonly ButtonType = ButtonType;

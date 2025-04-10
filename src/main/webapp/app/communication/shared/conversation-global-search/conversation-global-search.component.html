@@ -32,6 +32,8 @@
 
         @if (fullSearchTerm || selectedConversations.length > 0 || selectedConversations.length > 0) {
             <button type="button" class="btn-close ms-1" aria-label="Clear search" (click)="clearSearch()"></button>
+        } @else {
+            <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.metis.globalSearch.toolTip' | artemisTranslate" class="text-secondary" />
         }
     </div>
     <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onTriggerSearch()" />

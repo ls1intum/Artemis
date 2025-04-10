@@ -74,7 +74,8 @@
                 "searchBarWithConversationSelected": "Search for a message in selected conversations",
                 "noConversationFound": "No conversation found for '{{ search }}'",
                 "noUserFound": "No user found for '{{ search }}'",
-                "userQueryTooShort": "Please enter at least 3 characters to search for a user."
+                "userQueryTooShort": "Please enter at least 3 characters to search for a user.",
+                "toolTip": "Type 'in:' to select a conversation to search in or 'by:' to get messages by a specific author"
             },
             "overview": {
                 "title": "Posts",
