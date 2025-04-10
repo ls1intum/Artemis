@@ -70,7 +70,7 @@ public class SecurityConfiguration {
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    @Value("${artemis.user-management.passkey.enabled:false}")
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
     @Value("${artemis.user-management.passkey.allowedOrigins}")

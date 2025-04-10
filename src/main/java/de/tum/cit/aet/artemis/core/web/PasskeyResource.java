@@ -45,7 +45,7 @@ public class PasskeyResource {
 
     private final ArtemisUserCredentialRepository artemisUserCredentialRepository;
 
-    @Value("${artemis.user-management.passkey.enabled:false}")
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     public boolean enabled;
 
     /**

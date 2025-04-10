@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 @EnableConfigurationProperties
 public class PasskeyInfoContributor implements InfoContributor {
 
-    @Value("${artemis.user-management.passkey.enabled:false}")
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean enabled;
 
     @Override
