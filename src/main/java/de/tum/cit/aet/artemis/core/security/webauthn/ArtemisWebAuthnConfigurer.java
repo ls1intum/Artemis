@@ -33,8 +33,8 @@ import org.springframework.security.web.webauthn.registration.WebAuthnRegistrati
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
- * Configures WebAuthn for Spring Security applications using a custom {@link ArtemisWebAuthnAuthenticationFilter} in
- * because contrast to the Spring Security implementation we want to set a JWT in the response.
+ * Configures WebAuthn for Spring Security applications using a custom {@link ArtemisWebAuthnAuthenticationFilter}.
+ * In contrast to the Spring Security implementation, we want to set a JWT in the response.
  *
  * @see WebAuthnConfigurer on which this class is based and which can probably replace this custom class once a
  *      configuration of the in {@link WebAuthnAuthenticationFilter} configured

@@ -28,6 +28,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 
 /**
  * REST controller for public endpoints regarding the webauthn (Web Authentication) API, e.g. used for passkeys.
+ * Provides endpoints for retrieving and deleting passkeys associated with a user.
+ *
+ * This controller is only active when the "core" profile is enabled.
  */
 @Profile(PROFILE_CORE)
 @RestController
@@ -46,11 +49,6 @@ public class PasskeyResource {
     public boolean enabled;
 
     /**
-     * REST controller for managing passkeys.
-     * Provides endpoints for retrieving and deleting passkeys associated with a user.
-     *
-     * This controller is only active when the "core" profile is enabled.
-     *
      * @param userRepository                  for accessing user data
      * @param artemisUserCredentialRepository for managing user credentials
      */
@@ -85,7 +83,15 @@ public class PasskeyResource {
     }
 
     /**
-     * @param credentialIdBase64Encoded as base64 encoded url string
+     * Deletes a passkey associated with the given credential ID.
+     *
+     * This endpoint allows users to delete a specific passkey by providing its
+     * Base64-encoded credential ID. The passkey feature must be enabled for this
+     * operation to succeed.
+     *
+     * @param credentialIdBase64Encoded of the passkey to delete
+     * @return a {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
+     * @throws NotAllowedException if the passkey feature is disabled
      */
     @DeleteMapping("{credentialIdBase64Encoded}")
     @EnforceAtLeastStudent
