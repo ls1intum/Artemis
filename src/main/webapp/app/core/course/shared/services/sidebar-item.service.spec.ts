@@ -3,6 +3,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import {
     faChalkboardUser,
     faChartColumn,
+    faCog,
     faComments,
     faFlag,
     faGraduationCap,
@@ -312,6 +313,21 @@ describe('CourseSidebarItemService', () => {
             const item = service.getNotificationSettingsItem();
 
             expect(item.featureToggle).toBe(FeatureToggle.CourseSpecificNotifications);
+        });
+
+        it('getCourseSettingsItem should return correct item', () => {
+            const item = service.getCourseSettingsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/settings`,
+                icon: faCog,
+                title: 'Settings',
+                translation: 'artemisApp.courseOverview.menu.settings',
+                testId: 'course-settings',
+                bottom: true,
+                hidden: false,
+                guidedTour: false,
+            });
         });
     });
 });
