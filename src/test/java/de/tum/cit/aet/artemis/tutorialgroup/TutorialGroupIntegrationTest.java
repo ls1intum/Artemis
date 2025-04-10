@@ -82,6 +82,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @BeforeEach
     @Override
     void setupTestScenario() {
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 4, 2, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
