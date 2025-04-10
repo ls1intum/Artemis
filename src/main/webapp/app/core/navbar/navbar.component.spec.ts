@@ -33,9 +33,7 @@ import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
-import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 
 class MockBreadcrumb {
     label: string;
@@ -103,11 +101,9 @@ describe('NavbarComponent', () => {
                 MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
-                MockComponent(NotificationSidebarComponent),
                 MockComponent(GuidedTourComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
-                MockComponent(SystemNotificationComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(ThemeSwitchComponent),
             ],

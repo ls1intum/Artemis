@@ -4,7 +4,6 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { User } from 'app/core/user/user.model';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
-import { NotificationSetting, notificationSettingsStructure } from 'app/core/user/settings/notification-settings/notification-settings-structure';
 import { ScienceSetting, scienceSettingsStructure } from 'app/core/user/settings/science-settings/science-settings-structure';
 
 @Injectable({ providedIn: 'root' })
@@ -28,9 +27,7 @@ export class UserSettingsService {
      */
     public loadSettings(category: UserSettingsCategory): Observable<HttpResponse<Setting[]>> {
         switch (category) {
-            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.get<NotificationSetting[]>(this.notificationSettingsResourceUrl, { observe: 'response' });
-            }
+            default:
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.get<ScienceSetting[]>(this.scienceSettingsResourceUrl, { observe: 'response' });
             }
@@ -137,9 +134,7 @@ export class UserSettingsService {
      */
     private static loadSettingsStructure(category: UserSettingsCategory): UserSettingsStructure<Setting> {
         switch (category) {
-            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return notificationSettingsStructure;
-            }
+            default:
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return scienceSettingsStructure;
             }

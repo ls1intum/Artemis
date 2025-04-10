@@ -136,10 +136,10 @@ describe('Guided tour integration', () => {
             navBarComponentFixture.autoDetectChanges(true);
 
             expect(guidedTourService.isOnFirstStep).toBeTrue();
-            expect(guidedTourSteps).toBe(9);
+            expect(guidedTourSteps).toBe(8);
 
             // Click through tour steps in NavComponent
-            for (let i = 1; i < 6; i++) {
+            for (let i = 1; i < 5; i++) {
                 guidedTourService.nextStep();
                 expect(guidedTourService.isOnFirstStep).toBeFalse();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
@@ -151,7 +151,7 @@ describe('Guided tour integration', () => {
             }
 
             // Click through tour steps in CourseCardComponent
-            for (let i = 6; i < 8; i++) {
+            for (let i = 5; i < 7; i++) {
                 guidedTourService.nextStep();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 
@@ -162,7 +162,7 @@ describe('Guided tour integration', () => {
             }
 
             // Click through tour steps in FooterComponent
-            for (let i = 8; i < guidedTourSteps; i++) {
+            for (let i = 7; i < guidedTourSteps; i++) {
                 guidedTourService.nextStep();
                 guidedTourComponent.currentTourStep = guidedTourService['currentStep'];
 

@@ -1,8 +1,5 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        @if (currAccount && !isExamActive && !isExamStarted) {
-            <jhi-notification-sidebar />
-        }
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'" />
         @if (isAuthenticated()) {
             <div
@@ -195,12 +192,6 @@
                         </a>
                     </li>
                     <li>
-                        <a class="dropdown-item" routerLink="/admin/system-notification-management" routerLinkActive="active" (click)="collapseNavbar()">
-                            <fa-icon [icon]="faBell" [fixedWidth]="true" />
-                            <span jhiTranslate="global.menu.admin.systemNotifications"></span>
-                        </a>
-                    </li>
-                    <li>
                         <a class="dropdown-item" routerLink="/admin/feature-toggles" routerLinkActive="active" (click)="collapseNavbar()">
                             <fa-icon [icon]="faToggleOn" [fixedWidth]="true" />
                             <span jhiTranslate="global.menu.admin.featureToggles"></span>
@@ -333,7 +324,6 @@
         }
     </div>
 </nav>
-<jhi-system-notification />
 <div class="breadcrumb-container">
     @if (!isExamStarted && !isExamActive && breadcrumbs && breadcrumbs.length > 0) {
         <div>

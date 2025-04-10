@@ -3,10 +3,8 @@ import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
     faChartBar,
@@ -67,12 +65,9 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         MatSidenavContainer,
         MatSidenavContent,
         MatSidenav,
-        NgbTooltip,
-        NgStyle,
         RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
-        FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,

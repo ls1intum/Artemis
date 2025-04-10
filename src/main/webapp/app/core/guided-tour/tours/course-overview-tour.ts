@@ -40,13 +40,6 @@ export const courseOverviewTour: GuidedTour = {
             permission: [Authority.ADMIN],
         }),
         new TextTourStep({
-            highlightSelector: '.guided-tour-notification',
-            headlineTranslateKey: 'tour.courseOverview.notificationMenu.headline',
-            contentTranslateKey: 'tour.courseOverview.notificationMenu.content',
-            orientation: Orientation.BOTTOMRIGHT,
-            highlightPadding: 10,
-        }),
-        new TextTourStep({
             highlightSelector: '.guided-tour-account',
             headlineTranslateKey: 'tour.courseOverview.accountMenu.headline',
             contentTranslateKey: 'tour.courseOverview.accountMenu.content',

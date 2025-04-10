@@ -41,13 +41,11 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -78,7 +76,6 @@ describe('DiscussionSectionComponent', () => {
                 { provide: LinkifyService, useClass: LinkifyService },
                 { provide: LinkPreviewService, useClass: LinkPreviewService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },

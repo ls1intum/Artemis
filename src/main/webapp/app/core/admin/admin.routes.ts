@@ -1,7 +1,6 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { userManagementRoute } from 'app/core/admin/user-management/user-management.route';
-import { systemNotificationManagementRoute } from 'app/core/admin/system-notification-management/system-notification-management.route';
 import { IrisGuard } from 'app/iris/shared/iris-guard.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 
@@ -171,7 +170,6 @@ const routes: Routes = [
     },
     ...organizationMgmtRoute,
     ...userManagementRoute,
-    ...systemNotificationManagementRoute,
     ...ltiConfigurationRoute,
 ];
 

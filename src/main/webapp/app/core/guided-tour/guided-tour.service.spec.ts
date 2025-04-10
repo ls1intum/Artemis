@@ -33,7 +33,6 @@ import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guide
 import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
 import { completedTour } from 'app/core/guided-tour/tours/general-tour';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -161,7 +160,6 @@ describe('GuidedTourService', () => {
                     TranslatePipeMock,
                     MockPipe(SafeResourceUrlPipe),
                     MockComponent(LoadingNotificationComponent),
-                    MockComponent(NotificationSidebarComponent),
                     MockHasAnyAuthorityDirective,
                     MockDirective(ActiveMenuDirective),
                     MockPipe(FindLanguageFromKeyPipe),

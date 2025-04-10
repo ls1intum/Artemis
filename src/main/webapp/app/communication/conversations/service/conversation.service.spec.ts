@@ -9,9 +9,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('ConversationService', () => {
     let service: ConversationService;
@@ -24,7 +22,6 @@ describe('ConversationService', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(ConversationService);
