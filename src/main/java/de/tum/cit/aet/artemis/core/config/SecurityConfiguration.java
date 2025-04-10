@@ -79,8 +79,8 @@ public class SecurityConfiguration {
     @Value("${artemis.user-management.passkey.rpId}")
     private String rpId;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer, JWTCookieService jwtCookieService) {
+    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, JWTCookieService jwtCookieService, PasswordService passwordService,
+            ProfileService profileService, TokenProvider tokenProvider) {
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.jwtCookieService = jwtCookieService;
