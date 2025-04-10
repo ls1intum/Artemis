@@ -21,10 +21,10 @@ export class CourseManagementPage {
     }
 
     /**
-     * Opens the course edit page.
+     * Opens the course settings page.
      */
-    async openCourseEdit() {
-        await this.page.locator('#edit-course').click();
+    async openCourseSettings() {
+        await this.page.locator('#course-settings').click();
     }
 
     /**
@@ -90,10 +90,6 @@ export class CourseManagementPage {
     async removeFirstUser() {
         await this.page.locator('#registered-students button[jhideletebutton]').first().click();
         await this.page.locator('.modal #delete').click();
-    }
-
-    async clickEditCourse() {
-        await this.page.locator('#edit-course').click();
     }
 
     async updateCourse(course: Course) {
