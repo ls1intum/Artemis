@@ -86,6 +86,7 @@ examples.forEach((activeConversation) => {
         // Workaround for mocked components with viewChild: https://github.com/help-me-mom/ng-mocks/issues/8634
         MockInstance(CourseWideSearchComponent, 'content', signal(new ElementRef(document.createElement('div'))));
         MockInstance(CourseWideSearchComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
+        // @ts-ignore
         MockInstance(ConversationGlobalSearchComponent, 'searchElement', signal([new ElementRef(document.createElement('div'))]));
         MockInstance(ConversationThreadSidebarComponent, 'threadContainer', signal(new ElementRef(document.createElement('div'))));
         const dummyTooltip = { close: jest.fn() } as unknown as NgbTooltip;
