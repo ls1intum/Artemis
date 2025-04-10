@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -58,7 +59,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         Slide updatedSlide4 = slideRepository.findById(testSlides.get(3).getId()).orElseThrow();
 
         assertThat(updatedSlide2.getHidden()).isNull();
-        assertThat(updatedSlide4.getHidden()).isEqualTo(futureDate);
+        assertThat(updatedSlide4.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(futureDate.truncatedTo(ChronoUnit.MILLIS));
     }
 
 }
