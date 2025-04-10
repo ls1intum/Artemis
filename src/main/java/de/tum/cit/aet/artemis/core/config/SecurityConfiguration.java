@@ -81,7 +81,7 @@ public class SecurityConfiguration {
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
-    @Value("${artemis.user-management.passkey.allowedOrigins}")
+    @Value("${artemis.user-management.passkey.allowed-origins}")
     private String allowedOrigins;
 
     @Value("${artemis.user-management.passkey.rp-id}")
