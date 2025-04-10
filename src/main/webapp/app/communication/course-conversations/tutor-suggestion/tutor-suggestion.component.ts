@@ -10,7 +10,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
@@ -50,9 +49,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     post = input<Post>();
     course = input<Course>();
-
-    faArrowsRotate = faArrowsRotate;
-    faCircleXmark = faCircleXmark;
 
     ngOnInit(): void {
         const course = this.course();
