@@ -80,4 +80,35 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(Files.exists(actualFilePath)).isTrue();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testRegenerateStudentVersion_withNullAttachmentUnit() {
+        // Create attachment with null attachment unit
+        Attachment attachmentWithoutUnit = new Attachment();
+        attachmentWithoutUnit.setName("Test Attachment");
+        attachmentWithoutUnit.setLink("/test/path/file.pdf");
+        attachmentWithoutUnit.setAttachmentUnit(null);
+
+        // Should not throw exception
+        attachmentService.regenerateStudentVersion(attachmentWithoutUnit);
+
+        // No assertions needed as we're testing that no exception occurs
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    void testGenerateStudentVersionPdf() throws Exception {
+        // Create a test PDF file
+        Path testPdfPath = Path.of(testAttachment2.getLink());
+
+        // Get hidden slides
+        List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(testAttachment2.getAttachmentUnit().getId());
+
+        byte[] pdfData = attachmentService.generateStudentVersionPdf(FilePathService.actualPathForPublicPath(URI.create(testAttachment2.getLink())).toFile(), hiddenSlides);
+
+        // Verify output
+        assertThat(pdfData).isNotNull();
+        assertThat(pdfData.length).isGreaterThan(0);
+    }
+
 }
