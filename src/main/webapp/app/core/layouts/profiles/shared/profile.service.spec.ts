@@ -125,6 +125,7 @@ describe('ProfileService', () => {
         sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         registrationEnabled: true,
+        passkeyEnabled: false,
         needsToAcceptTerms: false,
         allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
         allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
