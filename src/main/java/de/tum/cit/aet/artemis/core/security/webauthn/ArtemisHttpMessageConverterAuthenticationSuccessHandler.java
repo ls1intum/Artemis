@@ -11,7 +11,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.converter.GenericHttpMessageConverter;
 import org.springframework.http.converter.HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServletServerHttpResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -30,14 +29,15 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public final class ArtemisHttpMessageConverterAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
 
-    private HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter();
+    private HttpMessageConverter<Object> converter;
 
     private RequestCache requestCache = new HttpSessionRequestCache();
 
     private final JWTCookieService jwtCookieService;
 
-    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(JWTCookieService jwtCookieService) {
+    public ArtemisHttpMessageConverterAuthenticationSuccessHandler(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
         this.jwtCookieService = jwtCookieService;
+        this.converter = converter;
     }
 
     /**

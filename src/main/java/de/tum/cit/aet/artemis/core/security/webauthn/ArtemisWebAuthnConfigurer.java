@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
@@ -22,7 +23,6 @@ import org.springframework.security.web.webauthn.management.PublicKeyCredentialU
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.management.Webauthn4JRelyingPartyOperations;
-import org.springframework.security.web.webauthn.registration.DefaultWebAuthnRegistrationPageGeneratingFilter;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
 
@@ -48,11 +48,12 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private Set<String> allowedOrigins = new HashSet<>();
 
-    private boolean disableDefaultRegistrationPage = false;
+    private final HttpMessageConverter<Object> converter;
 
     private final JWTCookieService jwtCookieService;
 
-    public ArtemisWebAuthnConfigurer(JWTCookieService jwtCookieService) {
+    public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
+        this.converter = converter;
         this.jwtCookieService = jwtCookieService;
     }
 
@@ -101,19 +102,6 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         return this;
     }
 
-    /**
-     * Configures whether the default webauthn registration should be disabled. Setting it
-     * to {@code true} will prevent the configurer from registering the
-     * {@link DefaultWebAuthnRegistrationPageGeneratingFilter}.
-     *
-     * @param disable disable the default registration page if true, enable it otherwise
-     * @return the {@link ArtemisWebAuthnConfigurer} for further customization
-     */
-    public ArtemisWebAuthnConfigurer<H> disableDefaultRegistrationPage(boolean disable) {
-        this.disableDefaultRegistrationPage = disable;
-        return this;
-    }
-
     @Override
     public void configure(H http) throws Exception {
         UserDetailsService userDetailsService = getSharedOrBean(http, UserDetailsService.class).orElseThrow(() -> new IllegalStateException("Missing UserDetailsService Bean"));
@@ -121,7 +109,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         UserCredentialRepository userCredentials = getSharedOrBean(http, UserCredentialRepository.class).orElse(userCredentialRepository());
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(userEntities, userCredentials);
 
-        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(jwtCookieService);
+        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(converter, jwtCookieService);
 
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);

@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -57,6 +59,8 @@ public class SecurityConfiguration {
 
     private final CorsFilter corsFilter;
 
+    private final HttpMessageConverter<Object> converter;
+
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
     private final JWTCookieService jwtCookieService;
@@ -79,9 +83,10 @@ public class SecurityConfiguration {
     @Value("${artemis.user-management.passkey.rpId}")
     private String rpId;
 
-    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, JWTCookieService jwtCookieService, PasswordService passwordService,
-            ProfileService profileService, TokenProvider tokenProvider) {
+    public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
+            JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider) {
         this.corsFilter = corsFilter;
+        this.converter = converter;
         this.customLti13Configurer = customLti13Configurer;
         this.jwtCookieService = jwtCookieService;
         this.passwordService = passwordService;
@@ -242,7 +247,7 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
             if (passkeyEnabled) {
-                WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(jwtCookieService);
+                WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService);
                 http.with(webAuthnConfigurer, configurer -> {
                     configurer
                         .allowedOrigins(allowedOrigins)

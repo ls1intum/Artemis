@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.webauthn;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.security.web.authentication.AuthenticationEntryPointFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -13,10 +14,10 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  */
 public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationFilter {
 
-    public ArtemisWebAuthnAuthenticationFilter(JWTCookieService jwtCookieService) {
+    public ArtemisWebAuthnAuthenticationFilter(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
         super();
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
         setAuthenticationFailureHandler(new AuthenticationEntryPointFailureHandler(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
-        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(jwtCookieService));
+        setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService));
     }
 }
