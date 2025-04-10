@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -776,7 +775,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             List<UserCourseNotificationStatus> statuses = userCourseNotificationStatusTestRepository
                     .findAllByCourseNotificationId(programmingTestCasesChangedNotification.get().getId());
 
-            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).collect(Collectors.toList());
+            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).toList();
 
             assertThat(recipientIds).contains(instructor.getId());
             assertThat(recipientIds).doesNotContain(student.getId());
@@ -809,7 +808,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             List<UserCourseNotificationStatus> statuses = userCourseNotificationStatusTestRepository
                     .findAllByCourseNotificationId(programmingBuildRunUpdateNotification.get().getId());
 
-            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).collect(Collectors.toList());
+            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).toList();
 
             assertThat(recipientIds).contains(instructor.getId());
             assertThat(recipientIds).doesNotContain(student.getId());
