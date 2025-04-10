@@ -144,8 +144,8 @@ describe('CommitHistoryComponent', () => {
         // Expectations
         expect(component.participation).toEqual(mockParticipation);
         expect(component.participation.submissions).toHaveLength(2);
-        expect(component.participation.submissions![0].results![0].id).toEqual(1);
-        expect(component.participation.submissions![1].results![0].id).toEqual(2);
+        expect(component.participation.submissions![0].results![0].id).toBe(1);
+        expect(component.participation.submissions![1].results![0].id).toBe(2);
 
         // Trigger ngOnDestroy
         component.ngOnDestroy();
