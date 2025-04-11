@@ -13,5 +13,5 @@
  */
 
 // @ts-expect-error – `?url` is not recognized by TypeScript
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?worker&url';
 export default pdfjsWorker;
