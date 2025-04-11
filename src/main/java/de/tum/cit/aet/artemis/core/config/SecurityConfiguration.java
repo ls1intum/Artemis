@@ -243,6 +243,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
+                    .requestMatchers("/login/webauthn").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -272,7 +273,7 @@ public class SecurityConfiguration {
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString(), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()), ensureTrailingSlash(clientUrl1.toString()))
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString(), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()), ensureTrailingSlash(clientUrl1.toString()), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn", ensureTrailingSlash(clientUrl1.toString()) + "login/webauthn")
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
