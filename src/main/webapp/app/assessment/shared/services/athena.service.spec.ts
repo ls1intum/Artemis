@@ -94,36 +94,6 @@ describe('AthenaService', () => {
         assessments: {},
     };
 
-    it('should return true if athena is enabled', fakeAsync(async () => {
-        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
-
-        let isAthenaEnabled = false;
-
-        athenaService.isEnabled().subscribe((isEnabled: boolean) => {
-            isAthenaEnabled = isEnabled;
-        });
-
-        tick();
-
-        expect(isAthenaEnabled).toBeTrue();
-    }));
-
-    it('should return false if athena is disabled', fakeAsync(() => {
-        const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
-
-        let isAthenaEnabled = false;
-
-        athenaService.isEnabled().subscribe((isEnabled: boolean) => {
-            isAthenaEnabled = isEnabled;
-        });
-
-        tick();
-
-        expect(isAthenaEnabled).toBeFalse();
-    }));
-
     it('should get feedback suggestions when athena is enabled', fakeAsync(() => {
         const textFeedbackSuggestions = [new TextFeedbackSuggestion(0, 1, 2, 'Test Text', 'Test Text Description', 0.0, 4321, 5, 10)];
         const programmingFeedbackSuggestions: ProgrammingFeedbackSuggestion[] = [
