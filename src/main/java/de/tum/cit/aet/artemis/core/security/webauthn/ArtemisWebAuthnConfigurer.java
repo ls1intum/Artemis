@@ -4,6 +4,8 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -36,6 +38,8 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
  *      can be modified / overwriten by specifying a bean.
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
+
+    private static final Logger log = LoggerFactory.getLogger(ArtemisWebAuthnConfigurer.class);
 
     /**
      * Typically the domain of the website that is using WebAuthn for authentication.
@@ -98,6 +102,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
      * @see #allowedOrigins(Set)
      */
     public ArtemisWebAuthnConfigurer<H> allowedOrigins(String... allowedOrigins) {
+        log.info("AllowedOrigins: {}", Set.of(allowedOrigins));
         return allowedOrigins(Set.of(allowedOrigins));
     }
 

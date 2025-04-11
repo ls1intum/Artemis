@@ -268,12 +268,20 @@ public class SecurityConfiguration {
 
         if (passkeyEnabled) {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-            URL clientUrl1 = new URI(serverUrl + ":" + port).toURL();;
+            URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();;
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString(), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()), ensureTrailingSlash(clientUrl1.toString()), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn", ensureTrailingSlash(clientUrl1.toString()) + "login/webauthn")
+                    .allowedOrigins(
+                        clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString(),
+                        ensureTrailingSlash(clientUrlToRegisterPasskey.toString()),
+                        ensureTrailingSlash(clientUrlWithPort.toString()),
+                        ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn",
+                        ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn",
+                        ensureTrailingSlash(ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn"),
+                        ensureTrailingSlash(ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn")
+                    )
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
