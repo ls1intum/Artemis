@@ -1,7 +1,8 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Observable } from 'rxjs';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
@@ -17,6 +18,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     private athenaService = inject(AthenaService);
+    private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
 
     @Input() exercise: Exercise;
@@ -24,12 +26,11 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     @Input() readOnly = false;
 
     protected readonly ExerciseType = ExerciseType;
-
     protected readonly AssessmentType = AssessmentType;
 
     readonly assessmentType: AssessmentType;
 
-    isAthenaEnabled$: Observable<boolean>;
+    isAthenaEnabled: boolean;
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
@@ -40,7 +41,7 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
             this.availableAthenaModules = modules;
             this.modulesAvailable = modules.length > 0;
         });
-        this.isAthenaEnabled$ = this.athenaService.isEnabled();
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.initialAthenaModule = this.exercise.feedbackSuggestionModule;
     }
 

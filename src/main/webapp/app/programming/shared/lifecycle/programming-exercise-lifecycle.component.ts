@@ -1,4 +1,6 @@
 import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { PROFILE_ATHENA } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -7,8 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { AthenaService } from 'app/assessment/shared/services/athena.service';
+import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
@@ -41,7 +42,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
-    private athenaService = inject(AthenaService);
+    private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
 
     protected readonly assessmentType = AssessmentType;
@@ -65,7 +66,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     inputfieldSubscriptions: (Subscription | undefined)[] = [];
     datePickerChildrenSubscription?: Subscription;
 
-    isAthenaEnabled$: Observable<boolean> | undefined;
+    isAthenaEnabled: boolean;
 
     isImport = false;
     private urlSubscription: Subscription;
@@ -77,7 +78,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.isAthenaEnabled$ = this.athenaService.isEnabled();
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.updateIsImportBasedOnUrl();
     }

@@ -6,24 +6,24 @@ import { TextExerciseUpdateComponent } from 'app/text/manage/text-exercise/updat
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import * as Utils from 'app/exercise/course-exercises/course-utils';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
 
 describe('TextExercise Management Update Component', () => {
