@@ -44,6 +44,9 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private String relyingPartyName;
 
+    /**
+     * To ensure that only trusted parties can create and authenticate with passkeys
+     */
     private Set<String> allowedOrigins = new HashSet<>();
 
     private final HttpMessageConverter<Object> converter;

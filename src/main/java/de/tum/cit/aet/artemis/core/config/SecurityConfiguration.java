@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URI;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,11 +83,14 @@ public class SecurityConfiguration {
     @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
     private boolean passkeyEnabled;
 
-    @Value("${artemis.user-management.passkey.allowed-origins}")
-    private String allowedOrigins;
+    /**
+     * We expect the server URL to equal the client URL
+     */
+    @Value("${server.url}")
+    private String serverUrl;
 
-    @Value("${artemis.user-management.passkey.rp-id}")
-    private String rpId;
+    @Value("${client.port:${server.port}}")
+    private String port;
 
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
@@ -255,12 +260,14 @@ public class SecurityConfiguration {
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
-            if (passkeyEnabled) {
+
+        URL clientUrl = new URI(serverUrl + ":" + port).toURL();
+        if (passkeyEnabled) {
                 WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService, publicKeyCredentialUserEntityRepository, userCredentialRepository);
                 http.with(webAuthnConfigurer, configurer -> {
                     configurer
-                        .allowedOrigins(allowedOrigins)
-                        .rpId(rpId)
+                        .allowedOrigins(clientUrl.toString())
+                        .rpId(clientUrl.getHost())
                         .rpName("Artemis");
                 });
             }
