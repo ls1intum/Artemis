@@ -7,7 +7,7 @@ import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icon
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
-import { PasskeyDto } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
+import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settings/passkey-settings-api.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -43,7 +43,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
 
-    registeredPasskeys = signal<PasskeyDto[]>([]);
+    registeredPasskeys = signal<PasskeyDTO[]>([]);
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -144,7 +144,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         };
     }
 
-    getDeleteSummary(passkey: PasskeyDto | undefined): Observable<EntitySummary> | undefined {
+    getDeleteSummary(passkey: PasskeyDTO | undefined): Observable<EntitySummary> | undefined {
         if (!passkey) {
             return undefined;
         }
@@ -158,7 +158,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         return of(summary);
     }
 
-    async deletePasskey(passkey: PasskeyDto) {
+    async deletePasskey(passkey: PasskeyDTO) {
         this.isDeletingPasskey = true;
         try {
             await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);

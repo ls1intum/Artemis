@@ -1,4 +1,4 @@
-export interface PasskeyDto {
+export interface PasskeyDTO {
     /**
      * The credential ID of the passkey, encoded in Base64url format.
      */

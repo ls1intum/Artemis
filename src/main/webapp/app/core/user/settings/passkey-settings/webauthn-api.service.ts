@@ -1,9 +1,9 @@
 import { BaseApiHttpService } from 'app/shared/service/base-api-http.service';
 // import { PasskeyOptions } from 'app/core/user/settings/passkey-settings/entities/passkey-options.model';
 import { Injectable } from '@angular/core';
-import { RegisterPasskeyDto } from 'app/core/user/settings/passkey-settings/dto/register-passkey.dto';
-import { PasskeyLoginResponseDto } from 'app/core/user/settings/passkey-settings/dto/passkey-login-response.dto';
-import { RegisterPasskeyResponseDto } from 'app/core/user/settings/passkey-settings/dto/register-passkey-response.dto';
+import { RegisterPasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/register-passkey.dto';
+import { PasskeyLoginResponseDTO } from 'app/core/user/settings/passkey-settings/dto/passkey-login-response.dto';
+import { RegisterPasskeyResponseDTO } from 'app/core/user/settings/passkey-settings/dto/register-passkey-response.dto';
 
 /**
  * Note: [WebAuthn4j](https://github.com/webauthn4j/webauthn4j) exposes the endpoints, the endpoints are not explicitly defined in a resource
@@ -25,8 +25,8 @@ export class WebauthnApiService extends BaseApiHttpService {
     /**
      * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-register-create}
      */
-    async registerPasskey(registerPasskeyDto: RegisterPasskeyDto): Promise<RegisterPasskeyResponseDto> {
-        return await this.post<RegisterPasskeyResponseDto>(`webauthn/register`, registerPasskeyDto);
+    async registerPasskey(registerPasskeyDto: RegisterPasskeyDTO): Promise<RegisterPasskeyResponseDTO> {
+        return await this.post<RegisterPasskeyResponseDTO>(`webauthn/register`, registerPasskeyDto);
     }
 
     /**
@@ -39,7 +39,7 @@ export class WebauthnApiService extends BaseApiHttpService {
     /**
      * @see {@link https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html#passkeys-verify-get}
      */
-    async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<PasskeyLoginResponseDto> {
-        return await this.post<PasskeyLoginResponseDto>(`login/webauthn`, publicKeyCredential);
+    async loginWithPasskey(publicKeyCredential: PublicKeyCredential): Promise<PasskeyLoginResponseDTO> {
+        return await this.post<PasskeyLoginResponseDTO>(`login/webauthn`, publicKeyCredential);
     }
 }

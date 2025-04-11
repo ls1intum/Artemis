@@ -1,4 +1,4 @@
-export interface PasskeyLoginResponseDto {
+export interface PasskeyLoginResponseDTO {
     redirectUrl: string;
     authenticated: boolean;
 }

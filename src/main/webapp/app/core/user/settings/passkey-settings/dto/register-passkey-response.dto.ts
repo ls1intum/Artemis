@@ -1,3 +1,3 @@
-export interface RegisterPasskeyResponseDto {
+export interface RegisterPasskeyResponseDTO {
     success: boolean;
 }
