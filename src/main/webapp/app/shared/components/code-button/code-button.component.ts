@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, input } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -9,7 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
@@ -98,8 +98,6 @@ export class CodeButtonComponent implements OnInit {
     sshTemplateUrl?: string;
     versionControlUrl: string;
 
-    localVCEnabled = signal<boolean>(true);
-
     copyEnabled = false;
     doesUserHaveSSHkeys = false;
     areAnySshKeysExpired = false;
@@ -145,7 +143,7 @@ export class CodeButtonComponent implements OnInit {
         });
 
         effect(() => {
-            if (!this.isInCourseManagement && this.localVCEnabled()) {
+            if (!this.isInCourseManagement) {
                 this.loadVcsAccessTokensForAllParticipations();
             }
         });
@@ -161,23 +159,20 @@ export class CodeButtonComponent implements OnInit {
         await this.checkForSshKeys();
 
         // Get ssh information from the user
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.sshSettingsUrl = profileInfo.sshKeysURL;
-            this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
+        const profileInfo = this.profileService.profileInfo;
+        this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
-            if (profileInfo.repositoryAuthenticationMechanisms?.length) {
-                this.authenticationMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
-                    Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
-                );
-            }
-            if (profileInfo.versionControlUrl) {
-                this.versionControlUrl = profileInfo.versionControlUrl;
-            }
+        if (profileInfo.repositoryAuthenticationMechanisms?.length) {
+            this.authenticationMechanisms = profileInfo.repositoryAuthenticationMechanisms.filter((method): method is RepositoryAuthenticationMethod =>
+                Object.values(RepositoryAuthenticationMethod).includes(method as RepositoryAuthenticationMethod),
+            );
+        }
+        if (profileInfo.versionControlUrl) {
+            this.versionControlUrl = profileInfo.versionControlUrl;
+        }
 
-            this.localVCEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LOCALVC));
-            this.configureTooltips(profileInfo);
-            this.initTheia(profileInfo);
-        });
+        this.configureTooltips();
+        this.initTheia(profileInfo);
 
         this.ideSettingsService.loadIdePreferences().then((programmingLanguageToIde) => {
             if (programmingLanguageToIde.size) {
@@ -327,23 +322,6 @@ export class CodeButtonComponent implements OnInit {
     }
 
     /**
-     * Gets the external link of the repository. For LocalVC, undefined is returned.
-     */
-    getHttpRepositoryUri(): string {
-        return this.isTeamParticipation ? this.repositoryUriForTeam(this.getRepositoryUri()) : this.getRepositoryUri();
-    }
-
-    /**
-     * The user info part of the repository uri of a team participation has to be added with the current user's login.
-     *
-     * @return repository uri with username of current user inserted
-     */
-    private repositoryUriForTeam(url: string) {
-        // (https://)(artemis.ase.in.tum.de/...-team1.git)  =>  (https://)ga12abc@(artemis.ase.in.tum.de/...-team1.git)
-        return url.replace(/^(\w*:\/\/)(.*)$/, `$1${this.user.login}@$2`);
-    }
-
-    /**
      * Transforms the repository uri to an ssh clone url
      */
     private getSshCloneUrl(url: string) {
@@ -418,13 +396,9 @@ export class CodeButtonComponent implements OnInit {
         }
     }
 
-    private configureTooltips(profileInfo: ProfileInfo) {
-        if (this.localVCEnabled()) {
-            this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
-            this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
-        } else {
-            this.sshSettingsUrl = profileInfo.sshKeysURL;
-        }
+    private configureTooltips() {
+        this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+        this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
         this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
         this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
         this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
@@ -443,7 +417,7 @@ export class CodeButtonComponent implements OnInit {
     }
 
     private initTheia(profileInfo: ProfileInfo) {
-        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise()) {
+        if (this.profileService.isProfileActive(PROFILE_THEIA) && this.exercise()) {
             const exercise = this.exercise()!;
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getTheiaConfig(exercise.id!).subscribe((theiaConfig) => {

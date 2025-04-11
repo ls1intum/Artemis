@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
@@ -11,24 +11,22 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { User } from 'app/core/user/user.model';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { MockActivatedRoute } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { mockThemeSwitcherComponentViewChildren } from '../../../../../test/javascript/spec/helpers/mocks/mock-instance.helper';
-import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
+import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -104,7 +102,6 @@ describe('NavbarComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
                 MockComponent(NotificationSidebarComponent),
-                MockComponent(GuidedTourComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
@@ -123,12 +120,6 @@ describe('NavbarComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
-                {
-                    provide: GuidedTourService,
-                    useValue: {
-                        getGuidedTourAvailabilityStream: () => of(false),
-                    },
-                },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ id: 123 }),

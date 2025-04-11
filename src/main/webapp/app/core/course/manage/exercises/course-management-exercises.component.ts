@@ -74,26 +74,12 @@ export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((result) => {
-            this.textExerciseEnabled = result.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
-        });
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
     }
 
     ngOnDestroy(): void {
         this.profileSubscription?.unsubscribe();
-    }
-
-    /**
-     * Sets the (filtered) programming exercise count. Required to pass a callback to the
-     * overrideProgrammingExerciseCard extension since extensions don't support @Output
-     * @param count to set the programmingExerciseCount to
-     */
-    setProgrammingExerciseCount(count: number) {
-        this.programmingExercisesCount = count;
-    }
-    setFilteredProgrammingExerciseCount(count: number) {
-        this.filteredProgrammingExercisesCount = count;
     }
 
     /**

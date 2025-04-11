@@ -2,15 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of } from 'rxjs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
 
 describe('UserSettingsContainerComponent', () => {
@@ -43,22 +42,5 @@ describe('UserSettingsContainerComponent', () => {
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.currentLang = 'en';
-    });
-
-    beforeEach(() => {
-        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [PROFILE_LOCALVC] }));
-    });
-
-    it('should initialize with localVC profile', async () => {
-        comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeTrue();
-    });
-
-    it('should initialize with no localVC profile set', async () => {
-        profileServiceMock.getProfileInfo.mockReturnValue(of({ activeProfiles: [] }));
-        comp.ngOnInit();
-        expect(profileServiceMock.getProfileInfo).toHaveBeenCalled();
-        expect(comp.localVCEnabled).toBeFalse();
     });
 });

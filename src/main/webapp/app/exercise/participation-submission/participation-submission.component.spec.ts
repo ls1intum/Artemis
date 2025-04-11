@@ -2,19 +2,19 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { UnreferencedFeedbackDetailComponent } from 'app/assessment/manage/unreferenced-feedback-detail/unreferenced-feedback-detail.component';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ParticipationSubmissionComponent } from 'app/exercise/participation-submission/participation-submission.component';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
-import { MockComplaintService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { ComplaintsForTutorComponent } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Submission, SubmissionExerciseType, SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
@@ -28,7 +28,6 @@ import { ProgrammingSubmission } from 'app/programming/shared/entities/programmi
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
@@ -42,11 +41,10 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateValuesDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ParticipationSubmissionComponent', () => {
     let comp: ParticipationSubmissionComponent;
@@ -63,13 +61,10 @@ describe('ParticipationSubmissionComponent', () => {
     let deleteProgrammingAssessmentStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
     let programmingExerciseService: ProgrammingExerciseService;
-    let profileService: ProfileService;
     let findAllSubmissionsOfParticipationStub: jest.SpyInstance;
     let debugElement: DebugElement;
     let router: Router;
     const route = () => ({ params: of({ participationId: 1, exerciseId: 42 }) });
-    // Template for commit hash url
-    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const result1 = { id: 44 } as Result;
     const result2 = { id: 45 } as Result;
@@ -129,17 +124,12 @@ describe('ParticipationSubmissionComponent', () => {
 
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-                profileService = fixture.debugElement.injector.get(ProfileService);
                 findAllSubmissionsOfParticipationStub = jest.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
 
                 deleteFileUploadAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'deleteAssessment');
                 deleteProgrammingAssessmentStub = jest.spyOn(programmingAssessmentService, 'deleteAssessment');
                 deleteModelingAssessmentStub = jest.spyOn(modelingAssessmentService, 'deleteAssessment');
                 deleteTextAssessmentStub = jest.spyOn(textAssessmentService, 'deleteAssessment');
-                // Set profile info
-                const profileInfo = new ProfileInfo();
-                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
                 fixture.ngZone!.run(() => router.initialNavigation());
             });
     });
@@ -230,10 +220,6 @@ describe('ParticipationSubmissionComponent', () => {
         expect(comp.participation).toEqual(templateParticipation);
         expect(comp.submissions).toEqual(templateParticipation.submissions);
 
-        // Create correct url for commit hash
-        const submission = templateParticipation.submissions[0] as ProgrammingSubmission;
-        checkForCorrectCommitHashUrl(submission, programmingExercise, '-exercise');
-
         fixture.destroy();
         flush();
     }));
@@ -272,10 +258,6 @@ describe('ParticipationSubmissionComponent', () => {
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);
-
-        // Create correct url for commit hash
-        const submission = solutionParticipation.submissions[0] as ProgrammingSubmission;
-        checkForCorrectCommitHashUrl(submission, programmingExercise, '-solution');
 
         fixture.destroy();
         flush();
@@ -402,16 +384,6 @@ describe('ParticipationSubmissionComponent', () => {
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
-
-    function checkForCorrectCommitHashUrl(submission: ProgrammingSubmission, programmingExercise: ProgrammingExercise, repoSlug: string) {
-        const projectKey = programmingExercise.projectKey!.toLowerCase();
-        const receivedCommitHashUrl = comp.getCommitUrl(submission);
-        const commitHashUrl = commitHashURLTemplate
-            .replace('{projectKey}', projectKey)
-            .replace('{repoSlug}', projectKey + repoSlug)
-            .replace('{commitHash}', submission.commitHash!);
-        expect(receivedCommitHashUrl).toEqual(commitHashUrl);
-    }
 
     function deleteResult(submission: Submission, resultToDelete: Result) {
         fixture.detectChanges();

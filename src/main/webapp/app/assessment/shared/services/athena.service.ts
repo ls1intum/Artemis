@@ -21,8 +21,9 @@ export class AthenaService {
     /**
      * Determine if the Athena service is available based on whether the corresponding profile is active
      */
+    // TODO: change this to a normal boolen to avoid complexity in the code
     public isEnabled(): Observable<boolean> {
-        return this.profileService.getProfileInfo().pipe(switchMap((profileInfo) => of(profileInfo.activeProfiles.includes(PROFILE_ATHENA))));
+        return of(this.profileService.isProfileActive(PROFILE_ATHENA));
     }
 
     /**

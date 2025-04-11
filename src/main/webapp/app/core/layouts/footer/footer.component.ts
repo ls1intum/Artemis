@@ -25,15 +25,14 @@ export class FooterComponent implements OnInit {
     isProduction: boolean;
 
     ngOnInit(): void {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.contact = profileInfo.contact;
-            this.gitBranch = profileInfo.git.branch;
-            this.gitCommitId = profileInfo.git.commit.id.abbrev;
-            this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
-            this.gitCommitUser = profileInfo.git.commit.user.name;
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.isProduction = profileInfo.inProduction;
-        });
+        const profileInfo = this.profileService.profileInfo;
+        this.contact = profileInfo.contact;
+        this.gitBranch = profileInfo.git.branch;
+        this.gitCommitId = profileInfo.git.commit.id.abbrev;
+        this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+        this.gitCommitUser = profileInfo.git.commit.user.name;
+        this.isTestServer = this.profileService.isTestServer();
+        this.isProduction = this.profileService.isProduction();
     }
 
     set contact(mail: string) {

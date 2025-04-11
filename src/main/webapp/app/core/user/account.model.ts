@@ -1,4 +1,3 @@
-import { GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
 
 export class Account {
     public activated?: boolean;
@@ -11,7 +10,6 @@ export class Account {
     public lastName?: string;
     public langKey?: string;
     public imageUrl?: string;
-    public guidedTourSettings?: GuidedTourSetting[];
 
     constructor(
         activated?: boolean,
@@ -22,7 +20,6 @@ export class Account {
         lastName?: string,
         login?: string,
         imageUrl?: string,
-        guidedTourSettings?: GuidedTourSetting[],
     ) {
         this.login = login;
         this.firstName = firstName;
@@ -32,6 +29,5 @@ export class Account {
         this.langKey = langKey;
         this.authorities = authorities;
         this.imageUrl = imageUrl;
-        this.guidedTourSettings = guidedTourSettings || [];
     }
 }

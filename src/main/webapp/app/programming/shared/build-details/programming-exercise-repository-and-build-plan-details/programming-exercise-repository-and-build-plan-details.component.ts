@@ -1,4 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
@@ -20,33 +22,33 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     private programmingExerciseService = inject(ProgrammingExerciseService);
+    private profileService = inject(ProfileService);
 
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     @Input() programmingLanguage?: ProgrammingLanguage;
-    @Input() isLocal: boolean;
     @Input() checkoutSolutionRepository = true;
     @Input() isCreateOrEdit = false;
     @Input() isEditMode = false;
     @Output() submissionBuildPlanEvent = new EventEmitter<BuildPlanCheckoutDirectoriesDTO>();
 
     checkoutDirectorySubscription?: Subscription;
-
     courseShortName?: string;
     checkoutDirectories?: CheckoutDirectoriesDto;
 
+    isLocalCIEnabled = true;
+
     ngOnInit() {
         this.updateCourseShortName();
+        this.updateCheckoutDirectories();
 
-        if (this.isLocal) {
-            this.updateCheckoutDirectories();
-        }
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     ngOnChanges(changes: SimpleChanges) {
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
-        if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
+        if (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated) {
             if (this.isCreateOrEdit && !this.isEditMode) {
                 this.resetProgrammingExerciseBuildCheckoutPaths();
             }
@@ -54,7 +56,7 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         }
 
         const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
-        if (this.isLocal && this.isCreateOrEdit && isBuildConfigChanged) {
+        if (this.isCreateOrEdit && isBuildConfigChanged) {
             this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
         }
     }

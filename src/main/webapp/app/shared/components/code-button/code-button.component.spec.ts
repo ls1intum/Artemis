@@ -12,11 +12,11 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
@@ -40,7 +40,7 @@ describe('CodeButtonComponent', () => {
     let getCachedSshKeysSpy: jest.SpyInstance;
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
-    const user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
+    const user = { login: 'user1', internal: true, vcsAccessToken: 'token' };
     const route = { snapshot: { url: of('courses') } } as any as ActivatedRoute;
 
     let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
@@ -48,15 +48,13 @@ describe('CodeButtonComponent', () => {
 
     const info: ProfileInfo = {
         externalCredentialProvider: '',
-        externalPasswordResetLinkMap: new Map<string, string>([
+        externalPasswordResetLinkMap: [
             ['en', ''],
             ['de', ''],
-        ]),
+        ],
         useExternal: false,
-        activeProfiles: ['localvc'],
         activeModuleFeatures: [],
         buildPlanURLTemplate: '',
-        commitHashURLTemplate: '',
         contact: '',
         externalUserManagementName: '',
         externalUserManagementURL: '',
@@ -67,7 +65,6 @@ describe('CodeButtonComponent', () => {
         programmingLanguageFeatures: [],
         ribbonEnv: '',
         sshCloneURLTemplate: 'ssh://git@gitlab.ase.in.tum.de:7999/',
-        sshKeysURL: 'sshKeysURL',
         testServer: false,
         versionControlUrl: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
         git: {
@@ -79,6 +76,7 @@ describe('CodeButtonComponent', () => {
                 time: '2022-11-20T20:35:01Z',
                 user: {
                     name: 'Max Musterman',
+                    email: 'max@mustermann.de',
                 },
             },
         },
@@ -548,8 +546,7 @@ describe('CodeButtonComponent', () => {
         const identityStub = jest.spyOn(accountService, 'identity');
         identityStub.mockReturnValue(
             Promise.resolve({
-                guidedTourSettings: [],
-                login: 'edx_userLogin',
+                        login: 'edx_userLogin',
                 internal: true,
                 vcsAccessToken: vcsToken,
             }),

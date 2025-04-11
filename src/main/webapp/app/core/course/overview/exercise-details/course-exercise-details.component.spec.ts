@@ -19,7 +19,6 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TeamService } from 'app/exercise/team/team.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -180,7 +179,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
-                MockProvider(GuidedTourService),
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),

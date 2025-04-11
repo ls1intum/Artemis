@@ -8,7 +8,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { Subscription } from 'rxjs';
-import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -23,7 +23,6 @@ import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -82,7 +81,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
 
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly alertService = inject(AlertService);
-    private readonly profileService = inject(ProfileService);
 
     sections = input.required<DetailOverviewSection[]>();
 
@@ -92,7 +90,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlinesRecord: Record<string, string>;
 
     profileSubscription: Subscription;
-    isLocalVC = false;
 
     ngOnInit() {
         this.headlines = this.sections().map((section) => {
@@ -100,9 +97,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
-        });
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };

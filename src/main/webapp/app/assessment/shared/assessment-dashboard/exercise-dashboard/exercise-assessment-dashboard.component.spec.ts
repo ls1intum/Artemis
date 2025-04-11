@@ -7,7 +7,6 @@ import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
@@ -60,7 +59,6 @@ import { User } from 'app/core/user/user.model';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 import { ExerciseAssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/exercise-assessment-dashboard.component';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
@@ -92,8 +90,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     let exerciseServiceGetStatsForTutorsStub: jest.SpyInstance;
 
     let tutorParticipationService: TutorParticipationService;
-
-    let guidedTourService: GuidedTourService;
 
     let accountService: AccountService;
 
@@ -244,7 +240,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(TutorParticipationService),
         MockProvider(ArtemisMarkdownService),
         MockProvider(ComplaintService),
-        MockProvider(GuidedTourService),
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
@@ -283,8 +278,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
                 exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
-
-                guidedTourService = TestBed.inject(GuidedTourService);
 
                 comp.exerciseId = modelingExercise.id!;
 
@@ -375,9 +368,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
-        const guidedTourMapping = {} as GuidedTourMapping;
-        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
-        guidedTourService.guidedTourMapping = guidedTourMapping;
         modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
 
         comp.loadAll();

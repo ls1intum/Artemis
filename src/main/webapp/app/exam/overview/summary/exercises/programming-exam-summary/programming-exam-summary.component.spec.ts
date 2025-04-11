@@ -9,7 +9,6 @@ import { User } from 'app/core/user/user.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { BehaviorSubject } from 'rxjs';
 import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { By } from '@angular/platform-browser';
@@ -17,16 +16,14 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { MockSyncStorage } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -96,8 +93,6 @@ describe('ProgrammingExamSummaryComponent', () => {
     let component: ProgrammingExamSummaryComponent;
     let fixture: ComponentFixture<ProgrammingExamSummaryComponent>;
 
-    let profileService: ProfileService;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             providers: [
@@ -118,13 +113,6 @@ describe('ProgrammingExamSummaryComponent', () => {
                 component.participation = programmingParticipation;
                 component.submission = programmingSubmission;
                 component.exam = exam;
-
-                profileService = TestBed.inject(ProfileService);
-
-                const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
-                const profileInfo = new ProfileInfo();
-                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
             });
     });
 
@@ -136,16 +124,6 @@ describe('ProgrammingExamSummaryComponent', () => {
         fixture.detectChanges();
 
         expect(component).toBeTruthy();
-    });
-
-    it('should set commitUrl', () => {
-        const spyOnGetProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
-
-        fixture.detectChanges();
-
-        expect(spyOnGetProfileInfo).toHaveBeenCalledOnce();
-        expect(component.commitHash).toBe('123456789ab');
-        expect(component.commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/test/repos/test-student1/commits/123456789ab');
     });
 
     it('should show result if present and results are published', () => {

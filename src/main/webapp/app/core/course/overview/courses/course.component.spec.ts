@@ -10,7 +10,6 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/core/course/overview/course-card/course-card.component';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
@@ -20,9 +19,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockHasAnyAuthorityDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
@@ -127,7 +126,6 @@ describe('CoursesComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 location = TestBed.inject(Location);
-                TestBed.inject(GuidedTourService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
                 TestBed.inject(AlertService);
                 httpMock = TestBed.inject(HttpTestingController);

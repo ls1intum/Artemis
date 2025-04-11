@@ -73,16 +73,15 @@ export class AboutUsComponent implements OnInit {
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.contact = profileInfo.contact;
-            if (profileInfo.git) {
-                this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                this.gitBranchName = profileInfo.git.branch;
-            }
-            this.operatorName = profileInfo.operatorName;
-            this.operatorAdminName = profileInfo.operatorAdminName;
-            this.operatorContactEmail = profileInfo.contact;
-        });
+        const profileInfo = this.profileService.profileInfo;
+        this.contact = profileInfo.contact;
+        if (profileInfo.git) {
+            this.gitCommitId = profileInfo.git.commit.id.abbrev;
+            this.gitBranchName = profileInfo.git.branch;
+        }
+        this.operatorName = profileInfo.operatorName;
+        this.operatorAdminName = profileInfo.operatorAdminName;
+        this.operatorContactEmail = profileInfo.contact;
     }
     /**
      * Create the mail reference for the contact

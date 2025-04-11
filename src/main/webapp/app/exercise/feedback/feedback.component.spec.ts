@@ -20,9 +20,9 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('FeedbackComponent', () => {
@@ -38,9 +38,6 @@ describe('FeedbackComponent', () => {
 
     let buildlogsStub: jest.SpyInstance;
     let getFeedbackDetailsForResultStub: jest.SpyInstance;
-
-    // Template for commit hash url
-    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const feedbackReference = {
         id: 1,
@@ -224,7 +221,6 @@ describe('FeedbackComponent', () => {
 
                 // Set profile info
                 const profileInfo = new ProfileInfo();
-                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
             });
     });
@@ -275,7 +271,6 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.getCommitHash()).toBe('123456789ab');
-        expect(comp.commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {

@@ -158,9 +158,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "user_groups")
     private Set<String> groups = new HashSet<>();
 
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
-
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
 
@@ -432,24 +429,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setExamUsers(Set<ExamUser> examUsers) {
         this.examUsers = examUsers;
-    }
-
-    public Set<GuidedTourSetting> getGuidedTourSettings() {
-        return this.guidedTourSettings;
-    }
-
-    public void addGuidedTourSetting(GuidedTourSetting setting) {
-        this.guidedTourSettings.add(setting);
-        setting.setUser(this);
-    }
-
-    public void removeGuidedTourSetting(GuidedTourSetting setting) {
-        this.guidedTourSettings.remove(setting);
-        setting.setUser(null);
-    }
-
-    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override

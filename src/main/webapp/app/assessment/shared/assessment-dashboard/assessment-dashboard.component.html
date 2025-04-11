@@ -61,7 +61,7 @@
 }
 @if (course) {
     <div>
-        <div id="assessment-statistics" class="guided-tour-assessment-stats">
+        <div id="assessment-statistics">
             <div class="container-fluid">
                 <jhi-assessment-dashboard-information
                     [isExamMode]="isExamMode"
@@ -86,7 +86,7 @@
         <div class="container-fluid mt-4">
             <h4 jhiTranslate="artemisApp.assessmentDashboard.exerciseTable.title"></h4>
             @if (!isTestRun) {
-                <div class="guided-tour-form-check col-6 align-baseline">
+                <div class="col-6 align-baseline">
                     <div class="form-check form-check-inline">
                         <input
                             class="form-check-input"
@@ -112,7 +112,7 @@
                 </div>
             }
             <div class="row table-responsive">
-                <table class="table exercise-table guided-tour-exercise-table">
+                <table class="table exercise-table">
                     <thead>
                         <tr jhiSort [(predicate)]="exercisesSortingPredicate" [(ascending)]="exercisesReverseOrder" (sortChange)="sortRows()">
                             <th jhiSortBy="type">
@@ -160,7 +160,6 @@
                                     <td>
                                         <jhi-tutor-participation-graph
                                             [exercise]="exercise"
-                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                                             [tutorParticipation]="exercise.tutorParticipations![0]"
                                             [numberOfSubmissions]="exercise.numberOfSubmissions"
                                             [totalNumberOfAssessments]="exercise.totalNumberOfAssessments"
@@ -201,7 +200,6 @@
                                                 id="open-exercise-dashboard"
                                                 [routerLink]="getAssessmentDashboardLinkForExercise(exercise)"
                                                 class="btn btn-info btn-sm me-1 mb-1"
-                                                [class.guided-tour]="exercise === exerciseForGuidedTour"
                                             >
                                                 <span class="d-md-inline" jhiTranslate="entity.action.exerciseDashboard"></span>
                                             </a>
@@ -211,7 +209,6 @@
                                             [routerLink]="['/course-management', courseId, 'exercises', exercise.id, 'teams']"
                                             [queryParams]="{ filter: TeamFilterProp.OWN }"
                                             class="btn btn-info btn-sm me-1 mb-1"
-                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                                         >
                                             <span class="d-none d-md-inline" jhiTranslate="artemisApp.assessmentDashboard.exerciseTeams"></span>
                                         </a>

@@ -56,14 +56,12 @@ describe('Exercise Scores Component', () => {
                 login: 'login1',
                 name: 'name1',
                 internal: true,
-                guidedTourSettings: [],
-            },
+                    },
             {
                 login: 'login2',
                 name: 'name2',
                 internal: true,
-                guidedTourSettings: [],
-            },
+                    },
         ],
     };
 
@@ -303,8 +301,7 @@ describe('Exercise Scores Component', () => {
             login: 'login',
             name: 'name',
             internal: true,
-            guidedTourSettings: [],
-        };
+            };
 
         expect(component.searchParticipationFormatter(participation)).toBe('login (name)');
 

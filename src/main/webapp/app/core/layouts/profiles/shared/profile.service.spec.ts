@@ -25,36 +25,7 @@ describe('ProfileService', () => {
         useExternal: false,
         contact: 'artemis@xcit.tum.de',
         imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
-        'guided-tour': {
-            courseShortName: 'artemistutorial',
-            tours: {
-                0: {
-                    cancel_tour: '',
-                },
-                1: {
-                    code_editor_tour: 'test',
-                },
-                2: {
-                    course_overview_tour: '',
-                },
-                3: {
-                    course_exercise_overview_tour: 'test',
-                },
-                4: {
-                    modeling_tour: 'UML Class Diagram',
-                },
-                5: {
-                    programming_exercise_fail_tour: 'test',
-                },
-                6: {
-                    programming_exercise_success_tour: 'test',
-                },
-                7: {
-                    tutor_assessment_tour: 'Patterns in Software Engineering',
-                },
-            },
-        },
-        'test-server': true,
+        testServer: true,
         sentry: {
             dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
         },
@@ -120,9 +91,7 @@ describe('ProfileService', () => {
             },
         ],
         versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
-        commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
-        sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         registrationEnabled: true,
         needsToAcceptTerms: false,
@@ -157,28 +126,13 @@ describe('ProfileService', () => {
         activeModuleFeatures: [],
         testServer: true,
         ribbonEnv: '',
-        guidedTourMapping: {
-            courseShortName: 'artemistutorial',
-            tours: {
-                cancel_tour: '',
-                code_editor_tour: 'test',
-                course_exercise_overview_tour: 'test',
-                course_overview_tour: '',
-                modeling_tour: 'UML Class Diagram',
-                programming_exercise_fail_tour: 'test',
-                programming_exercise_success_tour: 'test',
-                tutor_assessment_tour: 'Patterns in Software Engineering',
-            },
-        },
         inProduction: true,
         inDevelopment: false,
         openApiEnabled: true,
         sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
-        commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
-        sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
         externalUserManagementName: '',
         externalUserManagementURL: '',
         contact: 'artemis@xcit.tum.de',

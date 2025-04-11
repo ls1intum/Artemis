@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
-import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -56,17 +55,13 @@ public class TutorParticipationResource {
 
     private final UserRepository userRepository;
 
-    private final GuidedTourConfiguration guidedTourConfiguration;
-
     public TutorParticipationResource(TutorParticipationService tutorParticipationService, TutorParticipationRepository tutorParticipationRepository,
-            AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository,
-            GuidedTourConfiguration guidedTourConfiguration) {
+            AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, UserRepository userRepository) {
         this.tutorParticipationService = tutorParticipationService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
-        this.guidedTourConfiguration = guidedTourConfiguration;
     }
 
     /**
@@ -123,26 +118,5 @@ public class TutorParticipationResource {
         });
 
         return ResponseEntity.ok().body(resultTutorParticipation);
-    }
-
-    /**
-     * DELETE /guided-tour/exercises/:exerciseId/example-submission: delete the tutor participation for example submissions of the "exerciseId" exercise for guided tutorials (e.g.
-     * when restarting a tutorial)
-     * Please note: all tutors can delete their own tutor participation for example submissions when it belongs to a guided tutorial
-     *
-     * @param exerciseId the exercise id which has example submissions and tutor participations
-     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
-     */
-    @DeleteMapping("guided-tour/exercises/{exerciseId}/example-submission")
-    @EnforceAtLeastTutor
-    public ResponseEntity<TutorParticipation> deleteTutorParticipationForGuidedTour(@PathVariable Long exerciseId) {
-        log.debug("REST request to remove tutor participation of the example submission for exercise id : {}", exerciseId);
-        Exercise exercise = this.exerciseRepository.findByIdElseThrow(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        // Allow all tutors to delete their own participation if it's for a tutorial
-        authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
-        guidedTourConfiguration.checkExerciseForTutorialElseThrow(exercise);
-        tutorParticipationService.removeTutorParticipations(exercise, user);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).build();
     }
 }

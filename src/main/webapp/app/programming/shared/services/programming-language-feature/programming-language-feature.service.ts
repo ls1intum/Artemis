@@ -1,20 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-/**
- * ProgrammingLanguageFeature, defined on the server, allows to customize the user interface during programming exercise generation
- * @readonly
- */
-export type ProgrammingLanguageFeature = {
-    programmingLanguage: ProgrammingLanguage;
-    sequentialTestRuns: boolean;
-    staticCodeAnalysis: boolean;
-    plagiarismCheckSupported: boolean;
-    packageNameRequired: boolean;
-    checkoutSolutionRepositoryAllowed: boolean;
-    projectTypes?: ProjectType[];
-    auxiliaryRepositoriesSupported: boolean;
-};
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingLanguageFeatureService {
@@ -23,10 +10,9 @@ export class ProgrammingLanguageFeatureService {
     private programmingLanguageFeatures: Map<ProgrammingLanguage, ProgrammingLanguageFeature> = new Map<ProgrammingLanguage, ProgrammingLanguageFeature>();
 
     constructor() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            profileInfo.programmingLanguageFeatures.forEach((programmingLanguageFeature) => {
-                this.programmingLanguageFeatures.set(programmingLanguageFeature.programmingLanguage, programmingLanguageFeature);
-            });
+        const profileInfo = this.profileService.profileInfo;
+        profileInfo.programmingLanguageFeatures.forEach((programmingLanguageFeature) => {
+            this.programmingLanguageFeatures.set(programmingLanguageFeature.programmingLanguage, programmingLanguageFeature);
         });
     }
 

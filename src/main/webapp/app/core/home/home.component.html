@@ -123,17 +123,17 @@
                 <div class="d-xl-none horizontal-divider" jhiTranslate="login.divider"></div>
             </div>
         }
-        @if (!!profileInfo?.saml2) {
+        @if (!!profileInfo?.saml2Config) {
             <div class="login-col col-12 col-xl-5">
                 <!-- SAML2 Authentication -->
                 <div class="h-100 d-flex flex-column align-items-center justify-content-center">
-                    @if (!profileInfo!.saml2!.identityProviderName) {
+                    @if (!profileInfo!.saml2Config!.identityProviderName) {
                         <div [jhiTranslate]="'home.login.saml2.pleaseSignIn'" class="lead text-center">Please sign in via Single Sign-on.</div>
                     }
-                    @if (profileInfo!.saml2!.identityProviderName) {
+                    @if (profileInfo!.saml2Config!.identityProviderName) {
                         <div
                             [jhiTranslate]="'home.login.saml2.pleaseSignInProvider'"
-                            [translateValues]="{ provider: profileInfo!.saml2!.identityProviderName }"
+                            [translateValues]="{ provider: profileInfo!.saml2Config!.identityProviderName }"
                             class="lead text-center"
                         >
                             Please sign in.
@@ -153,7 +153,7 @@
                         <jhi-saml2-login
                             [acceptedTerms]="!needsToAcceptTerms || userAcceptedTerms"
                             [rememberMe]="rememberMe"
-                            [saml2Profile]="profileInfo!.saml2!"
+                            [saml2Profile]="profileInfo!.saml2Config!"
                             class="d-block text-center"
                         />
                     </div>

@@ -69,12 +69,15 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
+
+    // TODO: the following 5 values do not need to be signals as they cannot change
     atlasEnabled = signal<boolean>(false);
     irisEnabled = signal<boolean>(false);
     ltiEnabled = signal<boolean>(false);
     localCIActive = signal<boolean>(false);
     isProduction = signal<boolean>(true);
     isTestServer = signal<boolean>(false);
+
     pageTitle = signal<string>('');
     isNavbarCollapsed = signal<boolean>(false);
     isSidebarCollapsed = signal<boolean>(false);
@@ -109,16 +112,12 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.isSidebarCollapsed.set(false);
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.isProduction.set(profileInfo?.inProduction);
-                this.isTestServer.set(profileInfo.testServer ?? false);
-                this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
-                this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
-                this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
-                this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
-            }
-        });
+        this.isProduction.set(this.profileService.isProduction());
+        this.isTestServer.set(this.profileService.isTestServer());
+        this.atlasEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS));
+        this.irisEnabled.set(this.profileService.isProfileActive(PROFILE_IRIS));
+        this.ltiEnabled.set(this.profileService.isProfileActive(PROFILE_LTI));
+        this.localCIActive.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
 
         this.getCollapseStateFromStorage();
         const storedCourse = this.courseStorageService.getCourse(this.courseId());

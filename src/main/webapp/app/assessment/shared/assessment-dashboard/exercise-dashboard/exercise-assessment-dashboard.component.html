@@ -172,7 +172,7 @@
         }
 
         @if (tutorParticipationStatus === NOT_PARTICIPATED && !isTestRun) {
-            <div class="guided-tour-markdown-preview markdown-preview">
+            <div class="markdown-preview">
                 @if (exercise.problemStatement && exercise.problemStatement.length > 0) {
                     <jhi-info-panel [panelHeader]="'artemisApp.exerciseAssessmentDashboard.problemStatement' | artemisTranslate">
                         @if (exercise.type !== ExerciseType.PROGRAMMING) {
@@ -211,17 +211,11 @@
                 @if (exercise.type === ExerciseType.PROGRAMMING) {
                     <div class="col-12">
                         <h4 jhiTranslate="artemisApp.exerciseAssessmentDashboard.exampleSolution"></h4>
-                        @if (!localVCEnabled) {
-                            <a jhiSecureLink [href]="programmingExercise.solutionParticipation?.repositoryUri || ''">
-                                <jhi-button jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.exampleSolution" />
-                            </a>
-                        } @else {
-                            <jhi-code-button
-                                [smallButtons]="true"
-                                [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
-                                [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
-                            />
-                        }
+                        <jhi-code-button
+                            [smallButtons]="true"
+                            [repositoryUri]="programmingExercise.solutionParticipation?.repositoryUri || ''"
+                            [routerLinkForRepositoryView]="['/course-management', courseId, 'programming-exercises', exerciseId, 'repository', 'SOLUTION']"
+                        />
                     </div>
                 }
 
@@ -244,7 +238,7 @@
             <div class="col-12 text-center mt-2 mb-4">
                 <p jhiTranslate="artemisApp.exerciseAssessmentDashboard.pleaseContactIfUnclear"></p>
 
-                <button id="participate-in-assessment" class="btn btn-primary guided-tour-instructions-button p-1" (click)="readInstruction()" [disabled]="isLoading">
+                <button id="participate-in-assessment" class="btn btn-primary p-1" (click)="readInstruction()" [disabled]="isLoading">
                     @if (exercise.gradingInstructions && exercise.gradingInstructions.length > 0) {
                         <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.readAndUnderstood"></span>
                     }
@@ -258,7 +252,7 @@
 
         @if (tutorParticipationStatus !== NOT_PARTICIPATED || isTestRun) {
             <div class="d-flex">
-                <div class="guided-tour-exercise-dashboard-table flex-grow-1">
+                <div class="flex-grow-1">
                     @if (tutorParticipationStatus === REVIEWED_INSTRUCTIONS && !isTestRun) {
                         <div class="alert alert-warning row" role="alert">
                             <span
@@ -283,7 +277,6 @@
                                     @if (stats.toReview.done < stats.toReview.total) {
                                         <button
                                             class="btn btn-primary review-example-submission mb-4"
-                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                                             (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
                                         >
                                             @if (stats.toReview.done <= 0) {
@@ -302,7 +295,6 @@
                                                 <li>
                                                     <button
                                                         class="btn btn-link review-example-submission"
-                                                        [class.guided-tour]="exercise === exerciseForGuidedTour"
                                                         (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
@@ -326,7 +318,6 @@
                                     @if (stats.toAssess.done < stats.toAssess.total) {
                                         <button
                                             class="btn btn-primary assess-example-submission mb-4"
-                                            [class.guided-tour]="exercise === exerciseForGuidedTour"
                                             (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
                                         >
                                             @if (stats.toAssess.done <= 0) {
@@ -345,7 +336,6 @@
                                                 <li>
                                                     <button
                                                         class="btn btn-link assess-example-submission"
-                                                        [class.guided-tour]="exercise === exerciseForGuidedTour"
                                                         (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
                                                     >
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
@@ -435,12 +425,11 @@
                                                             <td>
                                                                 <a
                                                                     id="start-new-assessment"
-                                                                    class="btn btn-success btn-sm guided-tour-new-assessment-btn"
+                                                                    class="btn btn-success btn-sm"
                                                                     [routerLink]="getAssessmentLink('new')"
                                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                    [class.disabled]="exercise === exerciseForGuidedTour || openingAssessmentEditorForNewSubmission"
-                                                                    [class.guided-tour]="exercise === exerciseForGuidedTour"
-                                                                    [ngStyle]="exercise === exerciseForGuidedTour ? { cursor: 'not-allowed' } : {}"
+                                                                    [class.disabled]="exercise === openingAssessmentEditorForNewSubmission"
+                                                                    [ngStyle]="{}"
                                                                 >
                                                                     @if (openingAssessmentEditorForNewSubmission) {
                                                                         <fa-icon [icon]="faSpinner" animation="spin" />

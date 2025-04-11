@@ -22,15 +22,11 @@ export class PageRibbonComponent implements OnInit {
     ribbonEnv: string;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                if (profileInfo.inDevelopment) {
-                    this.ribbonEnv = 'dev';
-                }
-                if (profileInfo.inProduction && profileInfo.testServer) {
-                    this.ribbonEnv = 'test';
-                }
-            }
-        });
+        if (this.profileService.isDevelopment()) {
+            this.ribbonEnv = 'dev';
+        }
+        if (this.profileService.isProduction() && this.profileService.isTestServer()) {
+            this.ribbonEnv = 'test';
+        }
     }
 }

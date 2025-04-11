@@ -32,7 +32,7 @@ import {
 import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_TEXT, PROFILE_LOCALCI } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
@@ -90,7 +90,6 @@ export class ExerciseGroupsComponent implements OnInit, OnDestroy {
     latestIndividualEndDate?: dayjs.Dayjs;
     exerciseGroupToExerciseTypesDict = new Map<number, ExerciseType[]>();
 
-    localVCEnabled = true;
     localCIEnabled = true;
     textExerciseEnabled = false;
     disabledExerciseTypes: string[] = [];
@@ -126,14 +125,11 @@ export class ExerciseGroupsComponent implements OnInit, OnDestroy {
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-            this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
-            if (!this.textExerciseEnabled) {
-                this.disabledExerciseTypes.push(ExerciseType.TEXT);
-            }
-        });
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+        if (!this.textExerciseEnabled) {
+            this.disabledExerciseTypes.push(ExerciseType.TEXT);
+        }
     }
 
     ngOnDestroy() {
@@ -180,7 +176,7 @@ export class ExerciseGroupsComponent implements OnInit, OnDestroy {
 
     /**
      * Delete the exercise group with the given id.
-     * @param exerciseGroupId {number}
+     * @param exerciseGroupId
      * @param event representation of users choices to delete the student repositories and base repositories
      */
     deleteExerciseGroup(exerciseGroupId: number, event: { [key: string]: boolean }) {

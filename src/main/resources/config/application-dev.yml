@@ -100,19 +100,6 @@ jhipster:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    guided-tour:
-        # Names of the tutorial groups that will be automatically added to newly created users
-        course-group-students: 'artemis-artemistutorial-students'
-        courseShortName: 'artemistutorial'
-        tours:
-            - cancel_tour: ''
-            - code_editor_tour: 'test'
-            - course_overview_tour: ''
-            - course_exercise_overview_tour: 'test'
-            - modeling_tour: 'UML Class Diagram'
-            - programming_exercise_fail_tour: 'test'
-            - programming_exercise_success_tour: 'test'
-            - tutor_assessment_tour: 'Patterns in Software Engineering'
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true

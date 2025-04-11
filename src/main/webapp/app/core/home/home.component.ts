@@ -76,11 +76,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     passwordTouched = false;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.initializeWithProfileInfo(profileInfo);
-            }
-        });
+        const profileInfo = this.profileService.profileInfo;
+        this.initializeWithProfileInfo(profileInfo);
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
@@ -125,7 +122,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
-            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
+            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2Config && this.profileInfo.saml2Config.passwordLoginDisabled && !loginFormOverride;
         });
     }
 

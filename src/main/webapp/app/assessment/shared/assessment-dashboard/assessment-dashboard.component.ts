@@ -6,8 +6,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
@@ -69,7 +67,6 @@ export class AssessmentDashboardComponent implements OnInit {
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
-    private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
 
     readonly TeamFilterProp = TeamFilterProp;
@@ -106,7 +103,6 @@ export class AssessmentDashboardComponent implements OnInit {
     exercisesReverseOrder = false;
 
     tutor: User;
-    exerciseForGuidedTour?: Exercise;
 
     isExamMode = false;
     isTestRun = false;
@@ -257,8 +253,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
 
-                    // Ensure that the page is loaded when the guided tour is started
-                    this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
                 error: (response: string) => this.onError(response),
@@ -343,7 +337,6 @@ export class AssessmentDashboardComponent implements OnInit {
             this.currentlyShownExercises = this.getUnfinishedExercises(exercises);
             // sort exercises by type to get a better overview in the dashboard
             this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
-            this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
             this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }

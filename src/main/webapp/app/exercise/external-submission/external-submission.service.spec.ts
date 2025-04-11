@@ -38,7 +38,7 @@ describe('External Submission Service', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
         };
-        const user: User = { internal: false, id: 2, login: 'ab12cde', guidedTourSettings: [] };
+        const user: User = { internal: false, id: 2, login: 'ab12cde' };
         const result: Result = { id: undefined };
 
         let createResult: EntityResponseType | undefined;

@@ -32,8 +32,6 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -51,7 +49,6 @@ import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
@@ -134,7 +131,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private router = inject(Router);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
     private profileService = inject(ProfileService);
 
@@ -151,8 +147,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isLoading = false;
-
-    localVCEnabled = true;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -218,8 +212,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     tutor?: User;
     togglingSecondCorrectionButton = false;
 
-    exerciseForGuidedTour?: Exercise;
-
     complaintsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
     moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
@@ -261,9 +253,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.accountService.identity().then((user: User) => (this.tutor = user));
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
-        });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 
@@ -352,7 +341,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         break;
                 }
 
-                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
                 this.tutorParticipation = this.exercise.tutorParticipations![0];
                 this.tutorParticipationStatus = this.tutorParticipation.status!;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
@@ -386,9 +374,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if ((this.exercise.allowFeedbackRequests || isAfterDueDate) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
-
-                // load the guided tour step only after everything else on the page is loaded
-                this.guidedTourService.componentPageLoaded();
 
                 this.setupLinks();
             },

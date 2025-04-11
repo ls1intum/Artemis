@@ -79,18 +79,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @Autowired
     private TutorialGroupUtilService tutorialGroupUtilService;
 
-    @Value("${info.guided-tour.course-group-students:#{null}}")
-    private Optional<String> tutorialGroupStudents;
-
-    @Value("${info.guided-tour.course-group-tutors:#{null}}")
-    private Optional<String> tutorialGroupTutors;
-
-    @Value("${info.guided-tour.course-group-editors:#{null}}")
-    private Optional<String> tutorialGroupEditors;
-
-    @Value("${info.guided-tour.course-group-instructors:#{null}}")
-    private Optional<String> tutorialGroupInstructors;
-
     private User student;
 
     private static final String USERNAME = TEST_PREFIX + "student1";

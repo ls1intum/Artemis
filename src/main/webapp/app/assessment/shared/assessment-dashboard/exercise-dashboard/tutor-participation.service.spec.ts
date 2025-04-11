@@ -50,42 +50,6 @@ describe('Rating Service', () => {
         tick();
     }));
 
-    describe('should not delete tutor participation for guided tour', () => {
-        const course: Course | undefined = undefined;
-        it('if course is undefined', fakeAsync(() => {
-            service
-                .deleteTutorParticipationForGuidedTour(course!, {} as Exercise)
-                .pipe(isEmpty())
-                .subscribe();
-
-            tick();
-        }));
-
-        it('if user is not at least tutor for the course', fakeAsync(() => {
-            jest.spyOn(accountServiceMock, 'isAtLeastTutorInCourse').mockReturnValue(false);
-
-            service
-                .deleteTutorParticipationForGuidedTour(new Course(), {} as Exercise)
-                .pipe(isEmpty())
-                .subscribe();
-
-            tick();
-        }));
-    });
-
-    it('should delete tutor participation for guided tour if there is a course and is at least turo for the course', fakeAsync(() => {
-        jest.spyOn(accountServiceMock, 'isAtLeastTutorInCourse').mockReturnValue(true);
-
-        service
-            .deleteTutorParticipationForGuidedTour(new Course(), { id: exerciseId } as Exercise)
-            .pipe(take(1))
-            .subscribe();
-
-        const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
-        tick();
-    }));
-
     afterEach(() => {
         httpMock.verify();
     });

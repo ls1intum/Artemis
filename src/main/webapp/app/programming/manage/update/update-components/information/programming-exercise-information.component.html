@@ -56,19 +56,18 @@
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
-                <jhi-help-icon [text]="isLocal() ? 'artemisApp.programmingExercise.preview.tooltipLocalVC' : 'artemisApp.programmingExercise.preview.tooltip'" />
+                <jhi-help-icon [text]="'artemisApp.programmingExercise.preview.tooltipLocalVC'" />
             </div>
             <jhi-programming-exercise-repository-and-build-plan-details
                 [programmingExercise]="programmingExercise()"
                 [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-                [isLocal]="isLocal()"
                 [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository || false"
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
                 [isCreateOrEdit]="true"
                 [isEditMode]="programmingExerciseCreationConfig.isEdit"
                 [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
             />
-            @if (editRepositoryCheckoutPath && isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
+            @if (editRepositoryCheckoutPath && isLocalCIEnabled && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise()"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
@@ -147,12 +146,12 @@
                             }
                         </ngb-alert>
                     }
-                    @if (programmingExerciseCreationConfig && !isLocal()) {
+                    @if (programmingExerciseCreationConfig && !isLocalCIEnabled) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
-                    @if (isLocal() && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
+                    @if (isLocalCIEnabled && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
                         <jhi-button
                             [btnType]="ButtonType.WARNING"
                             [btnSize]="ButtonSize.SMALL"

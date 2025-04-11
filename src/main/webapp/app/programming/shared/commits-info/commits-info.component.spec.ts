@@ -9,12 +9,12 @@ import { of } from 'rxjs';
 import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -23,7 +23,6 @@ describe('CommitsInfoComponent', () => {
     let fixture: ComponentFixture<CommitsInfoComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseParticipationServiceSpy: jest.SpyInstance;
-    let profileService: ProfileService;
     let profileServiceSpy: jest.SpyInstance;
 
     const commitInfo1 = {
@@ -83,10 +82,6 @@ describe('CommitsInfoComponent', () => {
         programmingExerciseParticipationServiceSpy = jest
             .spyOn(programmingExerciseParticipationService, 'retrieveCommitsInfoForParticipation')
             .mockReturnValue(of([commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6] as CommitInfo[]));
-        profileService = TestBed.inject(ProfileService);
-        profileServiceSpy = jest
-            .spyOn(profileService, 'getProfileInfo')
-            .mockReturnValue(of({ commitHashURLTemplate: 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}' } as unknown as ProfileInfo));
     });
 
     afterEach(() => {
@@ -120,38 +115,5 @@ describe('CommitsInfoComponent', () => {
         component.commits = [{ hash: '123', author: 'author', timestamp: dayjs('2021-01-01'), message: 'commit message' }];
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).not.toHaveBeenCalled();
-    });
-
-    it('should correctly return commit url', () => {
-        component.participationId = 1;
-        component.commits = [commitInfo1];
-        component.submissions = [
-            {
-                commitHash: '123',
-                participation: {
-                    id: 1,
-                    type: ParticipationType.PROGRAMMING,
-                    participantIdentifier: '1',
-                    repositoryUri: 'repo.abc',
-                } as unknown as ProgrammingExerciseStudentParticipation,
-            },
-        ];
-        component.exerciseProjectKey = 'key';
-
-        component.ngOnInit();
-
-        expect(component.commits[0].commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/key/repos/key-1/commits/123');
-    });
-
-    it('should set localVC to true if active profiles contains localVc', () => {
-        profileServiceSpy.mockReturnValue(of({ activeProfiles: ['localvc'] } as unknown as ProfileInfo));
-        component.ngOnInit();
-        expect(component.localVC).toBeTrue();
-    });
-
-    it('should set localVC to false if active profiles does not contain localVc', () => {
-        profileServiceSpy.mockReturnValue(of({ activeProfiles: ['gitlab'] } as unknown as ProfileInfo));
-        component.ngOnInit();
-        expect(component.localVC).toBeFalse();
     });
 });

@@ -70,10 +70,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private async setupErrorHandling() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            // sentry is only activated if it was specified in the application.yml file
-            this.sentryErrorHandler.initSentry(profileInfo);
-        });
+        const profileInfo = this.profileService.profileInfo;
+        // sentry is only activated if it was specified in the application.yml file
+        this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -116,10 +115,8 @@ export class AppComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.isProduction = profileInfo.inProduction;
-        });
+        this.isTestServer = this.profileService.isTestServer();
+        this.isProduction = this.profileService.isProduction();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;

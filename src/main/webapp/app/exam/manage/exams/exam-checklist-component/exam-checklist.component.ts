@@ -104,13 +104,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.disabledExercises =
-                this.exam()
-                    .exerciseGroups?.flatMap((group) => group.exercises)
-                    .filter((exercise) => exercise !== undefined)
-                    .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
-        });
+        const profileInfo = this.profileService.profileInfo;
+        this.disabledExercises =
+            this.exam()
+                .exerciseGroups?.flatMap((group) => group.exercises)
+                .filter((exercise) => exercise !== undefined)
+                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
     }
 
     ngOnChanges() {

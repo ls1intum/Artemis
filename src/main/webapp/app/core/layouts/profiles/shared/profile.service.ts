@@ -10,10 +10,10 @@ export class ProfileService {
     private featureToggleService = inject(FeatureToggleService);
     private browserFingerprintService = inject(BrowserFingerprintService);
 
-    private readonly profileInfo = signal<ProfileInfo | undefined>(undefined);
+    private readonly profileInfoSignal = signal<ProfileInfo>({} as ProfileInfo);
 
     /** Expose read-only signal to components which want to use the information */
-    readonly profileInfoSignal = this.profileInfo;
+    public readonly profileInfo = this.profileInfoSignal();
 
     constructor() {
         this.loadProfileInfo(); // no condition needed — the app always needs it
@@ -23,19 +23,38 @@ export class ProfileService {
      * Check if the given profile is active.
      * @param profile The profile to check.
      */
-    readonly isProfileActive = computed(() => {
-        const info = this.profileInfo();
-        return (profile: string) => info?.activeProfiles?.includes(profile) ?? false;
+    private readonly isProfileActiveSignal = computed(() => {
+        return (profile: string) => this.profileInfo.activeProfiles?.includes(profile) ?? false;
     });
+
+    public isProfileActive(profile: string) {
+        return this.isProfileActiveSignal()(profile);
+    }
+
+    public isModuleFeatureActive(feature: string) {
+        return this.profileInfo.activeModuleFeatures?.includes(feature) ?? false;
+    }
 
     // TODO: convert ProfileInfo to exactly reflect the server API response so that no cumbersome mapping is needed
     //  this involves changing 'test-server' in the server to 'testServer', etc.
     /** Trigger data loading once */
     private loadProfileInfo(): void {
         this.http.get<ProfileInfo>('management/info').subscribe((info) => {
-            this.profileInfo.set(info);
+            this.profileInfoSignal.set(info);
             this.featureToggleService.initializeFeatureToggles(info.features);
             this.browserFingerprintService.initialize(info.studentExamStoreSessionData);
         });
+    }
+
+    public isDevelopment(): boolean {
+        return this.isProfileActive('dev') ?? false;
+    }
+
+    public isProduction(): boolean {
+        return this.isProfileActive('prod') ?? false;
+    }
+
+    public isTestServer(): boolean {
+        return this.profileInfo.testServer ?? false;
     }
 }

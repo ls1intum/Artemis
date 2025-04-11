@@ -1,23 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { of } from 'rxjs';
-import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
-import { RepositoryType } from '../../../../programming/shared/code-editor/model/code-editor.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Programming Exercise Group Cell Component', () => {
-    let comp: ProgrammingExerciseGroupCellComponent;
     let fixture: ComponentFixture<ProgrammingExerciseGroupCellComponent>;
     const exercise: ProgrammingExercise = {
         id: 1,
@@ -38,8 +35,6 @@ describe('Programming Exercise Group Cell Component', () => {
     } as any as ProgrammingExercise;
 
     let mockedProfileService: ProfileService;
-    let mockProgrammingExerciseService: ProgrammingExerciseService;
-    let mockAlertService: AlertService;
 
     beforeEach(() => {
         mockedProfileService = {
@@ -63,10 +58,7 @@ describe('Programming Exercise Group Cell Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseGroupCellComponent);
-                comp = fixture.componentInstance;
                 fixture.componentRef.setInput('exercise', exercise);
-                mockProgrammingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-                mockAlertService = fixture.debugElement.injector.get(AlertService);
             });
     });
 
@@ -108,18 +100,5 @@ describe('Programming Exercise Group Cell Component', () => {
         const div2 = fixture.debugElement.query(By.css('div > div > div:nth-child(3)'));
         expect(div2).not.toBeNull();
         expect(div2.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineIdeartemisApp.exercise.no');
-    });
-
-    it('should download the repository', () => {
-        // GIVEN
-        const exportRepositoryStub = jest.spyOn(mockProgrammingExerciseService, 'exportInstructorRepository').mockReturnValue(of(new HttpResponse<Blob>()));
-        const alertSuccessStub = jest.spyOn(mockAlertService, 'success');
-
-        // WHEN
-        comp.downloadRepository(RepositoryType.TEMPLATE);
-
-        // THEN
-        expect(exportRepositoryStub).toHaveBeenCalledOnce();
-        expect(alertSuccessStub).toHaveBeenCalledOnce();
     });
 });
