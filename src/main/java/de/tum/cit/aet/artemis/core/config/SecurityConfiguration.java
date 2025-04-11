@@ -266,15 +266,15 @@ public class SecurityConfiguration {
             //.httpBasic(Customizer.withDefaults());
 
         if (passkeyEnabled) {
-            URL clientUrl = getClientUrl();
+            URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
             URL clientUrl1 = new URI(serverUrl + ":" + port).toURL();;
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrl1.toString())
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString())
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
-                    .rpId(clientUrl.getHost())
+                    .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
             });
         }
