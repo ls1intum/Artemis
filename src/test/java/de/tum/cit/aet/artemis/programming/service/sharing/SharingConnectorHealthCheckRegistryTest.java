@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,6 +18,9 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
     @Autowired
     private SharingHealthIndicator sharingHealthIndicator;
 
+    @Autowired
+    private SharingConnectorService sharingConnectorService;
+
     @AfterEach
     void tearDown() throws Exception {
         sharingPlatformMockProvider.reset();
@@ -36,7 +39,7 @@ class SharingConnectorHealthCheckRegistryTest extends AbstractSpringIntegrationI
     void testMaxStatusInfo() throws Exception {
         sharingPlatformMockProvider.mockStatus(true);
 
-        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingHealthIndicator.sharingConnectorService.getLastHealthStati();
+        SharingConnectorService.HealthStatusWithHistory lastHealthStati = sharingConnectorService.getLastHealthStati();
 
         for (int i = 0; i < SharingConnectorService.HEALTH_HISTORY_LIMIT * 2; i++) {
             lastHealthStati.add(new SharingConnectorService.HealthStatus("Just Testing"));

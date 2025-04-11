@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -14,9 +14,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportFromFileService;
-import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
-import de.tum.cit.aet.artemis.sharing.SharingMultipartZipFile;
-import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 
 /**
  * Service for importing programming exercises from the sharing service.

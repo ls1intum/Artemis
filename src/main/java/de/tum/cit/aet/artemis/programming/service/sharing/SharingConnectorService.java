@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.net.URL;
 import java.time.Instant;
@@ -83,7 +83,7 @@ public class SharingConnectorService {
 
     }
 
-    protected static final int HEALTH_HISTORY_LIMIT = 10;
+    public static final int HEALTH_HISTORY_LIMIT = 10;
 
     private final HealthStatusWithHistory lastHealthStati = new HealthStatusWithHistory();
 

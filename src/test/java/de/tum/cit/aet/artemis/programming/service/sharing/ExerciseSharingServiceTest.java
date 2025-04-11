@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
 
 /**
  * some special tests for ExerciseSharingService.

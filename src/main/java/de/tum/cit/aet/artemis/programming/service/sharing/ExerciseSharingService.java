@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -60,8 +60,6 @@ import com.google.common.cache.LoadingCache;
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
@@ -315,7 +313,7 @@ public class ExerciseSharingService {
             return Optional.empty();
         }
 
-        try (ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream);) {
+        try (ZipInputStream zippedRepositoryStream = new ZipInputStream(repositoryStream)) {
 
             ZipEntry entry;
             while ((entry = zippedRepositoryStream.getNextEntry()) != null) {
@@ -334,7 +332,7 @@ public class ExerciseSharingService {
                 }
                 zippedRepositoryStream.closeEntry();
             }
-            return null; // Not found
+            return Optional.empty(); // Not found
         }
     }
 
@@ -427,9 +425,9 @@ public class ExerciseSharingService {
     public boolean validate(String base64token, String sec) {
         // we have to take care that the base64 encoded token may contain a + sign, which may be converted to a space
         // not sure whether this may be an effect of our testing environment
-        String sanitzedSec = sec.replace(' ', '+');
+        String sanitizedSec = sec.replace(' ', '+');
         String computedHMAC = createHMAC(base64token);
-        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sanitzedSec.getBytes(StandardCharsets.UTF_8));
+        return MessageDigest.isEqual(computedHMAC.getBytes(StandardCharsets.UTF_8), sanitizedSec.getBytes(StandardCharsets.UTF_8));
     }
 
     /**

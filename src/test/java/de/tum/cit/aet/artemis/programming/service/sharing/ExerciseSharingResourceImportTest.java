@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -71,8 +71,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTrigge
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
-import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
 
 /**
  * this class tests all import features of the ExerciseSharingResource class

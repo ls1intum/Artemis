@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
 
 /**
  * REST controller for the exchange of configuration data between artemis and the sharing platform.

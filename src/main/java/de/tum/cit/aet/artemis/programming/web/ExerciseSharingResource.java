@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.web;
+package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.SHARINGEXPORT_RESOURCE_PATH;
 
@@ -34,12 +34,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
-import de.tum.cit.aet.artemis.exercise.service.sharing.ProgrammingExerciseImportFromSharingService;
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingConnectorService;
-import de.tum.cit.aet.artemis.exercise.service.sharing.SharingException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.sharing.ExerciseSharingService;
-import de.tum.cit.aet.artemis.sharing.SharingSetupInfo;
+import de.tum.cit.aet.artemis.programming.service.sharing.ExerciseSharingService;
+import de.tum.cit.aet.artemis.programming.service.sharing.ProgrammingExerciseImportFromSharingService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingConnectorService;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingException;
+import de.tum.cit.aet.artemis.programming.service.sharing.SharingSetupInfo;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**

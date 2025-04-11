@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import org.springframework.context.annotation.Profile;
 

@@ -1,6 +1,7 @@
-package de.tum.cit.aet.artemis.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import java.io.BufferedInputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
  * just a utility class to hold the zip file from sharing
  */
 @Profile("sharing")
-public class SharingMultipartZipFile implements MultipartFile {
+public class SharingMultipartZipFile implements MultipartFile, Closeable {
 
     private final String name;
 
@@ -82,5 +83,11 @@ public class SharingMultipartZipFile implements MultipartFile {
     @Override
     public void transferTo(@NotNull File dest) throws IOException, IllegalStateException {
         FileUtils.copyInputStreamToFile(this.inputStream, dest);
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (this.inputStream != null)
+            inputStream.close();
     }
 }

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service.sharing;
+package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SHARING;
 import static org.assertj.core.api.Assertions.assertThat;
