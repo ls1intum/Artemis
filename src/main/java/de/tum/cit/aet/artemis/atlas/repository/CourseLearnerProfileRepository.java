@@ -22,8 +22,8 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     @Transactional // ok because of delete
     @Modifying
     @Query("""
-                DELETE FROM CourseLearnerProfile clp
-                WHERE clp.course = :course AND clp.learnerProfile.user = :user
+            DELETE FROM CourseLearnerProfile clp
+            WHERE clp.course = :course AND clp.learnerProfile.user = :user
             """)
     void deleteByCourseAndUser(@Param("course") Course course, @Param("user") User user);
 
@@ -32,9 +32,9 @@ public interface CourseLearnerProfileRepository extends ArtemisJpaRepository<Cou
     void deleteAllByCourse(Course course);
 
     @Query("""
-                 SELECT clp
-                 FROM CourseLearnerProfile clp, User u
-                 WHERE u.login = :login AND u.learnerProfile = clp.learnerProfile
+            SELECT clp
+            FROM CourseLearnerProfile clp
+            WHERE clp.learnerProfile.user.login = :login
             """)
     Set<CourseLearnerProfile> findAllByLogin(@Param("login") String login);
 }
