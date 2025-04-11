@@ -45,12 +45,13 @@ jest.mock('pdfjs-dist', () => {
                 ),
             }),
         })),
+        GlobalWorkerOptions: {
+            workerSrc: '',
+        },
     };
 });
 
-jest.mock('pdfjs-dist/build/pdf.worker', () => {
-    return {};
-});
+jest.mock('./pdf-preview-thumbnail-grid/pdfjs-worker-url', () => 'mocked-worker-url');
 
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
