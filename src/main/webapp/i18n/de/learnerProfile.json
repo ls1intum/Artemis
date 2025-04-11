@@ -8,27 +8,27 @@
                 "description": "Wählen Sie Ihre bevorzugte Art von Feedback aus - von kurz und knackig bis detailliert und ausführlich.",
                 "feedbackPracticalTheoretical": {
                     "title": "Praktisch vs. Theoretisch",
-                    "practical": "Praktisch",
-                    "theoretical": "Theoretisch",
-                    "description": "Stellen Sie ein, wie Sie lieber Feedback erhalten möchten - von konkreten Beispielen und Anwendungen bis hin zu theoretischen Konzepten und Erklärungen."
+                    "practical": "Mehr Praktisch",
+                    "theoretical": "Mehr Theoretisch",
+                    "description": "Praktische Feedback-Stile betonen praktische Anwendungen und Beispiele, während theoretische Feedback-Stile theoretische Konzepte und Prinzipien betonen."
                 },
                 "feedbackCreativeGuidance": {
                     "title": "Kreative Erkundung vs. fokussierte Anleitung",
-                    "creative": "Kreativ",
-                    "focused": "Fokussiert",
-                    "description": "Wählen Sie zwischen Aufforderungen, die zum Erforschen verschiedener Ansätze ermutigen, und gezielter Anleitung entlang eines klaren Pfades."
+                    "creative": "Mehr Kreativ",
+                    "focused": "Mehr Fokussiert",
+                    "description": "Kreative Feedback-Stile ermutigen zum Erforschen und Innovieren, während fokussierte Anleitung klare Richtungen und Strukturen bereitstellt."
                 },
                 "feedbackFollowupSummary": {
                     "title": "Follow-up-Fragen vs. Zusammenfassung",
-                    "followUp": "Follow-up",
-                    "summary": "Zusammenfassung",
-                    "description": "Wählen Sie aus, ob Sie ein Feedback bevorzugen, das zum Weiterdenken anregt, oder klare Schlussfolgerungen, die das Thema abschließen."
+                    "followUp": "Mehr Follow-up",
+                    "summary": "Mehr Zusammenfassung",
+                    "description": "Follow-up-Fragen ermutigen zum tieferen Denken und Erkunden, während Zusammenfassungen einen kompakten Überblick des Themas bereitstellen."
                 },
                 "feedbackBriefDetailed": {
                     "title": "Kurz vs. Ausführlich",
-                    "brief": "Kurz",
-                    "detailed": "Ausführlich",
-                    "description": "Wählen Sie zwischen einem knappen Feedback oder ausführlichen Erklärungen mit mehr Kontext und Hintergrundinformationen."
+                    "brief": "Mehr Kurz",
+                    "detailed": "Mehr Ausführlich",
+                    "description": "Kurze Feedback-Stile bieten schnelle Einblicke, während ausführliche Erklärungen mehr Kontext und Hintergrundinformationen bereitstellen."
                 }
             }
         }

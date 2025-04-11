@@ -8,27 +8,27 @@
                 "description": "Choose your preferred style of feedback - from concise to detailed, or from follow-up questions to summaries.",
                 "feedbackPracticalTheoretical": {
                     "title": "Practical vs. Theoretical",
-                    "description": "Adjust how you prefer to receive feedback - from concrete examples and applications to theoretical concepts and explanations.",
-                    "practical": "Practical",
-                    "theoretical": "Theoretical"
+                    "description": "Practical feedback focuses on real-world applications and examples, while theoretical feedback emphasizes concepts and principles.",
+                    "practical": "More Practical",
+                    "theoretical": "More Theoretical"
                 },
                 "feedbackCreativeGuidance": {
                     "title": "Creative Exploration vs. Focused Guidance",
-                    "description": "Choose between receiving prompts that encourage exploring multiple approaches or focused guidance along a clear path.",
-                    "creative": "Creative",
-                    "focused": "Focused"
+                    "description": "Creative feedback encourages exploration and innovation, while focused guidance provides clear direction and structure.",
+                    "creative": "More Creative",
+                    "focused": "More Focused"
                 },
                 "feedbackFollowupSummary": {
                     "title": "Follow-up Questions vs. Summary",
-                    "description": "Select whether you prefer feedback that prompts further thinking or clear conclusions that wrap up the topic.",
-                    "followUp": "Follow-up",
-                    "summary": "Summary"
+                    "description": "Follow-up questions encourage deeper thinking and exploration, while summaries provide a concise overview of the topic.",
+                    "followUp": "More Follow-up",
+                    "summary": "More Summary"
                 },
                 "feedbackBriefDetailed": {
                     "title": "Brief vs. Detailed",
-                    "description": "Choose between concise feedback or detailed explanations with more context and background information.",
-                    "brief": "Brief",
-                    "detailed": "Detailed"
+                    "description": "Brief feedback provides quick insights, while detailed explanations offer more context and background information.",
+                    "brief": "More Brief",
+                    "detailed": "More Detailed"
                 }
             }
         }
