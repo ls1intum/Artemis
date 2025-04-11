@@ -73,12 +73,12 @@ export const appConfig: ApplicationConfig = {
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
-            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
-            // this is important so that all components can access the profile info
             const profileService = inject(ProfileService);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
+            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
+            // this is important so that all components can access the profile info, by returning it here, this blocks the app initialization until profile info was loaded
             return profileService.loadProfileInfo();
         }),
         /**
