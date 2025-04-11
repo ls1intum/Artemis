@@ -55,7 +55,6 @@ import { SecondCorrectionEnableButtonComponent } from './second-correction-butto
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -71,9 +70,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
-import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -98,8 +95,6 @@ export interface ExampleSubmissionQueryParams {
         InfoPanelComponent,
         ProgrammingExerciseInstructionComponent,
         ModelingEditorComponent,
-        SecureLinkDirective,
-        ButtonComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         NgbTooltip,
@@ -132,7 +127,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private router = inject(Router);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private sortService = inject(SortService);
-    private profileService = inject(ProfileService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;

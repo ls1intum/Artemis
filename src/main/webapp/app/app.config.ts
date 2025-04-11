@@ -23,6 +23,7 @@ import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
 import { ErrorHandlerInterceptor } from 'app/core/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from 'app/core/interceptor/notification.interceptor';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 
 import { provideNgxWebstorage, withLocalStorage, withNgxWebstorageConfig, withSessionStorage } from 'ngx-webstorage';
@@ -72,9 +73,13 @@ export const appConfig: ApplicationConfig = {
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
         provideAppInitializer(() => {
+            // we load this as early as possible to ensure that all config options are loaded before any routing or rendering happens
+            // this is important so that all components can access the profile info
+            const profileService = inject(ProfileService);
             inject(TraceService);
             // Ensure the service is initialized before any routing happens
             inject(ArtemisNavigationUtilService);
+            return profileService.loadProfileInfo();
         }),
         /**
          * @description Interceptor declarations:

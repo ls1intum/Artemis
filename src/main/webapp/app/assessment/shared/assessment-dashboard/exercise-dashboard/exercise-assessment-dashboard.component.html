@@ -275,10 +275,7 @@
                                     </p>
 
                                     @if (stats.toReview.done < stats.toReview.total) {
-                                        <button
-                                            class="btn btn-primary review-example-submission mb-4"
-                                            (click)="openExampleSubmission(nextExampleSubmissionId, true, false)"
-                                        >
+                                        <button class="btn btn-primary review-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId, true, false)">
                                             @if (stats.toReview.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -293,10 +290,7 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToReview; track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button
-                                                        class="btn btn-link review-example-submission"
-                                                        (click)="openExampleSubmission(exampleSubmission.id!, true, false)"
-                                                    >
+                                                    <button class="btn btn-link review-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, true, false)">
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.readExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -316,10 +310,7 @@
                                         {{ stats.toAssess.total }})
                                     </p>
                                     @if (stats.toAssess.done < stats.toAssess.total) {
-                                        <button
-                                            class="btn btn-primary assess-example-submission mb-4"
-                                            (click)="openExampleSubmission(nextExampleSubmissionId, false, true)"
-                                        >
+                                        <button class="btn btn-primary assess-example-submission mb-4" (click)="openExampleSubmission(nextExampleSubmissionId, false, true)">
                                             @if (stats.toAssess.done <= 0) {
                                                 <span jhiTranslate="artemisApp.exerciseAssessmentDashboard.start"></span>
                                             } @else {
@@ -334,10 +325,7 @@
                                         <ul>
                                             @for (exampleSubmission of exampleSubmissionsToAssess; track exampleSubmission; let i = $index) {
                                                 <li>
-                                                    <button
-                                                        class="btn btn-link assess-example-submission"
-                                                        (click)="openExampleSubmission(exampleSubmission.id!, false, true)"
-                                                    >
+                                                    <button class="btn btn-link assess-example-submission" (click)="openExampleSubmission(exampleSubmission.id!, false, true)">
                                                         {{ 'artemisApp.exerciseAssessmentDashboard.assessExampleSubmission' | artemisTranslate }} {{ i + 1 }}
                                                     </button>
                                                     @if (hasBeenCompletedByTutor(exampleSubmission.id!)) {
@@ -428,7 +416,7 @@
                                                                     class="btn btn-success btn-sm"
                                                                     [routerLink]="getAssessmentLink('new')"
                                                                     [queryParams]="getAssessmentQueryParams(correctionRound)"
-                                                                    [class.disabled]="exercise === openingAssessmentEditorForNewSubmission"
+                                                                    [class.disabled]="openingAssessmentEditorForNewSubmission"
                                                                     [ngStyle]="{}"
                                                                 >
                                                                     @if (openingAssessmentEditorForNewSubmission) {

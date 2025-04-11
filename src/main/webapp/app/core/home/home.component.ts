@@ -68,7 +68,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isFormValid = false;
     isSubmittingLogin = false;
 
-    profileInfo: ProfileInfo | undefined = undefined;
+    profileInfo: ProfileInfo;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -76,8 +76,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     passwordTouched = false;
 
     ngOnInit() {
-        const profileInfo = this.profileService.profileInfo;
-        this.initializeWithProfileInfo(profileInfo);
+        this.initializeWithProfileInfo();
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
@@ -96,15 +95,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     /**
      * Initializes the component with the required information received from the server.
-     * @param profileInfo The information from the server how logins should be handled.
      */
-    private initializeWithProfileInfo(profileInfo: ProfileInfo) {
-        this.profileInfo = profileInfo;
+    private initializeWithProfileInfo() {
+        this.profileInfo = this.profileService.profileInfo;
         this.externalUserManagementActive = false;
 
-        this.accountName = profileInfo.accountName;
-        if (profileInfo.allowedLdapUsernamePattern) {
-            this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
+        this.accountName = this.profileInfo.accountName;
+        if (this.profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern = new RegExp(this.profileInfo.allowedLdapUsernamePattern);
         }
         if (this.accountName === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
@@ -118,8 +116,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
-        this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
-        this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
+        this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
+        this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2Config && this.profileInfo.saml2Config.passwordLoginDisabled && !loginFormOverride;
