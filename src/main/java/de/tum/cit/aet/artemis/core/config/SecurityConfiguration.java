@@ -264,16 +264,19 @@ public class SecurityConfiguration {
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
-        // @formatter:on
 
-        URL clientUrl = getClientUrl();
         if (passkeyEnabled) {
+            URL clientUrl = getClientUrl();
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
-                configurer.allowedOrigins(ensureTrailingSlash(clientUrl.toString())).rpId(clientUrl.getHost()).rpName("Artemis");
+                configurer
+                    .allowedOrigins(ensureTrailingSlash(clientUrl.toString()))
+                    .rpId(clientUrl.getHost())
+                    .rpName("Artemis");
             });
         }
+        // @formatter:on
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
