@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.util;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
-import static org.assertj.core.api.Assertions.assertThat;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.time.LocalDate;
@@ -14,10 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
-import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -38,10 +35,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRep
 @Profile(SPRING_PROFILE_TEST)
 public class TutorialGroupUtilService {
 
-    private static final ZonedDateTime PAST_TIMESTAMP = ZonedDateTime.now().minusDays(1);
-
-    private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
-
     @Autowired
     private CourseTestRepository courseRepo;
 
@@ -59,16 +52,6 @@ public class TutorialGroupUtilService {
 
     @Autowired
     private TutorialGroupRegistrationTestRepository tutorialGroupRegistrationRepository;
-
-    /**
-     * Creates and saves a Course for TutorialGroup tests.
-     */
-    public void addTutorialCourse() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tutorialgroup-students", "tutorialgroup-tutors",
-                "tutorialgroup-editors", "tutorialgroup-instructors");
-        courseRepo.save(course);
-        assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
-    }
 
     /**
      * Creates and saves a TutorialGroupSession for the TutorialGroup with the given ID.

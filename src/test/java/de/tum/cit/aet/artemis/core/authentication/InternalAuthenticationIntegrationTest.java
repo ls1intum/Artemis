@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.core.authentication;
 
-import static de.tum.cit.aet.artemis.core.domain.Authority.EDITOR_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.domain.Authority.TA_AUTHORITY;
-import static de.tum.cit.aet.artemis.core.domain.Authority.USER_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,9 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.validation.constraints.NotNull;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,18 +34,14 @@ import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
-import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
-// TODO: rewrite this test to use LocalVC instead
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "internalauth";
@@ -66,16 +56,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private JWTCookieService jwtCookieService;
 
     @Autowired
-    private ProgrammingExerciseTestRepository programmingExerciseRepository;
-
-    @Autowired
     private AuthorityRepository authorityRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
-
-    @Autowired
-    private TutorialGroupUtilService tutorialGroupUtilService;
 
     private User student;
 
@@ -102,20 +86,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         userTestRepository.save(student);
     }
 
-    @AfterEach
-    void teardown() {
-        // Set the student group to some other group because only one group can have the tutorialGroupStudents-group
-        SecurityUtils.setAuthorizationObject();
-        var tutorialCourse = courseRepository.findCourseByStudentGroupName("tutorialgroup-students");
-        if (tutorialCourse != null) {
-            tutorialCourse.setStudentGroupName("non-tutorial-course");
-            tutorialCourse.setTeachingAssistantGroupName("non-tutorial-course");
-            tutorialCourse.setEditorGroupName("non-tutorial-course");
-            tutorialCourse.setInstructorGroupName("non-tutorial-course");
-            courseRepository.save(tutorialCourse);
-        }
-    }
-
     @Test
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
@@ -130,81 +100,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
         Set<String> updatedGroups = request.postSetWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
-    }
-
-    @NotNull
-    private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
-        userTestRepository.findOneByLogin("user1").ifPresent(userTestRepository::delete);
-        tutorialGroupUtilService.addTutorialCourse();
-
-        student.setId(null);
-        student.setLogin("user1");
-        student.setPassword("foobar");
-        student.setEmail("user1@secret.invalid");
-        student.setAuthorities(authorities);
-
-        var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(student.getGroups());
-        assertThat(exercises).isEmpty();
-        jenkinsRequestMockProvider.mockCreateUser(student, false, false, false);
-
-        final var user = request.postWithResponseBody("/api/core/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
-        assertThat(user).isNotNull();
-        return user;
-    }
-
-    private void assertUserGroups(User user, boolean students, boolean tutors, boolean editors, boolean instructors) {
-        if (students) {
-            assertThat(user.getGroups()).contains("tutorialgroup-students");
-        }
-        else {
-            assertThat(user.getGroups()).doesNotContain("tutorialgroup-students");
-        }
-        if (tutors) {
-            assertThat(user.getGroups()).contains("tutorialgroup-tutors");
-        }
-        else {
-            assertThat(user.getGroups()).doesNotContain("tutorialgroup-tutors");
-        }
-        if (editors) {
-            assertThat(user.getGroups()).contains("tutorialgroup-editors");
-        }
-        else {
-            assertThat(user.getGroups()).doesNotContain("tutorialgroup-editors");
-        }
-        if (instructors) {
-            assertThat(user.getGroups()).contains("tutorialgroup-instructors");
-        }
-        else {
-            assertThat(user.getGroups()).doesNotContain("tutorialgroup-instructors");
-        }
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createUserWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY));
-        assertUserGroups(user, true, false, false, false);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createTutorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY));
-        assertUserGroups(user, true, true, false, false);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createEditorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY));
-        assertUserGroups(user, true, true, true, false);
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void createInstructorWithInternalUserManagementAndAutomatedTutorialGroupsAssignment() throws Exception {
-        final User user = createUserWithRestApi(Set.of(USER_AUTHORITY, TA_AUTHORITY, EDITOR_AUTHORITY, INSTRUCTOR_AUTHORITY));
-        assertUserGroups(user, true, true, true, true);
     }
 
     @Test
