@@ -266,7 +266,7 @@ public class SecurityConfiguration {
                 WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService, publicKeyCredentialUserEntityRepository, userCredentialRepository);
                 http.with(webAuthnConfigurer, configurer -> {
                     configurer
-                        .allowedOrigins(clientUrl.toString())
+                        .allowedOrigins(serverUrl)
                         .rpId(clientUrl.getHost())
                         .rpName("Artemis");
                 });
