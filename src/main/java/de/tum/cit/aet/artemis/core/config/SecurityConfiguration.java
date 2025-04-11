@@ -261,24 +261,19 @@ public class SecurityConfiguration {
             )
             // Applies additional configurations defined in a custom security configurer adapter.
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
-
-
-        URL clientUrl = getClientUrl();
-        if (passkeyEnabled) {
-            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService, publicKeyCredentialUserEntityRepository, userCredentialRepository);
-            http.with(webAuthnConfigurer, configurer -> {
-                configurer
-                    .allowedOrigins(clientUrl.toString())
-                    .rpId(clientUrl.getHost())
-                    .rpName("Artemis");
-            });
-        }
-
-
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
         // @formatter:on
+
+        URL clientUrl = getClientUrl();
+        if (passkeyEnabled) {
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
+                    publicKeyCredentialUserEntityRepository, userCredentialRepository);
+            http.with(webAuthnConfigurer, configurer -> {
+                configurer.allowedOrigins(ensureTrailingSlash(clientUrl.toString())).rpId(clientUrl.getHost()).rpName("Artemis");
+            });
+        }
 
         // Conditionally adds configuration for LTI if it is active.
         if (profileService.isLtiActive()) {
@@ -288,6 +283,10 @@ public class SecurityConfiguration {
 
         // Builds and returns the SecurityFilterChain.
         return http.build();
+    }
+
+    private String ensureTrailingSlash(String url) {
+        return url.endsWith("/") ? url : url + "/";
     }
 
     /**
