@@ -373,8 +373,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultId_assessorHiddenForStudent() throws Exception {
-        submissionRepo.save(modelingSubmission);
-        complaintRepo.save(complaint);
+        // Get a fresh copy of the result from the database
+        var freshResult = resultRepository.findById(modelingAssessment.getId()).orElseThrow();
+
+        // Create a fresh complaint object instead of using the one from setup
+        var freshComplaint = new Complaint().result(freshResult).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+
+        complaintRepo.saveAndFlush(freshComplaint);
+
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
         Complaint receivedComplaint = request.get("/api/assessment/complaints", HttpStatus.OK, Complaint.class, params);
