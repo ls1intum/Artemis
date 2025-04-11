@@ -267,11 +267,13 @@ public class SecurityConfiguration {
 
         if (passkeyEnabled) {
             URL clientUrl = getClientUrl();
+            URL clientUrl1 = new URI(serverUrl + ":" + port).toURL();;
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(ensureTrailingSlash(clientUrl.toString()))
+                    .allowedOrigins(clientUrl1.toString())
+//                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrl.getHost())
                     .rpName("Artemis");
             });
@@ -304,9 +306,9 @@ public class SecurityConfiguration {
      * @throws MalformedURLException If the constructed URL is invalid.
      */
     private URL getClientUrl() throws URISyntaxException, MalformedURLException {
-        if (profileService.isDevActive()) {
-            return new URI(serverUrl + ":" + port).toURL();
-        }
+        // if (profileService.isDevActive()) {
+        // return new URI(serverUrl + ":" + port).toURL();
+        // }
 
         return new URI(serverUrl).toURL();
     }
