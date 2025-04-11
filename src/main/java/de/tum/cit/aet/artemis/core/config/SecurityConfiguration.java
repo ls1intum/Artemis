@@ -272,7 +272,7 @@ public class SecurityConfiguration {
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString())
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrl1.toString(), ensureTrailingSlash(clientUrlToRegisterPasskey.toString()), ensureTrailingSlash(clientUrl1.toString()))
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
