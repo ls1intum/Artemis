@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./gradlew spotlessApply -PratchetFrom='develop'
+./gradlew spotlessApply -PratchetFrom=develop
