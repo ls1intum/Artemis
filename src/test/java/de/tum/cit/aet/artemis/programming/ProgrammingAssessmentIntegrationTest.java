@@ -1080,10 +1080,11 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     private void deleteAssessmentAsForbiddenUser() throws Exception {
         ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
         submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
-            AssessmentType.AUTOMATIC, true);
+                AssessmentType.AUTOMATIC, true);
+        assertThat(submission.getResults()).hasSize(1);
 
-        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + submission.getFirstResult().getId(),
-            HttpStatus.FORBIDDEN);
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
+                + submission.getFirstResult().getId(), HttpStatus.FORBIDDEN);
 
         assertThat(submission.getResults()).hasSize(1);
     }
@@ -1105,8 +1106,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         Result thirdResult = submission.getResults().get(2);
         assertThat(submission.getResults()).hasSize(3);
 
-        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/" + resultToDelete.getId(),
-            HttpStatus.OK);
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
+                + resultToDelete.getId(), HttpStatus.OK);
 
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
         assertThat(submission.getResults()).hasSize(2);
