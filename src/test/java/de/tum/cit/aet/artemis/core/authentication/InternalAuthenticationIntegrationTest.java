@@ -13,7 +13,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import jakarta.servlet.http.Cookie;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -108,7 +106,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void teardown() {
         // Set the student group to some other group because only one group can have the tutorialGroupStudents-group
         SecurityUtils.setAuthorizationObject();
-        var tutorialCourse = courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.orElseThrow());
+        var tutorialCourse = courseRepository.findCourseByStudentGroupName("tutorialgroup-students");
         if (tutorialCourse != null) {
             tutorialCourse.setStudentGroupName("non-tutorial-course");
             tutorialCourse.setTeachingAssistantGroupName("non-tutorial-course");
@@ -130,7 +128,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         course1 = courseRepository.save(course1);
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, student.getGroups(), Set.of(), false);
-        Set<String> updatedGroups = request.postWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, Set.class, HttpStatus.OK);
+        Set<String> updatedGroups = request.postSetWithResponseBody("/api/core/courses/" + course1.getId() + "/enroll", null, String.class, HttpStatus.OK);
         assertThat(updatedGroups).as("User is registered for course").contains(course1.getStudentGroupName());
     }
 
@@ -156,28 +154,28 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private void assertUserGroups(User user, boolean students, boolean tutors, boolean editors, boolean instructors) {
         if (students) {
-            assertThat(user.getGroups()).contains(tutorialGroupStudents.orElseThrow());
+            assertThat(user.getGroups()).contains("tutorialgroup-students");
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupStudents.orElseThrow());
+            assertThat(user.getGroups()).doesNotContain("tutorialgroup-students");
         }
         if (tutors) {
-            assertThat(user.getGroups()).contains(tutorialGroupTutors.orElseThrow());
+            assertThat(user.getGroups()).contains("tutorialgroup-tutors");
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupTutors.orElseThrow());
+            assertThat(user.getGroups()).doesNotContain("tutorialgroup-tutors");
         }
         if (editors) {
-            assertThat(user.getGroups()).contains(tutorialGroupEditors.orElseThrow());
+            assertThat(user.getGroups()).contains("tutorialgroup-editors");
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupEditors.orElseThrow());
+            assertThat(user.getGroups()).doesNotContain("tutorialgroup-editors");
         }
         if (instructors) {
-            assertThat(user.getGroups()).contains(tutorialGroupInstructors.orElseThrow());
+            assertThat(user.getGroups()).contains("tutorialgroup-instructors");
         }
         else {
-            assertThat(user.getGroups()).doesNotContain(tutorialGroupInstructors.orElseThrow());
+            assertThat(user.getGroups()).doesNotContain("tutorialgroup-instructors");
         }
     }
 

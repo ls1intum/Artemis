@@ -45,7 +45,7 @@ describe('StudentExamDetailComponent', () => {
 
         student = {
             internal: true,
-                name: 'name',
+            name: 'name',
             login: 'login',
             email: 'email',
             visibleRegistrationNumber: 'visibleRegistrationNumber',

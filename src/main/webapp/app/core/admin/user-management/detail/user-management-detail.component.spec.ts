@@ -51,7 +51,7 @@ describe('User Management Detail Component', () => {
                     langKey: 'en',
                     authorities: [Authority.USER],
                     groups: ['admin'],
-                            }),
+                }),
             );
         });
     });

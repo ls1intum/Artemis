@@ -8,11 +8,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -66,8 +64,8 @@ public class TutorialGroupUtilService {
      * Creates and saves a Course for TutorialGroup tests.
      */
     public void addTutorialCourse() {
-        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), tutorialGroupStudents.orElseThrow(),
-                tutorialGroupTutors.orElseThrow(), tutorialGroupEditors.orElseThrow(), tutorialGroupInstructors.orElseThrow());
+        Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_FUTURE_TIMESTAMP, new HashSet<>(), "tutorialgroup-students", "tutorialgroup-tutors",
+                "tutorialgroup-editors", "tutorialgroup-instructors");
         courseRepo.save(course);
         assertThat(courseRepo.findById(course.getId())).as("tutorial course is initialized").isPresent();
     }

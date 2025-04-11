@@ -314,7 +314,6 @@
                                                     [repositoryUri]="getRepositoryLink(value) || ''"
                                                     [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
                                                 />
-
                                             }
                                             @if (buildPlanId(value) && !localCIEnabled) {
                                                 <a target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">

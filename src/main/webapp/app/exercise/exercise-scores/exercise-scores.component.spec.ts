@@ -56,12 +56,12 @@ describe('Exercise Scores Component', () => {
                 login: 'login1',
                 name: 'name1',
                 internal: true,
-                    },
+            },
             {
                 login: 'login2',
                 name: 'name2',
                 internal: true,
-                    },
+            },
         ],
     };
 
@@ -301,7 +301,7 @@ describe('Exercise Scores Component', () => {
             login: 'login',
             name: 'name',
             internal: true,
-            };
+        };
 
         expect(component.searchParticipationFormatter(participation)).toBe('login (name)');
 

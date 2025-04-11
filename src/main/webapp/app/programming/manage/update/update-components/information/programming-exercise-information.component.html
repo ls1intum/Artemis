@@ -67,7 +67,13 @@
                 [isEditMode]="programmingExerciseCreationConfig.isEdit"
                 [programmingExerciseBuildConfig]="programmingExercise().buildConfig"
             />
-            @if (editRepositoryCheckoutPath && isLocalCIEnabled && !isImport() && !programmingExerciseCreationConfig.isEdit && isEditFieldDisplayedRecord().editRepositoriesCheckoutPath) {
+            @if (
+                editRepositoryCheckoutPath &&
+                isLocalCIEnabled &&
+                !isImport() &&
+                !programmingExerciseCreationConfig.isEdit &&
+                isEditFieldDisplayedRecord().editRepositoriesCheckoutPath
+            ) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise()"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"

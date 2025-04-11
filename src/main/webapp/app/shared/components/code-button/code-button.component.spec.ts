@@ -546,7 +546,7 @@ describe('CodeButtonComponent', () => {
         const identityStub = jest.spyOn(accountService, 'identity');
         identityStub.mockReturnValue(
             Promise.resolve({
-                        login: 'edx_userLogin',
+                login: 'edx_userLogin',
                 internal: true,
                 vcsAccessToken: vcsToken,
             }),
