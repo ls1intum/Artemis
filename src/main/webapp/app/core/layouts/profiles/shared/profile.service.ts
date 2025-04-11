@@ -11,8 +11,20 @@ export class ProfileService {
     private featureToggleService = inject(FeatureToggleService);
     private browserFingerprintService = inject(BrowserFingerprintService);
 
-    /** Expose read-only signal to components which want to use the information */
-    public profileInfo: ProfileInfo;
+    /** Internal mutable reference */
+    private profileInfo: ProfileInfo;
+
+    // Should only be called once by the app initializer
+    public async loadProfileInfo(): Promise<void> {
+        this.profileInfo = await firstValueFrom(this.http.get<ProfileInfo>('management/info'));
+        this.featureToggleService.initializeFeatureToggles(this.profileInfo.features);
+        this.browserFingerprintService.initialize(this.profileInfo.studentExamStoreSessionData);
+    }
+
+    /** Public readonly getter */
+    public getProfileInfo(): ProfileInfo {
+        return this.profileInfo;
+    }
 
     public isProfileActive(profile: string) {
         return this.profileInfo.activeProfiles?.includes(profile);
@@ -20,13 +32,6 @@ export class ProfileService {
 
     public isModuleFeatureActive(feature: string) {
         return this.profileInfo.activeModuleFeatures?.includes(feature) ?? false;
-    }
-
-    async loadProfileInfo(): Promise<void> {
-        const info = await firstValueFrom(this.http.get<ProfileInfo>('management/info'));
-        this.profileInfo = info;
-        this.featureToggleService.initializeFeatureToggles(info.features);
-        this.browserFingerprintService.initialize(info.studentExamStoreSessionData);
     }
 
     public isDevelopment(): boolean {

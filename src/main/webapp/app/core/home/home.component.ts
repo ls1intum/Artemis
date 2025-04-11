@@ -97,7 +97,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      * Initializes the component with the required information received from the server.
      */
     private initializeWithProfileInfo() {
-        this.profileInfo = this.profileService.profileInfo;
+        this.profileInfo = this.profileService.getProfileInfo();
         this.externalUserManagementActive = false;
 
         this.accountName = this.profileInfo.accountName;

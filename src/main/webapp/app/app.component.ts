@@ -70,7 +70,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private async setupErrorHandling() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         // sentry is only activated if it was specified in the application.yml file
         this.sentryErrorHandler.initSentry(profileInfo);
     }

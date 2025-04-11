@@ -229,7 +229,7 @@ export class FeatureOverviewComponent implements OnInit {
         ];
 
         // only add login feature for tum accounts
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         const accountName = profileInfo.accountName;
         if (accountName === 'TUM') {
             this.features.push(featureLogin);

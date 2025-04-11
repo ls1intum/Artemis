@@ -2,8 +2,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { of } from 'rxjs';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ModelingFeedbackSuggestion, ProgrammingFeedbackSuggestion, TextFeedbackSuggestion } from 'app/assessment/shared/entities/feedback-suggestion.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -97,7 +96,7 @@ describe('AthenaService', () => {
 
     it('should return true if athena is enabled', fakeAsync(async () => {
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         let isAthenaEnabled = false;
 
@@ -112,7 +111,7 @@ describe('AthenaService', () => {
 
     it('should return false if athena is disabled', fakeAsync(() => {
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         let isAthenaEnabled = false;
 
@@ -139,7 +138,7 @@ describe('AthenaService', () => {
         let modelingResponse: Feedback[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getTextFeedbackSuggestions(textExercise, { id: 2, text: 'Hello world, this is a test' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
             textResponse = suggestions;
@@ -197,7 +196,7 @@ describe('AthenaService', () => {
         let response: TextBlockRef[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionModule: undefined } as Exercise;
 
@@ -214,7 +213,7 @@ describe('AthenaService', () => {
         let response: TextBlockRef[] = [];
 
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getTextFeedbackSuggestions(textExercise, { id: 2, text: '' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
             response = suggestions;
@@ -229,7 +228,7 @@ describe('AthenaService', () => {
         let response: string[] = [];
 
         const mockProfileInfo = { activeProfiles: ['something'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
             response = modules;
@@ -250,7 +249,7 @@ describe('AthenaService', () => {
         let modelingResponse: string[] = [];
 
         const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(mockProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {
             textResponse = modules;

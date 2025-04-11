@@ -159,7 +159,7 @@ export class CodeButtonComponent implements OnInit {
         await this.checkForSshKeys();
 
         // Get ssh information from the user
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
         if (profileInfo.repositoryAuthenticationMechanisms?.length) {

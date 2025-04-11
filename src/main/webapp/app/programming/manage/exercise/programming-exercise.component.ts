@@ -126,7 +126,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
-                const profileInfo = this.profileService.profileInfo;
+                const profileInfo = this.profileService.getProfileInfo();
                 this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                 this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
                 this.onlineIdeEnabled = this.profileService.isProfileActive(PROFILE_THEIA);

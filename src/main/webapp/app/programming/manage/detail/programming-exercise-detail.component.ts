@@ -206,7 +206,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     tap(() => {
                         this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
                         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-                        const profileInfo = this.profileService.profileInfo;
+                        const profileInfo = this.profileService.getProfileInfo();
                         if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
                             this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
                                 profileInfo.buildPlanURLTemplate,

@@ -28,7 +28,7 @@ export class CourseRegistrationButtonComponent implements OnInit {
     loadUserIsAllowedToRegister() {
         this.loading = true;
         this.accountService.identity().then((user) => {
-            const profileInfo = this.profileService.profileInfo;
+            const profileInfo = this.profileService.getProfileInfo();
             this.userIsAllowedToRegister = matchesRegexFully(user!.login, profileInfo.allowedCourseRegistrationUsernamePattern);
         });
         this.loading = false;

@@ -25,7 +25,7 @@ export class FooterComponent implements OnInit {
     isProduction: boolean;
 
     ngOnInit(): void {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.contact = profileInfo.contact;
         this.gitBranch = profileInfo.git.branch;
         this.gitCommitId = profileInfo.git.commit.id.abbrev;

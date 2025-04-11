@@ -224,7 +224,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.inProduction = this.profileService.isProduction();
         this.testServer = this.profileService.isTestServer();
         this.openApiEnabled = profileInfo.openApiEnabled;

@@ -40,7 +40,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
         const projectKey = this.exercise()?.projectKey;
         if (projectKey && !this.localCIEnabled) {
             // buildPlanURLTemplate is only available on Artemis instances without LocalCI (e.g. using Jenkins)
-            const buildPlanURLTemplate = this.profileService.profileInfo.buildPlanURLTemplate;
+            const buildPlanURLTemplate = this.profileService.getProfileInfo().buildPlanURLTemplate;
 
             const solutionParticipation = this.exercise()?.solutionParticipation;
             if (solutionParticipation?.buildPlanId && buildPlanURLTemplate) {

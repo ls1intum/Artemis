@@ -73,7 +73,7 @@ export class AboutUsComponent implements OnInit {
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.contact = profileInfo.contact;
         if (profileInfo.git) {
             this.gitCommitId = profileInfo.git.commit.id.abbrev;

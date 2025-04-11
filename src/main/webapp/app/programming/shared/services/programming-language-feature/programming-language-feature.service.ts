@@ -10,7 +10,7 @@ export class ProgrammingLanguageFeatureService {
     private programmingLanguageFeatures: Map<ProgrammingLanguage, ProgrammingLanguageFeature> = new Map<ProgrammingLanguage, ProgrammingLanguageFeature>();
 
     constructor() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         profileInfo.programmingLanguageFeatures.forEach((programmingLanguageFeature) => {
             this.programmingLanguageFeatures.set(programmingLanguageFeature.programmingLanguage, programmingLanguageFeature);
         });

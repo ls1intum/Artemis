@@ -27,7 +27,7 @@ export class SettingsComponent implements OnInit {
     isRegistrationEnabled = false;
 
     ngOnInit() {
-        this.isRegistrationEnabled = this.profileService.profileInfo.registrationEnabled || false;
+        this.isRegistrationEnabled = this.profileService.getProfileInfo().registrationEnabled || false;
         this.accountService.identity().then((user) => {
             if (user) {
                 this.settingsForm.patchValue({

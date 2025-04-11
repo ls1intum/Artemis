@@ -251,7 +251,7 @@ describe('ProfileService', () => {
         }));
 
         it('should return true if the profile is active', () => {
-            service['profileInfo'] = new BehaviorSubject({
+            service['getProfileInfo'] = new BehaviorSubject({
                 activeProfiles: ['dev', 'prod'],
             } as any);
             expect(service.isProfileActive('dev')).toBeTrue();
@@ -259,19 +259,19 @@ describe('ProfileService', () => {
         });
 
         it('should return false if the profile is not active', () => {
-            service['profileInfo'] = new BehaviorSubject({
+            service['getProfileInfo'] = new BehaviorSubject({
                 activeProfiles: ['prod'],
             } as any);
             expect(service.isProfileActive('dev')).toBeFalse();
         });
 
         it('should return false if profileInfo is undefined', () => {
-            service['profileInfo'] = undefined!;
+            service['getProfileInfo'] = undefined!;
             expect(service.isProfileActive('dev')).toBeFalse();
         });
 
         it('should return false if activeProfiles is undefined', () => {
-            service['profileInfo'] = new BehaviorSubject({} as any);
+            service['getProfileInfo'] = new BehaviorSubject({} as any);
             expect(service.isProfileActive('dev')).toBeFalse();
         });
     });

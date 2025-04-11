@@ -31,7 +31,7 @@ export class TextAssessmentAnalytics {
 
     constructor() {
         // retrieve the analytics enabled status from the profile info and set to current property
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.analyticsEnabled = profileInfo.textAssessmentAnalyticsEnabled || false;
     }
 

@@ -33,7 +33,7 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     externalResetModalRef: NgbModalRef | undefined;
 
     ngOnInit() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.useExternal = profileInfo.useExternal;
         this.externalCredentialProvider = profileInfo.externalCredentialProvider;
         const lang = this.translateService.currentLang;

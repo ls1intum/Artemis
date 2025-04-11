@@ -44,7 +44,7 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isLoading = true;
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.versionControlName = profileInfo.versionControlName;
         this.continuousIntegrationName = profileInfo.continuousIntegrationName;
         this.hasCustomizedBuildPlans = this.profileService.isProfileActive(PROFILE_LOCALCI) || this.profileService.isProfileActive(PROFILE_AEOLUS);

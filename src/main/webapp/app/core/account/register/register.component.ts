@@ -52,7 +52,7 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
         this.allowedEmailPattern = profileInfo.allowedEmailPattern;
         this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;

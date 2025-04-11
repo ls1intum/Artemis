@@ -63,7 +63,7 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     ngOnInit() {
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         if (profileInfo) {
             this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
 

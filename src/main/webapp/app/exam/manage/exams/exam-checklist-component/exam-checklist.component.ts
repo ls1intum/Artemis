@@ -104,7 +104,7 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
-        const profileInfo = this.profileService.profileInfo;
+        const profileInfo = this.profileService.getProfileInfo();
         this.disabledExercises =
             this.exam()
                 .exerciseGroups?.flatMap((group) => group.exercises)
