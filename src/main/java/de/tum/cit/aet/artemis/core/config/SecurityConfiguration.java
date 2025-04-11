@@ -2,7 +2,9 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -261,16 +263,17 @@ public class SecurityConfiguration {
             .with(securityConfigurerAdapter(), configurer -> configurer.configure(http));
 
 
-        URL clientUrl = new URI(serverUrl + ":" + port).toURL();
+        URL clientUrl = getClientUrl();
         if (passkeyEnabled) {
-                WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService, publicKeyCredentialUserEntityRepository, userCredentialRepository);
-                http.with(webAuthnConfigurer, configurer -> {
-                    configurer
-                        .allowedOrigins(serverUrl)
-                        .rpId(clientUrl.getHost())
-                        .rpName("Artemis");
-                });
-            }
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService, publicKeyCredentialUserEntityRepository, userCredentialRepository);
+            http.with(webAuthnConfigurer, configurer -> {
+                configurer
+                    .allowedOrigins(clientUrl.toString())
+                    .rpId(clientUrl.getHost())
+                    .rpName("Artemis");
+            });
+        }
+
 
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
@@ -285,6 +288,25 @@ public class SecurityConfiguration {
 
         // Builds and returns the SecurityFilterChain.
         return http.build();
+    }
+
+    /**
+     * Retrieves the client URL for the current environment.
+     * <p>
+     * If the development profile is active, the client URL is constructed using the server URL and port.
+     * Otherwise, the client URL is based solely on the server URL.
+     * </p>
+     *
+     * @return The client URL as a {@link URL}.
+     * @throws URISyntaxException    If the constructed URI is invalid.
+     * @throws MalformedURLException If the constructed URL is invalid.
+     */
+    private URL getClientUrl() throws URISyntaxException, MalformedURLException {
+        if (profileService.isDevActive()) {
+            return new URI(serverUrl + ":" + port).toURL();
+        }
+
+        return new URI(serverUrl).toURL();
     }
 
     /**
