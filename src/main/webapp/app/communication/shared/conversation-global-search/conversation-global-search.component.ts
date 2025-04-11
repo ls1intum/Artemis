@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, input, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
@@ -7,7 +7,7 @@ import { isGroupChatDTO } from '../entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from '../entities/conversation/one-to-one-chat.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Subject, catchError, map, of, takeUntil } from 'rxjs';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
 
 export interface ConversationGlobalSearchConfig {
     searchTerm: string;
@@ -31,6 +32,7 @@ interface CombinedOption {
 
 const PREFIX_CONVERSATION_SEARCH = 'in:';
 const PREFIX_USER_SEARCH = 'by:';
+const PREFIX_USER_SEARCH_ME = 'me';
 
 enum SearchMode {
     NORMAL,
@@ -50,7 +52,7 @@ enum UserSearchStatus {
     styleUrls: ['./conversation-global-search.component.scss'],
     imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
 })
-export class ConversationGlobalSearchComponent implements OnDestroy {
+export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
     onSearch = output<ConversationGlobalSearchConfig>();
@@ -69,6 +71,7 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     filteredOptions: CombinedOption[] = [];
     filteredUsers: UserPublicInfoDTO[] = [];
+    user: User | undefined;
     activeDropdownIndex: number = -1;
     private destroy$ = new Subject<void>();
 
@@ -79,7 +82,16 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
     faSpinner = faSpinner;
     readonly ButtonType = ButtonType;
 
-    constructor(private courseManagementService: CourseManagementService) {}
+    constructor(
+        private courseManagementService: CourseManagementService,
+        private accountService: AccountService,
+    ) {}
+
+    ngOnInit(): void {
+        this.accountService.identity().then((user: User) => {
+            this.user = user!;
+        });
+    }
 
     ngOnDestroy(): void {
         this.destroy$.next();
@@ -148,6 +160,12 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
 
     filterUsers(searchQuery: string): void {
         const courseId = this.courseId();
+
+        if (this.user && searchQuery === PREFIX_USER_SEARCH_ME) {
+            this.addOwnUserToOptions();
+            return;
+        }
+
         if (!searchQuery || searchQuery.length < 3 || !courseId) {
             this.filteredOptions = [];
             this.userSearchStatus = UserSearchStatus.TOO_SHORT;
@@ -171,6 +189,9 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                     type: 'user',
                     img: user.imageUrl,
                 }));
+                if (this.user && this.user.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                    this.addOwnUserToOptions();
+                }
                 this.userSearchStatus = UserSearchStatus.RESULTS;
             });
     }
@@ -207,6 +228,24 @@ export class ConversationGlobalSearchComponent implements OnDestroy {
                 this.focusInput();
                 this.emitSelectionChange();
             }
+        }
+    }
+
+    addOwnUserToOptions(): void {
+        const alreadySelected = this.selectedAuthors.some((selected) => selected.id === this.user?.id);
+
+        if (this.user && !alreadySelected) {
+            this.filteredUsers = [this.user, ...this.filteredUsers];
+            this.filteredOptions = [
+                {
+                    id: this.user.id!,
+                    name: this.user.name!,
+                    type: 'user',
+                    img: this.user.imageUrl,
+                },
+                ...this.filteredOptions,
+            ];
+            this.userSearchStatus = UserSearchStatus.RESULTS;
         }
     }
 
