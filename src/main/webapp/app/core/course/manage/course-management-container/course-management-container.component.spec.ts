@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Params, Router } from '@angular/router';
 import { Observable, Subject, of, throwError } from 'rxjs';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
@@ -170,7 +170,6 @@ describe('CourseManagementContainerComponent', () => {
             imports: [MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule)],
             declarations: [
                 CourseManagementContainerComponent,
-                MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(FeatureToggleHideDirective),
@@ -179,7 +178,6 @@ describe('CourseManagementContainerComponent', () => {
                 MockComponent(CourseTitleBarComponent),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(DeleteButtonDirective),
-                MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
                 MockProvider(CourseManagementService),
@@ -199,6 +197,7 @@ describe('CourseManagementContainerComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
+                { provide: HasAnyAuthorityDirective, useClass: MockHasAnyAuthorityDirective },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -719,5 +718,17 @@ describe('CourseManagementContainerComponent', () => {
 
         courseSidebarService.closeSidebar();
         expect(component.isSidebarCollapsed()).toBeFalse();
+    });
+
+    it('should set isOverviewPage to false when not on overview page', async () => {
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
+        await component.ngOnInit();
+        expect(component.isOverviewPage()).toBeFalse();
+    });
+    it('should set isOverviewPage to true when on overview page', async () => {
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1');
+        jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1', '')));
+        await component.ngOnInit();
+        expect(component.isOverviewPage()).toBeTrue();
     });
 });

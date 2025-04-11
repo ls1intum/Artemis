@@ -259,6 +259,19 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.settings',
             guidedTour: false,
             hidden: false,
+            bottom: true,
+        };
+    }
+    getCourseSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/settings`,
+            icon: faCog,
+            title: 'Settings',
+            translation: 'artemisApp.courseOverview.menu.settings',
+            guidedTour: false,
+            hidden: false,
+            bottom: true,
+            testId: 'course-settings',
         };
     }
 }

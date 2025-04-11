@@ -208,7 +208,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await courseManagement.openCourseEdit();
+            await courseManagement.openCourseSettings();
 
             await courseCreation.setTitle(editedCourseData.title);
             await courseCreation.setTestCourse(editedCourseData.testCourse);
@@ -259,10 +259,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
             test('Deletes an existing course icon', async ({ navigationBar, courseManagement }) => {
                 await navigationBar.openCourseManagement();
                 await courseManagement.openCourse(course.id!);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.removeIconFromCourse();
                 await courseManagement.updateCourse(course);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.checkCourseHasNoIcon();
             });
 
@@ -282,7 +282,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             test('Deletes not existing course icon', async ({ navigationBar, courseManagement }) => {
                 await navigationBar.openCourseManagement();
                 await courseManagement.openCourse(course.id!);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.checkCourseHasNoIcon();
             });
 
