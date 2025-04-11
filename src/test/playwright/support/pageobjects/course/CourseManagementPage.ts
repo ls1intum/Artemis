@@ -21,10 +21,10 @@ export class CourseManagementPage {
     }
 
     /**
-     * Opens the course edit page.
+     * Opens the course settings page.
      */
-    async openCourseEdit() {
-        await this.page.locator('#edit-course').click();
+    async openCourseSettings() {
+        await this.page.locator('#course-settings').click();
     }
 
     /**
@@ -92,10 +92,6 @@ export class CourseManagementPage {
         await this.page.locator('.modal #delete').click();
     }
 
-    async clickEditCourse() {
-        await this.page.locator('#edit-course').click();
-    }
-
     async updateCourse(course: Course) {
         const response = this.page.waitForResponse(`api/core/courses/${course.id}`);
         await this.page.locator('#save-entity').click();
@@ -161,16 +157,8 @@ export class CourseManagementPage {
      * Retrieves the locator for the course header title.
      * @returns The locator for the course header title.
      */
-    getCourseHeaderTitle() {
-        return this.page.locator('#course-header-title');
-    }
-
-    /**
-     * Retrieves the locator for the course header description.
-     * @returns The locator for the course header description.
-     */
-    getCourseHeaderDescription() {
-        return this.page.locator('#course-header-description');
+    getCourseSidebarTitle() {
+        return this.page.locator('#test-course-title');
     }
 
     /**
