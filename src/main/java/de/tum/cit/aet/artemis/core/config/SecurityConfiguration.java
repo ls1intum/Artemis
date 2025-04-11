@@ -268,7 +268,10 @@ public class SecurityConfiguration {
 
         if (passkeyEnabled) {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-            URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();;
+            URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();
+            String ts3Url1 = "http://192.168.1.1";
+            String ts3Url2 = "http://131.159.89.160";
+            String ts3Url3 = "http://131.159.89.17";
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository);
             http.with(webAuthnConfigurer, configurer -> {
@@ -280,7 +283,8 @@ public class SecurityConfiguration {
                         ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn",
                         ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn",
                         ensureTrailingSlash(ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn"),
-                        ensureTrailingSlash(ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn")
+                        ensureTrailingSlash(ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn"),
+                        ts3Url1, ts3Url2, ts3Url3
                     )
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
