@@ -97,6 +97,14 @@ public class PyrisJobService {
         return token;
     }
 
+    /**
+     * adds a tutor suggestion job to the job map
+     *
+     * @param postId    Id of the post the suggestion is created for
+     * @param courseId  Id of the course the post belongs to
+     * @param sessionId Id of the session the suggestion is created for
+     * @return the token of the job
+     */
     public String addTutorSuggestionJob(Long postId, Long courseId, Long sessionId) {
         var token = generateJobIdToken();
         var job = new TutorSuggestionJob(token, postId, courseId, sessionId, null);

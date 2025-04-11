@@ -203,6 +203,12 @@ public class PyrisStatusUpdateService {
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), job);
     }
 
+    /**
+     * Handles the status update of a tutor suggestion job.
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update received
+     */
     public void handleStatusUpdate(TutorSuggestionJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var updatedJob = irisTutorSuggestionSessionService.handleStatusUpdate(job, statusUpdate);
 

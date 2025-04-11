@@ -53,7 +53,6 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("{postId}/sessions/current")
-    // @EnforceAtLeastTutorInCourse
     public ResponseEntity<IrisTutorSuggestionSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
