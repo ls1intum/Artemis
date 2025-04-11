@@ -88,20 +88,19 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentUnitIntoSingleSlides_WithHiddenPagesAndPageOrder() throws IOException {
+        // Create and save an Exercise
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
+
         // Arrange
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1).toString() + "\",\"exerciseId\":1}]";
+        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId\":" + testExercise.getId() + "}]";
 
         String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"2\",\"order\":2},{\"slideId\":\"3\",\"order\":3}]";
 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
         slideRepository.deleteAll(existingSlides);
-
-        // Create and save an Exercise with ID 1
-        Exercise testExercise = new TextExercise();
-        testExercise.setId(1L);
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
 
         // Get a proper temp path for slides
         Path tempFilePath = FilePathService.getTempFilePath();
@@ -139,7 +138,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(firstSlide).isNotNull();
         assertThat(firstSlide.getHidden()).isNotNull();
         assertThat(firstSlide.getExercise()).isNotNull();
-        assertThat(firstSlide.getExercise().getId()).isEqualTo(1L);
+        assertThat(firstSlide.getExercise().getId()).isEqualTo(testExercise.getId());
     }
 
     @Test
@@ -259,21 +258,20 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testSplitAttachmentUnitIntoSingleSlides_UpdateHiddenStatus() throws IOException {
+        // Create and save an Exercise1
+        Exercise testExercise = new TextExercise();
+        testExercise.setTitle("Test Exercise");
+        exerciseRepository.save(testExercise);
+
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + hiddenDate.toString() + "\",\"exerciseId\":1}]";
+        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId\":" + testExercise.getId() + "}]";
 
         String pageOrder = "[{\"slideId\":\"1\",\"order\":1}]";
 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
         slideRepository.deleteAll(existingSlides);
-
-        // Create and save an Exercise with ID 1
-        Exercise testExercise = new TextExercise();
-        testExercise.setId(1L);
-        testExercise.setTitle("Test Exercise");
-        exerciseRepository.save(testExercise);
 
         // Get a proper temp path for slides
         Path tempFilePath = FilePathService.getTempFilePath();
@@ -306,6 +304,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Verify the exercise association
         assertThat(updatedSlide.getExercise()).isNotNull();
-        assertThat(updatedSlide.getExercise().getId()).isEqualTo(1L);
+        assertThat(updatedSlide.getExercise().getId()).isEqualTo(testExercise.getId());
     }
 }
