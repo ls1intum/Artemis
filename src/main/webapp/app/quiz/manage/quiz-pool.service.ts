@@ -1,9 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
+import { QuizPool } from 'app/quiz/shared/entities/quiz-pool.model';
 
 export type EntityResponseType = HttpResponse<QuizExercise>;
 export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;

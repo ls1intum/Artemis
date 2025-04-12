@@ -114,6 +114,8 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     fileName = signal<string | undefined>(undefined);
     isFileTooBig = signal<boolean>(false);
 
+    videoSource = signal<string | undefined>(undefined);
+
     videoSourceUrlValidator = videoSourceUrlValidator;
     videoSourceTransformUrlValidator = videoSourceTransformUrlValidator;
 
@@ -131,7 +133,7 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
     private readonly statusChanges = toSignal(this.form.statusChanges ?? 'INVALID');
 
     isFormValid = computed(() => {
-        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.form.value.videoSource);
+        return this.statusChanges() === 'VALID' && !this.isFileTooBig() && this.datePickerComponent()?.isValid() && (!!this.fileName() || !!this.videoSource());
     });
 
     ngOnChanges() {
@@ -221,7 +223,9 @@ export class AttachmentVideoUnitFormComponent implements OnChanges {
 
     setEmbeddedVideoUrl(event: any) {
         event.stopPropagation();
-        this.videoSourceControl!.setValue(this.extractEmbeddedUrl(this.urlHelperControl!.value));
+        const embeddedUrl = this.extractEmbeddedUrl(this.urlHelperControl!.value);
+        this.videoSourceControl!.setValue(embeddedUrl);
+        this.videoSource.set(embeddedUrl);
     }
 
     extractEmbeddedUrl(videoUrl: string) {
