@@ -373,10 +373,9 @@ To search within a specific channel in the communications module, users can navi
 Filter Pinned Messages within a Conversation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If there are any pinned messages in a conversation, a button labeled "x pinned messages"
-(where x is the number of pinned messages) appears at the top right of the conversation view.
-By clicking this button, users can filter and view only the pinned messages within that conversation.
-Clicking the button again will return the view to the regular conversation.
+If there are any pinned messages in a conversation, a button labeled "*x* pinned messages", where *x* is the number of pinned messages,
+appears at the top right of the conversation view. By clicking this button, users can filter and view only the pinned messages
+within that conversation. Clicking the button again returns the view to the regular conversation.
 
 
 
@@ -507,8 +506,7 @@ Expand Thread to Full-Screen
 Users can expand a thread to cover the entire conversation view by clicking the expand button located at the top right
 corner of the answer thread. Clicking the same button again returns the thread to its original size.
 
-
-
+|expanded-thread|
 
 Features for Moderators
 -----------------------
@@ -518,8 +516,8 @@ The following features are only available for moderators, not for students.
 Pin Messages
 ^^^^^^^^^^^^
 
-By clicking the pushpin icon next to the reaction button of a message, a moderator can *pin* the message.
-As a consequence, the message is highlighted to receive higher attention.
+By using the "Pin message" button, either from the right-click dropdown menu or from the action bar that appears at the top right corner
+of a message when hovering over it, a moderator can *pin* the message. As a consequence, the message is highlighted to receive higher attention.
 
 Toggle Channel Privacy
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -596,3 +594,5 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 800
 .. |forward-message-dialog| image:: communication/forward-message-dialog.png
     :width: 800
+.. |expanded-thread| image:: communication/expanded-thread.png
+    :width: 1000
