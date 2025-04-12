@@ -47,7 +47,7 @@ These messages can also be created on the detail page of the lecture they belong
 
 Exemplary lecture detail page with messages:
 
-|lecture-messages|
+|lecture-view|
 
 Exercise Messages
 ^^^^^^^^^^^^^^^^^
@@ -563,7 +563,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 500
 .. |messaging-page| image:: communication/messaging-page.png
     :width: 1000
-.. |lecture-messages| image:: communication/lecture-messages.png
+.. |lecture-view| image:: communication/lecture-view.png
     :width: 1000
 .. |exercise-view| image:: communication/exercise-view.png
     :width: 1000
