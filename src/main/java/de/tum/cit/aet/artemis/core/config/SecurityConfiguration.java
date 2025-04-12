@@ -284,7 +284,7 @@ public class SecurityConfiguration {
                         ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn",
                         ensureTrailingSlash(ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn"),
                         ensureTrailingSlash(ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn"),
-                        ts3Url1, ts3Url2, ts3Url3
+                        ts3Url1, ts3Url2, ts3Url3, clientUrlToRegisterPasskey.getHost()
                     )
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
