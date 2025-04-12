@@ -495,7 +495,11 @@ Forward Messages
 
 Users can forward any message to another conversation within the same course. In the forward message dialog,
 they can add additional content using the input field. On the forwarded message view, users can navigate to the
-exact location of the original message by clicking the View Conversation button.
+exact location of the original message by clicking the *View Conversation* button.
+
+|forward-message-dialog|
+
+|forwarded-message|
 
 Expand Thread to Full-Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -504,7 +508,7 @@ Users can expand a thread to cover the entire conversation view by clicking the 
 corner of the answer thread. Clicking the same button again returns the thread to its original size.
 
 
-|resolved-post|
+
 
 Features for Moderators
 -----------------------
@@ -546,6 +550,8 @@ if needed. When creating a channel, they must choose between a *selective* chann
 In a *selective* channel, users are added manually after the channel is created. In a *course-wide* channel, all users
 enrolled in the course are automatically added as members.
 
+|channel-creation|
+
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -584,3 +590,9 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 600
 .. |link-preview-multiple| image:: communication/link-preview-multiple.png
     :width: 600
+.. |channel-creation| image:: communication/channel-creation.png
+    :width: 600
+.. |forwarded-message| image:: communication/forwarded-message.png
+    :width: 800
+.. |forward-message-dialog| image:: communication/forward-message-dialog.png
+    :width: 800
