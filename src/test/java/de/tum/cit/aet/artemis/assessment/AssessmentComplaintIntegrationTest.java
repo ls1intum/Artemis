@@ -683,14 +683,22 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
 
         checkIfNoSensitiveExerciseDataPresent(receivedComplaint);
         checkIfNoSensitiveSubmissionDataPresent(receivedComplaint);
+        checkIfNoSensitiveParticipationDataPresent(receivedComplaint);
     }
 
     private void checkIfNoSensitiveSubmissionDataPresent(Complaint receivedComplaint) {
         final var submission = receivedComplaint.getResult().getSubmission();
         if (submission != null) {
-            assertThat(submission.getParticipation()).as("Submission only contains ID").isNull();
             assertThat(submission.getLatestResult()).as("Submission only contains ID").isNull();
             assertThat(submission.getSubmissionDate()).as("Submission only contains ID").isNull();
+        }
+    }
+
+    private void checkIfNoSensitiveParticipationDataPresent(Complaint receivedComplaint) {
+        final var participation = receivedComplaint.getResult().getSubmission().getParticipation();
+        if (participation != null) {
+            assertThat(participation.getSubmissions()).as("Participation does not contain submission info").isNullOrEmpty();
+            assertThat(participation.getSubmissionCount()).as("Participation does not contain submission info").isNull();
         }
     }
 
