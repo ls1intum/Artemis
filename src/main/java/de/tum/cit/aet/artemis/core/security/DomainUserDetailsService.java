@@ -33,18 +33,21 @@ public class DomainUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(final String loginOrEmail) {
         log.debug("Authenticating {}", loginOrEmail);
+        log.debug("length of string {}", loginOrEmail.length());
+        long printableCharCount = loginOrEmail.chars().filter(ch -> !Character.isISOControl(ch) && !Character.isWhitespace(ch)).count();
+        log.debug("Number of printable characters: {}", printableCharCount);
         String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
 
         User user;
         if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
             // It's an email, try to find the user based on the email
             user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true)
-                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by email in the database"));
         }
         else {
             // It's a login, try to find the user based on the login
             user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true)
-                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by login in the database"));
         }
 
         if (!user.isInternal()) {
