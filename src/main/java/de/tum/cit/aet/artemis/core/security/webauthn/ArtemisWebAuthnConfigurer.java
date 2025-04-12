@@ -114,6 +114,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
      * @see #allowedOrigins(String...)
      */
     public ArtemisWebAuthnConfigurer<H> allowedOrigins(Set<String> allowedOrigins) {
+        log.info("AllowedOrigins (set): {}", Set.of(allowedOrigins));
         this.allowedOrigins = allowedOrigins;
         return this;
     }

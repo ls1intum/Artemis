@@ -2,10 +2,6 @@ package de.tum.cit.aet.artemis.core.repository.webauthn;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -115,22 +111,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     @Override
     public CredentialRecord findByCredentialId(Bytes credentialId) {
         log.info("findByCredentialId: id={}", credentialId.toBase64UrlString());
-
-        log.info("serverUrl={}", serverUrl);
-        log.info("port={}", port);
-        URL clientUrl = null;
-        try {
-            clientUrl = new URI(serverUrl + ":" + port).toURL();
-        }
-        catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        }
-        catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        log.info("clientUrl={}", clientUrl);
-        log.info("allowedOrigins={}", clientUrl.toString());
-        log.info("rpId={}", clientUrl.getHost());
 
         return passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).map(credential -> {
             log.info("Credential found: id={}, userId={}", credential.getCredentialId(), credential.getUser().getId());
