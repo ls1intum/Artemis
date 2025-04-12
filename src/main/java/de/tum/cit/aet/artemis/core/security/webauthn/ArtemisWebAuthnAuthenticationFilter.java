@@ -75,13 +75,25 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
         }
         PublicKeyCredentialRequestOptions requestOptions = this.requestOptionsRepository.load(request);
         if (requestOptions == null) {
+            log.error("No PublicKeyCredentialRequestOptions found for the request.");
             throw new BadCredentialsException("Unable to authenticate the PublicKeyCredential. No PublicKeyCredentialRequestOptions found.");
         }
+        log.info("RequestOptions: Challenge={}, Timeout={}, RP ID={}", requestOptions.getChallenge(), requestOptions.getTimeout(), requestOptions.getRpId());
+
         this.requestOptionsRepository.save(request, response, null);
         RelyingPartyAuthenticationRequest authenticationRequest = new RelyingPartyAuthenticationRequest(requestOptions, publicKeyCredential);
+
         WebAuthnAuthenticationRequestToken token = new WebAuthnAuthenticationRequestToken(authenticationRequest);
-        // Perform authentication
-        Authentication authentication = getAuthenticationManager().authenticate(token);
+        // Perform authentication and log details
+        Authentication authentication;
+        try {
+            authentication = getAuthenticationManager().authenticate(token);
+            log.info("Authentication successful: Principal={}, Authorities={}", authentication.getPrincipal(), authentication.getAuthorities());
+        }
+        catch (AuthenticationException ex) {
+            log.error("Authentication failed: {}", ex.getMessage(), ex);
+            throw ex;
+        }
 
         // Log response details
         log.info("Response Status: {}", response.getStatus());
