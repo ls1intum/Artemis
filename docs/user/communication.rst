@@ -525,6 +525,8 @@ Toggle Channel Privacy
 Moderators have the ability to seamlessly toggle a channel’s privacy between private and public using
 the toggle button in the channel settings.
 
+|channel-settings|
+
 Features for Instructors
 ------------------------
 
@@ -576,7 +578,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 500
 .. |student-user| image:: communication/user-authorities/student.png
     :width: 500
-.. |messages| image:: communication/messages.png
+.. |messages| image:: communication/direct-messages.png
     :width: 1000
 .. |slide-reference| image:: communication/slide-reference.png
     :width: 600
@@ -596,3 +598,5 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 800
 .. |expanded-thread| image:: communication/expanded-thread.png
     :width: 1000
+.. |channel-settings| image:: communication/channel-settings.png
+    :width: 800
