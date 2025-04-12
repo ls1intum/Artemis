@@ -93,12 +93,7 @@ If the message content contains links, a preview of the link will be shown under
 of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
 The preview will be removed.
 
-|link-preview|
-
-If the message contains more than one link, the preview will not have a preview image of the link to have more compact previews
-for multiple links.
-
-|link-preview-multiple|
+|link-preview-view|
 
 
 .. _communication features availability list:
@@ -457,12 +452,12 @@ Reference Lecture Unit Slides
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
 hover over a specific unit, see image below.
 
-|slide-reference-menu|
+|slide-menu|
 
 After the user references a single slide they can see it as an image included in the message. Additionally, they can preview the slide
 in order to easily read the content by clicking the image.
 
-|slide-reference|
+|slide-preview|
 
 |referenced-slide-preview|
 
@@ -490,11 +485,17 @@ It also highlights the correct answer for other students that have a similar pro
 Forward Messages
 ^^^^^^^^^^^^^^^^
 
-Users can forward any message to another conversation within the same course. In the forward message dialog,
-they can add additional content using the input field. On the forwarded message view, users can navigate to the
-exact location of the original message by clicking the *View Conversation* button.
+Users can forward any message to another conversation within the same course. In the forward message dialog, they can add
+additional content using the input field. At the top of the dialog, users can search for channels or users by typing into
+the input bar and selecting from the auto-suggestions. They can select multiple conversations at once to forward the message
+to several destinations simultaneously. On the forwarded message view, users can navigate to the exact location of the original
+message by clicking the *View Conversation* button.
+
+Forward Message Dialog
 
 |forward-message-dialog|
+
+Forwarded Message View
 
 |forwarded-message|
 
@@ -578,13 +579,13 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 500
 .. |messages| image:: communication/direct-messages.png
     :width: 1000
-.. |slide-reference| image:: communication/slide-reference.png
+.. |slide-preview| image:: communication/slide-preview.png
     :width: 600
-.. |slide-reference-menu| image:: communication/slide-reference-menu.png
+.. |slide-menu| image:: communication/slide-menu.png
     :width: 1000
 .. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
     :width: 600
-.. |link-preview| image:: communication/link-preview.png
+.. |link-preview-view| image:: communication/link-preview-view.png
     :width: 600
 .. |link-preview-multiple| image:: communication/link-preview-multiple.png
     :width: 600
