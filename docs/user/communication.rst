@@ -382,23 +382,21 @@ within that conversation. Clicking the button again returns the view to the regu
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend a role badge to the author’s name in the
-headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
-and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
-the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
+To build trust between users utilizing the system's communication features, we display the user's role below their name in the headers of messages and their replies.
+When hovering over the displayed role, a tooltip appears showing a brief explanation of that specific role. This way, the system builds trust in the author, and readers
 can tangibly confirm the origin of the shared information.
 
 Instructor Authority
 
-|instructor-user|
+|instructor-role|
 
 Tutor Authority
 
-|tutor-user|
+|tutor-role|
 
 Student Authority
 
-|student-user|
+|student-role|
 
 React on Messages
 ^^^^^^^^^^^^^^^^^
@@ -572,11 +570,11 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
     :width: 600
-.. |instructor-user| image:: communication/user-authorities/instructor.png
+.. |instructor-role| image:: communication/user-authorities/instructor-role.png
     :width: 500
-.. |tutor-user| image:: communication/user-authorities/tutor.png
+.. |tutor-role| image:: communication/user-authorities/tutor-role.png
     :width: 500
-.. |student-user| image:: communication/user-authorities/student.png
+.. |student-role| image:: communication/user-authorities/student-role.png
     :width: 500
 .. |messages| image:: communication/direct-messages.png
     :width: 1000
