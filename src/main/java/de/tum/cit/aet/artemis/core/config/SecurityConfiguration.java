@@ -36,6 +36,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.webauthn.authentication.HttpSessionPublicKeyCredentialRequestOptionsRepository;
+import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.web.filter.CorsFilter;
@@ -164,6 +166,11 @@ public class SecurityConfiguration {
         return expressionHandler;
     }
 
+    @Bean
+    public PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository() {
+        return new HttpSessionPublicKeyCredentialRequestOptionsRepository();
+    }
+
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
@@ -273,7 +280,7 @@ public class SecurityConfiguration {
             String ts3Url2 = "http://131.159.89.160";
             String ts3Url3 = "http://131.159.89.17";
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
-                    publicKeyCredentialUserEntityRepository, userCredentialRepository);
+                    publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialRequestOptionsRepository());
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
                     .allowedOrigins(

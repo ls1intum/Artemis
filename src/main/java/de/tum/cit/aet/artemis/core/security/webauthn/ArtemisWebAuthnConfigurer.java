@@ -17,6 +17,7 @@ import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsFilter;
+import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationProvider;
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
@@ -63,13 +64,17 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
 
     private final UserDetailsService userDetailsService;
 
+    private PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
+
     public ArtemisWebAuthnConfigurer(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService, UserDetailsService userDetailsService,
-            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository) {
+            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
         this.converter = converter;
         this.jwtCookieService = jwtCookieService;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
         this.userCredentialRepository = userCredentialRepository;
         this.userDetailsService = userDetailsService;
+        this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
     }
 
     /**
@@ -123,7 +128,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     @Override
     public void configure(H http) throws Exception {
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
-        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(converter, jwtCookieService);
+        WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(converter, jwtCookieService, publicKeyCredentialRequestOptionsRepository);
 
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);

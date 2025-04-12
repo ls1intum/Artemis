@@ -41,9 +41,11 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisWebAuthnAuthenticationFilter.class);
 
-    public ArtemisWebAuthnAuthenticationFilter(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService) {
+    public ArtemisWebAuthnAuthenticationFilter(HttpMessageConverter<Object> converter, JWTCookieService jwtCookieService,
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository) {
         super();
         setSecurityContextRepository(new HttpSessionSecurityContextRepository());
+        setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
         setAuthenticationFailureHandler(new AuthenticationEntryPointFailureHandler(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
         setAuthenticationSuccessHandler(new ArtemisHttpMessageConverterAuthenticationSuccessHandler(converter, jwtCookieService));
     }
@@ -51,7 +53,7 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
     private GenericHttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
             Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module()).build());
 
-    private PublicKeyCredentialRequestOptionsRepository requestOptionsRepository = new HttpSessionPublicKeyCredentialRequestOptionsRepository();
+    private PublicKeyCredentialRequestOptionsRepository requestOptionsRepository;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
