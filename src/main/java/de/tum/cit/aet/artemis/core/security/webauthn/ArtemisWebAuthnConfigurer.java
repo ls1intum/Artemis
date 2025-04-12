@@ -79,6 +79,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
      * @return the {@link ArtemisWebAuthnConfigurer} for further customization
      */
     public ArtemisWebAuthnConfigurer<H> rpId(String relyingPartyId) {
+        log.info("RelyingPartyId: {}", relyingPartyId);
         this.relyingPartyId = relyingPartyId;
         return this;
     }

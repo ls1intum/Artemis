@@ -81,9 +81,15 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
         log.info("RequestOptions: Challenge={}, Timeout={}, RP ID={}", requestOptions.getChallenge(), requestOptions.getTimeout(), requestOptions.getRpId());
 
         this.requestOptionsRepository.save(request, response, null);
+        log.info("Creating RelyingPartyAuthenticationRequest with RequestOptions: Challenge={}, Timeout={}, RP ID={}", requestOptions.getChallenge(), requestOptions.getTimeout(),
+                requestOptions.getRpId());
+        log.info("PublicKeyCredential: ID={}, Type={}", publicKeyCredential.getId(), publicKeyCredential.getType());
+
         RelyingPartyAuthenticationRequest authenticationRequest = new RelyingPartyAuthenticationRequest(requestOptions, publicKeyCredential);
+        log.debug("RelyingPartyAuthenticationRequest created: {}", authenticationRequest);
 
         WebAuthnAuthenticationRequestToken token = new WebAuthnAuthenticationRequestToken(authenticationRequest);
+        log.debug("WebAuthnAuthenticationRequestToken created: Principal={}, Credentials={}", token.getPrincipal(), token.getCredentials());
         // Perform authentication and log details
         Authentication authentication;
         try {
