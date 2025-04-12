@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -28,7 +26,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterfa
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
-import de.tum.cit.aet.artemis.lti.web.open.PublicOAuth2JWKSResource;
 
 /**
  * Service for managing Iris sessions.
@@ -48,8 +45,6 @@ public class IrisSessionService {
     private final IrisLectureChatSessionService irisLectureChatSessionService;
 
     private final IrisTutorSuggestionSessionService irisTutorSuggestionSessionService;
-
-    private static final Logger log = LoggerFactory.getLogger(PublicOAuth2JWKSResource.class);
 
     public IrisSessionService(UserRepository userRepository, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService,
             IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService,

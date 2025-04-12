@@ -19,17 +19,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     selector: 'jhi-conversation-thread-sidebar',
     templateUrl: './conversation-thread-sidebar.component.html',
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
-    imports: [
-        FaIconComponent,
-        TranslateDirective,
-        NgbTooltip,
-        PostComponent,
-        MessageReplyInlineInputComponent,
-        ArtemisTranslatePipe,
-        NgClass,
-        TutorSuggestionComponent,
-        TutorSuggestionComponent,
-    ],
+    imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;

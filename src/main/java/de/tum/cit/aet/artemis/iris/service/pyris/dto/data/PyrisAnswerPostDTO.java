@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 
 /**
@@ -9,6 +11,7 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
  * @param content      content of the answer post
  * @param resolvesPost resolves the post
  */
+@JsonInclude
 public record PyrisAnswerPostDTO(Long id, String content, boolean resolvesPost, Long userID) {
 
     public PyrisAnswerPostDTO(AnswerPost answerPost) {
