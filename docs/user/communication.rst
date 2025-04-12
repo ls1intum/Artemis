@@ -488,6 +488,8 @@ Note that only the author of the message as well as a moderator can perform this
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
 
+|resolved-post|
+
 Forward Messages
 ^^^^^^^^^^^^^^^^
 
@@ -498,6 +500,8 @@ exact location of the original message by clicking the View Conversation button.
 Expand Thread to Full-Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Users can expand a thread to cover the entire conversation view by clicking the expand button located at the top right
+corner of the answer thread. Clicking the same button again returns the thread to its original size.
 
 
 |resolved-post|
@@ -538,8 +542,8 @@ The video below provides a demonstration for the creation of a course-wide chann
     </iframe>
 
 Besides automatic creation during lecture, exercise, or exam setup, moderators can also manually create new channels later
-if needed. When creating a channel, they must choose between a selective channel (default option) and a course-wide channel.
-In a selective channel, users are added manually after the channel is created. In a course-wide channel, all users
+if needed. When creating a channel, they must choose between a *selective* channel (default option) and a *course-wide* channel.
+In a *selective* channel, users are added manually after the channel is created. In a *course-wide* channel, all users
 enrolled in the course are automatically added as members.
 
 Message Announcements
@@ -561,7 +565,7 @@ As soon as the announcement is created, all participants who did not actively re
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
-    :width: 400
+    :width: 600
 .. |instructor-user| image:: communication/user-authorities/instructor.png
     :width: 500
 .. |tutor-user| image:: communication/user-authorities/tutor.png
