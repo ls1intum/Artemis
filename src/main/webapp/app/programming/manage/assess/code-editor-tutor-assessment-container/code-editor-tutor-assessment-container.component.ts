@@ -507,7 +507,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
             .subscribe({
                 next: (result: Result) => {
                     assessmentAfterComplaint.onSuccess();
-                    this.participation.submissions!.last()!.results![0] = this.manualResult = result;
+                    this!.submission!.results![0] = this.manualResult = result;
                     this.alertService.closeAll();
                     this.alertService.success('artemisApp.assessment.messages.updateAfterComplaintSuccessful');
                 },
