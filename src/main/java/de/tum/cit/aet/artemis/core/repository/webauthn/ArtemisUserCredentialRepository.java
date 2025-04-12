@@ -8,7 +8,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
@@ -53,12 +52,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     private final UserRepository userRepository;
 
-    @Value("${server.url}")
-    private String serverUrl;
-
-    @Value("${client.port:${server.port}}")
-    private String port;
-
     public ArtemisUserCredentialRepository(ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository,
             PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository) {
         this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
@@ -100,7 +93,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                                     )
                             );
 
-                    log.info("save: user={}, externalId={}, label={}", user.getName(), user.getExternalId(), credentialRecord.getLabel());
+                    log.info("save: user={}, userId={}, externalId={}, label={}", user.getName(), user.getId(), user.getExternalId(), credentialRecord.getLabel());
                 });
         // @formatter:on
     }
