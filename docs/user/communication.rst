@@ -58,7 +58,7 @@ These messages can also be created on the detail page of the exercise they belon
 
 Exemplary exercise detail page with messages:
 
-|exercise-messages|
+|exercise-view|
 
 Private Communication
 ----------------------
@@ -459,7 +459,7 @@ in order to easily read the content by clicking the image.
 
 |slide-preview|
 
-|referenced-slide-preview|
+|slide-view|
 
 Reference other course members
 """"""""""""""""""""""""""""""
@@ -565,7 +565,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |lecture-messages| image:: communication/lecture-messages.png
     :width: 1000
-.. |exercise-messages| image:: communication/exercise-messages.png
+.. |exercise-view| image:: communication/exercise-view.png
     :width: 1000
 .. |message-with-references| image:: communication/message-with-all-references.png
     :width: 750
@@ -583,7 +583,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 600
 .. |slide-menu| image:: communication/slide-menu.png
     :width: 1000
-.. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
+.. |slide-view| image:: communication/slide-view.png
     :width: 600
 .. |link-preview-view| image:: communication/link-preview-view.png
     :width: 600
