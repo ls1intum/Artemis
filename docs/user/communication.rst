@@ -408,7 +408,7 @@ and attachments of these lectures. All references are then prepended with icons 
 to help users distinguish them conveniently. In the image below, we see all possible types of references that can be created
 in an Artemis message.
 
-|message-with-references|
+|message-references|
 
 Reference Course Exercises
 """"""""""""""""""""""""""
@@ -567,7 +567,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |exercise-view| image:: communication/exercise-view.png
     :width: 1000
-.. |message-with-references| image:: communication/message-with-all-references.png
+.. |message-references| image:: communication/message-references.png
     :width: 750
 .. |resolved-post| image:: communication/resolved-post.png
     :width: 600
