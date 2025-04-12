@@ -174,15 +174,11 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      * @private
      */
     private setCommitResults() {
+        const results = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
         this.commits.forEach((commit) => {
-            const results = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
-            results.forEach((result) => {
+            commit.result = results.find((result) => {
                 const submission = result.submission as ProgrammingSubmission;
-                if (submission) {
-                    if (submission.commitHash === commit.hash) {
-                        commit.result = result;
-                    }
-                }
+                return submission && submission.commitHash === commit.hash;
             });
         });
     }
