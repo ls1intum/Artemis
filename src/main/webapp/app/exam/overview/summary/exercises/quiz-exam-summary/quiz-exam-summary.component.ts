@@ -9,7 +9,7 @@ import { MultipleChoiceSubmittedAnswer } from 'app/quiz/shared/entities/multiple
 import { DragAndDropSubmittedAnswer } from 'app/quiz/shared/entities/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/quiz/shared/entities/short-answer-submitted-answer.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { QuizParticipation } from 'app/quiz/shared/entities/quiz-participation.model';
