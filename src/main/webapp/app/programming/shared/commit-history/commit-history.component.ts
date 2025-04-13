@@ -180,6 +180,9 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                 const submission = result.submission as ProgrammingSubmission;
                 return submission && submission.commitHash === commit.hash;
             });
+            if (commit.result?.submission) {
+                commit.result.submission.participation = this.participation;
+            }
         });
     }
 
