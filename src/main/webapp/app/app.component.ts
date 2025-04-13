@@ -47,7 +47,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
 
-    private profileSubscription: Subscription;
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
     private testRunSubscription: Subscription;
@@ -148,7 +147,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.courseOverviewSubscription?.unsubscribe();

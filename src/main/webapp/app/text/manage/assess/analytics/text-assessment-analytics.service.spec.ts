@@ -1,10 +1,12 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TextAssessmentEventType } from 'app/text/shared/entities/text-assesment-event.model';
 import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-assessment-analytics.service';
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -48,15 +50,12 @@ describe('TextAssessmentAnalytics Service', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
-                {
-                    provide: ActivatedRoute,
-                    useValue: route(),
-                },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: ActivatedRoute, useValue: route() },
             ],
         });
         service = TestBed.inject(TextAssessmentAnalytics);
         httpMock = TestBed.inject(HttpTestingController);
-        httpMock.expectOne({ url: `management/info`, method: 'GET' });
     });
 
     afterEach(() => {

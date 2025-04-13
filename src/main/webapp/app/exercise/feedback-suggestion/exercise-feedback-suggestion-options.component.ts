@@ -7,14 +7,14 @@ import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AsyncPipe, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 
 @Component({
     selector: 'jhi-exercise-feedback-suggestion-options',
     templateUrl: './exercise-feedback-suggestion-options.component.html',
-    imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule, AsyncPipe],
+    imports: [TranslateDirective, NgStyle, HelpIconComponent, FormsModule],
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
     private athenaService = inject(AthenaService);

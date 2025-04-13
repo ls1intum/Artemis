@@ -5,6 +5,7 @@ import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
@@ -29,7 +30,12 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: LocalStorageService, useClass: MockLocalStorageService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .compileComponents()
             .then(() => {

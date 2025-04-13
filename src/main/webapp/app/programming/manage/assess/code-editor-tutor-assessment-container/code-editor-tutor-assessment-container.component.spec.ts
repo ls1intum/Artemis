@@ -4,13 +4,14 @@ import { DebugElement } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
@@ -152,8 +153,8 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     const fileContent = 'This is the content of a file';
     const templateFileSessionReturn: { [fileName: string]: string } = { 'folder/file1': fileContent };
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [CodeEditorMonacoComponent],
             providers: [
                 provideRouter([]),
@@ -166,48 +167,42 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: AthenaService, useClass: MockAthenaService },
                 { provide: ActivatedRoute, useValue: route() },
                 { provide: Router, useClass: MockRouter },
-                MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
         })
             .overrideComponent(CodeEditorMonacoComponent, { set: { imports: [MonacoEditorComponent, MockComponent(CodeEditorHeaderComponent)] } })
-            .compileComponents()
-            .then(() => {
-                // Ignore console errors
-                console.error = () => {
-                    return false;
-                };
-                fixture = TestBed.createComponent(CodeEditorTutorAssessmentContainerComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                router = TestBed.inject(Router);
-
-                programmingAssessmentManualResultService = TestBed.inject(ProgrammingAssessmentManualResultService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-                complaintService = TestBed.inject(ComplaintService);
-                accountService = TestBed.inject(AccountService);
-                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-                repositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
-
-                updateAfterComplaintStub = jest.spyOn(programmingAssessmentManualResultService, 'updateAfterComplaint').mockReturnValue(of(afterComplaintResult));
-                lockAndGetProgrammingSubmissionParticipationStub = jest
-                    .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
-                    .mockReturnValue(of(submission).pipe(delay(100)));
-                findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
-                getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
-                getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
-                    .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
-                    .mockReturnValue(of(unassessedSubmission));
-
-                findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
-                findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
-
-                // Mock the ResizeObserver, which is not available in the test environment
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-            });
+            .compileComponents();
+        // Ignore console errors
+        console.error = () => {
+            return false;
+        };
+        fixture = TestBed.createComponent(CodeEditorTutorAssessmentContainerComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        router = TestBed.inject(Router);
+        programmingAssessmentManualResultService = TestBed.inject(ProgrammingAssessmentManualResultService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+        complaintService = TestBed.inject(ComplaintService);
+        accountService = TestBed.inject(AccountService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        repositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+        updateAfterComplaintStub = jest.spyOn(programmingAssessmentManualResultService, 'updateAfterComplaint').mockReturnValue(of(afterComplaintResult));
+        lockAndGetProgrammingSubmissionParticipationStub = jest
+            .spyOn(programmingSubmissionService, 'lockAndGetProgrammingSubmissionParticipation')
+            .mockReturnValue(of(submission).pipe(delay(100)));
+        findBySubmissionIdStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as HttpResponse<Complaint>));
+        getIdentityStub = jest.spyOn(accountService, 'identity').mockReturnValue(new Promise((promise) => promise(user)));
+        getProgrammingSubmissionForExerciseWithoutAssessmentStub = jest
+            .spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment')
+            .mockReturnValue(of(unassessedSubmission));
+        findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipation');
+        findWithParticipationsStub.mockReturnValue(of({ body: exercise }));
+        // Mock the ResizeObserver, which is not available in the test environment
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
     });
 
     afterEach(() => {

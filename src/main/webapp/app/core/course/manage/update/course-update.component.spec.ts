@@ -107,17 +107,14 @@ describe('Course Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: route,
-                },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
-
                 MockProvider(LoadImageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -174,7 +171,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseOrganizations).toEqual([organization]);
             expect(getOrganizationsStub).toHaveBeenCalledOnce();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
-            expect(getProfileStub).toHaveBeenCalledOnce();
+            expect(getProfileStub).toHaveBeenCalledTimes(4);
             expect(comp.customizeGroupNames).toBeTrue();
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');

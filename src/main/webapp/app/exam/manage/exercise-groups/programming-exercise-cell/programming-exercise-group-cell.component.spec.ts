@@ -8,6 +8,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
@@ -51,6 +52,7 @@ describe('Programming Exercise Group Cell Component', () => {
                 { provide: ProfileService, useValue: mockedProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 provideHttpClient(),
             ],

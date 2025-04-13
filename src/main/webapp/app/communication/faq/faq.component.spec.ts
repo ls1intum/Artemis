@@ -122,10 +122,7 @@ describe('FaqComponent', () => {
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
                 sortService = TestBed.inject(SortService);
-
-                profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
-
                 profileService = TestBed.inject(ProfileService);
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });

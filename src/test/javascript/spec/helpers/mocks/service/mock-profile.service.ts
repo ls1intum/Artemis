@@ -4,6 +4,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 export class MockProfileService {
     getProfileInfo = (): ProfileInfo =>
         ({
+            programmingLanguageFeatures: [],
             activeProfiles: [],
             activeModuleFeatures: [],
             testServer: false,

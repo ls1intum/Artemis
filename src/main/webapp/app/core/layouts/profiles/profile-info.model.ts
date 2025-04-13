@@ -125,8 +125,8 @@ export class ProgrammingLanguageFeature {
 
 export class ProfileInfo {
     public accountName?: string;
-    public activeModuleFeatures: string[];
-    public activeProfiles: string[];
+    public activeModuleFeatures: string[] = [];
+    public activeProfiles: string[] = [];
     public allowedCourseRegistrationUsernamePattern?: string;
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
@@ -151,7 +151,7 @@ export class ProfileInfo {
     public needsToAcceptTerms?: boolean;
     public operatorAdminName: string;
     public operatorName: string;
-    public programmingLanguageFeatures: ProgrammingLanguageFeature[];
+    public programmingLanguageFeatures: ProgrammingLanguageFeature[] = [];
     public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms: string[];
     public saml2Config?: Saml2Config;

@@ -1,3 +1,4 @@
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
@@ -10,6 +11,7 @@ import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-s
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { of } from 'rxjs';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ScienceService', () => {
     let scienceService: ScienceService;
@@ -24,6 +26,7 @@ describe('ScienceService', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()

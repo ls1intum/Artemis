@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
@@ -15,6 +16,7 @@ import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/program
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -29,14 +31,9 @@ describe('ProgrammingExerciseInformationComponent', () => {
             imports: [BrowserAnimationsModule],
             providers: [
                 MockProvider(AlertService),
-                {
-                    provide: ActivatedRoute,
-                    useValue: { queryParams: of({}) },
-                },
-                {
-                    provide: ExerciseService,
-                    useValue: MockExerciseService,
-                },
+                { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+                { provide: ExerciseService, useValue: MockExerciseService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -54,7 +51,6 @@ describe('ProgrammingExerciseInformationComponent', () => {
         fixture.componentRef.setInput('isSimpleMode', false);
         fixture.componentRef.setInput('isExamMode', false);
         fixture.componentRef.setInput('isImport', false);
-        fixture.componentRef.setInput('isLocal', false);
         fixture.componentRef.setInput('programmingExerciseCreationConfig', programmingExerciseCreationConfigMock);
         comp.programmingExercise().buildConfig = new ProgrammingExerciseBuildConfig();
     });

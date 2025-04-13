@@ -39,15 +39,13 @@ import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-setti
 import { IrisLectureIngestionSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
-    @Input()
-    courseId: number;
-    @Input()
-    competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input()
-    navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
+    @Input() courseId: number;
+    @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
+    @Input() navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -96,6 +94,7 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
                 MockProvider(IrisSettingsService),
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,

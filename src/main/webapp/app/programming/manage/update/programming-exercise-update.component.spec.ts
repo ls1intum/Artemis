@@ -63,8 +63,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let alertService: AlertService;
     let profileService: ProfileService;
 
-    let getProfileInfoSub: jest.SpyInstance;
-
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [BrowserAnimationsModule, FaIconComponent, OwlNativeDateTimeModule],
@@ -90,18 +88,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         alertService = TestBed.inject(AlertService);
         profileService = TestBed.inject(ProfileService);
 
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        const newProfileInfo = new ProfileInfo();
-        newProfileInfo.activeProfiles = [];
-        newProfileInfo.activeModuleFeatures = [];
-        getProfileInfoSub.mockReturnValue(of(newProfileInfo));
-
-        comp.isSimpleMode.set(false);
-
-        const programmingExercise = new ProgrammingExercise(undefined, undefined);
-        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-        route.data = of({ programmingExercise });
-        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+        const programmingLanguageFeature = {
             programmingLanguage: ProgrammingLanguage.JAVA,
             sequentialTestRuns: true,
             staticCodeAnalysis: true,
@@ -110,7 +97,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             checkoutSolutionRepositoryAllowed: true,
             projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
             auxiliaryRepositoriesSupported: true,
-        } as ProgrammingLanguageFeature);
+        } as ProgrammingLanguageFeature;
+
+        const newProfileInfo = new ProfileInfo();
+        newProfileInfo.activeProfiles = [];
+        newProfileInfo.activeModuleFeatures = [];
+        newProfileInfo.programmingLanguageFeatures = [programmingLanguageFeature];
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+
+        comp.isSimpleMode.set(false);
+
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        route.data = of({ programmingExercise });
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(programmingLanguageFeature);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -904,12 +904,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
         ])('%s', (description, profileInfo, expectedException) => {
-            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-
             const newProfileInfo = new ProfileInfo();
             newProfileInfo.activeProfiles = profileInfo.activeProfiles;
-
-            getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });

@@ -47,6 +47,7 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ArtemisNavigationUtilService, getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -235,6 +236,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         { provide: ActivatedRoute, useValue: route },
         { provide: LocalStorageService, useClass: MockSyncStorage },
         { provide: SessionStorageService, useClass: MockSyncStorage },
+        { provide: ProfileService, useClass: MockProfileService },
         MockProvider(ExerciseService),
         MockProvider(AlertService),
         MockProvider(TutorParticipationService),
@@ -243,73 +245,52 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockProvider(ArtemisDatePipe),
         MockProvider(SortService),
         MockProvider(ArtemisNavigationUtilService),
-        MockProvider(ProfileService, { getProfileInfo: () => of({ activeProfiles: [] }) }, 'useValue'),
         provideHttpClient(),
         provideHttpClientTesting(),
     ];
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports,
             declarations,
             providers,
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
-                comp = fixture.componentInstance;
-
-                modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
-                textSubmissionService = TestBed.inject(TextSubmissionService);
-                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
-                exerciseService = TestBed.inject(ExerciseService);
-                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
-
-                submissionService = TestBed.inject(SubmissionService);
-                jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
-
-                const router = TestBed.inject(Router);
-                navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
-
-                tutorParticipationService = TestBed.inject(TutorParticipationService);
-
-                exerciseServiceGetForTutorsStub = jest.spyOn(exerciseService, 'getForTutors');
-                exerciseServiceGetStatsForTutorsStub = jest.spyOn(exerciseService, 'getStatsForTutors');
-
-                exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
-                exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
-
-                comp.exerciseId = modelingExercise.id!;
-
-                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
-                modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
-
-                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
-                textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
-
-                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
-                fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
-
-                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
-                programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
-
-                textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
-                textSubmissionStubWithAssessment.mockReturnValue(of(textSubmissionAssessed));
-
-                fileUploadSubmissionStubWithAssessment.mockReturnValue(of(fileUploadSubmissionAssessed));
-                fileUploadSubmissionStubWithoutAssessment.mockReturnValue(of(fileUploadSubmission));
-
-                programmingSubmissionStubWithAssessment.mockReturnValue(of(programmingSubmissionAssessed));
-                programmingSubmissionStubWithoutAssessment.mockReturnValue(of(programmingSubmission));
-
-                modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
-                modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
-                comp.submissionsWithComplaints = [submissionWithComplaintDTO];
-
-                accountService = TestBed.inject(AccountService);
-
-                translateService = TestBed.inject(TranslateService);
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(ExerciseAssessmentDashboardComponent);
+        comp = fixture.componentInstance;
+        modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+        textSubmissionService = TestBed.inject(TextSubmissionService);
+        fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
+        exerciseService = TestBed.inject(ExerciseService);
+        programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+        submissionService = TestBed.inject(SubmissionService);
+        jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
+        const router = TestBed.inject(Router);
+        navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
+        tutorParticipationService = TestBed.inject(TutorParticipationService);
+        exerciseServiceGetForTutorsStub = jest.spyOn(exerciseService, 'getForTutors');
+        exerciseServiceGetStatsForTutorsStub = jest.spyOn(exerciseService, 'getStatsForTutors');
+        exerciseServiceGetForTutorsStub.mockReturnValue(of(new HttpResponse({ body: modelingExercise, headers: new HttpHeaders() })));
+        exerciseServiceGetStatsForTutorsStub.mockReturnValue(of(new HttpResponse({ body: stats, headers: new HttpHeaders() })));
+        comp.exerciseId = modelingExercise.id!;
+        modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
+        modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
+        textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
+        textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
+        fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
+        fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
+        programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
+        programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
+        textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
+        textSubmissionStubWithAssessment.mockReturnValue(of(textSubmissionAssessed));
+        fileUploadSubmissionStubWithAssessment.mockReturnValue(of(fileUploadSubmissionAssessed));
+        fileUploadSubmissionStubWithoutAssessment.mockReturnValue(of(fileUploadSubmission));
+        programmingSubmissionStubWithAssessment.mockReturnValue(of(programmingSubmissionAssessed));
+        programmingSubmissionStubWithoutAssessment.mockReturnValue(of(programmingSubmission));
+        modelingSubmissionStubWithAssessment.mockReturnValue(of(new HttpResponse({ body: [modelingSubmissionAssessed], headers: new HttpHeaders() })));
+        modelingSubmissionStubWithoutAssessment.mockReturnValue(of(modelingSubmission));
+        comp.submissionsWithComplaints = [submissionWithComplaintDTO];
+        accountService = TestBed.inject(AccountService);
+        translateService = TestBed.inject(TranslateService);
     });
 
     afterEach(() => {

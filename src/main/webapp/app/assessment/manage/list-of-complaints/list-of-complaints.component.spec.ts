@@ -4,6 +4,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { ListOfComplaintsComponent } from 'app/assessment/manage/list-of-complaints/list-of-complaints.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -22,8 +23,9 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
-import { ArtemisDatePipe } from '../../../shared/pipes/artemis-date.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -72,6 +74,7 @@ describe('ListOfComplaintsComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
             ],
         })
