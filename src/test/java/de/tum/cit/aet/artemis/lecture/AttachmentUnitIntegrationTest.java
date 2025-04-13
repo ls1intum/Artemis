@@ -384,4 +384,60 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependent
         request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, AttachmentUnit.class);
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(persistedAttachmentUnit), eq(Optional.empty()));
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void handleStudentVersionFile_shouldUpdateAttachmentStudentVersion() throws Exception {
+        // Create an attachment unit first
+        attachmentUnit.setCompetencyLinks(Set.of(new CompetencyLectureUnitLink(competency, attachmentUnit, 1)));
+        var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
+        var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
+        assertThat(persistedAttachmentUnit.getId()).isNotNull();
+        var persistedAttachment = persistedAttachmentUnit.getAttachment();
+        assertThat(persistedAttachment.getId()).isNotNull();
+
+        // Initial state - no student version
+        assertThat(persistedAttachment.getStudentVersion()).isNull();
+
+        // Create a student version file
+        MockMultipartFile studentVersionFile = new MockMultipartFile("studentVersion", "student_version.pdf", "application/pdf", "student content".getBytes());
+
+        // Build request for adding student version
+        MockHttpServletRequestBuilder builder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId() + "/student-version")
+                .file(studentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Perform request
+        request.performMvcRequest(builder).andExpect(status().isOk());
+
+        // Verify the student version was added
+        var updatedAttachmentUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK,
+                AttachmentUnit.class);
+        assertThat(updatedAttachmentUnit.getAttachment().getStudentVersion()).isNotNull();
+        assertThat(updatedAttachmentUnit.getAttachment().getStudentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentUnit.getId() + "/student");
+
+        // Now update with a new student version to test replacement
+        MockMultipartFile newStudentVersionFile = new MockMultipartFile("studentVersion", "updated_student_version.pdf", "application/pdf", "updated student content".getBytes());
+
+        // Build a new request to update the student version
+        MockHttpServletRequestBuilder updateBuilder = MockMvcRequestBuilders
+                .multipart(HttpMethod.PUT, "/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId() + "/student-version")
+                .file(newStudentVersionFile).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+
+        // Perform request again
+        request.performMvcRequest(updateBuilder).andExpect(status().isOk());
+
+        // Get the latest version
+        var finalAttachmentUnit = request.get("/api/lecture/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK,
+                AttachmentUnit.class);
+
+        // Verify the student version was updated
+        assertThat(finalAttachmentUnit.getAttachment().getStudentVersion()).isNotNull();
+        // The path should still contain the same base structure
+        assertThat(finalAttachmentUnit.getAttachment().getStudentVersion()).contains("attachments/attachment-unit/" + persistedAttachmentUnit.getId() + "/student");
+
+        // Verify the file can be accessed
+        String requestUrl = String.format("%s%s", ARTEMIS_FILE_PATH_PREFIX, finalAttachmentUnit.getAttachment().getStudentVersion());
+        request.getFile(requestUrl, HttpStatus.OK);
+    }
 }
