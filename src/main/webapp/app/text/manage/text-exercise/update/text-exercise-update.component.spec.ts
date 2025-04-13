@@ -47,7 +47,7 @@ describe('TextExercise Management Update Component', () => {
 
         fixture = TestBed.createComponent(TextExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(TextExerciseService);
+        service = TestBed.inject(TextExerciseService);
     });
 
     describe('save', () => {

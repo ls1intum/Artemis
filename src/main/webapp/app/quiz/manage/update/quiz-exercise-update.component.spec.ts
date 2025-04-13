@@ -167,14 +167,14 @@ describe('QuizExerciseUpdateComponent', () => {
     const configureFixtureAndServices = () => {
         fixture = TestBed.createComponent(QuizExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        router = fixture.debugElement.injector.get(Router);
-        alertService = fixture.debugElement.injector.get(AlertService);
-        dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
-        shortAnswerQuestionUtil = fixture.debugElement.injector.get(ShortAnswerQuestionUtil);
-        exerciseGroupService = fixture.debugElement.injector.get(ExerciseGroupService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        courseManagementService = TestBed.inject(CourseManagementService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        router = TestBed.inject(Router);
+        alertService = TestBed.inject(AlertService);
+        dragAndDropQuestionUtil = TestBed.inject(DragAndDropQuestionUtil);
+        shortAnswerQuestionUtil = TestBed.inject(ShortAnswerQuestionUtil);
+        exerciseGroupService = TestBed.inject(ExerciseGroupService);
+        exerciseService = TestBed.inject(ExerciseService);
     };
 
     describe('onInit', () => {

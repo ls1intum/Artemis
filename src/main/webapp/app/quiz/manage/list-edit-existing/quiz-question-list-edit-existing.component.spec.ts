@@ -123,12 +123,12 @@ describe('QuizQuestionListEditExistingComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(QuizQuestionListEditExistingComponent);
-                examService = fixture.debugElement.injector.get(ExamManagementService);
-                courseService = fixture.debugElement.injector.get(CourseManagementService);
-                quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                examService = TestBed.inject(ExamManagementService);
+                courseService = TestBed.inject(CourseManagementService);
+                quizExerciseService = TestBed.inject(QuizExerciseService);
                 fileService = TestBed.inject(FileService);
-                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                changeDetector = TestBed.inject(ChangeDetectorRef);
+                modalService = TestBed.inject(NgbModal);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
             });

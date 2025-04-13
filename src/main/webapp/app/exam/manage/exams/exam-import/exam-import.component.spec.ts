@@ -73,8 +73,8 @@ describe('Exam Import Component', () => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                alertService = TestBed.inject(AlertService);
 
                 profileService = TestBed.inject(ProfileService);
 

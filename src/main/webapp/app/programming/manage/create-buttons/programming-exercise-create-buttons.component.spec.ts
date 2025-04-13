@@ -32,7 +32,7 @@ describe('ProgrammingExercise Create Buttons Component', () => {
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCreateButtonsComponent);
         comp = fixture.componentInstance;
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        modalService = TestBed.inject(NgbModal);
 
         comp.course = course;
     });

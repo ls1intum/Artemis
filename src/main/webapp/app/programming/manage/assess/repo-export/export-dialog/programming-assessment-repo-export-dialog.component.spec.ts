@@ -59,8 +59,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 console.error = () => false;
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportDialogComponent);
                 comp = fixture.componentInstance;
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
+                exerciseService = TestBed.inject(ExerciseService);
+                repoExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
 
                 // stubs
                 jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));

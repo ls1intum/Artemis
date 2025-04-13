@@ -103,7 +103,7 @@ describe('DiscussionSectionComponent', () => {
 
         fixture = TestBed.createComponent(DiscussionSectionComponent);
         component = fixture.componentInstance;
-        metisService = fixture.debugElement.injector.get(MetisService);
+        metisService = TestBed.inject(MetisService);
         channelService = TestBed.inject(ChannelService);
         getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(

@@ -44,8 +44,8 @@ describe('ProgrammingExercise Trigger All Button Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseTriggerAllButtonComponent);
         comp = fixture.componentInstance;
-        submissionService = fixture.debugElement.injector.get(ProgrammingSubmissionService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        submissionService = TestBed.inject(ProgrammingSubmissionService);
+        modalService = TestBed.inject(NgbModal);
 
         comp.exercise = programmingExercise;
     });

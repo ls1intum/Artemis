@@ -150,7 +150,7 @@ describe('CompetencySelection', () => {
 
     it('should trigger change detection after loading competencies', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+        const changeDetector = TestBed.inject(ChangeDetectorRef);
         const detectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
         fixture.detectChanges();

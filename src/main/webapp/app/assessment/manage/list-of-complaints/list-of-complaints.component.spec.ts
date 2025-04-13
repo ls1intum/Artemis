@@ -80,11 +80,11 @@ describe('ListOfComplaintsComponent', () => {
                 fixture = TestBed.createComponent(ListOfComplaintsComponent);
                 comp = fixture.componentInstance;
 
-                complaintService = fixture.debugElement.injector.get(ComplaintService);
-                translateService = fixture.debugElement.injector.get(TranslateService);
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-                router = fixture.debugElement.injector.get(Router);
-                datePipe = fixture.debugElement.injector.get(ArtemisDatePipe);
+                complaintService = TestBed.inject(ComplaintService);
+                translateService = TestBed.inject(TranslateService);
+                activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                router = TestBed.inject(Router);
+                datePipe = TestBed.inject(ArtemisDatePipe);
 
                 findAllByTutorIdForExerciseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForExerciseId');
                 findAllByTutorIdForCourseIdStub = jest.spyOn(complaintService, 'findAllByTutorIdForCourseId');

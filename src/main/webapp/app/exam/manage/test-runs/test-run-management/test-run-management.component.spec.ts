@@ -58,7 +58,7 @@ describe('Test Run Management Component', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                modalService = TestBed.inject(NgbModal);
                 jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));

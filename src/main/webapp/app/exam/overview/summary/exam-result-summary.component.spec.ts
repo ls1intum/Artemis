@@ -295,7 +295,7 @@ describe('ExamResultSummaryComponent', () => {
     });
 
     it('should update student exam correctly', () => {
-        const plagiarismService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        const plagiarismService = TestBed.inject(PlagiarismCasesService);
         const plagiarismServiceSpy = jest.spyOn(plagiarismService, 'getPlagiarismCaseInfosForStudent');
 
         const courseId = 10;

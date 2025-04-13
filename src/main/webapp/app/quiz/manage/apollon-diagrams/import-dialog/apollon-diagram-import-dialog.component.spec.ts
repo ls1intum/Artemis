@@ -19,8 +19,7 @@ describe('ApollonDiagramImportDialog Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramImportDialogComponent);
-                const injector = fixture.debugElement.injector;
-                activeModal = injector.get(NgbActiveModal);
+                activeModal = TestBed.inject(NgbActiveModal);
             });
     });
 

@@ -42,8 +42,8 @@ describe('ApollonDiagramCreateForm Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramCreateFormComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                ngbModal = fixture.debugElement.injector.get(NgbActiveModal);
+                apollonDiagramService = TestBed.inject(ApollonDiagramService);
+                ngbModal = TestBed.inject(NgbActiveModal);
             });
     });
 

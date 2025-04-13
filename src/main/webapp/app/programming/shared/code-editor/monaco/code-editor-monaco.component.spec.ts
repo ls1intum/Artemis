@@ -60,7 +60,7 @@ describe('CodeEditorMonacoComponent', () => {
 
         fixture = TestBed.createComponent(CodeEditorMonacoComponent);
         comp = fixture.componentInstance;
-        codeEditorRepositoryFileService = fixture.debugElement.injector.get(CodeEditorRepositoryFileService);
+        codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
         loadFileFromRepositoryStub = jest.spyOn(codeEditorRepositoryFileService, 'getFile');
         getInlineFeedbackNodeStub = jest.spyOn(comp, 'getInlineFeedbackNode').mockReturnValue(document.createElement('div'));
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {

@@ -25,7 +25,7 @@ describe('Team Owner Search Component', () => {
 
         fixture = TestBed.createComponent(TeamOwnerSearchComponent);
         comp = fixture.componentInstance;
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        courseService = TestBed.inject(CourseManagementService);
     });
 
     it('should initialize with team owner', () => {

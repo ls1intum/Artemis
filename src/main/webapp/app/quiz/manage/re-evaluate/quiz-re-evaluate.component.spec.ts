@@ -93,7 +93,7 @@ describe('QuizExercise Re-evaluate Component', () => {
 
         fixture = TestBed.createComponent(QuizReEvaluateComponent);
         comp = fixture.componentInstance;
-        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        quizService = TestBed.inject(QuizExerciseService);
         const { question: quizQuestion1 } = createValidMCQuestion();
         const { question: quizQuestion2 } = createValidDnDQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];

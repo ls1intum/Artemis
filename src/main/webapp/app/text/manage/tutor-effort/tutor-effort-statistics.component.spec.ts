@@ -64,8 +64,8 @@ describe('TutorEffortStatisticsComponent', () => {
                 component = fixture.componentInstance;
                 compiled = fixture.debugElement.nativeElement;
                 fixture.detectChanges();
-                textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
-                textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+                textExerciseService = TestBed.inject(TextExerciseService);
+                textAssessmentService = TestBed.inject(TextAssessmentService);
                 getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
                 calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort');
                 router = TestBed.inject(Router);

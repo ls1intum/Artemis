@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
-import { DebugElement, SimpleChange } from '@angular/core';
+import { SimpleChange } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
@@ -45,7 +45,6 @@ const cartesianProduct = (a: any[], b: any[], ...c: any[][]): any[] => {
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
     let fixture: ComponentFixture<CodeEditorActionsComponent>;
-    let debugElement: DebugElement;
     let codeEditorRepositoryFileService: CodeEditorRepositoryFileService;
     let codeEditorRepositoryService: CodeEditorRepositoryService;
     let updateFilesStub: jest.SpyInstance;
@@ -71,10 +70,9 @@ describe('CodeEditorActionsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorActionsComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                codeEditorRepositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
+                codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
                 updateFilesStub = jest.spyOn(codeEditorRepositoryFileService, 'updateFiles');
-                codeEditorRepositoryService = debugElement.injector.get(CodeEditorRepositoryService);
+                codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
                 commitStub = jest.spyOn(codeEditorRepositoryService, 'commit');
             });
     });

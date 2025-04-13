@@ -78,8 +78,8 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                submissionService = debugElement.injector.get(ProgrammingSubmissionService);
-                buildRunService = debugElement.injector.get(ProgrammingBuildRunService);
+                submissionService = TestBed.inject(ProgrammingSubmissionService);
+                buildRunService = TestBed.inject(ProgrammingBuildRunService);
 
                 getExerciseSubmissionStateSubject = new Subject<ExerciseSubmissionState>();
                 getExerciseSubmissionStateStub = jest.spyOn(submissionService, 'getSubmissionStateOfExercise').mockReturnValue(getExerciseSubmissionStateSubject);

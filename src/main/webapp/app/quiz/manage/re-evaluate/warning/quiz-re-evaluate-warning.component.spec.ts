@@ -36,7 +36,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
         comp = fixture.componentInstance;
-        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        quizService = TestBed.inject(QuizExerciseService);
         const quizQuestion1 = new MultipleChoiceQuestion();
         const quizQuestion2 = new DragAndDropQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];

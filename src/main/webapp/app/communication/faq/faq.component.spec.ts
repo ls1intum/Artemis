@@ -126,7 +126,7 @@ describe('FaqComponent', () => {
                 profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
 
-                profileService = faqComponentFixture.debugElement.injector.get(ProfileService);
+                profileService = TestBed.inject(ProfileService);
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });

@@ -101,9 +101,9 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture = TestBed.createComponent(ExerciseDetailsStudentActionsComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        courseExerciseService = debugElement.injector.get(CourseExerciseService);
-        profileService = debugElement.injector.get(ProfileService);
-        router = debugElement.injector.get(Router) as unknown as MockRouter;
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        router = TestBed.inject(Router) as unknown as MockRouter;
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue({
             sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',

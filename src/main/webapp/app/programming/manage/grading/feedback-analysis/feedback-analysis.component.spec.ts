@@ -74,10 +74,10 @@ describe('FeedbackAnalysisComponent', () => {
 
         fixture = TestBed.createComponent(FeedbackAnalysisComponent);
         component = fixture.componentInstance;
-        feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
-        localStorageService = fixture.debugElement.injector.get(LocalStorageService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
-        alertService = fixture.debugElement.injector.get(AlertService);
+        feedbackAnalysisService = TestBed.inject(FeedbackAnalysisService);
+        localStorageService = TestBed.inject(LocalStorageService);
+        modalService = TestBed.inject(NgbModal);
+        alertService = TestBed.inject(AlertService);
 
         jest.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
         searchSpy = jest.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
@@ -93,8 +93,8 @@ describe('FeedbackAnalysisComponent', () => {
 
         createChannelSpy = jest.spyOn(feedbackAnalysisService, 'createChannel').mockResolvedValue({ id: 123 } as ChannelDTO);
 
-        jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
-        jest.spyOn(fixture.debugElement.injector.get(AlertService), 'error');
+        jest.spyOn(TestBed.inject(AlertService), 'success');
+        jest.spyOn(TestBed.inject(AlertService), 'error');
 
         fixture.componentRef.setInput('exerciseId', 1);
         fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
@@ -156,7 +156,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('openFilterModal', () => {
         it('should open filter modal and pass correct form values and properties', async () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalService = TestBed.inject(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
                 componentInstance: {
                     filterApplied: { subscribe: jest.fn() },
@@ -189,7 +189,7 @@ describe('FeedbackAnalysisComponent', () => {
         });
 
         it('should open filter modal and pass correct form values and properties when grouped feedback is active', async () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalService = TestBed.inject(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
                 componentInstance: {
                     filterApplied: { subscribe: jest.fn() },
@@ -309,7 +309,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('openFeedbackModal', () => {
         it('should open feedback modal with correct feedback detail', () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalService = TestBed.inject(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
 
             const feedbackDetail = feedbackMock[0];
@@ -321,7 +321,7 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('openAffectedStudentsModal', () => {
         it('should open affected students modal with the correct feedback detail', () => {
-            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalService = TestBed.inject(NgbModal);
             const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {} } as any);
 
             const feedbackDetail = feedbackMock[1];

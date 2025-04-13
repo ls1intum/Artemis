@@ -24,7 +24,7 @@ describe('UnreferencedFeedbackComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
                 comp = fixture.componentInstance;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 

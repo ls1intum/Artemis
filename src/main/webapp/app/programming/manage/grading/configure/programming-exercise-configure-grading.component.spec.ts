@@ -232,12 +232,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         debugElement = fixture.debugElement;
         comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-        gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-        route = debugElement.injector.get(ActivatedRoute);
-        const router = debugElement.injector.get(Router);
-        programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        modalService = debugElement.injector.get(NgbModal);
+        gradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        route = TestBed.inject(ActivatedRoute);
+        const router = TestBed.inject(Router);
+        programmingExerciseWebsocketService = TestBed.inject(ProgrammingExerciseWebsocketService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        modalService = TestBed.inject(NgbModal);
 
         updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');

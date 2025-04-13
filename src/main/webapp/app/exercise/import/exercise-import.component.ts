@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnInit, inject } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
@@ -26,8 +26,6 @@ const DEFAULT_SORT_COLUMN = 'ID';
     imports: [TranslateDirective, FormsModule, SortDirective, SortByDirective, FaIconComponent, NgbHighlight, ButtonComponent, NgbPagination, ExerciseCourseTitlePipe],
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
-    private injector = inject(Injector);
-
     readonly ExerciseType = ExerciseType;
 
     @Input() exerciseType?: ExerciseType;
@@ -69,18 +67,18 @@ export class ExerciseImportComponent extends ImportComponent<Exercise> implement
     private getPagingService(): ExercisePagingService<Exercise> {
         switch (this.exerciseType) {
             case ExerciseType.MODELING:
-                return this.injector.get(ModelingExercisePagingService);
+                return inject(ModelingExercisePagingService);
             case ExerciseType.PROGRAMMING:
                 if (this.programmingLanguage) {
-                    return this.injector.get(CodeAnalysisPagingService);
+                    return inject(CodeAnalysisPagingService);
                 }
-                return this.injector.get(ProgrammingExercisePagingService);
+                return inject(ProgrammingExercisePagingService);
             case ExerciseType.QUIZ:
-                return this.injector.get(QuizExercisePagingService);
+                return inject(QuizExercisePagingService);
             case ExerciseType.TEXT:
-                return this.injector.get(TextExercisePagingService);
+                return inject(TextExercisePagingService);
             case ExerciseType.FILE_UPLOAD:
-                return this.injector.get(FileUploadExercisePagingService);
+                return inject(FileUploadExercisePagingService);
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }

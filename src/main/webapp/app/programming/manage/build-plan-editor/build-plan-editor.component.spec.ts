@@ -52,10 +52,10 @@ describe('Build Plan Editor', () => {
                 fixture = TestBed.createComponent(BuildPlanEditorComponent);
                 comp = fixture.componentInstance;
 
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-                alertService = fixture.debugElement.injector.get(AlertService) as MockAlertService;
-                buildPlanService = fixture.debugElement.injector.get(BuildPlanService);
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+                activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                alertService = TestBed.inject(AlertService) as MockAlertService;
+                buildPlanService = TestBed.inject(BuildPlanService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
                 putBuildPlanStub = jest.spyOn(buildPlanService, 'putBuildPlan');
             });

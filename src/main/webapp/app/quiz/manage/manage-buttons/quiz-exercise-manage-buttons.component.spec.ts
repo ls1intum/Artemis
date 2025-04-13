@@ -45,8 +45,8 @@ describe('QuizExercise Management Buttons Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {

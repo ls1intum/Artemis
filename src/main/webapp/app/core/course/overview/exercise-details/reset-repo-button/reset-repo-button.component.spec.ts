@@ -46,7 +46,7 @@ describe('JhiResetRepoButtonComponent', () => {
 
         fixture = TestBed.createComponent(ResetRepoButtonComponent);
         comp = fixture.componentInstance;
-        const programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
         resetRepositoryStub = jest.spyOn(programmingExerciseParticipationService, 'resetRepository');
     });

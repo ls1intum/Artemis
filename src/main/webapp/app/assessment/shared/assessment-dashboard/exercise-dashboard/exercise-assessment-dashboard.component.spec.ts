@@ -268,7 +268,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
                 submissionService = TestBed.inject(SubmissionService);
                 jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
 
-                const router = fixture.debugElement.injector.get(Router);
+                const router = TestBed.inject(Router);
                 navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
 
                 tutorParticipationService = TestBed.inject(TutorParticipationService);

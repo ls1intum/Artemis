@@ -65,9 +65,9 @@ describe('ModelingExercise Management Detail Component', () => {
             .compileComponents();
         fixture = TestBed.createComponent(ModelingExerciseDetailComponent);
         comp = fixture.componentInstance;
-        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        eventManager = fixture.debugElement.injector.get(EventManager);
+        modelingExerciseService = TestBed.inject(ModelingExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
+        eventManager = TestBed.inject(EventManager);
         fixture.detectChanges();
     });
 

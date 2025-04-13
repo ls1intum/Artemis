@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { DebugElement, SimpleChange } from '@angular/core';
+import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -28,7 +28,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
-    let debugElement: DebugElement;
 
     let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
@@ -179,7 +178,6 @@ describe('FeedbackComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(FeedbackComponent);
         comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
         exercise = {
             maxPoints: 100,
             bonusPoints: 0,
@@ -202,10 +200,10 @@ describe('FeedbackComponent', () => {
                 repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
             },
         } as Result;
-        buildLogService = debugElement.injector.get(BuildLogService);
-        resultService = debugElement.injector.get(ResultService);
-        profileService = debugElement.injector.get(ProfileService);
-        feedbackItemService = debugElement.injector.get(ProgrammingFeedbackItemService);
+        buildLogService = TestBed.inject(BuildLogService);
+        resultService = TestBed.inject(ResultService);
+        profileService = TestBed.inject(ProfileService);
+        feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
         buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
         getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
         // Set profile info

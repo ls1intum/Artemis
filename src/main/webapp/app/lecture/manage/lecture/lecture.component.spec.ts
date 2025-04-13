@@ -159,7 +159,7 @@ describe('Lecture', () => {
                 lectureComponent = lectureComponentFixture.componentInstance;
                 lectureService = TestBed.inject(LectureService);
                 modalService = TestBed.inject(NgbModal);
-                profileService = lectureComponentFixture.debugElement.injector.get(ProfileService);
+                profileService = TestBed.inject(ProfileService);
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });

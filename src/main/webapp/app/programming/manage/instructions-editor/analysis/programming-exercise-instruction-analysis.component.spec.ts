@@ -44,7 +44,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                     comp = fixture.componentInstance;
                     debugElement = fixture.debugElement;
 
-                    analysisService = debugElement.injector.get(ProgrammingExerciseInstructionAnalysisService);
+                    analysisService = TestBed.inject(ProgrammingExerciseInstructionAnalysisService);
 
                     analyzeProblemStatementStub = jest.spyOn(analysisService, 'analyzeProblemStatement');
                     emitAnalysisSpy = jest.spyOn(comp.problemStatementAnalysis, 'emit');

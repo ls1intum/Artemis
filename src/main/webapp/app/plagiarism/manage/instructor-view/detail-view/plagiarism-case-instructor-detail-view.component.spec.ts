@@ -62,7 +62,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismCaseInstructorDetailViewComponent);
         component = fixture.componentInstance;
-        plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
         saveVerdictSpy = jest.spyOn(plagiarismCasesService, 'saveVerdict');
     });
@@ -137,7 +137,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should create student notification for course exercise', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         component.plagiarismCase = plagiarismCase;
@@ -161,7 +161,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should create student notification for exam exercise', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         const examTitle = 'Exam Title';
@@ -190,7 +190,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should create student notification with empty names and titles', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         component.plagiarismCase = {
@@ -218,7 +218,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should notify student', () => {
-        const successSpy = jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
+        const successSpy = jest.spyOn(TestBed.inject(AlertService), 'success');
 
         component.courseId = 1;
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
@@ -232,7 +232,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should not display post unrelated to the current plagiarism case', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const metisPostsSpy = jest.spyOn(TestBed.inject(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 
@@ -259,7 +259,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should delete post successfully', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
+        const metisPostsSpy = jest.spyOn(TestBed.inject(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 

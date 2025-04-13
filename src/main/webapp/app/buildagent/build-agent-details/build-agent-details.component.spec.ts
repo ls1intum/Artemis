@@ -195,7 +195,7 @@ describe('BuildAgentDetailsComponent', () => {
 
         fixture = TestBed.createComponent(BuildAgentDetailsComponent);
         component = fixture.componentInstance;
-        activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
+        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
         modalService = TestBed.inject(NgbModal);
         activatedRoute.setParameters({ agentName: mockBuildAgent.buildAgent?.name });
         alertService = TestBed.inject(AlertService);

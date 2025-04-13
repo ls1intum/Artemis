@@ -106,9 +106,9 @@ describe('CommitHistoryComponent', () => {
     function setupComponent() {
         fixture = TestBed.createComponent(CommitHistoryComponent);
         component = fixture.componentInstance;
-        activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         activatedRoute.setParameters({ repositoryId: 2 });
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));

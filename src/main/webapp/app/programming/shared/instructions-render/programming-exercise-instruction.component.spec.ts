@@ -89,11 +89,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-        programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-        programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-        modalService = debugElement.injector.get(NgbModal);
-        themeService = debugElement.injector.get(ThemeService);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        modalService = TestBed.inject(NgbModal);
+        themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
         openModalStub = jest.spyOn(modalService, 'open');

@@ -42,7 +42,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseInstructorStatusComponent);
                 comp = fixture.componentInstance as ProgrammingExerciseInstructorStatusComponent;
 
-                participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
 
                 subscribeForLatestResultStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 latestResultSubject = new Subject();

@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
@@ -57,7 +56,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     } as ActivatedRoute;
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
-    let debugElement: DebugElement;
     let programmingExerciseService: ProgrammingExerciseService;
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
@@ -85,13 +83,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        courseService = debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
-        alertService = debugElement.injector.get(AlertService);
-        profileService = debugElement.injector.get(ProfileService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        courseService = TestBed.inject(CourseManagementService);
+        exerciseGroupService = TestBed.inject(ExerciseGroupService);
+        programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        alertService = TestBed.inject(AlertService);
+        profileService = TestBed.inject(ProfileService);
 
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         const newProfileInfo = new ProfileInfo();

@@ -60,7 +60,7 @@ describe('Plagiarism Cases Student View Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismCaseStudentDetailViewComponent);
         component = fixture.componentInstance;
-        plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
         plagiarismCasesServiceSpy.mockImplementation(
             (courseId, plagiarismCaseId) =>

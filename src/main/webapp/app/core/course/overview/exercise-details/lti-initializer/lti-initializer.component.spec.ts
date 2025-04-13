@@ -40,10 +40,10 @@ describe('LtiInitializerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LtiInitializerComponent);
                 comp = fixture.componentInstance;
-                userService = fixture.debugElement.injector.get(UserService);
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-                alertService = fixture.debugElement.injector.get(AlertService);
-                router = fixture.debugElement.injector.get(Router);
+                userService = TestBed.inject(UserService);
+                activatedRoute = TestBed.inject(ActivatedRoute);
+                alertService = TestBed.inject(AlertService);
+                router = TestBed.inject(Router);
 
                 initializeLTIUserStub = jest.spyOn(userService, 'initializeLTIUser');
                 infoSpy = jest.spyOn(alertService, 'info');

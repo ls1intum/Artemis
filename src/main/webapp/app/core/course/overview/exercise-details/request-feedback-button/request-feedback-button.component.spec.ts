@@ -42,10 +42,10 @@ describe('RequestFeedbackButtonComponent', () => {
                 fixture = TestBed.createComponent(RequestFeedbackButtonComponent);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                courseExerciseService = debugElement.injector.get(CourseExerciseService);
-                exerciseService = debugElement.injector.get(ExerciseService);
-                profileService = debugElement.injector.get(ProfileService);
-                alertService = debugElement.injector.get(AlertService);
+                courseExerciseService = TestBed.inject(CourseExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
+                profileService = TestBed.inject(ProfileService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 

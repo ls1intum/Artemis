@@ -158,7 +158,7 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
@@ -169,7 +169,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to student exams subpage', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
@@ -180,7 +180,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to dashboard', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
@@ -191,7 +191,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to exercise groups', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
@@ -202,7 +202,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to scores', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
@@ -213,7 +213,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to students', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
@@ -224,7 +224,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to test runs', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();

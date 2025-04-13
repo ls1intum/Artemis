@@ -87,7 +87,7 @@ describe('FileUploadSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 alertService = TestBed.inject(AlertService);
-                fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
             });
     });
 

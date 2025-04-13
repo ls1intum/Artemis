@@ -45,7 +45,7 @@ describe('ExamNavigationSidebarComponent', () => {
 
         fixture = TestBed.createComponent(ExamNavigationSidebarComponent);
         comp = fixture.componentInstance;
-        repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
+        repositoryService = TestBed.inject(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
         comp.exercises = [

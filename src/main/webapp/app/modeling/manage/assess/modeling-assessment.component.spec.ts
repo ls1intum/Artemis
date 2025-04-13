@@ -119,7 +119,7 @@ describe('ModelingAssessmentComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ModelingAssessmentComponent);
                 comp = fixture.componentInstance;
-                translatePipe = fixture.debugElement.injector.get(ArtemisTranslatePipe);
+                translatePipe = TestBed.inject(ArtemisTranslatePipe);
             });
     });
 

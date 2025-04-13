@@ -44,9 +44,7 @@ describe('CodeEditorStudentContainerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CodeEditorStudentContainerComponent);
                 comp = fixture.componentInstance;
-                const debugElement = fixture.debugElement;
-
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
                 submissionPolicyService = TestBed.inject(SubmissionPolicyService);
             });
     });

@@ -114,7 +114,7 @@ describe('ParticipationSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 comp.participationId = 1;
                 debugElement = fixture.debugElement;
-                router = debugElement.injector.get(Router);
+                router = TestBed.inject(Router);
                 participationService = TestBed.inject(ParticipationService);
                 submissionService = TestBed.inject(SubmissionService);
                 textAssessmentService = TestBed.inject(TextAssessmentService);
@@ -122,8 +122,8 @@ describe('ParticipationSubmissionComponent', () => {
                 programmingAssessmentService = TestBed.inject(ProgrammingAssessmentManualResultService);
                 fileUploadAssessmentService = TestBed.inject(FileUploadAssessmentService);
 
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
                 findAllSubmissionsOfParticipationStub = jest.spyOn(submissionService, 'findAllSubmissionsOfParticipation');
 
                 deleteFileUploadAssessmentStub = jest.spyOn(fileUploadAssessmentService, 'deleteAssessment');

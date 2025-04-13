@@ -55,8 +55,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(DragAndDropQuestionStatisticComponent);
                 comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
+                quizService = TestBed.inject(QuizExerciseService);
+                accountService = TestBed.inject(AccountService);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });

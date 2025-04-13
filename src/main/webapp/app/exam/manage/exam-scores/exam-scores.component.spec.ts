@@ -295,9 +295,9 @@ describe('ExamScoresComponent', () => {
 
         fixture = TestBed.createComponent(ExamScoresComponent);
         comp = fixture.componentInstance;
-        examService = fixture.debugElement.injector.get(ExamManagementService);
-        gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
-        const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+        examService = TestBed.inject(ExamManagementService);
+        gradingSystemService = TestBed.inject(GradingSystemService);
+        const participationScoreService = TestBed.inject(ParticipantScoresService);
         findExamScoresSpy = jest
             .spyOn(participationScoreService, 'findExamScores')
             .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));

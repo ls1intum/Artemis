@@ -48,9 +48,9 @@ describe('RepositoryViewComponent', () => {
                 component = fixture.componentInstance;
                 fixture.detectChanges();
 
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-                programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+                activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
             });
     });
 

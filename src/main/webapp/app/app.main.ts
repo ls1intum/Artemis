@@ -13,20 +13,21 @@ import { NgbDatepickerConfig, NgbTooltipConfig } from '@ng-bootstrap/ng-bootstra
 import { TranslateService } from '@ngx-translate/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { artemisIconPack } from 'app/shared/icons/icons';
+import { inject } from '@angular/core';
 
 ProdConfig();
 MonacoConfig();
 
 bootstrapApplication(AppComponent, appConfig)
-    .then((app) => {
+    .then(() => {
         // TODO: potentially move this code into AppComponent
-        const library = app.injector.get(FaIconLibrary);
+        const library = inject(FaIconLibrary);
         library.addIconPacks(artemisIconPack);
-        const dpConfig = app.injector.get(NgbDatepickerConfig);
-        const tooltipConfig = app.injector.get(NgbTooltipConfig);
-        const translateService = app.injector.get(TranslateService);
-        const languageHelper = app.injector.get(JhiLanguageHelper);
-        const sessionStorageService = app.injector.get(SessionStorageService);
+        const dpConfig = inject(NgbDatepickerConfig);
+        const tooltipConfig = inject(NgbTooltipConfig);
+        const translateService = inject(TranslateService);
+        const languageHelper = inject(JhiLanguageHelper);
+        const sessionStorageService = inject(SessionStorageService);
 
         // Perform initialization logic
         registerLocaleData(locale);

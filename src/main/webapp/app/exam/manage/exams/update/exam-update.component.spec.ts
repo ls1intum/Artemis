@@ -124,7 +124,7 @@ describe('ExamUpdateComponent', () => {
                 return new MockResizeObserver(callback);
             });
             component = fixture.componentInstance;
-            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
+            examManagementService = TestBed.inject(ExamManagementService);
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
@@ -633,8 +633,8 @@ describe('ExamUpdateComponent', () => {
             router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
             component = fixture.componentInstance;
-            examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-            alertService = fixture.debugElement.injector.get(AlertService);
+            examManagementService = TestBed.inject(ExamManagementService);
+            alertService = TestBed.inject(AlertService);
             global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                 return new MockResizeObserver(callback);
             });

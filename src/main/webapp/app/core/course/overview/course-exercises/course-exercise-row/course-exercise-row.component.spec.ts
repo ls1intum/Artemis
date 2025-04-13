@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateModule } from '@ngx-translate/core';
@@ -42,7 +42,6 @@ class DummyComponent {}
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
-    let debugElement: DebugElement;
     let getAllParticipationsStub: jest.SpyInstance;
     let participationWebsocketService: ParticipationWebsocketService;
 
@@ -85,8 +84,7 @@ describe('CourseExerciseRowComponent', () => {
                 fixture = TestBed.createComponent(CourseExerciseRowComponent);
                 comp = fixture.componentInstance;
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
-                debugElement = fixture.debugElement;
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationsForExercise');
             });
     });

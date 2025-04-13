@@ -34,7 +34,7 @@ describe('ProgrammingExercise Re-Evaluate Button Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseReEvaluateButtonComponent);
         comp = fixture.componentInstance;
-        gradingService = fixture.debugElement.injector.get(ProgrammingExerciseGradingService);
+        gradingService = TestBed.inject(ProgrammingExerciseGradingService);
 
         comp.exercise = programmingExercise;
     });

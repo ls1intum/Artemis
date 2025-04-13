@@ -104,8 +104,8 @@ describe('ModelingSubmissionComponent', () => {
                 fixture = TestBed.createComponent(ModelingSubmissionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                service = debugElement.injector.get(ModelingSubmissionService);
-                alertService = debugElement.injector.get(AlertService);
+                service = TestBed.inject(ModelingSubmissionService);
+                alertService = TestBed.inject(AlertService);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
         console.error = jest.fn();
@@ -304,7 +304,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set result when new result comes in from websocket', () => {
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.id = 1;
@@ -330,7 +330,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should update submission when new submission comes in from websocket', () => {
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = debugElement.injector.get(WebsocketService);
+        const websocketService = TestBed.inject(WebsocketService);
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,

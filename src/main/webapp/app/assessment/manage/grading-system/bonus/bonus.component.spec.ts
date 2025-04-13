@@ -277,8 +277,8 @@ describe('BonusComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(BonusComponent);
         component = fixture.componentInstance;
-        bonusService = fixture.debugElement.injector.get(BonusService);
-        gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+        bonusService = TestBed.inject(BonusService);
+        gradingSystemService = TestBed.inject(GradingSystemService);
 
         findBonusForExamSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
         findWithBonusSpy = jest

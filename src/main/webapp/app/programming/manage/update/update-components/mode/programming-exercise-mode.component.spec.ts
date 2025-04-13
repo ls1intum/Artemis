@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,7 +19,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('ProgrammingExerciseModeComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;
     let comp: ProgrammingExerciseModeComponent;
-    let debugElement: DebugElement;
     let profileService: ProfileService;
     let getProfileInfoSub: jest.SpyInstance;
 
@@ -59,8 +57,7 @@ describe('ProgrammingExerciseModeComponent', () => {
             allowOnlineIde: true,
         });
 
-        debugElement = fixture.debugElement;
-        profileService = debugElement.injector.get(ProfileService);
+        profileService = TestBed.inject(ProfileService);
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue({
             sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',

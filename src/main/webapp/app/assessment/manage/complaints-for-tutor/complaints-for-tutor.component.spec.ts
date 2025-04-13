@@ -48,7 +48,7 @@ describe('ComplaintsForTutorComponent', () => {
             .then(() => {
                 complaintForTutorComponentFixture = TestBed.createComponent(ComplaintsForTutorComponent);
                 complaintsForTutorComponent = complaintForTutorComponentFixture.componentInstance;
-                injectedComplaintResponseService = complaintForTutorComponentFixture.debugElement.injector.get(ComplaintResponseService);
+                injectedComplaintResponseService = TestBed.inject(ComplaintResponseService);
 
                 course = new Course();
                 course.maxComplaintResponseTextLimit = 26;

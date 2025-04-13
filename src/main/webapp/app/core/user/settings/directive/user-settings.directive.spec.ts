@@ -72,7 +72,7 @@ describe('User Settings Directive', () => {
                 userSettingsService = TestBed.inject(UserSettingsService);
                 alertService = TestBed.inject(AlertService);
                 httpMock = TestBed.inject(HttpTestingController);
-                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                changeDetector = TestBed.inject(ChangeDetectorRef);
             });
     });
 

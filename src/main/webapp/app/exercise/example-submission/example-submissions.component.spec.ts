@@ -62,8 +62,8 @@ describe('Example Submission Component', () => {
                 fixture = TestBed.createComponent(ExampleSubmissionsComponent);
                 component = fixture.componentInstance;
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                modalService = TestBed.inject(NgbModal);
+                alertService = TestBed.inject(AlertService);
             });
     });
 

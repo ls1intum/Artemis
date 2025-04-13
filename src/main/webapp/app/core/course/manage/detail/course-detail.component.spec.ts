@@ -107,8 +107,8 @@ describe('Course Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
-        courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-        eventManager = fixture.debugElement.injector.get(EventManager);
+        courseManagementService = TestBed.inject(CourseManagementService);
+        eventManager = TestBed.inject(EventManager);
     });
 
     beforeEach(fakeAsync(() => {

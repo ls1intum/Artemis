@@ -36,7 +36,7 @@ describe('PostingContentComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(PostingContentComponent);
                 component = fixture.componentInstance;
-                metisService = fixture.debugElement.injector.get(MetisService);
+                metisService = TestBed.inject(MetisService);
             });
     });
 

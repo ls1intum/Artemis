@@ -45,7 +45,7 @@ describe('DragAndDropQuestionComponent', () => {
                 comp = fixture.componentInstance;
                 reset();
                 markdownService = TestBed.inject(ArtemisMarkdownService);
-                dragAndDropQuestionUtil = fixture.debugElement.injector.get(DragAndDropQuestionUtil);
+                dragAndDropQuestionUtil = TestBed.inject(DragAndDropQuestionUtil);
             });
     });
 

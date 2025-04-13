@@ -91,7 +91,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                 fixture = TestBed.createComponent(IrisExerciseChatbotButtonComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
-                chatService = fixture.debugElement.injector.get(IrisChatService);
+                chatService = TestBed.inject(IrisChatService);
                 chatHttpServiceMock = TestBed.inject(IrisChatHttpService) as jest.Mocked<IrisChatHttpService>;
                 wsServiceMock = TestBed.inject(IrisWebsocketService) as jest.Mocked<IrisWebsocketService>;
             });

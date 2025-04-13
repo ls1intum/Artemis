@@ -62,7 +62,7 @@ describe('AuditsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(AuditsComponent);
                 comp = fixture.componentInstance;
-                service = fixture.debugElement.injector.get(AuditsService);
+                service = TestBed.inject(AuditsService);
                 mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 mockActivatedRoute.setParameters({
                     sort: 'id,desc',

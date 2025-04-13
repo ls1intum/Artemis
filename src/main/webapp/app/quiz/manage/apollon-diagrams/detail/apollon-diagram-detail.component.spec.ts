@@ -64,9 +64,9 @@ describe('ApollonDiagramDetail Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
-                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-                alertService = fixture.debugElement.injector.get(AlertService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                apollonDiagramService = TestBed.inject(ApollonDiagramService);
+                alertService = TestBed.inject(AlertService);
+                modalService = TestBed.inject(NgbModal);
             });
     });
 

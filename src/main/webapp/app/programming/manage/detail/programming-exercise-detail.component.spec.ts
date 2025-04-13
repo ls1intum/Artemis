@@ -112,15 +112,15 @@ describe('ProgrammingExerciseDetailComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
         comp = fixture.componentInstance;
 
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        statisticsService = TestBed.inject(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(exerciseStatistics));
-        alertService = fixture.debugElement.injector.get(AlertService);
-        exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        profileService = fixture.debugElement.injector.get(ProfileService);
-        submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
+        alertService = TestBed.inject(AlertService);
+        exerciseService = TestBed.inject(ProgrammingExerciseService);
+        profileService = TestBed.inject(ProfileService);
+        submissionPolicyService = TestBed.inject(SubmissionPolicyService);
 
-        programmingLanguageFeatureService = fixture.debugElement.injector.get(ProgrammingLanguageFeatureService);
-        router = fixture.debugElement.injector.get(Router);
+        programmingLanguageFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        router = TestBed.inject(Router);
 
         findWithTemplateAndSolutionParticipationStub = jest
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')

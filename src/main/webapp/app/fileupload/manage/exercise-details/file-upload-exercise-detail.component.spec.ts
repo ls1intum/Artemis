@@ -82,8 +82,8 @@ describe('FileUploadExercise Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(FileUploadExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        service = TestBed.inject(FileUploadExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(fileUploadExerciseStatistics));
     });
 

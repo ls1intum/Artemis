@@ -116,9 +116,9 @@ describe('Exercise detail common actions Component', () => {
     });
 
     it('should call event manager on delete exercises', () => {
-        const textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
-        const fileUploadExerciseService = fixture.debugElement.injector.get(FileUploadExerciseService);
-        const modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
+        const textExerciseService = TestBed.inject(TextExerciseService);
+        const fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        const modelingExerciseService = TestBed.inject(ModelingExerciseService);
 
         const deleteTextExerciseService = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
         const deleteFileUploadExerciseStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));

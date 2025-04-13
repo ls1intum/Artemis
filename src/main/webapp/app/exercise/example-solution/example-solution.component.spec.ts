@@ -49,8 +49,8 @@ describe('Example Solution Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ExampleSolutionComponent);
         comp = fixture.componentInstance;
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
-        artemisMarkdownService = fixture.debugElement.injector.get(ArtemisMarkdownService);
+        exerciseService = TestBed.inject(ExerciseService);
+        artemisMarkdownService = TestBed.inject(ArtemisMarkdownService);
     });
 
     afterEach(() => {

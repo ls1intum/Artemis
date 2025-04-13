@@ -38,7 +38,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseEditSelectedComponent);
         comp = fixture.componentInstance;
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
     });
 
     describe('saveAll', () => {

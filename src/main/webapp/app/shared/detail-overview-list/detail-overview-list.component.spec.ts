@@ -46,8 +46,8 @@ describe('DetailOverviewList', () => {
         })
             .compileComponents()
             .then(() => {
-                modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                modelingService = TestBed.inject(ModelingExerciseService);
+                alertService = TestBed.inject(AlertService);
             });
 
         fixture = TestBed.createComponent(DetailOverviewListComponent);

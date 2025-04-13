@@ -195,12 +195,12 @@ describe('CourseExerciseDetailsComponent', () => {
                 comp.studentParticipations = [];
 
                 // mock exerciseService
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock teamService, needed for team assignment
-                teamService = fixture.debugElement.injector.get(TeamService);
+                teamService = TestBed.inject(TeamService);
                 const teamAssignmentPayload = {
                     exerciseId: 2,
                     teamId: 2,
@@ -210,11 +210,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 // mock participationService, needed for team assignment
                 participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
-                participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesMock.mockReturnValue(participationWebsocketBehaviorSubject);
 
-                complaintService = fixture.debugElement.injector.get(ComplaintService);
+                complaintService = TestBed.inject(ComplaintService);
 
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
@@ -291,7 +291,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const exampleSolutionInfo = {} as ExampleSolutionInfo;
         const exerciseServiceSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
 
-        const artemisMarkdown = fixture.debugElement.injector.get(ArtemisMarkdownService);
+        const artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toBeUndefined();
         const newExercise = { ...textExercise };
@@ -371,7 +371,7 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle error when getting latest rated result', fakeAsync(() => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const error = { message: 'Error msg' };
         const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => error));

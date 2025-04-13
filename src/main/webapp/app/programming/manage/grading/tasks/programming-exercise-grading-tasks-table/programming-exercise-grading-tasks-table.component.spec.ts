@@ -38,7 +38,7 @@ describe('ProgrammingExerciseGradingTasksTableComponent', () => {
                 comp.gradingStatisticsObservable = of(gradingStatistics);
                 comp.exercise = exercise;
                 comp.course = course;
-                taskService = fixture.debugElement.injector.get(ProgrammingExerciseTaskService);
+                taskService = TestBed.inject(ProgrammingExerciseTaskService);
                 taskServiceUpdateTasksStub = jest.spyOn(taskService, 'updateTasks');
             });
     });

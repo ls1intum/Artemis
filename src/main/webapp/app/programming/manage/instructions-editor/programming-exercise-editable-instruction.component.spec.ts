@@ -99,14 +99,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
+                gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
-                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-                alertService = debugElement.injector.get(AlertService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 

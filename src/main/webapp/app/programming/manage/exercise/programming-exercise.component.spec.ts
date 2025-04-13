@@ -66,10 +66,10 @@ describe('ProgrammingExercise Management Component', () => {
 
         fixture = TestBed.createComponent(ProgrammingExerciseComponent);
         comp = fixture.componentInstance;
-        courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
-        alertService = fixture.debugElement.injector.get(AlertService);
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        modalService = TestBed.inject(NgbModal);
+        alertService = TestBed.inject(AlertService);
 
         comp.programmingExercises = [programmingExercise, programmingExercise2, programmingExercise3];
     });

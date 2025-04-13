@@ -105,7 +105,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 athenaService = TestBed.inject(AthenaService);
                 complaintService = TestBed.inject(ComplaintService);
                 submissionService = TestBed.inject(SubmissionService);
-                mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
+                mockAuth = TestBed.inject(AccountService) as any as MockAccountService;
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
                 mockAuth.hasAnyAuthorityDirect([]);
                 mockAuth.identity();

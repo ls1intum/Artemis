@@ -79,7 +79,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
-        const modalSpy = jest.spyOn(fixture.debugElement.injector.get(NgbModal), 'open');
+        const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
         comp.comparison.status = PlagiarismStatus.CONFIRMED;
 

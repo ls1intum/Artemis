@@ -47,8 +47,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseLifecycleButtonsComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        alertService = fixture.debugElement.injector.get(AlertService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {

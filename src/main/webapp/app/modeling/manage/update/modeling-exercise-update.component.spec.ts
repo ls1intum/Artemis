@@ -59,9 +59,9 @@ describe('ModelingExerciseUpdateComponent', () => {
 
         fixture = TestBed.createComponent(ModelingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(ModelingExerciseService);
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        service = TestBed.inject(ModelingExerciseService);
+        courseService = TestBed.inject(CourseManagementService);
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     describe('save', () => {

@@ -49,7 +49,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
     function setupTestBed() {
         fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
         participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
     }

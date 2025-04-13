@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { delay, of, throwError } from 'rxjs';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ActivatedRoute, ActivatedRouteSnapshot, Router, convertToParamMap } from '@angular/router';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -38,7 +38,6 @@ import { TutorParticipationService } from 'app/assessment/shared/assessment-dash
 describe('Example Modeling Submission Component', () => {
     let comp: ExampleModelingSubmissionComponent;
     let fixture: ComponentFixture<ExampleModelingSubmissionComponent>;
-    let debugElement: DebugElement;
     let service: ExampleSubmissionService;
     let alertService: AlertService;
     let router: Router;
@@ -123,10 +122,9 @@ describe('Example Modeling Submission Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExampleModelingSubmissionComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                service = debugElement.injector.get(ExampleSubmissionService);
-                alertService = debugElement.injector.get(AlertService);
-                router = debugElement.injector.get(Router);
+                service = TestBed.inject(ExampleSubmissionService);
+                alertService = TestBed.inject(AlertService);
+                router = TestBed.inject(Router);
             });
     });
 
@@ -137,7 +135,7 @@ describe('Example Modeling Submission Component', () => {
     it('should initialize', () => {
         // GIVEN
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
-        const exerciseService = debugElement.injector.get(ExerciseService);
+        const exerciseService = TestBed.inject(ExerciseService);
         jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: exercise })));
 
         // WHEN
@@ -185,7 +183,7 @@ describe('Example Modeling Submission Component', () => {
         const alertSpy = jest.spyOn(alertService, 'success');
         const serviceSpy = jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })).pipe(delay(1)));
 
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const modelingAssessmentServiceSpy = jest.spyOn(modelingAssessmentService, 'saveExampleAssessment');
 
         comp.isNewSubmission = false;
@@ -214,7 +212,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should check assessment', () => {
         // GIVEN
-        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const assessExampleSubmissionSpy = jest.spyOn(tutorParticipationService, 'assessExampleSubmission');
         const exerciseId = 5;
         comp.exampleSubmission = exampleSubmission;
@@ -245,7 +243,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should read and understood', () => {
         // GIVEN
-        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
         jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
         const alertSpy = jest.spyOn(alertService, 'success');
         const routerSpy = jest.spyOn(router, 'navigate');
@@ -331,7 +329,7 @@ describe('Example Modeling Submission Component', () => {
         const result = { id: 1 } as Result;
         const alertSpy = jest.spyOn(alertService, 'success');
         jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
 
         // WHEN
@@ -351,7 +349,7 @@ describe('Example Modeling Submission Component', () => {
 
         const alertSpy = jest.spyOn(alertService, 'error');
         jest.spyOn(service, 'update').mockImplementation((updatedExampleSubmission) => of(new HttpResponse({ body: updatedExampleSubmission })));
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
 
         // WHEN
@@ -405,7 +403,7 @@ describe('Example Modeling Submission Component', () => {
     it('should create success alert on example assessment update', () => {
         // GIVEN
         const result = { id: 1 } as Result;
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(of(result));
         const alertSpy = jest.spyOn(alertService, 'success');
 
@@ -424,7 +422,7 @@ describe('Example Modeling Submission Component', () => {
 
     it('should create error alert on example assessment update failure', () => {
         // GIVEN
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         jest.spyOn(modelingAssessmentService, 'saveExampleAssessment').mockReturnValue(throwError(() => ({ status: 404 })));
         const alertSpy = jest.spyOn(alertService, 'error');
 
@@ -469,7 +467,7 @@ describe('Example Modeling Submission Component', () => {
         const result = { id: 1 } as Result;
 
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = jest.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
         comp.exercise = exercise;
@@ -496,7 +494,7 @@ describe('Example Modeling Submission Component', () => {
         result.feedbacks = [feedbackOne, feedbackTwo];
 
         jest.spyOn(service, 'get').mockReturnValue(of(new HttpResponse({ body: exampleSubmission })));
-        const modelingAssessmentService = debugElement.injector.get(ModelingAssessmentService);
+        const modelingAssessmentService = TestBed.inject(ModelingAssessmentService);
         const assessmentSpy = jest.spyOn(modelingAssessmentService, 'getExampleAssessment').mockReturnValue(of(result));
 
         // WHEN

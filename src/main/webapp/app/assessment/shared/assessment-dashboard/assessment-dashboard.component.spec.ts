@@ -146,7 +146,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 fixture = TestBed.createComponent(AssessmentDashboardComponent);
                 comp = fixture.componentInstance;
 
-                courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+                courseManagementService = TestBed.inject(CourseManagementService);
 
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
@@ -201,7 +201,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
             },
         } as any as ActivatedRoute;
-        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.snapshot = newRoute.snapshot;
         TestBed.inject(ActivatedRoute);
 
@@ -295,7 +295,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
                     },
                 } as any as ActivatedRoute;
-                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+                const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
 
                 comp.tutor = new User(1);

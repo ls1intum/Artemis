@@ -55,7 +55,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         comp = fixture.componentInstance;
         comp.initialEditorHeight = 'external';
         comp.domainActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
-        fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
+        fileUploaderService = TestBed.inject(FileUploaderService);
     });
 
     afterEach(() => {
@@ -158,7 +158,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should notify if the upload of a markdown file failed', fakeAsync(() => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertSpy = jest.spyOn(alertService, 'addAlert');
         const files = [new File([''], 'test.png')];
         const uploadMarkdownFileStub = jest.spyOn(fileUploaderService, 'uploadMarkdownFile').mockRejectedValue(new Error('Test error'));

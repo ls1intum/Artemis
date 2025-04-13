@@ -163,14 +163,14 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    participationService = fixture.debugElement.injector.get(ParticipationService);
+                    participationService = TestBed.inject(ParticipationService);
                     const participation: StudentParticipation = { exercise: { ...quizExercise } };
                     participationSpy = jest
                         .spyOn(participationService, 'startQuizParticipation')
                         .mockReturnValue(of({ body: participation } as HttpResponse<StudentParticipation>));
-                    quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                    quizExerciseService = TestBed.inject(QuizExerciseService);
                     jest.spyOn(quizExerciseService, 'findForStudent').mockReturnValue(of({ body: { ...quizExercise } } as HttpResponse<QuizExercise>));
-                    httpMock = fixture.debugElement.injector.get(HttpTestingController);
+                    httpMock = TestBed.inject(HttpTestingController);
                 });
         }));
 
@@ -284,7 +284,7 @@ describe('QuizParticipationComponent', () => {
         }));
 
         it('should refresh quiz', () => {
-            exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+            exerciseService = TestBed.inject(QuizExerciseService);
             fixture.detectChanges();
 
             component.quizExercise.quizStarted = false;
@@ -321,8 +321,8 @@ describe('QuizParticipationComponent', () => {
             [QuizMode.INDIVIDUAL, false],
             [QuizMode.INDIVIDUAL, true],
         ])('should join %s batches that have started %p', (quizMode, started) => {
-            exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-            const participationService = fixture.debugElement.injector.get(ParticipationService);
+            exerciseService = TestBed.inject(QuizExerciseService);
+            const participationService = TestBed.inject(ParticipationService);
             const participation: StudentParticipation = {
                 exercise: {
                     ...quizExercise,
@@ -448,7 +448,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should react to errors', () => {
-            const alertService = fixture.debugElement.injector.get(AlertService);
+            const alertService = TestBed.inject(AlertService);
             const alertSpy = jest.spyOn(alertService, 'addAlert');
             fixture.detectChanges();
 
@@ -529,8 +529,8 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    httpMock = fixture.debugElement.injector.get(HttpTestingController);
+                    exerciseService = TestBed.inject(QuizExerciseService);
+                    httpMock = TestBed.inject(HttpTestingController);
                 });
         });
 
@@ -550,7 +550,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should initialize and start', () => {
-            const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
+            const quizService = TestBed.inject(ArtemisQuizService);
             const serviceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExercise } as HttpResponse<QuizExercise>));
             const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
             const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
@@ -608,8 +608,8 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-                    httpMock = fixture.debugElement.injector.get(HttpTestingController);
+                    exerciseService = TestBed.inject(QuizExerciseService);
+                    httpMock = TestBed.inject(HttpTestingController);
                 });
         });
 
@@ -630,7 +630,7 @@ describe('QuizParticipationComponent', () => {
         });
 
         it('should initialize and start', () => {
-            const quizService = fixture.debugElement.injector.get(ArtemisQuizService);
+            const quizService = TestBed.inject(ArtemisQuizService);
             const serviceSpy = jest.spyOn(exerciseService, 'findForStudent').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
             const startSpy = jest.spyOn(component, 'startQuizPreviewOrPractice');
             const randomizeSpy = jest.spyOn(quizService, 'randomizeOrder');
@@ -691,7 +691,7 @@ describe('QuizParticipationComponent', () => {
                     fixture = TestBed.createComponent(QuizParticipationComponent);
                     component = fixture.componentInstance;
 
-                    exerciseService = fixture.debugElement.injector.get(QuizExerciseService);
+                    exerciseService = TestBed.inject(QuizExerciseService);
                     resultForSolutionServiceSpy = jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: quizExerciseForPractice } as HttpResponse<QuizExercise>));
                 });
         });

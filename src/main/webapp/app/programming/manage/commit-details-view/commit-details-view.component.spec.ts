@@ -107,9 +107,9 @@ describe('CommitDetailsViewComponent', () => {
     function setupComponent(throwErrorWhenRetrievingCommitHistory = false) {
         fixture = TestBed.createComponent(CommitDetailsViewComponent);
         component = fixture.componentInstance;
-        activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         mockRepositoryFiles.set('file1', 'content1');
         mockRepositoryFiles.set('file2', 'content2');

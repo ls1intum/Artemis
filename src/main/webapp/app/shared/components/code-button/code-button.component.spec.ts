@@ -78,7 +78,7 @@ describe('CodeButtonComponent', () => {
                 sshUserSettingsService = TestBed.inject(SshUserSettingsService);
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
-                localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
+                localStorageMock = TestBed.inject(LocalStorageService);
 
                 getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
                 getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');

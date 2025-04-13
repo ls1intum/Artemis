@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -63,7 +62,6 @@ import { provideHttpClient } from '@angular/common/http';
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
-    let containerDebugElement: DebugElement;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
     let checkIfRepositoryIsCleanStub: jest.SpyInstance;
@@ -109,17 +107,16 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
         container = containerFixture.componentInstance;
-        containerDebugElement = containerFixture.debugElement;
 
-        const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-        const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-        const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-        const resultService = containerDebugElement.injector.get(ResultService);
-        const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-        const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-        conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
-        domainService = containerDebugElement.injector.get(DomainService);
-        const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
+        const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+        const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const resultService = TestBed.inject(ResultService);
+        const buildLogService = TestBed.inject(CodeEditorBuildLogService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        conflictService = TestBed.inject(CodeEditorConflictStateService);
+        domainService = TestBed.inject(DomainService);
+        const submissionService = TestBed.inject(ProgrammingSubmissionService);
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 

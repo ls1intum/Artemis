@@ -99,7 +99,7 @@ describe('Exercise Groups Component', () => {
                 exerciseGroupService = TestBed.inject(ExerciseGroupService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 eventManager = TestBed.inject(EventManager);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                modalService = TestBed.inject(NgbModal);
                 alertService = TestBed.inject(AlertService);
                 router = TestBed.inject(Router);
 

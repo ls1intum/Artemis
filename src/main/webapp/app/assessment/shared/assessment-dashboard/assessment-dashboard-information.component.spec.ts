@@ -77,7 +77,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should handle language changes', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
         component.ngOnInit();
         translateService.use('de');

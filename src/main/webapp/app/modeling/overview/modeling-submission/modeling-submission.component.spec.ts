@@ -68,8 +68,8 @@ describe('ModelingSubmissionComponent', () => {
         fixture = TestBed.createComponent(ModelingSubmissionComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        service = debugElement.injector.get(ModelingSubmissionService);
-        alertService = debugElement.injector.get(AlertService);
+        service = TestBed.inject(ModelingSubmissionService);
+        alertService = TestBed.inject(AlertService);
         comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
     }
 
@@ -359,7 +359,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
 
         // Create initial manual result
@@ -404,7 +404,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
         const alertServiceInfoSpy = jest.spyOn(alertService, 'info');
         const alterServiceSuccessSpy = jest.spyOn(alertService, 'success');
 
@@ -451,7 +451,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.id = 1;
@@ -479,7 +479,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = debugElement.injector.get(WebsocketService);
+        const websocketService = TestBed.inject(WebsocketService);
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,
@@ -498,7 +498,7 @@ describe('ModelingSubmissionComponent', () => {
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         // Create an incomplete result
         const incompleteResult = new Result();

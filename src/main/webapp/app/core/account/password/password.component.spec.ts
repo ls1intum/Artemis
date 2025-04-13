@@ -38,7 +38,7 @@ describe('Password Component Tests', () => {
         beforeEach(() => {
             fixture = TestBed.createComponent(PasswordComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(PasswordService);
+            service = TestBed.inject(PasswordService);
             comp.passwordResetEnabled = true;
         });
 

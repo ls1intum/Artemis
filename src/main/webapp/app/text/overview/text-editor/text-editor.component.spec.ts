@@ -1,4 +1,4 @@
-import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { input, runInInjectionContext } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
@@ -54,7 +54,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
-    let debugElement: DebugElement;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: jest.SpyInstance;
@@ -112,8 +111,7 @@ describe('TextEditorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TextEditorComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                textService = debugElement.injector.get(TextEditorService);
+                textService = TestBed.inject(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
@@ -277,7 +275,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'success');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
@@ -291,7 +289,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should warn alert on submit if submitDueDateMissedAlert', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'warning');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;

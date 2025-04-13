@@ -31,7 +31,7 @@ describe('TeamsImportFromFileFormComponent', () => {
                 fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                changeDetector = debugElement.injector.get(ChangeDetectorRef);
+                changeDetector = TestBed.inject(ChangeDetectorRef);
             });
     });
 

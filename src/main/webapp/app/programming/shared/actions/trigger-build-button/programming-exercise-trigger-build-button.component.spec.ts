@@ -64,7 +64,7 @@ describe('TriggerBuildButtonSpec', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
 
-                submissionService = debugElement.injector.get(ProgrammingSubmissionService);
+                submissionService = TestBed.inject(ProgrammingSubmissionService);
 
                 getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
                 jest.spyOn(submissionService, 'getLatestPendingSubmissionByParticipationId').mockReturnValue(getLatestPendingSubmissionSubject);

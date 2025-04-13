@@ -27,7 +27,7 @@ describe('ProgrammingDiffReportDetailComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingDiffReportDetailComponent);
 
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        modalService = TestBed.inject(NgbModal);
         component = fixture.componentInstance;
     });
 

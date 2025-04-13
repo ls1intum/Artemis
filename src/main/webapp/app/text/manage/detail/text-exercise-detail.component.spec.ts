@@ -65,8 +65,8 @@ describe('TextExercise Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(TextExerciseDetailComponent);
         comp = fixture.componentInstance;
-        exerciseService = fixture.debugElement.injector.get(TextExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        exerciseService = TestBed.inject(TextExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
     });
 
     describe('onInit with course exercise', () => {

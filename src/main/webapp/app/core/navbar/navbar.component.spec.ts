@@ -136,7 +136,7 @@ describe('NavbarComponent', () => {
                 fixture = TestBed.createComponent(NavbarComponent);
                 component = fixture.componentInstance;
                 examParticipationService = TestBed.inject(ExamParticipationService);
-                entityTitleService = fixture.debugElement.injector.get(EntityTitleService);
+                entityTitleService = TestBed.inject(EntityTitleService);
                 entityTitleServiceStub = jest
                     .spyOn(entityTitleService, 'getTitle')
                     .mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
@@ -153,9 +153,9 @@ describe('NavbarComponent', () => {
     });
 
     it('should make api call when logged in user changes language', () => {
-        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const languageService = TestBed.inject(TranslateService);
         const useSpy = jest.spyOn(languageService, 'use');
-        const accountService = fixture.debugElement.injector.get(AccountService);
+        const accountService = TestBed.inject(AccountService);
         const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();
@@ -166,9 +166,9 @@ describe('NavbarComponent', () => {
     });
 
     it('should not make api call when anonymous user changes language', () => {
-        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const languageService = TestBed.inject(TranslateService);
         const useSpy = jest.spyOn(languageService, 'use');
-        const accountService = fixture.debugElement.injector.get(AccountService);
+        const accountService = TestBed.inject(AccountService);
         const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
 
         fixture.detectChanges();

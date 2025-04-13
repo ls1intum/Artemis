@@ -63,7 +63,7 @@ describe('LtiConfigurationComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         component.predicate = 'id';
-        mockAlertService = fixture.debugElement.injector.get(AlertService);
+        mockAlertService = TestBed.inject(AlertService);
     });
 
     it('should create', () => {

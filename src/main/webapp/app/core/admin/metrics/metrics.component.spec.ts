@@ -58,7 +58,7 @@ describe('MetricsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(MetricsComponent);
                 comp = fixture.componentInstance;
-                service = fixture.debugElement.injector.get(MetricsService);
+                service = TestBed.inject(MetricsService);
             });
     });
 

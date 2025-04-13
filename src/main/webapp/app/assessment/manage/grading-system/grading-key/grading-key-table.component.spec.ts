@@ -92,8 +92,8 @@ describe('GradingKeyTableComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(GradingKeyTableComponent);
                 comp = fixture.componentInstance;
-                gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
-                bonusService = fixture.debugElement.injector.get(BonusService);
+                gradingSystemService = TestBed.inject(GradingSystemService);
+                bonusService = TestBed.inject(BonusService);
             });
     });
 
@@ -177,7 +177,7 @@ describe('GradingKeyTableComponent', () => {
         const courseId = route.parent!.parent!.snapshot!.params.courseId;
         const reachablePoints = 200;
 
-        const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
+        const scoresStorageService = TestBed.inject(ScoresStorageService);
         const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, 0, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 

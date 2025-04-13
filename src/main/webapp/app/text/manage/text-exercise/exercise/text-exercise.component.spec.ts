@@ -46,8 +46,8 @@ describe('TextExercise Management Component', () => {
 
         fixture = TestBed.createComponent(TextExerciseComponent);
         comp = fixture.componentInstance;
-        courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        modalService = TestBed.inject(NgbModal);
 
         comp.textExercises = [textExercise];
     });

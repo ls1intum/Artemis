@@ -53,9 +53,9 @@ describe('QuizExercise Statistic Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizStatisticComponent);
                 comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
+                quizService = TestBed.inject(QuizExerciseService);
+                accountService = TestBed.inject(AccountService);
+                router = TestBed.inject(Router);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });

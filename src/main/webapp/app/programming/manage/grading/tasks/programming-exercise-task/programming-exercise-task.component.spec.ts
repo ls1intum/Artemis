@@ -29,7 +29,7 @@ describe('ProgrammingExerciseTaskComponent', () => {
 
                 comp.openSubject = new Subject();
 
-                taskService = fixture.debugElement.injector.get(ProgrammingExerciseTaskService);
+                taskService = TestBed.inject(ProgrammingExerciseTaskService);
                 jest.spyOn(comp.updateTasksEvent, 'emit');
             });
     });

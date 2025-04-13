@@ -183,12 +183,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 debugElement = fixture.debugElement;
                 router = TestBed.inject(Router);
 
-                programmingAssessmentManualResultService = debugElement.injector.get(ProgrammingAssessmentManualResultService);
-                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
-                complaintService = debugElement.injector.get(ComplaintService);
-                accountService = debugElement.injector.get(AccountService);
-                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-                repositoryFileService = debugElement.injector.get(CodeEditorRepositoryFileService);
+                programmingAssessmentManualResultService = TestBed.inject(ProgrammingAssessmentManualResultService);
+                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+                complaintService = TestBed.inject(ComplaintService);
+                accountService = TestBed.inject(AccountService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                repositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
 
                 updateAfterComplaintStub = jest.spyOn(programmingAssessmentManualResultService, 'updateAfterComplaint').mockReturnValue(of(afterComplaintResult));
                 lockAndGetProgrammingSubmissionParticipationStub = jest
@@ -380,7 +380,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     }));
 
     it('should lock a new submission', fakeAsync(() => {
-        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.params = of({ submissionId: 'new' });
         TestBed.inject(ActivatedRoute);
 

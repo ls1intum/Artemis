@@ -126,7 +126,7 @@ describe('CompetencyManagementComponent', () => {
         fixture = TestBed.createComponent(CompetencyManagementComponent);
         component = fixture.componentInstance;
 
-        modalService = fixture.debugElement.injector.get(NgbModal);
+        modalService = TestBed.inject(NgbModal);
     });
 
     afterEach(() => {

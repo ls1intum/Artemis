@@ -34,7 +34,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
                 comp.readOnly = false;
                 comp.selectedFile = fileName;
                 comp.codeLine = codeLine;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 

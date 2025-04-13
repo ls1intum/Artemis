@@ -50,8 +50,8 @@ describe('QuizExercise Details Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseDetailComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
     });
 
     afterEach(() => {

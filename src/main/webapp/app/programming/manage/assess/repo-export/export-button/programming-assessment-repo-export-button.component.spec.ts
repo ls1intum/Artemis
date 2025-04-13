@@ -37,7 +37,7 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportButtonComponent);
                 comp = fixture.componentInstance;
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                modalService = TestBed.inject(NgbModal);
 
                 comp.programmingExercises = [programmingExercise];
                 comp.participationIdList = participationIdList;

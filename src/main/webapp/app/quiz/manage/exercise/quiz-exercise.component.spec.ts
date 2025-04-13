@@ -50,8 +50,8 @@ describe('QuizExercise Management Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        accountService = fixture.debugElement.injector.get(AccountService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        accountService = TestBed.inject(AccountService);
 
         comp.course = course;
         comp.quizExercises = [quizExercise];
