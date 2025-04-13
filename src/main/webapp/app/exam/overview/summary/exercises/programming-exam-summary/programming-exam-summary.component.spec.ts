@@ -52,7 +52,7 @@ const programmingParticipation = {
     submissions: [programmingSubmission],
     type: ParticipationType.PROGRAMMING,
     participantIdentifier: 'student1',
-    repositoryUri: 'https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
+    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
 } as ProgrammingExerciseStudentParticipation;
 
 const programmingExercise = {
@@ -85,7 +85,7 @@ const result = {
         id: 55,
         type: ParticipationType.PROGRAMMING,
         participantIdentifier: 'student42',
-        repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+        repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
     },
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,

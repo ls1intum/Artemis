@@ -1,6 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -40,7 +39,7 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
         ArtemisTranslatePipe,
     ],
 })
-export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
+export class CourseManagementExercisesComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly documentationType: DocumentationType = 'Exercise';
 
@@ -62,7 +61,6 @@ export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
 
     private readonly route = inject(ActivatedRoute);
     private readonly profileService = inject(ProfileService);
-    private profileSubscription: Subscription | null;
 
     /**
      * initializes course
@@ -76,10 +74,6 @@ export class CourseManagementExercisesComponent implements OnInit, OnDestroy {
 
         this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
-    }
-
-    ngOnDestroy(): void {
-        this.profileSubscription?.unsubscribe();
     }
 
     /**

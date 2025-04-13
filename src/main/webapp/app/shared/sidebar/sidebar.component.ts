@@ -71,7 +71,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     exerciseId: string;
 
     paramSubscription?: Subscription;
-    profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
 
     routeParams: Params;
@@ -161,7 +160,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     ngOnDestroy() {
         this.paramSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }

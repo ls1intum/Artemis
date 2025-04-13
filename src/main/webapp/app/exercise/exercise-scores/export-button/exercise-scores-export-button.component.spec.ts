@@ -95,7 +95,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Criterion 1': 2,
             'Unnamed Criterion 1': 0,
             'Unnamed Criterion 2': 10,
-            'Repo Link': 'https://www.gitlab.local/studentA',
+            'Repo Link': 'https://www.artemis.local/studentA',
         },
         {
             Name: 'Student B',
@@ -105,7 +105,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Criterion 1': 0,
             'Unnamed Criterion 1': 0,
             'Unnamed Criterion 2': 0,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
         },
     ];
 
@@ -116,14 +116,14 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentA',
             Score: 1,
             Points: 2,
-            'Repo Link': 'https://www.gitlab.local/studentA',
+            'Repo Link': 'https://www.artemis.local/studentA',
         },
         {
             Name: 'Student B',
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
         },
     ];
 
@@ -134,7 +134,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed',
             'Test 3': 'Failed',
@@ -147,7 +147,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
             'Test 3': 'Failed',
@@ -302,7 +302,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         participation.participantIdentifier = studentLogin;
         participation.participantName = studentName;
         if (isProgramming) {
-            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.gitlab.local/${studentLogin}`;
+            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.artemis.local/${studentLogin}`;
         }
 
         return participation;

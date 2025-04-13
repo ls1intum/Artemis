@@ -128,7 +128,7 @@ describe('ExamUpdateComponent', () => {
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
         it('should initialize', () => {
@@ -641,7 +641,7 @@ describe('ExamUpdateComponent', () => {
 
             profileService = TestBed.inject(ProfileService);
             getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-            getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+            getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
         });
 
         it('should initialize without id and dates set', () => {

@@ -58,7 +58,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected closeSidebarEventSubscription: Subscription;
     protected openSidebarEventSubscription: Subscription;
     protected subscription?: Subscription;
-    protected profileSubscription?: Subscription;
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
     dashboardSubscription: Subscription;
@@ -171,7 +170,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();

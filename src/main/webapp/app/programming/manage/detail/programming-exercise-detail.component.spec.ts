@@ -42,7 +42,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
     let programmingLanguageFeatureService: ProgrammingLanguageFeatureService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
-    let profileServiceStub: jest.SpyInstance;
     let submissionPolicyServiceStub: jest.SpyInstance;
     let findWithTemplateAndSolutionParticipationStub: jest.SpyInstance;
     let router: Router;
@@ -126,7 +125,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
             .spyOn(exerciseService, 'findWithTemplateAndSolutionParticipationAndLatestResults')
             .mockReturnValue(of(new HttpResponse<ProgrammingExercise>({ body: mockProgrammingExercise })));
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
-        profileServiceStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
         submissionPolicyServiceStub = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(undefined));
 
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
@@ -165,7 +163,6 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
             // THEN
             expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalledOnce();
-            expect(profileServiceStub).toHaveBeenCalledTimes(2);
             expect(submissionPolicyServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(statisticsServiceStub).toHaveBeenCalledOnce();

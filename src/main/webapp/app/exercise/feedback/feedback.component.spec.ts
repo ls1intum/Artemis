@@ -197,7 +197,7 @@ describe('FeedbackComponent', () => {
                 id: 55,
                 type: ParticipationType.PROGRAMMING,
                 participantIdentifier: 'student42',
-                repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+                repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
             },
         } as Result;
         buildLogService = TestBed.inject(BuildLogService);

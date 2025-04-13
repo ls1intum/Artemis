@@ -9,6 +9,7 @@ import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -56,6 +57,7 @@ describe('LectureDetailComponent', () => {
                 MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .overrideTemplate(DetailOverviewListComponent, '')

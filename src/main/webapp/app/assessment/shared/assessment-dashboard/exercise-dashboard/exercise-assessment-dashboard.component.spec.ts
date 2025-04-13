@@ -264,7 +264,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
         submissionService = TestBed.inject(SubmissionService);
         jest.spyOn(submissionService, 'getSubmissionsWithComplaintsForTutor').mockReturnValue(of(new HttpResponse({ body: [] })));
-        const router = TestBed.inject(Router);
+        const router = fixture.debugElement.injector.get(Router);
         navigateSpy = jest.spyOn(router, 'navigate').mockImplementation();
         tutorParticipationService = TestBed.inject(TutorParticipationService);
         exerciseServiceGetForTutorsStub = jest.spyOn(exerciseService, 'getForTutors');
@@ -298,9 +298,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should initialize', fakeAsync(() => {
-        const user = { id: 10 } as User;
-        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-
+        const user = { id: 10, login: 'tutor1' } as User;
+        accountService.userIdentity = user;
         fixture.detectChanges();
 
         expect(comp.courseId).toBe(1);
@@ -318,8 +317,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     }));
 
     it('should initialize with tutor leaderboard entry', () => {
-        const tutor = { id: 10 } as User;
-        comp.tutor = tutor;
+        const tutor = { id: 10, login: 'tutor1' } as User;
+        accountService.userIdentity = tutor;
         const tutorLeaderBoardEntry = {
             userId: tutor.id!,
             numberOfAssessments: 3,

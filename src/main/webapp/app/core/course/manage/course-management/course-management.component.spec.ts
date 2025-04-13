@@ -1,7 +1,9 @@
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/core/course/manage/course-management/course-management.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
@@ -87,6 +89,7 @@ describe('CourseManagementComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
                 provideHttpClientTesting(),

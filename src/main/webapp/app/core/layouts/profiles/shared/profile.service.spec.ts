@@ -117,14 +117,14 @@ export const expectedProfileInfo: ProfileInfo = {
     registrationEnabled: true,
     repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
     sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
-    sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
+    sshCloneURLTemplate: 'ssh://git@artemistest2.aet.cit.tum.de:2222/',
     studentExamStoreSessionData: false,
     testServer: true,
     textAssessmentAnalyticsEnabled: false,
     theiaPortalURL: 'https://theia.artemis.cit.tum.de',
     useExternal: false,
     versionControlName: '',
-    versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
+    versionControlUrl: 'https://artemistest2.aet.cit.tum.de',
 };
 
 describe('ProfileService', () => {

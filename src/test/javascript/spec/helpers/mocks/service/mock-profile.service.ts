@@ -2,7 +2,7 @@ import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export class MockProfileService {
-    getProfileInfo = (): ProfileInfo =>
+    public getProfileInfo = (): ProfileInfo =>
         ({
             programmingLanguageFeatures: [],
             activeProfiles: [],
@@ -10,13 +10,13 @@ export class MockProfileService {
             testServer: false,
         }) as unknown as ProfileInfo;
 
-    isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
+    public isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
 
-    isModuleFeatureActive = (feature: string): boolean => this.getProfileInfo().activeModuleFeatures?.includes(feature) ?? false;
+    public isModuleFeatureActive = (feature: string): boolean => this.getProfileInfo().activeModuleFeatures?.includes(feature) ?? false;
 
-    isDevelopment = (): boolean => this.isProfileActive(PROFILE_DEV) ?? false;
+    public isDevelopment = (): boolean => this.isProfileActive(PROFILE_DEV) ?? false;
 
-    isProduction = (): boolean => this.isProfileActive(PROFILE_PROD) ?? false;
+    public isProduction = (): boolean => this.isProfileActive(PROFILE_PROD) ?? false;
 
-    isTestServer = (): boolean => this.getProfileInfo().testServer ?? false;
+    public isTestServer = (): boolean => this.getProfileInfo().testServer ?? false;
 }

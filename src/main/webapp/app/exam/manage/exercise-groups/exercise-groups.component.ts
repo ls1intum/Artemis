@@ -1,6 +1,6 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -66,7 +66,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         FeatureOverlayComponent,
     ],
 })
-export class ExerciseGroupsComponent implements OnInit, OnDestroy {
+export class ExerciseGroupsComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private exerciseGroupService = inject(ExerciseGroupService);
     exerciseService = inject(ExerciseService);
@@ -76,8 +76,6 @@ export class ExerciseGroupsComponent implements OnInit, OnDestroy {
     private modalService = inject(NgbModal);
     private router = inject(Router);
     private profileService = inject(ProfileService);
-
-    private profileSubscription: Subscription | null;
 
     courseId: number;
     course: Course;
@@ -130,10 +128,6 @@ export class ExerciseGroupsComponent implements OnInit, OnDestroy {
         if (!this.textExerciseEnabled) {
             this.disabledExerciseTypes.push(ExerciseType.TEXT);
         }
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
     }
 
     /**

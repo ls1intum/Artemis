@@ -70,8 +70,8 @@ describe('LectureUnitManagementComponent', () => {
     let lecture: Lecture;
     let course: Course;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip)],
             declarations: [
                 LectureUnitManagementComponent,
@@ -101,8 +101,8 @@ describe('LectureUnitManagementComponent', () => {
                     useValue: {
                         parent: {
                             params: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
+                                subscribe: (fn_1: (value: Params) => void) =>
+                                    fn_1({
                                         lectureId: 1,
                                     }),
                             },
@@ -111,53 +111,45 @@ describe('LectureUnitManagementComponent', () => {
                     },
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
-                lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
-                lectureService = TestBed.inject(LectureService);
-                lectureUnitService = TestBed.inject(LectureUnitService);
-                profileService = TestBed.inject(ProfileService);
-                irisSettingsService = TestBed.inject(IrisSettingsService);
-
-                findLectureSpy = jest.spyOn(lectureService, 'find');
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
-                deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
-                updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
-                getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
-                getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
-
-                textUnit = new TextUnit();
-                textUnit.id = 0;
-                videoUnit = new VideoUnit();
-                videoUnit.id = 1;
-                exerciseUnit = new ExerciseUnit();
-                exerciseUnit.id = 2;
-                attachmentUnit = new AttachmentUnit();
-                attachmentUnit.id = 3;
-                course = new Course();
-                course.id = 99;
-
-                lecture = new Lecture();
-                lecture.id = 0;
-                lecture.course = course;
-                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
-
-                const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
-                findLectureSpy.mockReturnValue(returnValue);
-                findLectureWithDetailsSpy.mockReturnValue(returnValue);
-                updateOrderSpy.mockReturnValue(returnValue);
-                deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
-                const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-                getProfileInfo.mockReturnValue(of(profileInfo));
-                const irisCourseSettings = new IrisCourseSettings();
-                irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-                irisCourseSettings.irisLectureIngestionSettings.enabled = true;
-                getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
-
-                lectureUnitManagementComponentFixture.detectChanges();
-            });
+        }).compileComponents();
+        lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
+        lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
+        lectureService = TestBed.inject(LectureService);
+        lectureUnitService = TestBed.inject(LectureUnitService);
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        findLectureSpy = jest.spyOn(lectureService, 'find');
+        findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
+        deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
+        updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
+        getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
+        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
+        textUnit = new TextUnit();
+        textUnit.id = 0;
+        videoUnit = new VideoUnit();
+        videoUnit.id = 1;
+        exerciseUnit = new ExerciseUnit();
+        exerciseUnit.id = 2;
+        attachmentUnit = new AttachmentUnit();
+        attachmentUnit.id = 3;
+        course = new Course();
+        course.id = 99;
+        lecture = new Lecture();
+        lecture.id = 0;
+        lecture.course = course;
+        lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+        const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
+        findLectureSpy.mockReturnValue(returnValue);
+        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        updateOrderSpy.mockReturnValue(returnValue);
+        deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
+        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
+        getProfileInfo.mockReturnValue(profileInfo);
+        const irisCourseSettings = new IrisCourseSettings();
+        irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+        irisCourseSettings.irisLectureIngestionSettings.enabled = true;
+        getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
+        lectureUnitManagementComponentFixture.detectChanges();
     });
 
     it('should reorder', () => {

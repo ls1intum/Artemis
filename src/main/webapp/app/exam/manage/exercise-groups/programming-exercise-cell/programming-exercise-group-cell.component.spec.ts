@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-groups/programming-exercise-cell/programming-exercise-group-cell.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -35,21 +35,11 @@ describe('Programming Exercise Group Cell Component', () => {
         allowOnlineIde: false,
     } as any as ProgrammingExercise;
 
-    let mockedProfileService: ProfileService;
+    let profileService: ProfileService;
 
     beforeEach(() => {
-        mockedProfileService = {
-            getProfileInfo: () =>
-                // @ts-ignore
-                of({
-                    buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
-                    activeProfiles: [PROFILE_THEIA],
-                }),
-        };
-
         TestBed.configureTestingModule({
             providers: [
-                { provide: ProfileService, useValue: mockedProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -61,6 +51,11 @@ describe('Programming Exercise Group Cell Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingExerciseGroupCellComponent);
                 fixture.componentRef.setInput('exercise', exercise);
+                profileService = TestBed.inject(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                    buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
+                    activeProfiles: [PROFILE_THEIA],
+                } as ProfileInfo);
             });
     });
 
@@ -88,7 +83,7 @@ describe('Programming Exercise Group Cell Component', () => {
     });
 
     it('should display editor mode flags', () => {
-        fixture.componentRef.setInput('displayEditorModus', true);
+        fixture.componentRef.setInput('displayEditorMode', true);
         fixture.detectChanges();
 
         const div0 = fixture.debugElement.query(By.css('div > div > div:first-child'));

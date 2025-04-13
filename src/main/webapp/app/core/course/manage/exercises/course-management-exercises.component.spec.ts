@@ -73,7 +73,7 @@ describe('Course Management Exercises Component', () => {
 
                 profileService = TestBed.inject(ProfileService);
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+                getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
             });
     });
 

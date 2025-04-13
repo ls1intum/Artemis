@@ -69,7 +69,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     isCollapsed = false;
@@ -117,7 +116,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 

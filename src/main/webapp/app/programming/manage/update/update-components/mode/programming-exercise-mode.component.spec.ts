@@ -32,19 +32,13 @@ describe('ProgrammingExerciseModeComponent', () => {
                 MockComponent(ProgrammingExerciseDifficultyComponent),
             ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: { queryParams: of({}) },
-                },
-                {
-                    provide: ProfileService,
-                    useClass: MockProfileService,
-                },
+                { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
             schemas: [],
         }).compileComponents();
-        // .then(() => {
+
         fixture = TestBed.createComponent(ProgrammingExerciseModeComponent);
         comp = fixture.componentInstance;
         comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -59,9 +53,7 @@ describe('ProgrammingExerciseModeComponent', () => {
 
         profileService = TestBed.inject(ProfileService);
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({
-            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
-        } as ProfileInfo);
+        getProfileInfoSub.mockReturnValue({ sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo);
     });
 
     afterEach(() => {
@@ -75,7 +67,7 @@ describe('ProgrammingExerciseModeComponent', () => {
 
     it('should initialize theiaEnabled', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(of({ activeProfiles: [PROFILE_THEIA] } as ProfileInfo));
+        getProfileInfoSub.mockReturnValue({ activeProfiles: [PROFILE_THEIA] } as ProfileInfo);
 
         fixture.detectChanges();
         expect(comp.theiaEnabled).toBeTrue();

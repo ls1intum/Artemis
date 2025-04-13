@@ -117,7 +117,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
     participation.exercise = exercise;
     participation.id = 1;
     participation.student = { login: 'student1' } as User;
-    participation.repositoryUri = 'http://student1@gitlab.ase.in.tum.de/scm/TEST/test-repo-student1.git';
+    participation.repositoryUri = 'http://student1@artemis.tum.de/git/TEST/test-repo-student1.git';
     result.submission!.participation = participation;
 
     const submission: ProgrammingSubmission = new ProgrammingSubmission();

@@ -243,8 +243,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         }
 
+        this.tutor = this.accountService.userIdentity;
+
         this.loadAll();
-        this.accountService.identity().then((user: User) => (this.tutor = user));
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
         });

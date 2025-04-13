@@ -78,7 +78,7 @@ describe('CodeButtonComponent', () => {
                 sshUserSettingsService = TestBed.inject(SshUserSettingsService);
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
-                localStorageMock = TestBed.inject(LocalStorageService);
+                localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
 
                 getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
                 getCachedSshKeysSpy = jest.spyOn(sshUserSettingsService, 'getCachedSshKeys');
@@ -180,23 +180,23 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should get ssh url (same url for team and individual participation)', async () => {
-        participation.repositoryUri = 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
+        participation.repositoryUri = 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git';
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
-        component.sshTemplateUrl = 'ssh://git@gitlab.ase.in.tum.de:7999/';
+        component.sshTemplateUrl = 'ssh://git@artemis.tum.de:7999/';
         component.isTeamParticipation = true;
         fixture.detectChanges();
         component.onClick();
 
-        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@gitlab.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
 
         participation.team = undefined;
         component.isTeamParticipation = false;
-        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@gitlab.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('ssh://git@artemis.tum.de:7999/git/ITCPLEASE1/itcplease1-exercise.git');
     });
 
     it('should get copy the repository uri', async () => {
-        participation.repositoryUri = info.versionControlUrl!;
+        participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         participation.team = {};
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Password;
@@ -204,16 +204,16 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         participation.team = undefined;
         component.isTeamParticipation = false;
         url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should insert the correct token in the repository uri', async () => {
-        participation.repositoryUri = `https://${component.user.login}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUri = `https://${component.user.login}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
         localStorageState = RepositoryAuthenticationMethod.Token;
 
@@ -225,26 +225,26 @@ describe('CodeButtonComponent', () => {
 
         // Placeholder is shown
         let url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:${vcsToken}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         // Team participation does not include user name
-        fixture.componentRef.setInput('repositoryUri', `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        fixture.componentRef.setInput('repositoryUri', `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
         participation.team = {};
         component.isTeamParticipation = true;
 
         // Placeholder is shown
         url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         url = component.getHttpOrSshRepositoryUri(false);
-        expect(url).toBe(`https://${component.user.login}:${vcsToken}@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:${vcsToken}@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should add the user login and token to the URL', async () => {
-        participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
 
         component.isTeamParticipation = false;
@@ -252,16 +252,16 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         const url = component.getHttpOrSshRepositoryUri();
-        expect(url).toBe(`https://${component.user.login}:**********@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+        expect(url).toBe(`https://${component.user.login}:**********@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should handle multiple participations', async () => {
         const participation1: ProgrammingExerciseStudentParticipation = {
-            repositoryUri: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git',
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git',
             testRun: false,
         };
         const participation2: ProgrammingExerciseStudentParticipation = {
-            repositoryUri: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git',
+            repositoryUri: 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git',
             testRun: true,
         };
         fixture.componentRef.setInput('participations', [participation1, participation2]);
@@ -269,24 +269,24 @@ describe('CodeButtonComponent', () => {
         await fixture.whenStable();
 
         expect(component.activeParticipation).toEqual(participation1);
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.cloneRatedRepository');
 
         component.switchPracticeMode();
 
         expect(component.activeParticipation).toEqual(participation2);
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://edx_userLogin@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-practice.git');
         expect(component.cloneHeadline).toBe('artemisApp.exerciseActions.clonePracticeRepository');
     });
 
     it('should handle no participation', () => {
-        fixture.componentRef.setInput('repositoryUri', 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+        fixture.componentRef.setInput('repositoryUri', 'https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
         fixture.componentRef.setInput('participations', []);
         component.activeParticipation = undefined;
         fixture.detectChanges();
 
         expect(component.isTeamParticipation).toBeFalsy();
-        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git');
+        expect(component.getHttpOrSshRepositoryUri()).toBe('https://user1@artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise.solution.git');
     });
 
     it('should set wasCopied to true and back to false after 3 seconds on successful copy', () => {
@@ -306,7 +306,7 @@ describe('CodeButtonComponent', () => {
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
-        participation.repositoryUri = `https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUri = `https://artemis.tum.de/git/ITCPLEASE1/itcplease1-exercise-team1.git`;
         fixture.componentRef.setInput('participations', [participation]);
 
         component.activeParticipation = participation;

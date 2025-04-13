@@ -83,7 +83,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             .compileComponents();
         fixture = TestBed.createComponent(DragAndDropQuestionEditComponent);
         component = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
+        modalService = fixture.debugElement.injector.get(NgbModal);
         questionUpdatedSpy = jest.spyOn(component.questionUpdated, 'emit');
         jest.spyOn(component['changeDetector'], 'detectChanges').mockImplementation(() => {});
         createObjectURLStub = jest.spyOn(window.URL, 'createObjectURL').mockImplementation((file: File) => {

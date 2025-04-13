@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button/button.component';
@@ -7,7 +7,6 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { Subscription } from 'rxjs';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
@@ -71,7 +70,7 @@ export enum DetailType {
         ArtemisTranslatePipe,
     ],
 })
-export class DetailOverviewListComponent implements OnInit, OnDestroy {
+export class DetailOverviewListComponent implements OnInit {
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -88,8 +87,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     headlines: { id: string; translationKey: string }[];
     // headline record to avoid function call in html
     headlinesRecord: Record<string, string>;
-
-    profileSubscription: Subscription;
 
     ngOnInit() {
         this.headlines = this.sections().map((section) => {
@@ -111,10 +108,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
                 },
             });
         }
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

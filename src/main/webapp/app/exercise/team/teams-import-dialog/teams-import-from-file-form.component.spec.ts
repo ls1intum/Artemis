@@ -1,8 +1,10 @@
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercise/team/teams-import-dialog/teams-import-from-file-form.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { mockFileStudents, mockFileTeamsConverted } from 'test/helpers/mocks/service/mock-team.service';
 import { unparse } from 'papaparse';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -11,7 +13,6 @@ import { TranslateService } from '@ngx-translate/core';
 describe('TeamsImportFromFileFormComponent', () => {
     let comp: TeamsImportFromFileFormComponent;
     let fixture: ComponentFixture<TeamsImportFromFileFormComponent>;
-    let debugElement: DebugElement;
     let changeDetector: ChangeDetectorRef;
 
     function resetComponent() {
@@ -24,14 +25,16 @@ describe('TeamsImportFromFileFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(TeamsImportFromFileFormComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                changeDetector = TestBed.inject(ChangeDetectorRef);
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
     });
 
@@ -46,7 +49,7 @@ describe('TeamsImportFromFileFormComponent', () => {
 
         it('should convert and call teamsChanged with converted teams', () => {
             const setImportStub = jest.spyOn(comp, 'setImportFile');
-            const inputElement = debugElement.query(By.css('input')).nativeElement;
+            const inputElement = fixture.debugElement.query(By.css('input')).nativeElement;
             inputElement.dispatchEvent(new Event('change'));
             expect(setImportStub).toHaveBeenCalledOnce();
         });

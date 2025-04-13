@@ -1,5 +1,6 @@
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -29,6 +30,7 @@ import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import JSZip from 'jszip';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -118,6 +120,7 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 MockProvider(ChangeDetectorRef),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
@@ -127,8 +130,8 @@ describe('QuizQuestionListEditExistingComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 quizExerciseService = TestBed.inject(QuizExerciseService);
                 fileService = TestBed.inject(FileService);
-                changeDetector = TestBed.inject(ChangeDetectorRef);
-                modalService = TestBed.inject(NgbModal);
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
+                modalService = fixture.debugElement.injector.get(NgbModal);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
             });

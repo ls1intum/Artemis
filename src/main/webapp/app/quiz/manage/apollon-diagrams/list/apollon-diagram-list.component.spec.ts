@@ -1,5 +1,6 @@
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { MockProvider } from 'ng-mocks';
@@ -14,6 +15,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { isEqual } from 'lodash-es';
@@ -42,6 +44,7 @@ describe('ApollonDiagramList Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(CourseManagementService),
                 MockProvider(AccountService),
             ],
@@ -51,9 +54,9 @@ describe('ApollonDiagramList Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramListComponent);
-                apollonDiagramService = TestBed.inject(ApollonDiagramService);
-                courseService = TestBed.inject(CourseManagementService);
-                modalService = TestBed.inject(NgbModal);
+                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+                courseService = fixture.debugElement.injector.get(CourseManagementService);
+                modalService = fixture.debugElement.injector.get(NgbModal);
             });
     });
 
