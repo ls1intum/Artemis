@@ -292,7 +292,7 @@ describe('Exercise Scores Component', () => {
 
     it('should export names correctly for student participation', () => {
         component.participations = [participation];
-        const rows = ['data:text/csv;charset=utf-8,participantName'];
+        const rows = ['participantName'];
         const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();
@@ -304,7 +304,7 @@ describe('Exercise Scores Component', () => {
     it('should export names correctly for team participation', () => {
         participation.team = team;
         component.participations = [participation];
-        const rows = ['data:text/csv;charset=utf-8,Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
+        const rows = ['Team Name,Team Short Name,Students', 'name,shortName,"name1, name2"'];
         const resultServiceStub = jest.spyOn(resultService, 'triggerDownloadCSV');
 
         component.exportNames();

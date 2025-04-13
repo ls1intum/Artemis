@@ -335,12 +335,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 const { participantName } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
-                        rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
+                        rows.push('Team Name,Team Short Name,Students');
                     }
                     const { name, shortName, students } = studentParticipation.team;
                     rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
                 } else {
-                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
+                    rows.push(participantName!);
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
