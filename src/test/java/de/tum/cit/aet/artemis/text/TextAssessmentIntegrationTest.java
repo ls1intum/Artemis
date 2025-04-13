@@ -432,7 +432,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         Participation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
-        final TextSubmission submission = (TextSubmission) participation.getResults().iterator().next().getSubmission();
+        final TextSubmission submission = (TextSubmission) participation.getSubmissions().iterator().next();
         assertThat(submission.getBlocks()).isNotNull();
         assertThat(submission.getBlocks()).isNotEmpty();
     }
