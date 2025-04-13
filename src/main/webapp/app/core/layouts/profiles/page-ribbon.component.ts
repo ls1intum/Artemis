@@ -1,4 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { PROFILE_DEV, PROFILE_TEST } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -23,10 +24,10 @@ export class PageRibbonComponent implements OnInit {
 
     ngOnInit() {
         if (this.profileService.isDevelopment()) {
-            this.ribbonEnv = 'dev';
+            this.ribbonEnv = PROFILE_DEV;
         }
         if (this.profileService.isProduction() && this.profileService.isTestServer()) {
-            this.ribbonEnv = 'test';
+            this.ribbonEnv = PROFILE_TEST;
         }
     }
 }

@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { ProfileInfo } from '../profile-info.model';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
@@ -35,11 +36,11 @@ export class ProfileService {
     }
 
     public isDevelopment(): boolean {
-        return this.isProfileActive('dev') ?? false;
+        return this.isProfileActive(PROFILE_DEV) ?? false;
     }
 
     public isProduction(): boolean {
-        return this.isProfileActive('prod') ?? false;
+        return this.isProfileActive(PROFILE_PROD) ?? false;
     }
 
     public isTestServer(): boolean {

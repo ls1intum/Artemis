@@ -163,7 +163,7 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+            const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
             const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             const organization = new Organization();
             organization.id = 12344;
@@ -944,7 +944,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {

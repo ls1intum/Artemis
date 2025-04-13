@@ -62,13 +62,9 @@ describe('ProgrammingExerciseModeComponent', () => {
         debugElement = fixture.debugElement;
         profileService = debugElement.injector.get(ProfileService);
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            of({
-                inProduction: false,
-                sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
-            } as ProfileInfo),
-        );
-        // });
+        getProfileInfoSub.mockReturnValue({
+            sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+        } as ProfileInfo);
     });
 
     afterEach(() => {

@@ -15,7 +15,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import '@angular/localize/init';
-import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -28,7 +28,7 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../shared/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
@@ -42,7 +42,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -237,9 +237,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.id = 1;
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 throwError(
-                    new HttpResponse({
-                        headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
-                    }),
+                    () =>
+                        new HttpResponse({
+                            headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
+                        }),
                 ),
             );
             const alertSpy = jest.spyOn(alertService, 'addAlert');

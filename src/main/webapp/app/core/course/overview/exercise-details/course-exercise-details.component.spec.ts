@@ -76,17 +76,15 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
-    let profileService: ProfileService;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
-    let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
-    let participationWebsockerBehaviourSubject: BehaviorSubject<Participation | undefined>;
+    let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
@@ -196,12 +194,6 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 comp.studentParticipations = [];
 
-                // mock profileService
-                profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as unknown as ProfileInfo;
-                getProfileInfoMock.mockReturnValue(profileInfo);
-
                 // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
@@ -217,10 +209,10 @@ describe('CourseExerciseDetailsComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
-                participationWebsockerBehaviourSubject = new BehaviorSubject<Participation | undefined>(undefined);
+                participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
                 participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesMock.mockReturnValue(participationWebsockerBehaviourSubject);
+                subscribeForParticipationChangesMock.mockReturnValue(participationWebsocketBehaviorSubject);
 
                 complaintService = fixture.debugElement.injector.get(ComplaintService);
 
@@ -416,7 +408,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
-        participationWebsockerBehaviourSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
+        participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(

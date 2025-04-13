@@ -1,5 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_DEV, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -89,7 +90,7 @@ const buildInformation = {
 // eslint-disable-next-line jest/no-export
 export const expectedProfileInfo: ProfileInfo = {
     activeModuleFeatures: [],
-    activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'apollon'],
+    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
     allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
     allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
     build: buildInformation,
@@ -170,27 +171,27 @@ describe('ProfileService', () => {
 
         it('should return true if the profile is active', () => {
             // @ts-ignore
-            service.profileInfo = { activeProfiles: ['dev', 'prod'] };
-            expect(service.isProfileActive('dev')).toBeTrue();
-            expect(service.isProfileActive('prod')).toBeTrue();
+            service.profileInfo = { activeProfiles: [PROFILE_DEV, PROFILE_PROD] };
+            expect(service.isProfileActive(PROFILE_DEV)).toBeTrue();
+            expect(service.isProfileActive(PROFILE_PROD)).toBeTrue();
         });
 
         it('should return false if the profile is not active', () => {
             // @ts-ignore
-            service.profileInfo = { activeProfiles: ['prod'] };
-            expect(service.isProfileActive('dev')).toBeFalse();
+            service.profileInfo = { activeProfiles: [PROFILE_PROD] };
+            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
         });
 
         it('should return false if profileInfo is undefined', () => {
             // @ts-ignore
             service.profileInfo = undefined!;
-            expect(service.isProfileActive('dev')).toBeFalse();
+            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
         });
 
         it('should return false if activeProfiles is undefined', () => {
             // @ts-ignore
             service.profileInfo = {};
-            expect(service.isProfileActive('dev')).toBeFalse();
+            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
         });
     });
 });

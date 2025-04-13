@@ -63,7 +63,7 @@ export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
-    private isLocalCIEnabled = true;
+    isLocalCIEnabled = true;
 
     ngOnInit() {
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);

@@ -73,7 +73,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
 
                 component.programmingLanguage = ProgrammingLanguage.C;
                 component.programmingExercise = { id: 1, shortName: 'shortName', buildConfig: new ProgrammingExerciseBuildConfig() } as ProgrammingExercise;
-                component.isLocal = true;
+                component.isLocalCIEnabled = true;
 
                 jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation(
                     (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => {
@@ -114,7 +114,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should NOT send request if localCI is NOT used', () => {
-        component.isLocal = false;
+        component.isLocalCIEnabled = false;
         const spy = jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
         fixture.detectChanges();
@@ -131,7 +131,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
-        component.isLocal = false;
+        component.isLocalCIEnabled = false;
         fixture.detectChanges();
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);

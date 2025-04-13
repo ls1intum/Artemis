@@ -87,7 +87,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
-                    getProfileInfo: () => of(mockProfileInfo),
+                    getProfileInfo: () => mockProfileInfo,
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -287,7 +287,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should log an error on save', () => {
-        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(undefined));
+        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
 
         comp.exercise = exercise;

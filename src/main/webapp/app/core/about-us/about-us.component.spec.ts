@@ -37,7 +37,7 @@ describe('AboutUsComponent', () => {
 
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], [])));
         const getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
+        getProfileInfoSub.mockReturnValue({ sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
 
         fixture.detectChanges();
         tick();
@@ -60,7 +60,7 @@ describe('AboutUsComponent', () => {
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
         const getProfileInfoStub = jest
             .spyOn(profileService, 'getProfileInfo')
-            .mockReturnValue({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
+            .mockReturnValue({ sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
 
         fixture.detectChanges();
         tick();

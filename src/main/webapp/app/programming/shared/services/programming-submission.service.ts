@@ -107,7 +107,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
 
     private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
-    private isLocalCIEnabled = true;
+    isLocalCIEnabled = true;
 
     constructor() {
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);

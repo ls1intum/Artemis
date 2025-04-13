@@ -57,7 +57,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise6 = { exerciseId: 6, exerciseName: 'BuilderPattern', averageScore: 50, exerciseType: ExerciseType.QUIZ };
-    const exercise7 = { exerciseId: 7, exerciseName: 'BehaviouralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING };
+    const exercise7 = { exerciseId: 7, exerciseName: 'BehavioralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING };
     const exercise8 = { exerciseId: 8, exerciseName: 'SingletonPattern', averageScore: 56, exerciseType: ExerciseType.TEXT };
     const exercise9 = { exerciseId: 9, exerciseName: 'ObserverPattern', averageScore: 60, exerciseType: ExerciseType.FILE_UPLOAD };
     const exercise10 = { exerciseId: 10, exerciseName: 'StrategyPattern', averageScore: 75, exerciseType: ExerciseType.PROGRAMMING };
@@ -126,7 +126,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             'AdapterPattern',
             'ProxyPattern',
             'BuilderPattern',
-            'BehaviouralPattern',
+            'BehavioralPattern',
             'SingletonPattern',
             'ObserverPattern',
             'StrategyPattern',
@@ -171,7 +171,7 @@ describe('StatisticsAverageScoreGraphComponent', () => {
             'AdapterPattern',
             'ProxyPattern',
             'BuilderPattern',
-            'BehaviouralPattern',
+            'BehavioralPattern',
             'SingletonPattern',
             'ObserverPattern',
             'StrategyPattern',

@@ -36,7 +36,7 @@ import { CourseExercisesComponent } from 'app/core/course/overview/course-exerci
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -256,9 +256,8 @@ describe('CourseOverviewComponent', () => {
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
-                    inProduction: true,
                     activeModuleFeatures: [MODULE_FEATURE_ATLAS],
-                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
                     testServer: false,
                 } as unknown as ProfileInfo);
             });

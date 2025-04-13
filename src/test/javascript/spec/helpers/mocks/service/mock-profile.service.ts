@@ -1,3 +1,4 @@
+import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export class MockProfileService {
@@ -12,9 +13,9 @@ export class MockProfileService {
 
     isModuleFeatureActive = (feature: string): boolean => this.getProfileInfo().activeModuleFeatures?.includes(feature) ?? false;
 
-    isDevelopment = (): boolean => this.isProfileActive('dev') ?? false;
+    isDevelopment = (): boolean => this.isProfileActive(PROFILE_DEV) ?? false;
 
-    isProduction = (): boolean => this.isProfileActive('prod') ?? false;
+    isProduction = (): boolean => this.isProfileActive(PROFILE_PROD) ?? false;
 
     isTestServer = (): boolean => this.getProfileInfo().testServer ?? false;
 }

@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -45,7 +45,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { FileService } from 'app/shared/service/file.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -56,10 +55,7 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit2: AttachmentUnit;
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
-    let profileService: ProfileService;
     let lectureService: LectureService;
-
-    let getProfileInfoMock: jest.SpyInstance;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -155,13 +151,6 @@ describe('CourseLectureDetailsComponent', () => {
         fixture = TestBed.createComponent(CourseLectureDetailsComponent);
         courseLecturesDetailsComponent = fixture.componentInstance;
         debugElement = fixture.debugElement;
-
-        // mock profileService
-        profileService = fixture.debugElement.injector.get(ProfileService);
-        getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-        const profileInfo = { inProduction: false } as ProfileInfo;
-        const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-        getProfileInfoMock.mockReturnValue(profileInfoSubject);
     });
 
     afterEach(() => {

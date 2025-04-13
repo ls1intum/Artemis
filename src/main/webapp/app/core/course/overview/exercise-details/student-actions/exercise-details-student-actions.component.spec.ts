@@ -106,7 +106,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         router = debugElement.injector.get(Router) as unknown as MockRouter;
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue({
-            inProduction: false,
             sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
             activeModuleFeatures: [MODULE_FEATURE_TEXT],
         } as unknown as ProfileInfo);
