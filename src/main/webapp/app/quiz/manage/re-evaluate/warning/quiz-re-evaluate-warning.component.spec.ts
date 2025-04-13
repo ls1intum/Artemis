@@ -9,10 +9,10 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { QuizReEvaluateWarningComponent } from 'app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;

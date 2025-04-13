@@ -11,7 +11,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -21,7 +21,7 @@ import { User } from 'app/core/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockResultService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';

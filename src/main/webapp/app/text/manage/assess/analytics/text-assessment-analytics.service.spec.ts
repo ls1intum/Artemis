@@ -5,10 +5,10 @@ import { TextAssessmentAnalytics } from 'app/text/manage/assess/analytics/text-a
 import { FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { TextBlockType } from 'app/text/shared/entities/text-block.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';

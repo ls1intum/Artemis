@@ -15,11 +15,11 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 
 describe('Course Management Tab Bar Component', () => {

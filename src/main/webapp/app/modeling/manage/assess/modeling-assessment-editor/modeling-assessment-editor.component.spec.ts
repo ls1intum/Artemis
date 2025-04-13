@@ -27,9 +27,9 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { MockComponent } from 'ng-mocks';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';

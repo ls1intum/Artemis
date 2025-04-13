@@ -3,9 +3,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { TeamsImportFromFileFormComponent } from 'app/exercise/team/teams-import-dialog/teams-import-from-file-form.component';
-import { mockFileStudents, mockFileTeamsConverted } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-team.service';
+import { mockFileStudents, mockFileTeamsConverted } from 'test/helpers/mocks/service/mock-team.service';
 import { unparse } from 'papaparse';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsImportFromFileFormComponent', () => {

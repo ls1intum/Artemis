@@ -1,11 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { User } from 'app/core/user/user.model';
 import { HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Team Owner Search Component', () => {

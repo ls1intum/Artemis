@@ -1,49 +1,49 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BehaviorSubject, of, throwError } from 'rxjs';
-import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
-import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
-import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { routes } from 'app/modeling/overview/modeling-participation.route';
+import { ActivatedRoute, RouterModule } from '@angular/router';
+import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
+import { TranslateService } from '@ngx-translate/core';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { WebsocketService } from 'app/shared/service/websocket.service';
-import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
-import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
-import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
-import { AlertService } from 'app/shared/service/alert.service';
-import { ResultService } from 'app/exercise/result/result.service';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import { ResultService } from 'app/exercise/result/result.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
+import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
+import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
+import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
+import { routes } from 'app/modeling/overview/modeling-participation.route';
+import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
+import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
+import { AlertService } from 'app/shared/service/alert.service';
+import { WebsocketService } from 'app/shared/service/websocket.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BehaviorSubject, of, throwError } from 'rxjs';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ModelingSubmissionComponent', () => {
     let comp: ModelingSubmissionComponent;
@@ -61,7 +61,7 @@ describe('ModelingSubmissionComponent', () => {
 
     const originalConsoleError = console.error;
 
-    function createComponent(route?: ActivatedRoute) {
+    function createModelingSubmissionComponent(route?: ActivatedRoute) {
         if (route) {
             TestBed.overrideProvider(ActivatedRoute, { useValue: route });
         }
@@ -124,7 +124,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should initialize without submissionId (Standard Mode)', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
@@ -159,7 +159,7 @@ describe('ModelingSubmissionComponent', () => {
             params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20 }),
         } as any as ActivatedRoute;
 
-        createComponent(route);
+        createModelingSubmissionComponent(route);
 
         // Mock data
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
@@ -201,7 +201,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should allow to submit when exercise due date not set', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         // GIVEN
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -219,7 +219,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should not allow to submit after the due date if the initialization date is before the due date', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.participation!.initializationDate = dayjs().subtract(2, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().subtract(1, 'days');
@@ -233,7 +233,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should allow to submit after the due date if the initialization date is after the due date and not submitted', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.participation!.initializationDate = dayjs().add(1, 'days');
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs();
@@ -250,7 +250,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should not allow to submit if there is a result and no due date', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         comp.result = result;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -263,7 +263,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should get inactive as soon as the due date passes the current date', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         (<StudentParticipation>submission.participation).exercise!.dueDate = dayjs().add(1, 'days');
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -280,7 +280,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should catch error on 403 error status', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(throwError(() => ({ status: 403 })));
         const alertServiceSpy = jest.spyOn(alertService, 'error');
@@ -290,7 +290,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set correct properties on modeling exercise update when saving', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
         fixture.detectChanges();
@@ -302,7 +302,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set correct properties on modeling exercise create when saving', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         fixture.detectChanges();
 
@@ -315,16 +315,15 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set correct properties on modeling exercise create when submitting', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         fixture.detectChanges();
 
-        const modelSubmission = <ModelingSubmission>(<unknown>{
+        comp.submission = <ModelingSubmission>(<unknown>{
             model: '{"elements": [{"id": 1}]}',
             submitted: true,
             participation,
         });
-        comp.submission = modelSubmission;
         const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: submission })));
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.DeploymentDiagram, undefined, undefined);
         comp.modelingExercise.id = 1;
@@ -334,7 +333,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should catch error on submit', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const modelSubmission = <ModelingSubmission>(<unknown>{
             model: '{"elements": [{"id": 1}]}',
@@ -356,7 +355,7 @@ describe('ModelingSubmissionComponent', () => {
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123 }),
         } as any as ActivatedRoute;
-        createComponent(route); // Pass the route
+        createModelingSubmissionComponent(route); // Pass the route
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -401,7 +400,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should handle Athena assessment results separately from manual assessments', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -448,7 +447,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set result when new result comes in from websocket', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -476,7 +475,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should update submission when new submission comes in from websocket', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -495,7 +494,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should not process results without completionDate except for failed Athena results', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
@@ -519,7 +518,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set correct properties on modeling exercise update when submitting', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
@@ -537,7 +536,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should calculate number of elements from model', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const elements = [{ id: 1 }, { id: 2 }, { id: 3 }];
         const relationships = [{ id: 4 }, { id: 5 }];
@@ -548,7 +547,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should update selected entities with given elements', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const selection = {
             elements: {
@@ -579,7 +578,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should shouldBeDisplayed return true if no selectedEntities and selectedRelationships', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: '5' });
         comp.selectedEntities = [];
@@ -592,7 +591,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should shouldBeDisplayed return true if feedback reference is in selectedEntities or selectedRelationships', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const id = 'referenceId';
         const feedback = <Feedback>(<unknown>{ referenceType: 'Activity', referenceId: id });
@@ -607,7 +606,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should update submission with current values', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const model = <UMLModel>(<unknown>{
             elements: [<UMLElement>(<unknown>{
@@ -626,7 +625,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should display the feedback text properly', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const gradingInstruction = {
             id: 1,
@@ -651,7 +650,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should deactivate return true when there are unsaved changes', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         const currentModel = <UMLModel>(<unknown>{
             elements: [<UMLElement>(<unknown>{
@@ -677,7 +676,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should set isChanged property to false after saving', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         comp.submission = <ModelingSubmission>(<unknown>{
             id: 1,
@@ -695,7 +694,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should mark the subsequent feedback', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         comp.assessmentResult = new Result();
 
@@ -708,7 +707,7 @@ describe('ModelingSubmissionComponent', () => {
             usageCount: 1,
         } as GradingInstruction;
 
-        const feedbacks = [
+        comp.assessmentResult.feedbacks = [
             {
                 id: 1,
                 detailText: 'feedback1',
@@ -726,8 +725,6 @@ describe('ModelingSubmissionComponent', () => {
             } as Feedback,
         ];
 
-        comp.assessmentResult.feedbacks = feedbacks;
-
         const unreferencedFeedback = comp.unreferencedFeedback;
         const referencedFeedback = comp.referencedFeedback;
 
@@ -740,7 +737,7 @@ describe('ModelingSubmissionComponent', () => {
     });
 
     it('should be set up with input values if present instead of loading new values from server', () => {
-        createComponent();
+        createModelingSubmissionComponent();
 
         // @ts-ignore method is private
         const setUpComponentWithInputValuesSpy = jest.spyOn(comp, 'setupComponentWithInputValues');
@@ -775,7 +772,7 @@ describe('ModelingSubmissionComponent', () => {
         const route = {
             params: of({ courseId: 5, exerciseId: 22, participationId: 123, submissionId: 20 }),
         } as any as ActivatedRoute;
-        createComponent(route);
+        createModelingSubmissionComponent(route);
 
         // Helper function to create a Result
         const createResult = (id: number, dateStr: string): Result => {

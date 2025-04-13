@@ -6,11 +6,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/programming/shared/instructions-render/services/programming-exercise-instruction.service';
-import { triggerChanges } from '../../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general.utils';
 import { Task } from 'app/programming/shared/instructions-render/task/programming-exercise-task.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseInstructionStepWizardComponent', () => {

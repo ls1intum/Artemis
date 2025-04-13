@@ -17,12 +17,12 @@ import { ExampleSubmissionService } from 'app/assessment/shared/services/example
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateValuesDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
@@ -30,9 +30,9 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { FormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 describe('Example Modeling Submission Component', () => {

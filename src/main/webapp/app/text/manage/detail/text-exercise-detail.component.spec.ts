@@ -7,13 +7,13 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
-import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
@@ -21,7 +21,7 @@ import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/det
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TextExercise Management Detail Component', () => {
     let comp: TextExerciseDetailComponent;

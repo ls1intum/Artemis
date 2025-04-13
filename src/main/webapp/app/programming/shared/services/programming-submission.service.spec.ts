@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
 import { range as _range } from 'lodash-es';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
     BuildTimingInfo,
     ExerciseSubmissionState,
@@ -14,15 +14,15 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { MockProgrammingExerciseParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
 
 describe('ProgrammingSubmissionService', () => {

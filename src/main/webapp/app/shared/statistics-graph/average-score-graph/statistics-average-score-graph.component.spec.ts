@@ -8,7 +8,7 @@ import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsAverageScoreGraphComponent', () => {

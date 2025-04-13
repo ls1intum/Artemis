@@ -9,8 +9,8 @@ import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -122,7 +122,7 @@ describe('LectureDetailComponent', () => {
                 enabled: true,
             },
         } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
         mockActivatedRoute.data = of({ lecture: mockLecture }); // Update the ActivatedRoute mock data
         component.ngOnInit();

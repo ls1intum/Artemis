@@ -2,7 +2,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLanguageHelper, MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/core/course/manage/course-scores/course-scores.component';
 import {
@@ -30,7 +30,7 @@ import { of } from 'rxjs';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { MockTranslateValuesDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -45,7 +45,7 @@ import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
 
 describe('CourseScoresComponent', () => {

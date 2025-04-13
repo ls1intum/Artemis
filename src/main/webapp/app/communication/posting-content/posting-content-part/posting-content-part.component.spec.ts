@@ -4,14 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
-import { getElement, getElements } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
-import { MockFileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { getElement, getElements } from 'test/helpers/utils/general.utils';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { MockProvider } from 'ng-mocks';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { FileService } from 'app/shared/service/file.service';
 
 describe('PostingContentPartComponent', () => {

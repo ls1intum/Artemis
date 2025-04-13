@@ -6,11 +6,11 @@ import { ExamExerciseOverviewPageComponent } from 'app/exam/overview/exercises/e
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExamExerciseOverviewPageComponent', () => {
     let fixture: ComponentFixture<ExamExerciseOverviewPageComponent>;

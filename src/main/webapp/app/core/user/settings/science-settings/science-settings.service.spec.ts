@@ -4,7 +4,7 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS } from '../../../../app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
@@ -39,7 +39,7 @@ describe('ScienceSettingsService', () => {
                 const profileService = TestBed.inject(ProfileService);
                 const profileInfo = new ProfileInfo();
                 profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });
 

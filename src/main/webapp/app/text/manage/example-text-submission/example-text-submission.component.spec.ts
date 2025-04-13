@@ -23,7 +23,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,8 +33,8 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 import { TranslateDirective } from '../../../shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 

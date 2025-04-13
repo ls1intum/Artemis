@@ -18,11 +18,11 @@ import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../shared/pipes/artemis-date.pipe';
 
 describe('ListOfComplaintsComponent', () => {

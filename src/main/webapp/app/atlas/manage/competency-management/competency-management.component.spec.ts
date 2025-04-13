@@ -9,9 +9,9 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { MockHasAnyAuthorityDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -28,11 +28,11 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
@@ -119,7 +119,7 @@ describe('CompetencyManagementComponent', () => {
         const profileInfoResponse = {
             activeProfiles: [PROFILE_IRIS],
         } as ProfileInfo;
-        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        getProfileInfoSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
 
         getIrisSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
 

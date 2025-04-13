@@ -2,7 +2,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';

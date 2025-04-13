@@ -29,10 +29,10 @@ import { ChangeDetectorRef, EventEmitter } from '@angular/core';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import JSZip from 'jszip';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FileService } from 'app/shared/service/file.service';
 
 const createValidMCQuestion = () => {

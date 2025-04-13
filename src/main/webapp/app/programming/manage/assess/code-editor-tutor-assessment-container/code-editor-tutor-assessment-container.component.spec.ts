@@ -4,8 +4,8 @@ import { DebugElement } from '@angular/core';
 import { BehaviorSubject, firstValueFrom, of, throwError } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockParticipationWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -19,8 +19,8 @@ import { ProgrammingAssessmentManualResultService } from 'app/programming/manage
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Complaint } from 'app/assessment/shared/entities/complaint.model';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { MockRepositoryFileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-repository-file.service';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockRepositoryFileService } from 'test/helpers/mocks/service/mock-repository-file.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { CodeEditorTutorAssessmentContainerComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-container/code-editor-tutor-assessment-container.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
@@ -36,16 +36,16 @@ import { ProgrammingExerciseService } from 'app/programming/manage/services/prog
 import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TreeViewItem } from 'app/programming/shared/code-editor/treeview/models/tree-view-item';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockAthenaService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-athena.service';
+import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena.service';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { MockResizeObserver } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { EntityResponseType } from 'app/exercise/result/result.service';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import dayjs from 'dayjs/esm';
@@ -53,7 +53,7 @@ import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({

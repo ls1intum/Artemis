@@ -50,7 +50,7 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles: enabled ? ['athena'] : [] } as ProfileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? ['athena'] : [] } as ProfileInfo);
     }
 
     function mockExerciseDetails(exercise: Exercise) {

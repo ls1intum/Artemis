@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import dayjs from 'dayjs/esm';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -19,12 +19,12 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 describe('Course Management Detail Component', () => {

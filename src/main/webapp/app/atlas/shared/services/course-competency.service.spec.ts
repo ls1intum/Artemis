@@ -6,9 +6,9 @@ import { MockProvider } from 'ng-mocks';
 import { LectureUnit } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { Competency, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { take } from 'rxjs/operators';
 

@@ -4,19 +4,19 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('CourseTutorialGroupDetailComponent', () => {
     let fixture: ComponentFixture<CourseTutorialGroupDetailComponent>;

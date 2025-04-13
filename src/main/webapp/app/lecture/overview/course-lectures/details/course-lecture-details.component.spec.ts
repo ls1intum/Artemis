@@ -24,7 +24,7 @@ import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachm
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
@@ -33,13 +33,13 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { MockFileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

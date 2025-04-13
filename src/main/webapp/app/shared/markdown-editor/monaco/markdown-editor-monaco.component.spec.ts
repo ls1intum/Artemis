@@ -8,7 +8,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
-import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CdkDragMove, DragDropModule } from '@angular/cdk/drag-drop';
 
 import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
@@ -21,7 +21,7 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/service/file-uploader.service';
 

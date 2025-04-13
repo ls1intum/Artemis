@@ -10,7 +10,7 @@ import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/at
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -27,7 +27,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';

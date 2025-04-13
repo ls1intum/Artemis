@@ -33,22 +33,22 @@ import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockParticipationWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { MockCourseManagementService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -64,7 +64,7 @@ import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-heade
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockScienceService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-science-service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -438,7 +438,7 @@ describe('CourseExerciseDetailsComponent', () => {
             getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise, irisSettings: fakeSettings } }));
 
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
 
             // Act
             comp.ngOnInit();

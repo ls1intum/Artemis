@@ -307,7 +307,7 @@ describe('NavbarComponent', () => {
 
     it('should have correct git info', fakeAsync(() => {
         const profileService: ProfileService = TestBed.inject(ProfileService);
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         fixture.detectChanges();
 

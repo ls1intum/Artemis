@@ -5,21 +5,21 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { Subject } from 'rxjs';
 import { isEqual as _isEqual } from 'lodash-es';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
-import { MockCodeEditorConflictStateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-code-editor-conflict-state.service';
-import { MockCodeEditorRepositoryFileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorRepositoryService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorConflictStateService } from 'test/helpers/mocks/service/mock-code-editor-conflict-state.service';
+import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
 import { CommitState, EditorState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { MockModule } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 
 // Cartesian product helper function

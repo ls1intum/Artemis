@@ -9,14 +9,14 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/shared/services/programming-submission.service';
-import { MockProgrammingSubmissionService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-submission.service';
-import { triggerChanges } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
+import { triggerChanges } from 'test/helpers/utils/general.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';

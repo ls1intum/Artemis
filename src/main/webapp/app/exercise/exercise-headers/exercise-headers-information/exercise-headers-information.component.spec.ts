@@ -19,7 +19,7 @@ import { LockRepositoryPolicy } from 'app/exercise/shared/entities/submission/su
 import { DateContent, InformationBox, StringNumberContent } from 'app/shared/information-box/information-box.component';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 
 describe('ExerciseHeadersInformationComponent', () => {

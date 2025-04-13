@@ -3,27 +3,27 @@ import { HttpErrorResponse, HttpHeaders, HttpResponse, provideHttpClient } from 
 import { of, throwError } from 'rxjs';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockCourseExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-exercise.service';
+import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage/edit-selected/programming-exercise-edit-selected.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ProgrammingExercise Management Component', () => {
     const course = { id: 123 } as Course;

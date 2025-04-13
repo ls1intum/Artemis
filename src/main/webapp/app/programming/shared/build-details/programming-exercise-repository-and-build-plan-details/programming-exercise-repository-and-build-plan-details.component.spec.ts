@@ -11,9 +11,9 @@ import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-build-plan-checkout-directories/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
 
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProgrammingExerciseService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 
 describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;

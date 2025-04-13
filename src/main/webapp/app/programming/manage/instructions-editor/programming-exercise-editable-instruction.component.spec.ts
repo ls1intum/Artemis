@@ -6,10 +6,10 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { MockResultService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseGradingService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { triggerChanges } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { triggerChanges } from 'test/helpers/utils/general.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -21,17 +21,17 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {

@@ -127,7 +127,7 @@ describe('FaqComponent', () => {
                 irisSettingsService = TestBed.inject(IrisSettingsService);
 
                 profileService = faqComponentFixture.debugElement.injector.get(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });
 
@@ -270,7 +270,7 @@ describe('FaqComponent', () => {
                 enabled: true,
             },
         } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
         expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);

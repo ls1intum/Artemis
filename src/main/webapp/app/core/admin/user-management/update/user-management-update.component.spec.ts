@@ -7,21 +7,21 @@ import { UserManagementUpdateComponent } from 'app/core/admin/user-management/up
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import * as Sentry from '@sentry/angular';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 // Preliminary mock before import to prevent errors
