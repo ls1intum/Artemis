@@ -6,7 +6,7 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programm
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { QueryList, SimpleChange } from '@angular/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general.utils';
+import { expectElementToBeDisabled, expectElementToBeEnabled } from 'test/helpers/utils/general-test.utils';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';

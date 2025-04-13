@@ -3,7 +3,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { triggerChanges } from 'test/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';

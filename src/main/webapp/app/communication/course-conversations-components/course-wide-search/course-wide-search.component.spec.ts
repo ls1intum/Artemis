@@ -17,7 +17,7 @@ import { PostCreateEditModalComponent } from 'app/communication/posting-create-e
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/communication/metis.util';
 import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from 'test/helpers/sample/metis-sample-data';
-import { getElement } from 'test/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({

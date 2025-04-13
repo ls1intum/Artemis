@@ -15,19 +15,19 @@ import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockProvider } from 'ng-mocks';
-import { MockProgrammingSubmissionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-submission.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ParticipationComponent', () => {

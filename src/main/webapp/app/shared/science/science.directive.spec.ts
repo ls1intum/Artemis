@@ -6,8 +6,8 @@ import { ScienceDirective } from 'app/shared/science/science.directive';
 import { ScienceService } from 'app/shared/science/science.service';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

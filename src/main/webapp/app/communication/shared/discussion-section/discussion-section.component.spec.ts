@@ -21,7 +21,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { getElement, getElements } from 'test/helpers/utils/general.utils';
+import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
     messagesBetweenUser1User2,
     metisCourse,

@@ -1,12 +1,12 @@
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AboutUsComponent } from 'app/core/about-us/about-us.component';
 import { ActivatedRoute } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -37,9 +37,7 @@ describe('AboutUsComponent', () => {
 
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], [])));
         const getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoSub.mockReturnValue(
-            new BehaviorSubject<ProfileInfo>({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo).asObservable(),
-        );
+        getProfileInfoSub.mockReturnValue({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
 
         fixture.detectChanges();
         tick();
@@ -62,7 +60,7 @@ describe('AboutUsComponent', () => {
         const getStaticJsonFromArtemisServerStub = jest.spyOn(staticContentService, 'getStaticJsonFromArtemisServer').mockReturnValue(of(new AboutUsModel([], contributors)));
         const getProfileInfoStub = jest
             .spyOn(profileService, 'getProfileInfo')
-            .mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+            .mockReturnValue({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as unknown as ProfileInfo);
 
         fixture.detectChanges();
         tick();

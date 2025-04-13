@@ -8,14 +8,14 @@ import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/helpers/mocks/programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

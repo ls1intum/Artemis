@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Competency, CompetencyLearningObjectLink } from 'app/atlas/shared/entities/competency.model';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -14,10 +14,10 @@ import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MODULE_FEATURE_ATLAS } from '../../../app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 describe('CompetencySelection', () => {
@@ -54,9 +54,8 @@ describe('CompetencySelection', () => {
                 const profileService = TestBed.inject(ProfileService);
 
                 const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-                const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
                 const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoMock.mockReturnValue(profileInfoSubject);
+                getProfileInfoMock.mockReturnValue(profileInfo);
             });
     });
 
@@ -99,7 +98,7 @@ describe('CompetencySelection', () => {
 
     it('should set disabled when error during loading', () => {
         const getCourseSpy = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
+        const getAllForCourseSpy = jest.spyOn(courseCompetencyService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 

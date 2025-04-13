@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
 import { CommitState, FileBadge, FileBadgeType, FileType, GitConflictState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { triggerChanges } from 'test/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CodeEditorFileBrowserFolderComponent } from 'app/programming/manage/code-editor/file-browser/folder/code-editor-file-browser-folder.component';

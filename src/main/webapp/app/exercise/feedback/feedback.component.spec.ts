@@ -17,7 +17,7 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -167,8 +167,8 @@ describe('FeedbackComponent', () => {
         return programmingSubmission;
     };
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -176,53 +176,41 @@ describe('FeedbackComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FeedbackComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-
-                exercise = {
-                    maxPoints: 100,
-                    bonusPoints: 0,
-                    type: ExerciseType.PROGRAMMING,
-                    staticCodeAnalysisEnabled: true,
-                    maxStaticCodeAnalysisPenalty: 20,
-                    projectKey: 'somekey',
-                } as ProgrammingExercise;
-
-                const course = new Course();
-                course.id = 3;
-                course.title = 'Testcourse';
-                exercise.course = course;
-
-                comp.exercise = exercise;
-
-                comp.result = {
-                    id: 89,
-                    participation: {
-                        id: 55,
-                        type: ParticipationType.PROGRAMMING,
-                        participantIdentifier: 'student42',
-                        repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
-                    },
-                } as Result;
-
-                buildLogService = debugElement.injector.get(BuildLogService);
-                resultService = debugElement.injector.get(ResultService);
-                profileService = debugElement.injector.get(ProfileService);
-                feedbackItemService = debugElement.injector.get(ProgrammingFeedbackItemService);
-
-                buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
-                getFeedbackDetailsForResultStub = jest
-                    .spyOn(resultService, 'getFeedbackDetailsForResult')
-                    .mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
-
-                // Set profile info
-                const profileInfo = new ProfileInfo();
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FeedbackComponent);
+        comp = fixture.componentInstance;
+        debugElement = fixture.debugElement;
+        exercise = {
+            maxPoints: 100,
+            bonusPoints: 0,
+            type: ExerciseType.PROGRAMMING,
+            staticCodeAnalysisEnabled: true,
+            maxStaticCodeAnalysisPenalty: 20,
+            projectKey: 'somekey',
+        } as ProgrammingExercise;
+        const course = new Course();
+        course.id = 3;
+        course.title = 'Testcourse';
+        exercise.course = course;
+        comp.exercise = exercise;
+        comp.result = {
+            id: 89,
+            participation: {
+                id: 55,
+                type: ParticipationType.PROGRAMMING,
+                participantIdentifier: 'student42',
+                repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
+            },
+        } as Result;
+        buildLogService = debugElement.injector.get(BuildLogService);
+        resultService = debugElement.injector.get(ResultService);
+        profileService = debugElement.injector.get(ProfileService);
+        feedbackItemService = debugElement.injector.get(ProgrammingFeedbackItemService);
+        buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
+        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+        // Set profile info
+        const profileInfo = new ProfileInfo();
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     afterEach(() => {

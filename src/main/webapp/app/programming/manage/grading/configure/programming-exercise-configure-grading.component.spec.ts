@@ -48,7 +48,7 @@ import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/servic
 import { MockProgrammingExerciseWebsocketService } from 'test/helpers/mocks/service/mock-programming-exercise-websocket.service';
 import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
-import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general.utils';
+import { expectElementToBeEnabled, getElement } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/programming/manage/grading/tasks/programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';

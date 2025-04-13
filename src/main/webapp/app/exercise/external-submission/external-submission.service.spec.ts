@@ -8,7 +8,7 @@ import { EntityResponseType, ResultService } from 'app/exercise/result/result.se
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Service', () => {

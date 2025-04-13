@@ -10,7 +10,7 @@ import { DragAndDropMouseEvent } from 'app/quiz/manage/drag-and-drop-question/dr
 import { DragAndDropQuestionEditComponent } from 'app/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { triggerChanges } from 'test/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';

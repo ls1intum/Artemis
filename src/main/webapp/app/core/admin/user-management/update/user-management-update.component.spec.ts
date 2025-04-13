@@ -94,7 +94,7 @@ describe('UserManagementUpdateComponent', () => {
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
                 // WHEN
                 comp.ngOnInit();
@@ -113,7 +113,7 @@ describe('UserManagementUpdateComponent', () => {
                 // GIVEN
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll');
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
                 // WHEN
                 comp.ngOnInit();
@@ -215,7 +215,7 @@ describe('UserManagementUpdateComponent', () => {
 
         it('foo', fakeAsync(() => {
             // GIVEN
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
             // WHEN
             comp.ngOnInit();

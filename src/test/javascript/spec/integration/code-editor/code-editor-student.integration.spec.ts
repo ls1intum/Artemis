@@ -13,7 +13,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { getElement } from '../../helpers/utils/general.utils';
+import { getElement } from '../../helpers/utils/general-test.utils';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';

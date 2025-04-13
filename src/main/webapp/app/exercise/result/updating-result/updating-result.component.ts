@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription } from 'rxjs';
@@ -30,7 +30,7 @@ import { ResultComponent } from '../result.component';
     providers: [ResultService, RepositoryService],
     imports: [ResultComponent],
 })
-export class UpdatingResultComponent implements OnChanges, OnDestroy {
+export class UpdatingResultComponent implements OnInit, OnChanges, OnDestroy {
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private submissionService = inject(ProgrammingSubmissionService);
     private profileService = inject(ProfileService);
@@ -63,6 +63,12 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
     public resultSubscription: Subscription;
     public submissionSubscription: Subscription;
 
+    private isLocalCIEnabled = true;
+
+    ngOnInit() {
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+    }
+
     /**
      * If there are changes, reorders the participation results and subscribes for new participation results.
      * @param changes The hashtable of occurred changes represented as SimpleChanges object.
@@ -78,7 +84,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 this.subscribeForNewSubmissions();
             }
 
-            if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
+            if (this.isLocalCIEnabled) {
                 this.showProgressBarInResult = this.showProgressBar;
             }
 
@@ -189,7 +195,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         this.isQueued = submissionState === ProgrammingSubmissionState.IS_QUEUED;
         this.isBuilding = submissionState === ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION;
 
-        if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
+        if (this.isLocalCIEnabled) {
             this.updateBuildTimingInfo(submissionState, buildTimingInfo, submissionDate);
         }
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { SshUserSettingsFingerprintsComponent } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.component';
 import { SshUserSettingsFingerprintsService } from 'app/core/user/settings/ssh-settings/fingerprints/ssh-user-settings-fingerprints.service';

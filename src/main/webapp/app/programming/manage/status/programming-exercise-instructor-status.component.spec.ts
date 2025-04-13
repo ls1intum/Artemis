@@ -5,7 +5,7 @@ import { By } from '@angular/platform-browser';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { triggerChanges } from 'test/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { ProgrammingExerciseInstructorStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-status.component';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

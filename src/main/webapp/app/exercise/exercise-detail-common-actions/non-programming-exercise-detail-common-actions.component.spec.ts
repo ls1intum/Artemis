@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
-import { MockFileUploadExerciseService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockFileUploadExerciseService } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -17,13 +18,13 @@ import { HttpResponse } from '@angular/common/http';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { ExternalSubmissionButtonComponent } from 'app/exercise/external-submission/external-submission-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockActivatedRoute } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Exercise detail common actions Component', () => {
@@ -51,7 +52,7 @@ describe('Exercise detail common actions Component', () => {
                 MockProvider(ProfileService),
             ],
         }).compileComponents();
-        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of());
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({} as ProfileInfo);
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });

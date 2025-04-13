@@ -199,9 +199,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
                 getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as ProfileInfo;
-                const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoMock.mockReturnValue(profileInfoSubject);
+                const profileInfo = { inProduction: false } as unknown as ProfileInfo;
+                getProfileInfoMock.mockReturnValue(profileInfo);
 
                 // mock exerciseService
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
@@ -383,7 +382,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const alertService = fixture.debugElement.injector.get(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const error = { message: 'Error msg' };
-        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(error));
+        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => error));
 
         const submissionId = 55;
         comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };

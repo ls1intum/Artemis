@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { PostingContentPartComponent } from 'app/communication/posting-content/posting-content-part/posting-content-part.components';
 import { PostingContentPart, ReferenceType } from 'app/communication/metis.util';
 import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
-import { getElement, getElements } from 'test/helpers/utils/general.utils';
+import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';

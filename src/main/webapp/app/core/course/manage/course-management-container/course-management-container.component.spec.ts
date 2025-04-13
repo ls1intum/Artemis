@@ -246,13 +246,11 @@ describe('CourseManagementContainerComponent', () => {
 
                 deleteSpy = jest.spyOn(courseAdminService, 'delete').mockReturnValue(of(new HttpResponse<void>()));
 
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
-                    of({
-                        inProduction: true,
-                        activeModuleFeatures: [MODULE_FEATURE_ATLAS],
-                        activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
-                    } as ProfileInfo),
-                );
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                    inProduction: true,
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
+                } as unknown as ProfileInfo);
 
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);

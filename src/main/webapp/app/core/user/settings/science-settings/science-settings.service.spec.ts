@@ -6,7 +6,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS } from '../../../../app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';

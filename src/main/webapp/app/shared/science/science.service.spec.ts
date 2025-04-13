@@ -1,14 +1,14 @@
-import { MockHttpService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-http.service';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventDTO, ScienceEventType } from 'app/shared/science/science.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { of } from 'rxjs';
 
 describe('ScienceService', () => {

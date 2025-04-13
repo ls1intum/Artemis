@@ -255,14 +255,12 @@ describe('CourseOverviewComponent', () => {
                 findAllForDropdownSpy = jest
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
-                    of({
-                        inProduction: true,
-                        activeModuleFeatures: [MODULE_FEATURE_ATLAS],
-                        activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
-                        testServer: false,
-                    } as ProfileInfo),
-                );
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                    inProduction: true,
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
+                    testServer: false,
+                } as unknown as ProfileInfo);
             });
     }));
 
@@ -394,11 +392,12 @@ describe('CourseOverviewComponent', () => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(
             throwError(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                    status: 403,
-                }),
+                () =>
+                    new HttpResponse({
+                        body: course1,
+                        headers: new HttpHeaders(),
+                        status: 403,
+                    }),
             ),
         );
         const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');

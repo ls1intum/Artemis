@@ -19,7 +19,7 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -38,7 +38,7 @@ import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.s
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from '../../../../app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from 'app/app.constants';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -163,9 +163,8 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-            const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
+            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             const organization = new Organization();
             organization.id = 12344;
             const getOrganizationsStub = jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
@@ -945,9 +944,8 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-        const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
+        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
             if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {

@@ -25,7 +25,7 @@ import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { getElement } from 'test/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { GroupChatCreateDialogComponent } from 'app/communication/course-conversations-components/group-chat-create-dialog/group-chat-create-dialog.component';

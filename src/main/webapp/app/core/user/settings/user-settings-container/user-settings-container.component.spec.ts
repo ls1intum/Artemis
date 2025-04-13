@@ -1,6 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { of } from 'rxjs';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -12,25 +10,19 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
 
-describe('UserSettingsContainerComponent', () => {
+describe('User Settings Container Component', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let comp: UserSettingsContainerComponent;
 
-    let profileServiceMock: { getProfileInfo: jest.Mock };
     let translateService: TranslateService;
 
     const router = new MockRouter();
     router.setUrl('');
 
     beforeEach(async () => {
-        profileServiceMock = {
-            getProfileInfo: jest.fn(),
-        };
-
         await TestBed.configureTestingModule({
             imports: [UserSettingsContainerComponent, RouterModule],
             providers: [
-                { provide: ProfileService, useValue: profileServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: Router, useValue: router },
@@ -42,5 +34,11 @@ describe('UserSettingsContainerComponent', () => {
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);
         translateService.currentLang = 'en';
+    });
+
+    it('should initialize', async () => {
+        comp.ngOnInit();
+        expect(comp.currentUser).toBeDefined();
+        expect(comp.isAtLeastTutor).toBeFalse();
     });
 });

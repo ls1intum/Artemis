@@ -10,14 +10,14 @@ import { RepositoryInfo, TriggeredByPushTo } from 'app/programming/shared/entiti
 import { JobTimingInfo } from 'app/buildagent/shared/entities/job-timing-info.model';
 import { BuildConfig } from 'app/buildagent/shared/entities/build-config.model';
 import { BuildAgentDetailsComponent } from 'app/buildagent/build-agent-details/build-agent-details.component';
-import { MockActivatedRoute } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { BuildQueueService } from 'app/buildagent/build-queue/build-queue.service';
-import { MockNgbModalService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FinishedBuildJobFilter } from 'app/buildagent/build-queue/finished-builds-filter-modal/finished-builds-filter-modal.component';
 import { BuildAgentsService } from 'app/buildagent/build-agents.service';
