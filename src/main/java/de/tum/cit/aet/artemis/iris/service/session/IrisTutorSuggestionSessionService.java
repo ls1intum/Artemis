@@ -78,6 +78,12 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         requestAndHandleResponse(irisSession, Optional.empty());
     }
 
+    /**
+     * Requests and handles the response from the Pyris pipeline for the given session.
+     *
+     * @param session The IrisTutorSuggestionSession to handle
+     * @param event   Optional event to pass to the Pyris pipeline
+     */
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
