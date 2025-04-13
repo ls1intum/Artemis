@@ -1,29 +1,29 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { LayoutService } from 'app/shared/breakpoints/layout.service';
 import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
 import dayjs from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
-import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { map } from 'rxjs/operators';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
-import { ExamSession } from 'app/entities/exam/exam-session.model';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
+import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
-import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamLiveEventsButtonComponent } from '../events/exam-live-events-button.component';
+import { ExamLiveEventsButtonComponent } from '../events/button/exam-live-events-button.component';
 import { NgClass } from '@angular/common';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExamTimerComponent } from '../timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',

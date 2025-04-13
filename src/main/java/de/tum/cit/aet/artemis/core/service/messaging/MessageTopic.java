@@ -8,9 +8,6 @@ public enum MessageTopic {
     // @formatter:off
     PROGRAMMING_EXERCISE_SCHEDULE("programming-exercise-schedule"),
     PROGRAMMING_EXERCISE_SCHEDULE_CANCEL("programming-exercise-schedule-cancel"),
-    MODELING_EXERCISE_SCHEDULE("modeling-exercise-schedule"),
-    MODELING_EXERCISE_SCHEDULE_CANCEL("modeling-exercise-schedule-cancel"),
-    MODELING_EXERCISE_INSTANT_CLUSTERING("modeling-exercise-instant-clustering"),
     TEXT_EXERCISE_SCHEDULE("text-exercise-schedule"),
     TEXT_EXERCISE_SCHEDULE_CANCEL("text-exercise-schedule-cancel"),
     USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS("user-management-remove-non-activated-users"),

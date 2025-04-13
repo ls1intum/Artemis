@@ -1,19 +1,19 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgbCollapse, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizQuestionEdit } from 'app/quiz/manage/quiz-question-edit.interface';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { QuizQuestionEdit } from 'app/quiz/manage/interfaces/quiz-question-edit.interface';
 import { MultipleChoiceQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
 import { generateExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ScoringType } from 'app/entities/quiz/quiz-question.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
 import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
 import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MultipleChoiceVisualQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
+import { MultipleChoiceVisualQuestionComponent } from 'app/quiz/shared/questions/multiple-choice-question/visual-question/multiple-choice-visual-question.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -23,7 +23,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-multiple-choice-question-edit',
     templateUrl: './multiple-choice-question-edit.component.html',
-    styleUrls: ['../quiz-exercise.scss', '../../../../quiz/shared/quiz.scss'],
+    styleUrls: ['../exercise/quiz-exercise.scss', '../../../quiz/shared/quiz.scss'],
     encapsulation: ViewEncapsulation.None,
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
@@ -49,15 +49,11 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     @ViewChild('visual', { static: false })
     visualChild: MultipleChoiceVisualQuestionComponent;
 
-    @Input()
-    question: MultipleChoiceQuestion;
-    @Input()
-    questionIndex: number;
+    @Input() question: MultipleChoiceQuestion;
+    @Input() questionIndex: number;
 
-    @Output()
-    questionUpdated = new EventEmitter();
-    @Output()
-    questionDeleted = new EventEmitter();
+    @Output() questionUpdated = new EventEmitter();
+    @Output() questionDeleted = new EventEmitter();
 
     questionEditorText = '';
     isQuestionCollapsed: boolean;

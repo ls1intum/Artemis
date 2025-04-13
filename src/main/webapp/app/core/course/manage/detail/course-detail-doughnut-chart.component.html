@@ -1,0 +1,31 @@
+<div class="doughnut mx-3">
+    @if (titleLink) {
+        <a [routerLink]="['/course-management', course.id, titleLink]">
+            <div class="text-center h5 m-0">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</div>
+        </a>
+    }
+    @if (!titleLink) {
+        <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h5>
+    }
+    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
+        <div class="doughnut-chart-text">
+            @if (receivedStats) {
+                @if (currentPercentage !== undefined) {
+                    <div class="h4">{{ currentPercentage }}%</div>
+                } @else if (showText) {
+                    <div class="h4">{{ showText }}</div>
+                }
+                @if (!showText) {
+                    <div class="h6">{{ currentAbsolute }} / {{ currentMax }}</div>
+                } @else if (currentPercentage !== undefined) {
+                    <div class="h6">{{ showText }}</div>
+                }
+            } @else {
+                <div class="h3">
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                </div>
+            }
+        </div>
+        <ngx-charts-pie-chart [view]="[160, 160]" [results]="ngxData" [scheme]="ngxColor" [doughnut]="true" [tooltipText]="bindFormatting" />
+    </div>
+</div>

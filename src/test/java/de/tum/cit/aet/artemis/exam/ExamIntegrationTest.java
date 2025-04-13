@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.CREATED;
 
@@ -85,11 +84,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
-import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
@@ -151,12 +145,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
     @Autowired
     private ExamUserRepository examUserRepository;
 
-    @Autowired
-    private QuizPoolService quizPoolService;
-
-    @Autowired
-    private QuizPoolRepository quizPoolRepository;
-
     private Course course1;
 
     private Course course2;
@@ -166,8 +154,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
     private Exam exam1;
 
     private Exam exam2;
-
-    private Exam exam3;
 
     private static final int NUMBER_OF_STUDENTS = 4;
 
@@ -213,8 +199,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         exam2 = examUtilService.addExamWithExerciseGroup(course1, true);
         examUtilService.addExamChannel(exam2, "exam2 channel");
-
-        exam3 = examUtilService.addExamWithQuizPool(course1);
     }
 
     @Test
@@ -238,29 +222,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         generateStudentExams(exam);
 
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateStudentExamsWithQuizPool() throws Exception {
-        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
-        setupQuizPoolWithQuestionsForExam(exam);
-
-        generateStudentExams(exam);
-
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateStudentExamsWithEmptyQuizPool() throws Exception {
-        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 2);
-        setupEmptyQuizPoolForExam(exam);
-
-        generateStudentExams(exam);
-
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+        verifyStudentsExamAndExercises(exam);
     }
 
     @Test
@@ -272,66 +234,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         registerNewStudentsToExam(exam, 1);
         generateMissingStudentExams(exam, 1);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
+        verifyStudentsExamAndExercises(exam);
 
         generateMissingStudentExams(exam, 0);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateMissingStudentExamsWithQuizPool() throws Exception {
-        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
-        setupQuizPoolWithQuestionsForExam(exam);
-
-        generateStudentExams(exam);
-
-        registerNewStudentsToExam(exam, 1);
-        generateMissingStudentExams(exam, 1);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
-
-        generateMissingStudentExams(exam, 0);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 4);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGenerateMissingStudentExamsWithEmptyQuizPool() throws Exception {
-        Exam exam = examUtilService.setupExamWithExerciseGroupsExercisesRegisteredStudents(TEST_PREFIX, course1, 1);
-        setupEmptyQuizPoolForExam(exam);
-
-        generateStudentExams(exam);
-
-        registerNewStudentsToExam(exam, 1);
-        generateMissingStudentExams(exam, 1);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
-
-        generateMissingStudentExams(exam, 0);
-        verifyStudentsExamAndExercisesAndQuizQuestions(exam, 0);
-    }
-
-    private void setupEmptyQuizPoolForExam(Exam exam) {
-        QuizPool quizPool = new QuizPool();
-        quizPoolService.update(exam.getId(), quizPool);
-    }
-
-    private void setupQuizPoolWithQuestionsForExam(Exam exam) {
-        QuizPool quizPool = new QuizPool();
-        setupGroupsAndQuestionsForQuizPool(quizPool);
-        quizPoolService.update(exam.getId(), quizPool);
-    }
-
-    private void setupGroupsAndQuestionsForQuizPool(QuizPool quizPool) {
-        QuizGroup quizGroup0 = QuizExerciseFactory.createQuizGroup("Encapsulation");
-        QuizGroup quizGroup1 = QuizExerciseFactory.createQuizGroup("Inheritance");
-        QuizGroup quizGroup2 = QuizExerciseFactory.createQuizGroup("Polymorphism");
-        QuizQuestion mcQuizQuestion0 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 0", quizGroup0);
-        QuizQuestion mcQuizQuestion1 = QuizExerciseFactory.createMultipleChoiceQuestionWithTitleAndGroup("MC 1", quizGroup0);
-        QuizQuestion dndQuizQuestion0 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 0", quizGroup1);
-        QuizQuestion dndQuizQuestion1 = QuizExerciseFactory.createDragAndDropQuestionWithTitleAndGroup("DND 1", quizGroup2);
-        QuizQuestion saQuizQuestion0 = QuizExerciseFactory.createShortAnswerQuestionWithTitleAndGroup("SA 0", null);
-        quizPool.setQuizGroups(List.of(quizGroup0, quizGroup1, quizGroup2));
-        quizPool.setQuizQuestions(List.of(mcQuizQuestion0, mcQuizQuestion1, dndQuizQuestion0, dndQuizQuestion1, saQuizQuestion0));
+        verifyStudentsExamAndExercises(exam);
     }
 
     private void registerNewStudentsToExam(Exam exam, int numberOfStudents) {
@@ -353,12 +259,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
         assertThat(missingStudentExams).hasSize(expectedMissingStudent);
     }
 
-    private void verifyStudentsExamAndExercisesAndQuizQuestions(Exam exam, int numberOfQuizQuestions) throws Exception {
+    private void verifyStudentsExamAndExercises(Exam exam) throws Exception {
         List<StudentExam> studentExams = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         verifyStudentExams(studentExams, exam.getExamUsers().size());
-
         verifyStudentExamsExercises(studentExams, exam.getNumberOfExercisesInExam());
-        verifyStudentExamsQuizQuestions(studentExams, numberOfQuizQuestions);
     }
 
     private void verifyStudentExams(List<StudentExam> studentExams, int expectedNumberOfStudentExams) {
@@ -375,14 +279,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
             assertThat(studentExam.getExercises()).hasSize(expected);
         }
         // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
-    }
-
-    private void verifyStudentExamsQuizQuestions(List<StudentExam> studentExams, int expected) {
-        List<Long> ids = studentExams.stream().map(StudentExam::getId).toList();
-        List<StudentExam> studentExamsWithQuizQuestions = studentExamRepository.findAllWithEagerQuizQuestionsById(ids);
-        for (var studentExam : studentExamsWithQuizQuestions) {
-            assertThat(studentExam.getQuizQuestions()).hasSize(expected);
-        }
     }
 
     @Test
@@ -677,42 +573,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleModeling_endDateChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
-        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithModelingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithModelingEx.getStartDate();
-        ZonedDateTime endDate = examWithModelingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate, startDate, endDate.plusSeconds(2));
-
-        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
-
-        verify(instanceMessageSendService).sendModelingExerciseSchedule(modelingExercise.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateExam_rescheduleModeling_workingTimeChanged() throws Exception {
-        var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
-        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
-
-        ZonedDateTime visibleDate = examWithModelingEx.getVisibleDate();
-        ZonedDateTime startDate = examWithModelingEx.getStartDate();
-        ZonedDateTime endDate = examWithModelingEx.getEndDate();
-        examUtilService.setVisibleStartAndEndDateOfExam(examWithModelingEx, visibleDate.plusHours(1), startDate.plusHours(2), endDate.plusHours(3));
-
-        request.put("/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
-
-        StudentExam studentExam = examUtilService.addStudentExam(examWithModelingEx);
-        request.patch(
-                "/api/exam/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
-                3, HttpStatus.OK);
-        verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
         var modelingExercise = modelingExerciseUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
         var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
@@ -769,17 +629,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         assertThat(returnedExam.getExerciseGroups()).anyMatch(groups -> groups.getExercises().stream().anyMatch(Exercise::getTestRunParticipationsExist));
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam.getId());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetExam_asInstructor_WithQuizPool() throws Exception {
-        Exam returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withExerciseGroups=true", HttpStatus.OK, Exam.class);
-        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
-        returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId() + "?withStudents=true", HttpStatus.OK, Exam.class);
-        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
-        returnedExam = request.get("/api/exam/courses/" + course1.getId() + "/exams/" + exam3.getId(), HttpStatus.OK, Exam.class);
-        assertThat(returnedExam.getQuizExamMaxPoints()).isEqualTo(0);
     }
 
     @Test
@@ -854,16 +703,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
         Optional<Channel> examChannelAfterDelete = channelRepository.findById(examChannel.getId());
         assertThat(examChannelAfterDelete).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteExamWithQuizPool() throws Exception {
-        Exam exam = examUtilService.addExamWithQuizPool(course1);
-
-        request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-        Optional<QuizPool> quizPool = quizPoolRepository.findByExamId(exam.getId());
-        assertThat(quizPool.isPresent()).isFalse();
     }
 
     @Test

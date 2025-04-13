@@ -92,7 +92,7 @@
                         @if (originalPostDetails) {
                             <jhi-forwarded-message [originalPostDetails]="originalPostDetails" (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)" />
                         }
-                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }">
+                        <div class="hover-actions" [ngClass]="{ 'mb-2': previewMode() }" (click)="$event.stopPropagation()">
                             @if (!previewMode()) {
                                 <!-- Post reactions (that appear when post is hovered) -->
                                 <jhi-posting-reactions-bar
@@ -128,7 +128,11 @@
         </div>
     }
     @if (!isDeleted) {
-        <div class="post-content-padding justify-content-between post-reactions-bar" [ngClass]="{ 'mb-2': previewMode(), 'is-saved': posting.isSaved && isConsecutive() }">
+        <div
+            class="post-content-padding justify-content-between post-reactions-bar"
+            [ngClass]="{ 'mb-2': previewMode(), 'is-saved': posting.isSaved && isConsecutive() }"
+            (click)="$event.stopPropagation()"
+        >
             <!-- Post reactions -->
             @if (!previewMode()) {
                 <jhi-posting-reactions-bar
@@ -137,6 +141,7 @@
                     [previewMode]="previewMode()"
                     [posting]="posting"
                     [(showAnswers)]="showAnswers"
+                    [showSearchResultInAnswersHint]="showSearchResultInAnswersHint"
                     [sortedAnswerPosts]="sortedAnswerPosts"
                     [isCommunicationPage]="isCommunicationPage"
                     [isThreadSidebar]="isThreadSidebar"

@@ -10,11 +10,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
@@ -37,6 +39,7 @@ import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
@@ -50,6 +53,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -57,6 +61,8 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -82,9 +88,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ConversationNotificationRepository conversationNotificationRepository;
 
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
     private List<Post> existingCourseWideMessages;
 
     private List<Post> existingConversationMessages;
+
+    private List<Long> existingConversationIds;
+
+    private List<Long> existingCourseWideChannelIds;
 
     private Course course;
 
@@ -113,6 +129,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // filters existing posts with conversation
         existingConversationMessages = existingPostsAndConversationPosts.stream().filter(
                 post -> post.getConversation() != null && !(post.getConversation() instanceof Channel channel && (channel.getExercise() != null || channel.getLecture() != null)))
+                .toList();
+
+        // filters course wide channels
+        existingCourseWideChannelIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide())
+                .map(post -> post.getConversation().getId()).distinct().toList();
+
+        // filters conversation ids
+        existingConversationIds = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).map(post -> post.getConversation().getId()).distinct()
                 .toList();
 
         // filter existing posts with exercise context
@@ -145,7 +169,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(createdPost.getConversation().getId()).isNotNull();
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, createdPost.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { createdPost.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
 
         // both conversation participants should be notified
@@ -157,6 +182,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
+        // Since we are testing old notifications
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
         ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
@@ -180,11 +208,16 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         else {
             verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
         }
+
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
+        // Since we are testing old notifications
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -204,6 +237,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
         verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
+
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -220,10 +255,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(channel);
 
         // then
-        // expected are 7 database calls independent of the number of students in the course.
-        // 4 calls are for user authentication checks, 3 calls to update database
+        // expected are 6 database calls independent of the number of students in the course.
+        // 4 calls are for user authentication checks, 2 calls to update database
         // further database calls are made in async code
-        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(7);
+        assertThatDb(() -> request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED)).hasBeenCalledTimes(6);
     }
 
     @ParameterizedTest
@@ -315,8 +350,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, null, posts.getFirst().getConversation().getId(), null, false, false, false, null,
-                null);
+        long[] conversationIds = new long[] { posts.getFirst().getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, null, false, false, false, false, null, null);
         if (pageSize == LOWER_PAGE_SIZE) {
             assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.ofSize(pageSize), requestingUser.getId())).hasSize(LOWER_PAGE_SIZE);
         }
@@ -336,7 +371,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { postToSave.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.BAD_REQUEST);
@@ -362,7 +398,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         postToSave.setConversation(existingConversationMessages.getFirst().getConversation());
         var requestingUser = userTestRepository.getUser();
 
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
+        long[] conversationIds = new long[] { postToSave.getConversation().getId() };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
@@ -393,7 +430,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "course-wide");
         conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", channel.getId().toString());
+        params.add("conversationIds", channel.getId().toString());
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -406,7 +443,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         Long conversationId = existingConversationMessages.getFirst().getConversation().getId();
-        params.add("conversationId", conversationId.toString());
+        params.add("conversationIds", conversationId.toString());
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -418,7 +455,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void testGetCourseWideMessages() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("courseWideChannelIds", "");
+        params.add("conversationIds", existingConversationIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("size", "50");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -434,8 +472,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
-        params.add("filterToOwn", "true");
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -447,17 +487,19 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseWideMessages_OrderByAnswerCountDESC() throws Exception {
+    void testGetCourseWideMessages_OrderByCreationDateDESC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
+
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("pagingEnabled", "true");
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.DESCENDING.toString());
-        params.add("courseWideChannelIds", "");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -471,17 +513,18 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetCourseWideMessages_OrderByAnswerCountASC() throws Exception {
+    void testGetCourseWideMessages_OrderByCreationDateASC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
         // ordering only available in course discussions page, where paging is enabled
+        params.add("conversationIds", existingCourseWideChannelIds.stream().map(String::valueOf).collect(Collectors.joining(",")));
+        params.add("filterToCourseWide", "true");
         params.add("pagingEnabled", "true");
         params.add("page", "0");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
 
-        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("postSortCriterion", PostSortCriterion.CREATION_DATE.toString());
         params.add("sortingOrder", SortingOrder.ASCENDING.toString());
-        params.add("courseWideChannelIds", "");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         conversationUtilService.assertSensitiveInformationHidden(returnedPosts);
@@ -499,8 +542,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
-        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
+        Long courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
 
         List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
         // get amount of posts with that certain
@@ -516,8 +560,10 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
-        params.add("filterToOwn", "true");
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
         params.add("searchText", "Content");
 
@@ -540,9 +586,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         var params = new LinkedMultiValueMap<String, String>();
         var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
         var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow().getId();
         courseWidePosts.getFirst().getAnswers().forEach(answer -> answer.setContent("AnswerPost"));
-        params.add("courseWideChannelIds", courseWideChannelId.toString());
-        params.add("filterToOwn", "true");
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
+        params.add("authorIds", String.valueOf(userId));
         params.add("size", "50");
         params.add("searchText", "Answer");
 
@@ -678,7 +726,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.changeUser(TEST_PREFIX + "student2");
         // we read the messages by "getting" them from the server as student
         var params = new LinkedMultiValueMap<String, String>();
-        params.add("conversationId", createdPost1.getConversation().getId().toString());
+        params.add("conversationIds", createdPost1.getConversation().getId().toString());
         params.add("pagingEnabled", "true");
         params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
         Set<Post> returnedPosts = request.getSet("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -741,7 +789,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(updatedPinnedPost.getDisplayPriority()).isEqualTo(DisplayPriority.PINNED);
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("courseWideChannelIds", channel.getId().toString());
+        params.add("conversationIds", channel.getId().toString());
+        params.add("filterToCourseWide", "true");
         params.add("pinnedOnly", "true");
         params.add("size", "10");
 
@@ -758,28 +807,174 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
+    void testGetCourseWideMessagesWithAuthorIds() throws Exception {
+        var params = new LinkedMultiValueMap<String, String>();
+        var courseWidePosts = existingConversationMessages.stream().filter(post -> post.getConversation() instanceof Channel channel && channel.getIsCourseWide()).toList();
+        var courseWideChannelId = courseWidePosts.getFirst().getConversation().getId();
+        var authorId = courseWidePosts.getFirst().getAuthor().getId();
+        params.add("conversationIds", courseWideChannelId.toString());
+        params.add("filterToCourseWide", "true");
+        params.add("authorIds", authorId.toString());
+        params.add("size", "50");
+
+        List<Post> returnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+        // get amount of posts with that certain
+        assertThat(returnedPosts).hasSize(existingCourseWideMessages.stream()
+                .filter(post -> post.getConversation().getId().equals(courseWideChannelId) && post.getAuthor().getId().equals(authorId)).toList().size());
+        assertThat(returnedPosts.size()).isLessThan(courseWidePosts.size());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    void testGetMessagesForPrivateConversationId_Forbidden() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        var oneToOneChat = directPost.getConversation();
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("conversationIds", oneToOneChat.getId().toString());
+        params.add("size", "50");
+
+        request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.FORBIDDEN, Post.class, params);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFindCourseWideMessages_IncludesDirectChatsAndNonCourseWideChannels() throws Exception {
+    void shouldIncludeDirectMessagesWhenFindingMessages() throws Exception {
         Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
         directPost.setContent("SearchTestDirect");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
 
+        // include the newly created conversation into all course-wide conversations
+        long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).mapToLong(Long::longValue).toArray();
+
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, "SearchTest", false, false, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
+
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
+        List<Post> resultPosts = searchResults.getContent();
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIncludeDirectMessagesWhenFindingMessagesUsingGetRequest() throws Exception {
+        Post directPost = createPostWithOneToOneChat(TEST_PREFIX);
+        directPost.setContent("SearchTestDirect");
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", directPost, Post.class, HttpStatus.CREATED);
+
+        // include the newly created conversation into all conversations
+        String conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(directPost.getConversation().getId())).map(String::valueOf)
+                .collect(Collectors.joining(","));
+
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("searchText", "SearchTest");
+        params.add("conversationIds", conversationIds);
+
+        List<Post> resultPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIncludeNonCourseWideChannelsWhenFindingMessages() throws Exception {
         Channel nonCourseWideChannel = conversationUtilService.createPublicChannel(course, "group-chat-test");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student1");
         conversationUtilService.addParticipantToConversation(nonCourseWideChannel, TEST_PREFIX + "student2");
+
         Post groupPost = new Post();
         groupPost.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         groupPost.setConversation(nonCourseWideChannel);
         groupPost.setContent("SearchTestGroup");
         request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", groupPost, Post.class, HttpStatus.CREATED);
 
-        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), new long[] {}, null, null, "SearchTest", false, false, false, PostSortCriterion.ANSWER_COUNT,
-                SortingOrder.DESCENDING);
+        // include the newly created conversation into all course-wide conversations
+        long[] conversationIds = Stream.concat(existingCourseWideChannelIds.stream(), Stream.of(nonCourseWideChannel.getId())).mapToLong(Long::longValue).toArray();
+
+        PostContextFilterDTO filter = new PostContextFilterDTO(course.getId(), null, conversationIds, null, "SearchTest", false, false, false, false,
+                PostSortCriterion.CREATION_DATE, SortingOrder.DESCENDING);
 
         var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        Page<Post> searchResults = conversationMessageRepository.findCourseWideMessages(filter, Pageable.unpaged(), student1.getId());
+        Page<Post> searchResults = conversationMessageRepository.findMessages(filter, Pageable.unpaged(), student1.getId());
         List<Post> resultPosts = searchResults.getContent();
-        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestDirect", "SearchTestGroup");
+
+        assertThat(resultPosts).extracting(Post::getContent).contains("SearchTestGroup");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendCourseNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        var channel = createChannelWithTwoStudents();
+        Post postToSave = new Post();
+        postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        postToSave.setConversation(channel);
+        postToSave.setContent("Test content for notification");
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 1)
+                    .isNotEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendMentionNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        User mentionedUser = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        var channel = createChannelWithTwoStudents();
+        Post postToSave = new Post();
+        postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        postToSave.setConversation(channel);
+        postToSave.setContent("[user]" + mentionedUser.getName() + "(" + mentionedUser.getLogin() + ")[/user] Check this out!");
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 3)
+                    .isNotEmpty();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
+
+        Post postToSave = new Post();
+        postToSave.setAuthor(author.getUser());
+        postToSave.setConversation(channel);
+        postToSave.setContent("Important announcement!");
+
+        request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+            assertThat(notifications).filteredOn(notification -> notification.getCourse().getId().equals(courseId)).filteredOn(notification -> notification.getType() == 4)
+                    .isNotEmpty();
+        });
+    }
+
+    private Channel createChannelWithTwoStudents() {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Channel channel = conversationUtilService.createPublicChannel(course, "test");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        return channel;
     }
 
     private long getUnreadMessagesCount(Conversation conversation, User user) {

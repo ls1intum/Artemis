@@ -1,18 +1,18 @@
 import { Component, Input, inject } from '@angular/core';
-import { Course, CourseForImportDTO } from 'app/entities/course.model';
+import { Course, CourseForImportDTO } from 'app/core/course/shared/entities/course.model';
 import { Column, ImportComponent } from 'app/shared/import/import.component';
 
-import { CourseCompetencyType } from 'app/entities/competency.model';
+import { CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbPagination, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CourseForImportDTOPagingService } from 'app/course/shared/course-for-import-dto-paging-service';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/services/course-for-import-dto-paging-service';
 
 const tableColumns: Column<Course>[] = [
     {

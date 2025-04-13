@@ -7,20 +7,20 @@ import { BehaviorSubject, Observable, Subject, fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map, mergeMap, switchMap } from 'rxjs/operators';
 import { GuidedTourState, Orientation, OrientationConfiguration, ResetParticipation, UserInteractionEvent } from './guided-tour.constants';
 import { User } from 'app/core/user/user.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AssessmentObject } from './guided-tour-task.model';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
 import { GuidedTourMapping, GuidedTourSetting } from 'app/core/guided-tour/guided-tour-setting.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { GuidedTour } from 'app/core/guided-tour/guided-tour.model';
 import { TextTourStep, TourStep, UserInterActionTourStep, VideoTourStep } from 'app/core/guided-tour/guided-tour-step.model';
 import { checkPageUrlEnding, clickOnElement, determineUrlMatching, getUrlParams } from 'app/core/guided-tour/guided-tour.utils';
 import { cancelTour, completedTour } from 'app/core/guided-tour/tours/general-tour';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export type EntityResponseType = HttpResponse<GuidedTourSetting[]>;
 
