@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -11,6 +12,7 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerd
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -54,6 +56,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -232,7 +235,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should not display post unrelated to the current plagiarism case', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(TestBed.inject(MetisService), 'posts', 'get');
+        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 
@@ -259,7 +262,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should delete post successfully', fakeAsync(() => {
-        const metisPostsSpy = jest.spyOn(TestBed.inject(MetisService), 'posts', 'get');
+        const metisPostsSpy = jest.spyOn(fixture.debugElement.injector.get(MetisService), 'posts', 'get');
         const postsSubject = new ReplaySubject<Post[]>(1);
         metisPostsSpy.mockReturnValue(postsSubject.asObservable());
 

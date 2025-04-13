@@ -218,7 +218,7 @@ describe('CourseManagementContainerComponent', () => {
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 router = TestBed.inject(Router);
                 findSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-                metisConversationService = TestBed.inject(MetisConversationService);
+                metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
 
                 findOneForDashboardSpy = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
 

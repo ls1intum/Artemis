@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { ScienceDirective } from 'app/shared/science/science.directive';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -10,6 +11,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({
     template: '<div [jhiScience]="ScienceEventType.LECTURE__OPEN"></div>',
@@ -29,6 +31,7 @@ describe('ScienceDirective', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

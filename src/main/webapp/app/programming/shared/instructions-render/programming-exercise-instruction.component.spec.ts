@@ -4,10 +4,12 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, VERSION } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import dayjs from 'dayjs/esm';
 import { Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import {
     problemStatementBubbleSortNotExecutedHtml,
@@ -79,6 +81,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

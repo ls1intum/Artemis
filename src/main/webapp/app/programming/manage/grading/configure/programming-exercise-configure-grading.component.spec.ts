@@ -4,6 +4,7 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseGradingStatistics } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
@@ -43,6 +44,7 @@ import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-rou
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProgrammingBuildRunService } from 'test/helpers/mocks/service/mock-programming-build-run.service';
 import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
 import { MockProgrammingExerciseWebsocketService } from 'test/helpers/mocks/service/mock-programming-exercise-websocket.service';
@@ -222,6 +224,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -232,12 +235,12 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         debugElement = fixture.debugElement;
         comp = fixture.componentInstance as ProgrammingExerciseConfigureGradingComponent;
 
-        gradingService = TestBed.inject(ProgrammingExerciseGradingService);
-        route = TestBed.inject(ActivatedRoute);
-        const router = TestBed.inject(Router);
-        programmingExerciseWebsocketService = TestBed.inject(ProgrammingExerciseWebsocketService);
-        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
-        modalService = TestBed.inject(NgbModal);
+        gradingService = fixture.debugElement.injector.get(ProgrammingExerciseGradingService);
+        route = fixture.debugElement.injector.get(ActivatedRoute);
+        const router = fixture.debugElement.injector.get(Router);
+        programmingExerciseWebsocketService = fixture.debugElement.injector.get(ProgrammingExerciseWebsocketService);
+        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        modalService = fixture.debugElement.injector.get(NgbModal);
 
         updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
         resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');

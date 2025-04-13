@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -12,6 +13,7 @@ import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -87,6 +89,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
@@ -103,7 +106,7 @@ describe('DiscussionSectionComponent', () => {
 
         fixture = TestBed.createComponent(DiscussionSectionComponent);
         component = fixture.componentInstance;
-        metisService = TestBed.inject(MetisService);
+        metisService = fixture.debugElement.injector.get(MetisService);
         channelService = TestBed.inject(ChannelService);
         getChannelOfLectureSpy = jest.spyOn(channelService, 'getChannelOfLecture').mockReturnValue(
             of(

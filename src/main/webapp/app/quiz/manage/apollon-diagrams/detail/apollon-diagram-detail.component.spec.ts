@@ -1,5 +1,6 @@
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ApollonDiagramService } from 'app/quiz/manage/apollon-diagrams/services/apollon-diagram.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
@@ -11,6 +12,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/quiz/manage/apollon-diagrams/detail/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockLanguageHelper, MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
@@ -57,6 +59,7 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
             schemas: [],
         })
@@ -64,9 +67,9 @@ describe('ApollonDiagramDetail Component', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ApollonDiagramDetailComponent);
-                apollonDiagramService = TestBed.inject(ApollonDiagramService);
-                alertService = TestBed.inject(AlertService);
-                modalService = TestBed.inject(NgbModal);
+                apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
+                alertService = fixture.debugElement.injector.get(AlertService);
+                modalService = fixture.debugElement.injector.get(NgbModal);
             });
     });
 

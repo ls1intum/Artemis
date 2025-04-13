@@ -207,6 +207,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
@@ -234,7 +235,7 @@ describe('CourseOverviewComponent', () => {
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
-                metisConversationService = TestBed.inject(MetisConversationService);
+                metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));

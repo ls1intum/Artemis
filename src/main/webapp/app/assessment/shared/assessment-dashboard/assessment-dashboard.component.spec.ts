@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -137,6 +139,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -146,8 +149,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 fixture = TestBed.createComponent(AssessmentDashboardComponent);
                 comp = fixture.componentInstance;
 
-                courseManagementService = TestBed.inject(CourseManagementService);
-
+                courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 sortService = TestBed.inject(SortService);
@@ -201,9 +203,8 @@ describe('AssessmentDashboardInformationComponent', () => {
                 url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
             },
         } as any as ActivatedRoute;
-        const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
         activatedRoute.snapshot = newRoute.snapshot;
-        TestBed.inject(ActivatedRoute);
 
         comp.ngOnInit();
         tick();
@@ -295,7 +296,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                         url: { path: '/course-management/10/assessment-dashboard', parameterMap: {}, parameters: {} } as UrlSegment,
                     },
                 } as any as ActivatedRoute;
-                const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
+                const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
                 activatedRoute.snapshot = newRoute.snapshot;
 
                 comp.tutor = new User(1);

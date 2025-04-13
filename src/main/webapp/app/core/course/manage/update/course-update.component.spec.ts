@@ -115,6 +115,7 @@ describe('Course Management Update Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -859,6 +860,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
             ],
             declarations: [
@@ -1002,7 +1004,7 @@ describe('Course Management Update Component Create', () => {
                 (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 component = fixture.componentInstance;
-                httpMock = TestBed.inject(HttpTestingController);
+                httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });
