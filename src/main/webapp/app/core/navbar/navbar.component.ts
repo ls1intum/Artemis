@@ -120,7 +120,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
     gitUsername: string;
     isBuildAgentDetails = false;
     languages = LANGUAGES;
-    openApiEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
@@ -227,7 +226,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         const profileInfo = this.profileService.getProfileInfo();
         this.inProduction = this.profileService.isProduction();
         this.testServer = this.profileService.isTestServer();
-        this.openApiEnabled = profileInfo.openApiEnabled;
         this.gitCommitId = profileInfo.git.commit.id.abbrev;
         this.gitBranchName = profileInfo.git.branch;
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();

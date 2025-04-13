@@ -261,14 +261,6 @@
                             </a>
                         </li>
                     }
-                    @if (openApiEnabled) {
-                        <li>
-                            <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faBook" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.admin.apidocs"></span>
-                            </a>
-                        </li>
-                    }
                     @if (irisEnabled) {
                         <li>
                             <a class="dropdown-item" routerLink="/admin/iris" routerLinkActive="active" (click)="collapseNavbar()">

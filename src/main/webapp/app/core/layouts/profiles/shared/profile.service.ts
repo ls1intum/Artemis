@@ -27,7 +27,7 @@ export class ProfileService {
     }
 
     public isProfileActive(profile: string) {
-        return this.profileInfo.activeProfiles?.includes(profile);
+        return this.profileInfo.activeProfiles?.includes(profile) ?? false;
     }
 
     public isModuleFeatureActive(feature: string) {

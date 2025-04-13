@@ -6,11 +6,6 @@ export class SentryConfig {
     public dsn?: string;
 }
 
-export class PostHogConfig {
-    public host?: string;
-    public token?: string;
-}
-
 export class GitCommitId {
     public describe?: string;
     public abbrev: string;
@@ -129,48 +124,44 @@ export class ProgrammingLanguageFeature {
 }
 
 export class ProfileInfo {
-    public operatorName: string;
-    public operatorAdminName: string;
-    public contact: string;
-    public imprint: string;
-    public testServer: boolean;
-    public textAssessmentAnalyticsEnabled: boolean;
-    public sentry: SentryConfig;
-    public postHog: PostHogConfig;
-    public displayRibbonOnProfiles: string;
-    public allowedMinimumOrionVersion: string;
-    public studentExamStoreSessionData: boolean;
-    public git: Git;
-    public build: Build;
-    public java: Java;
-    public compatibleVersions: CompatibleVersions;
-    public externalCredentialProvider: string;
-    public externalPasswordResetLinkMap: { [key: string]: string };
-    public useExternal: boolean;
-    public features: ActiveFeatureToggles;
-    public registrationEnabled?: boolean;
+    public accountName?: string;
+    public activeModuleFeatures: string[];
+    public activeProfiles: string[];
+    public allowedCourseRegistrationUsernamePattern?: string;
     public allowedEmailPattern?: string;
     public allowedEmailPatternReadable?: string;
-    public needsToAcceptTerms?: boolean;
-    public allowedLdapUsernamePattern: string;
-    public accountName: string;
-    public continuousIntegrationName: string;
-    public buildTimeoutMin: number;
-    public buildTimeoutMax: number;
+    public allowedLdapUsernamePattern?: string;
+    public build: Build;
+    public buildPlanURLTemplate?: string; // only available on Artemis instances with Jenkins
     public buildTimeoutDefault: number;
+    public buildTimeoutMax: number;
+    public buildTimeoutMin: number;
+    public compatibleVersions: CompatibleVersions;
+    public contact: string;
+    public continuousIntegrationName: string;
     public defaultContainerCpuCount: number;
     public defaultContainerMemoryLimitInMB: number;
     public defaultContainerMemorySwapLimitInMB: number;
+    public externalCredentialProvider: string;
+    public externalPasswordResetLinkMap: { [key: string]: string };
+    public features: ActiveFeatureToggles;
+    public git: Git;
+    public imprint: string;
+    public java: Java;
+    public needsToAcceptTerms?: boolean;
+    public operatorAdminName: string;
+    public operatorName: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
-    public versionControlUrl: string;
-    public versionControlName: string;
+    public registrationEnabled?: boolean;
     public repositoryAuthenticationMechanisms: string[];
-    public sshCloneURLTemplate: string;
-    public buildPlanURLTemplate?: string; // only available on Artemis instances with Jenkins
-    public activeProfiles: string[];
-    public activeModuleFeatures: string[];
     public saml2Config?: Saml2Config;
+    public sentry: SentryConfig;
+    public sshCloneURLTemplate: string;
+    public studentExamStoreSessionData: boolean;
+    public testServer: boolean;
+    public textAssessmentAnalyticsEnabled: boolean;
     public theiaPortalURL?: string;
-    public allowedCourseRegistrationUsernamePattern?: string;
-    public openApiEnabled?: boolean;
+    public useExternal: boolean;
+    public versionControlName: string;
+    public versionControlUrl: string;
 }

@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { AccountService } from 'app/core/auth/account.service';
+import { expectedProfileInfo } from 'app/core/layouts/profiles/shared/profile.service.spec';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -8,7 +9,7 @@ import { CodeButtonComponent, RepositoryAuthenticationMethod } from 'app/shared/
 import dayjs from 'dayjs/esm';
 import { MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UserSshPublicKey } from 'app/programming/shared/entities/user-ssh-public-key.model';
@@ -46,43 +47,7 @@ describe('CodeButtonComponent', () => {
     let localStorageState: RepositoryAuthenticationMethod = RepositoryAuthenticationMethod.SSH;
     let router: MockRouter;
 
-    const info: ProfileInfo = {
-        externalCredentialProvider: '',
-        externalPasswordResetLinkMap: [
-            ['en', ''],
-            ['de', ''],
-        ],
-        useExternal: false,
-        activeModuleFeatures: [],
-        buildPlanURLTemplate: '',
-        contact: '',
-        externalUserManagementName: '',
-        externalUserManagementURL: '',
-        repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
-        features: [],
-        inProduction: false,
-        inDevelopment: true,
-        programmingLanguageFeatures: [],
-        ribbonEnv: '',
-        sshCloneURLTemplate: 'ssh://git@gitlab.ase.in.tum.de:7999/',
-        testServer: false,
-        versionControlUrl: 'https://gitlab.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
-        git: {
-            branch: 'code-button',
-            commit: {
-                id: {
-                    abbrev: '95ef2a',
-                },
-                time: '2022-11-20T20:35:01Z',
-                user: {
-                    name: 'Max Musterman',
-                    email: 'max@mustermann.de',
-                },
-            },
-        },
-        theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
-        operatorName: 'TUM',
-    };
+    const info = expectedProfileInfo;
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
 
@@ -127,7 +92,7 @@ describe('CodeButtonComponent', () => {
                     .spyOn(sshUserSettingsService, 'getCachedSshKeys')
                     .mockImplementation(() => Promise.resolve([{ id: 99, publicKey: 'key' } as UserSshPublicKey]));
                 fixture.componentRef.setInput('repositoryUri', '');
-                jest.spyOn(localStorageMock, 'retrieve').mockImplementation((key) => {
+                jest.spyOn(localStorageMock, 'retrieve').mockImplementation(() => {
                     return localStorageState;
                 });
                 jest.spyOn(localStorageMock, 'store').mockImplementation(() => {});
@@ -480,7 +445,7 @@ describe('CodeButtonComponent', () => {
         ],
     ])('%s', async (description, profileInfo, programmingExercise, theiaConfig, expectedVisibility) => {
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoStub.mockReturnValue(of(profileInfo as ProfileInfo));
+        getProfileInfoStub.mockReturnValue(profileInfo as ProfileInfo);
 
         const getTheiaConfigStub = jest.spyOn(programmingExerciseService, 'getTheiaConfig');
         getTheiaConfigStub.mockReturnValue(of(theiaConfig as ProgrammingExerciseTheiaConfig));
@@ -553,6 +518,6 @@ describe('CodeButtonComponent', () => {
         );
 
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
-        getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
+        getProfileInfoStub.mockReturnValue(info);
     }
 });

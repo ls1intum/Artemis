@@ -258,14 +258,12 @@ sentry:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    # Comma separated list of profiles that will trigger the ribbon to show
-    display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://not-activated@sentry.io/0000000
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for tests
-    text-assessment-analytics-enabled: true
-    student-exam-store-session-data: true
+    textAssessmentAnalyticsEnabled: true
+    studentExamStoreSessionData: true
     contact: contactEmail@contact.de
 
 jhipster:

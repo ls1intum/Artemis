@@ -63,8 +63,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
-    externalUserManagementActive = true;
-
     isFormValid = false;
     isSubmittingLogin = false;
 
@@ -98,7 +96,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      */
     private initializeWithProfileInfo() {
         this.profileInfo = this.profileService.getProfileInfo();
-        this.externalUserManagementActive = false;
 
         this.accountName = this.profileInfo.accountName;
         if (this.profileInfo.allowedLdapUsernamePattern) {
