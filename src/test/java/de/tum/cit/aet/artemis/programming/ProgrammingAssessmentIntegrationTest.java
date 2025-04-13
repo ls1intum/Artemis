@@ -101,6 +101,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
+        manualResult.setSubmission(programmingSubmission);
 
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
