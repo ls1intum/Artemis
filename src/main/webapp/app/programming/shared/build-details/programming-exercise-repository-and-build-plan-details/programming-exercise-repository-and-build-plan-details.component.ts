@@ -39,16 +39,17 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     isLocalCIEnabled = true;
 
     ngOnInit() {
-        this.updateCourseShortName();
-        this.updateCheckoutDirectories();
-
         this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.updateCourseShortName();
+        if (this.isLocalCIEnabled) {
+            this.updateCheckoutDirectories();
+        }
     }
 
     ngOnChanges(changes: SimpleChanges) {
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
-        if (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated) {
+        if (this.isLocalCIEnabled && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
             if (this.isCreateOrEdit && !this.isEditMode) {
                 this.resetProgrammingExerciseBuildCheckoutPaths();
             }
@@ -72,9 +73,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
         this.checkoutDirectorySubscription?.unsubscribe(); // might be defined from previous method execution
 
-        const CHECKOUT_SOLUTION_REPOSITORY_DEFAULT = true;
+        const checkoutSolutionRepositoryDefault = true;
         this.checkoutDirectorySubscription = this.programmingExerciseService
-            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? CHECKOUT_SOLUTION_REPOSITORY_DEFAULT)
+            .getCheckoutDirectoriesForProgrammingLanguage(this.programmingLanguage, this.checkoutSolutionRepository ?? checkoutSolutionRepositoryDefault)
             .subscribe((checkoutDirectories) => {
                 if ((this.isCreateOrEdit && !this.isEditMode) || !this.isBuildConfigAvailable(this.programmingExercise.buildConfig)) {
                     this.checkoutDirectories = checkoutDirectories;

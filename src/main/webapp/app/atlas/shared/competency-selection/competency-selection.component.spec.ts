@@ -49,9 +49,9 @@ describe('CompetencySelection', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CompetencySelectionComponent);
                 component = fixture.componentInstance;
-                courseStorageService = TestBed.inject(CourseStorageService);
-                courseCompetencyService = TestBed.inject(CourseCompetencyService);
-                const profileService = TestBed.inject(ProfileService);
+                courseStorageService = fixture.debugElement.injector.get(CourseStorageService);
+                courseCompetencyService = fixture.debugElement.injector.get(CourseCompetencyService);
+                const profileService = fixture.debugElement.injector.get(ProfileService);
 
                 const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
                 const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
@@ -150,7 +150,7 @@ describe('CompetencySelection', () => {
 
     it('should trigger change detection after loading competencies', () => {
         jest.spyOn(courseStorageService, 'getCourse').mockReturnValue({ competencies: undefined });
-        const changeDetector = TestBed.inject(ChangeDetectorRef);
+        const changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
         const detectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
 
         fixture.detectChanges();

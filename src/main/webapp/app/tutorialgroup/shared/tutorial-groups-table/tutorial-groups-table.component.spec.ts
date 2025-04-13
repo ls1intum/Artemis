@@ -39,17 +39,11 @@ class MockExtraColumnComponent {
     imports: [TutorialGroupsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
-    @Input()
-    tutorialGroups: TutorialGroup[];
+    @Input() tutorialGroups: TutorialGroup[];
+    @Input() course: Course;
 
-    @Input()
-    course: Course;
-
-    @ViewChild(TutorialGroupsTableComponent)
-    tutorialGroupTableInstance: TutorialGroupsTableComponent;
-
-    @ViewChildren(MockExtraColumnComponent)
-    mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    @ViewChild(TutorialGroupsTableComponent) tutorialGroupTableInstance: TutorialGroupsTableComponent;
+    @ViewChildren(MockExtraColumnComponent) mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
@@ -208,7 +202,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'id';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
 
         component.sortRows();
@@ -220,7 +214,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'dayAndTime';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
@@ -232,7 +226,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'capacityAndRegistrations';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();

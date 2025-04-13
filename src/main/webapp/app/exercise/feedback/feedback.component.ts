@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -63,6 +63,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private translateService = inject(TranslateService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
+    private injector = inject(Injector);
     activeModal? = inject(NgbActiveModal, { optional: true });
 
     readonly BuildLogType = BuildLogType;
@@ -99,7 +100,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() latestDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
-
     @Input() isExamReviewPage = false;
     @Input() isPrinting = false;
 
@@ -156,7 +156,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
 
         this.initializeExerciseInformation();
 
-        this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? inject(ProgrammingFeedbackItemService) : inject(FeedbackItemServiceImpl);
+        this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.initFeedbackInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);

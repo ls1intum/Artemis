@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement, TemplateRef } from '@angular/core';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -50,7 +51,7 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? ['athena'] : [] } as ProfileInfo);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: enabled ? [PROFILE_ATHENA] : [] } as ProfileInfo);
     }
 
     function mockExerciseDetails(exercise: Exercise) {

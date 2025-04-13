@@ -1,5 +1,6 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { PROFILE_ATHENA } from 'app/app.constants';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
@@ -107,7 +108,7 @@ describe('AthenaService', () => {
         let programmingResponse: Feedback[] = [];
         let modelingResponse: Feedback[] = [];
 
-        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
+        const mockProfileInfo = { activeProfiles: [PROFILE_ATHENA] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getTextFeedbackSuggestions(textExercise, { id: 2, text: 'Hello world, this is a test' } as TextSubmission).subscribe((suggestions: TextBlockRef[]) => {
@@ -165,7 +166,7 @@ describe('AthenaService', () => {
     it('should return no feedback suggestions when feedback suggestions are disabled on the exercise', fakeAsync(() => {
         let response: TextBlockRef[] = [];
 
-        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
+        const mockProfileInfo = { activeProfiles: [PROFILE_ATHENA] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         const exerciseWithoutFeedbackSuggestions = { ...textExercise, feedbackSuggestionModule: undefined } as Exercise;
@@ -218,7 +219,7 @@ describe('AthenaService', () => {
         let programmingResponse: string[] = [];
         let modelingResponse: string[] = [];
 
-        const mockProfileInfo = { activeProfiles: ['athena'] } as ProfileInfo;
+        const mockProfileInfo = { activeProfiles: [PROFILE_ATHENA] } as ProfileInfo;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(mockProfileInfo);
 
         athenaService.getAvailableModules(1, textExercise).subscribe((modules: string[]) => {

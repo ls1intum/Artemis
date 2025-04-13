@@ -1,4 +1,4 @@
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -34,7 +34,6 @@ describe('User Settings Directive', () => {
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
     let userSettingsService: UserSettingsService;
-    let httpMock: HttpTestingController;
     let changeDetector: ChangeDetectorRef;
 
     const router = new MockRouter();
@@ -71,13 +70,8 @@ describe('User Settings Directive', () => {
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 alertService = TestBed.inject(AlertService);
-                httpMock = TestBed.inject(HttpTestingController);
-                changeDetector = TestBed.inject(ChangeDetectorRef);
+                changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
-    });
-
-    afterEach(() => {
-        httpMock.verify();
     });
 
     describe('Service methods with Category Notification Settings', () => {

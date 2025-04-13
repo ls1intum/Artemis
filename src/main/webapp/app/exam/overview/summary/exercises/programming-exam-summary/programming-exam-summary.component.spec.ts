@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
@@ -16,6 +17,7 @@ import dayjs from 'dayjs/esm';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
@@ -99,6 +101,7 @@ describe('ProgrammingExamSummaryComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

@@ -309,7 +309,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
     it('should open', () => {
         const content = {};
-        const modalService = TestBed.inject(NgbModal);
+        const modalService = fixture.debugElement.injector.get(NgbModal);
         const modalSpy = jest.spyOn(modalService, 'open');
         component.open(content);
         expect(modalSpy).toHaveBeenCalledOnce();
