@@ -612,8 +612,9 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
         log.debug("REST request to get the slide : {}", slideId);
+        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
 
-        Slide slide = slideRepository.findByIdElseThrow(slideId);
+        Slide slide = api.findSlideByIdElseThrow(slideId);
 
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");
@@ -643,7 +644,9 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
+
+        AttachmentUnit attachmentUnit = api.findAttachmentUnitByIdElseThrow(attachmentUnitId);
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
         checkAttachmentAuthorizationOrThrow(course, attachment);

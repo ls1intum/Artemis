@@ -42,6 +42,10 @@ public class LectureAttachmentApi extends AbstractLectureApi {
         return attachmentRepository.findByIdElseThrow(id);
     }
 
+    public Slide findSlideByIdElseThrow(long id) {
+        return slideRepository.findByIdElseThrow(id);
+    }
+
     public Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber) {
         return slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, slideNumber);
     }
