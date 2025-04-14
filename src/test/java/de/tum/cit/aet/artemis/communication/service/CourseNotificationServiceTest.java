@@ -40,6 +40,7 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationPa
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
@@ -86,6 +87,7 @@ class CourseNotificationServiceTest {
 
     @Test
     void shouldSendNotificationsToAllChannelsWhenMultipleChannelsSupported() {
+        when(featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)).thenReturn(true);
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         List<User> allRecipients = List.of(createTestUser(1L), createTestUser(2L));
         List<User> webappRecipients = List.of(createTestUser(1L));
@@ -109,6 +111,7 @@ class CourseNotificationServiceTest {
 
     @Test
     void shouldCreateCourseNotificationWhenSending() {
+        when(featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)).thenReturn(true);
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 

@@ -238,6 +238,8 @@ public class ConversationMessagingService extends PostingService {
                     post.getAuthor().getId(), post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
 
             this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+
+            conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         }
     }
 

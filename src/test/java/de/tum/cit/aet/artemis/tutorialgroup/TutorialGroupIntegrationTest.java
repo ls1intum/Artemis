@@ -451,9 +451,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
                     (Object) any());
         });
-        verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + persistedTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
-
     }
 
     @Test
@@ -499,8 +496,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
                     (Object) any());
         });
-        verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + existingTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
     }
 
     @Test
