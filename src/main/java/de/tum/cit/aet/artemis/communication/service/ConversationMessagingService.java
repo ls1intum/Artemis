@@ -185,9 +185,10 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      broadcastForPost DONE");
         }
 
+        var post = createdConversationMessage.messageWithHiddenDetails();
+        var author = post.getAuthor();
+
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var post = createdConversationMessage.messageWithHiddenDetails();
-            var author = post.getAuthor();
             String channelType = switch (conversation) {
                 case OneToOneChat ignored -> "oneToOneChat";
                 case GroupChat ignored -> "groupChat";
@@ -238,9 +239,9 @@ public class ConversationMessagingService extends PostingService {
                     post.getAuthor().getId(), post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
 
             this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
-
-            conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         }
+
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
     }
 
     /**
