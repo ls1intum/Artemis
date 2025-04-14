@@ -54,7 +54,6 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 
 function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerComponent, pointsAwarded: number, scoreExpected: number) {
     comp.unreferencedFeedback.push({
