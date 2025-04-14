@@ -283,9 +283,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void triggerBuildForParticipationsInstructorEmpty() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
-        String login1 = TEST_PREFIX + "student1";
-        String login2 = TEST_PREFIX + "student2";
-        String login3 = TEST_PREFIX + "student3";
+        String login1 = TEST_PREFIX + "student2";
+        String login2 = TEST_PREFIX + "student3";
+        String login3 = TEST_PREFIX + "student4";
         ProgrammingExerciseStudentParticipation participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login1);
         participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login2);
         ProgrammingExerciseStudentParticipation participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login3);
