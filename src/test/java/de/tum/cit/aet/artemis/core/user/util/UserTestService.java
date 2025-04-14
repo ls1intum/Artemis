@@ -120,7 +120,7 @@ public class UserTestService {
     private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private LearnerProfileRepository learnerProfileRepository;
+    private Optional<LearnerProfileRepository> learnerProfileRepository;
 
     @Autowired
     private ExerciseTestRepository exerciseTestRepository;
@@ -420,7 +420,9 @@ public class UserTestService {
         assertThat(student).as("New user is equal to request response").isEqualTo(response);
         assertThat(student).as("New user is equal to new user in DB").isEqualTo(userInDB);
 
-        assertThat(learnerProfileRepository.findByUser(student)).isNotEmpty();
+        learnerProfileRepository.ifPresent((repository) -> {
+            assertThat(repository.findByUser(student)).isNotEmpty();
+        });
 
         return userInDB;
     }
