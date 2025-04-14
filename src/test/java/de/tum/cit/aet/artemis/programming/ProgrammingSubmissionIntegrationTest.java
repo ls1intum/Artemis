@@ -605,11 +605,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
-        // TODO Michal Kawka we might need to set up a submission here
-        var result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
-                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, true, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
