@@ -51,7 +51,14 @@ public interface SolutionProgrammingExerciseParticipationRepository
         return getValueElseThrow(findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId));
     }
 
-    @EntityGraph(type = LOAD, attributePaths = { "submissions", "submissions.results", "submissions.results.feedbacks", "submissions.results.feedbacks.testCase" })
+    @Query("""
+            SELECT p FROM SolutionProgrammingExerciseParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
+            LEFT JOIN FETCH r.feedbacks f
+            LEFT JOIN FETCH f.testCase
+            WHERE p.programmingExercise.id = :exerciseId
+            """)
     Optional<SolutionProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndTestCasesAndSubmissionsByProgrammingExerciseId(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
