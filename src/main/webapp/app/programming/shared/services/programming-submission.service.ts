@@ -107,13 +107,10 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
     private currentExpectedQueueEstimate = this.DEFAULT_EXPECTED_QUEUE_ESTIMATE;
 
     private startedProcessingCache: Map<string, BuildTimingInfo> = new Map<string, BuildTimingInfo>();
-    private isLocalCIProfile?: boolean = undefined;
-    private profileServiceSubscription: Subscription;
+    isLocalCIEnabled = true;
 
     constructor() {
-        this.profileServiceSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.setLocalCIProfile(!!profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
-        });
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     ngOnDestroy(): void {
@@ -122,7 +119,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
         Object.values(this.queueEstimateTimerSubscriptions).forEach((sub) => sub.unsubscribe());
         this.submissionTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
         this.submissionProcessingTopicsSubscribed.forEach((topic) => this.websocketService.unsubscribe(topic));
-        this.profileServiceSubscription.unsubscribe();
     }
 
     get exerciseBuildState() {
@@ -267,7 +263,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                             const submissionParticipationId = programmingSubmission.participation!.id!;
                             let buildTimingInfo: BuildTimingInfo | undefined = undefined;
 
-                            if (this.isLocalCIProfile) {
+                            if (this.isLocalCIEnabled) {
                                 const isSubmissionQueued = this.handleQueuedProgrammingSubmissions(programmingSubmission, submissionParticipationId);
                                 if (isSubmissionQueued) {
                                     return;
@@ -708,14 +704,14 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
             // The new submission would then override the current latest pending submission.
             tap(() => {
                 this.setupWebsocketSubscriptionForLatestPendingSubmission(participationId, exerciseId, personal);
-                if (this.isLocalCIProfile) {
+                if (this.isLocalCIEnabled) {
                     this.setupWebsocketSubscriptionForSubmissionProcessing(participationId, exerciseId, personal);
                 }
             }),
             // Find out in what state the latest submission is (pending / failed). If the submission is pending, start the result timer.
             map((submission: ProgrammingSubmission | undefined) => {
                 if (submission) {
-                    if (this.isLocalCIProfile && submission.isProcessing === false && !this.didSubmissionStartProcessing(submission.commitHash!)) {
+                    if (this.isLocalCIEnabled && submission.isProcessing === false && !this.didSubmissionStartProcessing(submission.commitHash!)) {
                         const queueRemainingTime = this.getExpectedRemainingTimeForQueue(submission);
                         if (queueRemainingTime > 0) {
                             this.emitQueuedSubmission(participationId, exerciseId, submission);
@@ -897,20 +893,5 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
                 this.websocketService.unsubscribe(submissionProcessingTopic);
             }
         }
-    }
-
-    /**
-     * Set the local CI profile to determine which build system is used. Used to set the state in tests.
-     * @param isLocalCIProfile
-     */
-    public setLocalCIProfile(isLocalCIProfile: boolean) {
-        this.isLocalCIProfile = isLocalCIProfile;
-    }
-
-    /**
-     * Get the local CI profile to determine which build system is used.
-     */
-    public getIsLocalCIProfile() {
-        return this.isLocalCIProfile;
     }
 }

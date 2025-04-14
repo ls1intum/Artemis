@@ -1,5 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
@@ -8,7 +10,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -19,13 +20,12 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
-import { faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -98,9 +98,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
     private resultService = inject(ResultService);
-    private profileService = inject(ProfileService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
 
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
@@ -140,17 +140,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     participationsPerFilter: Map<FilterProp, number> = new Map();
 
     isLoading: boolean;
-
     afterDueDate = false;
 
-    localVCEnabled = true;
+    localCIEnabled = true;
 
     // Icons
     faDownload = faDownload;
     faSync = faSync;
     faFolderOpen = faFolderOpen;
     faListAlt = faListAlt;
-    faCodeBranch = faCodeBranch;
     farFileCode = faFileCode;
     faFilter = faFilter;
     faComment = faComment;
@@ -159,6 +157,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Fetches the course and exercise from the server
      */
     ngOnInit() {
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
         this.paramSub = this.route.params.subscribe((params) => {
             this.isLoading = true;
             const findCourse = this.courseService.find(params['courseId']);
@@ -229,14 +228,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = this.exercise as ProgrammingExercise;
-            if (programmingExercise.projectKey) {
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                });
-            }
-        }
 
         for (const filter of Object.values(FilterProp)) {
             if (this.isFilterRelevantForConfiguration(filter)) {
@@ -333,12 +324,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 const { participantName } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
-                        rows.push('data:text/csv;charset=utf-8,Team Name,Team Short Name,Students');
+                        rows.push('Team Name,Team Short Name,Students');
                     }
                     const { name, shortName, students } = studentParticipation.team;
                     rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
                 } else {
-                    rows.push(index === 0 ? `data:text/csv;charset=utf-8,${participantName}` : participantName!);
+                    rows.push(participantName!);
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');

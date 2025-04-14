@@ -243,6 +243,76 @@
                 "content": "Feedback was requested in {{exerciseTitle}}.",
                 "settingsTitle": "Feedback requested"
             },
+            "duplicateTestCaseNotification": {
+                "title": "Test duplicate warning",
+                "content": "There is a duplicate test in {{exerciseTitle}}.",
+                "settingsTitle": "Test duplicate warning"
+            },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "New similarity",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New similarity"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "New plagiarism case",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "New plagiarism case"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build update",
+                "content": "There is a new update in a build in {{exerciseTitle}}.",
+                "settingsTitle": "Build update"
+            },
+            "programmingTestCasesChangedNotification": {
+                "title": "Test cases changed",
+                "content": "Test cases changed in {{exerciseTitle}}.",
+                "settingsTitle": "Test cases changed"
+            },
+            "plagiarismCaseVerdictNotification": {
+                "title": "Plagiarism verdict",
+                "content": "New plagiarism verdict in {{exerciseTitle}}.",
+                "settingsTitle": "Plagiarism verdict"
+            },
+            "channelDeletedNotification": {
+                "title": "Channel deleted",
+                "content": "{{channelName}} was deleted in {{courseTitle}}.",
+                "settingsTitle": "Channel deleted"
+            },
+            "addedToChannelNotification": {
+                "title": "Added to channel",
+                "content": "You were added to {{channelName}} in {{courseTitle}}.",
+                "settingsTitle": "Added to channel"
+            },
+            "removedFromChannelNotification": {
+                "title": "Removed from channel",
+                "content": "You were removed from {{channelName}} in {{courseTitle}}.",
+                "settingsTitle": "Removed from channel"
+            },
+            "tutorialGroupAssignedNotification": {
+                "title": "Tutorial assigned",
+                "content": "You were assigned to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial assigned"
+            },
+            "tutorialGroupUnassignedNotification": {
+                "title": "Tutorial unassigned",
+                "content": "You were unassigned from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial unassigned"
+            },
+            "registeredToTutorialGroupNotification": {
+                "title": "Tutorial registration",
+                "content": "You were registered to tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial registration"
+            },
+            "deregisteredFromTutorialGroupNotification": {
+                "title": "Tutorial deregistration",
+                "content": "You were deregistered from tutorial group {{groupTitle}}.",
+                "settingsTitle": "Tutorial deregistration"
+            },
+            "tutorialGroupDeletedNotification": {
+                "title": "Tutorial deleted",
+                "content": "Tutorial group {{groupTitle}} was deleted.",
+                "settingsTitle": "Tutorial deleted"
+            },
             "temporal": {
                 "now": "Now",
                 "oneHourAgo": "1 hour ago.",

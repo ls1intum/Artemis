@@ -3,14 +3,14 @@ import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { SettingsComponent } from 'app/core/account/settings/settings.component';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { User } from 'app/core/user/user.model';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { HttpResponse } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SettingsComponent', () => {
@@ -18,7 +18,6 @@ describe('SettingsComponent', () => {
 
     const accountValues: User = {
         internal: true,
-        guidedTourSettings: [],
         name: 'John Doe',
         firstName: 'John',
         lastName: 'Doe',

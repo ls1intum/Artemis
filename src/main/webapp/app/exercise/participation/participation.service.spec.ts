@@ -7,11 +7,11 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -79,17 +79,6 @@ describe('Participation Service', () => {
         tick();
     }));
 
-    it('should delete for guided tour', fakeAsync(() => {
-        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok).toBeTrue());
-        let request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys()).toHaveLength(0);
-
-        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok).toBeTrue());
-        request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys()).toHaveLength(1);
-        expect(request.request.params.get('a')).toBe('param');
-    }));
-
     it('should cleanup build plan', fakeAsync(() => {
         service.cleanupBuildPlan(participationDefault).subscribe((resp) => expect(resp).toMatchObject(participationDefault));
         httpMock.expectOne({ method: 'PUT' });
@@ -101,7 +90,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUri: 'repo-url',
             buildPlanId: 'build-plan-id',
-            student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
+            student: { id: 1, login: 'student1', internal: true },
             team: { id: 1, name: 'team1' },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
@@ -112,7 +101,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
-            student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
+            student: { id: 2, login: 'student2', internal: true },
             results: [{ id: 1 }, { id: 2 }],
             submissions: [{ id: 2 }, { id: 3 }],
         };
@@ -133,7 +122,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUri: 'repo-url',
             buildPlanId: 'build-plan-id',
-            student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
+            student: { id: 1, login: 'student1', internal: true },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
             testRun: true,
@@ -144,7 +133,7 @@ describe('Participation Service', () => {
             type: ParticipationType.PROGRAMMING,
             repositoryUri: 'repo-url-1',
             buildPlanId: 'build-plan-id-1',
-            student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
+            student: { id: 2, login: 'student2', internal: true },
             results: [{ id: 1 }, { id: 2 }],
             submissions: [{ id: 2 }, { id: 3 }],
         };
@@ -159,7 +148,7 @@ describe('Participation Service', () => {
         const participation1: StudentParticipation = {
             id: 1,
             type: ParticipationType.STUDENT,
-            student: { id: 1, login: 'student1', guidedTourSettings: [], internal: true },
+            student: { id: 1, login: 'student1', internal: true },
             results: [{ id: 3 }],
             submissions: [{ id: 1 }],
         };
@@ -167,7 +156,7 @@ describe('Participation Service', () => {
         const participation2: StudentParticipation = {
             id: 2,
             type: ParticipationType.STUDENT,
-            student: { id: 2, login: 'student2', guidedTourSettings: [], internal: true },
+            student: { id: 2, login: 'student2', internal: true },
             results: [{ id: 1 }, { id: 2 }],
             submissions: [{ id: 2 }, { id: 3 }],
         };

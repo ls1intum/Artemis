@@ -173,29 +173,25 @@ export class CourseUpdateComponent implements OnInit {
             }
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                if (!profileInfo.inProduction) {
-                    // developers may want to customize the groups
-                    this.customizeGroupNames = true;
-                    if (!this.course.studentGroupName) {
-                        this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-                    }
-                    if (!this.course.teachingAssistantGroupName) {
-                        this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-                    }
-                    if (!this.course.editorGroupName) {
-                        this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-                    }
-                    if (!this.course.instructorGroupName) {
-                        this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
-                    }
-                }
-                this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
-                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
-                this.isAthenaEnabled = profileInfo.activeProfiles.includes(PROFILE_ATHENA);
+        if (!this.profileService.isProduction()) {
+            // developers may want to customize the groups
+            this.customizeGroupNames = true;
+            if (!this.course.studentGroupName) {
+                this.course.studentGroupName = DEFAULT_CUSTOM_GROUP_NAME;
             }
-        });
+            if (!this.course.teachingAssistantGroupName) {
+                this.course.teachingAssistantGroupName = DEFAULT_CUSTOM_GROUP_NAME;
+            }
+            if (!this.course.editorGroupName) {
+                this.course.editorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
+            }
+            if (!this.course.instructorGroupName) {
+                this.course.instructorGroupName = DEFAULT_CUSTOM_GROUP_NAME;
+            }
+        }
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.communicationEnabled = isCommunicationEnabled(this.course);
         this.messagingEnabled = isMessagingEnabled(this.course);

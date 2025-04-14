@@ -1,19 +1,19 @@
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
-import { MockWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ChangeDetectorRef, Component } from '@angular/core';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
-import { MockUserSettingsService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-user-settings.service';
+import { MockUserSettingsService } from 'test/helpers/mocks/service/mock-user-settings.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { UserSettingsDirective } from 'app/core/user/settings/directive/user-settings.directive';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
@@ -34,7 +34,6 @@ describe('User Settings Directive', () => {
     let fixture: ComponentFixture<UserSettingsMockComponent>;
 
     let userSettingsService: UserSettingsService;
-    let httpMock: HttpTestingController;
     let changeDetector: ChangeDetectorRef;
 
     const router = new MockRouter();
@@ -71,13 +70,8 @@ describe('User Settings Directive', () => {
                 comp.userSettingsCategory = UserSettingsCategory.NOTIFICATION_SETTINGS;
                 userSettingsService = TestBed.inject(UserSettingsService);
                 alertService = TestBed.inject(AlertService);
-                httpMock = TestBed.inject(HttpTestingController);
                 changeDetector = fixture.debugElement.injector.get(ChangeDetectorRef);
             });
-    });
-
-    afterEach(() => {
-        httpMock.verify();
     });
 
     describe('Service methods with Category Notification Settings', () => {

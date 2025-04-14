@@ -4,10 +4,10 @@ import { PagingService } from 'app/exercise/services/paging.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Observable, of } from 'rxjs';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 import { Column } from 'app/shared/import/import.component';
 
