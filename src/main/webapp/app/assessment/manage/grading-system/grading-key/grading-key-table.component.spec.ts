@@ -5,13 +5,13 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { Bonus } from 'app/assessment/shared/entities/bonus.model';
@@ -92,8 +92,8 @@ describe('GradingKeyTableComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(GradingKeyTableComponent);
                 comp = fixture.componentInstance;
-                gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
-                bonusService = fixture.debugElement.injector.get(BonusService);
+                gradingSystemService = TestBed.inject(GradingSystemService);
+                bonusService = TestBed.inject(BonusService);
             });
     });
 
@@ -177,7 +177,7 @@ describe('GradingKeyTableComponent', () => {
         const courseId = route.parent!.parent!.snapshot!.params.courseId;
         const reachablePoints = 200;
 
-        const scoresStorageService = fixture.debugElement.injector.get(ScoresStorageService);
+        const scoresStorageService = TestBed.inject(ScoresStorageService);
         const getStoredScoresStub = jest.spyOn(scoresStorageService, 'getStoredTotalScores').mockReturnValue(new CourseScores(250, 200, 0, new StudentScores()));
         const gradingSystemServiceSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
 

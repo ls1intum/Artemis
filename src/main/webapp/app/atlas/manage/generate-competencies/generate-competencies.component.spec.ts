@@ -29,8 +29,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseDescriptionFormStubComponent } from 'test/helpers/stubs/atlas/course-description-form-stub.component';
 
 describe('GenerateCompetenciesComponent', () => {
-    let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
-    let generateCompetenciesComponent: GenerateCompetenciesComponent;
+    let fixture: ComponentFixture<GenerateCompetenciesComponent>;
+    let comp: GenerateCompetenciesComponent;
     let mockWebSocketSubject: Subject<any>;
 
     beforeEach(() => {
@@ -49,10 +49,7 @@ describe('GenerateCompetenciesComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: new MockActivatedRoute({ courseId: 1 }),
-                },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({ courseId: 1 }) },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: WebsocketService,
@@ -74,8 +71,8 @@ describe('GenerateCompetenciesComponent', () => {
             .overrideProvider(NgbModal, { useValue: new MockNgbModalService() })
             .compileComponents()
             .then(() => {
-                generateCompetenciesComponentFixture = TestBed.createComponent(GenerateCompetenciesComponent);
-                generateCompetenciesComponent = generateCompetenciesComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(GenerateCompetenciesComponent);
+                comp = fixture.componentInstance;
             });
     });
 
@@ -84,29 +81,25 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should initialize', () => {
-        generateCompetenciesComponentFixture.detectChanges();
-        expect(generateCompetenciesComponent).toBeDefined();
+        fixture.detectChanges();
+        expect(comp).toBeDefined();
     });
 
     it('should handle description submit', () => {
-        generateCompetenciesComponentFixture.detectChanges();
-        const getCompetencyRecommendationsSpy = jest.spyOn(generateCompetenciesComponent, 'getCompetencyRecommendations').mockReturnValue();
+        fixture.detectChanges();
+        const getCompetencyRecommendationsSpy = jest.spyOn(comp, 'getCompetencyRecommendations').mockReturnValue();
 
-        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
-            By.directive(CourseDescriptionFormComponent),
-        ).componentInstance;
+        const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
         courseDescriptionComponent.formSubmitted.emit('');
 
         expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
     });
 
     it('should initialize the form with the course description', fakeAsync(() => {
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
         const courseDescription = 'Course Description';
 
-        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
-            By.directive(CourseDescriptionFormComponent),
-        ).componentInstance;
+        const courseDescriptionComponent: CourseDescriptionFormComponent = fixture.debugElement.query(By.directive(CourseDescriptionFormComponent)).componentInstance;
         const setCourseDescriptionSpy = jest.spyOn(courseDescriptionComponent, 'setCourseDescription');
 
         // mock the course returned by CourseManagementService
@@ -114,7 +107,7 @@ describe('GenerateCompetenciesComponent', () => {
         const courseManagementService = TestBed.inject(CourseManagementService);
         const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
 
-        generateCompetenciesComponent.ngOnInit();
+        comp.ngOnInit();
         tick();
 
         expect(getCourseSpy).toHaveBeenCalledOnce();
@@ -122,7 +115,7 @@ describe('GenerateCompetenciesComponent', () => {
     }));
 
     it('should add competency recommendations', () => {
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
         const courseDescription = 'Course Description';
         const response = new HttpResponse({
             body: null,
@@ -132,38 +125,38 @@ describe('GenerateCompetenciesComponent', () => {
         const getSpy = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         //expect no recommendations to exist at the start
-        expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
-        expect(generateCompetenciesComponent.competencies.value).toHaveLength(0);
+        expect(fixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(0);
+        expect(comp.competencies.value).toHaveLength(0);
 
-        generateCompetenciesComponent.getCompetencyRecommendations(courseDescription);
+        comp.getCompetencyRecommendations(courseDescription);
         const websocketMessage = {
             stages: [{ state: IrisStageStateDTO.DONE }],
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
         };
         mockWebSocketSubject.next(websocketMessage);
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
-        expect(generateCompetenciesComponent.competencies.value).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
+        expect(comp.competencies.value).toHaveLength(1);
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
     it('should open modal to remove competency recommendations', () => {
-        const modalService: NgbModal = TestBed.inject(NgbModal);
+        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
-        generateCompetenciesComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
         expect(openSpy).not.toHaveBeenCalled();
 
-        generateCompetenciesComponent.onDelete(0);
+        comp.onDelete(0);
 
         expect(openSpy).toHaveBeenCalled();
     });
 
     it('should cancel', () => {
-        generateCompetenciesComponentFixture.detectChanges();
-        const router: Router = TestBed.inject(Router);
+        fixture.detectChanges();
+        const router = fixture.debugElement.injector.get<Router>(Router);
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const cancelButton = generateCompetenciesComponentFixture.debugElement.nativeElement.querySelector('#cancelButton > .jhi-btn');
+        const cancelButton = fixture.debugElement.nativeElement.querySelector('#cancelButton > .jhi-btn');
 
         cancelButton.click();
 
@@ -171,41 +164,40 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should deactivate correctly', () => {
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        expect(generateCompetenciesComponent.canDeactivate()).toBeTrue();
+        expect(comp.canDeactivate()).toBeTrue();
 
-        generateCompetenciesComponent.isLoading = true;
-        expect(generateCompetenciesComponent.canDeactivate()).toBeFalse();
+        comp.isLoading = true;
+        expect(comp.canDeactivate()).toBeFalse();
 
-        generateCompetenciesComponent.submitted = true;
-        expect(generateCompetenciesComponent.canDeactivate()).toBeTrue();
+        comp.submitted = true;
+        expect(comp.canDeactivate()).toBeTrue();
     });
 
-    it('should not submit for unviewed recommendations', () => {
-        generateCompetenciesComponentFixture.detectChanges();
-        const modalService: NgbModal = TestBed.inject(NgbModal);
+    it('should not submit for unviewed recommendations', async () => {
+        fixture.detectChanges();
+        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
-        const saveSpy = jest.spyOn(generateCompetenciesComponent, 'save');
+        const saveSpy = jest.spyOn(comp, 'save');
 
         //create competency recomendations that are UNVIEWED
-        generateCompetenciesComponent.competencies.push(createCompetencyFormGroup());
-        const saveButton = generateCompetenciesComponentFixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
+        comp.competencies.push(createCompetencyFormGroup());
+        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
         saveButton.click();
 
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        return generateCompetenciesComponentFixture.whenStable().then(() => {
-            expect(openSpy).toHaveBeenCalledOnce();
-            expect(saveSpy).not.toHaveBeenCalled();
-        });
+        await fixture.whenStable();
+        expect(openSpy).toHaveBeenCalledOnce();
+        expect(saveSpy).not.toHaveBeenCalled();
     });
 
-    it('should submit', () => {
-        generateCompetenciesComponentFixture.detectChanges();
-        const router: Router = TestBed.inject(Router);
-        const modalService: NgbModal = TestBed.inject(NgbModal);
-        const competencyService: CompetencyService = TestBed.inject(CompetencyService);
+    it('should submit', async () => {
+        fixture.detectChanges();
+        const router = TestBed.inject(Router);
+        const modalService = fixture.debugElement.injector.get<NgbModal>(NgbModal);
+        const competencyService = TestBed.inject(CompetencyService);
 
         const navigateSpy = jest.spyOn(router, 'navigate');
         const openSpy = jest.spyOn(modalService, 'open');
@@ -216,17 +208,16 @@ describe('GenerateCompetenciesComponent', () => {
         const createBulkSpy = jest.spyOn(competencyService, 'createBulk').mockReturnValue(of(response));
 
         //create competency recomendations that are VIEWED
-        generateCompetenciesComponent.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
-        const saveButton = generateCompetenciesComponentFixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
+        comp.competencies.push(createCompetencyFormGroup('Title', 'Description', CompetencyTaxonomy.ANALYZE, true));
+        const saveButton = fixture.debugElement.nativeElement.querySelector('#saveButton > .jhi-btn');
         saveButton.click();
 
-        generateCompetenciesComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        return generateCompetenciesComponentFixture.whenStable().then(() => {
-            expect(openSpy).not.toHaveBeenCalled();
-            expect(createBulkSpy).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledOnce();
-        });
+        await fixture.whenStable();
+        expect(openSpy).not.toHaveBeenCalled();
+        expect(createBulkSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
     it('should display alerts after generating', () => {
@@ -239,7 +230,7 @@ describe('GenerateCompetenciesComponent', () => {
         const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
         const successMock = jest.spyOn(alertService, 'success');
-        generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
+        comp.getCompetencyRecommendations('Cool course description');
         const websocketMessage = {
             stages: [{ state: IrisStageStateDTO.DONE }],
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
@@ -249,7 +240,7 @@ describe('GenerateCompetenciesComponent', () => {
         expect(generateCompetenciesMock).toHaveBeenCalledOnce();
 
         const warnMock = jest.spyOn(alertService, 'warning');
-        generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
+        comp.getCompetencyRecommendations('Cool course description');
         const errorMessage = {
             stages: [{ state: IrisStageStateDTO.ERROR }],
             result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
@@ -259,8 +250,8 @@ describe('GenerateCompetenciesComponent', () => {
     });
 
     it('should not deactivate when loading', () => {
-        generateCompetenciesComponent.isLoading = true;
-        const canDeactivate = generateCompetenciesComponent.canDeactivate();
+        comp.isLoading = true;
+        const canDeactivate = comp.canDeactivate();
         expect(canDeactivate).toBeFalse();
     });
 

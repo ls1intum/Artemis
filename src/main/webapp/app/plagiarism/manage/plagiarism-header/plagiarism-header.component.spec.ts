@@ -2,14 +2,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { TranslateService } from '@ngx-translate/core';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Observable, Subject, of } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismComparison';
 import { PlagiarismStatus } from 'app/plagiarism/shared/entities/PlagiarismStatus';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -79,7 +79,7 @@ describe('Plagiarism Header Component', () => {
 
     it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
         jest.spyOn(comp, 'updatePlagiarismStatus');
-        const modalSpy = jest.spyOn(fixture.debugElement.injector.get(NgbModal), 'open');
+        const modalSpy = jest.spyOn(TestBed.inject(NgbModal), 'open');
 
         comp.comparison.status = PlagiarismStatus.CONFIRMED;
 

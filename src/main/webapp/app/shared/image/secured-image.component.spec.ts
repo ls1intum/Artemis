@@ -1,20 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
-import { MockCacheableImageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-cacheable-image.service';
-import { triggerChanges } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockCacheableImageService } from 'test/helpers/mocks/service/mock-cacheable-image.service';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { CachingStrategy, ImageLoadingStatus, SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { CacheableImageService } from 'app/shared/image/cacheable-image.service';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('SecuredImageComponent', () => {
     let comp: SecuredImageComponent;
     let fixture: ComponentFixture<SecuredImageComponent>;
-    let debugElement: DebugElement;
     let cacheableImageService: CacheableImageService;
 
     let loadCachedLocalStorageStub: jest.SpyInstance;
@@ -42,9 +40,8 @@ describe('SecuredImageComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(SecuredImageComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
 
-                cacheableImageService = debugElement.injector.get(CacheableImageService);
+                cacheableImageService = TestBed.inject(CacheableImageService);
 
                 loadCachedLocalStorageStub = jest.spyOn(cacheableImageService, 'loadCachedLocalStorage');
                 loadCachedSessionStorageStub = jest.spyOn(cacheableImageService, 'loadCachedSessionStorage');

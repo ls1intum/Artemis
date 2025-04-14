@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -23,10 +25,10 @@ import { User } from 'app/core/user/user.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentDashboardComponent } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard.component';
 import { TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
@@ -137,6 +139,7 @@ describe('AssessmentDashboardInformationComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(AlertService),
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -147,7 +150,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 comp = fixture.componentInstance;
 
                 courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-
                 examManagementService = TestBed.inject(ExamManagementService);
                 exerciseService = TestBed.inject(ExerciseService);
                 sortService = TestBed.inject(SortService);
@@ -203,7 +205,6 @@ describe('AssessmentDashboardInformationComponent', () => {
         } as any as ActivatedRoute;
         const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
         activatedRoute.snapshot = newRoute.snapshot;
-        TestBed.inject(ActivatedRoute);
 
         comp.ngOnInit();
         tick();

@@ -16,19 +16,18 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { of } from 'rxjs';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {
@@ -43,9 +42,6 @@ describe('CourseLectures', () => {
     let lecture1: Lecture;
     let lecture2: Lecture;
     let lecture3: Lecture;
-    let profileService: ProfileService;
-
-    let getProfileInfoMock: jest.SpyInstance;
 
     beforeEach(() => {
         course = new Course();
@@ -118,13 +114,6 @@ describe('CourseLectures', () => {
             .then(() => {
                 courseLecturesComponentFixture = TestBed.createComponent(CourseLecturesComponent);
                 courseLecturesComponent = courseLecturesComponentFixture.componentInstance;
-
-                // mock profileService
-                profileService = courseLecturesComponentFixture.debugElement.injector.get(ProfileService);
-                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as ProfileInfo;
-                const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoMock.mockReturnValue(profileInfoSubject);
             });
     });
 

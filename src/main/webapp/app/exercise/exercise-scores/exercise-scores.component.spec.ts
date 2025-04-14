@@ -21,12 +21,12 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { Range } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { Subscription, of } from 'rxjs';
-import { MockCourseManagementService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
-import { MockExerciseService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
-import { MockParticipationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-participation.service';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockProgrammingSubmissionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-submission.service';
-import { MockResultService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 
 describe('Exercise Scores Component', () => {
     let component: ExerciseScoresComponent;
@@ -56,13 +56,11 @@ describe('Exercise Scores Component', () => {
                 login: 'login1',
                 name: 'name1',
                 internal: true,
-                guidedTourSettings: [],
             },
             {
                 login: 'login2',
                 name: 'name2',
                 internal: true,
-                guidedTourSettings: [],
             },
         ],
     };
@@ -303,7 +301,6 @@ describe('Exercise Scores Component', () => {
             login: 'login',
             name: 'name',
             internal: true,
-            guidedTourSettings: [],
         };
 
         expect(component.searchParticipationFormatter(participation)).toBe('login (name)');

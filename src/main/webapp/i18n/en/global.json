@@ -118,11 +118,7 @@
                 "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings",
-            "guidedTutorial": "Guided tutorial",
-            "startTutorial": "Start tutorial",
-            "restartTutorial": "Restart tutorial",
-            "continueTutorial": "Continue tutorial"
+            "settings": "Settings"
         },
         "form": {
             "username": "Login or email",
