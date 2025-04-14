@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
-
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,9 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
-import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
-import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -25,8 +21,9 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 /**
  * Service that dynamically schedules tasks to unhide slides at their expiration time.
  */
-@Profile(PROFILE_SCHEDULING)
-@Service
+// TODO: currently disabled because of a misconfiguration, scheduling must be independent of secondary nodes
+// @Profile(PROFILE_SCHEDULING)
+// @Service
 public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {
 
     private final SlideRepository slideRepository;
