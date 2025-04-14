@@ -12,6 +12,7 @@ import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleName;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.simpleNameContaining;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
 import static com.tngtech.archunit.core.domain.JavaCodeUnit.Predicates.constructor;
+import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predicates.annotatedWith;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
 import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.nameMatching;
 import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
@@ -21,6 +22,7 @@ import static com.tngtech.archunit.lang.conditions.ArchPredicates.are;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.have;
 import static com.tngtech.archunit.lang.conditions.ArchPredicates.is;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.constructors;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.members;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
@@ -69,6 +71,7 @@ import com.tngtech.archunit.core.domain.JavaAnnotation;
 import com.tngtech.archunit.core.domain.JavaCall;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaConstructor;
 import com.tngtech.archunit.core.domain.JavaEnumConstant;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.domain.properties.HasAnnotations;
@@ -436,6 +439,56 @@ class ArchitectureTest extends AbstractArchitectureTest {
 
     private static DescribedPredicate<JavaCall<?>> callMethod(Class<?> owner, String methodName) {
         return JavaCall.Predicates.target(owner(type(owner))).and(JavaCall.Predicates.target(name(methodName)));
+    }
+
+    @Test
+    void testUsageOfSchedulingClasses() {
+        // Classes that are not itself part of the scheduling profile
+        // should use classes with scheduling profile annotation only in an optional context.
+        // We check this using constructors (field injection) since otherwise usages of the optional itself would be detected
+        constructors().that().areDeclaredInClassesThat(and(annotatedWith(Profile.class), not(classWithSchedulingProfile()))).should(correclyUseSchedulingParameters())
+                .check(productionClasses);
+    }
+
+    private DescribedPredicate<JavaClass> classWithSchedulingProfile() {
+        return new DescribedPredicate<JavaClass>("have scheduling profile") {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                var profiles = getProfiles(javaClass);
+                for (int i = 0; i < profiles.length; i++) {
+                    String profile = profiles[i];
+                    if (profile.contains("scheduling") && !profile.contains("!scheduling")) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        };
+    }
+
+    private String[] getProfiles(JavaClass javaClass) {
+        if (!javaClass.isAnnotatedWith(Profile.class)) {
+            return new String[0];
+        }
+        Profile profile = javaClass.getAnnotationOfType(Profile.class);
+        return profile.value();
+    }
+
+    private ArchCondition<JavaConstructor> correclyUseSchedulingParameters() {
+        return new ArchCondition<>("correctly wrap scheduling dependencies in optionals") {
+
+            @Override
+            public void check(JavaConstructor item, ConditionEvents events) {
+                var parameters = item.getParameters();
+                for (var parameter : parameters) {
+                    if (classWithSchedulingProfile().test(parameter.getRawType())) {
+                        events.add(violated(parameter,
+                                String.format("Class %s uses class %s without wrapping it with Optionals.", parameter.getOwner().getFullName(), parameter.getType().getName())));
+                    }
+                }
+            }
+        };
     }
 
 }
