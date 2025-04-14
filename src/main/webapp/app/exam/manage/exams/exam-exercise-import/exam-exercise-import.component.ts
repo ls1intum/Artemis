@@ -1,15 +1,17 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { EXERCISE_TITLE_NAME_REGEX, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge.component';
+import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -18,6 +20,8 @@ import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficul
     imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
 })
 export class ExamExerciseImportComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     exam = input.required<Exam>();
     importInSameCourse = input(false);
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
@@ -46,9 +50,13 @@ export class ExamExerciseImportComponent implements OnInit {
     faCheckDouble = faCheckDouble;
     faFont = faFont;
 
+    textExerciseEnabled = false;
+
     getExerciseIcon = getIcon;
 
     ngOnInit(): void {
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
+
         this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
         // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
         if (this.importInSameCourse()) {
@@ -85,7 +93,7 @@ export class ExamExerciseImportComponent implements OnInit {
     initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
         // Initialize selectedExercises
         this.exam().exerciseGroups?.forEach((exerciseGroup) => {
-            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises));
+            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises?.filter((exercise) => this.isExerciseTypeEnabled(exercise.type))));
         });
         const duplicated = new Set<string>();
         // Initialize containsProgrammingExercises
@@ -132,6 +140,10 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exerciseGroup The exercise group for which the user selected an exercise to import
      */
     onSelectExercise(exercise: Exercise, exerciseGroup: ExerciseGroup) {
+        if (!this.isExerciseTypeEnabled(exercise.type)) {
+            return;
+        }
+
         if (this.selectedExercises!.get(exerciseGroup)!.has(exercise)) {
             // Case Exercise is already selected -> delete
             this.selectedExercises!.get(exerciseGroup)!.delete(exercise);
@@ -317,5 +329,9 @@ export class ExamExerciseImportComponent implements OnInit {
             }
         });
         return validConfiguration;
+    }
+
+    protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
+        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
     }
 }

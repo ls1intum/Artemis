@@ -14,7 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { PostingDirective } from 'app/communication/posting.directive';
+import { PostingDirective } from 'app/communication/directive/posting.directive';
 import dayjs from 'dayjs/esm';
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
@@ -29,8 +29,8 @@ import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
-import { Course } from 'app/core/shared/entities/course.model';
-import { PostingContentComponent } from 'app/communication/posting-content.components';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

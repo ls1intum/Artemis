@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -362,30 +364,19 @@ public class ConversationMessagingService extends PostingService {
      * @return page of posts that match the given context
      */
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
-        conversationService.isMemberOrCreateForCourseWideElseThrow(postContextFilter.conversationId(), requestingUser, Optional.of(ZonedDateTime.now()));
+        List<Long> conversationIds = Arrays.stream(postContextFilter.conversationIds()).boxed().collect(Collectors.toCollection(ArrayList::new));
+        conversationParticipantRepository.userHasAccessToAllConversationsElseThrow(conversationIds, requestingUser.getId(), courseId);
 
         Page<Post> conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable, requestingUser.getId());
         setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
 
-        // invoke async due to db write access to avoid that the client has to wait
-        conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), postContextFilter.conversationId(), ZonedDateTime.now());
+        // This check is needed to avoid resetting the unread count when searching
+        if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
+            Long conversationId = conversationIds.getFirst();
+            // invoke async due to db write access to avoid that the client has to wait
+            conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+        }
 
-        return conversationPosts;
-    }
-
-    /**
-     * Fetch messages from database by a list of course-wide channels.
-     *
-     * @param pageable          requested page and page size
-     * @param postContextFilter request object to fetch messages
-     * @param requestingUser    the user requesting messages in course-wide channels
-     * @param courseId          the id of the course the post belongs to
-     * @return page of posts that match the given context
-     */
-    public Page<Post> getCourseWideMessages(Pageable pageable, @Valid PostContextFilterDTO postContextFilter, User requestingUser, Long courseId) {
-        // The following query loads posts, answerPosts and reactions to avoid too many database calls (due to eager references)
-        Page<Post> conversationPosts = conversationMessageRepository.findCourseWideMessages(postContextFilter, pageable, requestingUser.getId());
-        setAuthorRoleOfPostings(conversationPosts.getContent(), courseId);
         return conversationPosts;
     }
 

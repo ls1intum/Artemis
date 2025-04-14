@@ -6,15 +6,15 @@ import { Subject, Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({

@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
-import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -68,8 +67,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     private Set<String> groups = new HashSet<>();
 
-    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
-
     private Set<Organization> organizations;
 
     private String vcsAccessToken;
@@ -85,13 +82,12 @@ public class UserDTO extends AuditingEntityDTO {
     public UserDTO(User user) {
         this(user.getId(), user.getLogin(), user.getName(), user.getFirstName(), user.getLastName(), user.getEmail(), user.getVisibleRegistrationNumber(), user.getActivated(),
                 user.getImageUrl(), user.getLangKey(), user.isInternal(), user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getGuidedTourSettings(), user.getOrganizations(),
-                user.getExternalLLMUsageAcceptedTimestamp());
+                user.getLastNotificationRead(), user.getAuthorities(), user.getGroups(), user.getOrganizations(), user.getExternalLLMUsageAcceptedTimestamp());
     }
 
     public UserDTO(Long id, String login, String name, String firstName, String lastName, String email, String visibleRegistrationNumber, boolean activated, String imageUrl,
             String langKey, boolean internal, String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate, ZonedDateTime lastNotificationRead,
-            Set<Authority> authorities, Set<String> groups, Set<GuidedTourSetting> guidedTourSettings, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
+            Set<Authority> authorities, Set<String> groups, Set<Organization> organizations, ZonedDateTime externalLLMUsageAccepted) {
 
         this.id = id;
         this.login = login;
@@ -113,7 +109,6 @@ public class UserDTO extends AuditingEntityDTO {
             this.authorities = authorities.stream().map(Authority::getName).collect(Collectors.toSet());
         }
         this.groups = groups;
-        this.guidedTourSettings = guidedTourSettings;
         this.organizations = organizations;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
     }
@@ -228,14 +223,6 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setOrganizations(Set<Organization> organizations) {
         this.organizations = organizations;
-    }
-
-    public Set<GuidedTourSetting> getGuidedTourSettings() {
-        return guidedTourSettings;
-    }
-
-    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
     }
 
     public String getVcsAccessToken() {

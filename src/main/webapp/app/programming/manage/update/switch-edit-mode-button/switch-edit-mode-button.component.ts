@@ -1,7 +1,7 @@
 import { Component, input, output } from '@angular/core';
 import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 
 @Component({
     selector: 'jhi-switch-edit-mode-button',

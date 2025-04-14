@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.timeout;
@@ -8,18 +9,24 @@ import static org.mockito.Mockito.verify;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
@@ -27,6 +34,12 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "grtest";
 
     private static final int NUMBER_OF_STUDENTS = 11;
+
+    @Autowired
+    private FeatureToggleService featureToggleService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
 
     @BeforeEach
     @Override
@@ -344,6 +357,53 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
         var conversation = groupChatRepository.findById(chat1.getId()).orElseThrow();
         conversationRepository.delete(conversation);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendAddedToChannelNotificationWhenRegisteringUsersToGroupChat() throws Exception {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        GroupChatDTO chat = createGroupChatWithStudent1To3();
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register",
+                List.of(testPrefix + "student4", testPrefix + "student5"), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasAddedToChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 19);
+
+            assertThat(hasAddedToChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(chat.getId());
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldSendRemovedFromChannelNotificationWhenUnregisteringUsersFromGroupChat() throws Exception {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        GroupChatDTO chat = createGroupChatWithStudent1To3();
+
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"),
+                HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasRemovedFromChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 20);
+
+            assertThat(hasRemovedFromChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(chat.getId());
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     private GroupChatDTO createGroupChatWithStudent1To3() throws Exception {

@@ -4,10 +4,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -74,6 +77,7 @@ public class LtiDeepLinkingService {
 
         List<LtiContentItem> contentItems = switch (type) {
             case EXERCISE -> populateExerciseContentItems(String.valueOf(courseId), unitIds);
+            case GROUPED_EXERCISE -> List.of(populateGroupedExerciseContentItem(String.valueOf(courseId), unitIds));
             case LECTURE -> populateLectureContentItems(String.valueOf(courseId), unitIds);
             case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
             case IRIS -> populateIrisContentItems(String.valueOf(courseId));
@@ -114,6 +118,11 @@ public class LtiDeepLinkingService {
         return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
     }
 
+    private LtiContentItem populateGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+        validateUnitIds(exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
+        return setGroupedExerciseContentItem(courseId, exerciseIds);
+    }
+
     /**
      * Populate content items for deep linking response with lectures.
      */
@@ -125,7 +134,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with competencies.
      */
-    List<LtiContentItem> populateCompetencyContentItems(String courseId) {
+    private List<LtiContentItem> populateCompetencyContentItems(String courseId) {
         Optional<Competency> competencyOpt = courseRepository.findWithEagerCompetenciesAndPrerequisitesById(Long.parseLong(courseId))
                 .flatMap(course -> course.getCompetencies().stream().findFirst());
         String launchUrl = buildContentUrl(courseId, "competencies");
@@ -136,7 +145,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with Iris.
      */
-    List<LtiContentItem> populateIrisContentItems(String courseId) {
+    private List<LtiContentItem> populateIrisContentItems(String courseId) {
         Optional<Course> courseOpt = courseRepository.findById(Long.parseLong(courseId));
         if (courseOpt.isPresent() && courseOpt.get().getStudentCourseAnalyticsDashboardEnabled()) {
             String launchUrl = buildContentUrl(courseId, "dashboard");
@@ -150,7 +159,7 @@ public class LtiDeepLinkingService {
     /**
      * Populate content items for deep linking response with learning paths.
      */
-    List<LtiContentItem> populateLearningPathsContentItems(String courseId) {
+    private List<LtiContentItem> populateLearningPathsContentItems(String courseId) {
         boolean hasLearningPaths = courseRepository.findWithEagerLearningPathsAndLearningPathCompetenciesByIdElseThrow(Long.parseLong(courseId)).getLearningPathsEnabled();
         if (hasLearningPaths) {
             String launchUrl = buildContentUrl(courseId, "learning-path");
@@ -171,6 +180,20 @@ public class LtiDeepLinkingService {
                 .orElseThrow(() -> new BadRequestAlertException("Exercise not found.", "LTI", "exerciseNotFound"));
     }
 
+    private LtiContentItem setGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
+        List<Exercise> exercises = new ArrayList<>();
+
+        for (Long exerciseId : exerciseIds) {
+            Optional<Exercise> exerciseOpt = exerciseRepository.findById(exerciseId);
+            exerciseOpt.ifPresent(exercises::add);
+        }
+        if (exercises.isEmpty()) {
+            throw new BadRequestAlertException("No exercises found.", "LTI", "exercisesNotFound");
+        }
+        String launchUrl = buildContentUrl(courseId, "groupedExercises", exercises.stream().map(Exercise::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        return createGroupedExerciseContentItem(exercises, launchUrl);
+    }
+
     /**
      * Set a content item for a lecture.
      */
@@ -184,9 +207,16 @@ public class LtiDeepLinkingService {
     /**
      * Create a content item for an exercise.
      */
-    LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
+    private LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
         LineItem lineItem = exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED ? new LineItem(DEFAULT_SCORE_MAXIMUM) : null;
         return new LtiContentItem("ltiResourceLink", exercise.getTitle(), url, lineItem);
+    }
+
+    private LtiContentItem createGroupedExerciseContentItem(List<Exercise> exercises, String url) {
+        LineItem lineItem = exercises.stream().anyMatch(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED)
+                ? new LineItem(DEFAULT_SCORE_MAXIMUM)
+                : null;
+        return new LtiContentItem("ltiResourceLink", "Grouped Exercises", url, lineItem);
     }
 
     /**
@@ -215,18 +245,33 @@ public class LtiDeepLinkingService {
     /**
      * Build a content URL for deep linking.
      */
-    String buildContentUrl(String courseId, String resourceType, String resourceId) {
-        return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+    private String buildContentUrl(String courseId, String resourceType, String resourceId) {
+        if ("groupedExercises".equals(resourceType)) {
+            List<Long> exerciseIds = Arrays.stream(resourceId.split(",")).map(String::trim).map(Long::valueOf).toList();
+
+            // Take the smallest exercise ID for the base URL to establish it as "starting" exercise for LTI view
+            Long smallestExerciseId = exerciseIds.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No exercise IDs provided", "LTI", "noExerciseIds"));
+
+            String baseUrl = String.format("%s/courses/%s/exercises/%d", artemisServerUrl, courseId, smallestExerciseId);
+
+            // Include all exercise IDs in the query parameter for sidebar content
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId);
+
+            return uriBuilder.toUriString();
+        }
+        else {
+            return String.format("%s/courses/%s/%s/%s", artemisServerUrl, courseId, resourceType, resourceId);
+        }
     }
 
-    String buildContentUrl(String courseId, String resourceType) {
+    private String buildContentUrl(String courseId, String resourceType) {
         return String.format("%s/courses/%s/%s", artemisServerUrl, courseId, resourceType);
     }
 
     /**
      * Validate deep linking response settings.
      */
-    void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {
+    private void validateDeepLinkingResponseSettings(String returnURL, String jwt, String deploymentId) {
         if (isEmptyString(jwt)) {
             throw new BadRequestAlertException("Deep linking response cannot be created", "LTI", "deepLinkingResponseFailed");
         }

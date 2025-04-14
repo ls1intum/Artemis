@@ -3,9 +3,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { ParticipationResultDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
@@ -98,7 +98,7 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss'],
     imports: [
         NgbDropdown,
         NgbDropdownToggle,

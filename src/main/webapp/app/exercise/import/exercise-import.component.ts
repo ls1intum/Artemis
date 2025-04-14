@@ -1,21 +1,21 @@
 import { Component, Injector, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
-import { FileUploadExercisePagingService } from 'app/fileupload/manage/file-upload-exercise-paging.service';
-import { ModelingExercisePagingService } from 'app/modeling/manage/modeling-exercise-paging.service';
+import { FileUploadExercisePagingService } from 'app/fileupload/manage/services/file-upload-exercise-paging.service';
+import { ModelingExercisePagingService } from 'app/modeling/manage/services/modeling-exercise-paging.service';
 import { CodeAnalysisPagingService } from 'app/programming/manage/services/code-analysis-paging.service';
 import { ProgrammingExercisePagingService } from 'app/programming/manage/services/programming-exercise-paging.service';
-import { QuizExercisePagingService } from 'app/quiz/manage/quiz-exercise-paging.service';
-import { ExercisePagingService } from 'app/exercise/manage/exercise-paging.service';
-import { TextExercisePagingService } from 'app/text/manage/text-exercise/text-exercise-paging.service';
+import { QuizExercisePagingService } from 'app/quiz/manage/service/quiz-exercise-paging.service';
+import { ExercisePagingService } from 'app/exercise/services/exercise-paging.service';
+import { TextExercisePagingService } from 'app/text/manage/text-exercise/service/text-exercise-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 
 const DEFAULT_SORT_COLUMN = 'ID';
@@ -27,7 +27,6 @@ const DEFAULT_SORT_COLUMN = 'ID';
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
-
     readonly ExerciseType = ExerciseType;
 
     @Input() exerciseType?: ExerciseType;

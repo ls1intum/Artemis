@@ -4,6 +4,7 @@ import {
     Input,
     OnChanges,
     OnDestroy,
+    OnInit,
     QueryList,
     SimpleChanges,
     ViewChild,
@@ -16,30 +17,32 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { Subject, Subscription } from 'rxjs';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/shared/util/utils';
-import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/programming/shared/entities/build-plan-checkout-directories-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/custom-not-included-in-validator.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { RemoveAuxiliaryRepositoryButtonComponent } from '../../remove-auxiliary-repository-button.component';
 import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { AddAuxiliaryRepositoryButtonComponent } from '../../add-auxiliary-repository-button.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programming-exercise-difficulty.component';
@@ -52,7 +55,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 @Component({
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
     imports: [
         TranslateDirective,
         HelpIconComponent,
@@ -74,7 +77,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         RemoveKeysPipe,
     ],
 })
-export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -84,7 +87,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isImport = input.required<boolean>();
     isExamMode = input.required<boolean>();
     programmingExercise = input.required<ProgrammingExercise>();
-    isLocal = input.required<boolean>();
     importOptions = input.required<ImportOptions>();
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
@@ -101,8 +103,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
     @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
-    private readonly exerciseService: ExerciseService = inject(ExerciseService);
-    private readonly alertService: AlertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
@@ -120,6 +123,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     editRepositoryCheckoutPath = false;
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
+    isLocalCIEnabled = true;
+
     constructor() {
         effect(() => {
             this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
@@ -136,6 +141,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         effect(() => {
             this.fetchAndInitializeTakenTitlesAndShortNames();
         });
+    }
+
+    ngOnInit() {
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     ngAfterViewInit() {
