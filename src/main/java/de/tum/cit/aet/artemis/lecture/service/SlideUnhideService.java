@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  * Service that dynamically schedules tasks to unhide slides at their expiration time.
  */
 // TODO: currently disabled because of a misconfiguration, scheduling must be independent of secondary nodes
+// TODO: remove exception from src/test/java/de/tum/cit/aet/artemis/lecture/architecture/LectureApiArchitectureTest.java
 // @Profile(PROFILE_SCHEDULING)
 // @Service
 public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {

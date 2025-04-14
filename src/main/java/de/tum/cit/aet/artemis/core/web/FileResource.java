@@ -75,6 +75,7 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.lecture.api.LectureAttachmentApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
+import de.tum.cit.aet.artemis.lecture.api.SlideApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
@@ -112,6 +113,8 @@ public class FileResource {
 
     private final Optional<LectureAttachmentApi> lectureAttachmentApi;
 
+    private final Optional<SlideApi> slideApi;
+
     private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
@@ -130,13 +133,15 @@ public class FileResource {
 
     public FileResource(FileUploadService fileUploadService, AuthorizationCheckService authorizationCheckService, FileService fileService,
             ResourceLoaderService resourceLoaderService, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<FileUploadApi> fileUploadApi,
-            Optional<LectureAttachmentApi> lectureAttachmentApi, AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
-            QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, Optional<LectureUnitApi> lectureUnitApi) {
+            Optional<LectureAttachmentApi> lectureAttachmentApi, Optional<SlideApi> slideApi, AuthorizationCheckService authCheckService, UserRepository userRepository,
+            Optional<ExamUserApi> examUserApi, QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository,
+            Optional<LectureUnitApi> lectureUnitApi) {
         this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepositoryApi = lectureRepositoryApi;
         this.lectureAttachmentApi = lectureAttachmentApi;
+        this.slideApi = slideApi;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -576,6 +581,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitAttachmentSlide(@PathVariable Long attachmentUnitId, @PathVariable String slideNumber) {
         log.debug("REST request to get the slide : {}", slideNumber);
         LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
+        SlideApi sApi = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
+
         AttachmentUnit attachmentUnit = api.findAttachmentUnitByIdElseThrow(attachmentUnitId);
 
         Attachment attachment = attachmentUnit.getAttachment();
@@ -583,7 +590,7 @@ public class FileResource {
 
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
-        Slide slide = api.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+        Slide slide = sApi.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
 
         if (slide.getHidden() != null) {
             throw new AccessForbiddenException("Slide is hidden");
@@ -612,7 +619,7 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
         log.debug("REST request to get the slide : {}", slideId);
-        LectureAttachmentApi api = lectureAttachmentApi.orElseThrow(() -> new LectureApiNotPresentException(LectureAttachmentApi.class));
+        SlideApi api = slideApi.orElseThrow(() -> new LectureApiNotPresentException(SlideApi.class));
 
         Slide slide = api.findSlideByIdElseThrow(slideId);
 

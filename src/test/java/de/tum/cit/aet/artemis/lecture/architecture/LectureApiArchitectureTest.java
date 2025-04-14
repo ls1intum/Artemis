@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.architecture;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import de.tum.cit.aet.artemis.lecture.service.SlideUnhideService;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleAccessArchitectureTest;
 
 class LectureApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
@@ -14,6 +15,7 @@ class LectureApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
 
     @Override
     protected Set<Class<?>> getIgnoredClasses() {
-        return Set.of(LectureApiNotPresentException.class);
+        // TODO: remove SlideUnhideService once activated again
+        return Set.of(LectureApiNotPresentException.class, SlideUnhideService.class);
     }
 }
