@@ -76,7 +76,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createSession() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
@@ -86,7 +86,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createSession_alreadyExists() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
@@ -95,7 +95,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentSession() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
@@ -104,7 +104,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCurrentMessagesForSession() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
