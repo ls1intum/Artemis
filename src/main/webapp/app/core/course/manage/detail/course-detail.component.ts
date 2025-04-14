@@ -89,10 +89,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     async ngOnInit() {
         this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
-        const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
-        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             // TODO: Outdated, as we now have a bunch more sub settings

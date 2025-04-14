@@ -32,6 +32,9 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.DeregisteredFromTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RegisteredToTutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -42,6 +45,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -74,10 +79,14 @@ public class TutorialGroupService {
 
     private final ConversationDTOService conversationDTOService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService) {
+            ConversationDTOService conversationDTOService, FeatureToggleService featureToggleService, CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -86,6 +95,8 @@ public class TutorialGroupService {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -211,7 +222,17 @@ public class TutorialGroupService {
             return; // No registration found, nothing to do.
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
-        singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
+
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = tutorialGroup.getCourse();
+            var deregisteredFromTutorialGroupNotification = new DeregisteredFromTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                    tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
+            courseNotificationService.sendCourseNotification(deregisteredFromTutorialGroupNotification, List.of(student));
+        }
+        else {
+            singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
+        }
+
         if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
         }
@@ -243,7 +264,7 @@ public class TutorialGroupService {
         }
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
-        singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
+        notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
         if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
             singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
         }
@@ -261,7 +282,7 @@ public class TutorialGroupService {
 
         if (sendNotification && responsibleUser != null) {
             for (User student : studentsToRegister) {
-                singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
+                notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
             }
 
             if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
@@ -269,6 +290,25 @@ public class TutorialGroupService {
             }
         }
         tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, students);
+    }
+
+    /**
+     * Notifies the student that they were registered to a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student was registered to
+     * @param responsibleUser the user that registered the student
+     * @param student         to notify
+     */
+    private void notifyStudentAboutRegistration(TutorialGroup tutorialGroup, User responsibleUser, User student) {
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var course = tutorialGroup.getCourse();
+            var registeredFromTutorialGroupNotification = new RegisteredToTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                    tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
+            courseNotificationService.sendCourseNotification(registeredFromTutorialGroupNotification, List.of(student));
+        }
+        else {
+            singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
+        }
     }
 
     /**

@@ -9,10 +9,10 @@ import { CoursePrerequisitesButtonComponent } from 'app/core/course/overview/cou
 import { CourseRegistrationButtonComponent } from 'app/core/course/overview/course-registration/course-registration-button/course-registration-button.component';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockRouter } from '../../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { lastValueFrom, throwError } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseRegistrationDetailComponent', () => {

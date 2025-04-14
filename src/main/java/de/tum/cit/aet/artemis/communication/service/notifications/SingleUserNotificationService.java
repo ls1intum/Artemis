@@ -62,6 +62,9 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewCpcPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPlagiarismCaseNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.PlagiarismCaseVerdictNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -211,7 +214,7 @@ public class SingleUserNotificationService {
      * @param exercise  that was assessed
      * @param recipient who should be notified
      */
-    private void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
+    public void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
         if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
             var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
@@ -360,7 +363,18 @@ public class SingleUserNotificationService {
      * @param student        who should be notified
      */
     public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
-        notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var plagiarismCaseExercise = plagiarismCase.getExercise();
+            var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var newPlagiarismCaseNotification = new NewPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
+                    plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent());
+
+            courseNotificationService.sendCourseNotification(newPlagiarismCaseNotification, List.of(student));
+        }
+        else {
+            notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
+        }
     }
 
     public void notifyInstructionAboutPlagiarismCaseReply(PlagiarismCase plagiarismCase, User instructor) {
@@ -375,7 +389,18 @@ public class SingleUserNotificationService {
      * @param student        who should be notified
      */
     public void notifyUserAboutNewContinuousPlagiarismControlPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
-        notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var plagiarismCaseExercise = plagiarismCase.getExercise();
+            var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var newCpcPlagiarismCaseNotification = new NewCpcPlagiarismCaseNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
+                    plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getPost().getContent());
+
+            courseNotificationService.sendCourseNotification(newCpcPlagiarismCaseNotification, List.of(student));
+        }
+        else {
+            notifyRecipientWithNotificationType(plagiarismCase, NEW_CPC_PLAGIARISM_CASE_STUDENT, student, null);
+        }
     }
 
     /**
@@ -385,7 +410,18 @@ public class SingleUserNotificationService {
      * @param student        who should be notified
      */
     public void notifyUserAboutPlagiarismCaseVerdict(PlagiarismCase plagiarismCase, User student) {
-        notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
+        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var plagiarismCaseExercise = plagiarismCase.getExercise();
+            var course = plagiarismCaseExercise.getCourseViaExerciseGroupOrCourseMember();
+
+            var plagiarismCaseVerdictNotification = new PlagiarismCaseVerdictNotification(course.getId(), course.getTitle(), course.getCourseIcon(), plagiarismCaseExercise.getId(),
+                    plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString());
+
+            courseNotificationService.sendCourseNotification(plagiarismCaseVerdictNotification, List.of(student));
+        }
+        else {
+            notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
+        }
     }
 
     /**

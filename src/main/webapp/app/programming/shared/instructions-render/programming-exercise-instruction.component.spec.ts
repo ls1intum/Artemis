@@ -4,10 +4,12 @@ import { By } from '@angular/platform-browser';
 import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement, VERSION } from '@angular/core';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import dayjs from 'dayjs/esm';
 import { Subscription, of, throwError } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import {
     problemStatementBubbleSortNotExecutedHtml,
@@ -22,7 +24,7 @@ import { ProgrammingExerciseInstructionService } from 'app/programming/shared/in
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { triggerChanges } from 'test/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
@@ -79,6 +81,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -89,11 +92,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseInstructionComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-        programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
-        programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-        modalService = debugElement.injector.get(NgbModal);
-        themeService = debugElement.injector.get(ThemeService);
+        participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseGradingService = TestBed.inject(ProgrammingExerciseGradingService);
+        modalService = TestBed.inject(NgbModal);
+        themeService = TestBed.inject(ThemeService);
 
         subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
         openModalStub = jest.spyOn(modalService, 'open');

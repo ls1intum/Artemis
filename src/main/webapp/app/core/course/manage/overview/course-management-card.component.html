@@ -238,7 +238,6 @@
         @if (course.isAtLeastTutor) {
             <a
                 [routerLink]="['/course-management', course.id, 'exercises']"
-                [class.guided-tour]="isGuidedTour"
                 class="btn btn-primary me-1 mb-1"
                 [ngbTooltip]="'entity.action.exercise' | artemisTranslate"
                 id="course-card-open-exercises"
@@ -324,9 +323,7 @@
             <a
                 [routerLink]="['/course-management', course.id, 'assessment-dashboard']"
                 class="btn btn-info me-1 mb-1"
-                [class]="isGuidedTour ? 'guided-tour-assessment-dashboard-btn' : ''"
                 [ngbTooltip]="'entity.action.assessmentDashboard' | artemisTranslate"
-                [class.guided-tour]="isGuidedTour"
                 id="course-card-open-assessment-dashboard"
             >
                 <fa-icon [icon]="faUserCheck" />

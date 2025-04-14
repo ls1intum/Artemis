@@ -8,19 +8,15 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
-import { initializeDialog } from '../../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import {
     ConversationDetailDialogComponent,

@@ -23,7 +23,6 @@ export interface SidebarItem {
     title: string;
     testId?: string;
     translation: string;
-    guidedTour?: boolean;
     featureToggle?: FeatureToggle;
     hidden: boolean;
     isPrefix?: boolean;

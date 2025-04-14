@@ -3,9 +3,9 @@ import { Router } from '@angular/router';
 
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('PlagiarismCasesOverviewComponent', () => {
     let fixture: ComponentFixture<PlagiarismCasesOverviewComponent>;

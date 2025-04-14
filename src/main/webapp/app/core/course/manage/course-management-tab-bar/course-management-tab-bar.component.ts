@@ -131,8 +131,8 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
             this.subscribeToCourseUpdates(courseId);
         });
 
-        this.atlasEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_ATLAS);
-        this.tutorialGroupEnabled = this.profileService.isFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
         this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);

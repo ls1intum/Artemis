@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExamSubmissionComponent } from 'app/exam/overview/exercises/programming/programming-exam-submission.component';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExamSubmissionComponent', () => {

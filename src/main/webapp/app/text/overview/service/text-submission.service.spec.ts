@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { provideHttpClient } from '@angular/common/http';
 

@@ -82,13 +82,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSubscription = this.route?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
 
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
-                    this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
-                    });
-                }
-            });
+            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
+                });
+            }
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
@@ -96,7 +94,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.setCourse(course);
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)));
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     }
 
     ngOnDestroy(): void {

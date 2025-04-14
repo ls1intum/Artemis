@@ -1,12 +1,22 @@
-import { BehaviorSubject } from 'rxjs';
+import { PROFILE_DEV, PROFILE_PROD } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 export class MockProfileService {
-    getProfileInfo = () =>
-        new BehaviorSubject<ProfileInfo | undefined>({
+    public getProfileInfo = (): ProfileInfo =>
+        ({
+            programmingLanguageFeatures: [],
             activeProfiles: [],
             activeModuleFeatures: [],
-        } as unknown as ProfileInfo);
-    isProfileActive: (profile: string) => boolean = () => false;
-    isFeatureActive: (feature: string) => boolean = () => false;
+            testServer: false,
+        }) as unknown as ProfileInfo;
+
+    public isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
+
+    public isModuleFeatureActive = (feature: string): boolean => this.getProfileInfo().activeModuleFeatures?.includes(feature) ?? false;
+
+    public isDevelopment = (): boolean => this.isProfileActive(PROFILE_DEV) ?? false;
+
+    public isProduction = (): boolean => this.isProfileActive(PROFILE_PROD) ?? false;
+
+    public isTestServer = (): boolean => this.getProfileInfo().testServer ?? false;
 }

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
-import { metisCoursePosts, metisGeneralCourseWidePosts } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisCoursePosts, metisGeneralCourseWidePosts } from 'test/helpers/sample/metis-sample-data';
 import { ReplaySubject } from 'rxjs';
 import { NavigationStart, Router, RouterEvent } from '@angular/router';
 import { Post } from 'app/communication/shared/entities/post.model';

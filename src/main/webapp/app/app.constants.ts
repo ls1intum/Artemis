@@ -33,8 +33,6 @@ export const addPublicFilePrefix = (filePath?: string): string | undefined => {
 
 export const FILES_PATH_PREFIX = 'api/core/files/';
 
-export const PROFILE_LOCALVC = 'localvc';
-
 export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_AEOLUS = 'aeolus';
@@ -48,6 +46,16 @@ export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
+
+export const PROFILE_PROD = 'prod';
+
+export const PROFILE_DEV = 'dev';
+
+export const PROFILE_TEST = 'test';
+
+export const PROFILE_JENKINS = 'jenkins';
+
+export const PROFILE_APOLLON = 'apollon';
 
 export const PROFILE_ATHENA = 'athena';
 

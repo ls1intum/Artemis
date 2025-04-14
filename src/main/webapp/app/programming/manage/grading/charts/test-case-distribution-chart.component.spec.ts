@@ -3,7 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { TestCaseDistributionChartComponent } from 'app/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { MockProvider } from 'ng-mocks';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { TestCaseStatsMap } from 'app/programming/shared/entities/programming-exercise-test-case-statistics.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

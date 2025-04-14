@@ -51,8 +51,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
     private profileService = inject(ProfileService);
 
-    private profileSubscription: Subscription | null;
-
     exam = input.required<Exam>();
     getExamRoutesByIdentifier = input.required<(identifier: string) => (string | number | undefined)[]>();
     private longestWorkingTimeSub: Subscription | undefined = undefined;
@@ -104,13 +102,12 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
                 this.calculateIsExamOver();
             });
         }
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.disabledExercises =
-                this.exam()
-                    .exerciseGroups?.flatMap((group) => group.exercises)
-                    .filter((exercise) => exercise !== undefined)
-                    .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.disabledExercises =
+            this.exam()
+                .exerciseGroups?.flatMap((group) => group.exercises)
+                .filter((exercise) => exercise !== undefined)
+                .filter((exercise) => !this.isExerciseTypeEnabled(profileInfo.activeModuleFeatures, exercise?.type)) ?? [];
     }
 
     ngOnChanges() {
@@ -145,7 +142,6 @@ export class ExamChecklistComponent implements OnChanges, OnInit, OnDestroy {
         if (this.longestWorkingTimeSub) {
             this.longestWorkingTimeSub.unsubscribe();
         }
-        this.profileSubscription?.unsubscribe();
     }
 
     /**

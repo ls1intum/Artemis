@@ -6,7 +6,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { post } from '../../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { post } from 'test/helpers/sample/metis-sample-data';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
