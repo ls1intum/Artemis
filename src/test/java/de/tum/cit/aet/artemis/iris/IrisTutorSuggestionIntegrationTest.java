@@ -18,8 +18,12 @@ import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
@@ -35,6 +39,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     protected UserTestRepository userTestRepository;
+
+    @Autowired
+    private IrisMessageRepository irisMessageRepository;
 
     @Autowired
     private ConversationParticipantTestRepository conversationParticipantRepository;
@@ -87,6 +94,22 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisSession.class, HttpStatus.OK);
         assertThat(irisSession).isEqualTo(currentIrisSession);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    void getCurrentMessagesForSession() throws Exception {
+        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
+        message.setSender(IrisMessageSender.TUT_SUG);
+        message.setSession(irisSession);
+        irisMessageRepository.save(message);
+        var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
+        assertThat(messages).hasSize(1);
+        assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
+        assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
     }
 
     private static String tutorSuggestionUrl(long sessionId) {
