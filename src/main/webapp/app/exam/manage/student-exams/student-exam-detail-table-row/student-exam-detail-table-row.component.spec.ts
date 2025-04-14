@@ -18,7 +18,7 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { MockTranslateValuesDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCheckDouble, faFileUpload, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';

@@ -9,7 +9,7 @@ import { ModelingExamSubmissionComponent } from 'app/exam/overview/exercises/mod
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 import { ExerciseSaveButtonComponent } from 'app/exam/overview/exercises/exercise-save-button/exercise-save-button.component';
@@ -17,9 +17,9 @@ import { TranslateDirective } from '../../../../shared/language/translate.direct
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;

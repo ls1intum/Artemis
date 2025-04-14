@@ -13,11 +13,11 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { PresentationType } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 jest.mock('export-to-csv', () => {

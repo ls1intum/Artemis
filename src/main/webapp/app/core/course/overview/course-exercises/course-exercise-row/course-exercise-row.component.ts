@@ -52,7 +52,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
-    @Input() hasGuidedTour: boolean;
     /**
      * PresentationMode deactivates the interactivity of the component
      */

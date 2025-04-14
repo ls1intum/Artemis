@@ -1,14 +1,11 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
@@ -25,7 +22,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -68,18 +64,15 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         FeatureOverlayComponent,
     ],
 })
-export class AssessmentDashboardComponent implements OnInit, OnDestroy {
+export class AssessmentDashboardComponent implements OnInit {
     private courseService = inject(CourseManagementService);
     private exerciseService = inject(ExerciseService);
     private examManagementService = inject(ExamManagementService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
-    private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
     private profileService = inject(ProfileService);
-
-    private profileSubscription?: Subscription;
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
@@ -117,7 +110,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     exercisesReverseOrder = false;
 
     tutor: User;
-    exerciseForGuidedTour?: Exercise;
 
     isExamMode = false;
     isTestRun = false;
@@ -145,13 +137,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
-        });
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
     /**
@@ -275,8 +261,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
 
-                    // Ensure that the page is loaded when the guided tour is started
-                    this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
                 error: (response: string) => this.onError(response),
@@ -361,7 +345,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             this.currentlyShownExercises = this.getUnfinishedExercises(exercises);
             // sort exercises by type to get a better overview in the dashboard
             this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
-            this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
             this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }

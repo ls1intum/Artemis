@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
+import de.tum.cit.aet.artemis.lecture.service.SlideService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
@@ -109,12 +110,14 @@ public class ModelingExerciseResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final SlideService slideService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            Optional<CompetencyProgressApi> competencyProgressApi, SlideService slideService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -131,6 +134,7 @@ public class ModelingExerciseResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.slideService = slideService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -236,6 +240,7 @@ public class ModelingExerciseResource {
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
+        slideService.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise);
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 

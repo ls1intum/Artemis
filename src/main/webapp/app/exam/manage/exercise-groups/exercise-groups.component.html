@@ -134,11 +134,7 @@
                                         <button
                                             jhiDeleteButton
                                             [entityTitle]="exerciseGroup.title || ''"
-                                            deleteQuestion="{{
-                                                localVCEnabled
-                                                    ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
-                                                    : 'artemisApp.examManagement.exerciseGroup.delete.question'
-                                            }}"
+                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.questionLocalVC"
                                             deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                             [additionalChecks]="
                                                 localCIEnabled
@@ -314,7 +310,7 @@
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorMode]="true" />
                                             }
                                         </td>
                                     }

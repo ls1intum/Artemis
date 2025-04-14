@@ -6,16 +6,16 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
 import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
 import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
-import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from '../../helpers/sample/metis-sample-data';
+import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisTutor, metisUser1, metisUser2 } from 'test/helpers/sample/metis-sample-data';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import * as monaco from 'monaco-editor';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -29,7 +29,7 @@ import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import dayjs from 'dayjs/esm';
 import { FaqReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/faq-reference.action';
 import { Faq } from 'app/communication/shared/entities/faq.model';
-import { MockFileService } from '../../helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
@@ -370,14 +370,24 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
+
+            attachmentUnit.attachment = {
+                link: '/api/files/attachments/lecture/1/Metis-Attachment.pdf',
+                studentVersion: 'attachments/lecture/1/Metis-Attachment.pdf',
+                name: 'Metis-Attachment.pdf',
+            } as Attachment;
+
             const previousName = attachmentUnit.name;
             attachmentUnit.name = attachmentUnitNameWithBrackets;
-            const attachmentUnitFileName = 'Metis-Attachment.pdf';
+
+            const attachmentUnitFileName = 'lecture/1/Metis-Attachment.pdf';
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
                 attachmentUnit,
             });
+
             attachmentUnit.name = previousName;
             expect(comp.getText()).toBe(`[lecture-unit]${attachmentUnitNameWithoutBrackets}(${attachmentUnitFileName})[/lecture-unit]`);
         });
@@ -414,7 +424,15 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             comp.registerAction(lectureAttachmentReferenceAction);
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
+
+            attachmentUnit.attachment = {
+                link: '/api/files/attachments/Metis-Attachment.pdf',
+                studentVersion: 'attachments/Metis-Attachment.pdf',
+                name: 'Metis-Attachment.pdf',
+            } as Attachment;
+
             const attachmentUnitFileName = 'Metis-Attachment.pdf';
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.ATTACHMENT_UNITS,
                 lecture,
@@ -442,14 +460,24 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
             const lecture = lectureAttachmentReferenceAction.lecturesWithDetails[2];
             const attachmentUnit = lecture.attachmentUnits![0];
             const slide = attachmentUnit.slides![0];
-            const slideLink = 'slides';
+
+            // Ensure slide has a valid slideImagePath
+            slide.slideImagePath = 'attachments/attachment-unit/123/slide/slide1.png';
+
+            const slideIndex = 1;
+            const slideId = 1;
+            slide.id = slideId;
+
             lectureAttachmentReferenceAction.executeInCurrentEditor({
                 reference: ReferenceType.SLIDE,
                 lecture,
                 attachmentUnit,
                 slide,
+                slideIndex,
             });
-            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slide.slideNumber}(${slideLink})[/slide]`);
+
+            // Update the expectation to match the current implementation
+            expect(comp.getText()).toBe(`[slide]${attachmentUnit.name} Slide ${slideIndex}(#${slideId})[/slide]`);
         });
 
         it('should error when incorrectly referencing a slide', () => {

@@ -70,6 +70,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.service.SlideService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -161,6 +162,8 @@ public class ProgrammingExerciseResource {
 
     private final RepositoryCheckoutService repositoryCheckoutService;
 
+    private final SlideService slideService;
+
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -170,7 +173,7 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository, ChannelRepository channelRepository,
-            Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService) {
+            Optional<AthenaApi> athenaApi, Environment environment, RepositoryCheckoutService repositoryCheckoutService, SlideService slideService) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -196,6 +199,7 @@ public class ProgrammingExerciseResource {
         this.athenaApi = athenaApi;
         this.environment = environment;
         this.repositoryCheckoutService = repositoryCheckoutService;
+        this.slideService = slideService;
     }
 
     /**
@@ -375,6 +379,7 @@ public class ProgrammingExerciseResource {
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        slideService.handleDueDateChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
 
         return ResponseEntity.ok(savedProgrammingExercise);
     }

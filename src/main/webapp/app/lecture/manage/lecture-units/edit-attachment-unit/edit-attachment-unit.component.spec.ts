@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,13 +15,13 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { objectToJsonBlob } from 'app/shared/util/blob-util';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { ProfileService } from '../../../../core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditAttachmentUnitComponent', () => {
     let fixture: ComponentFixture<EditAttachmentUnitComponent>;

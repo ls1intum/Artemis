@@ -4,13 +4,13 @@ import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { generateExampleTutorialGroup } from '../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { mockedActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TutorialGroupManagementDetailComponent', () => {

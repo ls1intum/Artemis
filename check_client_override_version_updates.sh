@@ -32,10 +32,9 @@ check_dep() {
   if [[ "$CUR_VERSION" =~ ^\^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
     local CUR_MAJOR="${BASH_REMATCH[1]}"
     local CUR_MINOR="${BASH_REMATCH[2]}"
-    local LATEST_MAJOR LATEST_MINOR LATEST_PATCH
+    local LATEST_MAJOR LATEST_MINOR
     LATEST_MAJOR=$(echo "$LATEST_VERSION" | cut -d. -f1)
     LATEST_MINOR=$(echo "$LATEST_VERSION" | cut -d. -f2)
-    LATEST_PATCH=$(echo "$LATEST_VERSION" | cut -d. -f3)
 
     # Only show if major is bigger, or if same major but minor is bigger.
     if (( LATEST_MAJOR > CUR_MAJOR )); then

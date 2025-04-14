@@ -4,12 +4,12 @@ import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-com
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, CourseCompetencyType } from 'app/atlas/shared/entities/competency.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbActiveModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-active-modal.service';
+import { MockNgbActiveModalService } from 'test/helpers/mocks/service/mock-ngb-active-modal.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 describe('CourseCompetenciesRelationModalComponent', () => {

@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, Subject, Subscription, map } from 'rxjs';
+import { Observable, Subject, map } from 'rxjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ButtonSize } from 'app/shared/components/button/button.component';
@@ -64,8 +64,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    private profileSubscription: Subscription | null;
-
     // Icons
     faTrash = faTrash;
     faUndo = faUndo;
@@ -108,9 +106,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                 }
             });
 
-            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
-            });
+            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         });
     }
 
@@ -119,7 +115,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 
     getExamDetailSections() {

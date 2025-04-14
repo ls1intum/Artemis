@@ -73,7 +73,6 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
     @Input() courseWithExercises: Course | undefined;
     @Input() courseWithUsers: Course | undefined;
-    @Input() isGuidedTour: boolean;
 
     atlasEnabled = false;
 
@@ -123,7 +122,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)));
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     }
 
     ngOnChanges() {

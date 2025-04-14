@@ -8,12 +8,12 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 
 type Store = {

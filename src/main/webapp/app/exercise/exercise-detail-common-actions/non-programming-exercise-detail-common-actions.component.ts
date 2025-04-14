@@ -77,10 +77,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
-        this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
     deleteExercise() {

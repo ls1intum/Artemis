@@ -5,7 +5,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { SortService } from 'app/shared/service/sort.service';
@@ -15,11 +15,11 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ModelingExercise Management Component', () => {
     let comp: ModelingExerciseComponent;
@@ -54,11 +54,11 @@ describe('ModelingExercise Management Component', () => {
 
         fixture = TestBed.createComponent(ModelingExerciseComponent);
         comp = fixture.componentInstance;
-        courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
-        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
-        sortService = fixture.debugElement.injector.get(SortService);
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        modelingExerciseService = TestBed.inject(ModelingExerciseService);
+        sortService = TestBed.inject(SortService);
 
-        eventManager = fixture.debugElement.injector.get(EventManager);
+        eventManager = TestBed.inject(EventManager);
 
         comp.modelingExercises = [modelingExercise];
     });
