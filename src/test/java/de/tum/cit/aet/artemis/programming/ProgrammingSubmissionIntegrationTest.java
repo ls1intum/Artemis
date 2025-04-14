@@ -135,7 +135,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     void triggerBuildInstructor() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
-        String login = TEST_PREFIX + "student1";
+        String login = TEST_PREFIX + "student2";
         StudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, login);
         final var programmingExerciseParticipation = ((ProgrammingExerciseParticipation) participation);
         jenkinsRequestMockProvider.mockTriggerBuild(programmingExerciseParticipation.getProgrammingExercise().getProjectKey(), programmingExerciseParticipation.getBuildPlanId(),
@@ -348,15 +348,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerFailedBuildResultPresentInCIOk() throws Exception {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, TEST_PREFIX + "student1");
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         final var participation = optionalParticipation.get();
@@ -383,7 +383,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
-        var participation = createExerciseWithSubmissionAndParticipation();
+        var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student1");
 
         String url = "/api/programming/programming-submissions/" + participation.getId() + "/trigger-failed-build?lastGraded=true";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, null);
@@ -392,7 +392,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
-        var participation = createExerciseWithSubmissionAndParticipation();
+        var participation = createExerciseWithSubmissionAndParticipation(TEST_PREFIX + "student2");
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
         var repoUri = uriService.getRepositorySlugFromRepositoryUri(participation.getVcsRepositoryUri());
         doReturn(participation.getVcsRepositoryUri()).when(versionControlService).getCloneRepositoryUri(exercise.getProjectKey(), repoUri);
@@ -401,13 +401,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         request.postWithoutLocation(url, null, HttpStatus.OK, null);
     }
 
-    private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation() {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+    private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation(String login) {
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise = programmingExerciseRepository.save(exercise);
         var submission = new ProgrammingSubmission();
         submission.setType(SubmissionType.MANUAL);
-        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, login);
         var optionalParticipation = participationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
         var participation = optionalParticipation.get();
