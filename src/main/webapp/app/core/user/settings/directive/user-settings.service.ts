@@ -70,9 +70,7 @@ export class UserSettingsService {
      */
     public saveSettings(settings: Setting[], category: UserSettingsCategory): Observable<HttpResponse<Setting[]>> {
         switch (category) {
-            case UserSettingsCategory.NOTIFICATION_SETTINGS: {
-                return this.http.put<Setting[]>(this.notificationSettingsResourceUrl, settings, { observe: 'response' });
-            }
+            default:
             case UserSettingsCategory.SCIENCE_SETTINGS: {
                 return this.http.put<Setting[]>(this.scienceSettingsResourceUrl, settings, { observe: 'response' });
             }
