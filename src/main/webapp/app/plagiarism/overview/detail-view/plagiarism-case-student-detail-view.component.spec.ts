@@ -5,14 +5,14 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Plagiarism Cases Student View Component', () => {
@@ -57,7 +57,7 @@ describe('Plagiarism Cases Student View Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismCaseStudentDetailViewComponent);
         component = fixture.componentInstance;
-        plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
         plagiarismCasesServiceSpy.mockImplementation(
             (courseId, plagiarismCaseId) =>

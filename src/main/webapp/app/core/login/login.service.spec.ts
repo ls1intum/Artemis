@@ -1,7 +1,7 @@
-import { MockWebsocketService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockAuthServerProviderService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-auth-server-provider.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockAuthServerProviderService } from 'test/helpers/mocks/service/mock-auth-server-provider.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { LoginService } from 'app/core/login/login.service';

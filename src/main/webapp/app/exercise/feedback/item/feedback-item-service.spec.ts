@@ -5,7 +5,7 @@ import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { TestBed } from '@angular/core/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('FeedbackItemService', () => {
     let service: FeedbackItemServiceImpl;

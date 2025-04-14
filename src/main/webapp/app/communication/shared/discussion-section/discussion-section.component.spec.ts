@@ -1,27 +1,29 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/service/metis.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
-import { MockAnswerPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/communication/service/post.service';
-import { MockPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { getElement, getElements } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
     messagesBetweenUser1User2,
     metisCourse,
@@ -31,7 +33,7 @@ import {
     metisLecture,
     metisLectureChannelDTO,
     metisPostTechSupport,
-} from '../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
@@ -84,6 +86,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),

@@ -14,7 +14,6 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ButtonSize } from 'app/shared/components/button/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -23,7 +22,6 @@ import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-a
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -54,7 +52,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     private textAssessmentService = inject(TextAssessmentService);
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
-    private profileService = inject(ProfileService);
 
     readonly ParticipationType = ParticipationType;
     readonly buttonSizeSmall = ButtonSize.SMALL;
@@ -75,7 +72,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     submissions?: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
-    commitHashURLTemplate?: string;
     resultIdToBuildJobIdMap?: { [key: string]: string };
 
     // Icons
@@ -150,11 +146,6 @@ export class ParticipationSubmissionComponent implements OnInit {
                 }
             });
         });
-
-        // Get active profiles, to distinguish between VC systems
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
-        });
     }
 
     fetchParticipationAndSubmissionsForStudent() {
@@ -204,10 +195,6 @@ export class ParticipationSubmissionComponent implements OnInit {
             return this.translateService.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
-    }
-
-    getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
     }
 
     private updateStatusBadgeColor() {

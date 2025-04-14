@@ -11,7 +11,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
                 [autoClose]="true"
             >
-                <a class="guided-tour-account nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle id="account-menu">
                     @if (!getImageUrl()) {
                         <span>
                             <fa-icon [icon]="faUser" />
@@ -50,15 +50,6 @@
                                 </li>
                             }
                         </div>
-                    }
-                    @if (isTourAvailable) {
-                        <div class="dropdown-divider"></div>
-                        <li>
-                            <h6 class="dropdown-header fw-medium" jhiTranslate="global.menu.guidedTutorial"></h6>
-                        </li>
-                        <li>
-                            <a class="dropdown-item guided-tour" [jhiTranslate]="this.guidedTourInitLabel()" (click)="this.guidedTourService.initGuidedTour()">Start tutorial</a>
-                        </li>
                     }
                     <div class="dropdown-divider"></div>
                     @if (isRegistrationEnabled) {
@@ -132,7 +123,7 @@
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
             @if (currAccount && !isExamActive && !isExamStarted) {
                 <li class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
-                    <a class="guided-tour-overview nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
+                    <a class="nav-link py-0" routerLink="/courses" (click)="collapseNavbar()" id="overview-menu">
                         <span>
                             <fa-icon [icon]="faThLarge" />
                             <span jhiTranslate="global.menu.overview"></span>
@@ -148,7 +139,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
             >
                 @if (!isExamActive && !isExamStarted) {
-                    <a class="guided-tour-course-admin nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                    <a class="nav-link py-0" routerLink="/course-management" (click)="collapseNavbar()" id="course-admin-menu">
                         <span>
                             <fa-icon [icon]="faThList" />
                             <span jhiTranslate="global.menu.course"></span>
@@ -165,7 +156,7 @@
                 [routerLinkActiveOptions]="{ exact: true }"
             >
                 @if (!isExamActive && !isExamStarted) {
-                    <a class="guided-tour-admin nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
+                    <a class="nav-link dropdown-toggle py-0" ngbDropdownToggle id="admin-menu">
                         <span>
                             <fa-icon [icon]="faUserPlus" />
                             <span jhiTranslate="global.menu.admin.main"></span>
@@ -258,14 +249,6 @@
                             <a class="dropdown-item" routerLink="/admin/build-agents" routerLinkActive="active" (click)="collapseNavbar()">
                                 <fa-icon [icon]="faGears" [fixedWidth]="true" />
                                 <span jhiTranslate="artemisApp.buildAgents.title"></span>
-                            </a>
-                        </li>
-                    }
-                    @if (openApiEnabled) {
-                        <li>
-                            <a class="dropdown-item" href="api.html" target="_blank" rel="noreferrer noopener" (click)="collapseNavbar()">
-                                <fa-icon [icon]="faBook" [fixedWidth]="true" />
-                                <span jhiTranslate="global.menu.admin.apidocs"></span>
                             </a>
                         </li>
                     }
@@ -371,4 +354,3 @@
         </div>
     }
 </div>
-<jhi-guided-tour />
