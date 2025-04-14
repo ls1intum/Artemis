@@ -124,7 +124,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
-        this.tutorialGroupEnabledthis.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
+        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
     }
 
     ngOnChanges() {
