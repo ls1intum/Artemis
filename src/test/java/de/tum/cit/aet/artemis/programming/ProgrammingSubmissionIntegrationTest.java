@@ -68,7 +68,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         programmingExerciseUtilService.addSolutionParticipationForProgrammingExercise(exercise);
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
-        participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addProgrammingParticipationWithResultForExercise(exercise, TEST_PREFIX + "student1");
+        ProgrammingExerciseStudentParticipation participation = (ProgrammingExerciseStudentParticipation) result.getSubmission().getParticipation();
+
         exercise.setTestCasesChanged(true);
         programmingExerciseRepository.save(exercise);
 
@@ -80,6 +82,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
 
         var dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(programmingExerciseStudentParticipation.getVcsRepositoryUri());
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(participation.getVcsRepositoryUri());
     }
 
     @AfterEach
@@ -643,11 +646,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         exerciseUtilService.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");
-        // TODO Michal Kawka we might need to set up a submission here
-        var newResult = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2),
-                programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
-        var submission = programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation,
-                "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+
+        final var submission = programmingExerciseUtilService.createProgrammingSubmission(programmingExerciseStudentParticipation, false, "1");
+        participationUtilService.addResultToSubmission(submission, AssessmentType.AUTOMATIC, null);
 
         exerciseUtilService.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
