@@ -83,4 +83,22 @@ describe('LectureUnitComponent', () => {
         expect(toggleCollapseSpy).toHaveBeenCalledOnce();
         expect(onCollapseEmitSpy).toHaveBeenCalledOnce();
     });
+
+    it('should handle original version view', async () => {
+        const handleOriginalVersionViewSpy = jest.spyOn(component, 'handleOriginalVersionView');
+        const onShowOriginalVersionEmitSpy = jest.spyOn(component.onShowOriginalVersion, 'emit');
+
+        fixture.componentRef.setInput('showOriginalVersionButton', true);
+        fixture.detectChanges();
+
+        const event = new MouseEvent('click');
+        const button = fixture.debugElement.query(By.css('#view-original-version-button'));
+
+        expect(button).not.toBeNull();
+
+        button.nativeElement.dispatchEvent(event);
+
+        expect(handleOriginalVersionViewSpy).toHaveBeenCalledOnce();
+        expect(onShowOriginalVersionEmitSpy).toHaveBeenCalledOnce();
+    });
 });

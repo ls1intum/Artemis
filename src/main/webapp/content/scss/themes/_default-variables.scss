@@ -251,6 +251,7 @@ $pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
 $pdf-preview-canvas-shadow: scale-color($black, $alpha: -90%);
 $pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
 $pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -80%);
+$pdf-preview-date-box-title-background: $gray-100;
 
 // Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);

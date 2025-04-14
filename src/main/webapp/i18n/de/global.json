@@ -269,7 +269,8 @@
             "search": "Suchen",
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Anzeigen"
         },
         "detail": {
             "field": "Feld",
