@@ -96,8 +96,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
     private paramSub: Subscription;
     private languageChangeSubscription?: Subscription;
-    private profileSubscription?: Subscription;
-
     plagiarismEnabled = false;
 
     course: Course;
@@ -177,11 +175,9 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
-            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.plagiarismEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_PLAGIARISM);
-                this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
-                    this.initializeWithCourse(findWithExercisesResult.body!);
-                });
+            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+            this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
+                this.initializeWithCourse(findWithExercisesResult.body!);
             });
         });
 
@@ -197,7 +193,6 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.paramSub?.unsubscribe();
         this.languageChangeSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 
     sortRows() {
