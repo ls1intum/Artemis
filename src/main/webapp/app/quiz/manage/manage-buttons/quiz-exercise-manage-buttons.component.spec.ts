@@ -9,10 +9,10 @@ import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExerciseManageButtonsComponent } from 'app/quiz/manage/manage-buttons/quiz-exercise-manage-buttons.component';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Management Buttons Component', () => {
     let comp: QuizExerciseManageButtonsComponent;
@@ -45,8 +45,8 @@ describe('QuizExercise Management Buttons Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseManageButtonsComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        exerciseService = fixture.debugElement.injector.get(ExerciseService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        exerciseService = TestBed.inject(ExerciseService);
     });
 
     afterEach(() => {

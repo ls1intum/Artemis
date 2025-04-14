@@ -1,6 +1,6 @@
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockHttpService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-http.service';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import * as Sentry from '@sentry/angular';

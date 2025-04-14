@@ -3,7 +3,7 @@ import { DebugElement } from '@angular/core';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
-import { getElement } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 
 describe('PostingButtonComponent', () => {
     let component: PostingButtonComponent;

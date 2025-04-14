@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
@@ -13,22 +14,18 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { of } from 'rxjs';
 
 type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
 
 describe('Exam Exercise Import Component', () => {
     let component: ExamExerciseImportComponent;
     let fixture: ComponentFixture<ExamExerciseImportComponent>;
-
-    let profileService: ProfileService;
-    let getProfileInfoSub: jest.SpyInstance;
 
     // Initializing one Exercise Group per Exercise Type
     const exerciseGroup1 = { title: 'exerciseGroup1' } as ExerciseGroup;
@@ -85,9 +82,8 @@ describe('Exam Exercise Import Component', () => {
                 fixture = TestBed.createComponent(ExamExerciseImportComponent);
                 component = fixture.componentInstance;
 
-                profileService = TestBed.inject(ProfileService);
-                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+                const profileService = TestBed.inject(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] } as ProfileInfo);
             });
     });
 

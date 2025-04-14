@@ -243,6 +243,76 @@
                 "content": "In {{exerciseTitle}} wird Feedback benötigt.",
                 "settingsTitle": "Feedback benötigt"
             },
+            "duplicateTestCaseNotification": {
+                "title": "Test Duplikat Warnung",
+                "content": "In {{exerciseTitle}} wurde ein Test Duplikat entdeckt.",
+                "settingsTitle": "Test Duplikat Warnung"
+            },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "Neue Übereinstimmung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue Übereinstimmung"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "Neuer Plagiatsfall",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neuer Plagiatsfall"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build Update",
+                "content": "Es gibt ein neues Update in einem Build in {{exerciseTitle}}.",
+                "settingsTitle": "Build Update"
+            },
+            "programmingTestCasesChangedNotification": {
+                "title": "Tests geändert",
+                "content": "Tests haben sich in {{exerciseTitle}} geändert.",
+                "settingsTitle": "Tests geändert"
+            },
+            "plagiarismCaseVerdictNotification": {
+                "title": "Plagiat Beurteilung",
+                "content": "Neue Beurteilung zu einem Plagiatsfall in {{exerciseTitle}}.",
+                "settingsTitle": "Plagiat Beurteilung"
+            },
+            "channelDeletedNotification": {
+                "title": "Kanal gelöscht",
+                "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",
+                "settingsTitle": "Kanal gelöscht"
+            },
+            "addedToChannelNotification": {
+                "title": "Kanal beigetreten",
+                "content": "Du bist {{channelName}} in {{courseTitle}} beigetreten.",
+                "settingsTitle": "Kanal beigetreten"
+            },
+            "removedFromChannelNotification": {
+                "title": "Aus Kanal entfernt",
+                "content": "Du wurdest aus {{channelName}} in {{courseTitle}} entfernt.",
+                "settingsTitle": "Aus Kanal entfernt"
+            },
+            "tutorialGroupAssignedNotification": {
+                "title": "Übungsgruppe zugewiesen",
+                "content": "Du wurdest der Übungsgruppe {{groupTitle}} zugewiesen.",
+                "settingsTitle": "Übungsgruppe zugewiesen"
+            },
+            "tutorialGroupUnassignedNotification": {
+                "title": "Übungsgruppe entfernt",
+                "content": "Deine Zuweisung zur Übungsgruppe {{groupTitle}} wurde aufgehoben.",
+                "settingsTitle": "Übungsgruppe entfernt"
+            },
+            "registeredToTutorialGroupNotification": {
+                "title": "Übungsgruppen-Anmeldung",
+                "content": "Du wurdest zur Übungsgruppe {{groupTitle}} angemeldet.",
+                "settingsTitle": "Übungsgruppen-Anmeldung"
+            },
+            "deregisteredFromTutorialGroupNotification": {
+                "title": "Übungsgruppen-Abmeldung",
+                "content": "Du wurdest von der Übungsgruppe {{groupTitle}} abgemeldet.",
+                "settingsTitle": "Übungsgruppen-Abmeldung"
+            },
+            "tutorialGroupDeletedNotification": {
+                "title": "Übungsgruppe gelöscht",
+                "content": "Die Übungsgruppe {{groupTitle}} wurde gelöscht.",
+                "settingsTitle": "Übungsgruppe gelöscht"
+            },
             "temporal": {
                 "now": "Jetzt",
                 "oneHourAgo": "Vor 1 Stunde.",

@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -16,11 +17,9 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
@@ -98,8 +97,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    localVCEnabled = true;
-
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
@@ -109,12 +106,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     exerciseSubmissionState: ExerciseSubmissionState;
 
+    localCIEnabled = true;
     isAdmin = false;
-
     isLoading: boolean;
-
     isSaving: boolean;
-
     afterDueDate = false;
 
     // Icons
@@ -124,7 +119,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
-    faCodeBranch = faCodeBranch;
 
     constructor() {
         this.participationCriteria = {
@@ -139,6 +133,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     /**
@@ -185,14 +180,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private loadParticipations(exerciseId: number) {
         this.participationService.findAllParticipationsByExercise(exerciseId, false).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                const programmingExercise = this.exercise as ProgrammingExercise;
-                if (programmingExercise.projectKey) {
-                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    });
-                }
-            }
             this.isLoading = false;
         });
     }

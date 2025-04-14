@@ -41,7 +41,7 @@ describe('StandaloneFeedbackComponent', () => {
                 component = fixture.componentInstance;
 
                 // mock exerciseService
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 participation.results = [result];
                 exercise.studentParticipations = [participation];
@@ -49,7 +49,7 @@ describe('StandaloneFeedbackComponent', () => {
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock exerciseCacheService
-                exerciseCacheService = fixture.debugElement.injector.get(ExerciseCacheService);
+                exerciseCacheService = TestBed.inject(ExerciseCacheService);
                 getLatestDueDateMock = jest.spyOn(exerciseCacheService, 'getLatestDueDate');
                 getLatestDueDateMock.mockReturnValue(of(latestDueDate));
             });

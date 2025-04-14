@@ -39,14 +39,14 @@ import {
 } from 'app/shared/export/export-constants';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ExamScoresComponent', () => {
     let fixture: ComponentFixture<ExamScoresComponent>;
@@ -295,9 +295,9 @@ describe('ExamScoresComponent', () => {
 
         fixture = TestBed.createComponent(ExamScoresComponent);
         comp = fixture.componentInstance;
-        examService = fixture.debugElement.injector.get(ExamManagementService);
-        gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
-        const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
+        examService = TestBed.inject(ExamManagementService);
+        gradingSystemService = TestBed.inject(GradingSystemService);
+        const participationScoreService = TestBed.inject(ParticipantScoresService);
         findExamScoresSpy = jest
             .spyOn(participationScoreService, 'findExamScores')
             .mockReturnValue(of(new HttpResponse({ body: [examScoreStudent1, examScoreStudent2, examScoreStudent3] })));

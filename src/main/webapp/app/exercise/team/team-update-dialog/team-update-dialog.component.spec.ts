@@ -4,16 +4,9 @@ import { TeamUpdateDialogComponent } from 'app/exercise/team/team-update-dialog/
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import {
-    MockTeamService,
-    mockEmptyTeam,
-    mockExercise,
-    mockNonTeamStudents,
-    mockTeam,
-    mockTeamStudents,
-} from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-team.service';
+import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from 'test/helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercise/team/team.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -23,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamOwnerSearchComponent } from 'app/exercise/team/team-owner-search/team-owner-search.component';
 import { TeamStudentSearchComponent } from 'app/exercise/team/team-student-search/team-student-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamUpdateDialogComponent', () => {
