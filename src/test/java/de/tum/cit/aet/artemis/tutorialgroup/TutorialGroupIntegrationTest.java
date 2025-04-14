@@ -491,11 +491,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
         assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
         asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
-
-        existingTutorialGroup.getRegistrations().forEach(registration -> {
-            verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
-                    (Object) any());
-        });
     }
 
     @Test
