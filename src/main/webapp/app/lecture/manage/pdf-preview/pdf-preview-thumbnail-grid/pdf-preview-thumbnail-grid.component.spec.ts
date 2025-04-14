@@ -7,6 +7,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { PdfPreviewThumbnailGridComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-thumbnail-grid/pdf-preview-thumbnail-grid.component';
 
+let mockWorkerSrc = '';
+
 jest.mock('pdfjs-dist', () => {
     return {
         getDocument: jest.fn(() => ({
@@ -23,12 +25,15 @@ jest.mock('pdfjs-dist', () => {
             }),
         })),
         GlobalWorkerOptions: {
-            workerSrc: '',
+            get workerSrc() {
+                return mockWorkerSrc;
+            },
+            set workerSrc(value: string) {
+                mockWorkerSrc = value;
+            },
         },
     };
 });
-
-jest.mock('./pdfjs-worker-url', () => 'mocked-worker-url');
 
 describe('PdfPreviewThumbnailGridComponent', () => {
     let component: PdfPreviewThumbnailGridComponent;

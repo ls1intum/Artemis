@@ -1,6 +1,5 @@
 import { Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
-import pdfjsWorker from './pdfjs-worker-url';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
@@ -35,7 +34,7 @@ export class PdfPreviewThumbnailGridComponent {
     private readonly alertService = inject(AlertService);
 
     constructor() {
-        PDFJS.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+        PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
         effect(() => {
             this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
         });
