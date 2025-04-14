@@ -7,14 +7,14 @@ import { ChannelDTO } from 'app/communication/shared/entities/conversation/chann
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ForwardMessageDialogComponent', () => {

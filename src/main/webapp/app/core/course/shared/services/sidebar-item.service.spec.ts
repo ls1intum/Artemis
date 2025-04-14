@@ -59,7 +59,6 @@ describe('CourseSidebarItemService', () => {
                     icon: faChartColumn,
                     title: 'Statistics',
                     translation: 'artemisApp.courseOverview.menu.statistics',
-                    guidedTour: true,
                     hidden: false,
                 },
             ];
@@ -326,7 +325,6 @@ describe('CourseSidebarItemService', () => {
                 testId: 'course-settings',
                 bottom: true,
                 hidden: false,
-                guidedTour: false,
             });
         });
     });

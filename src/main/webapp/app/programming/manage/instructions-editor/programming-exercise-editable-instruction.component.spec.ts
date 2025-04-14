@@ -6,10 +6,10 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { DebugElement } from '@angular/core';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { MockResultService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
-import { MockProgrammingExerciseGradingService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-grading.service';
-import { triggerChanges } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockProgrammingExerciseGradingService } from 'test/helpers/mocks/service/mock-programming-exercise-grading.service';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ResultService } from 'app/exercise/result/result.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
@@ -21,17 +21,17 @@ import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/programming
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
@@ -87,7 +87,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ActivatedRoute, useValue: route },
                 MockProvider(ProfileService, {
-                    getProfileInfo: () => of(mockProfileInfo),
+                    getProfileInfo: () => mockProfileInfo,
                 }),
                 { provide: AccountService, useClass: MockAccountService },
                 provideHttpClient(),
@@ -99,14 +99,14 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                gradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
+                gradingService = TestBed.inject(ProgrammingExerciseGradingService);
                 (gradingService as MockProgrammingExerciseGradingService).initSubject([]);
-                programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
                 subscribeForTestCaseSpy = jest.spyOn(gradingService, 'subscribeForTestCases');
                 getLatestResultWithFeedbacksStub = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
                 generateHtmlSubjectStub = jest.spyOn(comp.generateHtmlSubject, 'next');
-                programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-                alertService = debugElement.injector.get(AlertService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
@@ -287,7 +287,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     });
 
     it('should log an error on save', () => {
-        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(undefined));
+        const updateProblemStatementSpy = jest.spyOn(programmingExerciseService, 'updateProblemStatement').mockReturnValue(throwError(() => undefined));
         const logErrorSpy = jest.spyOn(alertService, 'error');
 
         comp.exercise = exercise;

@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockLinkPreviewService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-link-preview.service';
+import { MockLinkPreviewService } from 'test/helpers/mocks/service/mock-link-preview.service';
 import { of } from 'rxjs';
 import { LinkPreviewContainerComponent } from 'app/communication/link-preview/components/link-preview-container/link-preview-container.component';
 import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';

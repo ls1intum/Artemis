@@ -5,7 +5,7 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionExportDialogComponent } from 'app/exercise/submission-export/dialog/submission-export-dialog.component';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { SubmissionExportService } from 'app/exercise/submission-export/submission-export.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';

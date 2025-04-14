@@ -1,10 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
-import { MockHttpService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-http.service';
+import { MockHttpService } from 'test/helpers/mocks/service/mock-http.service';
 import { ProgrammingExerciseTestCase } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { HttpClient } from '@angular/common/http';

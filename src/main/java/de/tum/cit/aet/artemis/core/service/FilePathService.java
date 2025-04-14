@@ -23,7 +23,7 @@ public class FilePathService {
     // This is also documented here: https://www.baeldung.com/spring-inject-static-field
     // We can not use a normal service here, as some classes (in the domain package) require this service (or depend on another service that depend on this service), were we cannot
     // use auto-injection
-    // TODO: Rework this behaviour be removing the dependencies to services (like FileService) from the domain package
+    // TODO: Rework this behavior be removing the dependencies to services (like FileService) from the domain package
     private static String fileUploadPath;
 
     @Value("${artemis.file-upload-path}")

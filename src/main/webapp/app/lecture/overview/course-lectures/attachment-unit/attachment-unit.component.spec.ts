@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import {
     IconDefinition,
@@ -22,7 +22,7 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { MockFileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 
 describe('AttachmentUnitComponent', () => {

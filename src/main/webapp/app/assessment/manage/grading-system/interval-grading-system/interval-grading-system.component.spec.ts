@@ -10,8 +10,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 

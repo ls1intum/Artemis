@@ -351,7 +351,7 @@ This approach has several benefits:
 
 * Repositories don't have further dependencies (they are facades for the database), therefore there are no cycles
 * We don't need to check for an ``EntityNotFoundException`` in the service since we throw in the repository already
-* The "ElseThrow" suffix at the end of the method name makes the behaviour clear to outside callers
+* The "ElseThrow" suffix at the end of the method name makes the behavior clear to outside callers
 
 In general everything changing small database objects can go into the repository. More complex operations have to be done in the service.
 

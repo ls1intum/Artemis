@@ -118,11 +118,7 @@
                 "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
-            "settings": "Einstellungen",
-            "guidedTutorial": "Guided Tutorial",
-            "startTutorial": "Tutorial starten",
-            "restartTutorial": "Tutorial wiederholen",
-            "continueTutorial": "Tutorial fortsetzen"
+            "settings": "Einstellungen"
         },
         "form": {
             "username": "Login oder E-Mail",

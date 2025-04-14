@@ -3,10 +3,10 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { FileUploadExerciseDetailComponent } from 'app/fileupload/manage/exercise-details/file-upload-exercise-detail.component';
-import { MockFileUploadExerciseService, fileUploadExercise } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockFileUploadExerciseService, fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
@@ -20,7 +20,7 @@ import { StatisticsService } from 'app/shared/statistics-graph/service/statistic
 import { ExerciseDetailStatisticsComponent } from 'app/exercise/statistics/exercise-detail-statistic/exercise-detail-statistics.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -82,8 +82,8 @@ describe('FileUploadExercise Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(FileUploadExerciseDetailComponent);
         comp = fixture.componentInstance;
-        service = fixture.debugElement.injector.get(FileUploadExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
+        service = TestBed.inject(FileUploadExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
         statisticsServiceStub = jest.spyOn(statisticsService, 'getExerciseStatistics').mockReturnValue(of(fileUploadExerciseStatistics));
     });
 

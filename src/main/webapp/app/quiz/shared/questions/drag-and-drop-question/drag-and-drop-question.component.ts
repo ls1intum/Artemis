@@ -21,7 +21,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
 
 // options are optional ;)
 polyfill({
-    // use this to make use of the scroll behaviour
+    // use this to make use of the scroll behavior
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
