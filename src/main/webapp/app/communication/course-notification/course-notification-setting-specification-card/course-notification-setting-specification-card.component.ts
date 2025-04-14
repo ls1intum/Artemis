@@ -55,6 +55,7 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     channelName: 'tech-support',
                     exerciseTitle: 'Modeling 123',
                     unitName: 'Modeling 123',
+                    groupTitle: 'Grp 123',
                 },
                 '/',
             );

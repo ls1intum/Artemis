@@ -4,6 +4,7 @@ import {
     Input,
     OnChanges,
     OnDestroy,
+    OnInit,
     QueryList,
     SimpleChanges,
     ViewChild,
@@ -16,6 +17,8 @@ import {
     viewChild,
 } from '@angular/core';
 import { FormsModule, NgModel } from '@angular/forms';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExercise, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
@@ -74,7 +77,7 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
         RemoveKeysPipe,
     ],
 })
-export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
+export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -84,7 +87,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isImport = input.required<boolean>();
     isExamMode = input.required<boolean>();
     programmingExercise = input.required<ProgrammingExercise>();
-    isLocal = input.required<boolean>();
     importOptions = input.required<ImportOptions>();
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
@@ -101,8 +103,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
     @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
-    private readonly exerciseService: ExerciseService = inject(ExerciseService);
-    private readonly alertService: AlertService = inject(AlertService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly alertService = inject(AlertService);
+    private readonly profileService = inject(ProfileService);
 
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
@@ -120,6 +123,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     editRepositoryCheckoutPath = false;
     submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
+    isLocalCIEnabled = true;
+
     constructor() {
         effect(() => {
             this.defineShortNameOnEditModeChangeIfNotDefinedInAdvancedMode();
@@ -136,6 +141,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         effect(() => {
             this.fetchAndInitializeTakenTitlesAndShortNames();
         });
+    }
+
+    ngOnInit() {
+        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     ngAfterViewInit() {

@@ -6,7 +6,7 @@ import { FinishedBuildJob } from 'app/buildagent/shared/entities/build-job.model
 import { TriggeredByPushTo } from 'app/programming/shared/entities/repository-info.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 

@@ -1,81 +1,126 @@
-import { Component, ElementRef, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
+import 'pdfjs-dist/build/pdf.worker';
+import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
+
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-enlarged-canvas/pdf-preview-enlarged-canvas.component';
+import { faEye, faEyeSlash, faGripLines } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import dayjs from 'dayjs/esm';
+import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
     templateUrl: './pdf-preview-thumbnail-grid.component.html',
     styleUrls: ['./pdf-preview-thumbnail-grid.component.scss'],
-    imports: [PdfPreviewEnlargedCanvasComponent],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [PdfPreviewEnlargedCanvasComponent, FaIconComponent, PdfPreviewDateBoxComponent, NgbModule, TranslateDirective, DragDropModule],
 })
-export class PdfPreviewThumbnailGridComponent {
+export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
 
-    readonly DEFAULT_SLIDE_WIDTH = 250;
+    FOREVER = dayjs('9999-12-31');
 
     // Inputs
+    course = input<Course>();
     currentPdfUrl = input<string>();
-    appendFile = input<boolean>();
+    isAppendingFile = input<boolean>();
+    hiddenPages = input<HiddenPageMap>({});
+    isAttachmentUnit = input<boolean>();
+    updatedSelectedPages = input<Set<OrderedPage>>(new Set());
+    orderedPages = input<OrderedPage[]>([]);
 
     // Signals
     isEnlargedView = signal<boolean>(false);
-    totalPages = signal<number>(0);
-    selectedPages = signal<Set<number>>(new Set());
+    loadedPages = signal<Set<number>>(new Set());
+    selectedPages = signal<Set<OrderedPage>>(new Set());
     originalCanvas = signal<HTMLCanvasElement | undefined>(undefined);
+    initialPageNumber = signal<number>(0);
+    activeButtonPage = signal<OrderedPage | null>(null);
+    isPopoverOpen = signal<boolean>(false);
+    dragSlideId = signal<string | null>(null);
+    isDragging = signal<boolean>(false);
+    reordering = signal<boolean>(false);
 
     // Outputs
-    isPdfLoading = output<boolean>();
-    totalPagesOutput = output<number>();
-    selectedPagesOutput = output<Set<number>>();
+    selectedPagesOutput = output<Set<OrderedPage>>();
+    hiddenPagesOutput = output<HiddenPageMap>();
+    pageOrderOutput = output<OrderedPage[]>();
 
     // Injected services
     private readonly alertService = inject(AlertService);
+    private readonly renderer = inject(Renderer2);
+
+    protected readonly faEye = faEye;
+    protected readonly faEyeSlash = faEyeSlash;
+    protected readonly faGripLines = faGripLines;
 
     constructor() {
         PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
-        effect(() => {
-            this.loadOrAppendPdf(this.currentPdfUrl()!, this.appendFile());
-        });
+    }
+    
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['orderedPages']) {
+            if (!this.reordering()) {
+                this.renderPages();
+            }
+            this.reordering.set(false);
+        }
+        if (changes['updatedSelectedPages']) {
+            this.selectedPages.set(new Set(this.updatedSelectedPages()!));
+            this.updateCheckboxStates();
+        }
     }
 
     /**
-     * Loads or appends a PDF from a provided URL.
-     * @param fileUrl The URL of the file to load or append.
-     * @param append Whether the document should be appended to the existing one.
-     * @returns A promise that resolves when the PDF is loaded.
+     * Renders PDF pages using the page proxies from the ordered pages
      */
-    async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
-        this.pdfContainer()
-            .nativeElement.querySelectorAll('.pdf-canvas-container')
-            .forEach((canvas) => canvas.remove());
-        this.totalPages.set(0);
-        this.isPdfLoading.emit(true);
+    async renderPages(): Promise<void> {
+        const pages = this.orderedPages();
         try {
-            const loadingTask = PDFJS.getDocument(fileUrl);
-            const pdf = await loadingTask.promise;
-            this.totalPages.set(pdf.numPages);
+            const containerEl = this.pdfContainer().nativeElement;
+            const canvases = containerEl.querySelectorAll('.pdf-canvas-container canvas');
+            canvases.forEach((canvas: HTMLCanvasElement) => {
+                if (canvas.parentNode) {
+                    this.renderer.removeChild(canvas.parentNode, canvas);
+                }
+            });
 
-            for (let i = 1; i <= this.totalPages(); i++) {
-                const page = await pdf.getPage(i);
-                const viewport = page.getViewport({ scale: 2 });
-                const canvas = this.createCanvas(viewport, i);
-                const context = canvas.getContext('2d');
-                await page.render({ canvasContext: context!, viewport }).promise;
+            this.loadedPages.set(new Set());
 
-                const canvasContainer = this.createCanvasContainer(canvas, i);
-                this.pdfContainer().nativeElement.appendChild(canvasContainer);
+            for (let i = 0; i < pages.length; i++) {
+                const page = pages[i];
+                const pageProxy = page.pageProxy;
+                if (pageProxy) {
+                    const viewport = pageProxy.getViewport({ scale: 1 });
+                    const canvas = this.createCanvas(viewport);
+                    const context = canvas.getContext('2d')!;
+
+                    await pageProxy.render({ canvasContext: context, viewport }).promise;
+
+                    const container = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${page.slideId}`);
+                    if (container) {
+                        this.renderer.appendChild(container, canvas);
+                        this.loadedPages.update((loadedPages) => {
+                            const newLoadedPages = new Set(loadedPages);
+                            newLoadedPages.add(page.order);
+                            return newLoadedPages;
+                        });
+                    }
+                }
             }
 
-            if (append) {
+            if (this.isAppendingFile()) {
                 this.scrollToBottom();
             }
         } catch (error) {
             onError(this.alertService, error);
-        } finally {
-            this.totalPagesOutput.emit(this.totalPages());
-            this.isPdfLoading.emit(false);
         }
     }
 
@@ -94,96 +139,171 @@ export class PdfPreviewThumbnailGridComponent {
     /**
      * Creates a canvas for each page of the PDF to allow for individual page rendering.
      * @param viewport The viewport settings used for rendering the page.
-     * @param pageIndex The index of the page within the PDF document.
      * @returns A new HTMLCanvasElement configured for the PDF page.
      */
-    createCanvas(viewport: PDFJS.PageViewport, pageIndex: number): HTMLCanvasElement {
+    createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
-        canvas.id = `${pageIndex}`;
-        /* Canvas styling is predefined because Canvas tags do not support CSS classes
-         * as they are not HTML elements but rather a bitmap drawing surface.
-         * See: https://stackoverflow.com/a/29675448
-         * */
-        canvas.height = viewport.height;
         canvas.width = viewport.width;
-        const fixedWidth = this.DEFAULT_SLIDE_WIDTH;
-        const scaleFactor = fixedWidth / viewport.width;
-        canvas.style.width = `${fixedWidth}px`;
-        canvas.style.height = `${viewport.height * scaleFactor}px`;
+        canvas.height = viewport.height;
+        canvas.style.display = 'block';
+        canvas.style.width = '100%';
+        canvas.style.height = '100%';
         return canvas;
     }
 
     /**
-     * Creates a container div for each canvas, facilitating layering and interaction.
-     * @param canvas The canvas element that displays a PDF page.
-     * @param pageIndex The index of the page within the PDF document.
-     * @returns A configured div element that includes the canvas and interactive overlays.
+     * Toggles the visibility state of a page by showing the date selection
+     * @param slideId The ID of the slide whose visibility is being toggled.
+     * @param event The event object triggered by the click action.
      */
-    createCanvasContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
-        const container = document.createElement('div');
-        /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
-         * See: https://stackoverflow.com/a/70911189
-         */
-        container.id = `pdf-page-${pageIndex}`;
-        container.classList.add('pdf-canvas-container');
-        container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px var(--pdf-preview-canvas-shadow);`;
-
-        const overlay = this.createOverlay(pageIndex);
-        const checkbox = this.createCheckbox(pageIndex);
-        container.appendChild(canvas);
-        container.appendChild(overlay);
-        container.appendChild(checkbox);
-
-        container.addEventListener('mouseenter', () => {
-            overlay.style.opacity = '1';
-        });
-        container.addEventListener('mouseleave', () => {
-            overlay.style.opacity = '0';
-        });
-        overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
-
-        return container;
+    toggleVisibility(slideId: string, event: Event): void {
+        const page = this.findPageBySlideId(slideId);
+        if (page) {
+            this.activeButtonPage.set(page);
+            const button = (event.target as HTMLElement).closest('button');
+            if (button) {
+                this.renderer.setStyle(button, 'opacity', '1');
+            }
+        }
+        event.stopPropagation();
     }
 
     /**
-     * Generates an interactive overlay for each PDF page to allow for user interactions.
-     * @param pageIndex The index of the page.
-     * @returns A div element styled as an overlay.
+     * Toggles the selection state of a page by adding or removing it from the selected pages set.
+     * @param slideId The ID of the slide whose selection state is being toggled.
+     * @param event The change event triggered by the checkbox interaction.
      */
-    private createOverlay(pageIndex: number): HTMLDivElement {
-        const overlay = document.createElement('div');
-        overlay.innerHTML = `<span>${pageIndex}</span>`;
-        /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
-         * See: https://stackoverflow.com/a/70911189
-         */
-        overlay.style.cssText = `position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; font-size: 24px; color: white; z-index: 1; transition: opacity 0.3s ease; opacity: 0; cursor: pointer; background-color: var(--pdf-preview-container-overlay)`;
-        return overlay;
+    togglePageSelection(slideId: string, event: Event): void {
+        const checkbox = event.target as HTMLInputElement;
+        const page = this.findPageBySlideId(slideId);
+
+        if (page) {
+            const newSelection = new Set(this.selectedPages());
+
+            if (checkbox.checked) {
+                newSelection.add(page);
+            } else {
+                newSelection.forEach((selectedPage) => {
+                    if (selectedPage.slideId === slideId) {
+                        newSelection.delete(selectedPage);
+                    }
+                });
+            }
+
+            this.selectedPages.set(newSelection);
+            this.selectedPagesOutput.emit(newSelection);
+        }
     }
 
-    private createCheckbox(pageIndex: number): HTMLDivElement {
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.id = String(pageIndex);
-        checkbox.style.cssText = `position: absolute; top: -5px; right: -5px; z-index: 4;`;
-        checkbox.checked = this.selectedPages().has(pageIndex);
-        checkbox.addEventListener('change', () => {
-            if (checkbox.checked) {
-                this.selectedPages().add(Number(checkbox.id));
-                this.selectedPagesOutput.emit(this.selectedPages());
-            } else {
-                this.selectedPages().delete(Number(checkbox.id));
-                this.selectedPagesOutput.emit(this.selectedPages());
-            }
+    /**
+     * Updates hidden pages information based on data from the date box component
+     * @param hiddenPageData Data for one or more hidden pages
+     */
+    onHiddenPagesReceived(hiddenPageData: HiddenPage | HiddenPage[]): void {
+        const pages = Array.isArray(hiddenPageData) ? hiddenPageData : [hiddenPageData];
+        const updatedHiddenPages = { ...this.hiddenPages() };
+
+        pages.forEach((page) => {
+            updatedHiddenPages[page.slideId] = {
+                date: dayjs(page.date),
+                exerciseId: page.exerciseId ?? null,
+            };
         });
-        return checkbox;
+
+        this.hiddenPagesOutput.emit(updatedHiddenPages);
     }
 
     /**
      * Displays the selected PDF page in an enlarged view for detailed examination.
-     * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
+     * @param pageOrder - The order of PDF page to be enlarged.
+     * @param slideId - The ID of the slide
      * */
-    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
-        this.originalCanvas.set(originalCanvas);
+    displayEnlargedCanvas(pageOrder: number, slideId: string): void {
+        const canvas = this.pdfContainer().nativeElement.querySelector(`#pdf-page-${slideId} canvas`) as HTMLCanvasElement;
+        this.originalCanvas.set(canvas!);
         this.isEnlargedView.set(true);
+        this.initialPageNumber.set(pageOrder);
+    }
+
+    /**
+     * Removes a page from the hidden pages and hides the associated action button.
+     *
+     * @param slideId - The ID of the slide to be made visible.
+     */
+    showPage(slideId: string): void {
+        const updatedHiddenPages = { ...this.hiddenPages() };
+        delete updatedHiddenPages[slideId];
+        this.hiddenPagesOutput.emit(updatedHiddenPages);
+        this.hideActionButton(slideId);
+    }
+
+    /**
+     * Hides the action button associated with a specified slide by setting its opacity to 0.
+     *
+     * @param slideId - The ID of the slide whose action button should be hidden.
+     */
+    hideActionButton(slideId: string): void {
+        const container = this.pdfContainer().nativeElement;
+        const button = container.querySelector(`#hide-show-button-${slideId}`);
+        if (button) {
+            this.renderer.setStyle(button, 'opacity', '0');
+        }
+    }
+
+    /**
+     * Updates checkbox states to match the current selection model
+     */
+    private updateCheckboxStates(): void {
+        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
+
+        checkboxes.forEach((checkbox: HTMLInputElement) => {
+            const match = checkbox.id.match(/checkbox-(.+)/);
+            if (match) {
+                const slideId = match[1];
+                checkbox.checked = Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+            }
+        });
+    }
+
+    /**
+     * Handles the drop event from Angular CDK drag-drop
+     * Updates the page order when an item is dropped in a new position
+     * @param event The CDK drop event containing source and target indices
+     */
+    onPageDrop(event: CdkDragDrop<OrderedPage[]>): void {
+        if (event.previousIndex === event.currentIndex) {
+            return;
+        }
+
+        this.reordering.set(true);
+        this.isDragging.set(false);
+
+        const pages = [...this.orderedPages()];
+
+        moveItemInArray(pages, event.previousIndex, event.currentIndex);
+
+        pages.forEach((page, index) => {
+            page.order = index + 1;
+        });
+
+        this.pageOrderOutput.emit(pages);
+    }
+
+    /**
+     * Gets the display order (position + 1) of a slide for the UI
+     * @param slideId The ID of the slide
+     * @returns The display order (1-based)
+     */
+    getPageOrder(slideId: string): number {
+        const index = this.orderedPages().findIndex((page) => page.slideId === slideId);
+        return index !== -1 ? index + 1 : -1;
+    }
+
+    /**
+     * Find a page by its slide ID
+     * @param slideId The slide ID to search for
+     */
+    findPageBySlideId(slideId: string): OrderedPage | undefined {
+        return this.orderedPages().find((page) => page.slideId === slideId);
     }
 }

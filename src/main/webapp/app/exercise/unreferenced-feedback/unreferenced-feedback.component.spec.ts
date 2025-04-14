@@ -5,8 +5,8 @@ import { MockPipe } from 'ng-mocks';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
 import { By } from '@angular/platform-browser';
-import { UnreferencedFeedbackDetailStubComponent } from '../../../../../test/javascript/spec/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { UnreferencedFeedbackDetailStubComponent } from 'test/helpers/stubs/exercise/unreferenced-feedback-detail-stub.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 
@@ -24,7 +24,7 @@ describe('UnreferencedFeedbackComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UnreferencedFeedbackComponent);
                 comp = fixture.componentInstance;
-                sgiService = fixture.debugElement.injector.get(StructuredGradingCriterionService);
+                sgiService = TestBed.inject(StructuredGradingCriterionService);
             });
     });
 
