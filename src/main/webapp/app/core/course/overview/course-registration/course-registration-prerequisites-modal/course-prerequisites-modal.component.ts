@@ -2,7 +2,7 @@ import { Component, Input, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PrerequisiteService } from 'app/atlas/manage/prerequisite.service';
+import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';

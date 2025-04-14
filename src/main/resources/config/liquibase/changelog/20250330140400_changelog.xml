@@ -2,18 +2,6 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
-    <!-- Step 1: PostgreSQL-only enum type creation -->
-    <changeSet id="20250330-01-create-enums-postgres" author="krusche">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql"/>
-        </preConditions>
-        <sql>
-            CREATE TYPE post_type_enum AS ENUM ('POST', 'ANSWER');
-        </sql>
-        <sql>
-            CREATE TYPE saved_post_status_enum AS ENUM ('IN_PROGRESS', 'COMPLETED', 'ARCHIVED');
-        </sql>
-    </changeSet>
 
     <!-- Step 1a: Remove all duplicate occurrences of saved posts. We do this to make the current index unique. This is mysql: -->
     <changeSet id="20250330-01a-remove-duplicate-saved-posts" author="rangger">
@@ -30,25 +18,24 @@
         </sql>
     </changeSet>
 
-    <!-- This is postgres and h2: -->
+    <!-- This is postgres: -->
     <changeSet id="20250330-01a-remove-duplicate-saved-posts-postgres" author="rangger">
         <preConditions onFail="MARK_RAN">
             <or>
                 <dbms type="postgresql"/>
-                <dbms type="h2"/>
             </or>
         </preConditions>
         <sql>
             DELETE FROM saved_post
             WHERE id IN
-            (
-                SELECT s1.id
-                FROM saved_post s1
-                    JOIN saved_post s2 ON s1.user_id = s2.user_id
-                    AND s1.post_id = s2.post_id
-                    AND s1.post_type = s2.post_type
-                    AND s1.id > s2.id
-            );
+                  (
+                      SELECT s1.id
+                      FROM saved_post s1
+                               JOIN saved_post s2 ON s1.user_id = s2.user_id
+                          AND s1.post_id = s2.post_id
+                          AND s1.post_type = s2.post_type
+                          AND s1.id > s2.id
+                  );
         </sql>
     </changeSet>
 
@@ -58,11 +45,11 @@
             <dbms type="postgresql"/>
         </preConditions>
         <addColumn tableName="saved_post">
-            <column name="post_type_tmp" type="post_type_enum"/>
-            <column name="status_tmp" type="saved_post_status_enum"/>
+            <column name="post_type_tmp" type="varchar(15)"/>
+            <column name="status_tmp" type="varchar(15)"/>
         </addColumn>
         <addColumn tableName="forwarded_message">
-            <column name="source_type_tmp" type="post_type_enum"/>
+            <column name="source_type_tmp" type="varchar(15)"/>
         </addColumn>
     </changeSet>
 
@@ -83,8 +70,8 @@
         </addColumn>
     </changeSet>
 
-    <!-- Step 3: Migrate data from int to enum -->
-    <!-- Step 3 mysql -->
+    <!-- Step 3a: Migrate data from int to enum -->
+    <!-- Step 3a mysql -->
     <changeSet id="20250330-03-transform-values-mysql" author="krusche">
         <preConditions onFail="MARK_RAN">
             <or>
@@ -115,7 +102,8 @@
             END"/>
         </update>
     </changeSet>
-    <!-- Step 3 postgresql -->
+
+    <!-- Step 3b postgresql -->
     <changeSet id="20250330-03-transform-values-postgresql" author="b-fein">
         <preConditions onFail="MARK_RAN">
             <or>
@@ -125,23 +113,23 @@
         <update tableName="saved_post">
             <column name="post_type_tmp" valueComputed="
             CASE post_type
-                WHEN 0 THEN 'POST'::post_type_enum
-                WHEN 1 THEN 'ANSWER'::post_type_enum
+                WHEN 0 THEN 'POST'
+                WHEN 1 THEN 'ANSWER'
             END"/>
         </update>
         <update tableName="saved_post">
             <column name="status_tmp" valueComputed="
             CASE status
-                WHEN 0 THEN 'IN_PROGRESS'::saved_post_status_enum
-                WHEN 1 THEN 'COMPLETED'::saved_post_status_enum
-                WHEN 2 THEN 'ARCHIVED'::saved_post_status_enum
+                WHEN 0 THEN 'IN_PROGRESS'
+                WHEN 1 THEN 'COMPLETED'
+                WHEN 2 THEN 'ARCHIVED'
             END"/>
         </update>
         <update tableName="forwarded_message">
             <column name="source_type_tmp" valueComputed="
             CASE source_type
-                WHEN 0 THEN 'POST'::post_type_enum
-                WHEN 1 THEN 'ANSWER'::post_type_enum
+                WHEN 0 THEN 'POST'
+                WHEN 1 THEN 'ANSWER'
             END"/>
         </update>
     </changeSet>
@@ -163,15 +151,15 @@
         <renameColumn tableName="saved_post"
                       oldColumnName="post_type_tmp"
                       newColumnName="post_type"
-                      columnDataType="post_type_enum"/>
+                      columnDataType="varchar(15)"/>
         <renameColumn tableName="saved_post"
                       oldColumnName="status_tmp"
                       newColumnName="status"
-                      columnDataType="saved_post_status_enum"/>
+                      columnDataType="varchar(15)"/>
         <renameColumn tableName="forwarded_message"
                       oldColumnName="source_type_tmp"
                       newColumnName="source_type"
-                      columnDataType="post_type_enum"/>
+                      columnDataType="varchar(15)"/>
         <addForeignKeyConstraint baseTableName="saved_post"
                                  baseColumnNames="user_id"
                                  constraintName="FK_SAVED_POST_USER"

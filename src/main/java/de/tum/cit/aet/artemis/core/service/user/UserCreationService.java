@@ -1,10 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
-import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
-import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -17,7 +14,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
@@ -30,7 +26,6 @@ import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -41,21 +36,6 @@ import tech.jhipster.security.RandomUtil;
 @Service
 public class UserCreationService {
 
-    @Value("${artemis.user-management.use-external}")
-    private Boolean useExternalUserManagement;
-
-    @Value("${info.guided-tour.course-group-students:#{null}}")
-    private Optional<String> tutorialGroupStudents;
-
-    @Value("${info.guided-tour.course-group-tutors:#{null}}")
-    private Optional<String> tutorialGroupTutors;
-
-    @Value("${info.guided-tour.course-group-editors:#{null}}")
-    private Optional<String> tutorialGroupEditors;
-
-    @Value("${info.guided-tour.course-group-instructors:#{null}}")
-    private Optional<String> tutorialGroupInstructors;
-
     private static final Logger log = LoggerFactory.getLogger(UserCreationService.class);
 
     private final UserRepository userRepository;
@@ -63,8 +43,6 @@ public class UserCreationService {
     private final PasswordService passwordService;
 
     private final AuthorityRepository authorityRepository;
-
-    private final CourseRepository courseRepository;
 
     private final OrganizationRepository organizationRepository;
 
@@ -74,13 +52,12 @@ public class UserCreationService {
 
     private final Optional<LearnerProfileApi> learnerProfileApi;
 
-    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
+    public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository,
             Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager, OrganizationRepository organizationRepository,
             Optional<LearnerProfileApi> learnerProfileApi) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
-        this.courseRepository = courseRepository;
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
@@ -177,9 +154,6 @@ public class UserCreationService {
         user.setPassword(passwordHash);
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
-        if (!useExternalUserManagement) {
-            addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
-        }
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
             user.setOrganizations(matchingOrganizations);
@@ -345,39 +319,6 @@ public class UserCreationService {
         if (userChanged) {
             // we only save if this is needed
             saveUser(user);
-        }
-    }
-
-    /**
-     * Adds the tutorial course groups to a user basing on its authorities,
-     * if a course with the given group names exist
-     * The groups can be customized in application-dev.yml or application-prod.yml
-     * at {info.tutorial-course-groups}
-     *
-     * @param user the userDTO to add to the groups to
-     */
-    private void addTutorialGroups(ManagedUserVM user) {
-        if (tutorialGroupInstructors.isPresent() || tutorialGroupEditors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
-            Set<String> groupsToAdd = new HashSet<>();
-            if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {
-                groupsToAdd.add(tutorialGroupStudents.get());
-            }
-            if (tutorialGroupTutors.isPresent() && user.getAuthorities().contains(TEACHING_ASSISTANT.getAuthority())
-                    && courseRepository.findCourseByTeachingAssistantGroupName(tutorialGroupTutors.get()) != null) {
-                groupsToAdd.add(tutorialGroupTutors.get());
-            }
-            if (tutorialGroupEditors.isPresent() && user.getAuthorities().contains(EDITOR.getAuthority())
-                    && courseRepository.findCourseByEditorGroupName(tutorialGroupEditors.get()) != null) {
-                groupsToAdd.add(tutorialGroupEditors.get());
-            }
-            if (tutorialGroupInstructors.isPresent() && user.getAuthorities().contains(INSTRUCTOR.getAuthority())
-                    && courseRepository.findCourseByInstructorGroupName(tutorialGroupInstructors.get()) != null) {
-                groupsToAdd.add(tutorialGroupInstructors.get());
-            }
-            if (user.getGroups() != null) {
-                groupsToAdd.addAll(user.getGroups());
-            }
-            user.setGroups(groupsToAdd);
         }
     }
 }
