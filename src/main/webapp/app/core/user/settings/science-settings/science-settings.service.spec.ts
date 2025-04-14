@@ -4,9 +4,10 @@ import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from '../../../layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS } from '../../../../app.constants';
+import { MODULE_FEATURE_ATLAS } from 'app/app.constants';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsService } from 'app/core/user/settings/directive/user-settings.service';
@@ -29,7 +30,12 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: LocalStorageService, useClass: MockLocalStorageService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -39,7 +45,7 @@ describe('ScienceSettingsService', () => {
                 const profileService = TestBed.inject(ProfileService);
                 const profileInfo = new ProfileInfo();
                 profileInfo.activeModuleFeatures = [MODULE_FEATURE_ATLAS];
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });
 

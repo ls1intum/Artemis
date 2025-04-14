@@ -1,16 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { UserService } from 'app/core/user/shared/user.service';
-import { MockUserService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-user.service';
-import { MockActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockUserService } from 'test/helpers/mocks/service/mock-user.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockNgbModalService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LtiInitializerComponent', () => {
@@ -40,10 +40,10 @@ describe('LtiInitializerComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(LtiInitializerComponent);
                 comp = fixture.componentInstance;
-                userService = fixture.debugElement.injector.get(UserService);
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
-                alertService = fixture.debugElement.injector.get(AlertService);
-                router = fixture.debugElement.injector.get(Router);
+                userService = TestBed.inject(UserService);
+                activatedRoute = TestBed.inject(ActivatedRoute);
+                alertService = TestBed.inject(AlertService);
+                router = TestBed.inject(Router);
 
                 initializeLTIUserStub = jest.spyOn(userService, 'initializeLTIUser');
                 infoSpy = jest.spyOn(alertService, 'info');

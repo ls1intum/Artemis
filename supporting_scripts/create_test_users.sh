@@ -26,7 +26,6 @@ do
     "email":"test_user'${i}'@example.com",
     "firstName":"Test",
     "lastName":"User'${i}'",
-    "guidedTourSettings":[],
     "groups":["default"],
     "password":"test_user_'${i}'_password"
     }'

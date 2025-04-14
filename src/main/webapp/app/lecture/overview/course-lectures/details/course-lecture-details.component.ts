@@ -84,7 +84,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     hasPdfLectureUnit: boolean;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     endsSameDay = false;
@@ -103,11 +102,9 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     }
 
     ngOnInit(): void {
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isProduction = profileInfo.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.irisEnabled = profileInfo.activeProfiles?.includes(PROFILE_IRIS);
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
 
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
@@ -203,6 +200,5 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
 
     ngOnDestroy() {
         this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 }

@@ -4,8 +4,6 @@ import { UpdatingResultComponent } from 'app/exercise/result/updating-result/upd
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { codeEditorTour } from 'app/core/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button/button.component';
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -49,7 +47,6 @@ import { DomainType } from 'app/programming/shared/code-editor/model/code-editor
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     private domainService = inject(DomainService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
-    private guidedTourService = inject(GuidedTourService);
     private submissionPolicyService = inject(SubmissionPolicyService);
     private route = inject(ActivatedRoute);
 
@@ -114,7 +111,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                 .subscribe({
                     next: () => {
                         this.loadingParticipation = false;
-                        this.guidedTourService.enableTourForExercise(this.exercise, codeEditorTour, true);
                     },
                     error: () => {
                         this.participationCouldNotBeFetched = true;

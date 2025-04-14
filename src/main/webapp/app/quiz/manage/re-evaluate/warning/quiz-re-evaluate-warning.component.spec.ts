@@ -9,10 +9,10 @@ import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-ques
 import { QuizReEvaluateWarningComponent } from 'app/quiz/manage/re-evaluate/warning/quiz-re-evaluate-warning.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Re-evaluate Warning Component', () => {
     let comp: QuizReEvaluateWarningComponent;
@@ -36,7 +36,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
 
         fixture = TestBed.createComponent(QuizReEvaluateWarningComponent);
         comp = fixture.componentInstance;
-        quizService = fixture.debugElement.injector.get(QuizExerciseService);
+        quizService = TestBed.inject(QuizExerciseService);
         const quizQuestion1 = new MultipleChoiceQuestion();
         const quizQuestion2 = new DragAndDropQuestion();
         quizExercise.quizQuestions = [quizQuestion1, quizQuestion2];

@@ -27,7 +27,7 @@ import {
     mockServerSessionHttpResponseWithId,
     mockUserMessageWithContent,
     mockWebsocketServerMessage,
-} from '../../../../../../test/javascript/spec/helpers/sample/iris-sample-data';
+} from 'test/helpers/sample/iris-sample-data';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';

@@ -236,11 +236,7 @@ public final class Constants {
 
     public static final String INFO_BUILD_PLAN_URL_DETAIL = "buildPlanURLTemplate";
 
-    public static final String INFO_COMMIT_HASH_URL_DETAIL = "commitHashURLTemplate";
-
     public static final String INFO_SSH_CLONE_URL_DETAIL = "sshCloneURLTemplate";
-
-    public static final String INFO_SSH_KEYS_URL_DETAIL = "sshKeysURL";
 
     public static final String INFO_CODE_BUTTON_REPOSITORY_AUTHENTICATION_MECHANISMS = "repositoryAuthenticationMechanisms";
 
@@ -259,14 +255,6 @@ public final class Constants {
     public static final String ALLOWED_COURSE_REGISTRATION_USERNAME_PATTERN = "allowedCourseRegistrationUsernamePattern";
 
     public static final String ARTEMIS_GROUP_DEFAULT_PREFIX = "artemis-";
-
-    public static final String HAZELCAST_QUIZ_SCHEDULER = "quizScheduleServiceExecutor";
-
-    public static final String HAZELCAST_QUIZ_PREFIX = "quiz-";
-
-    public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
-
-    public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
     public static final int HAZELCAST_PATH_SERIALIZER_ID = 2;
 

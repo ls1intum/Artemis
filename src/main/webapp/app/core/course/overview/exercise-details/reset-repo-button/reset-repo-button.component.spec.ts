@@ -3,23 +3,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button/exercise-action-button.component';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockFeatureToggleService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-feature-toggle.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Subject } from 'rxjs';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { MockParticipationService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 
 describe('JhiResetRepoButtonComponent', () => {
@@ -46,7 +46,7 @@ describe('JhiResetRepoButtonComponent', () => {
 
         fixture = TestBed.createComponent(ResetRepoButtonComponent);
         comp = fixture.componentInstance;
-        const programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
 
         resetRepositoryStub = jest.spyOn(programmingExerciseParticipationService, 'resetRepository');
     });

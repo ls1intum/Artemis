@@ -3,21 +3,21 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { getElement } from 'test/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactionService } from 'app/communication/service/reaction.service';
-import { MockReactionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-reaction.service';
+import { MockReactionService } from 'test/helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, UserRole } from 'app/communication/metis.util';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
@@ -30,10 +30,10 @@ import {
     metisUser1,
     sortedAnswerArray,
     unApprovedAnswerPost1,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockNotificationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
+import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
