@@ -87,8 +87,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     public void requestAndHandleResponse(IrisTutorSuggestionSession session, Optional<String> event) {
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
-        var variant = "test";
-        log.debug("IrisTutorSuggestionSessionService.requestAndHandleResponse");
+        var variant = "default";
 
         pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event);
     }

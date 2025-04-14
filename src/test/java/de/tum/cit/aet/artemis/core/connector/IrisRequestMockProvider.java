@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.course.PyrisCourseChat
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisWebhookFaqIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
@@ -161,6 +162,20 @@ public class IrisRequestMockProvider {
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisLectureChatPipelineExecutionDTO.class);
+                responseConsumer.accept(dto);
+                return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
+            });
+        // @formatter:on
+    }
+
+    public void mockTutorSuggestionResponse(Consumer<PyrisTutorSuggestionPipelineExecutionDTO> responseConsumer) {
+        // @formatter:off
+        mockServer
+            .expect(ExpectedCount.once(), requestTo(pipelinesApiURL + "/tutor-suggestion/default/run"))
+            .andExpect(method(HttpMethod.POST))
+            .andRespond(request -> {
+                var mockRequest = (MockClientHttpRequest) request;
+                var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorSuggestionPipelineExecutionDTO.class);
                 responseConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);
             });

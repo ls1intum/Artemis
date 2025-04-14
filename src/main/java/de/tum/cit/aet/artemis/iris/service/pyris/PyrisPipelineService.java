@@ -232,7 +232,7 @@ public class PyrisPipelineService {
         var course = post.getCoursePostingBelongsTo();
         // @formatter:off
         executePipeline(
-            "tutor-suggestions",
+            "tutor-suggestion",
             variant,
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),

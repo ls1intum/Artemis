@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,6 +59,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     private Course course;
 
+    private AtomicBoolean pipelineDone;
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -66,6 +71,8 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         activateIrisGlobally();
         activateIrisFor(course);
         activateIrisFor(exercise);
+
+        pipelineDone = new AtomicBoolean(false);
     }
 
     @Test
@@ -112,8 +119,32 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(messages.getFirst().getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void createTutorSuggestion() throws Exception {
+        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
+        message.setSender(IrisMessageSender.TUT_SUG);
+        message.setSession(irisSession);
+        irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+
+            pipelineDone.set(true);
+        });
+
+        var response = request.postWithResponseBody(irisSessionUrl(post.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+        assertThat(response.getContent().getFirst().toString()).contains("Test tutor suggestion request");
+    }
+
     private static String tutorSuggestionUrl(long sessionId) {
         return "/api/iris/tutor-suggestion/" + sessionId + "/sessions";
+    }
+
+    private static String irisSessionUrl(long sessionId) {
+        return "/api/iris/sessions/" + sessionId;
     }
 
     private Post createPostInExerciseChat(ProgrammingExercise exercise, String userPrefix) {
