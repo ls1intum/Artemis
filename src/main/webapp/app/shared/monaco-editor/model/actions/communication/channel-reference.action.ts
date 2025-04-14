@@ -2,13 +2,13 @@ import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { ChannelIdAndNameDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorRange } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-range.model';
 import { TextEditorCompletionItem, TextEditorCompletionItemKind } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-completion-item.model';
-import { ChannelService } from 'app/communication/conversations/channel.service';
+import { ChannelService } from 'app/communication/conversations/service/channel.service';
 
 /**
  * Action to insert a reference to a channel into the editor. Users that type a # will see a list of available channels to reference.

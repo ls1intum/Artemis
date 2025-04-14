@@ -675,6 +675,10 @@
                     "suspiciousBehavior": "Verdächtiges Verhalten und Plagiatsfälle können in diesem Dashboard eingesehen werden."
                 },
                 "textitems": {
+                    "noDeactivatedExerciseTypes": {
+                        "label": "Keine deaktivierten Aufgabentypen",
+                        "tooltip": "Es existiert mindestens eine Aufgabe mit einem derzeit deaktivierten Aufgabentyp. Löschen von diesen Aufgabentypen wird derzeit nicht unterstützt, lediglich der kompletten Aufgabengruppe. Du solltest die Artemis-betreibende Systemadministration kontaktieren."
+                    },
                     "leastoneexercisegroup": "Mindestens eine Aufgabengruppe",
                     "numberofexercisegroupsequal": "Anzahl der Aufgaben der Klausur entspricht Anzahl der Aufgabengruppen",
                     "numberofexercisegroupsinbetween": "Anzahl der Aufgaben der Klausur liegt zwischen der Anzahl der verpflichtenden Aufgabengruppen und der Gesamtanzahl der Aufgabengruppen",

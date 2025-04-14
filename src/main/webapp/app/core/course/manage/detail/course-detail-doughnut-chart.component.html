@@ -7,7 +7,7 @@
     @if (!titleLink) {
         <h5 class="text-center">{{ 'artemisApp.course.detail.' + doughnutChartTitle + 'Title' | artemisTranslate }}</h5>
     }
-    <div class="doughnut-chart-container" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
+    <div class="doughnut-chart-container position-relative" [ngClass]="titleLink ? 'clickable' : ''" (click)="openCorrespondingPage()">
         <div class="doughnut-chart-text">
             @if (receivedStats) {
                 @if (currentPercentage !== undefined) {

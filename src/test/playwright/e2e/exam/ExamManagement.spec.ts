@@ -2,7 +2,7 @@ import { expect } from '@playwright/test';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Commands } from '../../support/commands';

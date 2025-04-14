@@ -6,7 +6,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 export const quizManagementDetailRoute: Routes = [
     {
         path: '',
-        loadComponent: () => import('./quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
+        loadComponent: () => import('./detail/quiz-exercise-detail.component').then((m) => m.QuizExerciseDetailComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',

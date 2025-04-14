@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
-import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/shared/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import {
     faAngleDown,
@@ -73,7 +73,6 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     @Input() courseStatistics?: CourseManagementOverviewStatisticsDto;
     @Input() courseWithExercises: Course | undefined;
     @Input() courseWithUsers: Course | undefined;
-    @Input() isGuidedTour: boolean;
 
     atlasEnabled = false;
 
@@ -123,7 +122,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS)));
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     }
 
     ngOnChanges() {

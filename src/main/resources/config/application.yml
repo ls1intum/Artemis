@@ -300,14 +300,12 @@ sentry:
 
 # Properties to be exposed on the /info management endpoint
 info:
-    # Comma separated list of profiles that will trigger the ribbon to show
-    display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2 # Leave empty to disable Sentry, must be a valid URI
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
-    text-assessment-analytics-enabled: false
-    student-exam-store-session-data: true
+    textAssessmentAnalyticsEnabled: false
+    studentExamStoreSessionData: true
 
 # ===================================================================
 # JHipster specific properties

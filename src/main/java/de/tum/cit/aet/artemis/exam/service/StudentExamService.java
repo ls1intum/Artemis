@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -71,6 +70,7 @@ import de.tum.cit.aet.artemis.quiz.domain.compare.SAMapping;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.text.api.TextSubmissionApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -289,8 +289,7 @@ public class StudentExamService {
                         TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
                         TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
                         if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                            textSubmissionApi.orElseThrow(() -> new ApiProfileNotPresentException(TextSubmissionApi.class, PROFILE_CORE))
-                                    .saveTextSubmission(textSubmissionFromClient);
+                            textSubmissionApi.orElseThrow(() -> new TextApiNotPresentException(TextSubmissionApi.class)).saveTextSubmission(textSubmissionFromClient);
                             saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }

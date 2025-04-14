@@ -120,7 +120,7 @@ public class StudentExamResource {
 
     private final ExamLiveEventRepository examLiveEventRepository;
 
-    @Value("${info.student-exam-store-session-data:#{true}}")
+    @Value("${info.studentExamStoreSessionData:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
     private static final String ENTITY_NAME = "studentExam";

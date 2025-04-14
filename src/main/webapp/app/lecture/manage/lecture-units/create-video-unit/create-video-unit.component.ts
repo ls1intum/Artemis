@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { VideoUnitFormData } from 'app/lecture/manage/lecture-units/video-unit-form/video-unit-form.component';
-import { VideoUnitService } from 'app/lecture/manage/lecture-units/videoUnit.service';
+import { VideoUnitService } from 'app/lecture/manage/lecture-units/services/videoUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize } from 'rxjs/operators';

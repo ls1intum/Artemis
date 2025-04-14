@@ -3,9 +3,9 @@ import { FormsModule, NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
+import { TableEditableFieldComponent } from 'app/shared/table/editable-field/table-editable-field.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -22,7 +22,7 @@ interface DockerFlags {
 @Component({
     selector: 'jhi-programming-exercise-build-configuration',
     templateUrl: './programming-exercise-build-configuration.component.html',
-    styleUrls: ['../../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../../shared/programming-exercise-form.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, NgxDatatableModule, TableEditableFieldComponent, FaIconComponent],
 })
 export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
@@ -63,34 +63,33 @@ export class ProgrammingExerciseBuildConfigurationComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
+        const profileInfo = this.profileService.getProfileInfo();
+        if (profileInfo) {
+            this.timeoutMinValue = profileInfo.buildTimeoutMin ?? 10;
 
-                // Set the maximum timeout value to 240 if it is not set in the profile or if it is less than the minimum value
-                this.timeoutMaxValue = profileInfo.buildTimeoutMax && profileInfo.buildTimeoutMax > this.timeoutMinValue ? profileInfo.buildTimeoutMax : 240;
+            // Set the maximum timeout value to 240 if it is not set in the profile or if it is less than the minimum value
+            this.timeoutMaxValue = profileInfo.buildTimeoutMax && profileInfo.buildTimeoutMax > this.timeoutMinValue ? profileInfo.buildTimeoutMax : 240;
 
-                // Set the default timeout value to 120 if it is not set in the profile or if it is not in the valid range
-                this.timeoutDefaultValue = 120;
-                if (profileInfo.buildTimeoutDefault && profileInfo.buildTimeoutDefault >= this.timeoutMinValue && profileInfo.buildTimeoutDefault <= this.timeoutMaxValue) {
-                    this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
-                }
-
-                if (!this.timeout) {
-                    this.timeoutChange.emit(this.timeoutDefaultValue);
-                }
-
-                if (!this.cpuCount) {
-                    this.cpuCount = profileInfo.defaultContainerCpuCount;
-                }
-                if (!this.memory) {
-                    this.memory = profileInfo.defaultContainerMemoryLimitInMB;
-                }
-                if (!this.memorySwap) {
-                    this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
-                }
+            // Set the default timeout value to 120 if it is not set in the profile or if it is not in the valid range
+            this.timeoutDefaultValue = 120;
+            if (profileInfo.buildTimeoutDefault && profileInfo.buildTimeoutDefault >= this.timeoutMinValue && profileInfo.buildTimeoutDefault <= this.timeoutMaxValue) {
+                this.timeoutDefaultValue = profileInfo.buildTimeoutDefault;
             }
-        });
+
+            if (!this.timeout) {
+                this.timeoutChange.emit(this.timeoutDefaultValue);
+            }
+
+            if (!this.cpuCount) {
+                this.cpuCount = profileInfo.defaultContainerCpuCount;
+            }
+            if (!this.memory) {
+                this.memory = profileInfo.defaultContainerMemoryLimitInMB;
+            }
+            if (!this.memorySwap) {
+                this.memorySwap = profileInfo.defaultContainerMemorySwapLimitInMB;
+            }
+        }
 
         if (this.programmingExercise()?.buildConfig?.dockerFlags) {
             this.initDockerFlags();

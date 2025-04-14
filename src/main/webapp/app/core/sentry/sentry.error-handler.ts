@@ -1,6 +1,6 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { captureException, dedupeIntegration, init } from '@sentry/angular';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
@@ -18,9 +18,9 @@ export class SentryErrorHandler extends ErrorHandler {
 
         if (profileInfo.testServer != undefined) {
             if (profileInfo.testServer) {
-                this.environment = 'test';
+                this.environment = PROFILE_TEST;
             } else {
-                this.environment = 'prod';
+                this.environment = PROFILE_PROD;
             }
         } else {
             this.environment = 'local';
@@ -31,7 +31,7 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: [dedupeIntegration()],
-            tracesSampleRate: this.environment !== 'prod' ? 1.0 : 0.2,
+            tracesSampleRate: this.environment !== PROFILE_PROD ? 1.0 : 0.2,
         });
     }
 

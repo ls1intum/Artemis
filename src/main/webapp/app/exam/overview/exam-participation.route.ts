@@ -25,7 +25,7 @@ export const examParticipationRoute: Routes = [
     },
     {
         path: 'test-exam/:studentExamId',
-        loadComponent: () => import('app/exam/overview/exam-participation.component').then((m) => m.ExamParticipationComponent),
+        loadComponent: () => import('app/exam/overview/exam-participation/exam-participation.component').then((m) => m.ExamParticipationComponent),
         data: {
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.exam.title',

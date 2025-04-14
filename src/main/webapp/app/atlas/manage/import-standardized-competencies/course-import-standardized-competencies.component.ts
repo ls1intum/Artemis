@@ -1,12 +1,12 @@
 import { Component, inject } from '@angular/core';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/atlas/manage/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

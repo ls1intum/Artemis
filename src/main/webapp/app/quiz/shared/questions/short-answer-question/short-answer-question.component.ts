@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { ShortAnswerQuestionUtil } from 'app/quiz/shared/short-answer-question-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { ShortAnswerQuestionUtil } from 'app/quiz/shared/service/short-answer-question-util.service';
 import { ShortAnswerSolution } from 'app/quiz/shared/entities/short-answer-solution.model';
 import { ShortAnswerQuestion } from 'app/quiz/shared/entities/short-answer-question.model';
 import { ShortAnswerSubmittedText } from 'app/quiz/shared/entities/short-answer-submitted-text.model';
@@ -19,7 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-short-answer-question',
     templateUrl: './short-answer-question.component.html',
     providers: [ShortAnswerQuestionUtil],
-    styleUrls: ['./short-answer-question.component.scss', '../../../overview/quiz-participation.scss'],
+    styleUrls: ['./short-answer-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [NgClass, NgbTooltip, TranslateDirective, NgbPopover, FaIconComponent, QuizScoringInfoStudentModalComponent, ArtemisTranslatePipe],
 })
