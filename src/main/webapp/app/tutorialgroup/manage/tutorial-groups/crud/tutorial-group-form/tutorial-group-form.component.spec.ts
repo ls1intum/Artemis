@@ -16,17 +16,14 @@ import { ScheduleFormComponent, ScheduleFormData } from 'app/tutorialgroup/manag
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import {
-    generateClickSubmitButton,
-    generateTestFormIsInvalidOnMissingRequiredProperty,
-} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from 'test/helpers/sample/tutorialgroup/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
-import { runOnPushChangeDetection } from '../../../../../../../../test/javascript/spec/helpers/on-push-change-detection.helper';
-import { MockResizeObserver } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 @Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {

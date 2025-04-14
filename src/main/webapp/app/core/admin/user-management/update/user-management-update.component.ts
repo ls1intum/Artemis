@@ -122,9 +122,7 @@ export class UserManagementUpdateComponent implements OnInit {
                 map((value) => (value ? this.filter(value) : this.allGroups.slice())),
             );
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
-        });
+        this.isJenkins = this.profileService.isProfileActive('jenkins');
         this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
             this.authorities = authorities;

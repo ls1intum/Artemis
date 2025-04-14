@@ -10,16 +10,16 @@ import {
     formDataToTutorialGroupSessionDTO,
     generateExampleTutorialGroupSession,
     tutorialGroupSessionToTutorialGroupSessionFormData,
-} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
+} from 'test/helpers/sample/tutorialgroup/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { generateExampleTutorialGroup } from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSessionFormComponent } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupSessionComponent', () => {

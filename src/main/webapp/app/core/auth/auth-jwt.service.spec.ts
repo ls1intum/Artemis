@@ -2,8 +2,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('AuthServerProvider', () => {

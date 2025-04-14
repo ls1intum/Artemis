@@ -97,7 +97,6 @@
                             class="nav-link nav-link-sidebar px-3 py-2"
                             [id]="bottomItem.testId ?? ''"
                             [ngClass]="{
-                                'guided-tour': bottomItem.guidedTour,
                                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && bottomItem.title === 'Communication',
                                 collapsed: isNavbarCollapsed(),
                             }"
@@ -184,7 +183,6 @@
             class="nav-link nav-link-sidebar px-3 py-2"
             [id]="sidebarItem.testId ?? ''"
             [ngClass]="{
-                'guided-tour': sidebarItem.guidedTour,
                 newMessage: !communicationRouteLoaded() && hasUnreadMessages() && sidebarItem.title === 'Communication',
                 collapsed: isNavbarCollapsed(),
             }"

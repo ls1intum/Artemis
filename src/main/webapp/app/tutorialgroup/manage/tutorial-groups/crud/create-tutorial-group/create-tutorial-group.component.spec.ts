@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { CreateTutorialGroupComponent } from 'app/tutorialgroup/manage/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
@@ -10,14 +10,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
-import {
-    generateExampleTutorialGroup,
-    tutorialGroupToTutorialGroupFormData,
-} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { TutorialGroupFormComponent } from '../tutorial-group-form/tutorial-group-form.component';
 import { LoadingIndicatorContainerComponent } from '../../../../../shared/loading-indicator-container/loading-indicator-container.component';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupComponent', () => {

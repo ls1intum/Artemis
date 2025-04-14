@@ -243,7 +243,7 @@
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
                 "repeatedTestCase": "The test case '{{id}}' is repeated.",
-                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behavior:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",

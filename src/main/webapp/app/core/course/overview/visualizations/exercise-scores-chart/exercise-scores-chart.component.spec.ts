@@ -10,7 +10,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import dayjs from 'dayjs/esm';
 import { HttpResponse } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 
