@@ -44,7 +44,7 @@ import {
 import { ButtonSize } from 'app/shared/components/button/button.component';
 import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_IRIS, PROFILE_LOCALCI } from 'app/app.constants';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -64,7 +64,6 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from '../../shared/code-editor/model/code-editor.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
-import { hasEditableBuildPlan } from 'app/core/layouts/profiles/profile-info.model';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 
 @Component({
@@ -147,7 +146,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
     formattedGradingInstructions: SafeHtml;
-    localVCEnabled = true;
     localCIEnabled = true;
     irisEnabled = false;
     irisChatEnabled = false;
@@ -171,7 +169,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     exerciseDetailSections: DetailOverviewSection[];
 
     ngOnInit() {
-        this.checkBuildPlanEditable();
+        this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
 
         this.activatedRouteSubscription = this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
@@ -205,34 +203,30 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                         this.loadingTemplateParticipationResults = false;
                         this.loadingSolutionParticipationResults = false;
                     }),
-                    mergeMap(() => this.profileService.getProfileInfo()),
-                    tap((profileInfo) => {
-                        if (profileInfo) {
-                            if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId) {
-                                this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                    profileInfo.buildPlanURLTemplate,
-                                    this.programmingExercise.projectKey,
-                                    this.programmingExercise.templateParticipation.buildPlanId,
-                                );
-                            }
-                            if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId) {
-                                this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                    profileInfo.buildPlanURLTemplate,
-                                    this.programmingExercise.projectKey,
-                                    this.programmingExercise.solutionParticipation.buildPlanId,
-                                );
-                            }
-                            this.supportsAuxiliaryRepositories =
-                                this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ??
-                                false;
-                            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                            this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-                            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                            if (this.irisEnabled && !this.isExamExercise) {
-                                this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                                    this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
-                                });
-                            }
+                    tap(() => {
+                        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+                        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+                        const profileInfo = this.profileService.getProfileInfo();
+                        if (this.programmingExercise.projectKey && this.programmingExercise.templateParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                            this.programmingExercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.templateParticipation.buildPlanId,
+                            );
+                        }
+                        if (this.programmingExercise.projectKey && this.programmingExercise.solutionParticipation?.buildPlanId && profileInfo.buildPlanURLTemplate) {
+                            this.programmingExercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
+                                profileInfo.buildPlanURLTemplate,
+                                this.programmingExercise.projectKey,
+                                this.programmingExercise.solutionParticipation.buildPlanId,
+                            );
+                        }
+                        this.supportsAuxiliaryRepositories =
+                            this.programmingLanguageFeatureService.getProgrammingLanguageFeature(programmingExercise.programmingLanguage)?.auxiliaryRepositoriesSupported ?? false;
+                        if (this.irisEnabled && !this.isExamExercise) {
+                            this.irisSettingsSubscription = this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                                this.irisChatEnabled = settings?.irisChatSettings?.enabled ?? false;
+                            });
                         }
                     }),
                     mergeMap(() => this.programmingExerciseSubmissionPolicyService.getSubmissionPolicyOfProgrammingExercise(exerciseId)),
@@ -604,10 +598,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                     },
             ],
         };
-    }
-
-    private checkBuildPlanEditable() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.isBuildPlanEditable = hasEditableBuildPlan(profileInfo)));
     }
 
     onParticipationChange(): void {

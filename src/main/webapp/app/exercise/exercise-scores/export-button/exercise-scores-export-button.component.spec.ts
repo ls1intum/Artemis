@@ -11,7 +11,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/exercise/shared/entities/result/result-with-points-per-grading-criterion.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
@@ -21,7 +21,7 @@ import { User } from 'app/core/user/user.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockResultService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
@@ -104,7 +104,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Criterion 1': 2,
             'Unnamed Criterion 1': 0,
             'Unnamed Criterion 2': 10,
-            'Repo Link': 'https://www.gitlab.local/studentA',
+            'Repo Link': 'https://www.artemis.local/studentA',
         },
         {
             Name: 'Student B',
@@ -114,7 +114,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             'Criterion 1': 0,
             'Unnamed Criterion 1': 0,
             'Unnamed Criterion 2': 0,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
         },
     ];
 
@@ -125,14 +125,14 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentA',
             Score: 1,
             Points: 2,
-            'Repo Link': 'https://www.gitlab.local/studentA',
+            'Repo Link': 'https://www.artemis.local/studentA',
         },
         {
             Name: 'Student B',
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
         },
     ];
 
@@ -143,7 +143,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed',
             'Test 3': 'Failed',
@@ -156,7 +156,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Username: 'studentB',
             Score: 2,
             Points: 4,
-            'Repo Link': 'https://www.gitlab.local/studentB',
+            'Repo Link': 'https://www.artemis.local/studentB',
             TestName1: 'Passed',
             TestName2: 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
             'Test 3': 'Failed',
@@ -318,7 +318,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         participation.participantIdentifier = studentLogin;
         participation.participantName = studentName;
         if (isProgramming) {
-            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.gitlab.local/${studentLogin}`;
+            (participation as ProgrammingExerciseStudentParticipation).repositoryUri = `https://www.artemis.local/${studentLogin}`;
         }
 
         return participation;

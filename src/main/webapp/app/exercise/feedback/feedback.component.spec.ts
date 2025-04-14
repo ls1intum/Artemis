@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
-import { DebugElement, SimpleChange } from '@angular/core';
+import { SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -17,18 +17,17 @@ import { ProgrammingFeedbackItemService } from 'app/exercise/feedback/item/progr
 import { FeedbackNode } from 'app/exercise/feedback/node/feedback-node';
 import { ResultService } from 'app/exercise/result/result.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { BehaviorSubject, of, throwError } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { FeedbackGroup } from 'app/exercise/feedback/group/feedback-group';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
-    let debugElement: DebugElement;
 
     let exercise: ProgrammingExercise;
     let buildLogService: BuildLogService;
@@ -38,9 +37,6 @@ describe('FeedbackComponent', () => {
 
     let buildlogsStub: jest.SpyInstance;
     let getFeedbackDetailsForResultStub: jest.SpyInstance;
-
-    // Template for commit hash url
-    const commitHashURLTemplate = 'https://gitlab.ase.in.tum.de/projects/{projectKey}/repos/{repoSlug}/commits/{commitHash}';
 
     const feedbackReference = {
         id: 1,
@@ -53,7 +49,15 @@ describe('FeedbackComponent', () => {
     };
 
     const makeFeedbackItem = (item: FeedbackItem) => {
-        return Object.assign({ type: 'Reviewer', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+        return Object.assign(
+            {
+                type: 'Reviewer',
+                credits: 0,
+                title: undefined,
+                positive: undefined,
+            } as FeedbackItem,
+            item,
+        );
     };
 
     const generateSCAFeedbackPair = (
@@ -170,8 +174,8 @@ describe('FeedbackComponent', () => {
         return programmingSubmission;
     };
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -179,56 +183,42 @@ describe('FeedbackComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(FeedbackComponent);
-                comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-
-                exercise = {
-                    maxPoints: 100,
-                    bonusPoints: 0,
-                    type: ExerciseType.PROGRAMMING,
-                    staticCodeAnalysisEnabled: true,
-                    maxStaticCodeAnalysisPenalty: 20,
-                    projectKey: 'somekey',
-                } as ProgrammingExercise;
-
-                const course = new Course();
-                course.id = 3;
-                course.title = 'Testcourse';
-                exercise.course = course;
-
-                comp.exercise = exercise;
-
-                comp.result = {
-                    id: 89,
-                    submission: {
-                        participation: {
-                            id: 55,
-                            type: ParticipationType.PROGRAMMING,
-                            participantIdentifier: 'student42',
-                            repositoryUri: 'https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42',
-                        },
-                    },
-                } as Result;
-
-                buildLogService = debugElement.injector.get(BuildLogService);
-                resultService = debugElement.injector.get(ResultService);
-                profileService = debugElement.injector.get(ProfileService);
-                feedbackItemService = debugElement.injector.get(ProgrammingFeedbackItemService);
-
-                buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
-                getFeedbackDetailsForResultStub = jest
-                    .spyOn(resultService, 'getFeedbackDetailsForResult')
-                    .mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
-
-                // Set profile info
-                const profileInfo = new ProfileInfo();
-                profileInfo.commitHashURLTemplate = commitHashURLTemplate;
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new BehaviorSubject(profileInfo));
-            });
+        }).compileComponents();
+        fixture = TestBed.createComponent(FeedbackComponent);
+        comp = fixture.componentInstance;
+        exercise = {
+            maxPoints: 100,
+            bonusPoints: 0,
+            type: ExerciseType.PROGRAMMING,
+            staticCodeAnalysisEnabled: true,
+            maxStaticCodeAnalysisPenalty: 20,
+            projectKey: 'somekey',
+        } as ProgrammingExercise;
+        const course = new Course();
+        course.id = 3;
+        course.title = 'Testcourse';
+        exercise.course = course;
+        comp.exercise = exercise;
+        comp.result = {
+            id: 89,
+            submission: {
+                participation: {
+                    id: 55,
+                    type: ParticipationType.PROGRAMMING,
+                    participantIdentifier: 'student42',
+                    repositoryUri: 'https://artemis.tum.de/projects/somekey/repos/somekey-student42',
+                },
+            },
+        } as Result;
+        buildLogService = TestBed.inject(BuildLogService);
+        resultService = TestBed.inject(ResultService);
+        profileService = TestBed.inject(ProfileService);
+        feedbackItemService = TestBed.inject(ProgrammingFeedbackItemService);
+        buildlogsStub = jest.spyOn(buildLogService, 'getBuildLogs').mockReturnValue(of([]));
+        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult').mockReturnValue(of({ body: [] as Feedback[] } as HttpResponse<Feedback[]>));
+        // Set profile info
+        const profileInfo = new ProfileInfo();
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
     });
 
     afterEach(() => {
@@ -278,7 +268,6 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(comp.getCommitHash()).toBe('123456789ab');
-        expect(comp.commitUrl).toBe('https://gitlab.ase.in.tum.de/projects/somekey/repos/somekey-student42/commits/123456789ab');
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {

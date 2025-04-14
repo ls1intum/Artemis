@@ -12,10 +12,9 @@ import { BuildLogService } from 'app/programming/shared/services/build-log.servi
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
+import { isProgrammingExerciseParticipation } from 'app/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { BarChartModule, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
@@ -62,7 +61,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     private resultService = inject(ResultService);
     private buildLogService = inject(BuildLogService);
     private translateService = inject(TranslateService);
-    private profileService = inject(ProfileService);
     private feedbackService = inject(FeedbackService);
     private feedbackChartService = inject(FeedbackChartService);
     private injector = inject(Injector);
@@ -74,6 +72,8 @@ export class FeedbackComponent implements OnInit, OnChanges {
     readonly resultIsPreliminary = resultIsPreliminary;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
+
+    private showTestDetails = false;
 
     @Input() exercise?: Exercise;
     @Input() result: Result;
@@ -100,7 +100,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     @Input() latestDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
     @Input() numberOfNotExecutedTests?: number;
-
     @Input() isExamReviewPage = false;
     @Input() isPrinting = false;
 
@@ -108,16 +107,13 @@ export class FeedbackComponent implements OnInit, OnChanges {
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-    private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
     buildLogs: BuildLogEntryArray;
     course?: Course;
     isOnlyCompilationTested: boolean;
 
-    commitHashURLTemplate?: string;
     commitHash?: string;
-    commitUrl?: string;
 
     chartData: ChartData = {
         xScaleMax: 100,
@@ -166,12 +162,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
         this.commitHash = this.getCommitHash().slice(0, 11);
 
         this.isOnlyCompilationTested = isOnlyCompilationTested(this.result, evaluateTemplateStatus(this.exercise, this.result.submission?.participation, this.result, false));
-
-        // Get active profiles, to distinguish between VC systems for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = this.getCommitUrl(this.result, this.exercise as ProgrammingExercise, this.commitHashURLTemplate);
-        });
     }
 
     /**
@@ -314,11 +304,5 @@ export class FeedbackComponent implements OnInit, OnChanges {
                 feedbackNode.open = true;
             }
         });
-    }
-
-    private getCommitUrl(result: Result, programmingExercise: ProgrammingExercise | undefined, commitHashURLTemplate: string | undefined) {
-        const projectKey = programmingExercise?.projectKey;
-        const programmingSubmission = result.submission as ProgrammingSubmission;
-        return createCommitUrl(commitHashURLTemplate, projectKey, result.submission?.participation, programmingSubmission);
     }
 }

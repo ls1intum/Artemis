@@ -51,7 +51,7 @@ describe('ExerciseHeadersInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseHeadersInformationComponent);
                 component = fixture.componentInstance;
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
                 component.exercise = { ...exercise };

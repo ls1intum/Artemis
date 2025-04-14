@@ -7,7 +7,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
-import { Submission, getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 describe('ParticipationWebsocketService', () => {
     let websocketService: WebsocketService;

@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { BehaviorSubject, Subject, firstValueFrom, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -16,14 +15,13 @@ import {
     FileType,
     GitConflictState,
 } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from '../../helpers/sample/build-logs';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
+import { buildLogs, extractedBuildLogErrors, extractedErrorFiles } from 'test/helpers/sample/build-logs';
+import { problemStatement } from 'test/helpers/sample/problemStatement.json';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
-import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
@@ -38,34 +36,32 @@ import {
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { omit } from 'lodash-es';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { GuidedTourMapping } from 'app/core/guided-tour/guided-tour-setting.model';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorContainerComponent>;
-    let containerDebugElement: DebugElement;
     let conflictService: CodeEditorConflictStateService;
     let domainService: DomainService;
     let checkIfRepositoryIsCleanStub: jest.SpyInstance;
@@ -78,7 +74,6 @@ describe('CodeEditorContainerIntegration', () => {
     let commitStub: jest.SpyInstance;
     let getStudentParticipationWithLatestResultStub: jest.SpyInstance;
     let getLatestPendingSubmissionStub: jest.SpyInstance;
-    let guidedTourService: GuidedTourService;
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
     let getLatestPendingSubmissionSubject = new Subject<ProgrammingSubmissionStateObj>();
 
@@ -112,18 +107,16 @@ describe('CodeEditorContainerIntegration', () => {
 
         containerFixture = TestBed.createComponent(CodeEditorContainerComponent);
         container = containerFixture.componentInstance;
-        containerDebugElement = containerFixture.debugElement;
-        guidedTourService = TestBed.inject(GuidedTourService);
 
-        const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-        const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-        const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-        const resultService = containerDebugElement.injector.get(ResultService);
-        const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-        const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-        conflictService = containerDebugElement.injector.get(CodeEditorConflictStateService);
-        domainService = containerDebugElement.injector.get(DomainService);
-        const submissionService = containerDebugElement.injector.get(ProgrammingSubmissionService);
+        const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+        const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const resultService = TestBed.inject(ResultService);
+        const buildLogService = TestBed.inject(CodeEditorBuildLogService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        conflictService = TestBed.inject(CodeEditorConflictStateService);
+        domainService = TestBed.inject(DomainService);
+        const submissionService = TestBed.inject(ProgrammingSubmissionService);
 
         subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
 
@@ -487,10 +480,6 @@ describe('CodeEditorContainerIntegration', () => {
     });
 
     it('should enter conflict mode if a git conflict between local and remote arises', fakeAsync(() => {
-        const guidedTourMapping = {} as GuidedTourMapping;
-        jest.spyOn<any, any>(guidedTourService, 'checkTourState').mockReturnValue(true);
-        guidedTourService.guidedTourMapping = guidedTourMapping;
-
         const successfulResult = { id: 3, successful: false };
         const participation = { id: 1, submissions: [{ results: [successfulResult] }], exercise: { id: 99 } } as StudentParticipation;
         const feedbacks = [{ id: 2 }] as Feedback[];

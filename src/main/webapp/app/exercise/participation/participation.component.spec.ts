@@ -15,19 +15,19 @@ import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/programming/shared/services/programming-submission.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { MockProvider } from 'ng-mocks';
-import { MockProgrammingSubmissionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-submission.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 
 describe('ParticipationComponent', () => {
@@ -94,7 +94,7 @@ describe('ParticipationComponent', () => {
         const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 2, login: 'student', name: 'Max', internal: true };
+        const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 3, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
@@ -116,7 +116,7 @@ describe('ParticipationComponent', () => {
         const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 2, login: 'student', name: 'Max', internal: true };
+        const student: User = { id: 2, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 3, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
@@ -144,7 +144,7 @@ describe('ParticipationComponent', () => {
     }));
 
     it('should format student login or team name from participation', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
+        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
         const participation: StudentParticipation = { id: 123, student };
         expect(component.searchResultFormatter(participation)).toBe(`${student.login} (${student.name})`);
 
@@ -160,7 +160,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should return student login, team short name, or empty from participation', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
+        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
         const participation: StudentParticipation = { id: 123, student, team };
 
@@ -174,7 +174,7 @@ describe('ParticipationComponent', () => {
     });
 
     it('should filter participation by prop', () => {
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
+        const student: User = { id: 1, login: 'student', name: 'Max', internal: true };
         const team: Team = { name: 'Team', shortName: 'T', students: [student] };
         const participation: StudentParticipation = { id: 1, student, team };
 

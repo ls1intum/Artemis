@@ -11,7 +11,7 @@ import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap'
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;

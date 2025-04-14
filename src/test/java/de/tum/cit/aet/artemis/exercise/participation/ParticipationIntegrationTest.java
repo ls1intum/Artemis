@@ -485,30 +485,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteParticipation_student() throws Exception {
-        // Allow students to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if users do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteParticipation_tutor() throws Exception {
-        // Allow tutors to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "tutor1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if tutors do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
         request.delete("/api/exercise/participations/" + -1, HttpStatus.NOT_FOUND);

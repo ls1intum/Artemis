@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
-import { DebugElement } from '@angular/core';
 import { BehaviorSubject, of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import {
@@ -9,14 +11,15 @@ import {
     ProgrammingSubmissionState,
     ProgrammingSubmissionStateObj,
 } from 'app/programming/shared/services/programming-submission.service';
-import { MockProgrammingSubmissionService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-submission.service';
-import { triggerChanges } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockProgrammingSubmissionService } from 'test/helpers/mocks/service/mock-programming-submission.service';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent } from 'ng-mocks';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { MissingResultInformation } from 'app/exercise/result/result.utils';
@@ -25,7 +28,6 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 describe('UpdatingResultComponent', () => {
     let comp: UpdatingResultComponent;
     let fixture: ComponentFixture<UpdatingResultComponent>;
-    let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
     let programmingSubmissionService: ProgrammingSubmissionService;
 
@@ -33,8 +35,9 @@ describe('UpdatingResultComponent', () => {
     let subscribeForLatestResultOfParticipationSubject: BehaviorSubject<Result | undefined>;
 
     let getLatestPendingSubmissionStub: jest.SpyInstance;
-    let getIsLocalCIProfileStub: jest.SpyInstance;
     let fetchQueueReleaseDateEstimationByParticipationIdStub: jest.SpyInstance;
+
+    let profileService: ProfileService;
 
     const exercise = { id: 20 } as Exercise;
     const student = { id: 99 };
@@ -43,7 +46,7 @@ describe('UpdatingResultComponent', () => {
     const ungradedResult1 = { id: 12, rated: false, completionDate: dayjs('2019-06-06T22:25:29.203+02:00') } as Result;
     const ungradedResult2 = { id: 13, rated: false, completionDate: dayjs('2019-06-06T22:32:29.203+02:00') } as Result;
     const results = [gradedResult2, ungradedResult1, gradedResult1, ungradedResult2] as Result[];
-    const initialParticipation = { id: 1, exercise, submissions: [{ results }], student } as any;
+    const initialParticipation = { id: 1, exercise, submissions: [{ results }], student } as StudentParticipation;
     const newGradedResult = { id: 14, rated: true } as Result;
     const newUngradedResult = { id: 15, rated: false } as Result;
 
@@ -59,16 +62,18 @@ describe('UpdatingResultComponent', () => {
             providers: [
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(UpdatingResultComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
 
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
-                programmingSubmissionService = debugElement.injector.get(ProgrammingSubmissionService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+                programmingSubmissionService = TestBed.inject(ProgrammingSubmissionService);
+
+                profileService = TestBed.inject(ProfileService);
 
                 subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | undefined>(undefined);
                 subscribeForLatestResultOfParticipationStub = jest
@@ -79,7 +84,6 @@ describe('UpdatingResultComponent', () => {
                 getLatestPendingSubmissionStub = jest
                     .spyOn(programmingSubmissionService, 'getLatestPendingSubmissionByParticipationId')
                     .mockReturnValue(of(programmingSubmissionStateObj));
-                getIsLocalCIProfileStub = jest.spyOn(programmingSubmissionService, 'getIsLocalCIProfile').mockReturnValue(false);
                 fetchQueueReleaseDateEstimationByParticipationIdStub = jest
                     .spyOn(programmingSubmissionService, 'fetchQueueReleaseDateEstimationByParticipationId')
                     .mockReturnValue(of(undefined));
@@ -92,6 +96,7 @@ describe('UpdatingResultComponent', () => {
 
     const cleanInitializeGraded = (participation = initialParticipation) => {
         comp.participation = participation;
+        comp.ngOnInit();
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
@@ -99,6 +104,7 @@ describe('UpdatingResultComponent', () => {
     const cleanInitializeUngraded = (participation = initialParticipation) => {
         comp.participation = participation;
         comp.showUngradedResults = true;
+        comp.ngOnInit();
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
     };
@@ -166,6 +172,8 @@ describe('UpdatingResultComponent', () => {
     });
 
     it('should set the isBuilding attribute to true if exerciseType is PROGRAMMING and there is a latest pending submission', () => {
+        // LocalCI is disabled
+        jest.spyOn(profileService, 'isProfileActive').mockImplementation(() => false);
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         getLatestPendingSubmissionStub.mockReturnValue(
             of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3, buildTimingInfo }),
@@ -238,7 +246,8 @@ describe('UpdatingResultComponent', () => {
     });
 
     it('should set the isQueue and isBuilding attribute to true with correct timing', () => {
-        getIsLocalCIProfileStub.mockReturnValue(true);
+        // LocalCI is enabled
+        jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile) => profile === PROFILE_LOCALCI);
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING } as Exercise;
         const pendingSubmissionSubject = new BehaviorSubject({
             submissionState: ProgrammingSubmissionState.IS_QUEUED,

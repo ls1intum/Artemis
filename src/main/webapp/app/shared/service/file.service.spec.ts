@@ -191,4 +191,14 @@ describe('FileService', () => {
             expect(result).toBe(expected);
         });
     });
+
+    describe('createStudentLink', () => {
+        it('should return the student version of the given link', () => {
+            const link = 'http://example.com/course/attachment/file.pdf';
+            const expectedStudentLink = 'http://example.com/course/attachment/student/file.pdf';
+
+            const result = fileService.createStudentLink(link);
+            expect(result).toBe(expectedStudentLink);
+        });
+    });
 });

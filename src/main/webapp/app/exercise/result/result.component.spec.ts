@@ -2,7 +2,7 @@ import { ResultComponent } from 'app/exercise/result/result.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MissingResultInformation, ResultTemplateStatus } from 'app/exercise/result/result.utils';
 import { SimpleChange } from '@angular/core';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -12,7 +12,7 @@ import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/ex
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
-import { MockNgbModalService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import * as utils from 'app/exercise/feedback/feedback.utils';
 import { FeedbackComponentPreparedParams } from 'app/exercise/feedback/feedback.utils';
@@ -26,7 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 const mockExercise: Exercise = {
     id: 1,

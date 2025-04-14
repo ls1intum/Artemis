@@ -15,11 +15,11 @@ import { MockComponent } from 'ng-mocks';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ArtemisDatePipe } from '../../../shared/pipes/artemis-date.pipe';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
+import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { Component, ElementRef, signal } from '@angular/core';
 import { Location } from '@angular/common';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -134,7 +134,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;
-        plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
             of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
         );
@@ -172,7 +172,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
 
         const newSnapshot = { paramMap: convertToParamMap({ courseId: 1, examId: 1 }) } as ActivatedRouteSnapshot;
-        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.snapshot = newSnapshot;
 
         component.ngOnInit();
@@ -239,7 +239,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should navigate to plagiarism detection page on click', fakeAsync(() => {
-        const location = fixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         const courseId = route.snapshot.paramMap.get('courseId');
         // exercise id = exercise1.id for first element of first group (0-0)
         const exerciseId = exercise1.id;

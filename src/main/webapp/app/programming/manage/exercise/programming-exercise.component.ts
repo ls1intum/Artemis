@@ -33,7 +33,7 @@ import {
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
@@ -94,13 +94,12 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     FeatureToggle = FeatureToggle;
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
-    localVCEnabled = true;
     localCIEnabled = true;
     onlineIdeEnabled = false;
     numberOfResultsOfSolutionParticipation = 0;
     numberOfResultsOfTemplateParticipation = 0;
 
-    private buildPlanLinkTemplate: string;
+    private buildPlanLinkTemplate?: string; // only available on non LocalCI systems
     protected readonly RepositoryType = RepositoryType;
 
     // Icons
@@ -130,12 +129,10 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         this.courseExerciseService.findAllProgrammingExercisesForCourse(this.courseId).subscribe({
             next: (res: HttpResponse<ProgrammingExercise[]>) => {
                 this.programmingExercises = res.body!;
-                this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                    this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
-                    this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
-                    this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
-                });
+                const profileInfo = this.profileService.getProfileInfo();
+                this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
+                this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+                this.onlineIdeEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
                     exercise.course = this.course;
@@ -143,16 +140,16 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     this.numberOfResultsOfSolutionParticipation = getAllResultsOfAllSubmissions(exercise.solutionParticipation?.submissions).length;
                     this.numberOfResultsOfTemplateParticipation = getAllResultsOfAllSubmissions(exercise.templateParticipation?.submissions).length;
                     if (exercise.projectKey) {
-                        if (exercise.solutionParticipation?.buildPlanId) {
+                        if (exercise.solutionParticipation?.buildPlanId && !this.localCIEnabled) {
                             exercise.solutionParticipation.buildPlanUrl = createBuildPlanUrl(
-                                this.buildPlanLinkTemplate,
+                                this.buildPlanLinkTemplate!,
                                 exercise.projectKey,
                                 exercise.solutionParticipation.buildPlanId,
                             );
                         }
-                        if (exercise.templateParticipation?.buildPlanId) {
+                        if (exercise.templateParticipation?.buildPlanId && !this.localCIEnabled) {
                             exercise.templateParticipation.buildPlanUrl = createBuildPlanUrl(
-                                this.buildPlanLinkTemplate,
+                                this.buildPlanLinkTemplate!,
                                 exercise.projectKey,
                                 exercise.templateParticipation.buildPlanId,
                             );
@@ -244,7 +241,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     }
 
     /**
-     * Downloads the instructor repository. Used when the "localvc" profile is active.
+     * Downloads the instructor repository.
      * For the local VCS, linking to an external site displaying the repository does not work.
      * Instead, the repository is downloaded.
      *

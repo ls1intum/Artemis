@@ -1,5 +1,5 @@
 import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -13,18 +13,18 @@ import {
     NEW_REPLY_FOR_EXAM_POST_TITLE,
     Notification,
 } from 'app/core/shared/entities/notification.model';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { OneToOneChat } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
@@ -38,7 +38,7 @@ import { User } from 'app/core/user/user.model';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 

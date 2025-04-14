@@ -11,7 +11,7 @@ import { DifficultyLevel, Exercise, ExerciseType, getIcon } from 'app/exercise/s
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { SidebarCardElement } from 'app/shared/types/sidebar';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';

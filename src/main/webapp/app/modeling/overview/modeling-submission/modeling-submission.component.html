@@ -46,7 +46,7 @@
                 }
                 @if (!this.isFeedbackView) {
                     <jhi-button
-                        class="guided-tour submission-button"
+                        class="submission-button"
                         id="submit-modeling-submission"
                         [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"

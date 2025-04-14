@@ -326,6 +326,7 @@ $pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
 $pdf-preview-canvas-shadow: scale-color($white, $alpha: -40%);
 $pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
 $pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -20%);
+$pdf-preview-date-box-title-background: $gray-800;
 
 // Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(#fff, 0.95);
@@ -567,27 +568,6 @@ $textblock-assessment-text-feedback-highlighted-background: darkblue;
 $textblock-assessment-textblock-feedback-editor-active-border: $gray-600;
 $textblock-feedback-editor-dropdown-hover: $gray-700;
 $manual-text-selection-span-hover-background-color: $gray-700;
-
-// Guided tour
-$gt-tour-step-bg-color: $gray-700;
-$gt-tour-text-color: $white;
-$gt-tour-border-color: #17a2b8;
-$gt-tour-next-button-color: #17a2b8;
-$gt-tour-next-button-hover: #117a8b;
-$gt-tour-back-button-color: #17a2b8;
-$gt-tour-back-button-hover: #117a8b;
-$gt-tour-restart-button-color: #28a745;
-$gt-tour-restart-button-hover: #1e7e34;
-$gt-tour-button-color-disabled: #808080;
-$gt-tour-button-text-color: #ffffff;
-$gt-tour-button-text-disabled: #c2c2c2;
-$gt-tour-shadow-color: $black;
-$gt-overlay-background: black;
-$gt-tour-block-after-background: #231f1f;
-$gt-tour-block-content-tt-background: $gray-600;
-$gt-tour-block-content-red: #ca2024;
-$gt-tour-block-step-hint-not-interaction-background: $gray-800;
-$gt-tour-block-step-hint-interaction-background: rgb(23, 162, 184, 0.3);
 
 // Alerts
 $artemis-alert-info-color: lighten($info, 15);
