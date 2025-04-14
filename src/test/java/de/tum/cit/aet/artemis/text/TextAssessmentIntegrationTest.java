@@ -237,7 +237,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         params.add("resultId", String.valueOf(storedResult.getId()));
         StudentParticipation participation = request.get("/api/text/text-submissions/" + submission.getId() + "/for-assessment", HttpStatus.OK, StudentParticipation.class, params);
 
-        assertThat(participation.getResults()).isNotNull().contains(storedResult);
+        assertThat(participation.getSubmissions().stream().findFirst().isPresent()).isTrue();
+        assertThat(participation.getSubmissions().stream().findFirst().get().getResults()).isNotNull().contains(storedResult);
     }
 
     @Test
@@ -403,8 +404,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         Participation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, Participation.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
-        assertThat(participation.getResults().iterator().next().getAssessor()).as("assessor of participation is hidden").isNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst().getAssessor()).as("assessor of participation is hidden").isNull();
     }
 
     @Test
@@ -543,7 +544,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
         assertThat(participation).as("participation found").isNotNull();
-        assertThat(participation.getResults().iterator().next()).as("result found").isNotNull();
+        assertThat(participation.getSubmissions().iterator().next().getResults().getFirst()).as("result found").isNotNull();
         assertThat(participation.getStudent()).as("student of participation is hidden").isEmpty();
     }
 
@@ -565,7 +566,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults()).isEmpty();
+        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toList())).isEmpty();
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
     }
@@ -580,7 +581,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults()).hasSize(1);
+        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toList())).hasSize(1);
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
     }
@@ -596,7 +597,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
 
         StudentParticipation participation = request.get("/api/text/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
 
-        assertThat(participation.getResults()).hasSize(1);
+        assertThat(participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toList())).hasSize(1);
         assertThat(participation.getSubmissions()).hasSize(1);
         assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
     }
