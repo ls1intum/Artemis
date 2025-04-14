@@ -82,6 +82,13 @@
                     </div>
                 </ng-template>
             </ng-container>
+
+            @if (showCloseButton()) {
+                <button type="button" class="btn btn-sm close-btn p-0 ms-auto" (click)="onCloseButtonClick()">
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            }
+
             @if (inEditMode) {
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
