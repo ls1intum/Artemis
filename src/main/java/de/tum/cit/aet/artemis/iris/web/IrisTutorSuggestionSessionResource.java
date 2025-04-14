@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 @RequestMapping("api/iris/tutor-suggestion/")
 public class IrisTutorSuggestionSessionResource {
 
-    protected final PostRepository postRepository;
+    private final PostRepository postRepository;
 
     private final UserRepository userRepository;
 
-    protected final IrisSettingsService irisSettingsService;
+    private final IrisSettingsService irisSettingsService;
 
     private final IrisTutorSuggestionSessionRepository irisTutorSuggestionSessionRepository;
 

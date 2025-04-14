@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ import { NgClass } from '@angular/common';
 import { PostComponent } from 'app/communication/post/post.component';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -22,6 +23,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
+    private accountService = inject(AccountService);
+
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
@@ -58,6 +61,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     readonly faCompress = faCompress;
 
     isExpanded = false;
+    isAtLeastTutor = false;
 
     /**
      * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
@@ -82,6 +86,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
      * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
+        const course = this.course();
+        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
         interact('.expanded-thread')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },

@@ -15,7 +15,6 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -31,7 +30,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
-    private accountService = inject(AccountService);
 
     messagesSubscription: Subscription;
     irisSettingsSubscription: Subscription;
@@ -52,9 +50,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         const course = this.course();
-        if (!this.accountService.isAtLeastTutorInCourse(course)) {
-            return;
-        }
         const post = this.post();
         if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
             return;

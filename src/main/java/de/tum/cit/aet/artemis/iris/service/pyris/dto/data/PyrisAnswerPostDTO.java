@@ -15,6 +15,6 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 public record PyrisAnswerPostDTO(Long id, String content, boolean resolvesPost, Long userID) {
 
     public PyrisAnswerPostDTO(AnswerPost answerPost) {
-        this(answerPost.getId(), answerPost.getContent(), answerPost.doesResolvePost(), answerPost.getAuthor().getId());
+        this(answerPost.getId(), answerPost.getContent(), answerPost.doesResolvePost(), answerPost.getAuthor() != null ? answerPost.getAuthor().getId() : null);
     }
 }

@@ -216,7 +216,7 @@ class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(irisSubSettingsRepository.findById(courseChatSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(competencyGenerationSubSettingsId)).isEmpty();
         assertThat(irisSubSettingsRepository.findById(lectureIngestionSubSettingsId)).isEmpty();
-        assertThat(irisSettingsRepository.findById(tutorSuggestionSubSettingsId)).isEmpty();
+        assertThat(irisSubSettingsRepository.findById(tutorSuggestionSubSettingsId)).isEmpty();
     }
 
     @Test

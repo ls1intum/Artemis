@@ -62,9 +62,11 @@
                     </div>
                 }
             </div>
-            <div>
-                <jhi-tutor-suggestion [post]="post" [course]="course()" />
-            </div>
+            @if (isAtLeastTutor) {
+                <div>
+                    <jhi-tutor-suggestion [post]="post" [course]="course()" />
+                </div>
+            }
         </div>
     </div>
 </div>

@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
- * An {@link IrisSubSettings} implementation for the settings for competency generation.
+ * An {@link IrisSubSettings} implementation for the settings for tutor suggestions.
  */
 @Entity
 @DiscriminatorValue("TUTOR_SUGGESTION")
