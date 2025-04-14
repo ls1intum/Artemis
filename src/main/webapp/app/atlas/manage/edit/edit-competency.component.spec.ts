@@ -11,13 +11,13 @@ import { CompetencyService } from 'app/atlas/manage/services/competency.service'
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
 import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;

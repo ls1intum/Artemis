@@ -1,8 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ActivatedRoute } from '@angular/router';
-import { MockProgrammingExerciseParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { CommitHistoryComponent } from 'app/programming/shared/commit-history/commit-history.component';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import dayjs from 'dayjs/esm';
@@ -12,7 +12,7 @@ import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entiti
 import { CommitsInfoComponent } from 'app/programming/shared/commits-info/commits-info.component';
 import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 
@@ -106,9 +106,9 @@ describe('CommitHistoryComponent', () => {
     function setupComponent() {
         fixture = TestBed.createComponent(CommitHistoryComponent);
         component = fixture.componentInstance;
-        activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+        programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         activatedRoute.setParameters({ repositoryId: 2 });
         jest.spyOn(programmingExerciseParticipationService, 'getStudentParticipationWithAllResults').mockReturnValue(of(mockParticipation));

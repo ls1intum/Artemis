@@ -6,11 +6,11 @@ import { of, throwError } from 'rxjs';
 
 import { PasswordResetFinishComponent } from 'app/core/account/password-reset/finish/password-reset-finish.component';
 import { PasswordResetFinishService } from 'app/core/account/password-reset/finish/password-reset-finish.service';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {

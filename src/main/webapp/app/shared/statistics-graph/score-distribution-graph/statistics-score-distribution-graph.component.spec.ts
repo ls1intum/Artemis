@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { StatisticsScoreDistributionGraphComponent } from 'app/shared/statistics-graph/score-distribution-graph/statistics-score-distribution-graph.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 
 describe('StatisticsScoreDistributionGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsScoreDistributionGraphComponent>;

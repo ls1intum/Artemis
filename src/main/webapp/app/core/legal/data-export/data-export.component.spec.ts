@@ -5,7 +5,7 @@ import { DataExportComponent } from 'app/core/legal/data-export/data-export.comp
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
@@ -14,7 +14,7 @@ import { DataExport } from 'app/core/shared/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute } from '@angular/router';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 

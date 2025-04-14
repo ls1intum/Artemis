@@ -372,7 +372,7 @@ class SubmissionPolicyIntegrationTest extends AbstractProgrammingIntegrationLoca
         POLICY_NULL, POLICY_ACTIVE, POLICY_INACTIVE
     }
 
-    @Disabled // TODO re-enable (or delete) after remove gitlab test configuration issues are resolved
+    @Disabled // TODO re-enable (or delete) after for localvc when test configuration issues are resolved
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(EnforcePolicyTestType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

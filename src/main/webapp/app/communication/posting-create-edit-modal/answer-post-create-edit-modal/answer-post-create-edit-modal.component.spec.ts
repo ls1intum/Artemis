@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
@@ -9,8 +9,8 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ViewContainerRef, input, runInInjectionContext } from '@angular/core';
-import { MockViewContainerRef } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-view-container-ref.service';
-import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from '../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-container-ref.service';
+import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from 'test/helpers/sample/metis-sample-data';
 
 describe('AnswerPostCreateEditModalComponent', () => {
     let component: AnswerPostCreateEditModalComponent;

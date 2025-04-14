@@ -52,7 +52,7 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             Updating source code to revision: b3f71a4a21e72faf514bb1ae7f3803e7a542655d
             Creating local git repository in '/opt/jenkinsagent/jenkins-agent-home/xml-data/build-dir/ABC23H01E01/.git'.
             Initialized empty Git repository in /opt/jenkinsagent/jenkins-agent-home/xml-data/build-dir/ABC23H01E01/.git/
-            Fetching 'refs/heads/main' from 'ssh://git@gitlab.ase.in.tum.de:7999/abc23h01e01/abc23h01e01-tests.git'.
+            Fetching 'refs/heads/main' from 'ssh://git@artemis.tum.de:7999/abc23h01e01/abc23h01e01-tests.git'.
             Warning: Permanently added '[127.0.0.1]:46351' (RSA) to the list of known hosts.
             From ssh://127.0.0.1:46351/abc23h0e01/abc23h0e01-tests
             * [new branch]      main       -> main
@@ -63,7 +63,7 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             Updating source code to revision: 315faad6e0e703c3f9bae2d13f06aeebde43c5aa
             .git'.
             .git/
-            Fetching 'refs/heads/main' from 'ssh://git@gitlab.ase.in.tum.de:7999/abc23h0e01/abc23h01e01-user.git'.
+            Fetching 'refs/heads/main' from 'ssh://git@artemis.tum.de:7999/abc23h0e01/abc23h01e01-user.git'.
             From ssh://127.0.0.1:46351/abc23h0e01/abc23h0e01-user
             Checking out revision 315faad6e0e703c3f9bae2d13f06aeebde43c5aa.
             Updated source code to revision: 315faad6e0e703c3f9bae2d13f06aeebde43c5aa
@@ -194,7 +194,7 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             hint: 'development'. The just-created branch can be renamed via this command:
             hint:
             hint: 	git branch -m <name>
-            Fetching 'refs/heads/main' from 'ssh://git@gitlab:7999/mtctstmvn/mtctstmvn-tests.git'.
+            Fetching 'refs/heads/main' from 'ssh://git@artemis:7999/mtctstmvn/mtctstmvn-tests.git'.
             Warning: Permanently added '[127.0.0.1]:34027' (RSA) to the list of known hosts.
             From ssh://127.0.0.1:34027/mtctstmvn/mtctstmvn-tests
              * [new branch]      main       -> main
@@ -215,7 +215,7 @@ class BuildLogEntryServiceTest extends AbstractProgrammingIntegrationIndependent
             hint:
             hint: 	git branch -m <name>
             Initialized empty Git repository in /var/atlassian/application-data/jenkins/local-working-dir/MTCTSTMVN-ARTEMISADMIN-JOB1/assignment/.git/
-            Fetching 'refs/heads/main' from 'ssh://git@gitlab:7999/mtctstmvn/mtctstmvn-********.git'.
+            Fetching 'refs/heads/main' from 'ssh://git@artemis:7999/mtctstmvn/mtctstmvn-********.git'.
             Warning: Permanently added '[127.0.0.1]:34027' (RSA) to the list of known hosts.
             From ssh://127.0.0.1:34027/mtctstmvn/mtctstmvn-********
              * [new branch]      main       -> main

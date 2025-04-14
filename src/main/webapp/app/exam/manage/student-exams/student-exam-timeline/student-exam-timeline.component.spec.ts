@@ -13,7 +13,7 @@ import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/f
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamNavigationBarComponent } from 'app/exam/overview/exam-navigation-bar/exam-navigation-bar.component';
-import { MockTranslateValuesDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { EntityArrayResponseType, SubmissionService } from 'app/exercise/submission/submission.service';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -22,8 +22,8 @@ import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { signal } from '@angular/core';
 import { ExamSubmissionComponent } from 'app/exam/overview/exercises/exam-submission.component';
 import { SubmissionVersionService } from 'app/exercise/submission-version/submission-version.service';
@@ -32,7 +32,7 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { MatSlider } from '@angular/material/slider';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
