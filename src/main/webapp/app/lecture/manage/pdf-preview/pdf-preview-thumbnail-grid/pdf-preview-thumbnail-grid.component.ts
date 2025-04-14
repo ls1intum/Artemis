@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnChanges, Renderer2, SimpleChanges, inject, input, output, signal, viewChild } from '@angular/core';
 import * as PDFJS from 'pdfjs-dist';
-import 'pdfjs-dist/build/pdf.worker';
 import { CdkDragDrop, DragDropModule, moveItemInArray } from '@angular/cdk/drag-drop';
 
 import { onError } from 'app/shared/util/global.utils';
@@ -64,7 +63,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     constructor() {
         PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
     }
-    
+
     ngOnChanges(changes: SimpleChanges): void {
         if (changes['orderedPages']) {
             if (!this.reordering()) {
