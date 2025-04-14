@@ -1,6 +1,6 @@
 <ng-template #postingEditor>
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-        <div>
+        <div class="me-2">
             <jhi-posting-markdown-editor
                 formControlName="content"
                 [editorHeight]="editorHeight"
