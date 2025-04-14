@@ -6,6 +6,7 @@
                 "fullscreen": "Vollbild"
             },
             "fileUpload": "Füge Dateien durch Drag-and-Drop oder durch Auswählen hinzu.",
+            "fileUploadShort": "Füge Dateien hinzu",
             "guide": "Formatierungen mit Markdown sind möglich",
             "color": "Farbe",
             "preview": {
