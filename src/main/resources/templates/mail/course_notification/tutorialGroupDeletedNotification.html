@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <th:block th:fragment="head">
     <head>
-        <title th:text="#{email.courseNotification.newAnnouncementNotification.title}">A new announcement in Artemis</title>
+        <title th:text="#{email.courseNotification.tutorialGroupDeletedNotification.title}">A tutorial group was deleted</title>
         <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
         <th:block th:replace="~{mail/notification/fragments :: css}"/>
     </head>
@@ -17,20 +17,11 @@
         <br>
     </th:block>
     <div class="notification-content">
-        <span th:if="${parameters.containsKey('postTitle') and parameters['postTitle'] != null}"
-              th:text="#{email.courseNotification.newAnnouncementNotification.text(
-              ${parameters['postTitle']},
-              ${parameters['courseTitle']}
-          )}">A new announcement in Artemis</span>
-
-        <span th:if="${!parameters.containsKey('postTitle') or parameters['postTitle'] == null}"
-              th:text="#{email.courseNotification.newAnnouncementNotification.textWithoutTitle(
-              ${parameters['courseTitle']}
-          )}">A new announcement in Artemis</span>
-
-        <div class="bordered-content">
-            <p th:utext="${parameters['postMarkdownContent']}">Post Content</p>
-        </div>
+        <span th:text="#{email.courseNotification.tutorialGroupDeletedNotification.text(
+            ${parameters['groupTitle']},
+            ${parameters['courseTitle']},
+            )}">A tutorial group was deleted
+        </span>
         <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
     </div>
     <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
