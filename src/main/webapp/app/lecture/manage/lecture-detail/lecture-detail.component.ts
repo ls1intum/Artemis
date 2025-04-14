@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faFile, faFileExport, faPencilAlt, faPuzzlePiece } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -8,18 +8,18 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DetailOverviewListComponent } from '../../../shared/detail-overview-list/detail-overview-list.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { captureException } from '@sentry/angular';
+
 @Component({
     selector: 'jhi-lecture-detail',
     templateUrl: './lecture-detail.component.html',
     imports: [TranslateDirective, DetailOverviewListComponent, RouterLink, FaIconComponent],
 })
-export class LectureDetailComponent implements OnInit, OnDestroy {
+export class LectureDetailComponent implements OnInit {
     private activatedRoute = inject(ActivatedRoute);
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private alertService = inject(AlertService);
@@ -38,7 +38,6 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
 
     detailSections: DetailOverviewSection[];
     irisEnabled = false;
-    private profileInfoSubscription: Subscription;
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
@@ -47,19 +46,13 @@ export class LectureDetailComponent implements OnInit, OnDestroy {
         this.activatedRoute.data.subscribe(({ lecture }) => {
             this.lecture = lecture;
             this.getLectureDetailSections();
-            this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                if (this.irisEnabled && this.lecture.course?.id) {
-                    this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
-                        this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                    });
-                }
-            });
+            this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+            if (this.irisEnabled && this.lecture.course?.id) {
+                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course?.id).subscribe((settings) => {
+                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                });
+            }
         });
-    }
-
-    ngOnDestroy(): void {
-        this.profileInfoSubscription?.unsubscribe();
     }
 
     getLectureDetailSections() {

@@ -24,8 +24,7 @@ import { EditType, SaveExerciseCommand } from 'app/exercise/util/exercise.utils'
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { Observable, Subscription } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-channel-name/exercise-title-channel-name.component';
 import { TeamConfigFormGroupComponent } from 'app/exercise/team-config-form-group/team-config-form-group.component';
@@ -84,7 +83,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private courseService = inject(CourseManagementService);
     private eventManager = inject(EventManager);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
-    private athenaService = inject(AthenaService);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
@@ -105,7 +103,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     isExamMode: boolean;
     isImport = false;
     AssessmentType = AssessmentType;
-    isAthenaEnabled$: Observable<boolean> | undefined;
 
     textExercise: TextExercise;
     backupExercise: TextExercise;
@@ -205,8 +202,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
                 }),
             )
             .subscribe();
-
-        this.isAthenaEnabled$ = this.athenaService.isEnabled();
 
         this.isSaving = false;
         this.notificationText = undefined;

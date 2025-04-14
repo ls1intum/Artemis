@@ -4,15 +4,14 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FileUploadAssessmentComponent } from 'app/fileupload/manage/assess/file-upload-assessment.component';
-import { DebugElement } from '@angular/core';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
@@ -39,7 +38,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('FileUploadAssessmentComponent', () => {
@@ -50,7 +49,6 @@ describe('FileUploadAssessmentComponent', () => {
     let accountService: AccountService;
     let complaintService: ComplaintService;
     let getFileUploadSubmissionForExerciseWithoutAssessmentStub: jest.SpyInstance;
-    let debugElement: DebugElement;
     let router: Router;
     let navigateByUrlStub: jest.SpyInstance;
     let alertService: AlertService;
@@ -104,8 +102,7 @@ describe('FileUploadAssessmentComponent', () => {
                 comp = fixture.componentInstance;
                 comp.userId = 1;
                 comp.exercise = exercise;
-                debugElement = fixture.debugElement;
-                router = debugElement.injector.get(Router);
+                router = TestBed.inject(Router);
                 fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
                 // The TestBed only knows about its providers and the component has its own injector, so the component's service needs to be injected by
                 // getting the injector.
@@ -213,7 +210,7 @@ describe('FileUploadAssessmentComponent', () => {
         });
 
         it('should load optimal submission', () => {
-            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             const submission = createSubmission(exercise);
@@ -229,7 +226,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should get null submission when loading optimal submission', () => {
             navigateByUrlStub.mockReturnValue(Promise.resolve(true));
-            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
@@ -240,7 +237,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should get lock limit reached error when loading optimal submission', () => {
             navigateByUrlStub.mockReturnValue(Promise.resolve(true));
-            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
@@ -251,7 +248,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should fail to load optimal submission', () => {
             navigateByUrlStub.mockReturnValue(Promise.resolve(true));
-            const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+            const activatedRoute: ActivatedRoute = TestBed.inject(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 403 })));

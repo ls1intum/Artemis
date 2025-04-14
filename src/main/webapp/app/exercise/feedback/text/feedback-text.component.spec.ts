@@ -23,7 +23,7 @@ describe('FeedbackTextComponent', () => {
                 fixture = TestBed.createComponent(FeedbackTextComponent);
                 comp = fixture.componentInstance;
 
-                const longFeedbackTextService = fixture.debugElement.injector.get(LongFeedbackTextService);
+                const longFeedbackTextService = TestBed.inject(LongFeedbackTextService);
                 getLongFeedbackStub = jest.spyOn(longFeedbackTextService, 'find');
             });
     });

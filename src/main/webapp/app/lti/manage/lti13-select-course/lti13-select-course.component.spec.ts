@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { LtiCourseCardComponent } from 'app/lti/manage/lti-course-card/lti-course-card.component';
 import { OnlineCourseDtoModel } from 'app/lti/shared/entities/online-course-dto.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { AlertService } from 'app/shared/service/alert.service';
 

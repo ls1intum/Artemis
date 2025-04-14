@@ -76,7 +76,7 @@
             <div class="course-grid justify-content-center align-items-center">
                 @for (course of courses | searchFilter: ['title'] : searchCourseText; track course) {
                     <div class="course-card-wrapper">
-                        <jhi-overview-course-card [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+                        <jhi-overview-course-card [course]="course" />
                     </div>
                 }
             </div>

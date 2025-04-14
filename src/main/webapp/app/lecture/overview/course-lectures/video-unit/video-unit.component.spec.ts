@@ -1,7 +1,7 @@
 import { ScienceService } from 'app/shared/science/science.service';
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
-import { MockScienceService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-science-service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import { provideHttpClient } from '@angular/common/http';
