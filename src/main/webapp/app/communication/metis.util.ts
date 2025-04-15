@@ -28,23 +28,22 @@ export enum SortDirection {
 
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
-    VOTES = 'VOTES',
 }
 
 export enum MetisPostAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
-
     NEW_MESSAGE = 'NEW_MESSAGE',
 }
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
-    conversationId?: number;
+    conversationIds?: number[];
+    authorIds?: number[];
+    filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;

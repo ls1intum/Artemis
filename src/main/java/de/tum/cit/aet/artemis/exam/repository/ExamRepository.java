@@ -381,7 +381,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
-    long countByCourse_Id(Long courseId);
+    long countByCourse_Id(long courseId);
 
     /**
      * Returns the title of the exam with the given id.
@@ -506,5 +506,4 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
-
 }

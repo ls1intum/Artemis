@@ -3,15 +3,15 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { BarChartModule, Color, PieChartModule, ScaleType } from '@swimlane/ngx-charts';
-import { ParticipationResultDTO } from 'app/core/course/manage/course-for-dashboard-dto';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
-import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/entities/exercise.model';
-import { GradeDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { GraphColors } from 'app/entities/statistics.model';
+import { ParticipationResultDTO } from 'app/core/course/shared/entities/course-for-dashboard-dto';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ScoresPerExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { GradeDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
@@ -98,7 +98,7 @@ enum ChartBarTitle {
 @Component({
     selector: 'jhi-course-statistics',
     templateUrl: './course-statistics.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss'],
     imports: [
         NgbDropdown,
         NgbDropdownToggle,

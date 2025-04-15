@@ -188,13 +188,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
-        doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
+        doReturn(defaultBranch).when(localVCGitBranchService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
@@ -477,30 +477,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation).isEmpty();
         // Make sure that the result is deleted.
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteParticipation_student() throws Exception {
-        // Allow students to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if users do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteParticipation_tutor() throws Exception {
-        // Allow tutors to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "tutor1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if tutors do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test

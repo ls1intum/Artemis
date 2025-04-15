@@ -1,7 +1,7 @@
 import { Component, HostBinding, Input, ViewEncapsulation } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row.component';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
+import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 @Component({
     selector: 'jhi-exercise-unit',
     templateUrl: './exercise-unit.component.html',

@@ -1,39 +1,37 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { EntityResponseType, ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
+import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
-import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
-import { Result } from 'app/entities/result.model';
-import { setLatestSubmissionResult } from 'app/entities/submission.model';
-import { TextAssessmentBaseComponent } from 'app/text/manage/assess/text-assessment-base.component';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { TextAssessmentAreaComponent } from 'app/text/manage/assess/text-assessment-area/text-assessment-area.component';
 import { AssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/assessment-instructions/assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -60,7 +58,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private router = inject(Router);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private tutorParticipationService = inject(TutorParticipationService);
-    private guidedTourService = inject(GuidedTourService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
 
@@ -133,7 +130,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
         if (this.isNewSubmission) {
@@ -153,8 +149,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
-            // do this here to make sure everything is loaded before the guided tour step is loaded
-            this.guidedTourService.componentPageLoaded();
             if (this.exampleSubmission.usedForTutorial) {
                 this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
             } else {
@@ -403,10 +397,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     validateFeedback(): void {
         this.assessmentsAreValid = this.assessments.length > 0;
         this.totalScore = this.computeTotalScore(this.assessments);
-
-        if (this.guidedTourService.currentTour && this.toComplete) {
-            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
-        }
     }
 
     /**

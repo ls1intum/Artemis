@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
@@ -713,72 +712,5 @@ public class QuizExerciseFactory {
      */
     public static void setQuizQuestionsIdToNull(QuizSubmission quizSubmission) {
         quizSubmission.getSubmittedAnswers().forEach(answer -> answer.getQuizQuestion().setId(null));
-    }
-
-    /**
-     * Creates a quiz group with the given name.
-     *
-     * @param name The name of the quiz group.
-     * @return The created quiz group.
-     */
-    @NotNull
-    public static QuizGroup createQuizGroup(String name) {
-        QuizGroup quizGroup = new QuizGroup();
-        quizGroup.setName(name);
-        return quizGroup;
-    }
-
-    /**
-     * Creates a multiple choice question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created multiple choice question.
-     */
-    @NotNull
-    public static MultipleChoiceQuestion createMultipleChoiceQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        MultipleChoiceQuestion quizQuestion = QuizExerciseFactory.createMultipleChoiceQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Creates a drag and drop question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created drag and drop question.
-     */
-    @NotNull
-    public static DragAndDropQuestion createDragAndDropQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        DragAndDropQuestion quizQuestion = QuizExerciseFactory.createDragAndDropQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Creates a short answer question with the given title and quiz group.
-     *
-     * @param title     The title of the quiz question.
-     * @param quizGroup The group of the quiz question.
-     * @return The created short answer question.
-     */
-    @NotNull
-    public static ShortAnswerQuestion createShortAnswerQuestionWithTitleAndGroup(String title, QuizGroup quizGroup) {
-        ShortAnswerQuestion quizQuestion = QuizExerciseFactory.createShortAnswerQuestion();
-        setQuizQuestionsTitleAndGroup(quizQuestion, title, quizGroup);
-        return quizQuestion;
-    }
-
-    /**
-     * Sets the title and group of the quiz question.
-     *
-     * @param quizQuestion The quiz question to be updated.
-     * @param title        The new title of the quiz question.
-     * @param quizGroup    The new group of the quiz question.
-     */
-    private static void setQuizQuestionsTitleAndGroup(QuizQuestion quizQuestion, String title, QuizGroup quizGroup) {
-        quizQuestion.setTitle(title);
-        quizQuestion.setQuizGroup(quizGroup);
     }
 }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 
 @Injectable({
@@ -11,16 +11,8 @@ export class LocalCIGuard implements CanActivate {
     private profileService = inject(ProfileService);
     private router = inject(Router);
 
-    localCIActive = false;
-
-    async canActivate(): Promise<boolean> {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-            }
-        });
-
-        if (!this.localCIActive) {
+    canActivate(): boolean {
+        if (!this.profileService.isProfileActive(PROFILE_LOCALCI)) {
             this.router.navigate(['/course-management']);
             return false;
         }

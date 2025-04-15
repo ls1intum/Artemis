@@ -4,34 +4,32 @@ import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { Subject, Subscription, combineLatest, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
-import { Submission } from 'app/entities/submission.model';
-import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import dayjs from 'dayjs/esm';
-import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Result } from 'app/entities/result.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { FileUploadAssessmentService } from 'app/fileupload/manage/assess/file-upload-assessment.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { TextAssessmentService } from 'app/text/manage/assess/text-assessment.service';
+import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/programming/manage/assess/manual-result/programming-assessment-manual-result.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ResultComponent } from '../result/result.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -59,7 +57,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     private textAssessmentService = inject(TextAssessmentService);
     private programmingAssessmentService = inject(ProgrammingAssessmentManualResultService);
     private eventManager = inject(EventManager);
-    private profileService = inject(ProfileService);
 
     // These two variables are used to emit errors to the delete dialog
     protected dialogErrorSource = new Subject<string>();
@@ -76,7 +73,6 @@ export class ParticipationSubmissionComponent implements OnInit {
     submissions?: Submission[];
     eventSubscriber: Subscription;
     isLoading = true;
-    commitHashURLTemplate?: string;
     resultIdToBuildJobIdMap?: { [key: string]: string };
 
     /**
@@ -148,11 +144,6 @@ export class ParticipationSubmissionComponent implements OnInit {
                 }
             });
         });
-
-        // Get active profiles, to distinguish between VC systems
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
-        });
     }
 
     fetchParticipationAndSubmissionsForStudent() {
@@ -202,10 +193,6 @@ export class ParticipationSubmissionComponent implements OnInit {
             return this.translateService.instant('artemisApp.participation.templateParticipation');
         }
         return 'N/A';
-    }
-
-    getCommitUrl(submission: ProgrammingSubmission): string | undefined {
-        return createCommitUrl(this.commitHashURLTemplate, (this.exercise as ProgrammingExercise)?.projectKey, this.participation, submission);
     }
 
     private updateStatusBadgeColor() {

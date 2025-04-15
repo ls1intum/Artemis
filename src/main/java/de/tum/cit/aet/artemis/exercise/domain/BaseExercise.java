@@ -9,22 +9,18 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.util.StringUtil;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
 
     @Column(name = "title")
-    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "short_name")
-    @JsonView(QuizView.Before.class)
     private String shortName;
 
     @Column(name = "max_points", nullable = false)
@@ -38,23 +34,19 @@ public abstract class BaseExercise extends DomainObject {
     private AssessmentType assessmentType;
 
     @Column(name = "release_date")
-    @JsonView(QuizView.Before.class)
     @Nullable
     private ZonedDateTime releaseDate;
 
     // TODO: Also use for quiz exercises
     @Column(name = "start_date")
-    @JsonView(QuizView.Before.class)
     @Nullable
     private ZonedDateTime startDate;
 
     @Column(name = "due_date")
-    @JsonView(QuizView.Before.class)
     @Nullable
     private ZonedDateTime dueDate;
 
     @Column(name = "assessment_due_date")
-    @JsonView(QuizView.Before.class)
     @Nullable
     private ZonedDateTime assessmentDueDate;
 
@@ -64,7 +56,6 @@ public abstract class BaseExercise extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "difficulty")
-    @JsonView(QuizView.Before.class)
     private DifficultyLevel difficulty;
 
     @Enumerated(EnumType.STRING)
@@ -189,7 +180,6 @@ public abstract class BaseExercise extends DomainObject {
      *
      * @return true, if students are allowed to see this exercise, otherwise false
      */
-    @JsonView(QuizView.Before.class)
     public boolean isVisibleToStudents() {
         if (isExamExercise()) {
             return false;

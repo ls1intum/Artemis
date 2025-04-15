@@ -39,9 +39,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -66,7 +66,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -112,13 +111,11 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @OneToMany(mappedBy = "exercise", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties("exercise")
-    @JsonView(QuizView.Before.class)
     private Set<CompetencyExerciseLink> competencyLinks = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "exercise_categories", joinColumns = @JoinColumn(name = "exercise_id"))
     @Column(name = "categories")
-    @JsonView(QuizView.Before.class)
     private Set<String> categories = new HashSet<>();
 
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
@@ -143,11 +140,9 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     private String feedbackSuggestionModule;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private Course course;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private ExerciseGroup exerciseGroup;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
@@ -338,7 +333,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @return the course class member
      */
-    @JsonInclude
+    @JsonProperty
     protected Course getCourse() {
         return course;
     }
@@ -455,8 +450,6 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     public void setPlagiarismDetectionConfig(PlagiarismDetectionConfig plagiarismDetectionConfig) {
         this.plagiarismDetectionConfig = plagiarismDetectionConfig;
     }
-
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public Set<CompetencyExerciseLink> getCompetencyLinks() {
@@ -804,18 +797,22 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Set<GradingInstruction> newGradingInstructions = new HashSet<>();
         for (GradingInstruction originalGradingInstruction : originalGradingCriterion.getStructuredGradingInstructions()) {
-            GradingInstruction newGradingInstruction = new GradingInstruction();
-            newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
-            newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
-            newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
-            newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
-            newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
-            newGradingInstruction.setGradingCriterion(newGradingCriterion);
-
+            final var newGradingInstruction = copyGradingInstruction(newGradingCriterion, originalGradingInstruction);
             newGradingInstructions.add(newGradingInstruction);
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    private static GradingInstruction copyGradingInstruction(GradingCriterion newGradingCriterion, GradingInstruction originalGradingInstruction) {
+        GradingInstruction newGradingInstruction = new GradingInstruction();
+        newGradingInstruction.setCredits(originalGradingInstruction.getCredits());
+        newGradingInstruction.setFeedback(originalGradingInstruction.getFeedback());
+        newGradingInstruction.setGradingScale(originalGradingInstruction.getGradingScale());
+        newGradingInstruction.setInstructionDescription(originalGradingInstruction.getInstructionDescription());
+        newGradingInstruction.setUsageCount(originalGradingInstruction.getUsageCount());
+        newGradingInstruction.setGradingCriterion(newGradingCriterion);
+        return newGradingInstruction;
     }
 
     /**

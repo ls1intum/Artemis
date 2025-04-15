@@ -176,7 +176,7 @@ During the exam creation and configuration, you can create your exam and configu
 
 **1.4.1 Programming Exercises**
 
-- Programming exercises have multiple special options to adjust their behaviour:
+- Programming exercises have multiple special options to adjust their behavior:
 
 .. _manual_assessment:
 

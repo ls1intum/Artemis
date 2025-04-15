@@ -34,21 +34,6 @@
             "usedForTutorial": "Für Tutorial",
             "apollonConversion": {
                 "error": "Apollon-Konvertierung ist nicht verfügbar"
-            },
-            "clusters": "Cluster",
-            "checkClusters": {
-                "text": "Clusteranzahl:",
-                "error": "Laden der Clusteranzahl fehlgeschlagen."
-            },
-            "buildClusters": {
-                "action": "Cluster erstellen",
-                "error": "Cluster erstellen fehlgeschlagen",
-                "success": "Cluster erfolgreich erstellt"
-            },
-            "deleteClusters": {
-                "action": "Cluster löschen",
-                "error": "Cluster löschen fehlgeschlagen",
-                "success": "Cluster erfolgreich gelöscht"
             }
         }
     }

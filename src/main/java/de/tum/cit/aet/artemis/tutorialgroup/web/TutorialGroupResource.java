@@ -42,6 +42,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupAssignedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.TutorialGroupUnassignedNotification;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.TutorialGroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -59,6 +62,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -104,11 +108,16 @@ public class TutorialGroupResource {
 
     private final TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
             TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupNotificationService tutorialGroupNotificationService,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, SingleUserNotificationService singleUserNotificationService,
             TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
-            TutorialGroupChannelManagementService tutorialGroupChannelManagementService) {
+            TutorialGroupChannelManagementService tutorialGroupChannelManagementService, FeatureToggleService featureToggleService,
+            CourseNotificationService courseNotificationService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
@@ -120,6 +129,8 @@ public class TutorialGroupResource {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
         this.tutorialGroupScheduleService = tutorialGroupScheduleService;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -257,7 +268,17 @@ public class TutorialGroupResource {
         if (tutorialGroup.getTeachingAssistant() != null) {
             // Note: We have to load the teaching assistants from database otherwise languageKey is not defined and email sending fails
             var taFromDatabase = userRepository.findOneByLogin(tutorialGroup.getTeachingAssistant().getLogin());
-            taFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser));
+            taFromDatabase.ifPresent(user -> {
+                if (!Objects.equals(user.getId(), responsibleUser.getId()) && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+                    var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                            tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
+
+                    courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(user));
+                }
+                else {
+                    singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(persistedTutorialGroup, user, responsibleUser);
+                }
+            });
         }
 
         if (configuration.getUseTutorialGroupChannels()) {
@@ -353,7 +374,16 @@ public class TutorialGroupResource {
         if (newTA != null && (oldTA == null || !oldTA.equals(newTA))) {
             var newTAFromDatabase = userRepository.findOneByLogin(newTA.getLogin());
             newTAFromDatabase.ifPresent(user -> {
-                singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser);
+                if (!Objects.equals(user.getId(), responsibleUser.getId()) && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+                    var course = updatedTutorialGroup.getCourse();
+                    var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                            updatedTutorialGroup.getTitle(), updatedTutorialGroup.getId(), responsibleUser.getName());
+
+                    courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(user));
+                }
+                else {
+                    singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(updatedTutorialGroup, user, responsibleUser);
+                }
                 if (configuration.getUseTutorialGroupChannels()) {
                     tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
                     tutorialGroupChannelManagementService.grantUsersModeratorRoleToTutorialGroupChannel(updatedTutorialGroup, Set.of(user));
@@ -363,7 +393,16 @@ public class TutorialGroupResource {
         if (oldTA != null && (newTA == null || !newTA.equals(oldTA))) {
             var oldTAFromDatabase = userRepository.findOneByLogin(oldTA.getLogin());
             oldTAFromDatabase.ifPresent(user -> {
-                singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser);
+                if (!Objects.equals(user.getId(), responsibleUser.getId()) && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+                    var course = oldTutorialGroup.getCourse();
+                    var tutorialGroupUnassignedNotification = new TutorialGroupUnassignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                            oldTutorialGroup.getTitle(), oldTutorialGroup.getId(), responsibleUser.getName());
+
+                    courseNotificationService.sendCourseNotification(tutorialGroupUnassignedNotification, List.of(user));
+                }
+                else {
+                    singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser);
+                }
                 if (configuration.getUseTutorialGroupChannels()) {
                     tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(oldTutorialGroup, Set.of(user));
                 }
@@ -542,7 +581,7 @@ public class TutorialGroupResource {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        String csvContent = "";
+        String csvContent;
         try {
             csvContent = tutorialGroupService.exportTutorialGroupsToCSV(course, user, fields);
         }
