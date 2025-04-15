@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -211,7 +212,10 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleSlideUnhide(Long slideId) {
         log.info("Received schedule update for slide unhiding {}", slideId);
-        slideRepository.findById(slideId).ifPresent(slideUnhideScheduleService::scheduleSlideUnhiding);
+        slideRepository.findById(slideId).ifPresent(slide -> {
+            SlideUnhideDTO slideDTO = new SlideUnhideDTO(slide.getId(), slide.getHidden());
+            slideUnhideScheduleService.scheduleSlideUnhiding(slideDTO);
+        });
     }
 
     public void processCancelSlideUnhide(Long slideId) {

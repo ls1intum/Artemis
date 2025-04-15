@@ -25,11 +25,12 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
 
     /**
-     * Find all slides that have a non-null hidden timestamp
+     * Find all slides with non-null hidden field but only returns the id and hidden fields
      *
-     * @return List of all slides with a hidden timestamp
+     * @return list containing only slide ids and hidden timestamps
      */
-    List<Slide> findAllByHiddenNotNull();
+    @Query(value = "SELECT s.id, s.hidden FROM Slide s WHERE s.hidden IS NOT NULL")
+    List<Object[]> findHiddenSlidesProjection();
 
     /**
      * Find slides for a specific attachment unit where the hidden field is not null

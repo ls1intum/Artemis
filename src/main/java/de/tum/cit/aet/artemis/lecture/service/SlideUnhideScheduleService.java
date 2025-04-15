@@ -17,7 +17,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
@@ -57,11 +57,14 @@ public class SlideUnhideScheduleService {
      * Loads all slides with a non-null hidden timestamp and schedules their unhiding.
      */
     public void scheduleAllHiddenSlides() {
-        List<Slide> hiddenSlides = slideRepository.findAllByHiddenNotNull();
-        log.debug("Scheduling {} hidden slides for unhiding", hiddenSlides.size());
+        List<Object[]> hiddenSlidesProjection = slideRepository.findHiddenSlidesProjection();
+        log.debug("Scheduling {} hidden slides for unhiding", hiddenSlidesProjection.size());
 
-        for (Slide slide : hiddenSlides) {
-            scheduleSlideUnhiding(slide);
+        for (Object[] result : hiddenSlidesProjection) {
+            Long id = (Long) result[0];
+            ZonedDateTime hidden = (ZonedDateTime) result[1];
+            SlideUnhideDTO slideDTO = new SlideUnhideDTO(id, hidden);
+            scheduleSlideUnhiding(slideDTO);
         }
     }
 
@@ -69,27 +72,27 @@ public class SlideUnhideScheduleService {
      * Schedules a task to unhide a specific slide at its expiration time.
      * If the expiration time has already passed, unhides it immediately.
      *
-     * @param slide The slide to be unhidden
+     * @param slideDTO The slide DTO containing id and hidden datetime
      */
-    public void scheduleSlideUnhiding(Slide slide) {
-        if (slide.getHidden() == null) {
+    public void scheduleSlideUnhiding(SlideUnhideDTO slideDTO) {
+        if (slideDTO.hidden() == null) {
             return;
         }
 
         // Cancel any existing scheduled task for this slide
-        cancelScheduledUnhiding(slide.getId());
+        cancelScheduledUnhiding(slideDTO.id());
 
-        ZonedDateTime unhideDate = slide.getHidden();
+        ZonedDateTime unhideDate = slideDTO.hidden();
         Instant unhideTime = unhideDate.toInstant();
         Instant now = Instant.now();
 
         if (unhideTime.isBefore(now)) {
-            this.slideUnhideService.unhideSlide(slide.getId());
+            this.slideUnhideService.unhideSlide(slideDTO.id());
         }
         else {
-            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.slideUnhideService.unhideSlide(slide.getId()), unhideTime);
-            scheduledTasks.put(slide.getId(), scheduledTask);
-            log.debug("Scheduled slide {} to be unhidden at {}", slide.getId(), unhideDate);
+            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.slideUnhideService.unhideSlide(slideDTO.id()), unhideTime);
+            scheduledTasks.put(slideDTO.id(), scheduledTask);
+            log.debug("Scheduled slide {} to be unhidden at {}", slideDTO.id(), unhideDate);
         }
     }
 
