@@ -654,11 +654,11 @@ public class CourseUtilService {
         exerciseRepository.save(quizExercise);
 
         // Connect participations with submissions
-        participationModeling.setSubmissions(Set.of(modelingSubmission));
-        participationText.setSubmissions(Set.of(textSubmission));
-        participationFileUpload.setSubmissions(Set.of(fileUploadSubmission));
-        participationQuiz.setSubmissions(Set.of(quizSubmission));
-        participationProgramming.setSubmissions(Set.of(programmingSubmission));
+        participationModeling.setSubmissions(new HashSet<>(Set.of(modelingSubmission)));
+        participationText.setSubmissions(new HashSet<>(Set.of(textSubmission)));
+        participationFileUpload.setSubmissions(new HashSet<>(Set.of(fileUploadSubmission)));
+        participationQuiz.setSubmissions(new HashSet<>(Set.of(quizSubmission)));
+        participationProgramming.setSubmissions(new HashSet<>(Set.of(programmingSubmission)));
 
         // Save participations
         studentParticipationRepo.save(participationModeling);
