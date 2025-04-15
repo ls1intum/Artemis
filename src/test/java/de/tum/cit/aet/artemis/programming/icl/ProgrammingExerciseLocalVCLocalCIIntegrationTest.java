@@ -1,12 +1,9 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -141,9 +138,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
-
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
         newExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, newExercise, 1)));
@@ -154,9 +148,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // participation).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH), Map.of("assignmentCommitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
 
         dockerClientTestService.mockInspectImage(dockerClient);
@@ -165,7 +159,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, templateBuildTestResults,
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
                 solutionBuildTestResults);
         newExercise.setChannelName("testchannelname-pe");
         aeolusRequestMockProvider.enableMockingOfRequests();
@@ -186,8 +180,6 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateProgrammingExercise_Invalid_CheckoutPaths() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
 
         ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
@@ -247,17 +239,14 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportProgrammingExercise() throws Exception {
-        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
-        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
-
         // Mock dockerClient.copyArchiveFromContainerCmd() such that it returns a dummy commitHash for both the assignment and the test repository.
         // Note: The stub needs to receive the same object twice because there are two requests to the same method (one for the template participation and one for the solution
         // participation).
         // Usually, specifying one doReturn() is enough to make the stub return the same object on every subsequent call.
         // However, in this case we have it return an InputStream, which will be consumed after returning it the first time, so we need to create two separate ones.
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("assignmentComitHash", DUMMY_COMMIT_HASH), Map.of("assignmentComitHash", DUMMY_COMMIT_HASH));
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + "/testing-dir/.git/refs/heads/[^/]+",
                 Map.of("testsCommitHash", DUMMY_COMMIT_HASH), Map.of("testsCommitHash", DUMMY_COMMIT_HASH));
 
         dockerClientTestService.mockInspectImage(dockerClient);
@@ -266,7 +255,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Mock the results for the template repository build and for the solution repository build that will both be triggered as a result of creating the exercise.
         Map<String, String> templateBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_FAIL_TEST_RESULTS_PATH);
         Map<String, String> solutionBuildTestResults = dockerClientTestService.createMapFromTestResultsFolder(ALL_SUCCEED_TEST_RESULTS_PATH);
-        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, templateBuildTestResults,
+        dockerClientTestService.mockInputStreamReturnedFromContainer(dockerClient, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, templateBuildTestResults,
                 solutionBuildTestResults);
 
         ProgrammingExercise exerciseToBeImported = ProgrammingExerciseFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", programmingExercise,
@@ -327,16 +316,5 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         void testAccessForbidden() throws Exception {
             request.get("/api/programming/programming-exercises/repository-checkout-directories?programmingLanguage=JAVA", HttpStatus.FORBIDDEN, CheckoutDirectoriesDTO.class);
         }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldTriggerBuildOnRepoReset() throws Exception {
-        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
-        doNothing().when(localVCServletService).processNewPush(any(), any());
-
-        request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
-        verify(localVCServletService).processNewPush(any(), any());
     }
 }

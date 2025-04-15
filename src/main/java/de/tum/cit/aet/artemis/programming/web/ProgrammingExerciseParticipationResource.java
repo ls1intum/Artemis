@@ -35,8 +35,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamService;
+import de.tum.cit.aet.artemis.exam.api.ExamApi;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -56,12 +56,11 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
-import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -88,11 +87,13 @@ public class ProgrammingExerciseParticipationResource {
 
     private final ParticipationAuthorizationCheckService participationAuthCheckService;
 
+    private final ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
+
     private final ResultService resultService;
 
     private final RepositoryService repositoryService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final Optional<VcsAccessLogRepository> vcsAccessLogRepository;
 
@@ -100,16 +101,15 @@ public class ProgrammingExerciseParticipationResource {
 
     private final Optional<SharedQueueManagementService> sharedQueueManagementService;
 
-    private final Optional<LocalVCServletService> localVCServletService;
-
-    private final GitService gitService;
+    private final Optional<ExamApi> examApi;
 
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<LocalVCServletService> localVCServletService, GitService gitService) {
+            Optional<StudentExamApi> studentExamApi, Optional<VcsAccessLogRepository> vcsAccessLogRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<SharedQueueManagementService> sharedQueueManagementService, Optional<ExamApi> examApi,
+            ContinuousIntegrationTriggerService continuousIntegrationTriggerService) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -120,12 +120,12 @@ public class ProgrammingExerciseParticipationResource {
         this.resultService = resultService;
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.vcsAccessLogRepository = vcsAccessLogRepository;
         this.sharedQueueManagementService = sharedQueueManagementService;
-        this.localVCServletService = localVCServletService;
-        this.gitService = gitService;
+        this.examApi = examApi;
+        this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
     }
 
     /**
@@ -287,10 +287,9 @@ public class ProgrammingExerciseParticipationResource {
     }
 
     /**
-     * Resets the specified repository to either the exercise template or graded participation. Also triggers a build
-     * for the repository that was reset if the local-vc profile is active.
+     * Resets the specified repository to either the exercise template or graded participation
      *
-     * @param participationId       the id of the programming participation that should be reset
+     * @param participationId       the id of the programming participation that should be resetted
      * @param gradedParticipationId optional parameter that specifies that the repository should be set to the graded participation instead of the exercise template
      * @return the ResponseEntity with status 200 (OK)
      */
@@ -323,13 +322,7 @@ public class ProgrammingExerciseParticipationResource {
         }
 
         programmingExerciseParticipationService.resetRepository(participation.getVcsRepositoryUri(), sourceURL);
-
-        // ToDo: Circular dependencies currently make it impossible to put this into the ProgrammingExerciseParticipationService
-        // ToDo: Major refactoring would be required
-        if (localVCServletService.isPresent()) {
-            Repository targetRepo = gitService.getOrCheckoutRepository(participation.getVcsRepositoryUri(), true);
-            localVCServletService.get().processNewPush(null, targetRepo);
-        }
+        continuousIntegrationTriggerService.triggerBuild(participation, true);
 
         return ResponseEntity.ok().build();
     }
@@ -540,11 +533,13 @@ public class ProgrammingExerciseParticipationResource {
      */
     private boolean shouldHideExamExerciseResults(ProgrammingExerciseStudentParticipation participation) {
         if (participation.getProgrammingExercise().isExamExercise() && !participation.getProgrammingExercise().isTestExamExercise()) {
+            var examApi = this.examApi.orElseThrow(() -> new ExamApiNotPresentException(ExamApi.class));
+            var studentExamApi = this.studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
             User student = participation.getStudent()
                     .orElseThrow(() -> new EntityNotFoundException("Participation with id " + participation.getId() + " does not have a student!"));
-            var studentExam = studentExamRepository.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
+            var studentExam = studentExamApi.findByExerciseIdAndUserId(participation.getExercise().getId(), student.getId())
                     .orElseThrow(() -> new EntityNotFoundException("Participation " + participation.getId() + " does not have a student exam!"));
-            return !ExamService.shouldStudentSeeResult(studentExam, participation);
+            return !examApi.shouldStudentSeeResult(studentExam, participation);
         }
         return false;
     }

@@ -5,8 +5,8 @@ import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { Subscription } from 'rxjs';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
@@ -47,7 +47,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
 
-    private profileSubscription: Subscription;
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
     private testRunSubscription: Subscription;
@@ -70,10 +69,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private async setupErrorHandling() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            // sentry is only activated if it was specified in the application.yml file
-            this.sentryErrorHandler.initSentry(profileInfo);
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        // sentry is only activated if it was specified in the application.yml file
+        this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -116,10 +114,8 @@ export class AppComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.isProduction = profileInfo.inProduction;
-        });
+        this.isTestServer = this.profileService.isTestServer();
+        this.isProduction = this.profileService.isProduction();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -151,7 +147,6 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.courseOverviewSubscription?.unsubscribe();

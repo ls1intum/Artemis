@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -692,6 +693,17 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         programmingExerciseParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_shouldTriggerBuildOnRepoReset() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(any());
+
+        request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
+        verify(continuousIntegrationTriggerService).triggerBuild(any());
     }
 
     /**

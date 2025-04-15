@@ -1,0 +1,54 @@
+<div class="editor-wrapper">
+    <!-- Top bar -->
+    <nav class="editor-statusbar">
+        <ng-content select="[editorNavbar]" />
+    </nav>
+    <div class="editor-main">
+        <div class="editor-main__content">
+            <!-- File browser -->
+            <div #fileBrowser class="editor-sidebar-left collapsable">
+                <ng-content select="[editorSidebarLeft]" />
+                <!-- Required for resizing; don't remove empty span -->
+                @if (!fileBrowserIsCollapsed) {
+                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForFileBrowser" class="rg-sidebar-left">
+                        <span></span>
+                    </fa-icon>
+                }
+                @if (fileBrowserIsCollapsed) {
+                    <span class="separator"></span>
+                }
+            </div>
+            <!-- Editor -->
+            <div class="editor-center">
+                <ng-content select="[editorCenter]" />
+            </div>
+            <!-- Instructions -->
+            <div #instructions class="editor-sidebar-right collapsable">
+                @if (!rightPanelIsCollapsed) {
+                    <fa-icon [icon]="faGripLinesVertical" id="draggableIconForInstructions" class="rg-sidebar-right">
+                        <span></span>
+                    </fa-icon>
+                }
+                @if (rightPanelIsCollapsed) {
+                    <span class="separator"></span>
+                }
+                <ng-content select="[editorSidebarRight]" />
+            </div>
+        </div>
+        <!-- Required for resizing; don't remove empty span -->
+        <fa-icon [icon]="faGripLines" class="rg-main-bottom"><span></span></fa-icon>
+    </div>
+    <!-- Build Output -->
+    <div #buildOutput class="editor-bottom collapsable">
+        <ng-content select="[editorBottomArea]" class="editor-bottom-resizable" />
+        <!-- Required for resizing; don't remove empty span -->
+        @if (!buildOutputIsCollapsed) {
+            <fa-icon [icon]="faGripLines" id="draggableIconForBuildOutput" class="rg-bottom-bottom"><span></span></fa-icon>
+        }
+    </div>
+    @if (isTutorAssessment) {
+        <div>
+            <ng-content select="[editorBottom]" />
+        </div>
+    }
+</div>

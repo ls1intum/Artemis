@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { filter, tap } from 'rxjs/operators';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { findLatestResult } from 'app/shared/util/utils';

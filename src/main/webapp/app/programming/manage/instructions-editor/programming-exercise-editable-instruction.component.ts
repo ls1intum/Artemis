@@ -24,7 +24,7 @@ import { ProblemStatementAnalysis } from 'app/programming/manage/instructions-ed
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { hasExerciseChanged } from 'app/exercise/exercise.utils';
+import { hasExerciseChanged } from 'app/exercise/util/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseGradingService } from 'app/programming/manage/services/programming-exercise-grading.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -45,7 +45,6 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -86,9 +85,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     courseId: number;
     exerciseId: number;
-    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
     artemisIntelligenceActions = computed(() =>
-        this.irisEnabled()
+        this.irisEnabled
             ? [
                   new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
                   ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),

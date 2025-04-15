@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -229,7 +230,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Replaces all files except the .git folder of the target repository with the files from the source repository.
+     * Replaces all files except the .git folder of the target repository with the files from the source repository
      *
      * @param targetURL the repository where all files should be replaced
      * @param sourceURL the repository that should be used as source for all files
@@ -259,7 +260,7 @@ public class ProgrammingExerciseParticipationService {
     }
 
     /**
-     * Get the participation for a given repository url and a repository type or username. This method is used by the local VC system to get the
+     * Get the participation for a given repository url and a repository type or user name. This method is used by the local VC system to get the
      * participation for logging operations on the repository.
      *
      * @param repositoryTypeOrUserName the name of the user or the type of the repository
@@ -350,5 +351,36 @@ public class ProgrammingExerciseParticipationService {
             log.error("Could not get commit infos for test repository with participation id {}", participation.getId());
             return List.of();
         }
+    }
+
+    /**
+     * Returns the matching template, solution or student participation for a given build plan key.
+     *
+     * @param planKey the build plan key
+     * @return the matching participation
+     */
+    @Nullable
+    public ProgrammingExerciseParticipation getParticipationWithResults(String planKey) {
+        // we have to support template, solution and student build plans here
+        if (planKey.endsWith("-" + BuildPlanType.TEMPLATE.getName())) {
+            return templateParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        else if (planKey.endsWith("-" + BuildPlanType.SOLUTION.getName())) {
+            return solutionParticipationRepository.findByBuildPlanIdWithResults(planKey).orElse(null);
+        }
+        List<ProgrammingExerciseStudentParticipation> participations = studentParticipationRepository.findWithResultsAndExerciseAndTeamStudentsByBuildPlanId(planKey);
+        ProgrammingExerciseStudentParticipation participation = null;
+        if (!participations.isEmpty()) {
+            participation = participations.getFirst();
+            if (participations.size() > 1) {
+                // in the rare case of multiple participations, take the latest one.
+                for (ProgrammingExerciseStudentParticipation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
+        }
+        return participation;
     }
 }
