@@ -505,6 +505,16 @@ Forwarded Message View
 
 |forwarded-message|
 
+Save Messages
+^^^^^^^^^^^^^^^^
+
+Users can save messages and access them later from the Saved Messages section in the sidebar. Saved messages are
+organized into three categories: *In Progress*, *Completed*, and *Archived*. Messages initially appear in the *In Progress*
+section and can be marked as done to move them to *Completed*, or archived to move them to the *Archived* section.
+Clicking on a saved message navigates the user directly to its exact location within the conversation.
+
+|save-messages|
+
 Expand Thread to Full-Screen
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -622,4 +632,6 @@ As soon as the announcement is created, all participants who did not actively re
 .. |as-message-checkbox| image:: communication/as-message-checkbox.png
     :width: 800
 .. |reply-as-post| image:: communication/reply-as-post.png
+    :width: 800
+.. |save-messages| image:: communication/save-messages.png
     :width: 800
