@@ -251,7 +251,7 @@ describe('DiscussionSectionComponent', () => {
         fixture.detectChanges();
 
         expect(component.currentPostContextFilter.filterToUnresolved).toBeTrue();
-        expect(component.currentPostContextFilter.filterToOwn).toBeTrue();
+        expect(component.currentPostContextFilter.authorIds!.length > 0).toBeTrue();
         expect(component.currentPostContextFilter.filterToAnsweredOrReacted).toBeTrue();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(4);
     }));

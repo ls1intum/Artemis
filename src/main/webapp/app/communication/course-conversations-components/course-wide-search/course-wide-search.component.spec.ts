@@ -57,7 +57,6 @@ describe('CourseWideSearchComponent', () => {
     courseWideSearchConfig.searchTerm = '';
     courseWideSearchConfig.filterToUnresolved = false;
     courseWideSearchConfig.filterToCourseWide = false;
-    courseWideSearchConfig.filterToOwn = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
     courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
     courseWideSearchConfig.selectedConversations = [];
@@ -130,7 +129,6 @@ describe('CourseWideSearchComponent', () => {
             filterToUnresolved: false,
             authorIds: [],
             filterToCourseWide: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
             page: 0,
             pageSize: 50,
@@ -145,7 +143,6 @@ describe('CourseWideSearchComponent', () => {
         const conversation = conversationDtoArray[0];
 
         courseWideSearchConfig.searchTerm = 'test';
-        courseWideSearchConfig.filterToOwn = true;
         courseWideSearchConfig.selectedConversations = [conversation];
         component.onSearch();
         tick();
@@ -158,7 +155,6 @@ describe('CourseWideSearchComponent', () => {
             searchText: courseWideSearchConfig.searchTerm,
             filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
             filterToUnresolved: courseWideSearchConfig.filterToUnresolved,
-            filterToOwn: courseWideSearchConfig.filterToOwn,
             filterToAnsweredOrReacted: courseWideSearchConfig.filterToAnsweredOrReacted,
             page: 0,
             pageSize: 50,
@@ -198,7 +194,6 @@ describe('CourseWideSearchComponent', () => {
         component.ngOnInit();
         tick();
         expect(component.formGroup.get('filterToCourseWide')?.value).toBeFalse();
-        expect(component.formGroup.get('filterToOwn')?.value).toBeFalse();
         expect(component.formGroup.get('filterToUnresolved')?.value).toBeFalse();
         expect(component.formGroup.get('filterToAnsweredOrReacted')?.value).toBeFalse();
     }));
@@ -208,7 +203,6 @@ describe('CourseWideSearchComponent', () => {
         component.formGroup.patchValue({
             filterToCourseWide: true,
             filterToUnresolved: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToCourseWide]');
@@ -217,7 +211,6 @@ describe('CourseWideSearchComponent', () => {
         fixture.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
-        expect(component.courseWideSearchConfig()?.filterToOwn).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
     }));
 
@@ -226,7 +219,6 @@ describe('CourseWideSearchComponent', () => {
         component.formGroup.patchValue({
             filterToCourseWide: true,
             filterToUnresolved: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
         component.courseWideSearchConfig().selectedConversations = [metisGeneralChannelDTO];
@@ -259,7 +251,6 @@ describe('CourseWideSearchComponent', () => {
         component.formGroup.patchValue({
             filterToCourseWide: false,
             filterToUnresolved: true,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
@@ -268,23 +259,6 @@ describe('CourseWideSearchComponent', () => {
         fixture.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToCourseWide).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
-        expect(component.courseWideSearchConfig()?.filterToOwn).toBeFalse();
-        expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
-    }));
-
-    it('Should update filter setting when filterToOwn checkbox is checked', fakeAsync(() => {
-        fixture.detectChanges();
-        component.formGroup.patchValue({
-            filterToUnresolved: false,
-            filterToOwn: true,
-            filterToAnsweredOrReacted: false,
-        });
-        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
-        filterOwnCheckbox.dispatchEvent(new Event('change'));
-        tick();
-        fixture.detectChanges();
-        expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
-        expect(component.courseWideSearchConfig()?.filterToOwn).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeFalse();
     }));
 
@@ -292,7 +266,6 @@ describe('CourseWideSearchComponent', () => {
         fixture.detectChanges();
         component.formGroup.patchValue({
             filterToUnresolved: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: true,
         });
         const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
@@ -300,7 +273,6 @@ describe('CourseWideSearchComponent', () => {
         tick();
         fixture.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeFalse();
-        expect(component.courseWideSearchConfig()?.filterToOwn).toBeFalse();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeTrue();
     }));
 
@@ -308,19 +280,15 @@ describe('CourseWideSearchComponent', () => {
         fixture.detectChanges();
         component.formGroup.patchValue({
             filterToUnresolved: true,
-            filterToOwn: true,
             filterToAnsweredOrReacted: true,
         });
         const filterResolvedCheckbox = getElement(fixture.debugElement, 'input[name=filterToUnresolved]');
-        const filterOwnCheckbox = getElement(fixture.debugElement, 'input[name=filterToOwn]');
         const filterAnsweredOrReactedCheckbox = getElement(fixture.debugElement, 'input[name=filterToAnsweredOrReacted]');
         filterResolvedCheckbox.dispatchEvent(new Event('change'));
-        filterOwnCheckbox.dispatchEvent(new Event('change'));
         filterAnsweredOrReactedCheckbox.dispatchEvent(new Event('change'));
         tick();
         fixture.detectChanges();
         expect(component.courseWideSearchConfig()?.filterToUnresolved).toBeTrue();
-        expect(component.courseWideSearchConfig()?.filterToOwn).toBeTrue();
         expect(component.courseWideSearchConfig()?.filterToAnsweredOrReacted).toBeTrue();
     }));
 

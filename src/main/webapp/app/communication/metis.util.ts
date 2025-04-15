@@ -45,7 +45,6 @@ export interface PostContextFilter {
     authorIds?: number[];
     filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
-    filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;
     postSortCriterion?: PostSortCriterion;
     sortingOrder?: SortDirection;

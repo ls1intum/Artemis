@@ -135,9 +135,11 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetPlagiarismPostsForCourse_Forbidden() throws Exception {
-        // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
+        // authorIds containing own id && filterToUnresolved set true; will fetch all unresolved posts of current user
+        var userId = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow().getId();
         var params = new LinkedMultiValueMap<String, String>();
         params.add("plagiarismCaseId", existingPostsWithAnswers.getFirst().getPlagiarismCase().getId().toString());
+        params.add("authorIds", userId.toString());
 
         List<Post> returnedPosts = request.getList("/api/plagiarism/courses/" + courseId + "/posts", HttpStatus.FORBIDDEN, Post.class, params);
         assertThat(returnedPosts).isNull();

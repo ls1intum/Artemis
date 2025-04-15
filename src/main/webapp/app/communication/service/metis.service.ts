@@ -675,13 +675,14 @@ export class MetisService implements OnDestroy {
 
         switch (postDTO.action) {
             case MetisPostAction.CREATE:
-                const doesNotMatchOwnFilter = this.currentPostContextFilter.filterToOwn && postDTO.post.author?.id !== this.user.id;
+                const isAuthorFilterActive = this.currentPostContextFilter.authorIds && this.currentPostContextFilter.authorIds?.length > 0;
+                const doesNotMatchAuthorFilter = isAuthorFilterActive && postDTO.post.author?.id && !this.currentPostContextFilter.authorIds?.includes(postDTO.post.author?.id);
                 const doesNotMatchReactedFilter = this.currentPostContextFilter.filterToAnsweredOrReacted;
                 const doesNotMatchSearchString =
                     this.currentPostContextFilter.searchText?.length &&
                     !postDTO.post.content?.toLowerCase().includes(this.currentPostContextFilter.searchText.toLowerCase().trim());
 
-                if (doesNotMatchOwnFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
+                if (doesNotMatchAuthorFilter || doesNotMatchReactedFilter || doesNotMatchSearchString) {
                     break;
                 }
                 // we can add the received conversation message to the cached messages without violating the current context filter setting

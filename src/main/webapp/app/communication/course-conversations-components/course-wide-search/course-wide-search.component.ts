@@ -163,7 +163,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             filterToCourseWide: searchConfig.filterToCourseWide,
             filterToUnresolved: searchConfig.filterToUnresolved,
-            filterToOwn: searchConfig.filterToOwn,
             filterToAnsweredOrReacted: searchConfig.filterToAnsweredOrReacted,
             sortingOrder: searchConfig.sortingOrder,
             pagingEnabled: true,
@@ -209,7 +208,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         this.formGroup = this.formBuilder.group({
             filterToCourseWide: false,
             filterToUnresolved: false,
-            filterToOwn: false,
             filterToAnsweredOrReacted: false,
         });
     }
@@ -224,7 +222,6 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         if (!searchConfig) return;
         searchConfig.filterToCourseWide = this.formGroup.get('filterToCourseWide')?.value;
         searchConfig.filterToUnresolved = this.formGroup.get('filterToUnresolved')?.value;
-        searchConfig.filterToOwn = this.formGroup.get('filterToOwn')?.value;
         searchConfig.filterToAnsweredOrReacted = this.formGroup.get('filterToAnsweredOrReacted')?.value;
         searchConfig.sortingOrder = this.sortingOrder;
         this.commandMetisToFetchPosts(true);
@@ -241,7 +238,6 @@ export class CourseWideSearchConfig {
     selectedAuthors: UserPublicInfoDTO[];
     filterToCourseWide: boolean;
     filterToUnresolved: boolean;
-    filterToOwn: boolean;
     filterToAnsweredOrReacted: boolean;
     sortingOrder: SortDirection;
 }

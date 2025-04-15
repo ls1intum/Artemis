@@ -118,13 +118,6 @@ public class ConversationMessageResource {
         final var course = courseRepository.findByIdElseThrow(postContextFilter.courseId());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, requestingUser);
 
-        // Converting deprecated filterToOwn flag to authorIds filter containing only the current user's ID (temporary workaround)
-        if (postContextFilter.filterToOwn() != null && postContextFilter.filterToOwn()) {
-            postContextFilter = new PostContextFilterDTO(postContextFilter.courseId(), postContextFilter.plagiarismCaseId(), postContextFilter.conversationIds(),
-                    new long[] { requestingUser.getId() }, postContextFilter.searchText(), postContextFilter.filterToCourseWide(), postContextFilter.filterToUnresolved(), null,
-                    postContextFilter.filterToAnsweredOrReacted(), postContextFilter.postSortCriterion(), postContextFilter.sortingOrder(), postContextFilter.pinnedOnly());
-        }
-
         if (postContextFilter.conversationIds() != null && postContextFilter.conversationIds().length > 0) {
             posts = conversationMessagingService.getMessages(pageable, postContextFilter, requestingUser, course.getId());
         }

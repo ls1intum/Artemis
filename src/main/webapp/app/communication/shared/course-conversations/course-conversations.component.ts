@@ -411,7 +411,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.searchTerm = '';
         this.courseWideSearchConfig.filterToCourseWide = false;
         this.courseWideSearchConfig.filterToUnresolved = false;
-        this.courseWideSearchConfig.filterToOwn = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
     }
