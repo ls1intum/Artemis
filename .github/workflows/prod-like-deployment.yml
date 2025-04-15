@@ -15,7 +15,7 @@ on:
         type: choice
         options:
           - artemis-staging-localci.artemis.cit.tum.de
-          - artemis-staging1.artemis.cit.tum.de
+          - staging1.artemis.cit.tum.de
           - artemis.tum.de
       triggered_by:
         description: "Username that triggered deployment (not required, shown if triggered via GitHub UI, logged if triggered via GitHub app)"
