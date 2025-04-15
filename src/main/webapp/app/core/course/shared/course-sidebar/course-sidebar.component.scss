@@ -53,26 +53,30 @@ jhi-secured-image {
 }
 
 .double-arrow {
-    transform: translateX(calc(100% - 30px)); // Position relative to container width
-    transition: transform ease 0.3s;
-    cursor: pointer;
-    width: 30px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
     align-items: center;
-    justify-content: center;
-    display: flex;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+    padding-right: 10px;
 }
-
-.menu-closed .double-arrow-icon {
-    transform: rotate(0deg);
+.menu-closed.double-arrow {
+    padding-right: 0;
 }
-
 .double-arrow-icon {
-    display: flex;
-    flex-direction: row;
+    display: inline-flex;
     align-items: center;
     gap: 4px;
+    min-width: 40px;
+    transition: transform 0.3s ease;
     transform: rotate(180deg);
-    transition: transform ease 0.3s 0.3s;
+}
+.menu-closed .double-arrow-icon {
+    transform: rotate(0deg);
+    padding-left: 0;
+    margin-left: 0;
+    min-width: 40px;
 }
 
 .me-negative {
