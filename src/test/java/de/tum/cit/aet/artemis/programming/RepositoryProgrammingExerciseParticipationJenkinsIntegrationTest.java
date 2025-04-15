@@ -70,7 +70,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    public void testGetBuildLogsWithResultIdDoesNotReturnLogsFromDatabase() throws Exception {
+    void testGetBuildLogsWithResultIdDoesNotReturnLogsFromDatabase() throws Exception {
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).orElseThrow();
