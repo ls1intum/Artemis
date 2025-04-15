@@ -46,8 +46,6 @@ export class ProgrammingExerciseModeComponent implements OnInit {
     theiaEnabled = false;
 
     ngOnInit(): void {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.theiaEnabled = profileInfo.activeProfiles?.includes(PROFILE_THEIA);
-        });
+        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
     }
 }

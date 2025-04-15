@@ -95,7 +95,7 @@ class ContinuousPlagiarismControlServiceTest {
         var programmingPlagiarismResult = new TextPlagiarismResult();
         when(plagiarismChecksService.checkProgrammingExercise(programmingExercise)).thenReturn(programmingPlagiarismResult);
 
-        // and: mocked behaviour for plagiarism cases logic
+        // and: mocked behavior for plagiarism cases logic
         when(plagiarismCaseService.createOrAddToPlagiarismCaseForStudent(any(), any(), anyBoolean())).thenReturn(new PlagiarismCase(), new PlagiarismCase());
 
         // when

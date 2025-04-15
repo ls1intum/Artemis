@@ -36,7 +36,7 @@ import { CourseExercisesComponent } from 'app/core/course/overview/course-exerci
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -207,6 +207,7 @@ describe('CourseOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: NotificationService, useClass: MockNotificationService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
@@ -255,14 +256,11 @@ describe('CourseOverviewComponent', () => {
                 findAllForDropdownSpy = jest
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(
-                    of({
-                        inProduction: true,
-                        activeModuleFeatures: [MODULE_FEATURE_ATLAS],
-                        activeProfiles: [PROFILE_IRIS, PROFILE_LTI],
-                        testServer: false,
-                    } as ProfileInfo),
-                );
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
+                    testServer: false,
+                } as unknown as ProfileInfo);
             });
     }));
 
@@ -394,11 +392,12 @@ describe('CourseOverviewComponent', () => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(
             throwError(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                    status: 403,
-                }),
+                () =>
+                    new HttpResponse({
+                        body: course1,
+                        headers: new HttpHeaders(),
+                        status: 403,
+                    }),
             ),
         );
         const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');

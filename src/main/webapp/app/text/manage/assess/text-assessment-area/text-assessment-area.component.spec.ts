@@ -4,7 +4,7 @@ import { TextBlockAssessmentCardComponent } from 'app/text/manage/assess/textblo
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective } from 'ng-mocks';
-import { TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ManualTextblockSelectionComponent } from 'app/text/manage/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 

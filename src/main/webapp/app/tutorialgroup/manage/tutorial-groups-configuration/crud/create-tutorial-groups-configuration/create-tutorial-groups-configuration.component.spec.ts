@@ -2,26 +2,23 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CreateTutorialGroupsConfigurationComponent } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { TutorialGroupsConfigurationFormStubComponent } from '../../../../../../../../test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-groups-configuration-form-sub.component';
-import {
-    generateExampleTutorialGroupsConfiguration,
-    tutorialsGroupsConfigurationToFormData,
-} from '../../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { TutorialGroupsConfigurationFormStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-configuration-form-sub.component';
+import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { mockedActivatedRoute } from '../../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ArtemisDatePipe } from '../../../../../shared/pipes/artemis-date.pipe';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {

@@ -182,14 +182,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     initializeProfileInfo() {
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
-                this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
-                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled && this.lecture.course && this.lecture.course.id) {
+            this.irisSettingsService.getCombinedCourseSettings(this.lecture.course.id).subscribe((settings) => {
+                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+            });
+        }
     }
 
     drop(event: CdkDragDrop<LectureUnit[]>) {

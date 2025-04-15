@@ -103,14 +103,13 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+            });
+        }
+
         this.loadAll();
     }
 

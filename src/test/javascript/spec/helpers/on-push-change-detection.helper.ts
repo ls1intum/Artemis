@@ -7,7 +7,7 @@ import { ComponentFixture } from '@angular/core/testing';
  *
  * Source: https://gist.github.com/ali-kamalizade/14f7f0ab19f6592adf2f05cd6215dabf#file-on-push-change-detection-helper-ts
  */
-export async function runOnPushChangeDetection(fixture: ComponentFixture<any>): Promise<void> {
+export async function runOnPushChangeDetection<T>(fixture: ComponentFixture<T>): Promise<void> {
     const changeDetectorRef = fixture.debugElement.injector.get<ChangeDetectorRef>(ChangeDetectorRef);
     changeDetectorRef.detectChanges();
     return fixture.whenStable();

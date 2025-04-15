@@ -1,262 +1,135 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { PROFILE_APOLLON, PROFILE_ATHENA, PROFILE_DEV, PROFILE_JENKINS, PROFILE_PROD } from 'app/app.constants';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
-import { BehaviorSubject } from 'rxjs';
+
+const programmingLanguageFeatures: ProgrammingLanguageFeature[] = [
+    {
+        programmingLanguage: ProgrammingLanguage.KOTLIN,
+        sequentialTestRuns: true,
+        staticCodeAnalysis: false,
+        plagiarismCheckSupported: false,
+        packageNameRequired: true,
+        checkoutSolutionRepositoryAllowed: false,
+        projectTypes: [],
+        auxiliaryRepositoriesSupported: true,
+    },
+    {
+        programmingLanguage: ProgrammingLanguage.PYTHON,
+        sequentialTestRuns: false,
+        staticCodeAnalysis: false,
+        plagiarismCheckSupported: true,
+        packageNameRequired: false,
+        checkoutSolutionRepositoryAllowed: false,
+        projectTypes: [],
+        auxiliaryRepositoriesSupported: true,
+    },
+    {
+        programmingLanguage: ProgrammingLanguage.SWIFT,
+        sequentialTestRuns: false,
+        staticCodeAnalysis: true,
+        plagiarismCheckSupported: false,
+        packageNameRequired: true,
+        checkoutSolutionRepositoryAllowed: false,
+        projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
+        auxiliaryRepositoriesSupported: true,
+    },
+    {
+        programmingLanguage: ProgrammingLanguage.C,
+        sequentialTestRuns: false,
+        staticCodeAnalysis: false,
+        plagiarismCheckSupported: true,
+        packageNameRequired: false,
+        checkoutSolutionRepositoryAllowed: false,
+        projectTypes: [],
+        auxiliaryRepositoriesSupported: true,
+    },
+    {
+        programmingLanguage: ProgrammingLanguage.JAVA,
+        sequentialTestRuns: true,
+        staticCodeAnalysis: true,
+        plagiarismCheckSupported: true,
+        packageNameRequired: true,
+        checkoutSolutionRepositoryAllowed: false,
+        projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+        auxiliaryRepositoriesSupported: true,
+    },
+];
+
+const gitInformation = {
+    branch: 'code-button',
+    commit: {
+        id: {
+            abbrev: '95ef2a',
+        },
+        time: '2022-11-20T20:35:01Z',
+        user: {
+            name: 'Max Musterman',
+            email: 'max@mustermann.de',
+        },
+    },
+};
+
+const buildInformation = {
+    artifact: 'Artemis',
+    name: 'Artemis',
+    time: '2025-05-26T23:13:30.212Z',
+    version: '8.0.0',
+    group: 'de.tum.cit.aet.artemis',
+};
+
+// eslint-disable-next-line jest/no-export
+export const expectedProfileInfo: ProfileInfo = {
+    activeModuleFeatures: [],
+    activeProfiles: [PROFILE_PROD, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_APOLLON],
+    allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
+    allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
+    build: buildInformation,
+    buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
+    buildTimeoutDefault: 0,
+    buildTimeoutMax: 0,
+    buildTimeoutMin: 0,
+    compatibleVersions: {},
+    contact: 'artemis@xcit.tum.de',
+    continuousIntegrationName: '',
+    defaultContainerCpuCount: 0,
+    defaultContainerMemoryLimitInMB: 0,
+    defaultContainerMemorySwapLimitInMB: 0,
+    externalCredentialProvider: '',
+    externalPasswordResetLinkMap: { en: '', de: '' },
+    features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
+    git: gitInformation,
+    imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
+    java: {},
+    needsToAcceptTerms: false,
+    operatorAdminName: '',
+    operatorName: 'TUM',
+    programmingLanguageFeatures: programmingLanguageFeatures,
+    registrationEnabled: true,
+    repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
+    sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
+    sshCloneURLTemplate: 'ssh://git@artemistest2.aet.cit.tum.de:2222/',
+    studentExamStoreSessionData: false,
+    testServer: true,
+    textAssessmentAnalyticsEnabled: false,
+    theiaPortalURL: 'https://theia.artemis.cit.tum.de',
+    useExternal: false,
+    versionControlName: '',
+    versionControlUrl: 'https://artemistest2.aet.cit.tum.de',
+};
 
 describe('ProfileService', () => {
     let service: ProfileService;
     let httpMock: HttpTestingController;
-
-    const serverResponse = {
-        externalCredentialProvider: '',
-        externalPasswordResetLinkMap: new Map<string, string>([
-            ['en', ''],
-            ['de', ''],
-        ]),
-        useExternal: false,
-        contact: 'artemis@xcit.tum.de',
-        imprint: 'https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint',
-        'guided-tour': {
-            courseShortName: 'artemistutorial',
-            tours: {
-                0: {
-                    cancel_tour: '',
-                },
-                1: {
-                    code_editor_tour: 'test',
-                },
-                2: {
-                    course_overview_tour: '',
-                },
-                3: {
-                    course_exercise_overview_tour: 'test',
-                },
-                4: {
-                    modeling_tour: 'UML Class Diagram',
-                },
-                5: {
-                    programming_exercise_fail_tour: 'test',
-                },
-                6: {
-                    programming_exercise_success_tour: 'test',
-                },
-                7: {
-                    tutor_assessment_tour: 'Patterns in Software Engineering',
-                },
-            },
-        },
-        'test-server': true,
-        sentry: {
-            dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2',
-        },
-        'display-ribbon-on-profiles': 'dev',
-        build: {
-            artifact: 'Artemis',
-            name: 'Artemis',
-            time: '2021-05-26T23:13:30.212Z',
-            version: '5.0.0',
-            group: 'de.tum.cit.aet.artemis',
-        },
-        features: ['ProgrammingExercises', 'PlagiarismChecks'],
-        programmingLanguageFeatures: [
-            {
-                programmingLanguage: 'KOTLIN',
-                sequentialTestRuns: true,
-                staticCodeAnalysis: false,
-                plagiarismCheckSupported: false,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                programmingLanguage: 'PYTHON',
-                sequentialTestRuns: false,
-                staticCodeAnalysis: false,
-                plagiarismCheckSupported: true,
-                packageNameRequired: false,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                programmingLanguage: 'SWIFT',
-                sequentialTestRuns: false,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: false,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: ['PLAIN', 'XCODE'],
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                programmingLanguage: 'C',
-                sequentialTestRuns: false,
-                staticCodeAnalysis: false,
-                plagiarismCheckSupported: true,
-                packageNameRequired: false,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: [],
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                programmingLanguage: 'JAVA',
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: false,
-                projectTypes: ['PLAIN_MAVEN', 'MAVEN_MAVEN'],
-                auxiliaryRepositoriesSupported: true,
-            },
-        ],
-        versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
-        commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
-        sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
-        sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
-        buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
-        registrationEnabled: true,
-        needsToAcceptTerms: false,
-        allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
-        allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
-        activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
-        activeModuleFeatures: [],
-        git: {
-            branch: 'code-button',
-            commit: {
-                id: {
-                    abbrev: '95ef2a',
-                },
-                time: '2022-11-20T20:35:01Z',
-                user: {
-                    name: 'Max Musterman',
-                },
-            },
-        },
-        operatorName: 'TUM',
-        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
-    };
-
-    const expectedProfileInfo: ProfileInfo = {
-        externalCredentialProvider: '',
-        externalPasswordResetLinkMap: new Map<string, string>([
-            ['en', ''],
-            ['de', ''],
-        ]),
-        useExternal: false,
-        activeProfiles: ['prod', 'jenkins', 'gitlab', 'athena', 'openapi', 'apollon'],
-        activeModuleFeatures: [],
-        testServer: true,
-        ribbonEnv: '',
-        guidedTourMapping: {
-            courseShortName: 'artemistutorial',
-            tours: {
-                cancel_tour: '',
-                code_editor_tour: 'test',
-                course_exercise_overview_tour: 'test',
-                course_overview_tour: '',
-                modeling_tour: 'UML Class Diagram',
-                programming_exercise_fail_tour: 'test',
-                programming_exercise_success_tour: 'test',
-                tutor_assessment_tour: 'Patterns in Software Engineering',
-            },
-        },
-        inProduction: true,
-        inDevelopment: false,
-        openApiEnabled: true,
-        sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
-        features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
-        buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
-        commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
-        sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
-        sshKeysURL: 'https://artemistest2gitlab.ase.in.tum.de/profile/keys',
-        externalUserManagementName: '',
-        externalUserManagementURL: '',
-        contact: 'artemis@xcit.tum.de',
-        registrationEnabled: true,
-        needsToAcceptTerms: false,
-        allowedEmailPattern: '([a-zA-Z0-9_\\-\\.\\+]+)@((tum\\.de)|(in\\.tum\\.de)|(mytum\\.de))',
-        allowedEmailPatternReadable: '@tum.de, @in.tum.de, @mytum.de',
-        allowedLdapUsernamePattern: undefined,
-        allowedCourseRegistrationUsernamePattern: undefined,
-        accountName: undefined,
-        versionControlUrl: 'https://artemistest2gitlab.ase.in.tum.de',
-        programmingLanguageFeatures: [
-            {
-                checkoutSolutionRepositoryAllowed: false,
-                packageNameRequired: true,
-                plagiarismCheckSupported: false,
-                programmingLanguage: ProgrammingLanguage.KOTLIN,
-                projectTypes: [],
-                sequentialTestRuns: true,
-                staticCodeAnalysis: false,
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                checkoutSolutionRepositoryAllowed: false,
-                packageNameRequired: false,
-                plagiarismCheckSupported: true,
-                programmingLanguage: ProgrammingLanguage.PYTHON,
-                projectTypes: [],
-                sequentialTestRuns: false,
-                staticCodeAnalysis: false,
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                checkoutSolutionRepositoryAllowed: false,
-                packageNameRequired: true,
-                plagiarismCheckSupported: false,
-                programmingLanguage: ProgrammingLanguage.SWIFT,
-                projectTypes: [ProjectType.PLAIN, ProjectType.XCODE],
-                sequentialTestRuns: false,
-                staticCodeAnalysis: true,
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                checkoutSolutionRepositoryAllowed: false,
-                packageNameRequired: false,
-                plagiarismCheckSupported: true,
-                programmingLanguage: ProgrammingLanguage.C,
-                projectTypes: [],
-                sequentialTestRuns: false,
-                staticCodeAnalysis: false,
-                auxiliaryRepositoriesSupported: true,
-            },
-            {
-                checkoutSolutionRepositoryAllowed: false,
-                packageNameRequired: true,
-                plagiarismCheckSupported: true,
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                auxiliaryRepositoriesSupported: true,
-            },
-        ],
-        git: {
-            branch: 'code-button',
-            commit: {
-                id: {
-                    abbrev: '95ef2a',
-                },
-                time: '2022-11-20T20:35:01Z',
-                user: {
-                    name: 'Max Musterman',
-                },
-            },
-        },
-        theiaPortalURL: 'https://theia.artemis.cit.tum.de',
-        operatorName: 'TUM',
-    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -279,46 +152,47 @@ describe('ProfileService', () => {
 
     describe('Service methods', () => {
         it('should call correct URL', () => {
-            service.getProfileInfo().subscribe(() => {});
+            service.loadProfileInfo();
 
             const req = httpMock.expectOne({ method: 'GET' });
             const infoUrl = 'management/info';
             expect(req.request.url).toEqual(infoUrl);
         });
 
-        it('should get the profile info', fakeAsync(() => {
-            service.getProfileInfo().subscribe((received) => {
-                expect(received).toEqual(expectedProfileInfo);
-            });
+        it('should get the profile info', async () => {
+            const featureSpy = jest.spyOn(service['featureToggleService'], 'initializeFeatureToggles');
+            const fingerprintSpy = jest.spyOn(service['browserFingerprintService'], 'initialize');
 
-            const req = httpMock.expectOne({ method: 'GET' });
-            req.flush(serverResponse);
-            tick();
-        }));
+            const promise = service.loadProfileInfo();
+            const req = httpMock.expectOne('management/info');
+            expect(req.request.method).toBe('GET');
+
+            req.flush(expectedProfileInfo);
+
+            await promise; // wait for the async method to complete
+
+            expect(service.getProfileInfo()).toEqual(expectedProfileInfo);
+            expect(featureSpy).toHaveBeenCalledWith(expectedProfileInfo.features);
+            expect(fingerprintSpy).toHaveBeenCalledWith(expectedProfileInfo.studentExamStoreSessionData);
+        });
 
         it('should return true if the profile is active', () => {
-            service['profileInfo'] = new BehaviorSubject({
-                activeProfiles: ['dev', 'prod'],
-            } as any);
-            expect(service.isProfileActive('dev')).toBeTrue();
-            expect(service.isProfileActive('prod')).toBeTrue();
+            // @ts-ignore
+            service.profileInfo = { activeProfiles: [PROFILE_DEV, PROFILE_PROD] };
+            expect(service.isProfileActive(PROFILE_DEV)).toBeTrue();
+            expect(service.isProfileActive(PROFILE_PROD)).toBeTrue();
         });
 
         it('should return false if the profile is not active', () => {
-            service['profileInfo'] = new BehaviorSubject({
-                activeProfiles: ['prod'],
-            } as any);
-            expect(service.isProfileActive('dev')).toBeFalse();
-        });
-
-        it('should return false if profileInfo is undefined', () => {
-            service['profileInfo'] = undefined!;
-            expect(service.isProfileActive('dev')).toBeFalse();
+            // @ts-ignore
+            service.profileInfo = { activeProfiles: [PROFILE_PROD] };
+            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
         });
 
         it('should return false if activeProfiles is undefined', () => {
-            service['profileInfo'] = new BehaviorSubject({} as any);
-            expect(service.isProfileActive('dev')).toBeFalse();
+            // @ts-ignore
+            service.profileInfo = {};
+            expect(service.isProfileActive(PROFILE_DEV)).toBeFalse();
         });
     });
 });

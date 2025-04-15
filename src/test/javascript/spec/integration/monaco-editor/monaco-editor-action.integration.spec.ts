@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -20,10 +20,10 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
 import * as monaco from 'monaco-editor';
-import { MockClipboardItem } from '../../helpers/mocks/service/mock-clipboard-item';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockClipboardItem } from 'test/helpers/mocks/service/mock-clipboard-item';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 
 describe('MonacoEditorActionIntegration', () => {

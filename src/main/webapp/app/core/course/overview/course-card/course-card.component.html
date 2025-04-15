@@ -1,4 +1,4 @@
-<div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
+<div class="card rounded-4 flex-grow-1">
     <jhi-course-card-header
         [courseId]="course.id!"
         [courseTitle]="course.title!"
@@ -35,11 +35,11 @@
                         <hr />
                         <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
                         @if (nextRelevantExercise && nextRelevantExercise.id && course.id) {
-                            <a class="fw-bold btn-wrapper exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id, 'exercises', nextRelevantExercise.id]">
+                            <a class="fw-bold btn-wrapper exercise-title" [routerLink]="['/courses', course.id, 'exercises', nextRelevantExercise.id]">
                                 {{ nextRelevantExercise.title }}
                             </a>
                         } @else {
-                            <div class="fw-bold mb-3 exercise-guided-tour">
+                            <div class="fw-bold mb-3">
                                 <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
                             </div>
                         }

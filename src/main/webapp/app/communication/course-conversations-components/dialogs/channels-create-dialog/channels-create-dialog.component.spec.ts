@@ -7,8 +7,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { initializeDialog } from '../../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ChannelsCreateDialogComponent', () => {

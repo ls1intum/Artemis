@@ -9,15 +9,13 @@ import { ApollonEditor, Patch, UMLDiagramType, UMLModel } from '@ls1intum/apollo
 import { Text } from '@ls1intum/apollon/lib/es5/utils/svg/text';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import * as testClassDiagram from 'test/helpers/sample/modeling/test-models/class-diagram.json';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { cloneDeep } from 'lodash-es';
 import { SimpleChange } from '@angular/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { ModelingExplanationEditorComponent } from 'app/modeling/shared/modeling-explanation-editor/modeling-explanation-editor.component';
 import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guided-tour-task.model';
 
 // has to be overridden, because jsdom does not provide a getBBox() function for SVGTextElements
 Text.size = () => {
@@ -41,7 +39,6 @@ describe('ModelingEditorComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                MockProvider(GuidedTourService),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -50,7 +47,6 @@ describe('ModelingEditorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ModelingEditorComponent);
                 component = fixture.componentInstance;
-                jest.spyOn(TestBed.inject(GuidedTourService), 'checkModelingComponent').mockReturnValue(of());
             });
     });
 
@@ -243,38 +239,6 @@ describe('ModelingEditorComponent', () => {
         expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(component.explanation).toBe(newExplanation);
-    });
-
-    it('should assess model for guided tour for all UML types', async () => {
-        const guidedTourService = TestBed.inject(GuidedTourService);
-        const subject = new Subject<string>();
-        jest.spyOn(guidedTourService, 'checkModelingComponent').mockImplementation(() => subject.asObservable());
-        fixture.detectChanges();
-        const updateSpy = jest.spyOn(guidedTourService, 'updateModelingResult');
-        updateSpy.mockReturnThis();
-
-        let updateSpyCallCount = 0;
-        let currentUmlName = personUML.name;
-
-        await fixture.componentInstance.apollonEditor?.nextRender;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
-
-        currentUmlName = studentUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
-
-        currentUmlName = associationUML.name;
-        subject.next(currentUmlName);
-        expect(updateSpy).toHaveBeenLastCalledWith(currentUmlName, false);
-
-        updateSpyCallCount++;
-        expect(updateSpy).toHaveBeenCalledTimes(updateSpyCallCount);
     });
 
     it('should subscribe to model change patches and emit them.', () => {
