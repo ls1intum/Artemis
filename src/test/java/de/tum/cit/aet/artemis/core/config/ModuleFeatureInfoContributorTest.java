@@ -21,13 +21,15 @@ class ModuleFeatureInfoContributorTest {
     // @formatter:off
     private static final List<String> modulePropertyNames = List.of(
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
-        Constants.TEXT_ENABLED_PROPERTY_NAME
+        Constants.TEXT_ENABLED_PROPERTY_NAME,
+        Constants.PLAGIARISM_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
     // @formatter:off
     private static final List<String> moduleFeatures = List.of(
         Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_PLAGIARISM,
         Constants.MODULE_FEATURE_TEXT
     );
     // @formatter:on
