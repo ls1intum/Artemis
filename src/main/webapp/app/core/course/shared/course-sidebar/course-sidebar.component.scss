@@ -55,13 +55,14 @@ jhi-secured-image {
 .double-arrow {
     width: 100%;
     display: flex;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: flex-end;
     cursor: pointer;
-    transition: opacity 0.3s ease;
     padding-right: 10px;
 }
+
 .menu-closed.double-arrow {
+    justify-content: center;
     padding-right: 0;
 }
 .double-arrow-icon {
@@ -75,7 +76,7 @@ jhi-secured-image {
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
     padding-left: 0;
-    margin-left: 0;
+    margin-left: -3px;
     min-width: 40px;
 }
 
