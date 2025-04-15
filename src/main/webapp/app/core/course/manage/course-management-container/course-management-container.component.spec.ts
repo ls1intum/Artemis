@@ -290,12 +290,12 @@ describe('CourseManagementContainerComponent', () => {
     it('should subscribe to profileService and set values correctly', async () => {
         await component.ngOnInit();
 
-        expect(component.isProduction()).toBeTrue();
-        expect(component.isTestServer()).toBeFalse();
-        expect(component.atlasEnabled()).toBeTrue();
-        expect(component.irisEnabled()).toBeTrue();
-        expect(component.ltiEnabled()).toBeTrue();
-        expect(component.localCIActive()).toBeFalse();
+        expect(component.isProduction).toBeTrue();
+        expect(component.isTestServer).toBeFalse();
+        expect(component.atlasEnabled).toBeTrue();
+        expect(component.irisEnabled).toBeTrue();
+        expect(component.ltiEnabled).toBeTrue();
+        expect(component.localCIActive).toBeFalse();
     });
 
     it('should handle courseId change correctly', () => {
