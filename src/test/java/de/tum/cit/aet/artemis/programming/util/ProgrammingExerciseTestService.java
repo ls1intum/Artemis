@@ -2285,8 +2285,7 @@ public class ProgrammingExerciseTestService {
         var programmingSubmission = ParticipationFactory.generateProgrammingSubmission(true, "abcde", SubmissionType.MANUAL);
         programmingSubmission = programmingExerciseUtilService.addProgrammingSubmission(exercise, programmingSubmission, userPrefix + studentLogin);
         if (withResult) {
-            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission.getParticipation().findLatestSubmission().orElseThrow(),
-                    score >= 100D, true, 100D);
+            participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, submissionDate, programmingSubmission, score >= 100D, true, 100D);
         }
         return (ProgrammingExerciseStudentParticipation) programmingSubmission.getParticipation();
     }
