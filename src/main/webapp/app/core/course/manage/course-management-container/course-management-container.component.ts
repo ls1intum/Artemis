@@ -161,19 +161,27 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.subscribeToCourseUpdates(courseId);
     }
     determineStudentViewLink() {
-        // const courseIdString = this.courseId().toString();
-        // const routerUrl = this.router.url;
-        // console.log(routerUrl);
-        // if (routerUrl.endsWith('exam') || routerUrl.endsWith('exams')) {
-        //     console.log()
-        //     this.studentViewLink.set(['/courses', courseIdString, 'exams']);
-        // } else if (routerUrl.endsWith('exercises')) {
-        //     this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
-        // } else if (routerUrl.endsWith('lectures')) {
-        //     this.studentViewLink.set(['/courses', courseIdString, 'lectures']);
-        // } else {
-        //     this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
-        // }
+        const courseIdString = this.courseId().toString();
+        const routerUrl = this.router.url;
+        if (routerUrl.includes('exams')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'exams']);
+        } else if (routerUrl.includes('exercises')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
+        } else if (routerUrl.includes('lectures')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'lectures']);
+        } else if (routerUrl.includes('communication')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'communication']);
+        } else if (routerUrl.includes('learning-path-management')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'learning-path']);
+        } else if (routerUrl.includes('competency-management')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'competencies']);
+        } else if (routerUrl.includes('faqs')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'faq']);
+        } else if (routerUrl.includes('tutorial-groups') || routerUrl.includes('tutorial-groups-checklist')) {
+            this.studentViewLink.set(['/courses', courseIdString, 'tutorial-groups']);
+        } else {
+            this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
+        }
     }
 
     private subscribeToCourseUpdates(courseId: number) {

@@ -717,15 +717,79 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isSidebarCollapsed()).toBeFalse();
     });
 
-    it('should set isOverviewPage to false when not on overview page', async () => {
+    it('should set isSettingsPage to false when not on settings page', async () => {
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
         await component.ngOnInit();
         expect(component.isSettingsPage()).toBeFalse();
     });
-    it('should set isOverviewPage to true when on overview page', async () => {
-        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1');
-        jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1', '')));
+    it('should set isSettingsPage to true when on settings page', async () => {
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/settings');
+        jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
         await component.ngOnInit();
         expect(component.isSettingsPage()).toBeTrue();
+    });
+    describe('determineStudentViewLink', () => {
+        beforeEach(() => {
+            component.courseId.set(123);
+        });
+        it('should set exams link when URL includes "exams"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exams']);
+        });
+
+        it('should set exercises link when URL includes "exercises"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
+        });
+
+        it('should set lectures link when URL includes "lectures"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'lectures']);
+        });
+
+        it('should set communication link when URL includes "communication"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'communication']);
+        });
+
+        it('should set learning-path link when URL includes "learning-path-management"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path-management');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'learning-path']);
+        });
+
+        it('should set competencies link when URL includes "competency-management"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competency-management');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'competencies']);
+        });
+
+        it('should set faq link when URL includes "faqs"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faqs/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'faq']);
+        });
+
+        it('should set tutorial-groups link when URL includes "tutorial-groups"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups/configuration/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
+        });
+
+        it('should set tutorial-groups link when URL includes "tutorial-groups-checklist"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups-checklist');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
+        });
+
+        it('should default to exercises link when URL does not match any condition', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
+        });
     });
 });
