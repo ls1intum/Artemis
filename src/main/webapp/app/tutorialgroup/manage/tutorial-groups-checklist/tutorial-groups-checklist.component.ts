@@ -32,8 +32,8 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     isTimeZoneConfigured = false;
     isTutorialGroupConfigurationCreated = false;
 
-    faCog = faCog;
-    faPlus = faPlus;
+    protected readonly faCog = faCog;
+    protected readonly faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
 
