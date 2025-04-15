@@ -2,10 +2,10 @@
     "artemisApp": {
         "learnerProfile": {
             "title": "Einstellungen des Lernerprofils",
-            "description": "Anpassen Sie Ihre Lernerfahrung, indem Sie Ihre Präferenzen für das Feedback-Stil anpassen.",
+            "description": "Passe deine Lernerfahrung an, indem du deine Präferenzen für den Feedback-Stil anpasst.",
             "feedback": {
                 "title": "Feedback-Einstellungen",
-                "description": "Wählen Sie Ihre bevorzugte Art von Feedback aus - von kurz und knackig bis detailliert und ausführlich.",
+                "description": "Wähle deine bevorzugte Art von Feedback aus - von kurz und knackig bis detailliert und ausführlich.",
                 "feedbackPracticalTheoretical": {
                     "title": "Praktisch vs. Theoretisch",
                     "practical": "Mehr Praktisch",
@@ -30,6 +30,13 @@
                     "detailed": "Mehr Ausführlich",
                     "description": "Kurze Feedback-Stile bieten schnelle Einblicke, während ausführliche Erklärungen mehr Kontext und Hintergrundinformationen bereitstellen."
                 }
+            },
+            "error": {
+                "loading": "Fehler beim Laden des Lernerprofils",
+                "saving": "Fehler beim Speichern des Lernerprofils"
+            },
+            "success": {
+                "saved": "Lernerprofil gespeichert erfolgreich"
             }
         }
     }

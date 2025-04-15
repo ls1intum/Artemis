@@ -30,6 +30,13 @@
                     "brief": "More Brief",
                     "detailed": "More Detailed"
                 }
+            },
+            "error": {
+                "loading": "Error loading learner profile",
+                "saving": "Error saving learner profile"
+            },
+            "success": {
+                "saved": "Learner profile saved successfully"
             }
         }
     }
