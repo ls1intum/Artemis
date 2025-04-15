@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -57,6 +58,9 @@ public class IrisTutorSuggestionSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
+        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
 
         var sessionOptional = irisTutorSuggestionSessionRepository.findLatestSessionsByPostIdAndUserIdWithMessages(postId, user.getId(), Pageable.ofSize(1)).stream().findFirst();
@@ -79,9 +83,11 @@ public class IrisTutorSuggestionSessionResource {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
         var course = post.getCoursePostingBelongsTo();
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
-
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (!userRepository.isAtLeastTeachingAssistantInCourse(user.getLogin(), course.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
 
         var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post, user));
         var uriString = "/api/iris/sessions/" + session.getId();

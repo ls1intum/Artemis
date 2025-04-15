@@ -175,6 +175,7 @@ public class IrisRequestMockProvider {
             .andExpect(method(HttpMethod.POST))
             .andRespond(request -> {
                 var mockRequest = (MockClientHttpRequest) request;
+                assert mockRequest != null;
                 var dto = mapper.readValue(mockRequest.getBodyAsString(), PyrisTutorSuggestionPipelineExecutionDTO.class);
                 responseConsumer.accept(dto);
                 return MockRestResponseCreators.withRawStatus(HttpStatus.ACCEPTED.value()).createResponse(request);

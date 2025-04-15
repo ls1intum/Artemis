@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
@@ -54,6 +55,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private CourseTestRepository courseRepository;
+
+    @Autowired
+    private IrisMessageService irisMessageService;
 
     private ProgrammingExercise exercise;
 
@@ -87,7 +91,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void createSession_alreadyExists() throws Exception {
+    void testCreateTutorSuggestionSessionShouldReturnDifferentResponsesForSamePost() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var firstResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var secondResponse = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
@@ -112,7 +116,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         message.addContent(new IrisTextMessageContent("Test tutor suggestion request"));
         message.setSender(IrisMessageSender.TUT_SUG);
         message.setSession(irisSession);
-        irisMessageRepository.save(message);
+        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
         var messages = irisMessageRepository.findAllBySessionId(irisSession.getId());
         assertThat(messages).hasSize(1);
         assertThat(messages.getFirst().getContent().getFirst().toString()).contains("Test tutor suggestion request");
@@ -121,7 +125,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void createTutorSuggestion() throws Exception {
+    void testCreateTutorSuggestionShouldProcessMessageAndReturnResponse() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.CREATED);
         var message = new IrisMessage();
@@ -135,8 +139,15 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         });
 
         var response = request.postWithResponseBody(irisSessionUrl(post.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
-        await().until(pipelineDone::get);
+        await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
         assertThat(response.getContent().getFirst().toString()).contains("Test tutor suggestion request");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testGetTutorSuggestionSessionAsStudent() throws Exception {
+        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.FORBIDDEN);
     }
 
     private static String tutorSuggestionUrl(long sessionId) {
