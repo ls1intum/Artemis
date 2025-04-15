@@ -2,12 +2,6 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.regex.Pattern;
 
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.lti.web.LtiResource;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
-
 /**
  * Application constants.
  */
@@ -25,8 +19,6 @@ public final class Constants {
     public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
     public static final int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
-
-    public static final int SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS = 5;
 
     // Regex for acceptable logins
     public static final String LOGIN_REGEX = "^[_'.@A-Za-z0-9-]*$";
@@ -58,8 +50,9 @@ public final class Constants {
      * especially for exercises with many participants.
      * If the student was able to successfully push their solution, this solution should still be graded, even if
      * the push was a few seconds late.
-     *
-     * @see ProgrammingSubmissionService#isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission)
+     * <p>
+     * Have a look at isAllowedToSubmit(ProgrammingExerciseStudentParticipation, User, ProgrammingSubmission) in
+     * de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService
      */
     public static final int PROGRAMMING_GRACE_PERIOD_SECONDS = 60;
 
@@ -107,8 +100,6 @@ public final class Constants {
 
     // Used to cut off CI specific path segments when receiving static code analysis reports
     public static final String ASSIGNMENT_DIRECTORY = "/" + ASSIGNMENT_REPO_NAME + "/";
-
-    public static final String TEST_WORKING_DIRECTORY = "test";
 
     // Used as a value for <sourceDirectory> for the Java template pom.xml
     public static final String STUDENT_WORKING_DIRECTORY = ASSIGNMENT_DIRECTORY + "src";
@@ -345,7 +336,7 @@ public final class Constants {
     public static final String PROFILE_AEOLUS = "aeolus";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link LtiResource}.
+     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.lti.web.LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
 
@@ -354,8 +345,21 @@ public final class Constants {
      */
     public static final String PROFILE_SAML2 = "saml2";
 
+    /**
+     * The name of the Spring profile used for activating the scheduling functionality.
+     * NOTE: please only use this profile if the service is not used in non-scheduling services or resources, otherwise the multi node configuration does not work.
+     * If you need to communicate scheduling changes (e.g. based on exercise / lecture / slides changes) to node1 with scheduling active,
+     * please use {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService} and
+     * {@link de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService}
+     */
     public static final String PROFILE_SCHEDULING = "scheduling";
 
+    /**
+     * Profile combination for one primary node (in multi node setups, we typically call this node1), where scheduling AND core is active
+     * The distinction is necessary, because otherwise most scheduled operations (regarding database and file system) should only be executed ONCE on the primary node and NOT
+     * on secondary nodes.
+     * NOTE: secondary nodes should only use PROFILE_CORE
+     */
     public static final String PROFILE_CORE_AND_SCHEDULING = PROFILE_CORE + " & " + PROFILE_SCHEDULING;
 
     /**
