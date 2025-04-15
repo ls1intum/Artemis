@@ -438,6 +438,7 @@ public class ParticipationResource {
         // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+            // only editors and instructors have permission to trigger participation after due date passed
             if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
                     || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
                 throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
