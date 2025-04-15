@@ -11,10 +11,11 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ConversationDTO, ConversationType } from '../entities/conversation/conversation.model';
-import { UserPublicInfoDTO } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { OneToOneChat } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('ConversationGlobalSearchComponent', () => {
     let component: ConversationGlobalSearchComponent;
@@ -32,6 +33,8 @@ describe('ConversationGlobalSearchComponent', () => {
         { id: 2, name: 'Jane Smith', imageUrl: 'jane.jpg' } as UserPublicInfoDTO,
     ];
 
+    const mockCurrentUser: User = { internal: false, id: 42, name: 'James Smith', imageUrl: 'james.jpg' };
+
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
             imports: [FormsModule],
@@ -46,6 +49,9 @@ describe('ConversationGlobalSearchComponent', () => {
             providers: [
                 MockProvider(CourseManagementService, {
                     searchUsers: jest.fn(() => of(new HttpResponse({ body: mockUsers }))),
+                }),
+                MockProvider(AccountService, {
+                    identity: jest.fn(() => Promise.resolve(mockCurrentUser)),
                 }),
             ],
         }).compileComponents();
@@ -102,6 +108,21 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.searchMode).toBe(component.SearchMode.USER);
         expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
         expect(component.filteredUsers).toEqual(mockUsers);
+    }));
+
+    it('should filter own user when using "by:me" prefix', fakeAsync(() => {
+        // Simulate input with "by:" prefix
+        const inputEl = fixture.debugElement.query(By.css('input#search')).nativeElement;
+        inputEl.value = 'by:me';
+        inputEl.dispatchEvent(new Event('input'));
+        tick();
+        fixture.detectChanges();
+
+        // Verify dropdown shows current user
+        expect(component.showDropdown).toBeTrue();
+        expect(component.searchMode).toBe(component.SearchMode.USER);
+        expect(component.userSearchStatus).toBe(component.UserSearchStatus.RESULTS);
+        expect(component.filteredUsers).toEqual([mockCurrentUser]);
     }));
 
     it('should select conversation from dropdown and emit selection change', fakeAsync(() => {
