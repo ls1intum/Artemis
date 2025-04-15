@@ -18,6 +18,12 @@
                 "iris": {
                     "header": "Add Iris",
                     "selector": "Confirm whether you want to add a link to Iris"
+                },
+                "groupedContent": {
+                    "groupedExercises": {
+                        "header": "Activate exercise grouping:",
+                        "selector": "If activated, selecting multiple exercises in the table will group them and display them in the Artemis sidebar within the exercise view"
+                    }
                 }
             },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",

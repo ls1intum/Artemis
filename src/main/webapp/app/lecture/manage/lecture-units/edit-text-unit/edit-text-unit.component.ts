@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/manage/lecture-units/text-unit-form/text-unit-form.component';
-import { TextUnitService } from 'app/lecture/manage/lecture-units/textUnit.service';
+import { TextUnitService } from 'app/lecture/manage/lecture-units/services/textUnit.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';

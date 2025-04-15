@@ -1,9 +1,9 @@
 import { Component, Input, inject } from '@angular/core';
-import { Team } from 'app/entities/team.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { TeamService } from '../team.service';
 import { faFileExport } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 
 @Component({
     selector: 'jhi-teams-export-button',

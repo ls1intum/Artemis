@@ -46,12 +46,10 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.config.GuidedTourConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -96,11 +94,15 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithSolutionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.participation.StudentQuizParticipationWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -114,9 +116,6 @@ public class ParticipationResource {
     private static final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private static final String ENTITY_NAME = "participation";
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private final ParticipationService participationService;
 
@@ -137,8 +136,6 @@ public class ParticipationResource {
     private final UserRepository userRepository;
 
     private final AuditEventRepository auditEventRepository;
-
-    private final GuidedTourConfiguration guidedTourConfiguration;
 
     private final TeamRepository teamRepository;
 
@@ -170,11 +167,14 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ParticipationAuthorizationCheckService participationAuthCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
-            AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
+            AuditEventRepository auditEventRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
@@ -190,7 +190,6 @@ public class ParticipationResource {
         this.participationAuthCheckService = participationAuthCheckService;
         this.userRepository = userRepository;
         this.auditEventRepository = auditEventRepository;
-        this.guidedTourConfiguration = guidedTourConfiguration;
         this.teamRepository = teamRepository;
         this.featureToggleService = featureToggleService;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -407,17 +406,17 @@ public class ParticipationResource {
         }
 
         // Process feedback request
-        StudentParticipation updatedParticipation;
-        if (exercise instanceof TextExercise) {
-            TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new ApiNotPresentException(TextFeedbackApi.class, Constants.PROFILE_CORE));
-            updatedParticipation = api.handleNonGradedFeedbackRequest(participation, (TextExercise) exercise);
-        }
-        else if (exercise instanceof ModelingExercise) {
-            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);
-        }
-        else {
-            updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
-                    (ProgrammingExerciseStudentParticipation) participation, (ProgrammingExercise) exercise);
+        StudentParticipation updatedParticipation = null;
+        switch (exercise) {
+            case TextExercise textExercise -> {
+                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class));
+                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
+            }
+            case ModelingExercise modelingExercise -> updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, modelingExercise);
+            case ProgrammingExercise programmingExercise -> updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
+                    (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
+            default -> {
+            }
         }
 
         return ResponseEntity.ok().body(updatedParticipation);
@@ -693,18 +692,7 @@ public class ParticipationResource {
             participation.getStudents().forEach(student -> student.setVisibleRegistrationNumber(student.getRegistrationNumber()));
             // we only need participationId, title, dates and max points
             // remove unnecessary elements
-            Exercise exercise = participation.getExercise();
-            exercise.setCourse(null);
-            exercise.setStudentParticipations(null);
-            exercise.setTutorParticipations(null);
-            exercise.setExampleSubmissions(null);
-            exercise.setAttachments(null);
-            exercise.setCategories(null);
-            exercise.setProblemStatement(null);
-            exercise.setPosts(null);
-            exercise.setGradingInstructions(null);
-            exercise.setDifficulty(null);
-            exercise.setMode(null);
+            final var exercise = getExercise(participation);
             switch (exercise) {
                 case ProgrammingExercise programmingExercise -> {
                     programmingExercise.setSolutionParticipation(null);
@@ -732,6 +720,22 @@ public class ParticipationResource {
         long end = System.currentTimeMillis();
         log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
+    }
+
+    private static Exercise getExercise(StudentParticipation participation) {
+        Exercise exercise = participation.getExercise();
+        exercise.setCourse(null);
+        exercise.setStudentParticipations(null);
+        exercise.setTutorParticipations(null);
+        exercise.setExampleSubmissions(null);
+        exercise.setAttachments(null);
+        exercise.setCategories(null);
+        exercise.setProblemStatement(null);
+        exercise.setPosts(null);
+        exercise.setGradingInstructions(null);
+        exercise.setDifficulty(null);
+        exercise.setMode(null);
+        return exercise;
     }
 
     /**
@@ -782,6 +786,7 @@ public class ParticipationResource {
      */
     @GetMapping("exercises/{exerciseId}/participation")
     @EnforceAtLeastStudent
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     public ResponseEntity<MappingJacksonValue> getParticipationForCurrentUser(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -820,6 +825,7 @@ public class ParticipationResource {
     }
 
     @Nullable
+    // TODO: use a proper DTO (or interface here for the return type and avoid MappingJacksonValue)
     private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
@@ -848,11 +854,22 @@ public class ParticipationResource {
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
             StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
-            // set view
-            var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
-            MappingJacksonValue value = new MappingJacksonValue(participation);
-            value.setSerializationView(view);
-            return value;
+
+            // TODO: Duplicate
+            Object responseDTO = null;
+            if (participation != null) {
+                if (quizExercise.isQuizEnded()) {
+                    responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+                }
+                else if (quizBatch.get().isStarted()) {
+                    responseDTO = StudentQuizParticipationWithQuestionsDTO.of(participation);
+                }
+                else {
+                    responseDTO = StudentQuizParticipationWithoutQuestionsDTO.of(participation);
+                }
+            }
+
+            return responseDTO != null ? new MappingJacksonValue(responseDTO) : null;
         }
         else {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
@@ -884,36 +901,6 @@ public class ParticipationResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         checkAccessPermissionAtLeastInstructor(participation, user);
-        return deleteParticipation(participation, user);
-    }
-
-    /**
-     * DELETE guided-tour/participations/:participationId : delete the "participationId" participation of student participations for guided tutorials (e.g. when restarting a
-     * tutorial)
-     * Please note: all users can delete their own participation when it belongs to a guided tutorial
-     *
-     * @param participationId the participationId of the participation to delete
-     * @return the ResponseEntity with status 200 (OK) or 403 (FORBIDDEN)
-     */
-    @DeleteMapping("guided-tour/participations/{participationId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteParticipationForGuidedTour(@PathVariable Long participationId) {
-        StudentParticipation participation = studentParticipationRepository.findByIdElseThrow(participationId);
-        if (participation instanceof ProgrammingExerciseParticipation && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
-            throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
-        }
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // Allow all users to delete their own StudentParticipations if it's for a tutorial
-        if (participation.isOwnedBy(user)) {
-            checkAccessPermissionAtLeastStudent(participation, user);
-            guidedTourConfiguration.checkExerciseForTutorialElseThrow(participation.getExercise());
-        }
-        else {
-            throw new AccessForbiddenException("Users are not allowed to delete their own participation.");
-        }
-
         return deleteParticipation(participation, user);
     }
 
@@ -953,11 +940,6 @@ public class ParticipationResource {
         log.info("Clean up participation with build plan {} by {}", participation.getBuildPlanId(), principal.getName());
         participationService.cleanupBuildPlan(participation);
         return ResponseEntity.ok().body(participation);
-    }
-
-    private void checkAccessPermissionAtLeastStudent(StudentParticipation participation, User user) {
-        Course course = findCourseFromParticipation(participation);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
 
     private void checkAccessPermissionAtLeastInstructor(StudentParticipation participation, User user) {
@@ -1048,4 +1030,5 @@ public class ParticipationResource {
 
         return participation;
     }
+
 }

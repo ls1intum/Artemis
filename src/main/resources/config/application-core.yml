@@ -1,3 +1,11 @@
+artemis:
+    atlas:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
+
 spring:
     liquibase:
         enabled: true

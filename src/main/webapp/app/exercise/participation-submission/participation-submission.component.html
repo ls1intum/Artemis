@@ -116,11 +116,7 @@
                     <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
                         @if (value) {
                             <div>
-                                @if (getCommitUrl(row)) {
-                                    <a href="{{ getCommitUrl(row) }}" target="_blank" rel="noopener noreferrer">{{ value.slice(0, 11) }}</a>
-                                } @else {
-                                    {{ value.slice(0, 11) }}
-                                }
+                                {{ value.slice(0, 11) }}
                             </div>
                         } @else {
                             {{ 'n.a' }}

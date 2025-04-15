@@ -1,12 +1,12 @@
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Page } from '@playwright/test';
-import { Channel, ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel, ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { UserCredentials } from '../users';
-import { Post } from 'app/entities/metis/post.model';
-import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Lecture } from 'app/entities/lecture.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
 /**
  * A class which encapsulates all API requests related to communications.

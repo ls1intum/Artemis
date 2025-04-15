@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.NotificationChannelOption;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatusType;
-import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationBroadcastService;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
@@ -111,14 +111,14 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
         ReflectionTestUtils.setField(courseNotificationService, "serviceMap", mockServiceMap);
 
-        var notification = new NewPostNotification(1L, course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", 1L, "Test Channel", "coursewide", "Test Author",
-                "image.url", 1L);
+        var notification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), 1L, "test test", "test test", "Test Author", "image.url", 1L,
+                1L);
 
         courseNotificationService.sendCourseNotification(notification, List.of(user));
 
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
-                .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newPostNotification"))
-                .andExpect(jsonPath("$.content[0].courseId").value(course.getId())).andExpect(jsonPath("$.content[0].parameters['channelName']").value("Test Channel"))
+                .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newAnnouncementNotification"))
+                .andExpect(jsonPath("$.content[0].courseId").value(course.getId())).andExpect(jsonPath("$.content[0].parameters['authorName']").value("Test Author"))
                 .andExpect(jsonPath("$.content[0].parameters['courseTitle']").value(course.getTitle()));
     }
 

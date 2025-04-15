@@ -2,11 +2,11 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from '../course-management.service';
-import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from '../services/course-management.service';
+import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
@@ -16,8 +16,8 @@ import { OrganizationManagementService } from 'app/core/admin/organization-manag
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
@@ -89,10 +89,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     async ngOnInit() {
         this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
-        const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
-        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             // TODO: Outdated, as we now have a bunch more sub settings
