@@ -372,7 +372,13 @@ If there are any pinned messages in a conversation, a button labeled "*x* pinned
 appears at the top right of the conversation view. By clicking this button, users can filter and view only the pinned messages
 within that conversation. Clicking the button again returns the view to the regular conversation.
 
+Pinned Messages Button
 
+|pinned-messages-button|
+
+Applied Pinned Messages Filtering
+
+|applied-pinned filter|
 
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
@@ -599,3 +605,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |channel-settings| image:: communication/channel-settings.png
     :width: 800
+.. |pinned-messages-button| image:: communication/pinned-messages-button.png
+    :width: 1000
+.. |applied-pinned filter| image:: communication/applied-pinned-filter.png
+    :width: 1000
