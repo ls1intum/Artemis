@@ -529,7 +529,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         Result result = participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
-        submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
         var submissions = submissionRepository.findAll();
@@ -587,7 +586,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractProgrammingIntegratio
         Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), submission);
 
         result.setSubmission(submission);
-        submission.addResult(result);
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
