@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCre
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTaskTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
@@ -147,5 +149,9 @@ public abstract class AbstractProgrammingIntegrationIndependentTest extends Abst
 
     @Autowired
     protected UserUtilService userUtilService;
+
+    // Spy Beans
+    @MockitoSpyBean
+    protected ContinuousIntegrationTriggerService continuousIntegrationTriggerService;
 
 }
