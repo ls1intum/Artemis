@@ -12,8 +12,8 @@ import java.util.concurrent.ScheduledFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
-public class SlideUnhideScheduleService implements ApplicationListener<ApplicationReadyEvent> {
+public class SlideUnhideScheduleService {
 
     private final SlideRepository slideRepository;
 
@@ -48,8 +48,8 @@ public class SlideUnhideScheduleService implements ApplicationListener<Applicati
      * Method called when the application is ready.
      * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
      */
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady(ApplicationReadyEvent event) {
         scheduleAllHiddenSlides();
     }
 
