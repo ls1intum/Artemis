@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild, inject, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +22,7 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit {
+export class ConversationThreadSidebarComponent implements AfterViewInit, OnInit {
     private accountService = inject(AccountService);
 
     @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
@@ -82,12 +82,15 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.expandTooltip()?.close();
     }
 
+    ngOnInit(): void {
+        const course = this.course();
+        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+    }
+
     /**
      * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        const course = this.course();
-        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
         interact('.expanded-thread')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },

@@ -10,7 +10,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisMessage, IrisSender } from 'app/iris/shared/entities/iris-message.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -24,7 +23,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, FaIconComponent, ChatStatusBarComponent],
+    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
@@ -109,7 +108,7 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     requestSuggestion(): void {
         const post = this.post();
         if (post) {
-            this.tutorSuggestionSubscription = this.chatService.requestTutorSuggestion(post).subscribe();
+            this.tutorSuggestionSubscription = this.chatService.requestTutorSuggestion().subscribe();
         }
     }
 
