@@ -9,6 +9,10 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { LtiService } from 'app/shared/service/lti.service';
+import { forkJoin } from 'rxjs';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
     current: { entityData: [] },
@@ -44,9 +48,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private courseOverviewService = inject(CourseOverviewService);
+    private ltiService = inject(LtiService);
+    private lectureService = inject(LectureService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
+    private multiLaunchSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
+
     course?: Course;
     courseId: number;
 
@@ -56,6 +65,8 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sortedLectures: Lecture[] = [];
     sidebarLectures: SidebarCardElement[] = [];
     isCollapsed = false;
+    isMultiLaunch = false;
+    multiLaunchLectureIDs: number[] = [];
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
 
@@ -65,11 +76,21 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
             this.courseId = Number(params.courseId);
         });
 
+        this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
+            if (params['lectureIDs']) {
+                this.multiLaunchLectureIDs = params['lectureIDs'].split(',').map((id: string) => Number(id));
+            }
+        });
+
         this.course = this.courseStorageService.getCourse(this.courseId);
         this.prepareSidebarData();
         this.courseUpdatesSubscription = this.courseStorageService.subscribeToCourseUpdates(this.courseId).subscribe((course: Course) => {
             this.course = course;
             this.prepareSidebarData();
+        });
+
+        this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
+            this.isMultiLaunch = isMultiLaunch;
         });
 
         // If no lecture is selected navigate to the lastSelected or upcoming lecture
@@ -90,10 +111,28 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        if (!this.course?.lectures) {
-            return;
+        const lectures: Lecture[] = [];
+
+        if (this.multiLaunchLectureIDs?.length > 0) {
+            const exerciseObservables = this.multiLaunchLectureIDs.map((lectureId) => this.lectureService.find(lectureId));
+
+            forkJoin(exerciseObservables).subscribe((exerciseResponses) => {
+                exerciseResponses.forEach((response) => {
+                    lectures.push(response.body!);
+                });
+
+                this.processLectures(lectures);
+            });
+        } else {
+            if (!this.course?.lectures) {
+                return;
+            }
+            this.processLectures(this.course.lectures);
         }
-        this.sortedLectures = this.courseOverviewService.sortLectures(this.course.lectures);
+    }
+
+    processLectures(lectures: Lecture[]) {
+        this.sortedLectures = this.courseOverviewService.sortLectures(lectures);
         this.sidebarLectures = this.courseOverviewService.mapLecturesToSidebarCardElements(this.sortedLectures);
         this.accordionLectureGroups = this.courseOverviewService.groupLecturesByStartDate(this.sortedLectures);
         this.updateSidebarData();
@@ -127,5 +166,7 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
+        this.multiLaunchSubscription?.unsubscribe();
+        this.queryParamsSubscription?.unsubscribe();
     }
 }

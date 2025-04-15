@@ -78,6 +78,7 @@ public class LtiDeepLinkingService {
             case EXERCISE -> populateExerciseContentItems(String.valueOf(courseId), unitIds);
             case GROUPED_EXERCISE -> List.of(populateGroupedExerciseContentItem(String.valueOf(courseId), unitIds));
             case LECTURE -> populateLectureContentItems(String.valueOf(courseId), unitIds);
+            case GROUPED_LECTURE -> List.of(populateGroupedLectureContentItems(String.valueOf(courseId), unitIds));
             case COMPETENCY -> populateCompetencyContentItems(String.valueOf(courseId));
             case IRIS -> populateIrisContentItems(String.valueOf(courseId));
             case LEARNING_PATH -> populateLearningPathsContentItems(String.valueOf(courseId));
@@ -117,6 +118,9 @@ public class LtiDeepLinkingService {
         return exerciseIds.stream().map(exerciseId -> setExerciseContentItem(courseId, String.valueOf(exerciseId))).toList();
     }
 
+    /**
+     * Populate a content item for deep linking response with grouped exercises.
+     */
     private LtiContentItem populateGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
         validateUnitIds(exerciseIds, DeepLinkingType.GROUPED_EXERCISE);
         return setGroupedExerciseContentItem(courseId, exerciseIds);
@@ -128,6 +132,14 @@ public class LtiDeepLinkingService {
     private List<LtiContentItem> populateLectureContentItems(String courseId, Set<Long> lectureIds) {
         validateUnitIds(lectureIds, DeepLinkingType.LECTURE);
         return lectureIds.stream().map(lectureId -> setLectureContentItem(courseId, String.valueOf(lectureId))).toList();
+    }
+
+    /**
+     * Populate a content item for deep linking response with grouped lectures.
+     */
+    private LtiContentItem populateGroupedLectureContentItems(String courseId, Set<Long> lectureIds) {
+        validateUnitIds(lectureIds, DeepLinkingType.GROUPED_LECTURE);
+        return setGroupedLectureContentItem(courseId, lectureIds);
     }
 
     /**
@@ -179,6 +191,9 @@ public class LtiDeepLinkingService {
                 .orElseThrow(() -> new BadRequestAlertException("Exercise not found.", "LTI", "exerciseNotFound"));
     }
 
+    /**
+     * Set a content item for a grouped exercise.
+     */
     private LtiContentItem setGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
         List<Exercise> exercises = new ArrayList<>();
 
@@ -203,6 +218,23 @@ public class LtiDeepLinkingService {
     }
 
     /**
+     * Set a content item for a grouped lecture.
+     */
+    private LtiContentItem setGroupedLectureContentItem(String courseId, Set<Long> lectureIds) {
+        List<Lecture> lectures = new ArrayList<>();
+
+        for (Long lectureId : lectureIds) {
+            Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
+            lectureOpt.ifPresent(lectures::add);
+        }
+        if (lectures.isEmpty()) {
+            throw new BadRequestAlertException("No lectures found.", "LTI", "lecturesNotFound");
+        }
+        String launchUrl = buildContentUrl(courseId, "groupedLectures", lectures.stream().map(Lecture::getId).map(String::valueOf).collect(Collectors.joining(",")));
+        return createGroupedLectureContentItem(launchUrl);
+    }
+
+    /**
      * Create a content item for an exercise.
      */
     private LtiContentItem createExerciseContentItem(Exercise exercise, String url) {
@@ -210,6 +242,9 @@ public class LtiDeepLinkingService {
         return new LtiContentItem("ltiResourceLink", exercise.getTitle(), url, lineItem);
     }
 
+    /**
+     * Create a content item for grouped exercises.
+     */
     private LtiContentItem createGroupedExerciseContentItem(List<Exercise> exercises, String url) {
         LineItem lineItem = exercises.stream().anyMatch(exercise -> exercise.getIncludedInOverallScore() != IncludedInOverallScore.NOT_INCLUDED)
                 ? new LineItem(DEFAULT_SCORE_MAXIMUM)
@@ -222,6 +257,13 @@ public class LtiDeepLinkingService {
      */
     private LtiContentItem createLectureContentItem(Lecture lecture, String url) {
         return new LtiContentItem("ltiResourceLink", lecture.getTitle(), url, null);
+    }
+
+    /**
+     * Create a content item for grouped lectures.
+     */
+    private LtiContentItem createGroupedLectureContentItem(String url) {
+        return new LtiContentItem("ltiResourceLink", "Grouped Lectures", url, null);
     }
 
     /**
@@ -254,6 +296,16 @@ public class LtiDeepLinkingService {
 
             // Include all exercise IDs in the query parameter for sidebar content
             UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("exerciseIDs", resourceId);
+
+            return uriBuilder.toUriString();
+        }
+        else if ("groupedLectures".equals(resourceType)) {
+            List<Long> lectureIds = Arrays.stream(resourceId.split(",")).map(String::trim).map(Long::valueOf).toList();
+
+            Long smallestLectureId = lectureIds.stream().min(Long::compareTo).orElseThrow(() -> new BadRequestAlertException("No lecture IDs provided", "LTI", "noLectureIds"));
+
+            String baseUrl = String.format("%s/courses/%s/lectures/%d", artemisServerUrl, courseId, smallestLectureId);
+            UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(baseUrl).queryParam("isMultiLaunch", true).queryParam("lectureIDs", resourceId);
 
             return uriBuilder.toUriString();
         }

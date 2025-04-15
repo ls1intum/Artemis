@@ -23,6 +23,10 @@
                     "groupedExercises": {
                         "header": "Gruppierung von Übungen aktivieren:",
                         "selector": "Beim Auswählen mehrerer Übungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Übungsansicht angezeigt."
+                    },
+                    "groupedLectures": {
+                        "header": "Gruppierung von Vorlesungen aktivieren:",
+                        "selector": "Beim Auswählen mehrerer Vorlesungen in der Tabelle werden diese gruppiert und in der Artemis-Seitenleiste in der Vorlesungsansicht angezeigt."
                     }
                 }
             },
