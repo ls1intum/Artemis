@@ -736,7 +736,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         result.setSubmission(submission);
         programmingSubmissionRepo.save(submission);
-        result = resultRepo.save(result);
+        resultRepo.save(result);
         studentParticipationRepo.save(participation);
         return result;
     }

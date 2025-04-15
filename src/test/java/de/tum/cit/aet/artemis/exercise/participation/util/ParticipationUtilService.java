@@ -487,7 +487,8 @@ public class ParticipationUtilService {
         ));
 
         result.addFeedbacks(feedbacks);
-        return resultRepo.save(result);
+        resultRepo.save(result);
+        return result;
     }
     // @formatter:on
 

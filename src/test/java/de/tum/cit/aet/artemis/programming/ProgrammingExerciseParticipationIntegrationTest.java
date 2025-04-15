@@ -345,8 +345,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsDuringExam() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(1, TEST_PREFIX + "student1");
+        Submission submission = result.getSubmission();
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
+        submissionRepository.save(submission);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
@@ -367,8 +369,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetParticipationAllResults_showsResultsAfterExamResultsPublished() throws Exception {
         var result = setupExamExerciseWithParticipationAndResult(10, TEST_PREFIX + "student1");
+        Submission submission = result.getSubmission();
         StudentParticipation participation = (StudentParticipation) result.getSubmission().getParticipation();
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), result.getSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(1), submission);
+        submissionRepository.save(submission);
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-all-results", HttpStatus.OK,
                 ProgrammingExerciseStudentParticipation.class);
         assertThat(requestedParticipation.getResults()).hasSize(2);
