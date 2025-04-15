@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import {
@@ -132,10 +132,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             this.handleCourseIdChange(id);
             this.checkIfSettingsPage();
         });
-        this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.checkIfSettingsPage();
-            this.determineStudentViewLink();
-        });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
             this.learningPathsActive.set(isActive);
@@ -149,10 +145,15 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
+    protected handleNavigationEndActions(): void {
+        this.checkIfSettingsPage();
+        this.determineStudentViewLink();
+    }
+
     private checkIfSettingsPage() {
         const currentUrl = this.router.url;
-        const isDetailsPage = currentUrl.endsWith(`/course-management/${this.courseId()}/settings`);
-        this.isSettingsPage.set(isDetailsPage);
+        const isSettingsPage = currentUrl.endsWith(`/course-management/${this.courseId()}/settings`);
+        this.isSettingsPage.set(isSettingsPage);
     }
 
     handleCourseIdChange(courseId: number): void {
@@ -160,6 +161,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
     }
+
     determineStudentViewLink() {
         const courseIdString = this.courseId().toString();
         const routerUrl = this.router.url;
@@ -292,13 +294,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addLtiItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.ltiEnabled() && currentCourse.onlineCourse) {
+        if (this.ltiEnabled && currentCourse.onlineCourse) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }
     }
 
     private addBuildQueueItem(sidebarItems: SidebarItem[]) {
-        if (this.localCIActive()) {
+        if (this.localCIActive) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
     }
@@ -319,7 +321,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getAtlasItems() {
         const atlasItems: SidebarItem[] = [];
-        if (this.atlasEnabled()) {
+        if (this.atlasEnabled) {
             atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
             if (this.learningPathsActive()) {
                 atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
@@ -346,7 +348,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getIrisSettingsItem() {
         const irisItems: SidebarItem[] = [];
-        if (this.irisEnabled()) {
+        if (this.irisEnabled) {
             irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
         return irisItems;

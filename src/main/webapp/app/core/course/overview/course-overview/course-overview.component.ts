@@ -70,6 +70,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
+    manageViewLink = signal<string[]>(['']);
 
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -111,6 +112,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.sidebarItems.set(this.getSidebarItems());
     }
 
+    protected handleNavigationEndActions() {
+        this.determineManageViewLink();
+    }
+
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
     }
@@ -118,6 +123,30 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
+    }
+
+    determineManageViewLink() {
+        const courseIdString = this.courseId().toString();
+        const routerUrl = this.router.url;
+        if (routerUrl.includes('exams')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'exams']);
+        } else if (routerUrl.includes('exercises')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'exercises']);
+        } else if (routerUrl.includes('lectures')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'lectures']);
+        } else if (routerUrl.includes('communication')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'communication']);
+        } else if (routerUrl.includes('learning-path')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'learning-paths-management']);
+        } else if (routerUrl.includes('competencies')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'competency-management']);
+        } else if (routerUrl.includes('faq')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'faqs']);
+        } else if (routerUrl.includes('tutorial-groups')) {
+            this.manageViewLink.set(['/course-management', courseIdString, 'tutorial-groups-checklist']);
+        } else {
+            this.manageViewLink.set(['/course-management', courseIdString]);
+        }
     }
 
     /**
@@ -225,7 +254,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.atlasEnabled() && this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem = this.sidebarItemService.getCompetenciesItem();
             sidebarItems.push(competenciesItem);
 
