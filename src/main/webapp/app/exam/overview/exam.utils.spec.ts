@@ -1,6 +1,6 @@
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { MockArtemisServerDateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-server-date.service';
+import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import dayjs from 'dayjs/esm';

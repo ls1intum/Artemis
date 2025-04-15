@@ -7,12 +7,12 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Rating } from 'app/assessment/shared/entities/rating.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingListComponent', () => {

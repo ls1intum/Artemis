@@ -19,7 +19,6 @@ import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercise/
 import { AccountService } from 'app/core/auth/account.service';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { AUTOSAVE_CHECK_INTERVAL, AUTOSAVE_EXERCISE_INTERVAL, AUTOSAVE_TEAM_EXERCISE_INTERVAL } from 'app/shared/constants/exercise-exam-constants';
@@ -53,7 +52,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { captureException } from '@sentry/angular';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
-import { modelingTour } from 'app/core/guided-tour/tours/modeling-tour';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 @Component({
@@ -91,7 +89,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     private alertService = inject(AlertService);
     private route = inject(ActivatedRoute);
     private participationWebsocketService = inject(ParticipationWebsocketService);
-    private guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
     private translateService = inject(TranslateService);
 
@@ -379,7 +376,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             }
         }
         this.isLoading = false;
-        this.guidedTourService.enableTourForExercise(this.modelingExercise, modelingTour, true);
     }
 
     private updateModelAndExplanation(): void {

@@ -3,12 +3,12 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { generateExampleChannelDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
+import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 

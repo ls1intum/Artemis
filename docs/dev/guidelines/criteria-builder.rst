@@ -19,7 +19,6 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
             public static volatile SingularAttribute<User, Instant> resetDate;
             public static volatile SingularAttribute<User, ZonedDateTime> hideNotificationsUntil;
             public static volatile SetAttribute<User, String> groups;
-            public static volatile SetAttribute<User, GuidedTourSetting> guidedTourSettings;
             public static volatile SingularAttribute<User, String> login;
             public static volatile SingularAttribute<User, String> activationKey;
             public static volatile SingularAttribute<User, String> resetKey;

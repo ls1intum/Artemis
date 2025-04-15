@@ -9,8 +9,8 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingAssessmentRepoExportService } from 'app/programming/manage/assess/repo-export/programming-assessment-repo-export.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockSyncStorage } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -59,8 +59,8 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 console.error = () => false;
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportDialogComponent);
                 comp = fixture.componentInstance;
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                repoExportService = fixture.debugElement.injector.get(ProgrammingAssessmentRepoExportService);
+                exerciseService = TestBed.inject(ExerciseService);
+                repoExportService = TestBed.inject(ProgrammingAssessmentRepoExportService);
 
                 // stubs
                 jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));

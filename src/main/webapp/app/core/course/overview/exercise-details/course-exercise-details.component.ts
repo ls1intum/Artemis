@@ -7,8 +7,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { programmingExerciseFail, programmingExerciseSuccess } from 'app/core/guided-tour/tours/course-exercise-detail-tour';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -103,7 +101,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private participationService = inject(ParticipationService);
     private route = inject(ActivatedRoute);
     private profileService = inject(ProfileService);
-    private guidedTourService = inject(GuidedTourService);
     private alertService = inject(AlertService);
     private teamService = inject(TeamService);
     private quizExerciseService = inject(QuizExerciseService);
@@ -150,7 +147,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     plagiarismCaseInfo?: PlagiarismCaseInfo;
     irisSettings?: IrisSettings;
     paramsSubscription: Subscription;
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     instructorActionItems: InstructorActionItem[] = [];
@@ -196,10 +192,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             });
         }
 
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     loadExercise() {
@@ -231,11 +225,9 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.submissionPolicy = programmingExercise.submissionPolicy;
 
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo?.activeProfiles?.includes(PROFILE_IRIS)) {
-                    this.irisSettings = newExerciseDetails.irisSettings;
-                }
-            });
+            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
+                this.irisSettings = newExerciseDetails.irisSettings;
+            }
         }
 
         this.showIfExampleSolutionPresent(newExerciseDetails.exercise);
@@ -308,13 +300,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.studentParticipations.forEach((participation) => {
                 this.participationWebsocketService.addParticipation(participation, this.exercise);
             });
-            if (this.latestRatedResult) {
-                if (this.latestRatedResult.successful) {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseSuccess, true);
-                } else {
-                    this.guidedTourService.enableTourForExercise(this.exercise, programmingExerciseFail, true);
-                }
-            }
         }
 
         this.participationUpdateListener?.unsubscribe();
@@ -559,6 +544,5 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.teamAssignmentUpdateListener?.unsubscribe();
         this.submissionSubscription?.unsubscribe();
         this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 }

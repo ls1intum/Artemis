@@ -12,7 +12,7 @@ import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseU
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureUnitService', () => {

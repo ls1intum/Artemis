@@ -25,10 +25,8 @@ import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -42,22 +40,18 @@ public class AttachmentUnitService {
 
     private final SlideSplitterService slideSplitterService;
 
-    private final SlideRepository slideRepository;
-
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
     private final LectureUnitService lectureUnitService;
 
-    public AttachmentUnitService(SlideRepository slideRepository, SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository,
-            AttachmentRepository attachmentRepository, FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            LectureUnitService lectureUnitService) {
+    public AttachmentUnitService(SlideSplitterService slideSplitterService, AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository,
+            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
         this.slideSplitterService = slideSplitterService;
-        this.slideRepository = slideRepository;
         this.irisLectureApi = irisLectureApi;
         this.competencyProgressApi = competencyProgressApi;
         this.lectureUnitService = lectureUnitService;
@@ -102,10 +96,12 @@ public class AttachmentUnitService {
      * @param updateAttachment       The new attachment data.
      * @param updateFile             The optional file.
      * @param keepFilename           Whether to keep the original filename or not.
+     * @param hiddenPages            The hidden pages of attachment unit.
+     * @param pageOrder              The new order of the edited attachment unit
      * @return The updated attachment unit.
      */
     public AttachmentUnit updateAttachmentUnit(AttachmentUnit existingAttachmentUnit, AttachmentUnit updateUnit, Attachment updateAttachment, MultipartFile updateFile,
-            boolean keepFilename) {
+            boolean keepFilename, String hiddenPages, String pageOrder) {
         Set<CompetencyLectureUnitLink> existingCompetencyLinks = new HashSet<>(existingAttachmentUnit.getCompetencyLinks());
 
         existingAttachmentUnit.setDescription(updateUnit.getDescription());
@@ -120,7 +116,7 @@ public class AttachmentUnitService {
             throw new BadRequestAlertException("Attachment unit must be associated to an attachment", "AttachmentUnit", "attachmentMissing");
         }
 
-        updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
+        updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit, hiddenPages);
         handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentUnit.getId());
         final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
         existingAttachment.setVersion(revision);
@@ -130,16 +126,14 @@ public class AttachmentUnitService {
         evictCache(updateFile, savedAttachmentUnit);
 
         if (updateFile != null) {
-            if (existingAttachmentUnit.getSlides() != null && !existingAttachmentUnit.getSlides().isEmpty()) {
-                List<Slide> slides = existingAttachmentUnit.getSlides();
-                for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-                }
-                slideRepository.deleteAll(existingAttachmentUnit.getSlides());
-            }
             // Split the updated file into single slides only if it is a pdf
             if (Objects.equals(FilenameUtils.getExtension(updateFile.getOriginalFilename()), "pdf")) {
-                slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                if (pageOrder == null) {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit);
+                }
+                else {
+                    slideSplitterService.splitAttachmentUnitIntoSingleSlides(savedAttachmentUnit, hiddenPages, pageOrder);
+                }
             }
             irisLectureApi.ifPresent(api -> api.autoUpdateAttachmentUnitsInPyris(savedAttachmentUnit.getLecture().getCourse().getId(), List.of(savedAttachmentUnit)));
         }
@@ -157,14 +151,18 @@ public class AttachmentUnitService {
      * @param existingAttachment the existing attachment
      * @param updateAttachment   the new attachment containing updated information
      * @param attachmentUnit     the attachment unit to update
+     * @param hiddenPages        the hidden pages in the attachment
      */
-    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit) {
+    private void updateAttachment(Attachment existingAttachment, Attachment updateAttachment, AttachmentUnit attachmentUnit, String hiddenPages) {
         // Make sure that the original references are preserved.
         existingAttachment.setAttachmentUnit(attachmentUnit);
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setName(updateAttachment.getName());
         existingAttachment.setReleaseDate(updateAttachment.getReleaseDate());
         existingAttachment.setAttachmentType(updateAttachment.getAttachmentType());
+        if (hiddenPages == null && existingAttachment.getStudentVersion() != null) {
+            existingAttachment.setStudentVersion(null);
+        }
     }
 
     /**
@@ -180,6 +178,31 @@ public class AttachmentUnitService {
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
             attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
+        }
+    }
+
+    /**
+     * Handles the student version file of an attachment, updates its reference in the database,
+     * and deletes the old version if it exists.
+     *
+     * @param studentVersionFile the new student version file to be saved
+     * @param attachment         the existing attachment
+     * @param attachmentUnitId   the id of the attachment unit
+     */
+    public void handleStudentVersionFile(MultipartFile studentVersionFile, Attachment attachment, Long attachmentUnitId) {
+        if (studentVersionFile != null) {
+            // Delete the old student version
+            if (attachment.getStudentVersion() != null) {
+                URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
+                this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+            }
+
+            // Update student version of attachment
+            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
+            attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+            attachmentRepository.save(attachment);
         }
     }
 

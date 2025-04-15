@@ -169,11 +169,8 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
-    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMUsageAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "externalLLMUsageAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
     Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
@@ -927,18 +924,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
         String currentUserLogin = getCurrentUserLogin();
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
-    }
-
-    /**
-     * Get user with user groups, authorities and guided tour settings of currently logged-in user
-     * Note: this method should only be invoked if the guided tour settings are really needed
-     *
-     * @return currently logged-in user
-     */
-    @NotNull
-    default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
     }
 
     private String getCurrentUserLogin() {

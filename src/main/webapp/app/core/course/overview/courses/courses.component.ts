@@ -2,8 +2,6 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/core/course/shared/entities/courses-for-dashboard-dto';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { courseOverviewTour } from 'app/core/guided-tour/tours/course-overview-tour';
 import { TeamService } from 'app/exercise/team/team.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
@@ -41,7 +39,6 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
 })
 export class CoursesComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
-    private guidedTourService = inject(GuidedTourService);
     private teamService = inject(TeamService);
     private websocketService = inject(WebsocketService);
     private router = inject(Router);
@@ -60,7 +57,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     public recentlyAccessedCourses: Course[] = [];
     public regularCourses: Course[] = [];
 
-    courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
     searchCourseText = '';
 
@@ -96,7 +92,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
                         courses.push(courseDto.course);
                     });
                     this.courses = sortCourses(courses);
-                    this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, courseOverviewTour, true);
 
                     this.nextRelevantExams = res.body.activeExams ?? [];
                     this.sortCoursesInRecentlyAccessedAndRegularCourses();

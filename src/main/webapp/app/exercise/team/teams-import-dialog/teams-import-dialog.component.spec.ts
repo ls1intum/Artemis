@@ -10,16 +10,8 @@ import { TeamsImportDialogComponent } from 'app/exercise/team/teams-import-dialo
 import { flatMap } from 'lodash-es';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import {
-    mockExercise,
-    mockSourceExercise,
-    mockSourceTeamStudents,
-    mockSourceTeams,
-    mockTeam,
-    mockTeamStudents,
-    mockTeams,
-} from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-team.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { mockExercise, mockSourceExercise, mockSourceTeamStudents, mockSourceTeams, mockTeam, mockTeamStudents, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('TeamsImportDialogComponent', () => {

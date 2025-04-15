@@ -3,16 +3,16 @@ import { TutorEffortStatisticsComponent } from 'app/text/manage/tutor-effort/tut
 import { TutorEffort } from 'app/assessment/shared/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/text/manage/text-exercise/service/text-exercise.service';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TutorEffortStatisticsComponent', () => {
     let fixture: ComponentFixture<TutorEffortStatisticsComponent>;
@@ -64,8 +64,8 @@ describe('TutorEffortStatisticsComponent', () => {
                 component = fixture.componentInstance;
                 compiled = fixture.debugElement.nativeElement;
                 fixture.detectChanges();
-                textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
-                textAssessmentService = fixture.debugElement.injector.get(TextAssessmentService);
+                textExerciseService = TestBed.inject(TextExerciseService);
+                textAssessmentService = TestBed.inject(TextAssessmentService);
                 getNumberOfTutorsInvolvedInAssessmentStub = jest.spyOn(textAssessmentService, 'getNumberOfTutorsInvolvedInAssessment');
                 calculateTutorEffortStub = jest.spyOn(textExerciseService, 'calculateTutorEffort');
                 router = TestBed.inject(Router);

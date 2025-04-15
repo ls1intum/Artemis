@@ -6,7 +6,7 @@ import { ExamParticipationService } from 'app/exam/overview/services/exam-partic
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ExamParticipationLiveEventsService', () => {
