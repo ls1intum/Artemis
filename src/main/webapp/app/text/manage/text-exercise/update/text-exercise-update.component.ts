@@ -128,7 +128,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     bonusPointsSubscription?: Subscription;
     plagiarismSubscription?: Subscription;
     teamSubscription?: Subscription;
-    profileSubscription?: Subscription;
 
     get editType(): EditType {
         if (this.isImport) {
@@ -221,7 +220,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.plagiarismSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
+        this.teamSubscription?.unsubscribe();
     }
 
     calculateFormSectionStatus() {
