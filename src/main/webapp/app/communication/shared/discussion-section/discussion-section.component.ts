@@ -281,7 +281,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         this.currentPostContextFilter = {
             courseId: undefined,
             conversationIds: this.channel?.id ? [this.channel?.id] : undefined,
-            authorIds: this.formGroup.get('filterToOwn')?.value ? [this.currentUser?.id!] : undefined,
+            authorIds: this.formGroup.get('filterToOwn')?.value && this.currentUser?.id ? [this.currentUser.id] : undefined,
             searchText: this.searchText?.trim(),
             filterToUnresolved: this.formGroup.get('filterToUnresolved')?.value,
             filterToAnsweredOrReacted: this.formGroup.get('filterToAnsweredOrReacted')?.value,
