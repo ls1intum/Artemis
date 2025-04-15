@@ -147,7 +147,7 @@ public class ProgrammingTriggerService {
         // Also, if the programming exercise has no results yet, there is no point in setting test cases changed to *true*.
         // It is only relevant when there are student submissions that should get an updated result.
 
-        boolean resultsExist = resultRepository.existsBySubmissionParticipationExercise_Id(programmingExercise.getId());
+        boolean resultsExist = resultRepository.existsBySubmission_Participation_Exercise_Id(programmingExercise.getId());
 
         if (testCasesChanged == programmingExercise.getTestCasesChanged() || (!resultsExist && testCasesChanged)) {
             return;
