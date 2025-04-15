@@ -207,7 +207,9 @@
         </div>
         @if (!isExamMode) {
             <jhi-exercise-feedback-suggestion-options [exercise]="textExercise" [dueDate]="textExercise.dueDate" />
-            <jhi-exercise-update-plagiarism [exercise]="textExercise" />
+            <jhi-feature-overlay [enabled]="isPlagiarismEnabled" placement="right">
+                <jhi-exercise-update-plagiarism [exercise]="textExercise" />
+            </jhi-feature-overlay>
         }
         <jhi-presentation-score-checkbox [exercise]="textExercise" />
         <div class="form-group">
