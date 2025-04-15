@@ -630,8 +630,8 @@ As soon as the announcement is created, all participants who did not actively re
 .. |applied-pinned filter| image:: communication/applied-pinned-filter.png
     :width: 1000
 .. |as-message-checkbox| image:: communication/as-message-checkbox.png
-    :width: 800
+    :width: 700
 .. |reply-as-post| image:: communication/reply-as-post.png
-    :width: 800
+    :width: 900
 .. |save-messages| image:: communication/save-messages.png
-    :width: 800
+    :width: 1000
