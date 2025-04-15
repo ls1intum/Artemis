@@ -62,6 +62,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
+import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 
 @Component({
@@ -84,6 +85,7 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
         LoadingNotificationComponent,
         NgTemplateOutlet,
         NgbCollapse,
+        SystemNotificationComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
