@@ -1,6 +1,6 @@
 @if (!isCourseSpecificNotificationsEnabled) {
     <div class="pointer">
-        <button class="guided-tour-notification notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
+        <button class="notification-button light-button" (click)="toggleSidebar(); updateLastNotificationRead()">
             <fa-icon [icon]="faBell" />
             @if (recentNotificationCount > 0) {
                 <span class="badge bg-danger rounded-pill">

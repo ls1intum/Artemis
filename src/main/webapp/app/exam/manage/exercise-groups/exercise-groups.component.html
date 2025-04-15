@@ -76,18 +76,20 @@
                             </div>
                         }
                         @if (course?.isAtLeastEditor) {
-                            <div class="btn-group-vertical me-1 mb-1">
-                                <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.createLabel"></span>
-                                    <fa-icon [icon]="faFont" />
-                                </a>
-                                <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
-                                    <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.importLabel"></span>
-                                    <fa-icon [icon]="faFont" />
-                                </a>
-                            </div>
+                            <jhi-feature-overlay [enabled]="textExerciseEnabled">
+                                <div class="btn-group-vertical me-1 mb-1">
+                                    <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
+                                        <fa-icon [icon]="faPlus" />
+                                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.createLabel"></span>
+                                        <fa-icon [icon]="faFont" />
+                                    </a>
+                                    <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
+                                        <fa-icon [icon]="faFileImport" />
+                                        <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.importLabel"></span>
+                                        <fa-icon [icon]="faFont" />
+                                    </a>
+                                </div>
+                            </jhi-feature-overlay>
                         }
                         @if (course?.isAtLeastEditor) {
                             <div class="btn-group-vertical me-1 mb-1">
@@ -132,11 +134,7 @@
                                         <button
                                             jhiDeleteButton
                                             [entityTitle]="exerciseGroup.title || ''"
-                                            deleteQuestion="{{
-                                                localVCEnabled
-                                                    ? 'artemisApp.examManagement.exerciseGroup.delete.questionLocalVC'
-                                                    : 'artemisApp.examManagement.exerciseGroup.delete.question'
-                                            }}"
+                                            deleteQuestion="artemisApp.examManagement.exerciseGroup.delete.questionLocalVC"
                                             deleteConfirmationText="artemisApp.examManagement.exerciseGroup.delete.typeNameToConfirm"
                                             [additionalChecks]="
                                                 localCIEnabled
@@ -312,7 +310,7 @@
                                         </td>
                                         <td class="align-middle">
                                             @if (exercise.type === exerciseType.PROGRAMMING) {
-                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorModus]="true" />
+                                                <jhi-programming-exercise-group-cell [exercise]="exercise" [displayEditorMode]="true" />
                                             }
                                         </td>
                                     }
@@ -346,7 +344,12 @@
                                         </td>
                                     }
                                     <td class="align-middle">
-                                        @if (exercise.id && exerciseGroup.id) {
+                                        @if (isExerciseTypeDisabled(exercise.type!)) {
+                                            <div class="d-flex justify-content-end align-items-center gap-2">
+                                                <span jhiTranslate="artemisApp.exercise.errors.deactivatedExerciseType.label"></span>
+                                                <jhi-help-icon text="artemisApp.exercise.errors.deactivatedExerciseType.tooltip" />
+                                            </div>
+                                        } @else if (exercise.id && exerciseGroup.id) {
                                             <jhi-exam-exercise-row-buttons
                                                 class="d-flex justify-content-end"
                                                 [course]="course"

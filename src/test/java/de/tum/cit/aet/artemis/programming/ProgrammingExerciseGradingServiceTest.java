@@ -23,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
@@ -35,6 +36,8 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -83,6 +86,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     private final String student4 = TEST_PREFIX + "student4";
 
     private final String student5 = TEST_PREFIX + "student5";
+
+    @Autowired
+    FeatureToggleService featureToggleService;
 
     @BeforeEach
     void setUp() {
@@ -204,6 +210,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldAddFeedbackForDuplicateTestCases() {
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
         // Adjust existing test cases to our need
         var testCases = getTestCases(programmingExercise);
         testCases.get("test1").active(true).visibility(Visibility.ALWAYS);

@@ -11,13 +11,13 @@ import { ProgrammingExerciseDifficultyComponent } from '../difficulty/programmin
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-mode',
     templateUrl: './programming-exercise-mode.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         ProgrammingExerciseDifficultyComponent,
@@ -46,8 +46,6 @@ export class ProgrammingExerciseModeComponent implements OnInit {
     theiaEnabled = false;
 
     ngOnInit(): void {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.theiaEnabled = profileInfo.activeProfiles?.includes(PROFILE_THEIA);
-        });
+        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
     }
 }

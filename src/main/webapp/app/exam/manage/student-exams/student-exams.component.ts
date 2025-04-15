@@ -7,13 +7,13 @@ import { TestExamWorkingTimeComponent } from 'app/exam/overview/testExam-working
 import { Subscription } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -21,8 +21,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamStatusComponent } from './student-exam-status/student-exam-status.component';
@@ -67,7 +65,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private artemisTranslatePipe = inject(ArtemisTranslatePipe);
     private websocketService = inject(WebsocketService);
-    private profileService = inject(ProfileService);
 
     courseId: number;
     examId: number;
@@ -85,7 +82,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
     isExamOver = false;
     longestWorkingTime?: number;
     isAdmin = false;
-    localVCEnabled = true;
 
     exercisePreparationStatus?: ExamExerciseStartPreparationStatus;
     exercisePreparationRunning = false;
@@ -103,10 +99,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
-
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
 
         const channel = getWebsocketChannel(this.examId);
         this.websocketService.subscribe(channel);

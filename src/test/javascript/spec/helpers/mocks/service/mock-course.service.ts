@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 

@@ -138,16 +138,6 @@ public class UserSshPublicKeyService {
     }
 
     /**
-     * Returns whether the user of the specified id has stored SSH keys
-     *
-     * @param userId the ID of the user.
-     * @return true if the user has SSH keys, false if not
-     */
-    public boolean hasUserSSHkeys(Long userId) {
-        return userSshPublicKeyRepository.existsByUserId(userId);
-    }
-
-    /**
      * Deletes all the ssh keys of a user
      *
      * @param userId the ID of the user.

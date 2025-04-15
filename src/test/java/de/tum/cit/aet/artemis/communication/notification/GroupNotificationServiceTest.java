@@ -36,6 +36,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -48,11 +49,13 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.UserCourseNotificationStatus;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
@@ -110,6 +113,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
 
+    @Autowired
+    private UserCourseNotificationStatusTestRepository userCourseNotificationStatusTestRepository;
+
     private Exercise exercise;
 
     private Exercise updatedExercise;
@@ -124,13 +130,9 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     private static final String LECTURE_TITLE = "lecture title";
 
-    private Post post;
-
     private static final String POST_TITLE = "post title";
 
     private static final String POST_CONTENT = "post content";
-
-    private AnswerPost answerPost;
 
     private static final String ANSWER_POST_CONTENT = "answer post content";
 
@@ -227,13 +229,13 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
         channel.setId(123L);
         channel.setName("test");
 
-        post = new Post();
+        Post post = new Post();
         post.setConversation(channel);
         post.setAuthor(instructor);
         post.setTitle(POST_TITLE);
         post.setContent(POST_CONTENT);
 
-        answerPost = new AnswerPost();
+        AnswerPost answerPost = new AnswerPost();
         answerPost.setPost(post);
         answerPost.setAuthor(instructor);
         answerPost.setContent(ANSWER_POST_CONTENT);
@@ -279,7 +281,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
                         .hasSize(numberOfGroupsAndCalls + notificationCountBeforeTest));
 
         List<Notification> capturedNotifications = notificationTestRepository.findAll();
-        Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
+        Notification lastCapturedNotification = capturedNotifications.getLast();
         assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
 
         return index <= 0 ? lastCapturedNotification : capturedNotifications.get(capturedNotifications.size() - 1 - index);
@@ -723,6 +725,93 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
                     .anyMatch(notification -> notification.getType() == 11);
 
             assertThat(hasNewFeedbackRequestNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateDuplicateTestCaseNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        exercise.setReleaseDate(FUTURE_TIME);
+        exercise.setDueDate(FUTURISTIC_TIME);
+        exerciseRepository.save(exercise);
+
+        groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(exercise, NOTIFICATION_TEXT);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasDuplicateTestCaseNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 12);
+
+            assertThat(hasDuplicateTestCaseNotification).isTrue();
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateProgrammingTestCasesChangedNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        programmingExercise.setCourse(course);
+
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasProgrammingTestCasesChangedNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 16);
+
+            assertThat(hasProgrammingTestCasesChangedNotification).isTrue();
+
+            Optional<CourseNotification> programmingTestCasesChangedNotification = notifications.stream().filter(notification -> notification.getType() == 16).findFirst();
+
+            assertThat(programmingTestCasesChangedNotification).isPresent();
+
+            List<UserCourseNotificationStatus> statuses = userCourseNotificationStatusTestRepository
+                    .findAllByCourseNotificationId(programmingTestCasesChangedNotification.get().getId());
+
+            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).toList();
+
+            assertThat(recipientIds).contains(instructor.getId());
+            assertThat(recipientIds).doesNotContain(student.getId());
+        });
+
+        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    }
+
+    @Test
+    void shouldCreateProgrammingBuildRunUpdateNotificationWhenCourseSpecificNotificationsEnabled() {
+        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
+
+        programmingExercise.setCourse(course);
+        String notificationText = "Build run status has been updated";
+
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, notificationText);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasProgrammingBuildRunUpdateNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(course.getId()))
+                    .anyMatch(notification -> notification.getType() == 15);
+
+            assertThat(hasProgrammingBuildRunUpdateNotification).isTrue();
+
+            Optional<CourseNotification> programmingBuildRunUpdateNotification = notifications.stream().filter(notification -> notification.getType() == 15).findFirst();
+
+            assertThat(programmingBuildRunUpdateNotification).isPresent();
+
+            List<UserCourseNotificationStatus> statuses = userCourseNotificationStatusTestRepository
+                    .findAllByCourseNotificationId(programmingBuildRunUpdateNotification.get().getId());
+
+            List<Long> recipientIds = statuses.stream().map(status -> status.getUser().getId()).toList();
+
+            assertThat(recipientIds).contains(instructor.getId());
+            assertThat(recipientIds).doesNotContain(student.getId());
         });
 
         featureToggleService.disableFeature(Feature.CourseSpecificNotifications);

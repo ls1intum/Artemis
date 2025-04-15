@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -95,9 +95,7 @@ public abstract class PostingService {
         }
         catch (Exception e) {
             post.setIsSaved(false);
-            post.getAnswers().forEach(answer -> {
-                answer.setIsSaved(false);
-            });
+            post.getAnswers().forEach(answer -> answer.setIsSaved(false));
         }
     }
 
@@ -108,7 +106,7 @@ public abstract class PostingService {
      * @param course            course the answer post belongs to
      * @param notification      notification for the update (can be null)
      */
-    protected void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
+    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -127,7 +125,7 @@ public abstract class PostingService {
      * @param recipients     the recipients for this broadcast, can be null
      * @param mentionedUsers the users mentioned in the message, can be null
      */
-    protected void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
+    public void broadcastForPost(PostDTO postDTO, Long courseId, Set<ConversationNotificationRecipientSummary> recipients, Set<User> mentionedUsers) {
         // reduce the payload of the websocket message: this is important to avoid overloading the involved subsystems
         Conversation postConversation = postDTO.post().getConversation();
         if (postConversation != null) {
@@ -197,7 +195,13 @@ public abstract class PostingService {
         return course;
     }
 
-    protected void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
+    /**
+     * Ensures that user is allowed to communicate or message in the given course
+     *
+     * @param user   that wants to communicate or message
+     * @param course the course in which the user wants to communicate or message
+     */
+    public void preCheckUserAndCourseForCommunicationOrMessaging(User user, Course course) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (course.getCourseInformationSharingConfiguration() == CourseInformationSharingConfiguration.DISABLED) {
@@ -217,7 +221,7 @@ public abstract class PostingService {
      * @param posts    the list of posts for which the author roles need to be set
      * @param courseId the ID of the course in which the posts exist
      */
-    protected void setAuthorRoleOfPostings(List<Post> posts, Long courseId) {
+    protected void setAuthorRoleOfPostings(Collection<Post> posts, Long courseId) {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         posts.forEach(post -> {
@@ -229,7 +233,7 @@ public abstract class PostingService {
         });
 
         // we only fetch the minimal data needed for the mapping to avoid performance issues
-        List<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
+        Set<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
         log.debug("userRepository.findUserRolesInCourse done for {} authors ", userRoles.size());
 
         Map<Long, UserRoleDTO> authorRoles = userRoles.stream().collect(Collectors.toMap(UserRoleDTO::userId, Function.identity()));
@@ -237,9 +241,7 @@ public abstract class PostingService {
         // sets respective author role to display user authority icon on posting headers
         posts.stream().filter(post -> post.getAuthor() != null).forEach(post -> {
             post.setAuthorRole(authorRoles.get(post.getAuthor().getId()).role());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role());
-            });
+            post.getAnswers().forEach(answerPost -> answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role()));
         });
     }
 
@@ -307,7 +309,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");

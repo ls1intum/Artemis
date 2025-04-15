@@ -38,12 +38,12 @@ public class DomainUserDetailsService implements UserDetailsService {
         User user;
         if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
             // It's an email, try to find the user based on the email
-            user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndIsInternal(lowercaseLoginOrEmail, true)
+            user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true)
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
         }
         else {
             // It's a login, try to find the user based on the login
-            user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(lowercaseLoginOrEmail, true)
+            user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true)
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
         }
 
