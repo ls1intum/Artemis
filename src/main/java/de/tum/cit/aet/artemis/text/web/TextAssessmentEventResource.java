@@ -51,7 +51,7 @@ public class TextAssessmentEventResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    @Value("${info.text-assessment-analytics-enabled}")
+    @Value("${info.textAssessmentAnalyticsEnabled}")
     private Optional<Boolean> textAssessmentAnalyticsEnabled;
 
     public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
@@ -64,7 +64,7 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * The text assessment analytics are enabled when the configuration info.text-assessment-analytics-enabled is set to true.
+     * The text assessment analytics are enabled when the configuration info.textAssessmentAnalyticsEnabled is set to true.
      * A non-existing entry or false mean that the text assessment analytics is not enabled
      *
      * @return whether the text assessment analytics are enabled or not

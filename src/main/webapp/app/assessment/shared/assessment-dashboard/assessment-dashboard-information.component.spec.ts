@@ -2,7 +2,7 @@ import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import {
     AssessmentDashboardInformationComponent,
     AssessmentDashboardInformationEntry,
@@ -77,7 +77,7 @@ describe('AssessmentDashboardInformationComponent', () => {
     });
 
     it('should handle language changes', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const setupGraphStub = jest.spyOn(component, 'setupGraph').mockImplementation();
         component.ngOnInit();
         translateService.use('de');

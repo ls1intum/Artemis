@@ -1,4 +1,4 @@
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Example Submission Component', () => {
     let component: ExampleSubmissionsComponent;
@@ -62,8 +62,8 @@ describe('Example Submission Component', () => {
                 fixture = TestBed.createComponent(ExampleSubmissionsComponent);
                 component = fixture.componentInstance;
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                modalService = TestBed.inject(NgbModal);
+                alertService = TestBed.inject(AlertService);
             });
     });
 

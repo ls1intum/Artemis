@@ -1,0 +1,91 @@
+@import '../course-base-container/course-variables';
+
+.btn-sidebar-collapse {
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: start;
+    background-color: transparent;
+    &:hover {
+        color: var(--primary);
+    }
+    &:focus {
+        border-color: transparent;
+    }
+    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse::after,
+.btn-sidebar-collapse::before {
+    content: '';
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    position: absolute;
+    transition: background-color $transition-color-length ease-in-out;
+}
+
+.btn-sidebar-collapse::after {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse::before {
+    opacity: 0;
+    z-index: -1;
+    background-color: var(--module-bg);
+    transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse:hover::after {
+    background-color: var(--sidebar-card-selected-bg);
+}
+
+.btn-sidebar-collapse:hover::before {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse:active::after {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse:active::before {
+    background-color: var(--sidebar-card-selected-bg);
+}
+
+.btn-sidebar-collapse.is-collapsed {
+    border-color: var(--bs-secondary);
+}
+
+.is-collapsed.btn-sidebar-collapse::before {
+    opacity: 1;
+}
+
+.btn-sidebar-collapse-chevron-start {
+    margin-right: -0.7rem;
+}
+
+.btn-sidebar-collapse-chevron {
+    transform: rotateZ(-180deg);
+    display: inline-block;
+    overflow: hidden;
+    margin-left: 0.3rem;
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
+}
+
+.is-collapsed .btn-sidebar-collapse-chevron {
+    transform: rotateZ(0deg);
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
+}
+
+@media (max-width: 768px) {
+    .is-communication-module .btn-sidebar-collapse-chevron {
+        transform: rotateZ(0deg);
+    }
+
+    .is-collapsed.is-communication-module .btn-sidebar-collapse-chevron {
+        transform: rotateZ(-180deg);
+    }
+}

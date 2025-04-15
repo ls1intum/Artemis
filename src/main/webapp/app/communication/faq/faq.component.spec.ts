@@ -4,9 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
 
@@ -14,13 +14,13 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FaqComponent } from 'app/communication/faq/faq.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
@@ -122,12 +122,9 @@ describe('FaqComponent', () => {
                 faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
                 sortService = TestBed.inject(SortService);
-
-                profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
-
-                profileService = faqComponentFixture.debugElement.injector.get(ProfileService);
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+                profileService = TestBed.inject(ProfileService);
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             });
     });
 
@@ -270,7 +267,7 @@ describe('FaqComponent', () => {
                 enabled: true,
             },
         } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
         expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(faqComponent.courseId);

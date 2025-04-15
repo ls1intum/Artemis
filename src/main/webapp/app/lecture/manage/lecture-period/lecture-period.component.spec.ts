@@ -4,7 +4,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ArtemisTranslatePipe } from '../../../shared/pipes/artemis-translate.pipe';
 import { LectureUpdatePeriodComponent } from 'app/lecture/manage/lecture-period/lecture-period.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('LectureWizardPeriodComponent', () => {

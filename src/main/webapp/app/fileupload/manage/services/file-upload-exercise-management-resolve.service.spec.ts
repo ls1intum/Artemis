@@ -2,9 +2,9 @@ import { FileUploadExerciseManagementResolve } from 'app/fileupload/manage/servi
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot } from '@angular/router';
 import { EntityResponseType, FileUploadExerciseService } from 'app/fileupload/manage/services/file-upload-exercise.service';
-import { MockFileUploadExerciseService, fileUploadExercise } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-exercise.service';
+import { MockFileUploadExerciseService, fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { MockProvider } from 'ng-mocks';
 import { Observable, of, take } from 'rxjs';

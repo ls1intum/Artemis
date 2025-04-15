@@ -7,9 +7,9 @@ import { AuditsComponent } from 'app/core/admin/audits/audits.component';
 import { AuditsService } from 'app/core/admin/audits/audits.service';
 import { Audit } from 'app/core/admin/audits/audit.model';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 
@@ -62,7 +62,7 @@ describe('AuditsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(AuditsComponent);
                 comp = fixture.componentInstance;
-                service = fixture.debugElement.injector.get(AuditsService);
+                service = TestBed.inject(AuditsService);
                 mockActivatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
                 mockActivatedRoute.setParameters({
                     sort: 'id,desc',

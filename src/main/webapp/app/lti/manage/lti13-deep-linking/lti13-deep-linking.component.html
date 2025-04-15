@@ -57,6 +57,11 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="checkbox-container">
+                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.header"></span>
+                        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedExercises.selector" />
+                        <input class="form-check-input" type="checkbox" (change)="activateExerciseGrouping()" [ngModel]="isExerciseGroupingActive" />
+                    </div>
                 </div>
             </div>
 

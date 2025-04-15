@@ -2,23 +2,23 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
-import { MockAnswerPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PostService } from 'app/communication/service/post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ReactionService } from 'app/communication/service/reaction.service';
-import { MockReactionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-reaction.service';
+import { MockReactionService } from 'test/helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { DisplayPriority, MetisPostAction, PageType, PostContextFilter, UserRole } from 'app/communication/metis.util';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -40,17 +40,17 @@ import {
     metisUser1,
     metisUser2,
     plagiarismPost,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { MockNotificationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
+import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
-import { MockForwardedMessageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-forwarded-message.service';
+import { MockForwardedMessageService } from 'test/helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
 import { NotificationService } from 'app/core/notification/shared/notification.service';
 
@@ -188,16 +188,17 @@ describe('Metis Service', () => {
             });
 
             const pinnedPostDTO: MetisPostDTO = {
-                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER } as Post,
-                action: MetisPostAction.UPDATE, // WebSocket'ten güncelleme mesajı geliyor gibi simüle ettik
+                post: { id: 42, displayPriority: DisplayPriority.PINNED, authorRole: UserRole.USER, conversation: { id: 22 } as Conversation } as Post,
+                action: MetisPostAction.UPDATE,
             };
 
-            // WebSocket mesajı işleme alındığında
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](pinnedPostDTO);
 
             tick();
 
-            // pinnedPosts$ güncellenmeli ve yeni post burada olmalı
             expect(pinnedPostsResult).toHaveLength(1);
             expect(pinnedPostsResult[0].id).toBe(42);
             expect(pinnedPostsResult[0].displayPriority).toBe(DisplayPriority.PINNED);
@@ -215,10 +216,13 @@ describe('Metis Service', () => {
             });
 
             const unpinnedPostDTO: MetisPostDTO = {
-                post: { id: 42, displayPriority: DisplayPriority.NONE } as Post,
+                post: { id: 42, displayPriority: DisplayPriority.NONE, conversation: { id: 22 } as Conversation } as Post,
                 action: MetisPostAction.UPDATE,
             };
 
+            const pinnedFilter: PostContextFilter = { conversationIds: [22] };
+
+            metisService['getFilteredPosts'](pinnedFilter);
             metisService['handleNewOrUpdatedMessage'](unpinnedPostDTO);
             tick();
 
@@ -245,6 +249,20 @@ describe('Metis Service', () => {
             expect(getPostsSpy).toHaveBeenCalledOnce();
 
             subscription.unsubscribe();
+        }));
+
+        it('should ignore posts with invalid postContext when receiving WebSocket update', fakeAsync(() => {
+            // Creating invalid postContext by not providing conversationId
+            const post: Post = { id: 100 } as Post;
+            const postDTO: MetisPostDTO = { post, action: MetisPostAction.CREATE } as MetisPostDTO;
+
+            metisService['handleNewOrUpdatedMessage'](postDTO);
+            tick();
+
+            const cachedPostsStub = metisService.posts.subscribe((posts) => expect(posts).toEqual([]));
+
+            tick();
+            cachedPostsStub.unsubscribe();
         }));
 
         it('should archive a post', fakeAsync(() => {
@@ -514,7 +532,7 @@ describe('Metis Service', () => {
         it('should create websocket subscription when posts with lecture context are initially retrieved from DB', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             // setup subscription
-            metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
+            metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             metisServiceGetFilteredPostsSpy.mockReset();
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
@@ -527,7 +545,7 @@ describe('Metis Service', () => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.DELETE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
-            metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE });
+            metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE });
             metisServiceGetFilteredPostsSpy.mockReset();
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
@@ -539,7 +557,7 @@ describe('Metis Service', () => {
         it('should create websocket subscription when posts with course-wide context are initially retrieved from DB', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.UPDATE } as MetisPostDTO));
             // setup subscription
-            metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
+            metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             metisServiceGetFilteredPostsSpy.mockReset();
 
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
@@ -552,12 +570,12 @@ describe('Metis Service', () => {
         it('should not create new subscription if already exists', fakeAsync(() => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.DELETE } as MetisPostDTO));
             // setup subscription for the first time
-            metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
+            metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             metisServiceGetFilteredPostsSpy.mockReset();
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
-            metisService.getFilteredPosts({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ courseWideChannelIds: [metisPostInChannel.conversation!.id!] });
+            metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ conversationIds: [metisPostInChannel.conversation!.id!] });
             expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
         }));
 
@@ -565,7 +583,7 @@ describe('Metis Service', () => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
-            metisService.getFilteredPosts({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+            metisService.getFilteredPosts({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: true,
@@ -574,7 +592,7 @@ describe('Metis Service', () => {
             expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: true,
@@ -585,7 +603,7 @@ describe('Metis Service', () => {
             websocketServiceReceiveStub.mockReturnValue(of({ post: metisPostInChannel, action: MetisPostAction.CREATE } as MetisPostDTO));
             metisService.setPageType(PageType.OVERVIEW);
             // setup subscription
-            metisService.getFilteredPosts({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+            metisService.getFilteredPosts({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: false,
@@ -594,7 +612,7 @@ describe('Metis Service', () => {
             expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
             // receive message on channel
             tick();
-            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationId: 1, page: 0, pageSize: ITEMS_PER_PAGE }, true, {
+            expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
                 id: 1,
                 type: ConversationType.CHANNEL,
                 isCourseWide: false,
@@ -672,7 +690,7 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.OVERVIEW);
 
             // set currentPostContextFilter appropriately
-            metisService.getFilteredPosts({ conversationId: metisChannel.id } as PostContextFilter);
+            metisService.getFilteredPosts({ conversationIds: [metisChannel.id] } as PostContextFilter);
             const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
 
             metisService['handleNewOrUpdatedMessage'](mockPostDTO);
@@ -688,8 +706,10 @@ describe('Metis Service', () => {
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup
+            const post = { ...plagiarismPost, conversation: { id: 22 } };
+
             const mockPostDTO = {
-                post: plagiarismPost,
+                post: post,
                 action: MetisPostAction.CREATE,
             };
             const mockReceiveObservable = new Subject();
@@ -697,14 +717,14 @@ describe('Metis Service', () => {
             metisService.setPageType(PageType.PLAGIARISM_CASE_STUDENT);
 
             // set currentPostContextFilter appropriately
-            metisService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id } as PostContextFilter);
+            metisService.getFilteredPosts({ plagiarismCaseId: mockPostDTO.post.plagiarismCase?.id, conversationIds: [22] } as PostContextFilter);
 
             // Ensure subscribe to websocket was not called
             expect(websocketService.subscribe).toHaveBeenCalled();
 
             // Emulate receiving a message
             mockReceiveObservable.next(mockPostDTO);
-            expect(metisService['cachedPosts']).toContain(plagiarismPost);
+            expect(metisService['cachedPosts']).toContain(post);
         });
 
         it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {
@@ -731,7 +751,7 @@ describe('Metis Service', () => {
             );
 
             // set currentPostContextFilter with search text
-            metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id, searchText: 'Search text' } as PostContextFilter);
+            metisService.getFilteredPosts({ conversationIds: [mockPostDTO.post.conversation?.id], searchText: 'Search text' } as PostContextFilter);
 
             jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
             // Emulate receiving a message matching the search text
@@ -749,7 +769,7 @@ describe('Metis Service', () => {
         }));
 
         it('should return current conversation', () => {
-            metisService.getFilteredPosts({ conversationId: metisLectureChannelDTO.id } as PostContextFilter, false, metisLectureChannelDTO);
+            metisService.getFilteredPosts({ conversationIds: [metisLectureChannelDTO.id] } as PostContextFilter, false, metisLectureChannelDTO);
             expect(metisService.getCurrentConversation()).toBe(metisLectureChannelDTO);
         });
     });
@@ -792,6 +812,18 @@ describe('Metis Service', () => {
         tick();
     }));
 
+    it('should return undefined if no source post is found with the given ids (404 error)', fakeAsync(() => {
+        const postIds = [4, 5, 6];
+        const postServiceSpy = jest.spyOn(postService, 'getSourcePostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        metisService.getSourcePostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        tick();
+        expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        expect(result).toBeUndefined();
+    }));
+
     it('should call AnswerPostService.getSourceAnswerPostsByIds with correct parameters', fakeAsync(() => {
         const postServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
         const answerPostIds = [7, 8, 9];
@@ -800,6 +832,18 @@ describe('Metis Service', () => {
 
         expect(postServiceSpy).toHaveBeenCalledWith(metisService['courseId'], answerPostIds);
         tick();
+    }));
+
+    it('should return undefined if no source answer post is found with the given ids (404 error)', fakeAsync(() => {
+        const postIds = [4, 5, 6];
+        const answerPostServiceSpy = jest.spyOn(answerPostService, 'getSourceAnswerPostsByIds').mockReturnValue(throwError(() => ({ status: 404 })));
+        let result: Post[] | undefined;
+        metisService.getSourceAnswerPostsByIds(postIds).subscribe((res) => {
+            result = res;
+        });
+        tick();
+        expect(answerPostServiceSpy).toHaveBeenCalledWith(metisService['courseId'], postIds);
+        expect(result).toBeUndefined();
     }));
 
     it('should not call getSourcePostsByIds if postId list is undefined', fakeAsync(() => {
@@ -880,7 +924,7 @@ describe('Metis Service', () => {
 
     it('should NOT update local cache if target conversation differs from currentConversation', fakeAsync(() => {
         metisService.setCourse(metisCourse);
-        metisService.getFilteredPosts({ conversationId: 101 } as PostContextFilter, false, { id: 101 } as ChannelDTO);
+        metisService.getFilteredPosts({ conversationIds: [101] } as PostContextFilter, false, { id: 101 } as ChannelDTO);
 
         let result: ForwardedMessage[] | undefined;
         metisService.createForwardedMessages(originalPosts, targetConversation, false, newContent).subscribe((res) => (result = res));
@@ -892,7 +936,7 @@ describe('Metis Service', () => {
 
     it('should NOT add newly created post to cache if it already exists in cache', fakeAsync(() => {
         metisService.setCourse(metisCourse);
-        metisService.getFilteredPosts({ conversationId: targetConversation.id } as PostContextFilter, false, targetConversation);
+        metisService.getFilteredPosts({ conversationIds: [targetConversation.id] } as PostContextFilter, false, targetConversation);
 
         metisService['cachedPosts'] = [{ id: 123, content: 'cached content', conversation: targetConversation } as Post];
 
@@ -973,7 +1017,7 @@ describe('Metis Service', () => {
         });
 
         it('should remove pinned post from pinnedPosts$ when WebSocket DELETE action is received', () => {
-            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED } as Post;
+            const pinnedPost = { id: 123, displayPriority: DisplayPriority.PINNED, conversation: { id: 22 } } as Post;
             const mockDeleteDTO: MetisPostDTO = {
                 action: MetisPostAction.DELETE,
                 post: { ...pinnedPost },
@@ -981,6 +1025,7 @@ describe('Metis Service', () => {
 
             metisService['pinnedPosts$'].next([pinnedPost]);
             metisService['cachedPosts'].push({ ...pinnedPost });
+            metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](mockDeleteDTO);
 
             let pinnedPostsResult: Post[] = [];
@@ -1031,6 +1076,7 @@ describe('Metis Service', () => {
                 content: 'Old Content',
                 authorRole: UserRole.USER,
                 tags: [],
+                conversation: { id: 22 },
             } as Post;
 
             metisService['cachedPosts'] = [pinnedPost];
@@ -1041,12 +1087,14 @@ describe('Metis Service', () => {
                 displayPriority: DisplayPriority.PINNED,
                 content: 'Updated Content',
                 tags: ['newTag'],
+                conversation: { id: 22 },
             } as Post;
             const updateDTO: MetisPostDTO = {
                 post: updatedPost,
                 action: MetisPostAction.UPDATE,
             };
 
+            metisService['getFilteredPosts']({ conversationIds: [22] } as PostContextFilter);
             metisService['handleNewOrUpdatedMessage'](updateDTO);
             tick();
 

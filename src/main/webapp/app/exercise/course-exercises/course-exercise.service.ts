@@ -156,4 +156,14 @@ export class CourseExerciseService {
         }
         return res;
     }
+
+    /**
+     * returns all exercises for the course corresponding to courseId
+     * @param courseId - the unique identifier of the course
+     */
+    findAllExercisesWithDueDatesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
+        return this.http
+            .get<Exercise[]>(`api/core/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
+    }
 }

@@ -16,13 +16,8 @@ import { MessageInlineInputComponent } from 'app/communication/message/message-i
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { PostSortCriterion, SortDirection } from 'app/communication/metis.util';
-import {
-    metisExamChannelDTO,
-    metisExerciseChannelDTO,
-    metisGeneralChannelDTO,
-    metisLectureChannelDTO,
-} from '../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
-import { getElement } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { metisExamChannelDTO, metisExerciseChannelDTO, metisGeneralChannelDTO, metisLectureChannelDTO } from 'test/helpers/sample/metis-sample-data';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({
@@ -56,6 +51,7 @@ describe('CourseWideSearchComponent', () => {
     const courseWideSearchConfig = new CourseWideSearchConfig();
     courseWideSearchConfig.searchTerm = '';
     courseWideSearchConfig.filterToUnresolved = false;
+    courseWideSearchConfig.filterToCourseWide = false;
     courseWideSearchConfig.filterToOwn = false;
     courseWideSearchConfig.filterToAnsweredOrReacted = false;
     courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
@@ -122,9 +118,11 @@ describe('CourseWideSearchComponent', () => {
         const conversationsOfUser = conversationDtoArray.map((conversation) => conversation.id);
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
-            courseWideChannelIds: conversationsOfUser,
+            conversationIds: conversationsOfUser,
             searchText: undefined,
             filterToUnresolved: false,
+            authorIds: undefined,
+            filterToCourseWide: false,
             filterToOwn: false,
             filterToAnsweredOrReacted: false,
             page: 0,
@@ -147,8 +145,9 @@ describe('CourseWideSearchComponent', () => {
 
         expect(component.currentPostContextFilter).toEqual({
             courseId: course.id,
-            courseWideChannelIds: conversationsOfUser,
+            conversationIds: conversationsOfUser,
             searchText: courseWideSearchConfig.searchTerm,
+            filterToCourseWide: courseWideSearchConfig.filterToCourseWide,
             filterToUnresolved: courseWideSearchConfig.filterToUnresolved,
             filterToOwn: courseWideSearchConfig.filterToOwn,
             filterToAnsweredOrReacted: courseWideSearchConfig.filterToAnsweredOrReacted,
