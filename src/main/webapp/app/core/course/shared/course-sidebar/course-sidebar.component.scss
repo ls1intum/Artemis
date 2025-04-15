@@ -67,6 +67,10 @@ jhi-secured-image {
 }
 
 .double-arrow-icon {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
     transform: rotate(180deg);
     transition: transform ease 0.3s 0.3s;
 }
