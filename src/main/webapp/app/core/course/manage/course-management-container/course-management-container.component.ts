@@ -84,7 +84,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
-    isOverviewPage = signal(false);
+    isSettingsPage = signal(false);
+    studentViewLink = signal<string[]>([]);
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -129,10 +130,11 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
-            this.checkIfOverviewPage();
+            this.checkIfSettingsPage();
         });
         this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.checkIfOverviewPage();
+            this.checkIfSettingsPage();
+            this.determineStudentViewLink();
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -147,15 +149,31 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    private checkIfOverviewPage() {
+    private checkIfSettingsPage() {
         const currentUrl = this.router.url;
-        const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
-        this.isOverviewPage.set(isDetailsPage);
+        const isDetailsPage = currentUrl.endsWith(`/course-management/${this.courseId()}/settings`);
+        this.isSettingsPage.set(isDetailsPage);
     }
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
+        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
+    }
+    determineStudentViewLink() {
+        // const courseIdString = this.courseId().toString();
+        // const routerUrl = this.router.url;
+        // console.log(routerUrl);
+        // if (routerUrl.endsWith('exam') || routerUrl.endsWith('exams')) {
+        //     console.log()
+        //     this.studentViewLink.set(['/courses', courseIdString, 'exams']);
+        // } else if (routerUrl.endsWith('exercises')) {
+        //     this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
+        // } else if (routerUrl.endsWith('lectures')) {
+        //     this.studentViewLink.set(['/courses', courseIdString, 'lectures']);
+        // } else {
+        //     this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
+        // }
     }
 
     private subscribeToCourseUpdates(courseId: number) {

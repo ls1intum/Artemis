@@ -720,12 +720,12 @@ describe('CourseManagementContainerComponent', () => {
     it('should set isOverviewPage to false when not on overview page', async () => {
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
         await component.ngOnInit();
-        expect(component.isOverviewPage()).toBeFalse();
+        expect(component.isSettingsPage()).toBeFalse();
     });
     it('should set isOverviewPage to true when on overview page', async () => {
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1');
         jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1', '')));
         await component.ngOnInit();
-        expect(component.isOverviewPage()).toBeTrue();
+        expect(component.isSettingsPage()).toBeTrue();
     });
 });
