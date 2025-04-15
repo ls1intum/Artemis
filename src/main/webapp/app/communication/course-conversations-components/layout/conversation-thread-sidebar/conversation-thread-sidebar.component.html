@@ -62,7 +62,7 @@
                     </div>
                 }
             </div>
-            @if (isAtLeastTutor) {
+            @if (isAtLeastTutor && !post?.resolved) {
                 <div>
                     <jhi-tutor-suggestion [post]="post" [course]="course()" />
                 </div>

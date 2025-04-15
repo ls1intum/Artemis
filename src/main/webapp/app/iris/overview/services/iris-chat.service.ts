@@ -14,7 +14,6 @@ import { IrisRateLimitInformation } from 'app/iris/shared/entities/iris-ratelimi
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { UserService } from 'app/core/user/shared/user.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { Post } from 'app/communication/shared/entities/post.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'text-exercise-chat',
@@ -106,9 +105,8 @@ export class IrisChatService implements OnDestroy {
 
     /**
      * requests a tutor suggestion from the server
-     * @param post that the tutor suggestion should be based on
      */
-    public requestTutorSuggestion(post: Post): Observable<undefined> {
+    public requestTutorSuggestion(): Observable<undefined> {
         if (!this.sessionId) {
             return throwError(() => new Error('Not initialized'));
         }
