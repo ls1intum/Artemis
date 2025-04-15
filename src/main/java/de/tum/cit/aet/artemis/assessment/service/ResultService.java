@@ -768,6 +768,6 @@ public class ResultService {
         }
 
         List<BuildLogDTO> parsedBuildLogs = buildLogEntryService.parseBuildLogEntries(buildLog);
-        return parsedBuildLogs.stream().map(BuildLogDTO::toBuildLogEntry).collect(Collectors.toList());
+        return parsedBuildLogs.stream().map(BuildLogDTO::toBuildLogEntry).toList();
     }
 }
