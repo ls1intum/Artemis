@@ -513,6 +513,16 @@ corner of the answer thread. Clicking the same button again returns the thread t
 
 |expanded-thread|
 
+Send Reply as Regular Message
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Users can choose to post their reply as a regular message within the same conversation. By selecting the checkbox below
+the input box, the reply will appear both as a threaded response and as a normal message in the conversation flow.
+
+|as-message-checkbox|
+
+|reply-as-post|
+
 Features for Moderators
 -----------------------
 
@@ -609,3 +619,7 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |applied-pinned filter| image:: communication/applied-pinned-filter.png
     :width: 1000
+.. |as-message-checkbox| image:: communication/as-message-checkbox.png
+    :width: 800
+.. |reply-as-post| image:: communication/reply-as-post.png
+    :width: 800
