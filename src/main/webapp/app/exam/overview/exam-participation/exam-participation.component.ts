@@ -157,7 +157,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     websocketSubscription?: Subscription;
     workingTimeUpdateEventsSubscription?: Subscription;
     problemStatementUpdateEventsSubscription?: Subscription;
-    profileSubscription?: Subscription;
 
     isProduction = true;
     isTestServer = false;
@@ -265,10 +264,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.connected = status.connected;
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     /**
@@ -636,7 +633,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.workingTimeUpdateEventsSubscription?.unsubscribe();
         this.problemStatementUpdateEventsSubscription?.unsubscribe();
         this.examParticipationService.resetExamLayout();
-        this.profileSubscription?.unsubscribe();
         window.clearInterval(this.autoSaveInterval);
     }
 

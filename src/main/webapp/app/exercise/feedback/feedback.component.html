@@ -74,11 +74,8 @@
                                     {{ result.submission.submissionDate | artemisTimeAgo }}
                                 </span>
                                 - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
-                                @if (commitUrl) {
-                                    <a href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
-                                } @else {
-                                    {{ commitHash }}
-                                }
+                                <!-- TODO Link to repository view -->
+                                {{ commitHash }}
                             </p>
                         }
                     </div>

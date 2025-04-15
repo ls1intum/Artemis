@@ -5,7 +5,7 @@ import { CourseUsersSelectorComponent } from 'app/communication/course-users-sel
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { initializeDialog } from '../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('GroupChatCreateDialogComponent', () => {

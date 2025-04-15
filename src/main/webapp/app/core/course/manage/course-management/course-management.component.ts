@@ -1,11 +1,9 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
@@ -36,11 +34,10 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
         ArtemisTranslatePipe,
     ],
 })
-export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
+export class CourseManagementComponent implements OnInit, OnDestroy {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
-    private guidedTourService = inject(GuidedTourService);
     private courseAccessStorageService = inject(CourseAccessStorageService);
 
     showOnlyActive = true;
@@ -57,8 +54,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    courseForGuidedTour?: Course;
-
     readonly documentationType: DocumentationType = 'Course';
     // Icons
     faPlus = faPlus;
@@ -71,14 +66,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     ngOnInit() {
         this.loadAll();
         this.registerChangeInCourses();
-    }
-
-    /**
-     * notifies the guided-tour service that the current component has
-     * been fully loaded
-     */
-    ngAfterViewInit(): void {
-        this.guidedTourService.componentPageLoaded();
     }
 
     /**
@@ -96,7 +83,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
         this.courseManagementService.getCourseOverview({ onlyActive: this.showOnlyActive }).subscribe({
             next: (res: HttpResponse<Course[]>) => {
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
-                this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
 
                 this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
                 this.sortCoursesIntoSemesters();

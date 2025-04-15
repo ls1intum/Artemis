@@ -143,7 +143,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isEdit: boolean;
     isCreate: boolean;
     isExamMode: boolean;
-    isLocal: boolean;
+    isLocalCIEnabled: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -179,7 +179,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
-    public customBuildPlansSupported: string = '';
+    public customBuildPlansSupported = '';
     public theiaEnabled = false;
 
     // Additional options for import
@@ -505,24 +505,16 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProductionEnvironment = profileInfo.inProduction;
-            }
-        });
+        this.inProductionEnvironment = this.profileService.isProduction();
+        if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
+            this.isLocalCIEnabled = true;
+            this.customBuildPlansSupported = PROFILE_LOCALCI;
+        }
+        if (this.profileService.isProfileActive(PROFILE_AEOLUS)) {
+            this.customBuildPlansSupported = PROFILE_AEOLUS;
+        }
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
-                this.customBuildPlansSupported = PROFILE_LOCALCI;
-                this.isLocal = true;
-            }
-            if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
-                this.customBuildPlansSupported = PROFILE_AEOLUS;
-            }
-            if (profileInfo?.activeProfiles.includes(PROFILE_THEIA)) {
-                this.theiaEnabled = true;
-            }
-        });
+        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
         this.defineSupportedProgrammingLanguages();
     }
 

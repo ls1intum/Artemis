@@ -27,7 +27,6 @@ const DEFAULT_SORT_COLUMN = 'ID';
 })
 export class ExerciseImportComponent extends ImportComponent<Exercise> implements OnInit {
     private injector = inject(Injector);
-
     readonly ExerciseType = ExerciseType;
 
     @Input() exerciseType?: ExerciseType;

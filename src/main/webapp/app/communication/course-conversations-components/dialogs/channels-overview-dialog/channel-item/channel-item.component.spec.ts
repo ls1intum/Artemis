@@ -3,7 +3,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { generateExampleChannelDTO } from '../../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExampleModels';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChannelItemComponent } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
