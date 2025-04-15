@@ -23,12 +23,7 @@
             <dt jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.title"></dt>
             <p class="text-muted" jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.description"></p>
             <mat-slider min="1" max="5" step="1" [discrete]="true" showTickMarks [displayWith]="hideTooltip">
-                <input
-                    matSliderThumb
-                    [value]="learnerProfile.feedbackPracticalTheoretical"
-                    (valueChange)="learnerProfile.feedbackPracticalTheoretical = $event"
-                    (change)="onSliderChange()"
-                />
+                <input matSliderThumb [(ngModel)]="learnerProfile.feedbackPracticalTheoretical" (change)="onSliderChange()" />
             </mat-slider>
             <div class="labels">
                 <span jhiTranslate="artemisApp.learnerProfile.feedback.feedbackPracticalTheoretical.practical"></span>

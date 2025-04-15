@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import java.util.Optional;
-
 import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -74,18 +72,13 @@ public class LearnerProfileResource {
             throw new BadRequestAlertException("Provided learnerProfileId does not match learnerProfile.", LearnerProfile.ENTITY_NAME, "objectDoesNotMatchId", true);
         }
 
-        Optional<LearnerProfile> optionalLearnerProfile = learnerProfileRepository.findByUser(user);
-
-        if (optionalLearnerProfile.isEmpty()) {
-            throw new BadRequestAlertException("LearnerProfile not found.", LearnerProfile.ENTITY_NAME, "LearnerProfileNotFound", true);
-        }
+        LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
         validateProfileField(learnerProfileDTO.feedbackPracticalTheoretical(), "FeedbackPracticalTheoretical");
         validateProfileField(learnerProfileDTO.feedbackCreativeGuidance(), "FeedbackCreativeGuidance");
         validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
         validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
 
-        LearnerProfile updateProfile = optionalLearnerProfile.get();
         updateProfile.setFeedbackPracticalTheoretical(learnerProfileDTO.feedbackPracticalTheoretical());
         updateProfile.setFeedbackCreativeGuidance(learnerProfileDTO.feedbackCreativeGuidance());
         updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
