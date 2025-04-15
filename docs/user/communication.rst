@@ -506,7 +506,7 @@ Forwarded Message View
 |forwarded-message|
 
 Save Messages
-^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
 Users can save messages and access them later from the Saved Messages section in the sidebar. Saved messages are
 organized into three categories: *In Progress*, *Completed*, and *Archived*. Messages initially appear in the *In Progress*
@@ -524,7 +524,7 @@ corner of the answer thread. Clicking the same button again returns the thread t
 |expanded-thread|
 
 Send Reply as Regular Message
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Users can choose to post their reply as a regular message within the same conversation. By selecting the checkbox below
 the input box, the reply will appear both as a threaded response and as a normal message in the conversation flow.
