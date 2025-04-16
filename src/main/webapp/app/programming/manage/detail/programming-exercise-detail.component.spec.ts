@@ -30,6 +30,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entitie
 import { SubmissionPolicyService } from 'app/programming/manage/services/submission-policy.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
 
 describe('ProgrammingExerciseDetailComponent', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -88,6 +89,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
 
     const profileInfo = {
         activeProfiles: [],
+        activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM],
     } as unknown as ProfileInfo;
 
     beforeEach(() => {

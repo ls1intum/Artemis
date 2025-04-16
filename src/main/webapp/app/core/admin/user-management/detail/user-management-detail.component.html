@@ -45,6 +45,16 @@
                     }
                 </ul>
             </dd>
+            <dt><span jhiTranslate="artemisApp.userManagement.groups"></span></dt>
+            <dd>
+                <ul class="list-unstyled">
+                    @for (group of user.groups; track group) {
+                        <li>
+                            <span>{{ group }}</span>
+                        </li>
+                    }
+                </ul>
+            </dd>
             <a [routerLink]="['edit']" class="btn btn-warning">
                 <fa-icon [icon]="faWrench" />
                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>

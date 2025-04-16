@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -138,11 +137,6 @@ public class OneToOneChatResource extends ConversationManagementResource {
      */
     private ResponseEntity<OneToOneChatDTO> createOneToOneChat(User requestingUser, User userToBeNotified, Course course) throws URISyntaxException {
         var oneToOneChat = oneToOneChatService.startOneToOneChat(course, requestingUser, userToBeNotified);
-        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, userToBeNotified, requestingUser,
-                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
-        // also send notification to the author in order for the author to subscribe to the new chat (this notification won't be saved and shown to author)
-        singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(oneToOneChat, requestingUser, requestingUser,
-                NotificationType.CONVERSATION_CREATE_ONE_TO_ONE_CHAT);
         return ResponseEntity.created(new URI("/api/one-to-one-chats/" + oneToOneChat.getId())).body(conversationDTOService.convertOneToOneChatToDto(requestingUser, oneToOneChat));
     }
 }
