@@ -6,7 +6,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { faGear, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -21,9 +21,6 @@ import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/ser
     imports: [LoadingIndicatorContainerComponent, TranslateDirective, ChecklistCheckComponent, RouterLink, FaIconComponent],
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
-    protected readonly faGear = faGear;
-    protected readonly faPlus = faPlus;
-
     private activatedRoute = inject(ActivatedRoute);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
@@ -34,6 +31,9 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     course: Course;
     isTimeZoneConfigured = false;
     isTutorialGroupConfigurationCreated = false;
+
+    faWrench = faWrench;
+    faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
 
