@@ -705,10 +705,12 @@ describe('CourseOverviewComponent', () => {
     describe('determineManageViewLink', () => {
         beforeEach(() => {
             component.courseId.set(123);
+            component.course.set({ isAtLeastTutor: true });
         });
 
         it('should set exams link when URL includes "exams"', () => {
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
+            component.course.set({ isAtLeastTutor: true });
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
         });
@@ -720,6 +722,7 @@ describe('CourseOverviewComponent', () => {
         });
 
         it('should set lectures link when URL includes "lectures"', () => {
+            component.course.set({ isAtLeastEditor: true });
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
@@ -731,13 +734,15 @@ describe('CourseOverviewComponent', () => {
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
         });
 
-        it('should set learning-paths-management link when URL includes "learning-path"', () => {
+        it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
         });
 
-        it('should set competency-management link when URL includes "competencies"', () => {
+        it('should set competency-management link when URL includes "competencies + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
@@ -749,7 +754,14 @@ describe('CourseOverviewComponent', () => {
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
         });
 
-        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups"', () => {
+        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+        });
+        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
+            component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
@@ -759,6 +771,12 @@ describe('CourseOverviewComponent', () => {
             jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it('should set course statistics link when URL includes course statistics', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
         });
     });
 });

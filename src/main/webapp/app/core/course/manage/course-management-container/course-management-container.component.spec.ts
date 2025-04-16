@@ -786,6 +786,12 @@ describe('CourseManagementContainerComponent', () => {
             expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
         });
 
+        it('should set statistics link when URL includes course-statistics', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/course-statistics');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
+        });
+
         it('should default to exercises link when URL does not match any condition', () => {
             jest.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
             component.determineStudentViewLink();

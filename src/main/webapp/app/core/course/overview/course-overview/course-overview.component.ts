@@ -126,27 +126,34 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     }
 
     determineManageViewLink() {
+        if (!this.course()) {
+            return;
+        }
+
         const courseIdString = this.courseId().toString();
         const routerUrl = this.router.url;
-        if (routerUrl.includes('exams')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'exams']);
-        } else if (routerUrl.includes('exercises')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'exercises']);
-        } else if (routerUrl.includes('lectures')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'lectures']);
-        } else if (routerUrl.includes('communication')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'communication']);
-        } else if (routerUrl.includes('learning-path')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'learning-paths-management']);
-        } else if (routerUrl.includes('competencies')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'competency-management']);
-        } else if (routerUrl.includes('faq')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'faqs']);
-        } else if (routerUrl.includes('tutorial-groups')) {
-            this.manageViewLink.set(['/course-management', courseIdString, 'tutorial-groups-checklist']);
-        } else {
-            this.manageViewLink.set(['/course-management', courseIdString]);
-        }
+        const baseManagementPath = ['/course-management', courseIdString];
+        const routeMappings = [
+            { urlPart: 'exams', targetPath: [...baseManagementPath, 'exams'] },
+            { urlPart: 'exercises', targetPath: [...baseManagementPath, 'exercises'] },
+            { urlPart: 'lectures', targetPath: [...baseManagementPath, 'lectures'], permissionCheck: () => this.course()?.isAtLeastEditor },
+            { urlPart: 'communication', targetPath: [...baseManagementPath, 'communication'] },
+            { urlPart: 'learning-path', targetPath: [...baseManagementPath, 'learning-paths-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
+            { urlPart: 'competencies', targetPath: [...baseManagementPath, 'competency-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
+            { urlPart: 'faq', targetPath: [...baseManagementPath, 'faqs'] },
+            { urlPart: 'statistics', targetPath: [...baseManagementPath, 'course-statistics'] },
+            {
+                urlPart: 'tutorial-groups',
+                targetPath: [...baseManagementPath, 'tutorial-groups-checklist'],
+                permissionCheck: () => this.course()?.isAtLeastInstructor || this.course()?.tutorialGroupsConfiguration,
+            },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return routerUrl.includes(route.urlPart) && (!route.permissionCheck || route.permissionCheck());
+        });
+
+        this.manageViewLink.set(matchedRoute ? matchedRoute.targetPath : baseManagementPath);
     }
 
     /**

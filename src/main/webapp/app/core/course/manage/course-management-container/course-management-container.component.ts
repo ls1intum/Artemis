@@ -165,25 +165,34 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     determineStudentViewLink() {
         const courseIdString = this.courseId().toString();
         const routerUrl = this.router.url;
-        if (routerUrl.includes('exams')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'exams']);
-        } else if (routerUrl.includes('exercises')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
-        } else if (routerUrl.includes('lectures')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'lectures']);
-        } else if (routerUrl.includes('communication')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'communication']);
-        } else if (routerUrl.includes('learning-path-management')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'learning-path']);
-        } else if (routerUrl.includes('competency-management')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'competencies']);
-        } else if (routerUrl.includes('faqs')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'faq']);
-        } else if (routerUrl.includes('tutorial-groups') || routerUrl.includes('tutorial-groups-checklist')) {
-            this.studentViewLink.set(['/courses', courseIdString, 'tutorial-groups']);
-        } else {
-            this.studentViewLink.set(['/courses', courseIdString, 'exercises']);
-        }
+        const baseStudentPath = ['/courses', courseIdString];
+
+        const routeMappings = [
+            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
+            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
+            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
+            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
+            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
+            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
+            {
+                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
+                targetPath: [...baseStudentPath, 'tutorial-groups'],
+                matcher: (url: string | string[], parts: string[]) => parts.some((part) => url.includes(part)),
+            },
+            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const defaultPath = [...baseStudentPath, 'exercises'];
+
+        const matchedRoute = routeMappings.find((route) => {
+            if (route.matcher) {
+                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
+            }
+            return routerUrl.includes(route.urlPart);
+        });
+
+        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToCourseUpdates(courseId: number) {
