@@ -51,7 +51,6 @@ export class CourseSidebarItemService {
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            guidedTour: true,
             hidden: false,
         };
 
@@ -78,7 +77,6 @@ export class CourseSidebarItemService {
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            guidedTour: true,
             hidden: false,
         };
 
@@ -257,8 +255,19 @@ export class CourseSidebarItemService {
             icon: faCog,
             title: 'Notification Settings',
             translation: 'artemisApp.courseOverview.menu.settings',
-            guidedTour: false,
             hidden: false,
+            bottom: true,
+        };
+    }
+    getCourseSettingsItem(courseId: number): SidebarItem {
+        return {
+            routerLink: `${courseId}/settings`,
+            icon: faCog,
+            title: 'Settings',
+            translation: 'artemisApp.courseOverview.menu.settings',
+            hidden: false,
+            bottom: true,
+            testId: 'course-settings',
         };
     }
 }

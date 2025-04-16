@@ -62,34 +62,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     Set<String> findAllTeachingAssistantGroupNames();
 
     @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.instructorGroupName LIKE :name
-            """)
-    Course findCourseByInstructorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.editorGroupName LIKE :name
-            """)
-    Course findCourseByEditorGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.teachingAssistantGroupName LIKE :name
-            """)
-    Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
-
-    @Query("""
-            SELECT DISTINCT course
-            FROM Course course
-            WHERE course.studentGroupName LIKE :name
-            """)
-    Course findCourseByStudentGroupName(@Param("name") String name);
-
-    @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
             WHERE c.id = :courseId

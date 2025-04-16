@@ -204,11 +204,11 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'edit',
+                        path: 'settings',
                         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.course.home.editLabel',
+                            pageTitle: 'overview.settings',
                         },
                         canActivate: [UserRouteAccessService],
                     },
