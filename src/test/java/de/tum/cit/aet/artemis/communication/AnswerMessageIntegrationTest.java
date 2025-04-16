@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -28,10 +27,8 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -189,24 +186,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         testCreateChannelAnswer(channel, 2);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testSendNotificationWhenDifferentUserAnswersPost() throws Exception {
-        var channel = createChannelWithTwoStudents();
-        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
-        verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
-                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDoNotSendNotificationWhenSameUserAnswersPost() throws Exception {
-        var channel = createChannelWithTwoStudents();
-        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
-        verify(singleUserNotificationService, timeout(2000).times(0)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
-                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
-    }
-
     private Channel createChannelWithTwoStudents() {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Channel channel = conversationUtilService.createPublicChannel(course, "test");
@@ -288,9 +267,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
-
-        // mentioned user is not a member of the conversation and should not be notified
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + mentionedUser.getId() + "/notifications"), any(SingleUserNotification.class));
     }
 
     @Test

@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
@@ -39,7 +38,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 @Profile(PROFILE_CORE)
@@ -110,17 +108,11 @@ public class GroupChatResource extends ConversationManagementResource {
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), groupChat.getName(),
-                    groupChat.getId());
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), groupChat.getName(),
+                groupChat.getId());
 
-            courseNotificationService.sendCourseNotification(addedToChannelNotification,
-                    chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
-        }
-        else {
-            chatMembers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChat, user, requestingUser,
-                    NotificationType.CONVERSATION_CREATE_GROUP_CHAT));
-        }
+        courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                chatMembers.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
 
         conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
 
@@ -175,16 +167,10 @@ public class GroupChatResource extends ConversationManagementResource {
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
-                    groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
 
-            courseNotificationService.sendCourseNotification(addedToChannelNotification, usersToRegister.stream().toList());
-        }
-        else {
-            usersToRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
-                    NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT));
-        }
+        courseNotificationService.sendCourseNotification(addedToChannelNotification, usersToRegister.stream().toList());
 
         return ResponseEntity.ok().build();
     }
@@ -216,16 +202,10 @@ public class GroupChatResource extends ConversationManagementResource {
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
         // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
-                    groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
+        var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                groupChatFromDatabase.getName(), groupChatFromDatabase.getId());
 
-            courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
-        }
-        else {
-            usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(groupChatFromDatabase, user, requestingUser,
-                    NotificationType.CONVERSATION_REMOVE_USER_GROUP_CHAT));
-        }
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
 
         return ResponseEntity.ok().build();
     }
