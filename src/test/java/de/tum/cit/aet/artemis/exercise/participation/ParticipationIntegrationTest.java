@@ -374,12 +374,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         prepareMocksForProgrammingExercise(user.getLogin(), false);
         mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "editor1", Set.of(user), true);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
-        var participationUsers = participation.getStudents();
-        assertThat(participation).isNotNull();
-        assertThat(participation.isPracticeMode()).isFalse();
-        assertThat(participationUsers).contains(user);
+        request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test

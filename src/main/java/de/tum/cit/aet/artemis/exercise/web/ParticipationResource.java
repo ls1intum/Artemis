@@ -226,14 +226,6 @@ public class ParticipationResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        // Don't allow student to start before the start and release date
-        ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
-        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
-            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
-                throw new AccessForbiddenException("Students cannot start an exercise before the release date");
-            }
-        }
-
         checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
@@ -422,15 +414,10 @@ public class ParticipationResource {
      * <p>
      * Checks if a participation can be started for the given exercise and user.
      * </p>
-     * This method verifies if the participation can be started based on the exercise type and user permissions.
+     * This method verifies if the participation can be started based on the due date.
      * <ul>
      * <li>Checks if the due date has passed (allows starting participations for non programming exercises if the user might have an individual working time)</li>
-     * <li>Additionally for programming exercises, checks if:
-     * <ul>
-     * <li>the programming exercise feature is enabled</li>
-     * <li>the user has the necessary permissions</li>
-     * </ul>
-     * </li>
+     * <li>Additionally for programming exercises, checks if the programming exercise feature is enabled</li>
      * </ul>
      *
      * @param exercise for which the participation is to be started
@@ -438,27 +425,36 @@ public class ParticipationResource {
      * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
     private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // Only editors and instructors have permission to trigger participation after due date passed
-            // Also don't allow participations if the feature is disabled
-            if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
-                    || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
-                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
+        // 1) Don't allow student to start before the start and release date
+        ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
+        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
+            if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+                throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
         }
-        else {
-            ZonedDateTime exerciseDueDate = exercise.getDueDate();
-            // NOTE: course exercises can only have an individual due date when they already have started
-            if (exercise.isExamExercise()) {
-                // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
-                exerciseDueDate = exercise.getExam().getEndDate();
-                var studentExam = studentExamRepository.findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
-                if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
-                    exerciseDueDate = studentExam.get().getIndividualEndDate();
-                }
+        // 2) Don't allow participations if the feature is disabled
+        if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
+            throw new AccessForbiddenException("Programming Exercise Feature is disabled.");
+        }
+        // 3) Don't allow to start after the (individual) end date
+        ZonedDateTime exerciseDueDate = exercise.getDueDate();
+        // NOTE: course exercises can only have an individual due date when they already have started
+        if (exercise.isExamExercise()) {
+            // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
+            exerciseDueDate = exercise.getExam().getEndDate();
+            var studentExam = studentExamRepository.findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
+            if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
+                exerciseDueDate = studentExam.get().getIndividualEndDate();
             }
-            boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
-            if (isDueDateInPast) {
+        }
+        boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
+        if (isDueDateInPast) {
+            if (exercise instanceof ProgrammingExercise) {
+                // at the moment, only programming exercises offer a dedicated practice mode
+                throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
+            }
+            else {
+                // all other exercise types are not allowed to be started after the due date
                 throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
                         "dueDateOver.noParticipationPossible");
             }
