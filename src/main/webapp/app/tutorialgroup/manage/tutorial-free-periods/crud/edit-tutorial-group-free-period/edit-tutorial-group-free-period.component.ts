@@ -28,13 +28,13 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private alertService = inject(AlertService);
 
-    isLoading = false;
-
     tutorialGroupFreePeriod = model.required<TutorialGroupFreePeriod>();
 
     tutorialGroupsConfiguration = model.required<TutorialGroupsConfiguration>();
 
     course = model.required<Course>();
+
+    isLoading = false;
 
     isInitialized = false;
 
