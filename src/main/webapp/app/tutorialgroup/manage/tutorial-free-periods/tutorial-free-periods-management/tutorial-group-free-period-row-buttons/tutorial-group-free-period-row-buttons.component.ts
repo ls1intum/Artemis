@@ -21,6 +21,10 @@ import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service
     imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
+    protected readonly faWrench = faWrench;
+    protected readonly faUsers = faUsers;
+    protected readonly faTrash = faTrash;
+
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private modalService = inject(NgbModal);
 
@@ -34,10 +38,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngUnsubscribe = new Subject<void>();
-
-    faWrench = faWrench;
-    faUsers = faUsers;
-    faTrash = faTrash;
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService
@@ -55,9 +55,9 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     openEditFreePeriodDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
-        modalRef.componentInstance.course.set(this.course());
-        modalRef.componentInstance.tutorialGroupFreePeriod.set(this.tutorialFreePeriod());
-        modalRef.componentInstance.tutorialGroupsConfiguration.set(this.tutorialGroupConfiguration());
+        modalRef.componentInstance.course = this.course();
+        modalRef.componentInstance.tutorialGroupFreePeriod = this.tutorialFreePeriod();
+        modalRef.componentInstance.tutorialGroupsConfiguration = this.tutorialGroupConfiguration();
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
