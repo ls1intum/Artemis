@@ -14,7 +14,6 @@ import { CourseNotificationPopupOverlayComponent } from 'app/communication/cours
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -29,7 +28,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
         NgStyle,
         PageRibbonComponent,
         RouterOutlet,
-        NotificationPopupComponent,
         FooterComponent,
         CourseNotificationPopupOverlayComponent,
         FeatureToggleHideDirective,

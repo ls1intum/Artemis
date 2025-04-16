@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -1222,8 +1221,6 @@ public class ExamService {
         // This contains possible errors encountered during the archive process
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
-
         try {
             // Create exam archives directory if it doesn't exist
             Files.createDirectories(examArchivesDirPath);
@@ -1237,10 +1234,6 @@ public class ExamService {
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
                 examRepository.saveAndFlush(exam);
             }
-            else {
-                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
-                return;
-            }
         }
         catch (IOException e) {
             var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
@@ -1248,7 +1241,6 @@ public class ExamService {
             log.info(error);
         }
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
         log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
