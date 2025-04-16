@@ -61,10 +61,17 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faGripLines = faGripLines;
 
     /**
-     * PDF.js requires a URL pointing to a worker script to process PDFs.
-     * The worker script is included in the package but is required to be served separately as a static asset.
-     * In Artemis the postinstall lifecycle hook (see package.json) copies the script from the package to the
-     * publicly served contents folder.
+     * pdfjs-dist requires a URL pointing to a worker script to process PDFs. See:
+     * https://github.com/mozilla/pdfjs-dist
+     * https://github.com/mozilla/pdf.js/issues/12917#
+     * https://github.com/mozilla/pdf.js/issues/12917#
+     *
+     * The worker script is included in the package but is required to be served separately as a static asset for Angular projects. See:
+     * https://www.nutrient.io/blog/how-to-build-an-angular-pdf-viewer-with-pdfjs/#:~:text=Copy%20the%20,use%20the%20following%20bash%20command
+     * https://stackoverflow.com/questions/49822219/how-to-give-pdf-js-worker-in-angular-cli-application#:~:text=Put%20your%20pdf,to%20%2Fsrc%2Fassets%2F%20And%20then%20use
+     * https://github.com/mozilla/pdf.js/discussions/18438#
+     *
+     * In Artemis the postinstall lifecycle hook (see package.json) copies the script from the package to the publicly served contents folder.
      */
     constructor() {
         PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
