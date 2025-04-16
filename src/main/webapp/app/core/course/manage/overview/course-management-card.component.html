@@ -225,15 +225,17 @@
     </div>
     <div class="card-footer">
         @if (course.isAtLeastTutor) {
-            <a
-                [routerLink]="['/course-management', course.id, 'exams']"
-                class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'entity.action.exams' | artemisTranslate"
-                id="course-card-open-exams"
-            >
-                <fa-icon [icon]="faGraduationCap" />
-                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="examEnabled" placement="right">
+                <a
+                    [routerLink]="['/course-management', course.id, 'exams']"
+                    class="btn btn-primary me-1 mb-1"
+                    [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+                    id="course-card-open-exams"
+                >
+                    <fa-icon [icon]="faGraduationCap" />
+                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         @if (course.isAtLeastTutor) {
             <a

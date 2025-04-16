@@ -28,6 +28,11 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testExamProperty() {
+        testProperty(artemisConfigHelper::isExamEnabled, Constants.EXAM_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
     void testPlagiarismProperty() {
         testProperty(artemisConfigHelper::isPlagiarismEnabled, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME);
     }
