@@ -60,6 +60,12 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     protected readonly faEyeSlash = faEyeSlash;
     protected readonly faGripLines = faGripLines;
 
+    /**
+     * PDF.js requires a URL pointing to a worker script to process PDFs.
+     * The worker script is included in the package but is required to be served separately as a static asset.
+     * In Artemis the postinstall lifecycle hook (see package.json) copies the script from the package to the
+     * publicly served contents folder.
+     */
     constructor() {
         PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
     }
