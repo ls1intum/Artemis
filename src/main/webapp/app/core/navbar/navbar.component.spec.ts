@@ -32,7 +32,6 @@ import { mockThemeSwitcherComponentViewChildren } from 'test/helpers/mocks/mock-
 import { NavbarComponent } from 'app/core/navbar/navbar.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 
@@ -84,7 +83,6 @@ describe('NavbarComponent', () => {
                 MockRouterLinkActiveOptionsDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(FindLanguageFromKeyPipe),
-                MockComponent(NotificationSidebarComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),

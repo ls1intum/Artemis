@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
@@ -432,9 +431,7 @@ public class ChannelService {
         List<String> userLogins = studentParticipationRepository.findAffectedLoginsByFeedbackDetailText(exerciseId, feedbackDetailTexts, testCaseName);
 
         if (userLogins != null && !userLogins.isEmpty()) {
-            var registeredUsers = registerUsersToChannel(false, false, false, userLogins, course, createdChannel);
-            registeredUsers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(createdChannel, user, requestingUser,
-                    NotificationType.CONVERSATION_ADD_USER_CHANNEL));
+            registerUsersToChannel(false, false, false, userLogins, course, createdChannel);
         }
 
         return createdChannel;
