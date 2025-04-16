@@ -48,6 +48,7 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -65,6 +66,7 @@ describe('DiscussionSectionComponent', () => {
     let channelService: ChannelService;
     let getChannelOfLectureSpy: jest.SpyInstance;
     let getChannelOfExerciseSpy: jest.SpyInstance;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -87,6 +89,7 @@ describe('DiscussionSectionComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
                 { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseStorageService, useClass: CourseStorageService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
@@ -122,6 +125,9 @@ describe('DiscussionSectionComponent', () => {
             ),
         );
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseStorageService.setCourses([metisCourse]);
     });
 
     afterEach(() => {
