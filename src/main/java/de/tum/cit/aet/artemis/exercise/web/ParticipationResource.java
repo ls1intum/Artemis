@@ -431,7 +431,7 @@ public class ParticipationResource {
      * <li>Checks if the due date has passed and if the user has individual working time.</li>
      * <li>Additionally for programming exercises, checks if:
      * <ul>
-     * <li>the feature is enabled</li>
+     * <li>the programming exercise feature is enabled</li>
      * <li>the user has the necessary permissions</li>
      * </ul>
      * </li>
