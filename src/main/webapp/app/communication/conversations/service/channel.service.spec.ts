@@ -8,9 +8,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('ChannelService', () => {
     let service: ChannelService;
@@ -24,7 +22,6 @@ describe('ChannelService', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(ChannelService);
