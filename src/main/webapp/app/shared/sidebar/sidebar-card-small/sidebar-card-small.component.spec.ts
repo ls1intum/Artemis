@@ -8,10 +8,8 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
 
 describe('SidebarCardSmallComponent', () => {
     let component: SidebarCardSmallComponent;
@@ -32,7 +30,6 @@ describe('SidebarCardSmallComponent', () => {
             ],
             providers: [
                 { provide: Router, useValue: router },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();

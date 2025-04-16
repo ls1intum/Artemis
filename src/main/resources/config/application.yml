@@ -121,11 +121,11 @@ artemis:
 
     compatible-versions:
       android:
-        min: "1.2.0"
-        recommended: "1.2.0"
+        min: "2.0.0"
+        recommended: "2.0.0"
       ios:
-        min: "1.6.1"
-        recommended: "1.6.1"
+        min: "2.0.0"
+        recommended: "2.0.0"
 
 
 
