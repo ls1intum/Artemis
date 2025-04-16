@@ -30,6 +30,8 @@ public class DomainUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
+    // TODO find a better fix without changing the behaviour of this service
+
     @Override
     public UserDetails loadUserByUsername(final String loginOrEmail) {
         log.debug("Authenticating {}", loginOrEmail);
@@ -41,18 +43,18 @@ public class DomainUserDetailsService implements UserDetailsService {
         User user;
         if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
             // It's an email, try to find the user based on the email
-            user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true)
+            user = userRepository.findOneWithGroupsAndAuthoritiesByEmail(lowercaseLoginOrEmail)
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by email in the database"));
         }
         else {
             // It's a login, try to find the user based on the login
-            user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true)
+            user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(lowercaseLoginOrEmail)
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by login in the database"));
         }
 
-        if (!user.isInternal()) {
-            throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
-        }
+        // if (!user.isInternal()) {
+        // throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
+        // }
         return createSpringSecurityUser(lowercaseLoginOrEmail, user);
     }
 

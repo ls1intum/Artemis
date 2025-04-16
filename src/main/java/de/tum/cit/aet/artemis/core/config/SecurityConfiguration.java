@@ -9,6 +9,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -95,6 +97,21 @@ public class SecurityConfiguration {
 
     @Value("${client.port:${server.port}}")
     private String port;
+
+    @PostConstruct
+    public void validateConfiguration() {
+        if (passkeyEnabled) {
+            try {
+                new URI(serverUrl).toURL();
+                if (!port.matches("\\d+")) {
+                    throw new IllegalStateException("Invalid port configuration: " + port);
+                }
+            }
+            catch (URISyntaxException | MalformedURLException e) {
+                throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
+            }
+        }
+    }
 
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
@@ -276,9 +293,6 @@ public class SecurityConfiguration {
         if (passkeyEnabled) {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
             URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();
-            String ts3Url1 = "http://192.168.1.1";
-            String ts3Url2 = "http://131.159.89.160";
-            String ts3Url3 = "http://131.159.89.17";
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
                     publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialRequestOptionsRepository());
             http.with(webAuthnConfigurer, configurer -> {
@@ -287,11 +301,7 @@ public class SecurityConfiguration {
                         clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString(),
                         ensureTrailingSlash(clientUrlToRegisterPasskey.toString()),
                         ensureTrailingSlash(clientUrlWithPort.toString()),
-                        ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn",
-                        ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn",
-                        ensureTrailingSlash(ensureTrailingSlash(clientUrlToRegisterPasskey.toString()) + "login/webauthn"),
-                        ensureTrailingSlash(ensureTrailingSlash(clientUrlWithPort.toString()) + "login/webauthn"),
-                        ts3Url1, ts3Url2, ts3Url3, clientUrlToRegisterPasskey.getHost()
+                        clientUrlToRegisterPasskey.getHost(), "http://localhost:9000"
                     )
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())
