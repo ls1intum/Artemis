@@ -37,7 +37,7 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
@@ -53,6 +53,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercis
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
@@ -72,6 +73,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
+        FeatureOverlayComponent,
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -181,6 +183,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     auxiliaryRepositoriesValid = signal<boolean>(true);
     public customBuildPlansSupported = '';
     public theiaEnabled = false;
+    public plagiarismEnabled = false;
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -515,6 +518,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
 
         this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.defineSupportedProgrammingLanguages();
     }
 

@@ -1,10 +1,8 @@
 package de.tum.cit.aet.artemis.plagiarism.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -14,10 +12,11 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
 
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @Controller
 public class PlagiarismPostApi extends AbstractPlagiarismApi {
 

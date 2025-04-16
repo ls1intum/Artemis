@@ -23,11 +23,23 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { ExamChecklistComponent } from '../exam-checklist-component/exam-checklist.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-exam-detail',
     templateUrl: './exam-detail.component.html',
-    imports: [TranslateDirective, RouterLink, FaIconComponent, DeleteButtonDirective, CourseExamArchiveButtonComponent, ExamChecklistComponent, DetailOverviewListComponent],
+    imports: [
+        TranslateDirective,
+        RouterLink,
+        FaIconComponent,
+        DeleteButtonDirective,
+        CourseExamArchiveButtonComponent,
+        ExamChecklistComponent,
+        DetailOverviewListComponent,
+        FeatureOverlayComponent,
+    ],
     providers: [ArtemisDurationFromSecondsPipe],
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
@@ -39,6 +51,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private gradingSystemService = inject(GradingSystemService);
     private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+    private profileService = inject(ProfileService);
 
     exam: Exam;
     formattedStartText?: SafeHtml;
@@ -63,6 +76,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faHeartBroken = faHeartBroken;
     faAward = faAward;
     faFlaskVial = faFlaskVial;
+
+    plagiarismEnabled = false;
 
     isAdmin = false;
     canHaveBonus = false;
@@ -90,6 +105,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
                     this.canHaveBonus = gradingSystemResponse.body.gradeType === GradeType.GRADE;
                 }
             });
+
+            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         });
     }
 

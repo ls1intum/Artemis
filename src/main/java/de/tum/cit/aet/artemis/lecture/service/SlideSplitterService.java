@@ -57,14 +57,15 @@ public class SlideSplitterService {
 
     private final SlideRepository slideRepository;
 
-    private final SlideUnhideService slideUnhideService;
+    // TODO: currently disabled because of a misconfiguration
+    // private final SlideUnhideService slideUnhideService;
 
     private final ExerciseRepository exerciseRepository;
 
-    public SlideSplitterService(FileService fileService, SlideRepository slideRepository, SlideUnhideService slideUnhideService, ExerciseRepository exerciseRepository) {
+    public SlideSplitterService(FileService fileService, SlideRepository slideRepository/* , SlideUnhideService slideUnhideService */, ExerciseRepository exerciseRepository) {
         this.fileService = fileService;
         this.slideRepository = slideRepository;
-        this.slideUnhideService = slideUnhideService;
+        // this.slideUnhideService = slideUnhideService;
         this.exerciseRepository = exerciseRepository;
     }
 
@@ -314,8 +315,9 @@ public class SlideSplitterService {
      */
     private void scheduleUnhideIfNeeded(Slide savedSlide, ZonedDateTime previousHiddenValue, ZonedDateTime newHiddenValue) {
         if (!Objects.equals(previousHiddenValue, newHiddenValue)) {
-            slideUnhideService.handleSlideHiddenUpdate(savedSlide);
-            log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
+            // TODO: currently disabled because of a misconfiguration
+            // slideUnhideService.handleSlideHiddenUpdate(savedSlide);
+            // log.debug("Scheduled unhiding for slide ID {} at time {}", savedSlide.getId(), newHiddenValue);
         }
     }
 

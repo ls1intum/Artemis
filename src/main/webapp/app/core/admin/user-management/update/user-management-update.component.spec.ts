@@ -223,7 +223,7 @@ describe('UserManagementUpdateComponent', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(comp.editForm.controls['idInput']).toBeDefined();
+            expect(comp.editForm.controls['id']).toBeDefined();
         }));
     });
 
@@ -242,6 +242,8 @@ describe('UserManagementUpdateComponent', () => {
                 );
                 comp.user = entity;
                 comp.user.login = 'test_user';
+                // @ts-ignore
+                comp.initializeForm();
                 // WHEN
                 comp.save();
                 tick(); // simulate async
@@ -259,6 +261,8 @@ describe('UserManagementUpdateComponent', () => {
                 const entity = new User();
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.user = entity;
+                // @ts-ignore
+                comp.initializeForm();
                 // WHEN
                 comp.save();
                 tick(); // simulate async
