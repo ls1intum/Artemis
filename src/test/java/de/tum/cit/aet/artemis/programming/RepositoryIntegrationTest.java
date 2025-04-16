@@ -53,6 +53,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -112,6 +113,9 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Autowired
     private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
+    private ResultService resultService;
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
@@ -1021,7 +1025,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
+    void testBuildLogsFromFileForSpecificResults() throws Exception {
         // FIRST SUBMISSION
         var submission1 = new ProgrammingSubmission();
         submission1.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -1053,6 +1057,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission2.setBuildLogEntries(submission2Logs);
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
+
+        // TODO works differently now, fix / adjust test
 
         // Specify to use result1
         var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
