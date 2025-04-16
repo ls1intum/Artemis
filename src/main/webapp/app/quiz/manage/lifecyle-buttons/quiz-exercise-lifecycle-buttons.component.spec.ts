@@ -7,13 +7,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { QuizBatch, QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseLifecycleButtonsComponent } from 'app/quiz/manage/lifecyle-buttons/quiz-exercise-lifecycle-buttons.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('QuizExercise Lifecycle Buttons Component', () => {
     let comp: QuizExerciseLifecycleButtonsComponent;
@@ -47,8 +47,8 @@ describe('QuizExercise Lifecycle Buttons Component', () => {
 
         fixture = TestBed.createComponent(QuizExerciseLifecycleButtonsComponent);
         comp = fixture.componentInstance;
-        quizExerciseService = fixture.debugElement.injector.get(QuizExerciseService);
-        alertService = fixture.debugElement.injector.get(AlertService);
+        quizExerciseService = TestBed.inject(QuizExerciseService);
+        alertService = TestBed.inject(AlertService);
     });
 
     afterEach(() => {

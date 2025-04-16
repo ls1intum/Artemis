@@ -1,14 +1,14 @@
-import { DebugElement, input, runInInjectionContext } from '@angular/core';
+import { input, runInInjectionContext } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTextEditorService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-text-editor.service';
+import { MockTextEditorService } from 'test/helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/text/overview/service/text-editor.service';
 import { BehaviorSubject, of } from 'rxjs';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
@@ -21,7 +21,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ComplaintsFormComponent } from 'app/assessment/overview/complaint-form/complaints-form.component';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
-import { MockTextSubmissionService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-text-submission.service';
+import { MockTextSubmissionService } from 'test/helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/core/course/shared/entities/course.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
@@ -35,7 +35,7 @@ import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-particip
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
@@ -43,18 +43,17 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
     let fixture: ComponentFixture<TextEditorComponent>;
-    let debugElement: DebugElement;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: jest.SpyInstance;
@@ -112,8 +111,7 @@ describe('TextEditorComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TextEditorComponent);
                 comp = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-                textService = debugElement.injector.get(TextEditorService);
+                textService = TestBed.inject(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
@@ -277,7 +275,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'success');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
@@ -291,7 +289,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should warn alert on submit if submitDueDateMissedAlert', () => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'warning');
         comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
@@ -474,7 +472,7 @@ describe('TextEditorComponent', () => {
 
     it('should load Iris settings when Iris profile is active and not in exam mode', fakeAsync(() => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const mockIrisSettings = { id: 123 } as IrisSettings;
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings').mockReturnValue(of(mockIrisSettings));
@@ -495,7 +493,7 @@ describe('TextEditorComponent', () => {
 
     it('should not load Iris settings when in exam mode', fakeAsync(() => {
         const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
 
@@ -515,7 +513,7 @@ describe('TextEditorComponent', () => {
 
     it('should not load Iris settings when Iris profile is not active', fakeAsync(() => {
         const profileInfo = { activeProfiles: ['no-iris'] } as ProfileInfo;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         jest.spyOn(irisSettingsService, 'getCombinedExerciseSettings');
 

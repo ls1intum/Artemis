@@ -3,7 +3,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
 import { NgbTooltip, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('Feature Overlay Component Tests', () => {
     let fixture: ComponentFixture<FeatureOverlayComponent>;

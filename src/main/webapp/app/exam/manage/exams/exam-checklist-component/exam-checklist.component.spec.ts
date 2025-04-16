@@ -8,21 +8,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { MockExamChecklistService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-exam-checklist.service';
+import { MockExamChecklistService } from 'test/helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -93,7 +93,7 @@ describe('ExamChecklistComponent', () => {
                 profileService = TestBed.inject(ProfileService);
 
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ activeModuleFeatures: [MODULE_FEATURE_TEXT] }));
+                getProfileInfoSub.mockReturnValue({ activeModuleFeatures: [MODULE_FEATURE_TEXT] });
             });
     });
 

@@ -1,12 +1,11 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { MockNgbModalService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
@@ -15,7 +14,7 @@ import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import '@angular/localize/init';
-import { ProgrammingLanguageFeature, ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
@@ -28,21 +27,21 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
-import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from '../../../shared/constants/input.constants';
+import { APP_NAME_PATTERN_FOR_SWIFT, PACKAGE_NAME_PATTERN_FOR_JAVA_KOTLIN } from 'app/shared/constants/input.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileInfo, ProgrammingLanguageFeature } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -57,15 +56,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     } as ActivatedRoute;
     let comp: ProgrammingExerciseUpdateComponent;
     let fixture: ComponentFixture<ProgrammingExerciseUpdateComponent>;
-    let debugElement: DebugElement;
     let programmingExerciseService: ProgrammingExerciseService;
     let courseService: CourseManagementService;
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
     let profileService: ProfileService;
-
-    let getProfileInfoSub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -85,26 +81,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(ProgrammingExerciseUpdateComponent);
         comp = fixture.componentInstance;
-        debugElement = fixture.debugElement;
-        programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
-        courseService = debugElement.injector.get(CourseManagementService);
-        exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
-        programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
-        alertService = debugElement.injector.get(AlertService);
-        profileService = debugElement.injector.get(ProfileService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        courseService = TestBed.inject(CourseManagementService);
+        exerciseGroupService = TestBed.inject(ExerciseGroupService);
+        programmingExerciseFeatureService = TestBed.inject(ProgrammingLanguageFeatureService);
+        alertService = TestBed.inject(AlertService);
+        profileService = TestBed.inject(ProfileService);
 
-        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-        const newProfileInfo = new ProfileInfo();
-        newProfileInfo.activeProfiles = [];
-        newProfileInfo.activeModuleFeatures = [];
-        getProfileInfoSub.mockReturnValue(of(newProfileInfo));
-
-        comp.isSimpleMode.set(false);
-
-        const programmingExercise = new ProgrammingExercise(undefined, undefined);
-        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-        route.data = of({ programmingExercise });
-        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+        const programmingLanguageFeature = {
             programmingLanguage: ProgrammingLanguage.JAVA,
             sequentialTestRuns: true,
             staticCodeAnalysis: true,
@@ -113,7 +97,20 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             checkoutSolutionRepositoryAllowed: true,
             projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
             auxiliaryRepositoriesSupported: true,
-        } as ProgrammingLanguageFeature);
+        } as ProgrammingLanguageFeature;
+
+        const newProfileInfo = new ProfileInfo();
+        newProfileInfo.activeProfiles = [];
+        newProfileInfo.activeModuleFeatures = [];
+        newProfileInfo.programmingLanguageFeatures = [programmingLanguageFeature];
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
+
+        comp.isSimpleMode.set(false);
+
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+        route.data = of({ programmingExercise });
+        jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(programmingLanguageFeature);
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
@@ -237,9 +234,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             entity.id = 1;
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(
                 throwError(
-                    new HttpResponse({
-                        headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
-                    }),
+                    () =>
+                        new HttpResponse({
+                            headers: new HttpHeaders({ 'X-artemisApp-alert': 'error-message' }),
+                        }),
                 ),
             );
             const alertSpy = jest.spyOn(alertService, 'addAlert');
@@ -906,12 +904,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 },
             ],
         ])('%s', (description, profileInfo, expectedException) => {
-            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-
             const newProfileInfo = new ProfileInfo();
             newProfileInfo.activeProfiles = profileInfo.activeProfiles;
-
-            getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(newProfileInfo);
 
             const route = TestBed.inject(ActivatedRoute);
             route.params = of({ courseId });

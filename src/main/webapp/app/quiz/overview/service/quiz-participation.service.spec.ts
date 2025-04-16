@@ -4,7 +4,7 @@ import { QuizParticipationService } from 'app/quiz/overview/service/quiz-partici
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Quiz Participation Service', () => {

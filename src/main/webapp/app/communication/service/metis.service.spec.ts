@@ -2,23 +2,23 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
-import { MockAnswerPostService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { PostService } from 'app/communication/service/post.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ReactionService } from 'app/communication/service/reaction.service';
-import { MockReactionService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-reaction.service';
+import { MockReactionService } from 'test/helpers/mocks/service/mock-reaction.service';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { DisplayPriority, MetisPostAction, PageType, PostContextFilter, UserRole } from 'app/communication/metis.util';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProvider } from 'ng-mocks';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -27,7 +27,6 @@ import { Subject, of, throwError } from 'rxjs';
 import {
     conversationBetweenUser1User2,
     directMessageUser2,
-    metisChannel,
     metisCourse,
     metisExam,
     metisExercise,
@@ -40,19 +39,17 @@ import {
     metisUser1,
     metisUser2,
     plagiarismPost,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/metis-sample-data';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { Conversation, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { MockNotificationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
-import { MockForwardedMessageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-forwarded-message.service';
+import { MockForwardedMessageService } from 'test/helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -85,7 +82,6 @@ describe('Metis Service', () => {
                 provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 MockProvider(ConversationService),
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
@@ -535,7 +531,7 @@ describe('Metis Service', () => {
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             metisServiceGetFilteredPostsSpy.mockReset();
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
@@ -548,7 +544,7 @@ describe('Metis Service', () => {
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!], page: 0, pageSize: ITEMS_PER_PAGE });
             metisServiceGetFilteredPostsSpy.mockReset();
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
@@ -561,7 +557,7 @@ describe('Metis Service', () => {
             metisServiceGetFilteredPostsSpy.mockReset();
 
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
@@ -576,7 +572,7 @@ describe('Metis Service', () => {
             expect(metisServiceGetFilteredPostsSpy).not.toHaveBeenCalled();
             metisService.getFilteredPosts({ conversationIds: [metisPostInChannel.conversation!.id!] });
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledExactlyOnceWith({ conversationIds: [metisPostInChannel.conversation!.id!] });
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
         }));
 
         it('subscribes to broadcast topic for course-wide channels', fakeAsync(() => {
@@ -589,7 +585,7 @@ describe('Metis Service', () => {
                 isCourseWide: true,
             } as ChannelDTO);
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
@@ -609,7 +605,7 @@ describe('Metis Service', () => {
                 isCourseWide: false,
             } as ChannelDTO);
             expect(metisServiceCreateWebsocketSubscriptionSpy).not.toHaveBeenCalled();
-            expect(websocketServiceSubscribeSpy).not.toHaveBeenCalled();
+            expect(websocketServiceSubscribeSpy).toHaveBeenCalledOnce();
             // receive message on channel
             tick();
             expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ conversationIds: [1], page: 0, pageSize: ITEMS_PER_PAGE }, true, {
@@ -635,7 +631,7 @@ describe('Metis Service', () => {
                 metisService.getFilteredPosts({ plagiarismCaseId: 1 } as PostContextFilter);
 
                 // Ensure subscribe to websocket was called
-                expect(websocketService.subscribe).toHaveBeenCalledExactlyOnceWith('/topic/metis/plagiarismCase/1');
+                expect(websocketServiceSubscribeSpy).toHaveBeenCalledTimes(2);
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
@@ -664,8 +660,8 @@ describe('Metis Service', () => {
                 // set currentPostContextFilter appropriately
                 metisService.getFilteredPosts({ conversationId: mockPostDTO.post.conversation?.id } as PostContextFilter);
 
-                // Ensure subscribe to websocket was not called
-                expect(websocketService.subscribe).not.toHaveBeenCalled();
+                // Ensure subscribe to websocket was called
+                expect(websocketService.subscribe).toHaveBeenCalledOnce();
 
                 // Emulate receiving a message
                 const getPostsSpy = jest.spyOn(postService, 'getPosts');
@@ -678,31 +674,6 @@ describe('Metis Service', () => {
                 expect(getPostsSpy).not.toHaveBeenCalled();
             },
         );
-
-        it('should update messages received over WebSocket in private channels', () => {
-            // Setup
-            const mockPostDTO = {
-                post: { ...metisPostInChannel, conversation: { ...metisChannel, isCourseWide: false } },
-                action: MetisPostAction.CREATE,
-            };
-            const mockReceiveObservable = new Subject();
-            websocketServiceReceiveStub.mockReturnValue(mockReceiveObservable.asObservable());
-            metisService.setPageType(PageType.OVERVIEW);
-
-            // set currentPostContextFilter appropriately
-            metisService.getFilteredPosts({ conversationIds: [metisChannel.id] } as PostContextFilter);
-            const markAsReadSpy = jest.spyOn(conversationService, 'markAsRead').mockReturnValue(of());
-
-            metisService['handleNewOrUpdatedMessage'](mockPostDTO);
-
-            // Ensure subscribe to websocket was not called
-            expect(websocketService.subscribe).not.toHaveBeenCalled();
-
-            // Emulate receiving a message
-            mockReceiveObservable.next(mockPostDTO);
-
-            expect(markAsReadSpy).toHaveBeenCalled();
-        });
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup

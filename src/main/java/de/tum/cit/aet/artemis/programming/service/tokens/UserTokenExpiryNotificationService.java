@@ -38,7 +38,6 @@ public class UserTokenExpiryNotificationService {
     public void sendTokenExpirationNotifications() {
         log.info("Sending Token expiration notifications to single user");
         notifyOnExpiredToken();
-        notifyUsersOnUpcomingVcsAccessTokenExpiry();
     }
 
     /**
@@ -46,13 +45,6 @@ public class UserTokenExpiryNotificationService {
      */
     public void notifyOnExpiredToken() {
         notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), singleUserNotificationService::notifyUserAboutExpiredVcsAccessToken);
-    }
-
-    /**
-     * Notifies the users one week before the VCS access tokens expiry
-     */
-    public void notifyUsersOnUpcomingVcsAccessTokenExpiry() {
-        notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), singleUserNotificationService::notifyUserAboutSoonExpiringVcsAccessToken);
     }
 
     /**

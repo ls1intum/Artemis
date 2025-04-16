@@ -1,13 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { tap } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterModule } from '@angular/router';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { tap } from 'rxjs';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -25,15 +25,11 @@ export class UserSettingsContainerComponent implements OnInit {
     private readonly accountService = inject(AccountService);
 
     currentUser?: User;
-    localVCEnabled = true;
     isPasskeyEnabled = false;
     isAtLeastTutor = false;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-            this.isPasskeyEnabled = profileInfo.passkeyEnabled;
-        });
+        this.isPasskeyEnabled = this.profileService.getProfileInfo().passkeyEnabled;
 
         this.accountService
             .getAuthenticationState()

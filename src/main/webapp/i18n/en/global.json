@@ -119,11 +119,7 @@
                 "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings",
-            "guidedTutorial": "Guided tutorial",
-            "startTutorial": "Start tutorial",
-            "restartTutorial": "Restart tutorial",
-            "continueTutorial": "Continue tutorial"
+            "settings": "Settings"
         },
         "form": {
             "username": "Login or email",
@@ -276,7 +272,8 @@
             "search": "Search",
             "select": "Select",
             "sendToIris": "Send To Iris",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Show"
         },
         "detail": {
             "field": "Field",

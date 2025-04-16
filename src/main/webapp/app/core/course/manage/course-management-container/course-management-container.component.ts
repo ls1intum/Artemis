@@ -3,10 +3,8 @@ import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { NgClass, NgStyle, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 import {
     faChartBar,
@@ -23,13 +21,11 @@ import {
     faTimes,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { CourseSidebarComponent, SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { facSidebar } from 'app/shared/icons/icons';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
@@ -67,12 +63,9 @@ import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course
         MatSidenavContainer,
         MatSidenavContent,
         MatSidenav,
-        NgbTooltip,
-        NgStyle,
         RouterLink,
         RouterOutlet,
         NgTemplateOutlet,
-        FaIconComponent,
         TranslateDirective,
         CourseSidebarComponent,
         CourseExamArchiveButtonComponent,
@@ -129,7 +122,6 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
-    facSidebar = facSidebar;
     faQuestion = faQuestion;
 
     protected readonly ButtonSize = ButtonSize;
@@ -261,7 +253,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const atlasItems = this.getAtlasItems();
             const scoresItem = this.getScoresItem();
             const buildAndLtiItems: SidebarItem[] = [];
-            this.addBuildQueueItem(currentCourse, buildAndLtiItems);
+            this.addBuildQueueItem(buildAndLtiItems);
             this.addLtiItem(currentCourse, buildAndLtiItems);
 
             sidebarItems.splice(3, 0, ...irisItems); // After lectures
@@ -280,7 +272,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
     }
 
-    private addBuildQueueItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
+    private addBuildQueueItem(sidebarItems: SidebarItem[]) {
         if (this.localCIActive()) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }

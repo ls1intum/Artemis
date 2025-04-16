@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * This helper class is used to store transient information related to the notification,
  * especially regarding the creation of valid URLs/Links on the server side for emails
  * NotificationTargets are intended to have different attributes, i.e. many will be null
+ * TODO: Delete when deleting {@link de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService}
  */
 @JsonInclude(NON_EMPTY) // needed for ObjectMapper to ignore null values
 public class NotificationTarget {

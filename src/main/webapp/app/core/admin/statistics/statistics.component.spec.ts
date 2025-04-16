@@ -1,15 +1,15 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { StatisticsComponent } from 'app/core/admin/statistics/statistics.component';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { SpanType } from 'app/exercise/shared/entities/statistics.model';
 import { provideRouter } from '@angular/router';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('StatisticsComponent', () => {

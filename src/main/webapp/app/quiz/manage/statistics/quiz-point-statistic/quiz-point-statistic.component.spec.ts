@@ -1,5 +1,5 @@
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -9,10 +9,10 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { QuizPointStatisticComponent } from 'app/quiz/manage/statistics/quiz-point-statistic/quiz-point-statistic.component';
 import dayjs from 'dayjs/esm';
 import { QuizPointStatistic } from 'app/quiz/shared/entities/quiz-point-statistic.model';
@@ -65,10 +65,10 @@ describe('QuizExercise Point Statistic Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(QuizPointStatisticComponent);
                 comp = fixture.componentInstance;
-                quizService = fixture.debugElement.injector.get(QuizExerciseService);
-                accountService = fixture.debugElement.injector.get(AccountService);
-                router = fixture.debugElement.injector.get(Router);
-                translateService = fixture.debugElement.injector.get(TranslateService);
+                quizService = TestBed.inject(QuizExerciseService);
+                accountService = TestBed.inject(AccountService);
+                router = TestBed.inject(Router);
+                translateService = TestBed.inject(TranslateService);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });

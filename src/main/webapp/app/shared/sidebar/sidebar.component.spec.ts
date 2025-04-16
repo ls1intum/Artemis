@@ -9,7 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -19,11 +19,11 @@ import { EventEmitter, input, runInInjectionContext } from '@angular/core';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { MockActivatedRoute } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 describe('SidebarComponent', () => {

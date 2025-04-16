@@ -23,7 +23,7 @@ plugins {
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "20.5.6"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
-    id "org.owasp.dependencycheck" version "12.1.0"
+    id "org.owasp.dependencycheck" version "12.1.1"
     id "org.springframework.boot" version "${spring_boot_version}"
 }
 
@@ -223,7 +223,7 @@ dependencies {
     implementation "ch.qos.logback:logback-core:${logback_version}"
 
     // required by Saml2, should NOT be used in other places, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "org.apache.santuario:xmlsec:4.0.3"
+    implementation "org.apache.santuario:xmlsec:4.0.4"
 
     implementation "org.jsoup:jsoup:1.19.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
@@ -281,7 +281,7 @@ dependencies {
     implementation "com.zaxxer:HikariCP:6.3.0"
 
     // Required for several dependencies
-    implementation "org.apache.commons:commons-text:1.13.0"
+    implementation "org.apache.commons:commons-text:1.13.1"
     implementation "org.apache.commons:commons-math3:3.6.1"
 
     implementation("org.liquibase:liquibase-core:${liquibase_version}") {
@@ -313,7 +313,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty:1.2.4"
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.4"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -328,7 +328,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.0.2"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.2"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -370,11 +370,12 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.6-jre"
+    implementation "com.google.guava:guava:33.4.7-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
-    implementation "com.google.code.gson:gson:2.12.1"
+    // NOTE: gson itself is not allowed in the Artemis code (based on architecture tests), but is used by dependencies (e.g. spring cloud eureka netflix)
+    implementation "com.google.code.gson:gson:2.13.0"
 
     // explicitly only use this at runtime, because developers should prefer org.apache.commons:csv
     runtimeOnly "com.opencsv:opencsv:5.10"
@@ -398,7 +399,7 @@ dependencies {
 
     // use newest version of plexus to avoid security issues through outdated dependencies
     checkstyle "org.codehaus.plexus:plexus-container-default:2.1.1"
-    checkstyle "org.codehaus.plexus:plexus-classworlds:2.8.0"
+    checkstyle "org.codehaus.plexus:plexus-classworlds:2.9.0"
     checkstyle "com.puppycrawl.tools:checkstyle:${checkstyle_version}"
 
 

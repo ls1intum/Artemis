@@ -4,7 +4,7 @@ import { ConfirmEntityNameComponent } from 'app/shared/confirm-entity-name/confi
 import { Component } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { By } from '@angular/platform-browser';
 
 const expectedEntityName = 'TestEntityName';
