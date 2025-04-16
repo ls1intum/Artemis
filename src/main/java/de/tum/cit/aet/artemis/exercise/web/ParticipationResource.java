@@ -67,6 +67,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -167,6 +168,8 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
+    private final StudentExamRepository studentExamRepository;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -179,7 +182,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, StudentExamRepository studentExamRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -205,6 +208,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
+        this.studentExamRepository = studentExamRepository;
     }
 
     /**
@@ -230,7 +234,7 @@ public class ParticipationResource {
             }
         }
 
-        exercise = checkIfParticipationCanBeStarted(exercise, user);
+        checkIfParticipationCanBeStartedElseThrow(exercise, user);
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
         Participant participant = user;
@@ -240,15 +244,6 @@ public class ParticipationResource {
         }
 
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
-
-        if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {
-            // TODO: this programming exercise was started during an exam (the instructor did not invoke "prepare exercise start" before the exam or it failed in this case)
-            // 1) check that now is between exam start and individual exam end
-            // 2) create a scheduled lock operation (see ProgrammingExerciseScheduleService)
-            // var task = programmingExerciseScheduleService.lockStudentRepository(participation);
-            // 3) add the task to the schedule service
-            // scheduleService.scheduleExerciseTask(exercise, ExerciseLifecycle.DUE, task);
-        }
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();
@@ -280,6 +275,7 @@ public class ParticipationResource {
         if (exercise.isTeamMode()) {
             throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "noPracticeModeForTeams");
         }
+        // TODO: we should allow the practice mode for all other exercise types as well
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
         }
@@ -439,31 +435,35 @@ public class ParticipationResource {
      *
      * @param exercise for which the participation is to be started
      * @param user     attempting to start the participation
-     * @return the exercise, potentially cast to a more specific type if it is a programming exercise
      * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
-    private Exercise checkIfParticipationCanBeStarted(Exercise exercise, User user) {
-        if (exercise instanceof ProgrammingExercise) {
-            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+    private void checkIfParticipationCanBeStartedElseThrow(Exercise exercise, User user) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             // Only editors and instructors have permission to trigger participation after due date passed
             // Also don't allow participations if the feature is disabled
             if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
                     || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
                 throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
             }
-            return programmingExercise;
         }
         else {
             ZonedDateTime exerciseDueDate = exercise.getDueDate();
-            boolean userMightHaveIndividualWorkingTime = exercise.isExamExercise();
+            // NOTE: course exercises can only have an individual due date when they already have started
+            if (exercise.isExamExercise()) {
+                // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
+                exerciseDueDate = exercise.getExam().getEndDate();
+                var studentExam = studentExamRepository.findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
+                if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
+                    exerciseDueDate = studentExam.get().getIndividualEndDate();
+                }
+            }
             boolean isDueDateInPast = exerciseDueDate != null && now().isAfter(exerciseDueDate);
-            if (!userMightHaveIndividualWorkingTime && isDueDateInPast) {
+            if (isDueDateInPast) {
                 throw new AccessForbiddenAlertException("The exercise due date is already over, you can no longer participate in this exercise.", ENTITY_NAME,
                         "dueDateOver.noParticipationPossible");
             }
         }
 
-        return exercise;
     }
 
     /**
