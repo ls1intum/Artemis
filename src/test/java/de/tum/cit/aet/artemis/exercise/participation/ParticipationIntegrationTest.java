@@ -303,6 +303,30 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentBeforeDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class,
+                HttpStatus.CREATED);
+
+        assertThat(participation).isNotNull();
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Set<User> participationUsers = participation.getStudents();
+        assertThat(participationUsers).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        exerciseRepository.save(textExercise);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
@@ -327,30 +351,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         exerciseRepository.save(programmingExercise);
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
-    void participateInTextExerciseAsStudentBeforeDueDatePassed() throws Exception {
-        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
-        exerciseRepository.save(textExercise);
-
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class,
-                HttpStatus.CREATED);
-
-        assertThat(participation).isNotNull();
-        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        Set<User> participationUsers = participation.getStudents();
-        assertThat(participationUsers).contains(user);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1")
-    void participateInTextExerciseAsStudentDueDatePassed() throws Exception {
-        textExercise.setDueDate(ZonedDateTime.now().minusHours(2));
-        exerciseRepository.save(textExercise);
-
-        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
