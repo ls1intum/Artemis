@@ -423,11 +423,19 @@ public class ParticipationResource {
     }
 
     /**
-     * Checks if a participation can be started for the given exercise and user.<br>
-     *
+     * <p>
+     * Checks if a participation can be started for the given exercise and user.
+     * </p>
      * This method verifies if the participation can be started based on the exercise type and user permissions.
-     * For programming exercises, it checks if the feature is enabled and if the user has the necessary permissions.
-     * For other exercises, it checks if the due date has passed and if the user has individual working time.
+     * <ul>
+     * <li>Checks if the due date has passed and if the user has individual working time.</li>
+     * <li>Additionally for programming exercises, checks if:
+     * <ul>
+     * <li>the feature is enabled</li>
+     * <li>the user has the necessary permissions</li>
+     * </ul>
+     * </li>
+     * </ul>
      *
      * @param exercise for which the participation is to be started
      * @param user     attempting to start the participation
@@ -435,10 +443,10 @@ public class ParticipationResource {
      * @throws AccessForbiddenAlertException if the participation cannot be started due to feature restrictions or due date constraints
      */
     private Exercise checkIfParticipationCanBeStarted(Exercise exercise, User user) {
-        // Also don't allow participations if the feature is disabled
         if (exercise instanceof ProgrammingExercise) {
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            // only editors and instructors have permission to trigger participation after due date passed
+            // Only editors and instructors have permission to trigger participation after due date passed
+            // Also don't allow participations if the feature is disabled
             if (!featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)
                     || (!authCheckService.isAtLeastEditorForExercise(exercise, user) && !isAllowedToParticipateInProgrammingExercise(programmingExercise, null))) {
                 throw new AccessForbiddenAlertException("Not allowed", ENTITY_NAME, "dueDateOver.participationInPracticeMode");
