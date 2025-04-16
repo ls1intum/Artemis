@@ -41,6 +41,8 @@ export const MODULE_FEATURE_ATLAS = 'atlas';
 
 export const MODULE_FEATURE_EXAM = 'exam';
 
+export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
+
 export const MODULE_FEATURE_TEXT = 'text';
 
 export const PROFILE_IRIS = 'iris';

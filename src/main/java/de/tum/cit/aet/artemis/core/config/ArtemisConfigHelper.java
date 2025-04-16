@@ -33,6 +33,16 @@ public class ArtemisConfigHelper {
     }
 
     /**
+     * Check if the Plagiarism module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Plagiarism module is enabled, false otherwise
+     */
+    public boolean isPlagiarismEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the text module is enabled.
      *
      * @param environment the Spring environment
