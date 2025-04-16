@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -168,7 +168,7 @@ public class ParticipationResource {
 
     private final ModelingExerciseFeedbackService modelingExerciseFeedbackService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -182,7 +182,7 @@ public class ParticipationResource {
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
             ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            ModelingExerciseFeedbackService modelingExerciseFeedbackService, StudentExamRepository studentExamRepository) {
+            ModelingExerciseFeedbackService modelingExerciseFeedbackService, Optional<StudentExamApi> studentExamApi) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -208,7 +208,7 @@ public class ParticipationResource {
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
         this.textFeedbackApi = textFeedbackApi;
         this.modelingExerciseFeedbackService = modelingExerciseFeedbackService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
     }
 
     /**
@@ -442,7 +442,7 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             // NOTE: this is an absolute edge case because exam participations are generated before the exam starts and should not be started by the user
             exerciseDueDate = exercise.getExam().getEndDate();
-            var studentExam = studentExamRepository.findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
+            var studentExam = studentExamApi.orElseThrow().findByExamIdAndUserId(exercise.getExam().getId(), user.getId());
             if (studentExam.isPresent() && studentExam.get().getIndividualEndDate() != null) {
                 exerciseDueDate = studentExam.get().getIndividualEndDate();
             }
