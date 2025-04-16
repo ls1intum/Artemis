@@ -39,7 +39,12 @@
                                     [style.cursor]="isResizing ? 'ns-resize !important' : undefined"
                                 >
                                     <div class="row mx-0 align-items-baseline">
-                                        <span class="col upload-subtitle" jhiTranslate="artemisApp.markdownEditor.fileUpload"></span>
+                                        <span
+                                            class="col upload-subtitle"
+                                            [jhiTranslate]="
+                                                wrapper.getBoundingClientRect().width < 500 ? 'artemisApp.markdownEditor.fileUploadShort' : 'artemisApp.markdownEditor.fileUpload'
+                                            "
+                                        ></span>
                                     </div>
                                 </label>
                                 <a class="col-auto mx-1" href="https://markdown-it.github.io/">
@@ -82,6 +87,13 @@
                     </div>
                 </ng-template>
             </ng-container>
+
+            @if (showCloseButton()) {
+                <button type="button" class="btn btn-sm close-btn p-0 ms-auto" (click)="onCloseButtonClick()">
+                    <fa-icon [icon]="faTimes" />
+                </button>
+            }
+
             @if (inEditMode) {
                 <ng-container ngbNavItem>
                     <div class="d-flex align-items-center" [style.flex-flow]="'row wrap'">
