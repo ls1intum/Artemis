@@ -201,7 +201,7 @@
         "compile:ts:tests": "npm run prebuild && tsc --project tsconfig.spec.json",
         "lint": "eslint",
         "lint:fix": "eslint --fix",
-        "postinstall": "husky && patch-package && node supporting_scripts/pdfjs_copy_worker.js",
+        "postinstall": "husky && patch-package && node supporting_scripts/pdfjs_copy_worker.mjs",
         "prebuild": "node prebuild.mjs",
         "prepare": "husky",
         "prettier:check": "prettier --check \"src/{main/webapp,test}/**/*.{json,ts,js,css,scss,html}\"",
