@@ -33,7 +33,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         log.info("Saving PublicKeyCredentialRequestOptions to session with id {}", request.getSession().getId());
 
         log.info("Logging all elements in the Hazelcast map:");
-        hazelcastMap.forEach((key, value) -> log.info("Key: {}, Value: {}", key, value));
+        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
 
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
@@ -63,7 +63,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         hazelcastMap.put(sessionId, options);
 
         log.info("Logging all elements in the Hazelcast map:");
-        hazelcastMap.forEach((key, value) -> log.info("Key: {}, Value: {}", key, value));
+        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
 
         log.info("Stored PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
         log.info("Hazelcast size: {}", hazelcastMap.size());
