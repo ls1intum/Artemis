@@ -122,15 +122,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "reset_date")
     private Instant resetDate = null;
 
-    @Column(name = "last_notification_read")
-    private ZonedDateTime lastNotificationRead = null;
-
-    // hides all notifications with a notification date until (before) the given date in the notification sidebar.
-    // if the value is null all notifications are displayed
-    @Nullable
-    @Column(name = "hide_notifications_until")
-    private ZonedDateTime hideNotificationsUntil = null;
-
     @Column(name = "is_internal", nullable = false)
     private boolean internal = true;          // default value
 
@@ -329,22 +320,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setResetDate(Instant resetDate) {
         this.resetDate = resetDate;
-    }
-
-    public ZonedDateTime getLastNotificationRead() {
-        return lastNotificationRead;
-    }
-
-    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
-        this.lastNotificationRead = lastNotificationRead;
-    }
-
-    public ZonedDateTime getHideNotificationsUntil() {
-        return hideNotificationsUntil;
-    }
-
-    public void setHideNotificationsUntil(ZonedDateTime hideNotificationsUntil) {
-        this.hideNotificationsUntil = hideNotificationsUntil;
     }
 
     public String getLangKey() {

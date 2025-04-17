@@ -734,13 +734,6 @@ public class UserTestService {
     }
 
     // Test
-    public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
-        request.put("/api/core/users/notification-date", null, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
-    }
-
-    // Test
     public void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
@@ -773,21 +766,6 @@ public class UserTestService {
         request.delete("/api/core/account/profile-picture", HttpStatus.OK);
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
-    }
-
-    // Test
-    public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
-        request.put("/api/core/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getHideNotificationsUntil()).isNull();
-    }
-
-    // Test
-    public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
-        request.put("/api/core/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-        assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
-        assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
 
     // Test
