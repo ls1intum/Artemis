@@ -105,9 +105,9 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
 
         assertThat(actualAttachment.getName()).isEqualTo("new name");
         var ignoringFields = new String[] { "name", "fileService", "filePathService", "entityFileService", "prevLink", "lecture.lectureUnits", "lecture.posts", "lecture.course",
-                "lecture.attachments" };
+                "lecture.attachments", "lecture.lectureTranscriptions" };
         assertThat(actualAttachment).usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(expectedAttachment);
-        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment, notificationText);
+        verify(groupNotificationService).notifyStudentGroupAboutAttachmentChange(actualAttachment);
     }
 
     @Test

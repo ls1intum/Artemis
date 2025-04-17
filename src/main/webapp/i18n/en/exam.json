@@ -655,7 +655,7 @@
                     "exportResults": "Export the exam results",
                     "editWorkingTime": "Edit the exam duration",
                     "createAnnouncement": "Create an announcement",
-                    "suspiciousBehavior": "Check for suspicious behaviour"
+                    "suspiciousBehavior": "Check for suspicious behavior"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a CSV file, manually, or by importing all students registered in the course.",
@@ -672,9 +672,13 @@
                     "exportResults": "Exports the exam results as a CSV file.",
                     "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
-                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
+                    "suspiciousBehavior": "Check for suspicious behavior and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
+                    "noDeactivatedExerciseTypes": {
+                        "label": "No deactivated exercise types",
+                        "tooltip": "There is at least one exercise with a currently deactivated exercise type. Deleting these exercise types is currently not supported, only the complete exercise group. You should contact the Artemis-hosting system administration."
+                    },
                     "leastoneexercisegroup": "At least one exercise group",
                     "numberofexercisegroupsequal": "Number of exercises in the exam equals the number of exercise groups",
                     "numberofexercisegroupsinbetween": "Number of exercises in the exam is between the number of mandatory exercise groups and the total number of exercise groups",

@@ -94,7 +94,8 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     }
 
     Post postInConversation(Long conversationId, String authorLoginWithoutPrefix) throws Exception {
-        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, null, conversationId, null, false, false, false, null, null);
+        long[] conversationIds = new long[] { conversationId };
+        PostContextFilterDTO postContextFilter = new PostContextFilterDTO(exampleCourseId, null, conversationIds, null, null, false, false, false, false, null, null);
         var requestingUser = userRepository.getUser();
 
         var numberBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).stream().toList().size();

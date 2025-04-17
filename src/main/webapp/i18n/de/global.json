@@ -114,14 +114,11 @@
                 "iris": "Iris Einstellungen",
                 "lti": "LTI Konfiguration",
                 "standardizedCompetencies": "Standardisierte Kompetenzen",
-                "cleanupService": "Aufräumdienst"
+                "cleanupService": "Aufräumdienst",
+                "lectureTranscription": "Vorlesungstranskription"
             },
             "language": "Sprache",
-            "settings": "Einstellungen",
-            "guidedTutorial": "Guided Tutorial",
-            "startTutorial": "Tutorial starten",
-            "restartTutorial": "Tutorial wiederholen",
-            "continueTutorial": "Tutorial fortsetzen"
+            "settings": "Einstellungen"
         },
         "form": {
             "username": "Login oder E-Mail",
@@ -272,7 +269,8 @@
             "search": "Suchen",
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Anzeigen"
         },
         "detail": {
             "field": "Feld",
@@ -354,7 +352,8 @@
         "communication": "Kommunikation",
         "archive": "Kursarchiv",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiatsfälle"
+        "plagiarismCases": "Plagiatsfälle",
+        "settings": "Einstellungen"
     },
     "connectionStatus": {
         "connected": "Verbunden",

@@ -6,7 +6,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/overview/student-exam-working-time/student-exam-working-time.component';
 import { NgClass } from '@angular/common';
 import { ProfilePictureComponent } from '../../profile-picture/profile-picture.component';
-import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status.component';
+import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';

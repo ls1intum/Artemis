@@ -8,7 +8,7 @@
         },
         "quizExercise": {
             "home": {
-                "title": "Quiz Exercises",
+                "title": "Quiz Exercise",
                 "createLabel": "Create Quiz",
                 "editLabel": "Edit Quiz",
                 "importLabel": "Import Quiz",

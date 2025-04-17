@@ -122,15 +122,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "reset_date")
     private Instant resetDate = null;
 
-    @Column(name = "last_notification_read")
-    private ZonedDateTime lastNotificationRead = null;
-
-    // hides all notifications with a notification date until (before) the given date in the notification sidebar.
-    // if the value is null all notifications are displayed
-    @Nullable
-    @Column(name = "hide_notifications_until")
-    private ZonedDateTime hideNotificationsUntil = null;
-
     @Column(name = "is_internal", nullable = false)
     private boolean internal = true;          // default value
 
@@ -157,9 +148,6 @@ public class User extends AbstractAuditingEntity implements Participant {
     @CollectionTable(name = "user_groups", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "user_groups")
     private Set<String> groups = new HashSet<>();
-
-    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<GuidedTourSetting> guidedTourSettings = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private final Set<SavedPost> savedPosts = new HashSet<>();
@@ -334,22 +322,6 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.resetDate = resetDate;
     }
 
-    public ZonedDateTime getLastNotificationRead() {
-        return lastNotificationRead;
-    }
-
-    public void setLastNotificationRead(ZonedDateTime lastNotificationRead) {
-        this.lastNotificationRead = lastNotificationRead;
-    }
-
-    public ZonedDateTime getHideNotificationsUntil() {
-        return hideNotificationsUntil;
-    }
-
-    public void setHideNotificationsUntil(ZonedDateTime hideNotificationsUntil) {
-        this.hideNotificationsUntil = hideNotificationsUntil;
-    }
-
     public String getLangKey() {
         return langKey;
     }
@@ -432,24 +404,6 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setExamUsers(Set<ExamUser> examUsers) {
         this.examUsers = examUsers;
-    }
-
-    public Set<GuidedTourSetting> getGuidedTourSettings() {
-        return this.guidedTourSettings;
-    }
-
-    public void addGuidedTourSetting(GuidedTourSetting setting) {
-        this.guidedTourSettings.add(setting);
-        setting.setUser(this);
-    }
-
-    public void removeGuidedTourSetting(GuidedTourSetting setting) {
-        this.guidedTourSettings.remove(setting);
-        setting.setUser(null);
-    }
-
-    public void setGuidedTourSettings(Set<GuidedTourSetting> guidedTourSettings) {
-        this.guidedTourSettings = guidedTourSettings;
     }
 
     @Override
