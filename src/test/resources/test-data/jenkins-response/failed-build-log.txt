@@ -1,4 +1,4 @@
-Started by GitLab push by Administrator Administrator
+Started by Git push by Administrator Administrator
 Running in Durability level: MAX_SURVIVABILITY
 [Pipeline] Start of Pipeline
 [Pipeline] node
@@ -20,17 +20,17 @@ Timeout set to expire in 30 min
 [Pipeline] { (Checkout)
 [Pipeline] checkout
 The recommended git tool is: NONE
-using credential artemis_gitlab_admin_credentials
+using credential artemis_admin_credentials
 Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@3cd7216; decorates hudson.Launcher$LocalLauncher@7f2e6b7 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
 Cloning the remote Git repository
-Cloning repository http://gitlab:80/CS1JAVA1/cs1java1-tests.git
+Cloning repository http://artemis:80/CS1JAVA1/cs1java1-tests.git
  > git init /var/jenkins_home/workspace/CS1JAVA1/CS1JAVA1-ARTEMISADMIN # timeout=10
-Fetching upstream changes from http://gitlab:80/CS1JAVA1/cs1java1-tests.git
+Fetching upstream changes from http://artemis:80/CS1JAVA1/cs1java1-tests.git
  > git --version # timeout=10
  > git --version # 'git version 2.20.1'
-using GIT_ASKPASS to set credentials Gitlab Admin credentials for Artemis
- > git fetch --tags --force --progress -- http://gitlab:80/CS1JAVA1/cs1java1-tests.git +refs/heads/*:refs/remotes/tests/* # timeout=10
- > git config remote.tests.url http://gitlab:80/CS1JAVA1/cs1java1-tests.git # timeout=10
+using GIT_ASKPASS to set credentials Artemis Admin credentials for Artemis
+ > git fetch --tags --force --progress -- http://artemis:80/CS1JAVA1/cs1java1-tests.git +refs/heads/*:refs/remotes/tests/* # timeout=10
+ > git config remote.tests.url http://artemis:80/CS1JAVA1/cs1java1-tests.git # timeout=10
  > git config --add remote.tests.fetch +refs/heads/*:refs/remotes/tests/* # timeout=10
 Avoid second fetch
 skipping resolution of commit remotes/tests/main, since it originates from another repository
@@ -45,17 +45,17 @@ Running in /var/jenkins_home/workspace/CS1JAVA1/CS1JAVA1-ARTEMISADMIN/assignment
 [Pipeline] {
 [Pipeline] checkout
 The recommended git tool is: NONE
-using credential artemis_gitlab_admin_credentials
+using credential artemis_admin_credentials
 Warning: JENKINS-30600: special launcher org.jenkinsci.plugins.docker.workflow.WithContainerStep$Decorator$1@4cf751a; decorates hudson.Launcher$LocalLauncher@36019c75 will be ignored (a typical symptom is the Git executable not being run inside a designated container)
 Cloning the remote Git repository
-Cloning repository http://gitlab:80/CS1JAVA1/cs1java1-exercise.git
+Cloning repository http://artemis:80/CS1JAVA1/cs1java1-exercise.git
  > git init /var/jenkins_home/workspace/CS1JAVA1/CS1JAVA1-ARTEMISADMIN/assignment # timeout=10
-Fetching upstream changes from http://gitlab:80/CS1JAVA1/cs1java1-exercise.git
+Fetching upstream changes from http://artemis:80/CS1JAVA1/cs1java1-exercise.git
  > git --version # timeout=10
  > git --version # 'git version 2.20.1'
-using GIT_ASKPASS to set credentials Gitlab Admin credentials for Artemis
- > git fetch --tags --force --progress -- http://gitlab:80/CS1JAVA1/cs1java1-exercise.git +refs/heads/*:refs/remotes/assignment/* # timeout=10
- > git config remote.assignment.url http://gitlab:80/CS1JAVA1/cs1java1-exercise.git # timeout=10
+using GIT_ASKPASS to set credentials Artemis Admin credentials for Artemis
+ > git fetch --tags --force --progress -- http://artemis:80/CS1JAVA1/cs1java1-exercise.git +refs/heads/*:refs/remotes/assignment/* # timeout=10
+ > git config remote.assignment.url http://artemis:80/CS1JAVA1/cs1java1-exercise.git # timeout=10
  > git config --add remote.assignment.fetch +refs/heads/*:refs/remotes/assignment/* # timeout=10
 Avoid second fetch
 skipping resolution of commit remotes/tests/main, since it originates from another repository

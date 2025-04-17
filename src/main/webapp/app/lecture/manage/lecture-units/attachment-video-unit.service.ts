@@ -1,5 +1,5 @@
-import { LectureUnitService } from 'app/lecture/manage/lecture-units/lectureUnit.service';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
+import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
@@ -77,5 +77,20 @@ export class AttachmentVideoUnitService {
      */
     getAttachmentFile(courseId: number, attachmentVideoUnitId: number): Observable<Blob> {
         return this.httpClient.get(`api/core/files/courses/${courseId}/attachment-units/${attachmentVideoUnitId}`, { responseType: 'blob' });
+    }
+
+    /**
+     * Update only the student version of an attachment unit's attachment
+     * @param lectureId the id of the lecture
+     * @param attachmentUnitId the id of the attachment unit
+     * @param formData the FormData containing only the student version file
+     */
+    updateStudentVersion(lectureId: number, attachmentUnitId: number, formData: FormData): Observable<EntityResponseType> {
+        return this.httpClient
+            .put<AttachmentVideoUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}/student-version`, formData, {
+                headers: { 'ngsw-bypass': 'true' },
+                observe: 'response',
+            })
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

@@ -133,7 +133,7 @@ public class AttachmentResource {
 
         Attachment result = attachmentRepository.save(attachment);
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(result);
         }
         return ResponseEntity.ok(result);
     }

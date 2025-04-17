@@ -11,15 +11,34 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.core.env.Environment;
 
+/**
+ * Test for {@link ModuleFeatureInfoContributor}.
+ */
 class ModuleFeatureInfoContributorTest {
 
     private final Environment mockEnv = mock(Environment.class);
 
-    private static final List<String> modulePropertyNames = List.of(Constants.ATLAS_ENABLED_PROPERTY_NAME);
+    // @formatter:off
+    private static final List<String> modulePropertyNames = List.of(
+        Constants.ATLAS_ENABLED_PROPERTY_NAME,
+        Constants.EXAM_ENABLED_PROPERTY_NAME,
+        Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
+        Constants.TEXT_ENABLED_PROPERTY_NAME
+    );
+    // @formatter:on
+
+    // @formatter:off
+    private static final List<String> moduleFeatures = List.of(
+        Constants.MODULE_FEATURE_ATLAS,
+        Constants.MODULE_FEATURE_EXAM,
+        Constants.MODULE_FEATURE_PLAGIARISM,
+        Constants.MODULE_FEATURE_TEXT
+    );
+    // @formatter:on
 
     @Test
     void testEnabledContribution() {
-        testContribution(true, List.of(Constants.MODULE_FEATURE_ATLAS));
+        testContribution(true, moduleFeatures);
     }
 
     @Test

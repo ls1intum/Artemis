@@ -42,6 +42,13 @@
         }
     }
 
+    @if (showSearchResultInAnswersHint()) {
+        <div class="search-result-in-answers-info">
+            <fa-icon class="fa-xs align-self-center" [icon]="faInfoCircle" />
+            <span class="emoji-count px-2" jhiTranslate="artemisApp.metis.overview.searchResultInAnswersHint"></span>
+        </div>
+    }
+
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
         @if (isEmojiCount()) {
             <div>

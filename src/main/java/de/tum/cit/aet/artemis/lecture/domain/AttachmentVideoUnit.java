@@ -10,6 +10,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
+import jakarta.persistence.OrderBy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,8 +31,9 @@ public class AttachmentVideoUnit extends LectureUnit {
     @JsonIgnoreProperties(value = "attachmentVideoUnit", allowSetters = true)
     private Attachment attachment;
 
-    @OneToMany(mappedBy = "attachmentVideoUnit", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "attachmentVideoUnit", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("attachmentVideoUnit")
+    @OrderBy("slideNumber ASC")
     private List<Slide> slides = new ArrayList<>();
 
     @Override

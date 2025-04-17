@@ -210,6 +210,7 @@ public class LectureResource {
         Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
         lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
         lectures.forEach(lectureService::filterActiveAttachmentVideoUnits);
+        lectures.forEach(lectureService::filterHiddenPagesOfAttachmentUnits);
         return ResponseEntity.ok().body(lectures);
     }
 
@@ -339,6 +340,7 @@ public class LectureResource {
         competencyApi.orElseThrow(() -> new AtlasNotPresentException(CompetencyApi.class)).addCompetencyLinksToExerciseUnits(lecture);
         lectureService.filterActiveAttachmentVideoUnits(lecture);
         lectureService.filterActiveAttachments(lecture, user);
+        lectureService.filterHiddenPagesOfAttachmentUnits(lecture);
         return ResponseEntity.ok(lecture);
     }
 

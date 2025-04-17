@@ -67,14 +67,28 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     });
 
     /**
-     * Downloads the file
+     * Downloads the file as the student version if available, otherwise the instructor version
+     * If it is not the student view, it always downloads the original version
      */
     handleDownload() {
         this.logEvent();
 
-        if (this.lectureUnit().attachment?.link) {
-            const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
-            this.fileService.downloadFileByAttachmentName(link!, this.lectureUnit().attachment!.name!);
+        // Determine the link based on the availability of a student version
+        const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+        }
+    }
+
+    handleOriginalVersion() {
+        this.logEvent();
+
+        const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

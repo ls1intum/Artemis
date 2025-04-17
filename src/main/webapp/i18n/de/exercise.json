@@ -217,7 +217,11 @@
             },
             "errors": {
                 "exerciseNotFound": "Diese Übung konnte nicht gefunden werden",
-                "projectTypeCouldNotBeDetermined": "Der Projekttyp konnte nicht bestimmt werden, bitte wechsle zum erweiterten Modus und wähle den Projekttyp manuell aus."
+                "projectTypeCouldNotBeDetermined": "Der Projekttyp konnte nicht bestimmt werden, bitte wechsle zum erweiterten Modus und wähle den Projekttyp manuell aus.",
+                "deactivatedExerciseType": {
+                    "label": "Deaktivierter Aufgabentyp",
+                    "tooltip": "Dieser Aufgabentyp ist derzeit deaktiviert. Die Bearbeitung wird nicht unterstützt. Du solltest dich an die Systemadministration von Artemis wenden."
+                }
             },
             "form": {
                 "title": {

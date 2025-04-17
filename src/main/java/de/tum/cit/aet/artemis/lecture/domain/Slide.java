@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.domain;
 
+import java.time.ZonedDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -10,6 +12,7 @@ import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
 @Table(name = "slide")
@@ -26,6 +29,14 @@ public class Slide extends DomainObject {
 
     @Column(name = "slide_number")
     private int slideNumber;
+
+    @Column(name = "hidden")
+    private ZonedDateTime hidden;
+
+    // Exercise ID is retained to sync the Slide's hidden date with the Exercise's due date when linked
+    @ManyToOne
+    @JoinColumn(name = "exercise_id")
+    private Exercise exercise;
 
     public AttachmentVideoUnit getAttachmentVideoUnit() {
         return attachmentVideoUnit;
@@ -49,5 +60,21 @@ public class Slide extends DomainObject {
 
     public void setSlideNumber(int slideNumber) {
         this.slideNumber = slideNumber;
+    }
+
+    public ZonedDateTime getHidden() {
+        return hidden;
+    }
+
+    public void setHidden(ZonedDateTime hidden) {
+        this.hidden = hidden;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 }

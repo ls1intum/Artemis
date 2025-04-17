@@ -23,7 +23,7 @@ public class FilePathService {
     // This is also documented here: https://www.baeldung.com/spring-inject-static-field
     // We can not use a normal service here, as some classes (in the domain package) require this service (or depend on another service that depend on this service), were we cannot
     // use auto-injection
-    // TODO: Rework this behaviour be removing the dependencies to services (like FileService) from the domain package
+    // TODO: Rework this behavior be removing the dependencies to services (like FileService) from the domain package
     private static String fileUploadPath;
 
     @Value("${artemis.file-upload-path}")
@@ -146,6 +146,10 @@ public class FilePathService {
 
     private static Path actualPathForPublicAttachmentVideoUnitFilePath(URI publicPath, String filename) {
         Path path = Path.of(publicPath.getPath());
+        if (publicPath.toString().contains("student")) {
+            String attachmentUnitId = path.getName(2).toString();
+            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+        }
         if (!publicPath.toString().contains("slide")) {
             String attachmentVideoUnitId = path.getName(2).toString();
             return getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentVideoUnitId, filename));
@@ -244,6 +248,9 @@ public class FilePathService {
     }
 
     private static URI publicPathForActualAttachmentVideoUnitFilePath(Path path, String filename, String id) {
+        if (path.toString().contains("student")) {
+            return URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
+        }
         if (!path.toString().contains("slide")) {
             return URI.create("attachments/attachment-unit/" + id + "/" + filename);
         }

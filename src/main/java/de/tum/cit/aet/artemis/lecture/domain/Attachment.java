@@ -61,6 +61,10 @@ public class Attachment extends DomainObject implements Serializable {
     @JoinColumn(name = "attachment_unit_id")
     private AttachmentVideoUnit attachmentVideoUnit;
 
+    // Student Version holds the version of the file without the pages hidden by the Instructor
+    @Column(name = "student_version")
+    private String studentVersion;
+
     public String getName() {
         return name;
     }
@@ -131,6 +135,14 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setAttachmentVideoUnit(AttachmentVideoUnit attachmentVideoUnit) {
         this.attachmentVideoUnit = attachmentVideoUnit;
+    }
+
+    public String getStudentVersion() {
+        return studentVersion;
+    }
+
+    public void setStudentVersion(String studentVersion) {
+        this.studentVersion = studentVersion;
     }
 
     public Boolean isVisibleToStudents() {

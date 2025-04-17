@@ -6,9 +6,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import {
+    IconDefinition,
     faFile,
     faFileArchive,
     faFileCode,
@@ -20,9 +21,8 @@ import {
     faFilePen,
     faFilePowerpoint,
     faFileWord,
-    IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
-import { MockFileService } from '../../../helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 
 describe('AttachmentVideoUnitComponent', () => {
@@ -82,11 +82,22 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     it('should handle download', () => {
+        const createStudentLinkSpy = jest.spyOn(fileService, 'createStudentLink');
         const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
         const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
 
-        fixture.detectChanges();
         component.handleDownload();
+
+        expect(createStudentLinkSpy).toHaveBeenCalledOnce();
+        expect(downloadFileSpy).toHaveBeenCalledOnce();
+        expect(onCompletionEmitSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should handle original version', () => {
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileByAttachmentName');
+        const onCompletionEmitSpy = jest.spyOn(component.onCompletion, 'emit');
+
+        component.handleOriginalVersion();
 
         expect(downloadFileSpy).toHaveBeenCalledOnce();
         expect(onCompletionEmitSpy).toHaveBeenCalledOnce();

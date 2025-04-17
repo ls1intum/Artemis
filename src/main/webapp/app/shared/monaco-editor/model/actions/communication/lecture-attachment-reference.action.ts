@@ -1,7 +1,7 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -26,6 +26,7 @@ interface LectureAttachmentReferenceActionArgs {
     attachmentVideoUnit?: AttachmentVideoUnit;
     slide?: Slide;
     attachment?: Attachment;
+    slideIndex?: number;
 }
 
 /**
@@ -107,8 +108,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentVideoUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentVideoUnit, args.slide);
+                if (args.attachmentVideoUnit && args.slide && args.slideIndex) {
+                    this.insertSlideReference(editor, args.attachmentVideoUnit, args.slide, args.slideIndex);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -136,18 +137,14 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit, slide: Slide): void {
-        const shortLink = slide.slideImagePath?.split('attachments/')[1];
-        // Remove the trailing slash and the file name.
-        const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-        this.replaceTextAtCurrentSelection(
-            editor,
-            `[slide]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
-        );
+    insertSlideReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit, slide: Slide, slideIndex: number): void {
+        // Using the new pattern that directly references the slide by ID with # prefix
+        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)} Slide ${slideIndex}(#${slide.id})[/slide]`);
     }
 
     insertAttachmentVideoUnitReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit): void {
-        const shortLink = attachmentVideoUnit.attachment?.link!.split('attachments/')[1];
+        const link = attachmentVideoUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentVideoUnit.attachment!.link!);
+        const shortLink = link.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

@@ -114,31 +114,31 @@ public class AttachmentVideoUnitResource {
      *
      * @param lectureId             the id of the lecture to which the attachment unit belongs to update
      * @param attachmentVideoUnitId the id of the attachment unit to update
-     * @param attachmentVideoUnit   the attachment video unit with updated content
+     * @param attachmentVideoUnit   the attachment unit with updated content
      * @param attachment            the attachment with updated content
      * @param file                  the optional file to upload
+     * @param hiddenPages           the pages to be hidden in the attachment unit
+     * @param pageOrder             the new order of the edited attachment unit
      * @param keepFilename          specifies if the original filename should be kept or not
      * @param notificationText      the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentVideoUnit
      */
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentVideoUnit> updateAttachmentVideoUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
-            @RequestParam(defaultValue = "false") boolean keepFilename, @RequestParam(value = "notificationText", required = false) String notificationText) {
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
+            @RequestPart AttachmentUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+            @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
         AttachmentVideoUnit existingAttachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
-        log.debug("REST request to update an attachment unit 1: {}", attachmentVideoUnit);
         checkAttachmentVideoUnitCourseAndLecture(existingAttachmentVideoUnit, lectureId);
-        log.debug("REST request to update an attachment unit 2: {}", attachmentVideoUnit);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentVideoUnit.getLecture().getCourse(), null);
 
-        log.debug("REST request to update an attachment unit 3: {}", attachmentVideoUnit);
         AttachmentVideoUnit savedAttachmentVideoUnit = attachmentVideoUnitService.updateAttachmentVideoUnit(existingAttachmentVideoUnit, attachmentVideoUnit, attachment, file,
-                keepFilename);
+                keepFilename, hiddenPages, pageOrder);
 
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment(), notificationText);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentVideoUnit.getAttachment());
         }
 
         log.debug("REST request to update an attachment unit 4: {}", attachmentVideoUnit);
@@ -306,6 +306,34 @@ public class AttachmentVideoUnitResource {
         catch (IOException e) {
             log.error("Could not calculate slides to remove", e);
             throw new InternalServerErrorException("Could not calculate slides to remove");
+        }
+    }
+
+    /**
+     * PUT lectures/:lectureId/attachment-units/:attachmentUnitId/student-version : Updates the student version file for an existing attachment unit
+     *
+     * @param lectureId          the id of the lecture to which the attachment unit belongs
+     * @param attachmentUnitId   the id of the attachment unit to update
+     * @param studentVersionFile the file containing the student version of the attachment
+     * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
+     */
+    @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
+    @EnforceAtLeastEditor
+    public ResponseEntity<AttachmentUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
+            @RequestParam("studentVersion") MultipartFile studentVersionFile) {
+
+        AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
+        Attachment attachment = existingAttachmentUnit.getAttachment();
+
+        try {
+            attachmentUnitService.handleStudentVersionFile(studentVersionFile, attachment, existingAttachmentUnit.getId());
+            return ResponseEntity.ok(existingAttachmentUnit);
+        }
+        catch (Exception e) {
+            log.error("Could not set the Student Version of the Attachment Unit", e);
+            throw new InternalServerErrorException("Could not set the Student Version of the Attachment Unit");
         }
     }
 
