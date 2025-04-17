@@ -405,24 +405,22 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                                     .map((message) => {
                                         if (message.sourceId && !fetchedPostIds.has(message.sourceId)) {
                                             // A source post has not been found so it was most likely deleted.
-                                            // We return null to indicate a missing post and handle it later (see forwarded-message.component)
-                                            return null;
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
                                         }
                                         return fetchedPosts.find((fetchedPost) => fetchedPost.id === message.sourceId);
-                                    })
-                                    .filter((post) => post !== undefined) as Post[];
+                                    });
 
                                 post.forwardedAnswerPosts = forwardedMessages
                                     .filter((message) => message.sourceType?.toString() === 'ANSWER')
                                     .map((message) => {
                                         if (message.sourceId && !fetchedAnswerPostIds.has(message.sourceId)) {
                                             // A source post has not been found so it was most likely deleted, therefore we return null.
-                                            // We return null to indicate a missing post and handle it later (see forwarded-message.component)
-                                            return null;
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
                                         }
                                         return fetchedAnswerPosts.find((fetchedAnswerPost) => fetchedAnswerPost.id === message.sourceId);
-                                    })
-                                    .filter((answerPost) => answerPost !== undefined) as AnswerPost[];
+                                    });
                                 return post;
                             });
 

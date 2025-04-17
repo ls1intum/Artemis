@@ -136,7 +136,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     isLastAnswer = input<boolean>(false);
     postingUpdated = output<void>();
     openThread = output<void>();
-    originalPostDetails = input<Posting | null>();
+    originalPostDetails = input<Posting | undefined>();
     course = input<Course>();
     isDeleteEvent = output<boolean>();
     createEditModal = viewChild.required<PostCreateEditModalComponent>('createEditModal');

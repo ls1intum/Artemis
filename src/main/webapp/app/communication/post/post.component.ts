@@ -7,6 +7,7 @@ import {
     OnChanges,
     OnInit,
     Renderer2,
+    computed,
     inject,
     input,
     model,
@@ -112,7 +113,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     mayEdit = false;
     mayDelete = false;
     canPin = false;
-    originalPostDetails: Post | AnswerPost | null | undefined = undefined;
+    originalPostDetails: Post | AnswerPost | undefined;
     readonly onNavigateToPost = output<Posting>();
 
     // Icons
@@ -126,10 +127,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     readonly faShare = faShare;
 
     isConsecutive = input<boolean>(false);
-    forwardedPosts = input<(Post | null)[]>([]);
-    forwardedAnswerPosts = input<(AnswerPost | null)[]>([]);
+    forwardedPosts = input<(Post | undefined)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
+
+    readonly hasOriginalPostBeenDeleted = computed(() => {
+        return this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+    });
 
     constructor() {
         super();
@@ -249,6 +254,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 this.originalPostDetails = this.forwardedAnswerPosts()[0];
                 this.changeDetector.markForCheck();
             }
+            //alert(this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined);
+            this.hasOriginalPostBeenDeleted();
         } catch (error) {
             throw new Error(error.toString());
         }
@@ -343,7 +350,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
-    protected onTriggerNavigateToPost(post: Posting | null) {
+    protected onTriggerNavigateToPost(post: Posting | undefined) {
         if (!post) {
             return;
         }
