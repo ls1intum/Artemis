@@ -67,9 +67,11 @@
                             </a>
                         }
                         @if (programmingExercise.isAtLeastEditor && plagiarismCheckSupported) {
-                            <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
-                                <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism"></span>
-                            </a>
+                            <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                                <a [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises" class="btn btn-info btn-sm" routerLink="plagiarism">
+                                    <span jhiTranslate="artemisApp.programmingExercise.checkPlagiarism"></span>
+                                </a>
+                            </jhi-feature-overlay>
                         }
                         @if (programmingExercise.isAtLeastTutor) {
                             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">

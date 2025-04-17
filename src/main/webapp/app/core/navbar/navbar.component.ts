@@ -6,7 +6,7 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
@@ -60,7 +60,6 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
@@ -72,7 +71,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     styleUrls: ['navbar.scss'],
     imports: [
         NgClass,
-        NotificationSidebarComponent,
         ThemeSwitchComponent,
         NgbDropdown,
         RouterLinkActive,
@@ -133,6 +131,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
+    examEnabled = false;
     irisEnabled: boolean;
     localCIActive = false;
     ltiEnabled: boolean;
@@ -231,6 +230,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
         this.gitUsername = profileInfo.git.commit.user.name;
         this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
         this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
         this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
         this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);

@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
@@ -223,19 +222,11 @@ public class TutorialGroupService {
         }
         tutorialGroupRegistrationRepository.delete(existingRegistration.get());
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var course = tutorialGroup.getCourse();
-            var deregisteredFromTutorialGroupNotification = new DeregisteredFromTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
-                    tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
-            courseNotificationService.sendCourseNotification(deregisteredFromTutorialGroupNotification, List.of(student));
-        }
-        else {
-            singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
+        var course = tutorialGroup.getCourse();
+        var deregisteredFromTutorialGroupNotification = new DeregisteredFromTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
+                tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
+        courseNotificationService.sendCourseNotification(deregisteredFromTutorialGroupNotification, List.of(student));
 
-        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-            singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
         tutorialGroupChannelManagementService.removeUsersFromTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
@@ -265,9 +256,6 @@ public class TutorialGroupService {
         TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
         notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
-        if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-            singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
         tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
@@ -284,10 +272,6 @@ public class TutorialGroupService {
             for (User student : studentsToRegister) {
                 notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
             }
-
-            if (tutorialGroup.getTeachingAssistant() != null && !responsibleUser.equals(tutorialGroup.getTeachingAssistant())) {
-                singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, studentsToRegister, responsibleUser);
-            }
         }
         tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, students);
     }
@@ -300,15 +284,10 @@ public class TutorialGroupService {
      * @param student         to notify
      */
     private void notifyStudentAboutRegistration(TutorialGroup tutorialGroup, User responsibleUser, User student) {
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var course = tutorialGroup.getCourse();
-            var registeredFromTutorialGroupNotification = new RegisteredToTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(),
-                    tutorialGroup.getTitle(), tutorialGroup.getId(), responsibleUser.getName());
-            courseNotificationService.sendCourseNotification(registeredFromTutorialGroupNotification, List.of(student));
-        }
-        else {
-            singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student, responsibleUser);
-        }
+        var course = tutorialGroup.getCourse();
+        var registeredFromTutorialGroupNotification = new RegisteredToTutorialGroupNotification(course.getId(), course.getTitle(), course.getCourseIcon(), tutorialGroup.getTitle(),
+                tutorialGroup.getId(), responsibleUser.getName());
+        courseNotificationService.sendCourseNotification(registeredFromTutorialGroupNotification, List.of(student));
     }
 
     /**

@@ -9,6 +9,10 @@
 artemis:
     atlas:
       enabled: false
+    exam:
+      enabled: false
+    plagiarism:
+      enabled: false
     text:
       enabled: false
     tutorialgroup:

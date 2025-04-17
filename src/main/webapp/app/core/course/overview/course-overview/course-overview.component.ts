@@ -363,7 +363,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.websocketService.subscribe(this.quizExercisesChannel);
-            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.receive(this.quizExercisesChannel)?.subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 const currentCourse = this.course();
