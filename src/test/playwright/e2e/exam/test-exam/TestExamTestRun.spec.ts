@@ -99,8 +99,7 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
             await examTestRun.openTestRunPage(course, exam);
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
-            await examTestRun.deleteTestRun(testRun.id!);
-            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
+            await examTestRun.deleteTestExamTestRun();
         });
     });
 
