@@ -114,12 +114,14 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
         const lectures: Lecture[] = [];
 
         if (this.multiLaunchLectureIDs?.length > 0) {
-            const exerciseObservables = this.multiLaunchLectureIDs.map((lectureId) => this.lectureService.find(lectureId));
+            const lectureObservables = this.multiLaunchLectureIDs.map((lectureId) =>
+                this.lectureService.find(lectureId).pipe(catchError(() => of(null))),
+            );
 
-            forkJoin(exerciseObservables).subscribe((exerciseResponses) => {
-                exerciseResponses.forEach((response) => {
-                    lectures.push(response.body!);
-                });
+            forkJoin(lectureObservables).subscribe((lectureResponses) => {
+                lectureResponses
+                    .filter((res): res is HttpResponse<Lecture> => res !== null && !!res.body)
+                    .forEach((response) => lectures.push(response.body));
 
                 this.processLectures(lectures);
             });
