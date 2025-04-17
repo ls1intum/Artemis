@@ -13,6 +13,7 @@ import {
     computed,
     inject,
     input,
+    output,
     signal,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -41,7 +42,7 @@ import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachm
 import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulleted-list.action';
 import { StrikethroughAction } from 'app/shared/monaco-editor/model/actions/strikethrough.action';
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
-import { faAngleDown, faGripLines, faQuestionCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faGripLines, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { v4 as uuid } from 'uuid';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { TextEditorActionGroup } from 'app/shared/monaco-editor/model/actions/text-editor-action-group.model';
@@ -254,6 +255,9 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     readonly useCommunicationForFileUpload = input<boolean>(false);
     readonly fallbackConversationId = input<number>();
 
+    showCloseButton = input<boolean>(false);
+    closeEditor = output<void>();
+
     @Output()
     markdownChange = new EventEmitter<string>();
 
@@ -317,6 +321,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     // Icons
     protected readonly faQuestionCircle = faQuestionCircle;
     protected readonly faSpinner = faSpinner;
+    protected readonly faTimes = faTimes;
     protected readonly faGripLines = faGripLines;
     protected readonly faAngleDown = faAngleDown;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -656,5 +661,12 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
      */
     applyOptionPreset(preset: MonacoEditorOptionPreset): void {
         this.monacoEditor.applyOptionPreset(preset);
+    }
+
+    /**
+     * Emits the closeEditor event when the close button is clicked
+     */
+    onCloseButtonClick(): void {
+        this.closeEditor.emit();
     }
 }

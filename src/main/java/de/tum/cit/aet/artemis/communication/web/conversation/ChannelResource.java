@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
@@ -318,17 +317,11 @@ public class ChannelResource extends ConversationManagementResource {
                 .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var course = channel.getCourse();
-            var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
+        var course = channel.getCourse();
+        var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
 
-            courseNotificationService.sendCourseNotification(channelDeletedNotification,
-                    usersToNotify.stream().filter((user) -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
-        }
-        else {
-            usersToNotify.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, requestingUser,
-                    NotificationType.CONVERSATION_DELETE_CHANNEL));
-        }
+        courseNotificationService.sendCourseNotification(channelDeletedNotification,
+                usersToNotify.stream().filter((user) -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
         return ResponseEntity.ok().build();
     }
 
@@ -457,16 +450,10 @@ public class ChannelResource extends ConversationManagementResource {
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
         Set<User> registeredUsers = channelService.registerUsersToChannel(addAllStudents, addAllTutors, addAllInstructors, usersLoginsToRegister, course, channelFromDatabase);
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
-                    channelFromDatabase.getName(), channelFromDatabase.getId());
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                channelFromDatabase.getName(), channelFromDatabase.getId());
 
-            courseNotificationService.sendCourseNotification(addedToChannelNotification, registeredUsers.stream().toList());
-        }
-        else {
-            registeredUsers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
-                    NotificationType.CONVERSATION_ADD_USER_CHANNEL));
-        }
+        courseNotificationService.sendCourseNotification(addedToChannelNotification, registeredUsers.stream().toList());
 
         return ResponseEntity.ok().build();
     }
@@ -505,16 +492,10 @@ public class ChannelResource extends ConversationManagementResource {
 
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
-                    channelFromDatabase.getName(), channelFromDatabase.getId());
+        var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                channelFromDatabase.getName(), channelFromDatabase.getId());
 
-            courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
-        }
-        else {
-            usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
-                    NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
-        }
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
         return ResponseEntity.ok().build();
     }
 

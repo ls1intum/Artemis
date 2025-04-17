@@ -2,8 +2,6 @@ package de.tum.cit.aet.artemis.programming;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -15,8 +13,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import jakarta.mail.internet.MimeMessage;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.BeforeEach;
@@ -239,8 +235,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         int countOfNewFeedbacks = originalFeedbackSize + duplicateFeedbackEntries.size();
         assertThat(result.getFeedbacks()).hasSize(countOfNewFeedbacks);
         String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + "test1, test3";
-        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
-        verify(javaMailSender, timeout(4000)).send(any(MimeMessage.class));
+        verify(groupNotificationService).notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
     }
 
     @Test
