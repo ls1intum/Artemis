@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -55,7 +54,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -75,6 +73,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -115,7 +114,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 /**
  * Service Implementation for managing exams.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamService {
 
@@ -1214,8 +1213,6 @@ public class ExamService {
         // This contains possible errors encountered during the archive process
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
-
         try {
             // Create exam archives directory if it doesn't exist
             Files.createDirectories(examArchivesDirPath);
@@ -1229,10 +1226,6 @@ public class ExamService {
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
                 examRepository.saveAndFlush(exam);
             }
-            else {
-                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
-                return;
-            }
         }
         catch (IOException e) {
             var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
@@ -1240,7 +1233,6 @@ public class ExamService {
             log.info(error);
         }
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
         log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 

@@ -153,10 +153,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         fileUploadSubmissionService.hideDetails(submission, user);
         long end = System.currentTimeMillis();
-        if (exercise.isCourseExercise()) {
-            // only notify users in course exercises about successful submissions
-            singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
-        }
         log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(submission);
     }

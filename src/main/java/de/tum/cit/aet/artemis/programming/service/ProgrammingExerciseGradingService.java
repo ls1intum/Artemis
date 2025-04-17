@@ -742,7 +742,7 @@ public class ProgrammingExerciseGradingService {
 
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION
                     + duplicateTestCases.stream().map(ProgrammingExerciseTestCase::getTestName).sorted().collect(Collectors.joining(", "));
-            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise);
 
             return true;
         }

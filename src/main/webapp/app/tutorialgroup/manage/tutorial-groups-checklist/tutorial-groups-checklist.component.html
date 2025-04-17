@@ -11,8 +11,8 @@
                 <div>
                     <jhi-checklist-check id="timeZone" [checkAttribute]="isTimeZoneConfigured" />
                     <label class="form-check-label pe-4" for="timeZone" jhiTranslate="artemisApp.pages.checklist.timeZone"></label>
-                    <a [routerLink]="['/course-management', course.id!, 'edit']" class="btn btn-warning btn-md my-2">
-                        <fa-icon [icon]="faWrench" />&nbsp;<span jhiTranslate="artemisApp.pages.checklist.editCourse"></span>
+                    <a [routerLink]="['/course-management', course.id!, 'settings']" class="btn btn-warning btn-md my-2">
+                        <fa-icon [icon]="faCog" class="me-1" />&nbsp;<span jhiTranslate="artemisApp.courseOverview.menu.settings"></span>
                     </a>
                 </div>
             </div>

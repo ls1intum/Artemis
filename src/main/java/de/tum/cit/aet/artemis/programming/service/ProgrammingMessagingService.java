@@ -1,14 +1,11 @@
 package de.tum.cit.aet.artemis.programming.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE;
-import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE;
 import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
 import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING;
 import static de.tum.cit.aet.artemis.core.config.Constants.SUBMISSION_PROCESSING_TOPIC;
-import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
 
@@ -94,13 +91,13 @@ public class ProgrammingMessagingService {
     public void notifyInstructorAboutStartedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.RUNNING);
         // Send a notification to the client to inform the instructor about started builds.
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     public void notifyInstructorAboutCompletedExerciseBuildRun(ProgrammingExercise programmingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseAllExerciseBuildsTriggeredTopic(programmingExercise.getId()), BuildRunState.COMPLETED);
         // Send a notification to the client to inform the instructor about the completed builds.
-        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise, BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE);
+        groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
     }
 
     /**
@@ -163,19 +160,8 @@ public class ProgrammingMessagingService {
             groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(updatedProgrammingExercise);
         }
         else {
-            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise, TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION);
+            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(updatedProgrammingExercise);
         }
-    }
-
-    /**
-     * Notify instructor groups about illegal submissions. In case a student has submitted after the individual end date or exam end date,
-     * the submission is not valid and therefore marked as illegal. We notify the instructor about this cheating attempt.
-     *
-     * @param exercise         that has been affected
-     * @param notificationText that should be displayed
-     */
-    public void notifyInstructorGroupAboutIllegalSubmissionsForExercise(ProgrammingExercise exercise, String notificationText) {
-        groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, notificationText);
     }
 
     /**
