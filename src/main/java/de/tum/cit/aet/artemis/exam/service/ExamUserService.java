@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.awt.Rectangle;
 import java.io.IOException;
 import java.net.URI;
@@ -17,7 +15,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripperByArea;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +28,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -37,7 +36,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 /**
  * Service Implementation for managing Exam Users.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamUserService {
 
@@ -70,15 +69,7 @@ public class ExamUserService {
             List<ExamUserWithImageDTO> studentWithImages = new ArrayList<>();
 
             for (ImageDTO image : images) {
-                PDFTextStripperByArea stripper = new PDFTextStripperByArea();
-                stripper.setSortByPosition(true);
-
-                // A4 page, where the Y coordinate of the bottom is 0 and the Y coordinate of the top is 842.
-                // If you have Y coordinates such as y1 = 806 and y2 = 36, then you can do this: y = 842 - y;
-                // and to get left upper corner of the image you subtract the height of the image from the y coordinate
-                Rectangle rect = new Rectangle(Math.round(image.xPosition()), 842 - (Math.round(image.yPosition())) - image.renderedHeight(), 4 * image.renderedWidth(),
-                        image.renderedHeight());
-                stripper.addRegion("image:" + (image.page() - 1), rect);
+                final var stripper = getPdfTextStripperByArea(image);
                 stripper.extractRegions(document.getPage(image.page() - 1));
                 String string = stripper.getTextForRegion("image:" + (image.page() - 1));
                 String[] studentInformation = string.split("\\s");
@@ -99,6 +90,19 @@ public class ExamUserService {
             log.error("Error while parsing PDF file", e);
             throw new InternalServerErrorException("Error while parsing PDF file");
         }
+    }
+
+    private static PDFTextStripperByArea getPdfTextStripperByArea(ImageDTO image) throws IOException {
+        PDFTextStripperByArea stripper = new PDFTextStripperByArea();
+        stripper.setSortByPosition(true);
+
+        // A4 page, where the Y coordinate of the bottom is 0 and the Y coordinate of the top is 842.
+        // If you have Y coordinates such as y1 = 806 and y2 = 36, then you can do this: y = 842 - y;
+        // and to get left upper corner of the image you subtract the height of the image from the y coordinate
+        Rectangle rect = new Rectangle(Math.round(image.xPosition()), 842 - (Math.round(image.yPosition())) - image.renderedHeight(), 4 * image.renderedWidth(),
+                image.renderedHeight());
+        stripper.addRegion("image:" + (image.page() - 1), rect);
+        return stripper;
     }
 
     /**

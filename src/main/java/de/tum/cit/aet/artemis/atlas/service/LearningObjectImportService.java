@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitImportService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTaskRepository;
@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -196,14 +197,14 @@ public class LearningObjectImportService {
         return switch (sourceExercise) {
             case ProgrammingExercise programmingExercise -> importOrLoadProgrammingExercise(programmingExercise, course);
             case FileUploadExercise fileUploadExercise -> {
-                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
+                FileUploadImportApi api = fileUploadImportApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadImportApi.class, PROFILE_CORE));
                 yield importOrLoadExercise(fileUploadExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId, api::findWithGradingCriteriaByIdElseThrow,
                         api::importFileUploadExercise);
             }
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }

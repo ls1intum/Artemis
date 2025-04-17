@@ -6,13 +6,12 @@ import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/buildagent/shared/entities/build-log-statistics-dto';
 
 export type Detail = NotShownDetail | ShownDetail;
 
@@ -35,7 +34,6 @@ export type ShownDetail =
     | ProgrammingDiffReportDetail
     | ProgrammingProblemStatementDetail
     | ProgrammingTimelineDetail
-    | ProgrammingBuildStatisticsDetail
     | ProgrammingCheckoutDirectoriesDetail;
 
 export interface DetailBase {
@@ -133,13 +131,6 @@ interface ProgrammingProblemStatementDetail extends DetailBase {
 interface ProgrammingTimelineDetail extends DetailBase {
     type: DetailType.ProgrammingTimeline;
     data: { exercise: ProgrammingExercise; isExamMode?: boolean };
-}
-
-export interface ProgrammingBuildStatisticsDetail extends DetailBase {
-    type: DetailType.ProgrammingBuildStatistics;
-    data: {
-        buildLogStatistics: BuildLogStatisticsDTO;
-    };
 }
 
 interface ProgrammingCheckoutDirectoriesDetail extends DetailBase {

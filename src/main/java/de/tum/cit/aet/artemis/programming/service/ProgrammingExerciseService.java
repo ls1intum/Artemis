@@ -33,6 +33,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -92,6 +93,9 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     /**
      * Java package name Regex according to Java 14 JLS
@@ -275,7 +279,6 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
-        VersionControlService versionControl = versionControlService.orElseThrow();
 
         // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
         // When saving the object leads to an exception at runtime.
@@ -295,7 +298,7 @@ public class ProgrammingExerciseService {
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.getBuildConfig().setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
 
         // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);

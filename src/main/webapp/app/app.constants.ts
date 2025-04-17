@@ -33,21 +33,32 @@ export const addPublicFilePrefix = (filePath?: string): string | undefined => {
 
 export const FILES_PATH_PREFIX = 'api/core/files/';
 
-export const PROFILE_LOCALVC = 'localvc';
-
 export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
 export const MODULE_FEATURE_ATLAS = 'atlas';
 
+export const MODULE_FEATURE_EXAM = 'exam';
+
+export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
+
+export const MODULE_FEATURE_TEXT = 'text';
+
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
 
+export const PROFILE_PROD = 'prod';
+
+export const PROFILE_DEV = 'dev';
+
+export const PROFILE_TEST = 'test';
+
+export const PROFILE_JENKINS = 'jenkins';
+
+export const PROFILE_APOLLON = 'apollon';
+
 export const PROFILE_ATHENA = 'athena';
 
 export const PROFILE_THEIA = 'theia';
-
-// TODO TW: This "feature" is only temporary for a paper.
-export const ICER_PAPER_FLAG = 'ICER 2025 Paper a5157934-9092-4a72-addc-3aaf489debdc';

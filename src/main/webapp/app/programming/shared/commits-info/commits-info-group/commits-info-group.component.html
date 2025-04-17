@@ -12,7 +12,6 @@
         [firstCommit]="groupIndex === groupCount - 1 && 0 === commits.length - 1"
         [groupCommitCount]="commits.length"
         [groupCommitIndex]="0"
-        [localVC]="localVC"
     />
 } @else {
     @for (commit of commits; track commit; let i = $index) {
@@ -29,7 +28,6 @@
             [firstCommit]="groupIndex === groupCount - 1 && i === commits.length - 1"
             [groupCommitCount]="commits.length"
             [groupCommitIndex]="i"
-            [localVC]="localVC"
         />
     }
 }

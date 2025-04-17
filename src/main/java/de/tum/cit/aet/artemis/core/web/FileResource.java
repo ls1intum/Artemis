@@ -46,9 +46,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ApiNotPresentException;
+import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -63,11 +64,12 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.file.FileUploadService;
+import de.tum.cit.aet.artemis.exam.api.ExamUserApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadApi;
-import de.tum.cit.aet.artemis.fileupload.domain.FileUploadEntityType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -101,6 +103,8 @@ public class FileResource {
 
     private final FileService fileService;
 
+    private final FileUploadService fileUploadService;
+
     private final ResourceLoaderService resourceLoaderService;
 
     private final LectureRepository lectureRepository;
@@ -117,7 +121,7 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    private final ExamUserRepository examUserRepository;
+    private final Optional<ExamUserApi> examUserApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -129,10 +133,11 @@ public class FileResource {
 
     private final LectureUnitService lectureUnitService;
 
-    public FileResource(SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService, ResourceLoaderService resourceLoaderService,
-            LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, ExamUserRepository examUserRepository,
+    public FileResource(FileUploadService fileUploadService, SlideRepository slideRepository, AuthorizationCheckService authorizationCheckService, FileService fileService,
+            ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, Optional<FileUploadApi> fileUploadApi, AttachmentRepository attachmentRepository,
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository, Optional<ExamUserApi> examUserApi,
             QuizQuestionRepository quizQuestionRepository, DragItemRepository dragItemRepository, CourseRepository courseRepository, LectureUnitService lectureUnitService) {
+        this.fileUploadService = fileUploadService;
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -141,7 +146,7 @@ public class FileResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.examUserRepository = examUserRepository;
+        this.examUserApi = examUserApi;
         this.slideRepository = slideRepository;
         this.quizQuestionRepository = quizQuestionRepository;
         this.dragItemRepository = dragItemRepository;
@@ -163,7 +168,8 @@ public class FileResource {
     public ResponseEntity<String> saveMarkdownFile(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName)
             throws URISyntaxException {
         log.debug("REST request to upload file for markdown: {}", file.getOriginalFilename());
-        String responsePath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String publicPath = fileService.handleSaveFile(file, keepFileName, true).toString();
+        String responsePath = getResponsePathFromPublicPathString(publicPath);
 
         // return path for getting the file
         String responseBody = "{\"path\":\"" + responsePath + "\"}";
@@ -191,8 +197,8 @@ public class FileResource {
         var filePathInformation = fileService.handleSaveFileInConversation(file, courseId, conversationId);
         String publicPath = filePathInformation.publicPath().toString();
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
-        api.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId, FileUploadEntityType.CONVERSATION);
+        fileUploadService.createFileUpload(publicPath, filePathInformation.serverPath().toString(), filePathInformation.filename(), conversationId,
+                FileUploadEntityType.CONVERSATION);
 
         // return path for getting the file
         String responsePath = getResponsePathFromPublicPathString(publicPath);
@@ -216,17 +222,15 @@ public class FileResource {
         log.debug("REST request to get file for markdown in conversation: File {} for conversation {} in course {}", filename, conversationId, courseId);
         sanitizeFilenameElseThrow(filename);
 
-        var publicPath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
-        Path responsePath = getResponsePathFromPublicPath(publicPath);
-
-        var api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
-        var fileUpload = api.findByPath("courses/" + courseId + "/conversations/" + conversationId + "/" + filename);
+        var serverFilePath = FilePathService.getMarkdownFilePathForConversation(courseId, conversationId);
+        var publicPath = "courses/" + courseId + "/conversations/" + conversationId + "/" + filename;
+        var fileUpload = fileUploadService.findByPath(publicPath);
 
         if (fileUpload.isPresent()) {
-            return buildFileResponse(responsePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
+            return buildFileResponse(serverFilePath, filename, Optional.ofNullable(fileUpload.get().getFilename()), true);
         }
 
-        return buildFileResponse(responsePath, filename, true);
+        return buildFileResponse(serverFilePath, filename, true);
     }
 
     /**
@@ -330,7 +334,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         log.debug("REST request to get file for file upload submission : {}", exerciseId);
 
-        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiNotPresentException(FileUploadApi.class, PROFILE_CORE));
+        FileUploadApi api = fileUploadApi.orElseThrow(() -> new ApiProfileNotPresentException(FileUploadApi.class, PROFILE_CORE));
         FileUploadSubmission submission = api.findWithTeamStudentsAndParticipationAndExerciseByIdAndExerciseIdElseThrow(submissionId, exerciseId);
         FileUploadExercise exercise = (FileUploadExercise) submission.getParticipation().getExercise();
 
@@ -406,7 +410,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getUserSignature(@PathVariable Long examUserId) {
         log.debug("REST request to get signature for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getSigningImagePath()), false);
@@ -422,7 +428,9 @@ public class FileResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<byte[]> getExamUserImage(@PathVariable Long examUserId) {
         log.debug("REST request to get image for exam user : {}", examUserId);
-        ExamUser examUser = examUserRepository.findWithExamById(examUserId).orElseThrow();
+        ExamUserApi api = examUserApi.orElseThrow(() -> new ExamApiNotPresentException(ExamUserApi.class));
+
+        ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
         return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath()), true);
@@ -477,7 +485,13 @@ public class FileResource {
                 .toList();
 
         lectureUnitService.setCompletedForAllLectureUnits(lectureAttachments, user, true);
-        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.actualPathForPublicPathOrThrow(URI.create(unit.getAttachment().getLink()))).toList();
+
+        // Modified to use studentVersion if available
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
+            Attachment attachment = unit.getAttachment();
+            String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
+            return FilePathService.actualPathForPublicPathOrThrow(URI.create(filePath));
+        }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -496,9 +510,9 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for tutors", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -568,6 +582,11 @@ public class FileResource {
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -575,14 +594,68 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            String fileName = matcher.group(1);
-            return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
         }
+    }
+
+    /**
+     * GET files/slides/{slideId} : Get the lecture unit attachment slide by slide id
+     *
+     * @param slideId the id of the slide that wanted to be retrieved
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/slides/{slideId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
+        log.debug("REST request to get the slide : {}", slideId);
+
+        Slide slide = slideRepository.findByIdElseThrow(slideId);
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideId);
+        }
+    }
+
+    /**
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment unit by attachment unit id
+     *
+     * @param attachmentUnitId ID of the attachment unit, the student version belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        // check if hidden link is available in the attachment
+        String studentVersion = attachment.getStudentVersion();
+        if (studentVersion == null) {
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        }
+
+        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
+
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**

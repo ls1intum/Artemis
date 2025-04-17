@@ -1,6 +1,12 @@
 artemis:
     atlas:
         enabled: true
+    exam:
+        enabled: true
+    plagiarism:
+        enabled: true
+    text:
+        enabled: true
 
 spring:
     liquibase:

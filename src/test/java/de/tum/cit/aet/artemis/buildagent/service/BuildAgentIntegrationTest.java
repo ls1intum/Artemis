@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.buildagent.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_WORKING_DIRECTORY;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
@@ -125,8 +125,8 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
         DockerClientTestService.mockCreateContainerCmd(dockerClient, container1, image1);
         DockerClientTestService.mockCreateContainerCmd(dockerClient, container2, image2);
 
-        dockerClientTestService.mockTestResultsForContainer(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, container1);
-        dockerClientTestService.mockTestResultsForContainer(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY, container2);
+        dockerClientTestService.mockTestResultsForContainer(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, container1);
+        dockerClientTestService.mockTestResultsForContainer(dockerClient, ALL_SUCCEED_TEST_RESULTS_PATH, LOCAL_CI_WORKING_DIRECTORY + LOCAL_CI_RESULTS_DIRECTORY, container2);
 
         var queueItem = createBaseBuildJobQueueItemForTriggerWithImage(image1);
         var queueItem2 = createBaseBuildJobQueueItemForTriggerWithImage(image2);

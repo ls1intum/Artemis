@@ -1,15 +1,16 @@
 import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, inject, input } from '@angular/core';
+import { PROFILE_ATHENA } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseFeedbackSuggestionOptionsComponent } from 'app/exercise/feedback-suggestion/exercise-feedback-suggestion-options.component';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { AthenaService } from 'app/assessment/shared/athena.service';
-import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
+import { Subject, Subscription } from 'rxjs';
+import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
@@ -17,15 +18,15 @@ import { ImportOptions } from 'app/programming/manage/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { AsyncPipe, NgStyle } from '@angular/common';
+import { NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
     templateUrl: './programming-exercise-lifecycle.component.html',
-    styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
+    styleUrls: ['./test-schedule-date-picker/programming-exercise-test-schedule-picker.scss'],
     imports: [
         ProgrammingExerciseTestScheduleDatePickerComponent,
         FormsModule,
@@ -34,14 +35,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         FaIconComponent,
         NgStyle,
         ExerciseFeedbackSuggestionOptionsComponent,
-        AsyncPipe,
         ArtemisTranslatePipe,
     ],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
     private translateService = inject(TranslateService);
     private exerciseService = inject(ExerciseService);
-    private athenaService = inject(AthenaService);
+    private profileService = inject(ProfileService);
     private activatedRoute = inject(ActivatedRoute);
 
     protected readonly assessmentType = AssessmentType;
@@ -65,7 +65,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     inputfieldSubscriptions: (Subscription | undefined)[] = [];
     datePickerChildrenSubscription?: Subscription;
 
-    isAthenaEnabled$: Observable<boolean> | undefined;
+    isAthenaEnabled: boolean;
 
     isImport = false;
     private urlSubscription: Subscription;
@@ -77,7 +77,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
         if (!this.exercise.id) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
         }
-        this.isAthenaEnabled$ = this.athenaService.isEnabled();
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
         this.updateIsImportBasedOnUrl();
     }

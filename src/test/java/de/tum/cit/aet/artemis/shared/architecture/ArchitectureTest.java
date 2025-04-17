@@ -290,7 +290,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     @Test
     void testNoRestControllersImported() {
         final var exceptions = new String[] { "AccountResourceIntegrationTest", "AndroidAppSiteAssociationResourceTest", "AppleAppSiteAssociationResourceTest",
-                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest" };
+                "AbstractModuleResourceArchitectureTest", "CommunicationResourceArchitectureTest", "PlagiarismApiArchitectureTest", "LtiApiArchitectureTest" };
         final var classes = classesExcept(allClasses, exceptions);
         classes().should(IMPORT_RESTCONTROLLER).check(classes);
     }
@@ -321,8 +321,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
         String identifyingPackage = "authorization";
 
         ArchRule rule = classes().that(beDirectSubclassOf(AbstractArtemisIntegrationTest.class))
-                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod))).because(
-                        "every test environment should have a corresponding authorization test covering the endpoints of this environment. Examples are \"AuthorizationJenkinsGitlabTest\" or \"AuthorizationGitlabCISamlTest\".");
+                .should(haveMatchingTestClassCallingAMethod(identifyingPackage, Set.of(allCheckMethod, condCheckMethod)))
+                .because("every test environment should have a corresponding authorization test covering the endpoints of this environment.");
         rule.check(testClasses);
     }
 

@@ -14,7 +14,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -57,7 +56,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
  * <br>
  * <p>
  * <b>Note</b>: Please keep in mind that the User entities are soft-deleted when adding new queries to this repository.
- * If you don't need deleted user entities, add `WHERE user.isDeleted = FALSE` to your query.
+ * If you don't need deleted user entities, add `WHERE user.deleted = FALSE` to your query.
  * </p>
  */
 @Profile(PROFILE_CORE)
@@ -117,10 +116,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
+    Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndInternal(String login, boolean internal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndIsInternal(String email, boolean isInternal);
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmailAndInternal(String email, boolean internal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
@@ -146,7 +145,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      *
      * @param userIds  a collection of user IDs for which the roles are to be fetched
      * @param courseId the ID of the course for which the user roles are to be determined
-     * @return a list of {@link UserRoleDTO} objects containing the user ID, user login, and role for each user
+     * @return a set of {@link UserRoleDTO} objects containing the user ID, user login, and role for each user
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.core.dto.UserRoleDTO(user.id, user.login,
@@ -162,7 +161,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             ON course.id = :courseId
             WHERE user.id IN :userIds
             """)
-    List<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
+    Set<UserRoleDTO> findUserRolesInCourse(@Param("userIds") Collection<Long> userIds, @Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
@@ -170,18 +169,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings" })
-    Optional<User> findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(String login);
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "externalLLMUsageAccepted" })
+    Optional<User> findOneWithGroupsAndAuthoritiesAndExternalLLMUsageAcceptedTimestampByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "externalLLMUsageAccepted" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndExternalLLMUsageAcceptedTimestampByLogin(String login);
-
-    Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
+    Long countByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT DISTINCT user
             FROM User user
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     LOWER(user.email) = LOWER(:searchInput)
                     OR LOWER(user.login) = LOWER(:searchInput)
@@ -190,22 +186,22 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     List<User> findAllByEmailOrUsernameIgnoreCase(@Param("searchInput") String searchInput);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(String groupName);
+    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(String groupName);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "learnerProfile" })
-    Set<User> findAllWithGroupsAndAuthoritiesAndLearnerProfileByIsDeletedIsFalseAndGroupsContains(String groupName);
+    Set<User> findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.groups userGroup
                 LEFT JOIN FETCH user.authorities userAuthority
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND userGroup IN :groupNames
             """)
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
+    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(@Param("groupNames") Set<String> groupNames);
 
-    Set<User> findAllByIsDeletedIsFalseAndGroupsContains(String groupName);
+    Set<User> findAllByDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
             SELECT new de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary (
@@ -225,7 +221,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 JOIN UserGroup ug ON ug.userId = user.id
                 LEFT JOIN ConversationParticipant cp ON cp.user = user AND cp.conversation.id = :conversationId
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     ug.group = :studentGroupName
                     OR ug.group = :teachingAssistantGroupName
@@ -248,7 +244,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT DISTINCT user
             FROM User user
                 LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -268,7 +264,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT user
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     userGroup IN :groupNames
                     AND CONCAT(user.firstName, ' ', user.lastName) LIKE %:nameOfUser%
@@ -281,7 +277,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT user.id
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE %:loginOrName%
@@ -297,7 +293,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND :groupName = userGroup
                 AND (
                     user.login LIKE %:loginOrName%
@@ -327,7 +323,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT user.id
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE %:loginOrName%
@@ -350,7 +346,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE %:loginOrName%
@@ -382,7 +378,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT user.id
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -395,7 +391,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             SELECT COUNT(user)
             FROM User user
                 LEFT JOIN user.groups userGroup
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND userGroup IN :groupNames
                 AND (
                     user.login LIKE :#{#loginOrName}%
@@ -426,7 +422,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -441,7 +437,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -476,7 +472,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -493,7 +489,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -530,7 +526,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -546,7 +542,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 JOIN user.groups userGroup
                 JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
                 JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND conversation.id = :conversationId
                 AND (
                     :loginOrName = ''
@@ -589,13 +585,13 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     }
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
+    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndRegistrationNumberIn(String groupName, Set<String> registrationNumbers);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
-    List<User> findAllWithGroupsByIsDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
+    List<User> findAllWithGroupsByDeletedIsFalseAndGroupsContainsAndLoginIn(String groupName, Set<String> logins);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(Set<String> logins);
+    Set<User> findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(Set<String> logins);
 
     List<User> findAllByIdIn(List<Long> ids);
 
@@ -609,7 +605,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user
             FROM User user
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
@@ -622,7 +618,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
@@ -643,7 +639,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
                 JOIN user.groups userGroup
                 JOIN Course course ON course.id = :courseId
-            WHERE user.isDeleted = FALSE
+            WHERE user.deleted = FALSE
                 AND (
                     user.login LIKE :#{#loginOrName}%
                     OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
@@ -706,6 +702,16 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
+    /**
+     * Update user notification read date for current user
+     *
+     * @param userId the user for which the notification read date should be updated
+     */
+    @Transactional
+    default void updateUserNotificationReadDate(long userId) {
+        updateUserNotificationReadDate(userId, ZonedDateTime.now());
+    }
+
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
@@ -764,20 +770,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     void updateExternalLLMUsageAcceptedToDate(@Param("userId") long userId, @Param("acceptDatetime") ZonedDateTime acceptDatetime);
 
     @Query("""
-            SELECT DISTINCT user
-            FROM User user
-                LEFT JOIN FETCH user.groups userGroup
-            WHERE user.isDeleted = FALSE
-                AND :groupName = userGroup
-                AND user NOT IN :ignoredUsers
-            """)
-    Set<User> findAllInGroupContainingAndNotIn(@Param("groupName") String groupName, @Param("ignoredUsers") Set<User> ignoredUsers);
-
-    @Query("""
             SELECT DISTINCT team.students AS student
             FROM Team team
                 JOIN team.students st
-            WHERE st.isDeleted = FALSE
+            WHERE st.deleted = FALSE
                 AND team.exercise.course.id = :courseId
                 AND team.shortName = :teamShortName
             """)
@@ -792,7 +788,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Query("""
             SELECT user.login
             FROM User user
-            WHERE user.groups IS EMPTY AND NOT user.isDeleted
+            WHERE user.groups IS EMPTY AND NOT user.deleted
                 AND NOT :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
             ORDER BY user.login
             """)
@@ -930,18 +926,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(currentUserLogin));
     }
 
-    /**
-     * Get user with user groups, authorities and guided tour settings of currently logged-in user
-     * Note: this method should only be invoked if the guided tour settings are really needed
-     *
-     * @return currently logged-in user
-     */
-    @NotNull
-    default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
-        String currentUserLogin = getCurrentUserLogin();
-        return getValueElseThrow(findOneWithGroupsAuthoritiesAndGuidedTourSettingsByLogin(currentUserLogin));
-    }
-
     private String getCurrentUserLogin() {
         Optional<String> currentUserLogin = SecurityUtils.getCurrentUserLogin();
         if (currentUserLogin.isPresent()) {
@@ -1023,7 +1007,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return students for given course
      */
     default Set<User> getStudents(Course course) {
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
     }
 
     /**
@@ -1033,7 +1017,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return students for given course
      */
     default Set<User> getStudentsWithLearnerProfile(Course course) {
-        return findAllWithGroupsAndAuthoritiesAndLearnerProfileByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
+        return findAllWithGroupsAndAuthoritiesAndLearnerProfileByDeletedIsFalseAndGroupsContains(course.getStudentGroupName());
     }
 
     /**
@@ -1043,7 +1027,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return tutors for given course
      */
     default Set<User> getTutors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName());
+        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -1053,7 +1037,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return editors for given course
      */
     default Set<User> getEditors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName());
+        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName());
     }
 
     /**
@@ -1063,7 +1047,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return instructors for the given course
      */
     default Set<User> getInstructors(Course course) {
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName());
+        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName());
     }
 
     /**
@@ -1074,35 +1058,11 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      */
     default Set<User> getUsersInCourse(Course course) {
         Set<String> groupNames = Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupNames);
-    }
-
-    /**
-     * Finds all users that are part of the specified group, but are not contained in the collection of excluded users
-     *
-     * @param groupName     The group by which all users should get filtered
-     * @param excludedUsers The users that should get ignored/excluded
-     * @return users who are in the given group except the excluded ones
-     */
-    default Set<User> findAllUserInGroupAndNotIn(String groupName, Collection<User> excludedUsers) {
-        // For an empty list, we have to use another query, because Hibernate builds an invalid query with empty lists
-        if (!excludedUsers.isEmpty()) {
-            return findAllInGroupContainingAndNotIn(groupName, new HashSet<>(excludedUsers));
-        }
-        return findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(groupName);
+        return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
     }
 
     default Long countUserInGroup(String groupName) {
-        return countByIsDeletedIsFalseAndGroupsContains(groupName);
-    }
-
-    /**
-     * Update user notification read date for current user
-     *
-     * @param userId the user for which the notification read date should be updated
-     */
-    default void updateUserNotificationReadDate(long userId) {
-        updateUserNotificationReadDate(userId, ZonedDateTime.now());
+        return countByDeletedIsFalseAndGroupsContains(groupName);
     }
 
     @Query(value = """
@@ -1156,7 +1116,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             FROM User user
             WHERE :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
                 AND user.activated = TRUE
-                AND user.isDeleted = FALSE
+                AND user.deleted = FALSE
             """)
     Set<String> findAllActiveAdminLogins();
 

@@ -223,17 +223,20 @@ public class LearningPathResource {
      * @param learningObjectId   the id of the learning object to navigate to
      * @param learningObjectType the type of the learning object to navigate to
      * @param competencyId       the id of the competency the learning object belongs to
+     * @param repeatedTest       whether the learning object is part of a repeated test
      * @return the ResponseEntity with status 200 (OK) and with body the navigation information
      */
     @GetMapping("learning-path/{learningPathId}/relative-navigation")
     @EnforceAtLeastStudent
     public ResponseEntity<LearningPathNavigationDTO> getRelativeLearningPathNavigation(@PathVariable @Valid long learningPathId, @RequestParam long learningObjectId,
-            @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId) {
+            @RequestParam LearningObjectType learningObjectType, @RequestParam long competencyId, @RequestParam(defaultValue = "false") boolean repeatedTest) {
         log.debug("REST request to get navigation for learning path with id: {} relative to learning object with id: {} and type: {} in competency with id: {}", learningPathId,
                 learningObjectId, learningObjectType, competencyId);
         var learningPath = learningPathService.findWithCompetenciesAndReleasedLearningObjectsAndCompletedUsersAndLearnerProfileById(learningPathId);
         checkLearningPathAccessElseThrow(Optional.empty(), learningPath, Optional.empty());
-        return ResponseEntity.ok(learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType, competencyId));
+
+        return ResponseEntity
+                .ok(learningPathNavigationService.getNavigationRelativeToLearningObject(learningPath, learningObjectId, learningObjectType, competencyId, repeatedTest));
     }
 
     /**
@@ -368,7 +371,8 @@ public class LearningPathResource {
         checkLearningPathAccessElseThrow(Optional.of(learningPath.getCourse()), learningPath, Optional.of(user));
 
         List<LearningPathNavigationObjectDTO> learningObjects = learningPathRecommendationService.getOrderOfLearningObjectsForCompetency(competencyId, user).stream()
-                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, learningObjectService.isCompletedByUser(learningObject, user), competencyId)).toList();
+                .map(learningObject -> LearningPathNavigationObjectDTO.of(learningObject, false, learningObjectService.isCompletedByUser(learningObject, user), competencyId))
+                .toList();
         return ResponseEntity.ok(learningObjects);
     }
 
