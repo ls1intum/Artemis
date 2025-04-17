@@ -92,7 +92,7 @@
                         @if (originalPostDetails !== null) {
                             <jhi-forwarded-message
                                 [originalPostDetails]="originalPostDetails"
-                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted()"
+                                [hasOriginalPostBeenDeleted]="hasOriginalPostBeenDeleted"
                                 (onNavigateToPost)="onTriggerNavigateToPost(originalPostDetails)"
                             />
                         }

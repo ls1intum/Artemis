@@ -7,7 +7,7 @@ import {
     OnChanges,
     OnInit,
     Renderer2,
-    computed,
+    effect,
     inject,
     input,
     model,
@@ -132,13 +132,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     dropdownPosition = { x: 0, y: 0 };
     course: Course;
 
-    readonly hasOriginalPostBeenDeleted = computed(() => {
-        return this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
-    });
+    hasOriginalPostBeenDeleted: boolean;
 
     constructor() {
         super();
         this.course = this.metisService.getCourse() ?? throwError('Course not found');
+        effect(() => {
+            this.hasOriginalPostBeenDeleted = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+        });
     }
 
     get reactionsBar() {
@@ -254,8 +255,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                 this.originalPostDetails = this.forwardedAnswerPosts()[0];
                 this.changeDetector.markForCheck();
             }
-            //alert(this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined);
-            this.hasOriginalPostBeenDeleted();
         } catch (error) {
             throw new Error(error.toString());
         }

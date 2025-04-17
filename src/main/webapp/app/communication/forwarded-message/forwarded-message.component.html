@@ -1,62 +1,66 @@
-<div class="forwarded-message-container">
-    <div class="left-border-line"></div>
-    <div class="forwarded-message-content">
-        <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
-            <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
-            <span [jhiTranslate]="'artemisApp.metis.forward.' + (hasOriginalPostBeenDeleted() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName }}
-            @if (viewButtonVisible) {
-                <button
-                    type="button"
-                    class="btn btn-link p-0"
-                    style="width: fit-content; font-size: 0.7rem; margin-left: 0.2rem"
-                    (click)="onTriggerNavigateToPost()"
-                    jhiTranslate="artemisApp.metis.forward.viewConversation"
-                ></button>
-            }
-        </span>
-        @if (hasOriginalPostBeenDeleted()) {
-            <div class="forwarded-message-missing-container">
-                <span class="forwarded-message-missing-label"> <span [jhiTranslate]="'artemisApp.metis.forward.forwardedMessageDeleted'"></span> {{ sourceName }} </span>
-            </div>
-        } @else {
-            <div class="forwarded-message-header">
-                <jhi-profile-picture
-                    imageSizeInRem="1.5"
-                    fontSizeInRem="0.6"
-                    imageId="user-profile-picture"
-                    defaultPictureId="user-default-profile-picture"
-                    [authorId]="originalPostDetails()?.author?.id"
-                    [authorName]="originalPostDetails()?.author?.name"
-                    [imageUrl]="addPublicFilePrefix(originalPostDetails()?.author?.imageUrl)"
-                    style="margin-right: 0.2rem"
-                />
-                <span class="forwarded-message-author">{{ originalPostDetails()?.author?.name }}</span>
-                <span class="post-header-date-separator">-</span>
-                <span class="post-header-date">
-                    @if (postingIsOfToday) {
-                        <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
-                    }
-                    <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ originalPostDetails()?.creationDate | artemisDate: 'time' }}"
-                        >{{ postingIsOfToday ? (originalPostDetails()?.creationDate | artemisDate: 'time') : (originalPostDetails()?.creationDate | artemisDate: 'short-date') }}
+@if (hasOriginalPostBeenDeleted() || originalPostDetails()) {
+    <div class="forwarded-message-container">
+        <div class="left-border-line"></div>
+        <div class="forwarded-message-content">
+            <span class="forwarded-message-channel fs-x-small d-flex align-items-center">
+                <fa-icon [icon]="faShare" class="item-icon" style="margin-right: 0.3rem" />
+                <span [jhiTranslate]="'artemisApp.metis.forward.' + (hasOriginalPostBeenDeleted() ? 'forwardedFromUnknown' : 'forwardedFrom')"></span>&nbsp;{{ sourceName }}
+                @if (viewButtonVisible) {
+                    <button
+                        type="button"
+                        class="btn btn-link p-0"
+                        style="width: fit-content; font-size: 0.7rem; margin-left: 0.2rem"
+                        (click)="onTriggerNavigateToPost()"
+                        jhiTranslate="artemisApp.metis.forward.viewConversation"
+                    ></button>
+                }
+            </span>
+            @if (hasOriginalPostBeenDeleted()) {
+                <div class="forwarded-message-missing-container">
+                    <span class="forwarded-message-missing-label"> <span [jhiTranslate]="'artemisApp.metis.forward.forwardedMessageDeleted'"></span> {{ sourceName }} </span>
+                </div>
+            } @else {
+                <div class="forwarded-message-header">
+                    <jhi-profile-picture
+                        imageSizeInRem="1.5"
+                        fontSizeInRem="0.6"
+                        imageId="user-profile-picture"
+                        defaultPictureId="user-default-profile-picture"
+                        [authorId]="originalPostDetails()?.author?.id"
+                        [authorName]="originalPostDetails()?.author?.name"
+                        [imageUrl]="addPublicFilePrefix(originalPostDetails()?.author?.imageUrl)"
+                        style="margin-right: 0.2rem"
+                    />
+                    <span class="forwarded-message-author">{{ originalPostDetails()?.author?.name }}</span>
+                    <span class="post-header-date-separator">-</span>
+                    <span class="post-header-date">
+                        @if (postingIsOfToday) {
+                            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
+                        }
+                        <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ originalPostDetails()?.creationDate | artemisDate: 'time' }}"
+                            >{{
+                                postingIsOfToday ? (originalPostDetails()?.creationDate | artemisDate: 'time') : (originalPostDetails()?.creationDate | artemisDate: 'short-date')
+                            }}
+                        </span>
                     </span>
-                </span>
-            </div>
-            <div class="forwarded-message-body" id="messageContent" #messageContent [ngClass]="{ expanded: showFullForwardedMessage }">
-                <jhi-posting-content
-                    [previewMode]="false"
-                    [content]="originalPostDetails()!.content!"
-                    [author]="originalPostDetails()!.author!"
-                    [isEdited]="!!originalPostDetails()!.updatedDate"
-                    [posting]="originalPostDetails()!"
-                    [isReply]="false"
-                    [isSubscribeToMetis]="false"
-                />
-            </div>
-            @if (isContentLong) {
-                <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">
-                    {{ showFullForwardedMessage ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
-                </button>
+                </div>
+                <div class="forwarded-message-body" id="messageContent" #messageContent [ngClass]="{ expanded: showFullForwardedMessage }">
+                    <jhi-posting-content
+                        [previewMode]="false"
+                        [content]="originalPostDetails()!.content!"
+                        [author]="originalPostDetails()!.author!"
+                        [isEdited]="!!originalPostDetails()!.updatedDate"
+                        [posting]="originalPostDetails()!"
+                        [isReply]="false"
+                        [isSubscribeToMetis]="false"
+                    />
+                </div>
+                @if (isContentLong) {
+                    <button type="button" class="btn btn-link p-0" style="width: fit-content; font-size: 0.7rem" (click)="toggleShowFullForwardedMessage()">
+                        {{ showFullForwardedMessage ? ('artemisApp.metis.forward.showLess' | artemisTranslate) : ('artemisApp.metis.forward.showMore' | artemisTranslate) }}
+                    </button>
+                }
             }
-        }
+        </div>
     </div>
-</div>
+}

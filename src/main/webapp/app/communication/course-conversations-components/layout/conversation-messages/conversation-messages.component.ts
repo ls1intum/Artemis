@@ -415,7 +415,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                                     .filter((message) => message.sourceType?.toString() === 'ANSWER')
                                     .map((message) => {
                                         if (message.sourceId && !fetchedAnswerPostIds.has(message.sourceId)) {
-                                            // A source post has not been found so it was most likely deleted, therefore we return null.
+                                            // A source post has not been found so it was most likely deleted.
                                             // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
                                             return undefined;
                                         }
