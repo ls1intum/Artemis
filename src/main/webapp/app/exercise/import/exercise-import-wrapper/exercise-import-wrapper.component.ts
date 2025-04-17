@@ -4,7 +4,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from '../exercise-import-tabs.component';
+import { ExerciseImportTabsComponent } from '../exercise-import-tabs/exercise-import-tabs.component';
 import { ExerciseImportComponent } from '../exercise-import.component';
 
 @Component({

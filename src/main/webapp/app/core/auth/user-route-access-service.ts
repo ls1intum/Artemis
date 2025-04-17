@@ -25,7 +25,7 @@ export class UserRouteAccessService implements CanActivate {
         const authorities = route.data['authorities'];
 
         // For programming exercise template and solution participations editors shall be allowed to view the submissions, but not for other submissions.
-        // To ensure this behaviour the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
+        // To ensure this behavior the query parameter of the route needs to be considered and the Editor authority needs to be added subsequently within the
         // canActivate check, as it can not be allowed directly within the corresponding router since this would allow access to all submissions.
         if (
             (route.routeConfig?.path === ':courseId/programming-exercises/:exerciseId/participations/:participationId/submissions' ||

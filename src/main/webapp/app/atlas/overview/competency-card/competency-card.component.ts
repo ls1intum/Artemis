@@ -15,7 +15,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 @Component({
     selector: 'jhi-competency-card',
     templateUrl: './competency-card.component.html',
-    styleUrls: ['../../../core/course/overview/course-exercises/course-exercise-row.scss'],
+    styleUrls: ['../../../core/course/overview/course-exercises/course-exercise-row/course-exercise-row.scss'],
     imports: [RouterLink, FaIconComponent, NgbTooltip, TranslateDirective, NgClass, CompetencyRingsComponent, ArtemisTranslatePipe, ArtemisTimeAgoPipe, HtmlForMarkdownPipe],
 })
 export class CompetencyCardComponent {
