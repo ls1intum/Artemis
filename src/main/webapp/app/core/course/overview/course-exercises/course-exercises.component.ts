@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
-import { ProgrammingSubmissionService } from 'app/programming/overview/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { LtiService } from 'app/shared/service/lti.service';
 import { NgClass, NgStyle } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseOverviewService } from 'app/core/course/overview/course-overview.service';
+import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { forkJoin } from 'rxjs';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -41,26 +41,27 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 @Component({
     selector: 'jhi-course-exercises',
     templateUrl: './course-exercises.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview/course-overview.scss'],
     imports: [NgClass, SidebarComponent, NgStyle, RouterOutlet, TranslateDirective],
 })
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
-    private guidedTourService = inject(GuidedTourService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private router = inject(Router);
     private courseOverviewService = inject(CourseOverviewService);
     private ltiService = inject(LtiService);
+    private exerciseService = inject(ExerciseService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     private ltiSubscription: Subscription;
+    private multiLaunchSubscription: Subscription;
+    private queryParamsSubscription: Subscription;
 
     course?: Course;
     courseId: number;
     sortedExercises?: Exercise[];
-    exerciseForGuidedTour?: Exercise;
 
     exerciseSelected = true;
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
@@ -68,6 +69,8 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed = false;
     isShownViaLti = false;
+    isMultiLaunch = false;
+    multiLaunchExerciseIDs: number[] = [];
 
     protected readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     protected readonly DEFAULT_SHOW_ALWAYS = DEFAULT_SHOW_ALWAYS;
@@ -76,6 +79,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise');
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
+        });
+
+        this.queryParamsSubscription = this.route.queryParams.subscribe((params) => {
+            if (params['exerciseIDs']) {
+                this.multiLaunchExerciseIDs = params['exerciseIDs'].split(',').map((id: string) => Number(id));
+            }
         });
 
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -88,10 +97,12 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.onCourseLoad();
         });
 
-        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
-
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;
+        });
+
+        this.multiLaunchSubscription = this.ltiService.isMultiLaunch$.subscribe((isMultiLaunch) => {
+            this.isMultiLaunch = isMultiLaunch;
         });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
@@ -102,6 +113,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         const upcomingExercise = this.courseOverviewService.getUpcomingExercise(this.course?.exercises);
         const lastSelectedExercise = this.getLastSelectedExercise();
         let exerciseId = this.route.firstChild?.snapshot?.params.exerciseId;
+
         if (!exerciseId) {
             // Get the exerciseId from the URL
             const url = this.router.url;
@@ -131,10 +143,28 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        if (!this.course?.exercises) {
-            return;
+        const exercises: Exercise[] = [];
+
+        if (this.multiLaunchExerciseIDs?.length > 0) {
+            const exerciseObservables = this.multiLaunchExerciseIDs.map((exerciseId) => this.exerciseService.find(exerciseId));
+
+            forkJoin(exerciseObservables).subscribe((exerciseResponses) => {
+                exerciseResponses.forEach((response) => {
+                    exercises.push(response.body!);
+                });
+
+                this.processExercises(exercises);
+            });
+        } else {
+            if (!this.course?.exercises) {
+                return;
+            }
+            this.processExercises(this.course.exercises);
         }
-        this.sortedExercises = this.courseOverviewService.sortExercises(this.course.exercises);
+    }
+
+    processExercises(exercises: Exercise[]): void {
+        this.sortedExercises = this.courseOverviewService.sortExercises(exercises);
         this.sidebarExercises = this.courseOverviewService.mapExercisesToSidebarCardElements(this.sortedExercises);
         this.accordionExerciseGroups = this.courseOverviewService.groupExercisesByDueDate(this.sortedExercises);
         this.updateSidebarData();
@@ -165,5 +195,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
+        this.multiLaunchSubscription?.unsubscribe();
+        this.queryParamsSubscription?.unsubscribe();
     }
 }

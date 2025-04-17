@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,7 +19,6 @@ class LocalVCSshSettingsTest extends AbstractSpringIntegrationLocalCILocalVCTest
 
     @BeforeEach
     void setUp() throws Exception {
-        doNothing().when(singleUserNotificationService).notifyUserAboutNewlyAddedSshKey(any(), any());
         sshSettingsTestService.setup(TEST_PREFIX);
     }
 

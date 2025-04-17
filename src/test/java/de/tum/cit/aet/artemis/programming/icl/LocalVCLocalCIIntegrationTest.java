@@ -656,7 +656,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
     }
 
     // ---- Tests for the exam mode ----
-    @Disabled // TODO re-enable after remove gitlab test configuration issues are resolved
+    @Disabled // TODO re-enable after remove when localvc test configuration issues are resolved
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_assignmentRepository_examMode() throws Exception {
