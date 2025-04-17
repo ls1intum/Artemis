@@ -2,7 +2,7 @@
     "artemisApp": {
         "modelingExercise": {
             "home": {
-                "title": "Modeling Exercises",
+                "title": "Modeling Exercise",
                 "createLabel": "Create Modeling Exercise",
                 "editLabel": "Edit Modeling Exercise",
                 "importLabel": "Import Modeling Exercise"

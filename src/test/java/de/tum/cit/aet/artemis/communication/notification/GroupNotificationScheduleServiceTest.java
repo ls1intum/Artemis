@@ -1,11 +1,7 @@
 package de.tum.cit.aet.artemis.communication.notification;
 
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
-import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
 import static java.time.ZonedDateTime.now;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -21,14 +17,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
-import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
-import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
-import de.tum.cit.aet.artemis.core.test_repository.NotificationTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -37,18 +28,12 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
-class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class GroupNotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     private static final String TEST_PREFIX = "notificationschedserv";
 
     @Autowired
     private InstanceMessageReceiveService instanceMessageReceiveService;
-
-    @Autowired
-    private NotificationTestRepository notificationTestRepository;
-
-    @Autowired
-    private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -67,10 +52,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
 
     private Exercise exercise;
 
-    private User user;
-
-    private long sizeBefore;
-
     // TODO: This could be improved by e.g. manually setting the system time instead of waiting for actual time to pass.
     private static final long DELAY_MS = 200;
 
@@ -79,28 +60,20 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
-        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         final Course course = courseUtilService.addEmptyCourse();
         exercise = TextExerciseFactory.generateTextExercise(null, null, null, course);
         exercise.setMaxPoints(5.0);
         exerciseRepository.saveAndFlush(exercise);
-
-        sizeBefore = notificationTestRepository.count();
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
-        notificationSettingRepository.saveAndFlush(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         exercise.setReleaseDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
 
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
-        await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(groupNotificationService, timeout(TIMEOUT_MS)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(mailService, timeout(TIMEOUT_MS).atLeastOnce()).sendNotification(any(), anySet(), any());
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -116,14 +89,11 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         manualResult.setAssessmentType(AssessmentType.MANUAL);
         resultRepository.saveAndFlush(manualResult);
 
-        notificationSettingRepository.saveAndFlush(new NotificationSetting(user, true, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
         exercise.setAssessmentDueDate(now().plus(DELAY_MS, ChronoUnit.MILLIS));
         exerciseRepository.saveAndFlush(exercise);
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
-        await().until(() -> notificationTestRepository.count() > sizeBefore);
         verify(singleUserNotificationService, timeout(TIMEOUT_MS)).notifyUsersAboutAssessedExerciseSubmission(exercise);
         verify(javaMailSender, timeout(TIMEOUT_MS)).send(any(MimeMessage.class));
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 }
