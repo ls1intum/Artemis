@@ -210,6 +210,14 @@ public class InstanceMessageReceiveService {
         quizScheduleService.cancelScheduledQuizStart(exerciseId);
     }
 
+    /**
+     * Processes a request to schedule the unhiding of a slide.
+     * This method is triggered when a message is received on the SLIDE_UNHIDE_SCHEDULE topic.
+     * It retrieves the slide by ID from the repository and, if found, creates a SlideUnhideDTO
+     * which is then passed to the slideUnhideScheduleService to schedule the unhiding.
+     *
+     * @param slideId The ID of the slide to be unhidden
+     */
     public void processScheduleSlideUnhide(Long slideId) {
         log.info("Received schedule update for slide unhiding {}", slideId);
         slideRepository.findById(slideId).ifPresent(slide -> {
