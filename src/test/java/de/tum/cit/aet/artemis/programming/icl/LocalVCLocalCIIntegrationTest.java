@@ -422,7 +422,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, instructor1Login, projectKey1, assignmentRepositorySlug);
 
-        vcsAccessLogRepository.findAllByParticipationId(participation.getId());
         var vcsAccessLogs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
 
         // Assert the expected logs
