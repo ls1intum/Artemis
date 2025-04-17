@@ -11,6 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { LtiService } from 'app/shared/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { RouterTestingModule } from '@angular/router/testing';
+import { SidebarCardElement } from 'app/shared/types/sidebar';
 
 describe('CourseLecturesComponent', () => {
     let component: CourseLecturesComponent;
@@ -18,8 +19,7 @@ describe('CourseLecturesComponent', () => {
     let ltiService: LtiService;
     let courseOverviewService: CourseOverviewService;
     let lectureService: LectureService;
-
-    let lecture: Lecture;
+    let sidebarCardElements: SidebarCardElement[];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -52,10 +52,6 @@ describe('CourseLecturesComponent', () => {
             ],
         });
 
-        lecture = new Lecture();
-        lecture.id = 6;
-        lecture.title = 'Introduction to Computer Science';
-
         fixture = TestBed.createComponent(CourseLecturesComponent);
         component = fixture.componentInstance;
         ltiService = TestBed.inject(LtiService);
@@ -67,7 +63,7 @@ describe('CourseLecturesComponent', () => {
         const processSpy = jest.spyOn(component, 'processLectures');
         const sortSpy = jest.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
         const mapSpy = jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
-        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue([lecture]);
+        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue(sidebarCardElements);
 
         ltiService.setMultiLaunch(true);
         component.ngOnInit();
