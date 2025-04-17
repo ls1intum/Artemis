@@ -306,7 +306,7 @@ public class SecurityConfiguration {
                         clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString(),
                         ensureTrailingSlash(clientUrlToRegisterPasskey.toString()),
                         ensureTrailingSlash(clientUrlWithPort.toString()),
-                        clientUrlToRegisterPasskey.getHost(), "http://localhost:9000"
+                        clientUrlToRegisterPasskey.getHost(), "http://localhost:9000", "http://localhost:8083"
                     )
 //                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
                     .rpId(clientUrlToRegisterPasskey.getHost())

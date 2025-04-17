@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -42,8 +44,11 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
 
     private final UserRepository userRepository;
 
-    public ArtemisPublicKeyCredentialUserEntityRepository(UserRepository userRepository) {
+    private final HttpServletRequest request;
+
+    public ArtemisPublicKeyCredentialUserEntityRepository(UserRepository userRepository, HttpServletRequest request) {
         this.userRepository = userRepository;
+        this.request = request;
     }
 
     public Optional<User> findArtemisUserById(Bytes id) {
@@ -71,6 +76,17 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
     @Override
     public void save(PublicKeyCredentialUserEntity userEntity) {
         log.warn("save not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");
+        log.warn("user entity that should have been saved: id={}, name={}, displayName={}", userEntity.getId().toBase64UrlString(), userEntity.getName(),
+                userEntity.getDisplayName());
+
+        // log.warn("current session id: {}", getSessionId(request));
+    }
+
+    public String getSessionId(HttpServletRequest request) {
+        if (request.getSession(false) != null) {
+            return request.getSession().getId();
+        }
+        return null; // Return null if no session exists
     }
 
     @Override

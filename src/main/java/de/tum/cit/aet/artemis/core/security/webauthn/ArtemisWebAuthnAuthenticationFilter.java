@@ -60,11 +60,11 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
 
         log.debug("Attempting to authenticate");
         // Log request details
-        log.warn("Request Origin: {}", request.getHeader("Origin"));
-        log.info("Request Method: {}", request.getMethod());
-        log.info("Request URI: {}", request.getRequestURI());
-        request.getHeaderNames().asIterator().forEachRemaining(header -> log.info("Request Header: {} = {}", header, request.getHeader(header)));
-        request.getParameterMap().forEach((key, value) -> log.info("Request Parameter: {} = {}", key, String.join(", ", value)));
+        // log.warn("Request Origin: {}", request.getHeader("Origin"));
+        // log.info("Request Method: {}", request.getMethod());
+        // log.info("Request URI: {}", request.getRequestURI());
+        // request.getHeaderNames().asIterator().forEachRemaining(header -> log.info("Request Header: {} = {}", header, request.getHeader(header)));
+        // request.getParameterMap().forEach((key, value) -> log.info("Request Parameter: {} = {}", key, String.join(", ", value)));
 
         ServletServerHttpRequest httpRequest = new ServletServerHttpRequest(request);
         ResolvableType resolvableType = ResolvableType.forClassWithGenerics(PublicKeyCredential.class, AuthenticatorAssertionResponse.class);

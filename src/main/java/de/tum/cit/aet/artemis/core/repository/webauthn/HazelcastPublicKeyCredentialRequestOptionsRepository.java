@@ -32,42 +32,70 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
         log.info("Saving PublicKeyCredentialRequestOptions to session with id {}", request.getSession().getId());
 
-        log.info("Logging all elements in the Hazelcast map:");
-        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
-
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        log.info("Hazelcast size before removing session info: {}", hazelcastMap.size());
-        hazelcastMap.remove(session.getId());
-        log.info("Hazelcast size after removing session info: {}", hazelcastMap.size());
+        logHazlecastMap();
+        if (options != null) {
+            hazelcastMap.put(session.getId(), options);
+        }
+        else {
+            // hazelcastMap.remove(session.getId());
+        }
+        logHazlecastMap();
+    }
+
+    private void logHazlecastMap() {
+        log.info("Logging all elements in the Hazelcast map:");
+        log.info("Hazelcast size: {}", hazelcastMap.size());
+        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
+    }
+
+    private String getSessionId(HttpServletRequest request) {
+        log.info("Getting session id for request {}", request.getRequestURI());
+
+        // HttpSession session = request.getSession(false);
+
+        // boolean sessionExistsInLocalStorage = session == null;
+        // if (sessionExistsInLocalStorage) {
+        // return request.getSession().getId();
+        // }
+
+        // this should only happen in multinode environments when the session was created on another node (with the `webauthn/authenticate/options` endpoint)
+        return request.getRequestedSessionId();
     }
 
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
-        log.info("Loading PublicKeyCredentialRequestOptions");
-        HttpSession session = request.getSession(false);
-        if (session == null) {
+        String sessionId = getSessionId(request);
+        if (sessionId == null) {
+            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
             return null;
         }
-        log.info("Loading PublicKeyCredentialRequestOptions from session with id {}", request.getSession().getId());
 
-        String sessionId = request.getSession().getId();
+        log.info("Loading PublicKeyCredentialRequestOptions for session id {}", sessionId);
+
         // load from hazelcast, if it is stored there
-        if (hazelcastMap.containsKey(sessionId)) {
-            log.info("Found PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
-            return hazelcastMap.get(sessionId);
-        }
+        // if (hazelcastMap.containsKey(sessionId)) {
+        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
+        logHazlecastMap();
+        return hazelcastMap.get(sessionId);
+        // }
+
         // not found in hazelcast => we have a new request => read from request options and store it in hazelcast
-        PublicKeyCredentialRequestOptions options = (PublicKeyCredentialRequestOptions) session.getAttribute(this.attrName);
-        hazelcastMap.put(sessionId, options);
-
-        log.info("Logging all elements in the Hazelcast map:");
-        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
-
-        log.info("Stored PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
-        log.info("Hazelcast size: {}", hazelcastMap.size());
-
-        return options;
+        // HttpSession session = request.getSession(false);
+        // if (session == null) {
+        // log.error("Session is null. Unable to load PublicKeyCredentialRequestOptions.");
+        // return null;
+        // }
+        // PublicKeyCredentialRequestOptions options = (PublicKeyCredentialRequestOptions) session.getAttribute(this.attrName);
+        //
+        // log.info("request options from session attribute: {}", options);
+        //
+        // hazelcastMap.put(sessionId, options);
+        //
+        // logHazlecastMap();
+        //
+        // return options;
     }
 }

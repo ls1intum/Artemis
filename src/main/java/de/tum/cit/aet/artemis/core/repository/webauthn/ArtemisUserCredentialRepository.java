@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -52,11 +54,14 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     private final UserRepository userRepository;
 
+    private final HttpServletRequest request;
+
     public ArtemisUserCredentialRepository(ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository,
-            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository, HttpServletRequest request) {
         this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.userRepository = userRepository;
+        this.request = request;
     }
 
     @Override
@@ -115,6 +120,13 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         });
     }
 
+    public String getSessionId(HttpServletRequest request) {
+        if (request.getSession(false) != null) {
+            return request.getSession().getId();
+        }
+        return null; // Return null if no session exists
+    }
+
     /**
      * <p>
      * Finds all credential records associated with a given user ID.
@@ -134,6 +146,8 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         // Maybe related to ArtemisPublicKeyCredentialUserEntityRepository.save - could be the case that the options requests sets a temporary userId
         log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
 
+        // log.warn("current session id: {}", getSessionId(request));
+
         Optional<User> user = Optional.empty(); // TODO properly retrieve the user
         return user.map(
                 passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
@@ -145,6 +159,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      */
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
         log.info("findPasskeyDtosByUserId: userId={}", userId);
+        log.info("findPasskeyDtosByUserId: userId bytesToLong={}", BytesConverter.bytesToLong(userId));
 
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 

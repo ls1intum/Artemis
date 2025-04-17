@@ -130,11 +130,13 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(converter, jwtCookieService, publicKeyCredentialRequestOptionsRepository);
 
+        var authOptionsFilter = new PublicKeyCredentialRequestOptionsFilter(rpOperations);
+        authOptionsFilter.setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
         http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentialRepository, rpOperations), AuthorizationFilter.class);
         http.addFilterBefore(new PublicKeyCredentialCreationOptionsFilter(rpOperations), AuthorizationFilter.class);
-        http.addFilterBefore(new PublicKeyCredentialRequestOptionsFilter(rpOperations), AuthorizationFilter.class);
+        http.addFilterBefore(authOptionsFilter, AuthorizationFilter.class);
     }
 
     private <T> Optional<T> getBeanOrNull(Class<T> type) {
