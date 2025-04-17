@@ -51,8 +51,6 @@ class PyrisLectureTranscriptionIngestionTest extends AbstractIrisIntegrationTest
 
     private Lecture lecture2;
 
-    private LectureUnit lectureUnit;
-
     private LectureUnit emptyLectureUnit;
 
     private LectureUnit attachmentUnit;

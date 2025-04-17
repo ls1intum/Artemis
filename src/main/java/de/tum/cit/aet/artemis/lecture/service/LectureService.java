@@ -225,25 +225,4 @@ public class LectureService {
             }
         }
     }
-
-    /**
-     * Ingest the transcriptions in the Pyris system
-     *
-     * @param transcription Transcription to be ingested
-     * @param course        The course containing the transcription
-     * @param lecture       The lecture containing the transcription
-     * @param lectureUnit   The lecture unit containing the transcription
-     */
-    public void ingestTranscriptionInPyris(LectureTranscription transcription, Course course, Lecture lecture, VideoUnit lectureUnit) {
-        pyrisWebhookService.ifPresent(webhookService -> webhookService.addTranscriptionsToPyrisDB(transcription, course, lecture, lectureUnit));
-    }
-
-    /**
-     * Deletes an existing Lecture transcription from the Pyris system. If the PyrisWebhookService is unavailable, the method does nothing.
-     *
-     * @param existingLectureTranscription the Lecture transcription to be removed from Pyris
-     */
-    public void deleteLectureTranscriptionInPyris(LectureTranscription existingLectureTranscription) {
-        pyrisWebhookService.ifPresent(webhookService -> webhookService.deleteLectureTranscription(existingLectureTranscription));
-    }
 }
