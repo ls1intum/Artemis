@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.lti.dto.LtiContentItem;
 /**
  * Service for handling LTI deep linking functionality.
  * This includes building and returning appropriate LTI launch URLs
- * for various types of educational content such as exercises, lectures, competencies, etc.
+ * for various Artemis content types such as exercises, lectures, competencies, etc.
  */
 @Service
 @Profile(PROFILE_LTI)
