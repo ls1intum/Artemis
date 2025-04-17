@@ -6,9 +6,9 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { SortIconComponent } from 'app/shared/sort/sort-icon.component';
 import { CommonModule } from '@angular/common';
-import { VcsRepositoryAccessLogService } from 'app/programming/service/vcs-repository-access-log.service';
+import { VcsRepositoryAccessLogService } from 'app/programming/shared/services/vcs-repository-access-log.service';
+import { SortIconComponent } from 'app/shared/sort/icon/sort-icon.component';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
