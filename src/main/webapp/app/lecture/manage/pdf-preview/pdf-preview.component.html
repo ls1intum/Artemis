@@ -12,7 +12,7 @@
                 </h4>
             </div>
             <div class="d-flex-end text-end">
-                @if (attachmentUnit()) {
+                @if (attachmentVideoUnit()) {
                     @if (hasHiddenPages()) {
                         <button
                             class="btn btn-success text-truncate"
@@ -127,7 +127,7 @@
                 [currentPdfUrl]="currentPdfUrl()"
                 [isAppendingFile]="isAppendingFile()"
                 [hiddenPages]="hiddenPages()"
-                [isAttachmentUnit]="!!attachmentUnit()"
+                [isAttachmentUnit]="!!attachmentVideoUnit()"
                 [updatedSelectedPages]="selectedPages()"
                 [orderedPages]="pageOrder()"
                 (selectedPagesOutput)="selectedPages.set($event)"

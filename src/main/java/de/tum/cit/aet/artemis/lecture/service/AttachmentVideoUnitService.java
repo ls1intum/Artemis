@@ -122,7 +122,7 @@ public class AttachmentVideoUnitService {
             createAttachment(updateAttachment, savedAttachmentVideoUnit, updateFile, keepFilename);
         }
         else {
-            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit);
+            updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
             handleFile(updateFile, existingAttachment, keepFilename, savedAttachmentVideoUnit.getId());
             final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
             existingAttachment.setVersion(revision);

@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockAttachmentVideoUnitsService } from '../../../helpers/mocks/service/mock-attachment-video-units.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';

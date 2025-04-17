@@ -7,7 +7,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
 import { AttachmentVideoUnitFormComponent, AttachmentVideoUnitFormData } from 'app/lecture/manage/lecture-units/attachment-video-unit-form/attachment-video-unit-form.component';
-import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/attachment-video-unit.service';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { EditAttachmentVideoUnitComponent } from 'app/lecture/manage/lecture-units/edit-attachment-video-unit/edit-attachment-video-unit.component';
 import { AttachmentVideoUnit } from 'app/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';

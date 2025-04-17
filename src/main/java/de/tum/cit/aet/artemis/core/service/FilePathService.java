@@ -148,7 +148,7 @@ public class FilePathService {
         Path path = Path.of(publicPath.getPath());
         if (publicPath.toString().contains("student")) {
             String attachmentUnitId = path.getName(2).toString();
-            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+            return getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
         }
         if (!publicPath.toString().contains("slide")) {
             String attachmentVideoUnitId = path.getName(2).toString();

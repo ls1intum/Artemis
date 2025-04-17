@@ -103,6 +103,7 @@ public class AttachmentVideoUnitResource {
     public ResponseEntity<AttachmentVideoUnit> getAttachmentVideoUnit(@PathVariable Long attachmentVideoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentVideoUnit : {}", attachmentVideoUnitId);
         AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentVideoUnitId);
+        System.out.println(attachmentVideoUnit.getSlides());
         checkAttachmentVideoUnitCourseAndLecture(attachmentVideoUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentVideoUnit.getLecture().getCourse(), null);
 
@@ -126,7 +127,7 @@ public class AttachmentVideoUnitResource {
     @PutMapping(value = "lectures/{lectureId}/attachment-video-units/{attachmentVideoUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
     public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentVideoUnitId,
-            @RequestPart AttachmentUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
+            @RequestPart AttachmentVideoUnit attachmentVideoUnit, @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file,
             @RequestPart(required = false) String hiddenPages, @RequestPart(required = false) String pageOrder, @RequestParam(defaultValue = "false") boolean keepFilename,
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentVideoUnit);
@@ -319,16 +320,16 @@ public class AttachmentVideoUnitResource {
      */
     @PutMapping("lectures/{lectureId}/attachment-units/{attachmentUnitId}/student-version")
     @EnforceAtLeastEditor
-    public ResponseEntity<AttachmentUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
+    public ResponseEntity<AttachmentVideoUnit> updateAttachmentUnitStudentVersion(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId,
             @RequestParam("studentVersion") MultipartFile studentVersionFile) {
 
-        AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
-        checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
+        AttachmentVideoUnit existingAttachmentUnit = attachmentVideoUnitRepository.findWithSlidesAndCompetenciesByIdElseThrow(attachmentUnitId);
+        checkAttachmentVideoUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
         Attachment attachment = existingAttachmentUnit.getAttachment();
 
         try {
-            attachmentUnitService.handleStudentVersionFile(studentVersionFile, attachment, existingAttachmentUnit.getId());
+            attachmentVideoUnitService.handleStudentVersionFile(studentVersionFile, attachment, existingAttachmentUnit.getId());
             return ResponseEntity.ok(existingAttachmentUnit);
         }
         catch (Exception e) {

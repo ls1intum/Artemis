@@ -91,20 +91,20 @@ public class SlideSplitterService {
     /**
      * Splits an Attachment Unit file into single slides and saves them as PNG files asynchronously.
      *
-     * @param attachmentUnit The attachment unit to which the slides belong.
-     * @param hiddenPages    The hidden pages of the attachment unit.
-     * @param pageOrder      The page order of the attachment unit.
+     * @param attachmentVideoUnit The attachment unit to which the slides belong.
+     * @param hiddenPages         The hidden pages of the attachment unit.
+     * @param pageOrder           The page order of the attachment unit.
      */
     @Async
-    public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit, String hiddenPages, String pageOrder) {
-        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()));
+    public void splitAttachmentVideoUnitIntoSingleSlides(AttachmentVideoUnit attachmentVideoUnit, String hiddenPages, String pageOrder) {
+        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentVideoUnit.getAttachment().getLink()));
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
-            splitAttachmentUnitIntoSingleSlides(document, attachmentUnit, pdfFilename, hiddenPages, pageOrder);
+            splitAttachmentUnitIntoSingleSlides(document, attachmentVideoUnit, pdfFilename, hiddenPages, pageOrder);
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
         }
     }
@@ -155,8 +155,8 @@ public class SlideSplitterService {
      * @param hiddenPages    The hidden pages information.
      * @param pageOrder      The order of pages in the PDF.
      */
-    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentUnit attachmentUnit, String pdfFilename, String hiddenPages, String pageOrder) {
-        log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentUnit.getAttachment().getName());
+    public void splitAttachmentUnitIntoSingleSlides(PDDocument document, AttachmentVideoUnit attachmentVideoUnit, String pdfFilename, String hiddenPages, String pageOrder) {
+        log.debug("Processing slides for Attachment Unit with hidden pages {}", attachmentVideoUnit.getAttachment().getName());
 
         try {
             // Parse the page order and hidden pages information
@@ -164,7 +164,7 @@ public class SlideSplitterService {
             HiddenPagesData hiddenPagesData = HiddenPagesData.fromJson(hiddenPages);
 
             // Retrieve existing slides
-            List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(attachmentUnit.getId());
+            List<Slide> existingSlides = slideRepository.findAllByAttachmentVideoUnitId(attachmentVideoUnit.getId());
             Map<String, Slide> existingSlidesMap = existingSlides.stream().collect(Collectors.toMap(slide -> String.valueOf(slide.getId()), slide -> slide));
 
             // Initialize PDF renderer and filename
@@ -173,14 +173,14 @@ public class SlideSplitterService {
 
             // Process each slide in the page order
             for (Map<String, Object> page : pageOrderList) {
-                processSlide(page, attachmentUnit, existingSlidesMap, hiddenPagesData, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
+                processSlide(page, attachmentVideoUnit, existingSlidesMap, hiddenPagesData, pdfRenderer, fileNameWithOutExt, document.getNumberOfPages());
             }
 
             // Clean up slides that are no longer in the page order
             cleanupRemovedSlides(pageOrderList, existingSlides);
         }
         catch (IOException e) {
-            log.error("Error while splitting Attachment Unit {} into single slides", attachmentUnit.getId(), e);
+            log.error("Error while splitting Attachment Unit {} into single slides", attachmentVideoUnit.getId(), e);
             throw new InternalServerErrorException("Could not split Attachment Unit into single slides: " + e.getMessage());
         }
     }
@@ -188,7 +188,7 @@ public class SlideSplitterService {
     /**
      * Process a single slide in the page order.
      */
-    private void processSlide(Map<String, Object> page, AttachmentUnit attachmentUnit, Map<String, Slide> existingSlidesMap, HiddenPagesData hiddenPagesData,
+    private void processSlide(Map<String, Object> page, AttachmentVideoUnit attachmentVideoUnit, Map<String, Slide> existingSlidesMap, HiddenPagesData hiddenPagesData,
             PDFRenderer pdfRenderer, String fileNameWithOutExt, int totalPages) throws IOException {
         String slideId = String.valueOf(page.get("slideId"));
         int order = ((Number) page.get("order")).intValue();
@@ -200,7 +200,7 @@ public class SlideSplitterService {
         if (slideId.startsWith("temp_") || !existingSlidesMap.containsKey(slideId)) {
             isNewSlide = true;
             slideEntity = new Slide();
-            slideEntity.setAttachmentUnit(attachmentUnit);
+            slideEntity.setAttachmentVideoUnit(attachmentVideoUnit);
         }
         else {
             slideEntity = existingSlidesMap.get(slideId);
@@ -210,10 +210,10 @@ public class SlideSplitterService {
         ZonedDateTime previousHiddenValue = updateSlideHiddenStatus(slideEntity, hiddenPagesData, slideId);
 
         if (isNewSlide) {
-            createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentUnit, order, totalPages);
+            createNewSlideImage(slideEntity, pdfRenderer, fileNameWithOutExt, attachmentVideoUnit, order, totalPages);
         }
         else {
-            updateExistingSlideImage(slideEntity, fileNameWithOutExt, attachmentUnit, order);
+            updateExistingSlideImage(slideEntity, fileNameWithOutExt, attachmentVideoUnit, order);
         }
 
         // Save slide and schedule unhiding if needed
@@ -261,16 +261,16 @@ public class SlideSplitterService {
     /**
      * Create image for a new slide.
      */
-    private void createNewSlideImage(Slide slideEntity, PDFRenderer pdfRenderer, String fileNameWithOutExt, AttachmentUnit attachmentUnit, int order, int totalPages)
+    private void createNewSlideImage(Slide slideEntity, PDFRenderer pdfRenderer, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order, int totalPages)
             throws IOException {
         int pdfPageIndex = order - 1;
         if (pdfPageIndex >= 0 && pdfPageIndex < totalPages) {
             BufferedImage bufferedImage = pdfRenderer.renderImageWithDPI(pdfPageIndex, 72, ImageType.RGB);
             byte[] imageInByte = bufferedImageToByteArray(bufferedImage, "png");
-            String filename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+            String filename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
             MultipartFile slideFile = fileService.convertByteArrayToMultipart(filename, ".png", imageInByte);
-            Path savePath = fileService.saveFile(slideFile,
-                    FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide").resolve(String.valueOf(order)).resolve(filename));
+            Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString()).resolve("slide")
+                    .resolve(String.valueOf(order)).resolve(filename));
 
             slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
         }
@@ -279,11 +279,11 @@ public class SlideSplitterService {
     /**
      * Update image for an existing slide.
      */
-    private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentUnit attachmentUnit, int order) {
+    private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentVideoUnit attachmentVideoUnit, int order) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
             Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath));
-            String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
+            String newFilename = fileNameWithOutExt + "_" + attachmentVideoUnit.getId() + "_Slide_" + order + ".png";
 
             try {
                 File existingFile = originalPath.toFile();
@@ -292,8 +292,8 @@ public class SlideSplitterService {
                     byte[] imageInByte = bufferedImageToByteArray(image, "png");
 
                     MultipartFile slideFile = fileService.convertByteArrayToMultipart(newFilename, ".png", imageInByte);
-                    Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
-                            .resolve(String.valueOf(order)).resolve(newFilename));
+                    Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentVideoUnit.getId().toString())
+                            .resolve("slide").resolve(String.valueOf(order)).resolve(newFilename));
 
                     slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, (long) order).toString());
                     existingFile.delete();
@@ -332,7 +332,7 @@ public class SlideSplitterService {
 
             if (!slidesToDetach.isEmpty()) {
                 for (Slide slide : slidesToDetach) {
-                    slide.setAttachmentUnit(null);
+                    slide.setAttachmentVideoUnit(null);
                     slideRepository.save(slide);
                 }
                 log.debug("Detached {} slides that are no longer in the page order by setting their attachment unit to null", slidesToDetach.size());

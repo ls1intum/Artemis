@@ -13,7 +13,7 @@ export class AttachmentVideoUnitResolve implements Resolve<AttachmentVideoUnit> 
 
     resolve(route: ActivatedRouteSnapshot): Observable<AttachmentVideoUnit> {
         const lectureId = route.params['lectureId'];
-        const attachmentVideoUnitId = route.params['attachmentUnitId'];
+        const attachmentVideoUnitId = route.params['attachmentVideoUnitId'];
         if (attachmentVideoUnitId) {
             return this.attachmentVideoUnitService.findById(attachmentVideoUnitId, lectureId).pipe(
                 filter((response: HttpResponse<AttachmentVideoUnit>) => response.ok),

@@ -643,9 +643,9 @@ public class FileResource {
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
         log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
-        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-        Attachment attachment = attachmentUnit.getAttachment();
-        Course course = attachmentUnit.getLecture().getCourse();
+        AttachmentVideoUnit attachmentVideoUnit = attachmentVideoUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Attachment attachment = attachmentVideoUnit.getAttachment();
+        Course course = attachmentVideoUnit.getLecture().getCourse();
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         // check if hidden link is available in the attachment
@@ -656,7 +656,7 @@ public class FileResource {
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
+        return buildFileResponse(FilePathService.getAttachmentVideoUnitFilePath().resolve(Path.of(attachmentVideoUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**

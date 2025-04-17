@@ -218,9 +218,9 @@ public class LectureService {
      */
     public void filterHiddenPagesOfAttachmentUnits(Lecture lectureWithAttachmentUnits) {
         for (LectureUnit unit : lectureWithAttachmentUnits.getLectureUnits()) {
-            if (unit instanceof AttachmentUnit attachmentUnit) {
-                List<Slide> filteredSlides = attachmentUnit.getSlides().stream().filter(slide -> slide.getHidden() == null).toList();
-                attachmentUnit.setSlides(filteredSlides);
+            if (unit instanceof AttachmentVideoUnit attachmentVideoUnit) {
+                List<Slide> filteredSlides = attachmentVideoUnit.getSlides().stream().filter(slide -> slide.getHidden() == null).toList();
+                attachmentVideoUnit.setSlides(filteredSlides);
             }
         }
     }

@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
@@ -49,12 +49,12 @@ public class AttachmentService {
      * @param attachment The attachment whose student version needs to be regenerated
      */
     public void regenerateStudentVersion(Attachment attachment) {
-        AttachmentUnit attachmentUnit = attachment.getAttachmentUnit();
+        AttachmentVideoUnit attachmentUnit = attachment.getAttachmentVideoUnit();
         if (attachmentUnit == null) {
             return;
         }
 
-        List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(attachmentUnit.getId());
+        List<Slide> hiddenSlides = slideRepository.findByAttachmentVideoUnitIdAndHiddenNotNull(attachmentUnit.getId());
 
         // If no slides are marked as hidden, remove student version if it exists
         if (hiddenSlides.isEmpty()) {
@@ -132,7 +132,7 @@ public class AttachmentService {
         }
 
         // Create the student version directory if it doesn't exist
-        Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString()).resolve("student");
+        Path basePath = FilePathService.getAttachmentVideoUnitFilePath().resolve(attachmentUnitId.toString()).resolve("student");
         Files.createDirectories(basePath);
 
         String sanitizedName = fileService.checkAndSanitizeFilename(attachment.getName());

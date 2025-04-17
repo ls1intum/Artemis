@@ -14,7 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -47,8 +47,8 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
         testCourse = courseUtilService.addEmptyCourse();
         testExercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), ZonedDateTime.now().plusDays(8), testCourse);
 
-        AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
-        List<Slide> testSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        AttachmentVideoUnit testAttachmentVideoUnit = lectureUtilService.createAttachmentVideoUnitWithSlidesAndFile(5, true);
+        List<Slide> testSlides = slideRepository.findAllByAttachmentVideoUnitId(testAttachmentVideoUnit.getId());
         testSlides.getFirst().setHidden(testExercise.getDueDate());
         slideRepository.save(testSlides.getFirst());
     }
