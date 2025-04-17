@@ -126,6 +126,15 @@ jhi-secured-image {
     background-color: var(--link-item-bg);
     color: var(--link-item-color);
 }
+// We have to override this style from globals.scss here as we only want to target the span with the text inside
+a:not(.btn):not(.tab-link):hover {
+    text-decoration: none !important;
+}
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+}
 
 .three-dots {
     cursor: pointer;
