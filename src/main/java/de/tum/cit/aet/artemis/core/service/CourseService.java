@@ -1038,10 +1038,8 @@ public class CourseService {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
             // remove some values which are not needed in the client
-            user.setLastNotificationRead(null);
             user.setActivationKey(null);
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setCreatedDate(null);
         });
         removeUserVariables(usersInGroup);
@@ -1192,10 +1190,8 @@ public class CourseService {
      */
     private void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
-            user.setLastNotificationRead(null);
             user.setActivationKey(null);
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setCreatedDate(null);
         });
     }

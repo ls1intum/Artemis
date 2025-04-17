@@ -697,48 +697,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
-            SET user.lastNotificationRead = :lastNotificationRead
-            WHERE user.id = :userId
-            """)
-    void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
-
-    /**
-     * Update user notification read date for current user
-     *
-     * @param userId the user for which the notification read date should be updated
-     */
-    @Transactional
-    default void updateUserNotificationReadDate(long userId) {
-        updateUserNotificationReadDate(userId, ZonedDateTime.now());
-    }
-
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
             SET user.imageUrl = :imageUrl
             WHERE user.id = :userId
             """)
     void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
-
-    /**
-     * Update user notification hide until property for current user
-     * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.
-     * If the value is null then all notifications should be shown.
-     * (Not to be confused with notification settings. This filter is based on the notification date alone)
-     *
-     * @param userId                of the user
-     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
-     *                                  (if null -> show all notifications)
-     */
-    @Modifying
-    @Transactional // ok because of modifying query
-    @Query("""
-            UPDATE User user
-            SET user.hideNotificationsUntil = :hideNotificationUntil
-            WHERE user.id = :userId
-            """)
-    void updateUserNotificationVisibility(@Param("userId") long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
     @Modifying
     @Transactional // ok because of modifying query

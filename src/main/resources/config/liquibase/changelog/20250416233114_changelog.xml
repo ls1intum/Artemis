@@ -40,4 +40,9 @@
     <changeSet id="20250417151621" author="rangger">
         <dropTable tableName="notification_setting"/>
     </changeSet>
+
+    <changeSet id="20250417163554" author="rangger">
+        <dropColumn tableName="jhi_user" columnName="hide_notifications_until"/>
+        <dropColumn tableName="jhi_user" columnName="last_notification_read"/>
+    </changeSet>
 </databaseChangeLog>
