@@ -6,12 +6,12 @@ import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang.StringUtils;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -192,18 +192,15 @@ public class SharingConnectorService {
      * Returns a sharing plugin configuration.
      *
      * @param apiBaseUrl       the base url of the sharing application api (for callbacks)
-     * @param installationName a descriptive name of the sharing application
+     * @param installationName an optional descriptive name of the sharing application
      */
-    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, String installationName) {
+    public SharingPluginConfig getPluginConfig(URL apiBaseUrl, Optional<String> installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
-        this.installationName = installationName;
-        if (StringUtils.isEmpty(installationName)) {
-            try {
-                this.installationName = InetAddress.getLocalHost().getCanonicalHostName();
-            }
-            catch (UnknownHostException e) {
-                this.installationName = UNKNOWN_INSTALLATIONAME;
-            }
+        try {
+            this.installationName = installationName.orElse(InetAddress.getLocalHost().getCanonicalHostName());
+        }
+        catch (UnknownHostException e) {
+            this.installationName = UNKNOWN_INSTALLATIONAME;
         }
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
