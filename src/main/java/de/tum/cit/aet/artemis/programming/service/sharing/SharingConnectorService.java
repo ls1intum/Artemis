@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -9,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang.StringUtils;
 import org.codeability.sharing.plugins.api.SharingPluginConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +33,8 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 @Service
 @Profile("sharing")
 public class SharingConnectorService {
+
+    public static final String UNKNOWN_INSTALLATIONAME = "unknown installationame";
 
     public static class HealthStatus {
 
@@ -192,6 +197,14 @@ public class SharingConnectorService {
     public SharingPluginConfig getPluginConfig(URL apiBaseUrl, String installationName) {
         this.sharingApiBaseUrl = apiBaseUrl;
         this.installationName = installationName;
+        if (StringUtils.isEmpty(installationName)) {
+            try {
+                this.installationName = InetAddress.getLocalHost().getCanonicalHostName();
+            }
+            catch (UnknownHostException e) {
+                this.installationName = UNKNOWN_INSTALLATIONAME;
+            }
+        }
         SharingPluginConfig.Action action = new SharingPluginConfig.Action("Import", "/sharing/import", actionName,
                 "metadata.format.stream().anyMatch(entry->entry=='artemis' || entry=='Artemis').get()");
         lastHealthStati.add(new HealthStatus("Delivered Sharing Config Status to " + apiBaseUrl));
