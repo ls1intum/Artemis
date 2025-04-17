@@ -5,6 +5,7 @@ import { Observable, Subject, Subscription, of } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
+
 import {
     faChartBar,
     faChevronLeft,

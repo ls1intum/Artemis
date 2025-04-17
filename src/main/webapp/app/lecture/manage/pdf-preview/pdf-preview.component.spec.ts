@@ -42,6 +42,8 @@ jest.mock('pdf-lib', () => {
     };
 });
 
+let mockWorkerSrc = '';
+
 jest.mock('pdfjs-dist', () => {
     return {
         getDocument: jest.fn(() => ({
@@ -57,11 +59,15 @@ jest.mock('pdfjs-dist', () => {
                 ),
             }),
         })),
+        GlobalWorkerOptions: {
+            get workerSrc() {
+                return mockWorkerSrc;
+            },
+            set workerSrc(value: string) {
+                mockWorkerSrc = value;
+            },
+        },
     };
-});
-
-jest.mock('pdfjs-dist/build/pdf.worker', () => {
-    return {};
 });
 
 describe('PdfPreviewComponent', () => {

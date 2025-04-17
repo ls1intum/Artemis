@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.communication.domain;
 
+/**
+ * TODO: Delete when deleting {@link de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService}
+ */
 public enum NotificationType {
     EXERCISE_SUBMISSION_ASSESSED, ATTACHMENT_CHANGE, EXERCISE_RELEASED, EXERCISE_PRACTICE, QUIZ_EXERCISE_STARTED, EXERCISE_UPDATED, NEW_REPLY_FOR_EXERCISE_POST,
     NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_REPLY_FOR_EXAM_POST, NEW_EXERCISE_POST, NEW_LECTURE_POST, NEW_COURSE_POST, NEW_ANNOUNCEMENT_POST, NEW_EXAM_POST,

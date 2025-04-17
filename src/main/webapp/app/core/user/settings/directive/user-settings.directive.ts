@@ -38,7 +38,7 @@ export abstract class UserSettingsDirective implements OnInit {
      * Fetches the settings based on the settings category, updates the currently loaded userSettingsStructure, individual settings, and HTML template
      */
     protected loadSetting(): void {
-        this.userSettingsService.loadSettings(this.userSettingsCategory).subscribe({
+        this.userSettingsService.loadSettings(this.userSettingsCategory)?.subscribe({
             next: (res: HttpResponse<Setting[]>) => {
                 this.userSettings = this.userSettingsService.loadSettingsSuccessAsSettingsStructure(res.body!, this.userSettingsCategory);
                 this.settings = this.userSettingsService.extractIndividualSettingsFromSettingsStructure(this.userSettings);
