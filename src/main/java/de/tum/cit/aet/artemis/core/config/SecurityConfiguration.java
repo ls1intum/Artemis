@@ -38,7 +38,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.security.web.webauthn.authentication.HttpSessionPublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
@@ -46,6 +45,9 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
@@ -83,6 +85,8 @@ public class SecurityConfiguration {
 
     private final UserDetailsService userDetailsService;
 
+    private final HazelcastInstance hazelcastInstance;
+
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
@@ -116,7 +120,7 @@ public class SecurityConfiguration {
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserDetailsService userDetailsService) {
+            UserDetailsService userDetailsService, HazelcastInstance hazelcastInstance) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -127,6 +131,7 @@ public class SecurityConfiguration {
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
         this.userDetailsService = userDetailsService;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -185,7 +190,7 @@ public class SecurityConfiguration {
 
     @Bean
     public PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository() {
-        return new HttpSessionPublicKeyCredentialRequestOptionsRepository();
+        return new HazelcastPublicKeyCredentialRequestOptionsRepository(hazelcastInstance);
     }
 
     /**
@@ -322,25 +327,6 @@ public class SecurityConfiguration {
 
     private String ensureTrailingSlash(String url) {
         return url.endsWith("/") ? url : url + "/";
-    }
-
-    /**
-     * Retrieves the client URL for the current environment.
-     * <p>
-     * If the development profile is active, the client URL is constructed using the server URL and port.
-     * Otherwise, the client URL is based solely on the server URL.
-     * </p>
-     *
-     * @return The client URL as a {@link URL}.
-     * @throws URISyntaxException    If the constructed URI is invalid.
-     * @throws MalformedURLException If the constructed URL is invalid.
-     */
-    private URL getClientUrl() throws URISyntaxException, MalformedURLException {
-        // if (profileService.isDevActive()) {
-        // return new URI(serverUrl + ":" + port).toURL();
-        // }
-
-        return new URI(serverUrl).toURL();
     }
 
     /**
