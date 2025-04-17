@@ -15,6 +15,7 @@ import {
     forwardRef,
     inject,
     input,
+    output,
 } from '@angular/core';
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -80,6 +81,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
 
+    showCloseButton = input<boolean>(false);
+    closeEditor = output<void>();
     isButtonLoading = input<boolean>(false);
     isFormGroupValid = input<boolean>(false);
     editType = input<PostingEditType>();

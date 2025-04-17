@@ -103,7 +103,6 @@ export const routes: Routes = [
                 path: 'exercises/text-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.textExercise',
                 },
                 loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
@@ -113,7 +112,7 @@ export const routes: Routes = [
                     import('app/programming/overview/code-editor-student-container/code-editor-student-container.component').then((m) => m.CodeEditorStudentContainerComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.programmingExercise',
+                    pageTitle: 'artemisApp.programmingExercise.home.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -121,7 +120,6 @@ export const routes: Routes = [
                 path: 'exercises/:exerciseId/repository',
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.repository',
                 },
                 loadChildren: () => import('app/programming/overview/programming-repository.route').then((m) => m.routes),
             },
@@ -129,7 +127,6 @@ export const routes: Routes = [
                 path: 'exercises/modeling-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.modelingExercise',
                 },
                 loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
             },
@@ -137,7 +134,6 @@ export const routes: Routes = [
                 path: 'exercises/quiz-exercises/:exerciseId',
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.quizExercise',
                 },
                 loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
             },
@@ -146,7 +142,7 @@ export const routes: Routes = [
                 loadComponent: () => import('app/fileupload/overview/file-upload-submission/file-upload-submission.component').then((m) => m.FileUploadSubmissionComponent),
                 data: {
                     authorities: [Authority.USER],
-                    pageTitle: 'overview.fileUploadExercise',
+                    pageTitle: 'artemisApp.fileUploadExercise.home.title',
                 },
                 canActivate: [UserRouteAccessService],
                 canDeactivate: [PendingChangesGuard],

@@ -2,7 +2,7 @@
     "artemisApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
+                "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",

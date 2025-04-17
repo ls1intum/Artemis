@@ -46,12 +46,9 @@ import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
@@ -84,9 +81,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ConversationUtilService conversationUtilService;
-
-    @Autowired
-    private ConversationNotificationRepository conversationNotificationRepository;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -200,24 +194,11 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
-
-        if (isAnnouncement) {
-            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
-            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
-        }
-        else {
-            verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
-        }
-
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
-        // Since we are testing old notifications
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
         ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -234,11 +215,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
-
-        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
-        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
-
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -329,11 +305,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        ConversationNotification notificationForPost = conversationNotificationRepository.findAll().stream().filter(notification -> createdPost.equals(notification.getMessage()))
-                .findFirst().orElseThrow();
-
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + course.getId()),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost) && postDTO.notification().equals(notificationForPost)));
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
     }
 
     @ParameterizedTest
@@ -1035,18 +1008,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * Calls the POST /messages endpoint to create a new message and awaits the asynchronously executed code
-     * <p>
-     * This method awaits the asynchronous calls, by checking that the notification for the new message has been stored in the database,
-     * which is a call close to the end of the asynchronously executed code.
+     * Calls the POST /messages endpoint to create a new message
      *
      * @param postToSave post to save in the database
      * @return saved post
      */
     private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
-        Post savedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        await().until(() -> conversationNotificationRepository.findAll().stream().map(ConversationNotification::getMessage).collect(Collectors.toSet()).contains(savedPost));
-        return savedPost;
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
