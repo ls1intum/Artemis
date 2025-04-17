@@ -14,7 +14,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
- * This class describes SAML2 properties.
+ * This class describes SAML2 properties. Those values are specified in application-saml2.yml and automatically mapped to the below Java attributes. Admins can override the values
+ * in application-prod.yml
  */
 @Profile(PROFILE_CORE)
 @Component

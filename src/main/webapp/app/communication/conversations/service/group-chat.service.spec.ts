@@ -8,9 +8,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('GroupChatService', () => {
     let service: GroupChatService;
@@ -24,7 +22,6 @@ describe('GroupChatService', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(GroupChatService);
