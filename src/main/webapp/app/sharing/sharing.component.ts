@@ -150,15 +150,9 @@ export class SharingComponent implements OnInit {
                     checksum: this.sharingInfo.checksum,
                 },
             })
-            .then(
-                (nav) => {
-                    return true; // true if navigation is successful
-                },
-                (err) => {
-                    // just a technical branch, should never be called
-                    this.alertService.addErrorAlert(`Cannot navigate to imported exercise: ${err}`); // when there's an error
-                },
-            );
+            .then((nav) => {
+                return true; // true if navigation is successful
+            });
     }
 
     /**

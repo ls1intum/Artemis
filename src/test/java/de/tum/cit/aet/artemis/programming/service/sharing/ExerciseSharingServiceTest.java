@@ -10,8 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * some special tests for ExerciseSharingService.
- * Most of functionality is tested via @link ExerciseSharingResourceImportTest and @Link ExerciseSharingResourceExportTest
+ * Special tests for ExerciseSharingService focusing on validation failures.
+ * Most of the functionality is tested via {@link de.tum.cit.aet.artemis.programming.web.rest.ExerciseSharingResourceImportTest}
+ * and {@link de.tum.cit.aet.artemis.programming.web.rest.ExerciseSharingResourceExportTest}
  */
 class ExerciseSharingServiceTest extends AbstractSpringIntegrationIndependentTest {
 

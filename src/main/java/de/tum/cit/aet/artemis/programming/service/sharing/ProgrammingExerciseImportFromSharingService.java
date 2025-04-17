@@ -63,21 +63,21 @@ public class ProgrammingExerciseImportFromSharingService {
      * @param sharingSetupInfo Containing sharing and exercise data needed for the import
      */
     public ProgrammingExercise importProgrammingExerciseFromSharing(SharingSetupInfo sharingSetupInfo) throws SharingException, IOException, GitAPIException, URISyntaxException {
-        if (sharingSetupInfo.getExercise() == null) {
+        if (sharingSetupInfo.exercise() == null) {
             throw new SharingException("Exercise is null?");
         }
-        Optional<SharingMultipartZipFile> zipFileO = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.getSharingInfo());
+        Optional<SharingMultipartZipFile> zipFileO = exerciseSharingService.getCachedBasketItem(sharingSetupInfo.sharingInfo());
         if (zipFileO.isEmpty()) {
             throw new SharingException("Failed to retrieve exercise zip file from sharing platform");
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (sharingSetupInfo.getExercise().getCourseViaExerciseGroupOrCourseMember() == null) {
-            sharingSetupInfo.getExercise().setCourse(sharingSetupInfo.getCourse());
+        if (sharingSetupInfo.exercise().getCourseViaExerciseGroupOrCourseMember() == null) {
+            sharingSetupInfo.exercise().setCourse(sharingSetupInfo.course());
         }
         try {
-            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.getExercise(), zipFileO.get(), sharingSetupInfo.getCourse(),
-                    user, true);
+            return this.programmingExerciseImportFromFileService.importProgrammingExerciseFromFile(sharingSetupInfo.exercise(), zipFileO.get(), sharingSetupInfo.course(), user,
+                    true);
         }
         catch (Exception e) {
             log.error("Cannot create exercise", e);

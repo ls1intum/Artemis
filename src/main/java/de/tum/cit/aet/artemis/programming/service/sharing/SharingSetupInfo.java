@@ -11,26 +11,4 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  */
 @Profile("sharing")
 public record SharingSetupInfo(ProgrammingExercise exercise, Course course, SharingInfoDTO sharingInfo) {
-
-    /**
-     * the exercise
-     */
-    public ProgrammingExercise getExercise() {
-        return exercise;
-    }
-
-    /**
-     * the course
-     */
-    public Course getCourse() {
-        return course;
-    }
-
-    /**
-     * the sharing info from the sharing platform
-     */
-    public SharingInfoDTO getSharingInfo() {
-        return sharingInfo;
-    }
-
 }

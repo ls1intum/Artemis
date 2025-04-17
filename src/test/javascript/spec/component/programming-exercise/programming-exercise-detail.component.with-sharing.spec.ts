@@ -61,6 +61,9 @@ describe('ProgrammingExerciseDetailComponent', () => {
         solutionParticipation: {
             id: 2,
         } as SolutionProgrammingExerciseParticipation,
+        buildConfig: {
+            buildTool: 'GRADLE',
+        },
     } as ProgrammingExercise;
 
     const exerciseStatistics = {
@@ -165,7 +168,7 @@ describe('ProgrammingExerciseDetailComponent', () => {
             httpMock = TestBed.inject(HttpTestingController);
         });
         afterEach(() => {
-            //            httpMock.verify();
+            httpMock.verify();
         });
 
         it('should be in sharing mode', async () => {

@@ -109,6 +109,35 @@ describe('SharingComponent', () => {
         fixture.componentInstance.navigateToImportFromSharing();
     }));
 
+    it('failed init basket error', fakeAsync(() => {
+        jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
+        // token expiry date not yet set
+        expect(fixture.componentInstance.getTokenExpiryDate()).toBeBetween(new Date(Date.now() - 1000), new Date(Date.now() + 1000));
+        const errorSpy = jest.spyOn(alertService, 'error');
+
+        fixture.detectChanges();
+        tick();
+        const basketUrl = `api/sharing/import/basket?basketToken=${fixture.componentInstance.sharingInfo.basketToken}&returnURL=${fixture.componentInstance.sharingInfo.returnURL}&apiBaseURL=${fixture.componentInstance.sharingInfo.apiBaseURL}&checksum=${fixture.componentInstance.sharingInfo.checksum}`;
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: basketUrl,
+        });
+
+        const courseReq = httpMock.expectOne((request) => request.url === 'api/core/courses/with-user-stats');
+
+        courseReq.flush(courses);
+
+        req.flush(
+            { message: 'Bakset not found' }, // error body
+            {
+                status: 404,
+                statusText: 'Not Found',
+            },
+        );
+
+        expect(errorSpy).toHaveBeenCalledOnce();
+    }));
+
     it('failed init course load error', fakeAsync(() => {
         jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(true));
         // token expiry date not yet set

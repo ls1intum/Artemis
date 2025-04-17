@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.programming.service.sharing;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.dto.SharingInfoDTO;
@@ -50,7 +50,7 @@ public class SharingInfoDTOTest {
     }
 
     @Test
-    void testVariousOnSharingZipFile() throws IOException {
+    void testSharingZipFilePropertiesAndFileTransfer() throws IOException {
         final String testZipName = "testZip";
         try (SharingMultipartZipFile sharingZip = new SharingMultipartZipFile(testZipName, this.getClass().getResource("./basket/sampleExercise.zip").openStream());) {
             assertThat(sharingZip.getName()).isEqualTo(testZipName);
@@ -66,9 +66,10 @@ public class SharingInfoDTOTest {
     }
 
     @Test
-    void testWeirdUseOfSharingZipFile() throws IOException {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new SharingMultipartZipFile(null, this.getClass().getResource("./basket/sampleExercise.zip").openStream()));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> new SharingMultipartZipFile("no stream", null));
+    void testSharingZipFileThrowsExceptionForInvalidParameters() throws IOException {
+        assertThatExceptionOfType(IllegalArgumentException.class)
+                .isThrownBy(() -> new SharingMultipartZipFile(null, this.getClass().getResource("./basket/sampleExercise.zip").openStream()));
+        assertThatExceptionOfType(IllegalArgumentException.class).isThrownBy(() -> new SharingMultipartZipFile("no stream", null));
     }
 
 }

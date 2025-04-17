@@ -5,13 +5,13 @@ export class SharingInfo {
     /** Token representing the current shopping basket */
     public basketToken = '';
     /** URL to return to after completing sharing operation */
-    public returnURL: '';
+    public returnURL = '';
     /** Base URL for the sharing platform API */
-    public apiBaseURL: '';
+    public apiBaseURL = '';
     /** ID of the currently selected exercise */
     public selectedExercise = 0;
     /** checksum fo apiBaseURL and returnURL */
-    public checksum: '';
+    public checksum = '';
 
     /**
      * Checks if a shopping basket is currently available

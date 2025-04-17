@@ -6,8 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import jakarta.validation.constraints.NotNull;
-
 import javax.annotation.Nonnull;
 
 import org.apache.commons.io.FileUtils;
@@ -70,18 +68,18 @@ public class SharingMultipartZipFile implements MultipartFile, Closeable {
 
     @Override
     @Nonnull
-    public byte @NotNull [] getBytes() throws IOException {
+    public byte[] getBytes() throws IOException {
         return this.inputStream.readAllBytes();
     }
 
     @Override
     @Nonnull
-    public @NotNull InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() throws IOException {
         return this.inputStream;
     }
 
     @Override
-    public void transferTo(@NotNull File dest) throws IOException, IllegalStateException {
+    public void transferTo(@Nonnull File dest) throws IOException, IllegalStateException {
         FileUtils.copyInputStreamToFile(this.inputStream, dest);
     }
 
