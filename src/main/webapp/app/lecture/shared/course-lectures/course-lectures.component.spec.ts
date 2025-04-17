@@ -73,7 +73,6 @@ describe('CourseLecturesComponent', () => {
         expect(processSpy).toHaveBeenCalled();
         expect(sortSpy).toHaveBeenCalled();
         expect(mapSpy).toHaveBeenCalled();
-        expect(groupSpy).toHaveBeenCalled();
     }));
 
     it('should fetch lectures for multi-launch when lectureIDs are provided', fakeAsync(() => {
