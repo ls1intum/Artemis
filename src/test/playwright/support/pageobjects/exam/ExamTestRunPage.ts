@@ -100,12 +100,4 @@ export class ExamTestRunPage {
         await this.page.locator('#delete').click();
         await responsePromise;
     }
-
-    async deleteTestExamTestRun() {
-        await this.page.locator('svg.svg-inline--fa.fa-xmark').nth(1).click();
-        await this.page.locator('#confirm-entity-name').fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run/*`);
-        await this.page.locator('#delete').click();
-        await responsePromise;
-    }
 }
