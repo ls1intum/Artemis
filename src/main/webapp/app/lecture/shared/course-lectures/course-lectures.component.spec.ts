@@ -22,12 +22,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { LtiService } from 'app/shared/service/lti.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 
 @Component({ selector: 'jhi-course-lecture-row', template: '' })
 class CourseLectureRowStubComponent {
@@ -97,6 +99,12 @@ describe('CourseLectures', () => {
                         return [lecture1, lecture1, lecture3];
                     },
                 }),
+                MockProvider(LtiService, {
+                    isMultiLaunch$: of(false),
+                }),
+                MockProvider(LectureService, {
+                    find: (id: number) => of(new HttpResponse({ body: new Lecture() })),
+                }),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -104,6 +112,7 @@ describe('CourseLectures', () => {
                             params: of({ courseId: '1' }),
                         },
                         params: of({ lectureId: lecture1.id }),
+                        queryParams: of({}),
                     },
                 },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
