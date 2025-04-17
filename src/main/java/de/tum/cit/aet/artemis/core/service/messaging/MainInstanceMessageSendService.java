@@ -76,4 +76,14 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     public void sendQuizExerciseStartCancel(Long exerciseId) {
         instanceMessageReceiveService.processCancelQuizStart(exerciseId);
     }
+
+    @Override
+    public void sendSlideUnhideSchedule(Long slideId) {
+        instanceMessageReceiveService.processScheduleSlideUnhide(slideId);
+    }
+
+    @Override
+    public void sendSlideUnhideScheduleCancel(Long slideId) {
+        instanceMessageReceiveService.processCancelSlideUnhide(slideId);
+    }
 }
