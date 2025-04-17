@@ -36,4 +36,8 @@
 
         <dropTable tableName="notification"/>
     </changeSet>
+
+    <changeSet id="20250417151621" author="rangger">
+        <dropTable tableName="notification_setting"/>
+    </changeSet>
 </databaseChangeLog>
