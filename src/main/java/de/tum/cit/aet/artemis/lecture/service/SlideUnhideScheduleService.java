@@ -30,7 +30,7 @@ public class SlideUnhideScheduleService {
 
     private final SlideRepository slideRepository;
 
-    private final SlideUnhideService slideUnhideService;
+    private final SlideUnhideExecutionService slideUnhideExecutionService;
 
     private final TaskScheduler taskScheduler;
 
@@ -38,9 +38,9 @@ public class SlideUnhideScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideScheduleService.class);
 
-    public SlideUnhideScheduleService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, TaskScheduler taskScheduler) {
+    public SlideUnhideScheduleService(SlideRepository slideRepository, SlideUnhideExecutionService slideUnhideExecutionService, TaskScheduler taskScheduler) {
         this.slideRepository = slideRepository;
-        this.slideUnhideService = slideUnhideService;
+        this.slideUnhideExecutionService = slideUnhideExecutionService;
         this.taskScheduler = taskScheduler;
     }
 
@@ -49,7 +49,7 @@ public class SlideUnhideScheduleService {
      * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
      */
     @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady(ApplicationReadyEvent event) {
+    public void onApplicationReady() {
         scheduleAllHiddenSlides();
     }
 
@@ -57,13 +57,10 @@ public class SlideUnhideScheduleService {
      * Loads all slides with a non-null hidden timestamp and schedules their unhiding.
      */
     public void scheduleAllHiddenSlides() {
-        List<Object[]> hiddenSlidesProjection = slideRepository.findHiddenSlidesProjection();
+        List<SlideUnhideDTO> hiddenSlidesProjection = slideRepository.findHiddenSlidesProjection();
         log.debug("Scheduling {} hidden slides for unhiding", hiddenSlidesProjection.size());
 
-        for (Object[] result : hiddenSlidesProjection) {
-            Long id = (Long) result[0];
-            ZonedDateTime hidden = (ZonedDateTime) result[1];
-            SlideUnhideDTO slideDTO = new SlideUnhideDTO(id, hidden);
+        for (SlideUnhideDTO slideDTO : hiddenSlidesProjection) {
             scheduleSlideUnhiding(slideDTO);
         }
     }
@@ -87,10 +84,10 @@ public class SlideUnhideScheduleService {
         Instant now = Instant.now();
 
         if (unhideTime.isBefore(now)) {
-            this.slideUnhideService.unhideSlide(slideDTO.id());
+            this.slideUnhideExecutionService.unhideSlide(slideDTO.id());
         }
         else {
-            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.slideUnhideService.unhideSlide(slideDTO.id()), unhideTime);
+            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.slideUnhideExecutionService.unhideSlide(slideDTO.id()), unhideTime);
             scheduledTasks.put(slideDTO.id(), scheduledTask);
             log.debug("Scheduled slide {} to be unhidden at {}", slideDTO.id(), unhideDate);
         }

@@ -445,7 +445,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testUsageOfSchedulingClasses() {
         // Classes that are not itself part of the scheduling profile
         // should use classes with scheduling profile annotation only in an optional context.
-        // We check this using constructors (field injection) since otherwise usages of the optional itself would be detected
+        // We check this using constructors (constructor injection) since otherwise usages of the optional itself would be detected
         constructors().that().areDeclaredInClassesThat(and(annotatedWith(Profile.class), not(classWithSchedulingProfile()))).should(correclyUseSchedulingParameters())
                 .check(productionClasses);
     }

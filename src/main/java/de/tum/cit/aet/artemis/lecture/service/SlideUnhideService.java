@@ -4,38 +4,29 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
  * Service for managing slide unhiding operations in a multi-node environment.
- * This service has two parts:
- * - Core functionality (available on all nodes with PROFILE_CORE)
- * - Scheduling functionality (only available on nodes with PROFILE_CORE_AND_SCHEDULING)
+ * This service handles the messaging aspects.
  */
 @Profile(PROFILE_CORE)
 @Service
 public class SlideUnhideService {
 
-    private final SlideRepository slideRepository;
-
-    private final AttachmentService attachmentService;
-
     private final InstanceMessageSendService instanceMessageSendService;
+
+    private final SlideUnhideExecutionService slideUnhideExecutionService;
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
-    public SlideUnhideService(SlideRepository slideRepository, AttachmentService attachmentService, @Lazy InstanceMessageSendService instanceMessageSendService) {
-        this.slideRepository = slideRepository;
-        this.attachmentService = attachmentService;
+    public SlideUnhideService(InstanceMessageSendService instanceMessageSendService, SlideUnhideExecutionService slideUnhideExecutionService) {
         this.instanceMessageSendService = instanceMessageSendService;
+        this.slideUnhideExecutionService = slideUnhideExecutionService;
     }
 
     /**
@@ -58,32 +49,11 @@ public class SlideUnhideService {
     }
 
     /**
-     * Unhides a slide by setting its hidden property to null.
-     * After unhiding, regenerates the student version of the attachment.
+     * Unhides a slide by delegating to the execution service.
      *
      * @param slideId The ID of the slide to unhide
      */
     public void unhideSlide(Long slideId) {
-        slideRepository.findById(slideId).ifPresent(slide -> {
-            AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
-            Attachment attachment = null;
-            if (attachmentUnit != null) {
-                attachment = attachmentUnit.getAttachment();
-            }
-
-            // Use repository method to handle transaction
-            slideRepository.unhideSlide(slideId);
-            log.debug("Unhid slide {}", slideId);
-
-            // Regenerate student version of the attachment if applicable
-            if (attachment != null) {
-                try {
-                    attachmentService.regenerateStudentVersion(attachment);
-                }
-                catch (Exception e) {
-                    log.error("Failed to regenerate student version for attachment {} after unhiding slide {}: {}", attachment.getId(), slideId, e.getMessage(), e);
-                }
-            }
-        });
+        slideUnhideExecutionService.unhideSlide(slideId);
     }
 }
