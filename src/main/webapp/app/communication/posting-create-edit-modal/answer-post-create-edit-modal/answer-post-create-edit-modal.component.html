@@ -1,6 +1,6 @@
 <ng-template #postingEditor>
     <form [formGroup]="formGroup" (ngSubmit)="confirm()">
-        <div>
+        <div class="me-2">
             <jhi-posting-markdown-editor
                 formControlName="content"
                 [editorHeight]="editorHeight"
@@ -10,19 +10,9 @@
                 [isButtonLoading]="isLoading"
                 [isFormGroupValid]="formGroup.valid"
                 [editType]="editType"
+                [showCloseButton]="true"
+                (closeEditor)="close()"
             />
-            <div class="col mt-1 text-end">
-                <button jhi-posting-button [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate" class="btn btn-sm btn-outline-secondary" (click)="close()"></button>
-                <button
-                    jhi-posting-button
-                    [buttonLoading]="isLoading"
-                    [disabled]="isLoading || !formGroup.valid"
-                    [buttonLabel]="'artemisApp.metis.savePosting' | artemisTranslate"
-                    id="save"
-                    class="btn btn-sm btn-outline-primary"
-                    type="submit"
-                ></button>
-            </div>
         </div>
     </form>
 </ng-template>
