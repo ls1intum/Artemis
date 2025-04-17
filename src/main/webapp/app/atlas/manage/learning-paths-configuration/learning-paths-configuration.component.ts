@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { LearningPathApiService } from '../../shared/learning-path-api.service';
+import { LearningPathApiService } from '../../shared/services/learning-path-api.service';
 import { LearningPathsConfigurationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-learning-paths-configuration',

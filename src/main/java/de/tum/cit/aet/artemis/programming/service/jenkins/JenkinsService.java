@@ -126,7 +126,7 @@ public class JenkinsService implements ContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation) {
         jenkinsBuildPlanService.configureBuildPlanForParticipation(participation);
     }
 

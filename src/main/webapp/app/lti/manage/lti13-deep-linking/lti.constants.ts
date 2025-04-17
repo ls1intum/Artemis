@@ -1,0 +1,8 @@
+export enum DeepLinkingType {
+    EXERCISE = 'EXERCISE',
+    GROUPED_EXERCISE = 'GROUPED_EXERCISE',
+    LECTURE = 'LECTURE',
+    COMPETENCY = 'COMPETENCY',
+    LEARNING_PATH = 'LEARNING_PATH',
+    IRIS = 'IRIS',
+}

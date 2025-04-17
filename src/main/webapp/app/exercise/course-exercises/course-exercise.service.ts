@@ -1,5 +1,5 @@
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -155,5 +155,15 @@ export class CourseExerciseService {
             });
         }
         return res;
+    }
+
+    /**
+     * returns all exercises for the course corresponding to courseId
+     * @param courseId - the unique identifier of the course
+     */
+    findAllExercisesWithDueDatesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
+        return this.http
+            .get<Exercise[]>(`api/core/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
     }
 }

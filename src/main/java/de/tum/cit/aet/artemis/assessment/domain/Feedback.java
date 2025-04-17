@@ -206,10 +206,6 @@ public class Feedback extends DomainObject {
         this.longFeedbackText.add(longFeedbackText);
     }
 
-    public void clearLongFeedback() {
-        this.longFeedbackText.clear();
-    }
-
     /**
      * Only for JPA, do not use directly. Use {@link #getLongFeedback()} instead.
      *

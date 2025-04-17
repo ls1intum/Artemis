@@ -2,7 +2,7 @@ import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID } from '../../support/utils';
 import { Exercise, ExerciseType } from '../../support/constants';

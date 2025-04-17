@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, e
 import { faCheckDouble, faFilter, faFilterCircleXmark, faHashtag, faPeopleGroup, faPlusCircle, faSearch, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
-import { SidebarEventService } from './sidebar-event.service';
+import { SidebarEventService } from './service/sidebar-event.service';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseFilterOptions, ExerciseFilterResults } from 'app/shared/types/exercise-filter';
@@ -18,7 +18,7 @@ import { SearchFilterComponent } from '../search-filter/search-filter.component'
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from '../language/translate.directive';
 import { SidebarAccordionComponent } from './sidebar-accordion/sidebar-accordion.component';
-import { SidebarCardDirective } from './sidebar-card.directive';
+import { SidebarCardDirective } from './directive/sidebar-card.directive';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ChannelTypeIcons, CollapseState, SidebarCardSize, SidebarData, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
@@ -71,7 +71,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     exerciseId: string;
 
     paramSubscription?: Subscription;
-    profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
 
     routeParams: Params;
@@ -117,10 +116,8 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     }
 
     ngOnInit(): void {
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo?.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     private subscribeToSidebarEvents() {
@@ -163,7 +160,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
 
     ngOnDestroy() {
         this.paramSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.sidebarEventSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }

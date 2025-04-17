@@ -66,7 +66,6 @@ public class UserSshPublicKeyService {
         }
 
         userSshPublicKeyRepository.save(newUserSshPublicKey);
-        singleUserNotificationService.notifyUserAboutNewlyAddedSshKey(user, newUserSshPublicKey);
     }
 
     /**
@@ -135,16 +134,6 @@ public class UserSshPublicKeyService {
         else {
             throw new AccessForbiddenException("SSH key", keyId);
         }
-    }
-
-    /**
-     * Returns whether the user of the specified id has stored SSH keys
-     *
-     * @param userId the ID of the user.
-     * @return true if the user has SSH keys, false if not
-     */
-    public boolean hasUserSSHkeys(Long userId) {
-        return userSshPublicKeyRepository.existsByUserId(userId);
     }
 
     /**

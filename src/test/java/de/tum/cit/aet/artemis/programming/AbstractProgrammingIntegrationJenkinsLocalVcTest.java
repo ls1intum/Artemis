@@ -23,16 +23,11 @@ import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestR
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
-import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckTestService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsPipelineScriptCreator;
@@ -44,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseResultTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionAndResultIntegrationTestService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -53,12 +47,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     // Config
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     protected String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
-
-    @Value("${artemis.git.name}")
-    protected String artemisGitName;
-
-    @Value("${artemis.git.email}")
-    protected String artemisGitEmail;
 
     @Value("${artemis.continuous-integration.url}")
     protected URI jenkinsServerUri;
@@ -70,9 +58,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     protected ObjectMapper objectMapper;
 
     // Repositories
-    @Autowired
-    protected BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
-
     @Autowired
     protected BuildPlanRepository buildPlanRepository;
 
@@ -102,9 +87,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     protected PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    protected PlagiarismComparisonRepository plagiarismComparisonRepository;
-
-    @Autowired
     protected PostTestRepository postRepository;
 
     @Autowired
@@ -115,10 +97,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
 
     @Autowired
     protected UserTestRepository userRepository;
-
-    // Services
-    @Autowired
-    protected BuildLogEntryService buildLogEntryService;
 
     @Autowired
     protected ConsistencyCheckTestService consistencyCheckTestService;
@@ -136,9 +114,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     protected JenkinsPipelineScriptCreator jenkinsPipelineScriptCreator;
 
     @Autowired
-    protected ProgrammingExerciseGradingService gradingService;
-
-    @Autowired
     protected ProgrammingExerciseIntegrationTestService programmingExerciseIntegrationTestService;
 
     @Autowired
@@ -147,15 +122,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     @Autowired
     protected ProgrammingLanguageFeatureService programmingLanguageFeatureService;
 
-    @Autowired
-    protected ProgrammingSubmissionAndResultIntegrationTestService testService;
-
-    @Autowired
-    protected RepositoryAccessService repositoryAccessService;
-
-    // External Services
-
-    // Util Services
     @Autowired
     protected ContinuousIntegrationTestService continuousIntegrationTestService;
 
@@ -168,7 +134,6 @@ public abstract class AbstractProgrammingIntegrationJenkinsLocalVcTest extends A
     @Autowired
     protected ProgrammingExerciseUtilService programmingExerciseUtilService;
 
-    // External Util Services
     @Autowired
     protected CourseTestService courseTestService;
 

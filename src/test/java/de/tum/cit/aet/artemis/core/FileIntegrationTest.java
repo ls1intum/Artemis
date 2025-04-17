@@ -36,6 +36,7 @@ import org.testcontainers.shaded.org.apache.commons.io.FileUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
@@ -78,6 +79,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -363,7 +367,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetAttachmentUnitAttachmentFilenameSanitization() throws Exception {
         Path tempFile = Files.createTempFile("dummy", ".pdf");
         byte[] dummyContent = "dummy pdf content".getBytes();
@@ -399,6 +403,24 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(contentDisposition).doesNotContain("–");
             assertThat(contentDisposition).contains("filename=");
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUploadAndRetrieveFileForConversation() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 4, 4, 4, 1);
+        var posts = conversationUtilService.createPostsWithinCourse(TEST_PREFIX);
+        var conversation = posts.getFirst().getConversation();
+        var course = conversation.getCourse();
+
+        MockMultipartFile file = new MockMultipartFile("file", "image.png", "image/png", new byte[] { 1, 2, 3, 4, 5 });
+
+        JsonNode response = request.postWithMultipartFile("/api/core/files/courses/" + course.getId() + "/conversations/" + conversation.getId(), file.getOriginalFilename(),
+                "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+
+        byte[] retrievedContent = request.get(responsePath, HttpStatus.OK, byte[].class);
+        assertThat(retrievedContent).isEqualTo(file.getBytes());
     }
 
 }
