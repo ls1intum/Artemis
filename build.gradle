@@ -423,9 +423,7 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.4.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
-    // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
-//    testImplementation "com.h2database:h2:2.3.232"
-    testImplementation "com.h2database:h2:2.2.224"
+    testImplementation "com.h2database:h2:2.3.232"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250107"
