@@ -416,8 +416,8 @@ public class ParticipationResource {
      * </p>
      * This method verifies if the participation can be started based on the due date.
      * <ul>
-     * <li>Checks if the due date has passed (allows starting participations for non programming exercises if the user might have an individual working time)</li>
-     * <li>Additionally for programming exercises, checks if the programming exercise feature is enabled</li>
+     * <li>Checks if the due date has passed (allows starting participations for non-programming exercises if the user might have an individual working time)</li>
+     * <li>Additionally, for programming exercises, checks if the programming exercise feature is enabled</li>
      * </ul>
      *
      * @param exercise for which the participation is to be started
