@@ -12,5 +12,5 @@ import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 @Primary
 public interface SlideTestRepository extends SlideRepository {
 
-    List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
+    List<Slide> findAllByAttachmentVideoUnitId(Long attachmentVideoUnitId);
 }

@@ -4,7 +4,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription, of, throwError } from 'rxjs';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { PdfPreviewComponent } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { ElementRef, signal } from '@angular/core';
@@ -16,6 +15,7 @@ import dayjs from 'dayjs/esm';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import PDFJS from 'pdfjs-dist';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
+import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 
 jest.mock('pdf-lib', () => {
     const originalModule = jest.requireActual('pdf-lib');
@@ -111,7 +111,7 @@ describe('PdfPreviewComponent', () => {
             providers: [
                 { provide: ActivatedRoute, useValue: routeMock },
                 { provide: AttachmentService, useValue: attachmentServiceMock },
-                { provide: AttachmentUnitService, useValue: attachmentUnitServiceMock },
+                { provide: AttachmentVideoUnitService, useValue: attachmentUnitServiceMock },
                 { provide: LectureUnitService, useValue: lectureUnitServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -210,7 +210,7 @@ describe('PdfPreviewComponent', () => {
             tick();
 
             expect(component.course()).toEqual({ id: 1, name: 'Example Course' });
-            expect(component.attachmentUnit()).toEqual(mockAttachmentUnit);
+            expect(component.attachmentVideoUnit()).toEqual(mockAttachmentUnit);
 
             expect(Object.keys(component.initialHiddenPages())).toContain('slide2');
             expect(Object.keys(component.hiddenPages())).toContain('slide2');
@@ -253,8 +253,8 @@ describe('PdfPreviewComponent', () => {
                 error: 'File not found',
             });
 
-            const attachmentUnitService = TestBed.inject(AttachmentUnitService);
-            jest.spyOn(attachmentUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
+            const attachmentVideoUnitService = TestBed.inject(AttachmentVideoUnitService);
+            jest.spyOn(attachmentVideoUnitService, 'getAttachmentFile').mockReturnValue(throwError(() => errorResponse));
             const alertServiceSpy = jest.spyOn(alertServiceMock, 'error');
 
             component.ngOnInit();
@@ -284,7 +284,7 @@ describe('PdfPreviewComponent', () => {
 
             mockSubscription.unsubscribe = unsubscribeSpy;
 
-            component.attachmentUnitSub = mockSubscription;
+            component.attachmentVideoUnitSub = mockSubscription;
 
             component.currentPdfUrl.set('test-url');
 
@@ -375,7 +375,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should update an attachment unit successfully without hidden pages', async () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -404,7 +404,7 @@ describe('PdfPreviewComponent', () => {
 
             await component.updateAttachmentWithFile();
 
-            expect(component.attachmentToBeEdited()).toEqual(component.attachmentUnit()!.attachment);
+            expect(component.attachmentToBeEdited()).toEqual(component.attachmentVideoUnit()!.attachment);
             expect(appendSpy).toHaveBeenCalledWith('file', expect.any(File));
             expect(appendSpy).toHaveBeenCalledWith('attachment', expect.any(Blob));
             expect(appendSpy).toHaveBeenCalledWith('attachmentUnit', expect.any(Blob));
@@ -418,7 +418,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should update an attachment unit with hidden pages and create a student version', async () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -500,7 +500,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should handle errors when attachment unit update fails', async () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({
+            component.attachmentVideoUnit.set({
                 id: 2,
                 name: 'Chapter 1',
                 lecture: { id: 3 },
@@ -682,7 +682,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should delete the attachment unit and navigate to unit management on success', () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
 
             component.deleteAttachmentFile();
@@ -708,7 +708,7 @@ describe('PdfPreviewComponent', () => {
             const error = { message: 'Deletion failed' };
             lectureUnitServiceMock.delete.mockReturnValue(throwError(() => error));
             component.attachment.set(undefined);
-            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
 
             component.deleteAttachmentFile();
@@ -778,7 +778,7 @@ describe('PdfPreviewComponent', () => {
 
         it('should navigate to unit management page when attachmentUnit is present', () => {
             component.attachment.set(undefined);
-            component.attachmentUnit.set({ id: 4, lecture: { id: 5 } });
+            component.attachmentVideoUnit.set({ id: 4, lecture: { id: 5 } });
             component.course.set({ id: 6 });
 
             component.navigateToCourseManagement();

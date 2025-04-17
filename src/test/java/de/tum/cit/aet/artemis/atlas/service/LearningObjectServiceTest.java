@@ -86,7 +86,7 @@ class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest
     @ParameterizedTest(name = "{displayName} [{index}] {arguments}")
     @ValueSource(booleans = { true, false })
     void testIsCompletedByUserLectureUnit(boolean completed) {
-        var lectureUnit = LectureFactory.generateAttachmentUnit();
+        var lectureUnit = LectureFactory.generateAttachmentVideoUnit();
 
         if (completed) {
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student);

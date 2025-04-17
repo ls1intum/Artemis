@@ -15,7 +15,7 @@
         }
         <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
             @for (lectureUnit of lectureUnits; track identify(i, lectureUnit); let i = $index) {
-                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT" cdkDrag>
+                <div class="lecture-unit-container" [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO" cdkDrag>
                     <div class="custom-handle d-none d-sm-flex">
                         <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
@@ -33,7 +33,10 @@
                         </svg>
                     </div>
                     <div class="lecture-unit-type-container">
-                        <div class="unit-badges d-flex flex-column gap-1">
+                        <div
+                            class="unit-badges d-flex flex-column gap-1"
+                            [style.top]="lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && hasAttachment(lectureUnit) ? '-40px' : null"
+                        >
                             <div class="badge bg-info">
                                 {{
                                     getLectureUnitReleaseDate(lectureUnit)
@@ -41,7 +44,7 @@
                                         : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
                                 }}
                             </div>
-                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT) {
+                            @if (lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO && hasAttachment(lectureUnit)) {
                                 <div class="badge bg-info attachment-badge">
                                     {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
                                 </div>
@@ -49,14 +52,11 @@
                         </div>
                         <div class="mt-2">
                             @switch (lectureUnit.type) {
-                                @case (LectureUnitType.ATTACHMENT) {
-                                    <jhi-attachment-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
+                                @case (LectureUnitType.ATTACHMENT_VIDEO) {
+                                    <jhi-attachment-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
                                 @case (LectureUnitType.EXERCISE) {
                                     <jhi-exercise-unit [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!" />
-                                }
-                                @case (LectureUnitType.VIDEO) {
-                                    <jhi-video-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
                                 }
                                 @case (LectureUnitType.TEXT) {
                                     <jhi-text-unit [lectureUnit]="lectureUnit" [isPresentationMode]="true" />
@@ -68,7 +68,7 @@
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (this.lectureIngestionEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT) {
+                        @if (this.lectureIngestionEnabled && lectureUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
                             <div class="d-flex gap-1 w-100">
                                 @if (lecture.course?.id && showCompetencies) {
                                     <jhi-competencies-popover
@@ -107,7 +107,16 @@
                             <a
                                 type="button"
                                 class="btn btn-primary btn-sm flex-grow-1"
-                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                [routerLink]="[
+                                    '/course-management',
+                                    lecture.course?.id,
+                                    'lectures',
+                                    lecture.id,
+                                    'unit-management',
+                                    'attachment-video-units',
+                                    lectureUnit.id,
+                                    'view',
+                                ]"
                                 [ngbTooltip]="'entity.action.view' | artemisTranslate"
                             >
                                 <fa-icon [icon]="faEye" />

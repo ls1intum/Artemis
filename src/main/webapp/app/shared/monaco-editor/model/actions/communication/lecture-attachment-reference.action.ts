@@ -3,7 +3,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
-import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
 import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
@@ -16,14 +16,14 @@ import { FileService } from 'app/shared/service/file.service';
 interface LectureWithDetails {
     id: number;
     title: string;
-    attachmentUnits?: AttachmentUnit[];
+    attachmentVideoUnits?: AttachmentVideoUnit[];
     attachments?: Attachment[];
 }
 
 interface LectureAttachmentReferenceActionArgs {
     reference: ReferenceType;
     lecture: LectureWithDetails;
-    attachmentUnit?: AttachmentUnit;
+    attachmentVideoUnit?: AttachmentVideoUnit;
     slide?: Slide;
     attachment?: Attachment;
     slideIndex?: number;
@@ -62,7 +62,7 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                         return {
                             id: lecture.id!,
                             title: lecture.title!,
-                            attachmentUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT),
+                            attachmentVideoUnits: lecture.lectureUnits?.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO),
                             attachments: attachmentsWithFileUrls,
                         };
                     });
@@ -101,15 +101,15 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.ATTACHMENT_UNITS:
-                if (args.attachmentUnit) {
-                    this.insertAttachmentUnitReference(editor, args.attachmentUnit);
+                if (args.attachmentVideoUnit) {
+                    this.insertAttachmentVideoUnitReference(editor, args.attachmentVideoUnit);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit provided to reference.`);
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide && args.slideIndex) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex);
+                if (args.attachmentVideoUnit && args.slide && args.slideIndex) {
+                    this.insertSlideReference(editor, args.attachmentVideoUnit, args.slide, args.slideIndex);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -137,14 +137,14 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number): void {
+    insertSlideReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit, slide: Slide, slideIndex: number): void {
         // Using the new pattern that directly references the slide by ID with # prefix
-        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(#${slide.id})[/slide]`);
+        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)} Slide ${slideIndex}(#${slide.id})[/slide]`);
     }
 
-    insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
-        const link = attachmentUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentUnit.attachment!.link!);
+    insertAttachmentVideoUnitReference(editor: TextEditor, attachmentVideoUnit: AttachmentVideoUnit): void {
+        const link = attachmentVideoUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentVideoUnit.attachment!.link!);
         const shortLink = link.split('attachments/')[1];
-        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
+        this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentVideoUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

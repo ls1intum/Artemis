@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -106,7 +106,7 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected TextUnitRepository textUnitRepository;
 
     @Autowired
-    protected AttachmentUnitTestRepository attachmentUnitRepository;
+    protected AttachmentVideoUnitTestRepository attachmentVideoUnitRepository;
 
     @Autowired
     protected ExerciseUnitRepository exerciseUnitRepository;
