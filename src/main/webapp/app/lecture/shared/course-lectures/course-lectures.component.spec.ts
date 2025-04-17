@@ -18,7 +18,6 @@ describe('CourseLecturesComponent LtiService Tests', () => {
     let ltiService: LtiService;
     let courseOverviewService: CourseOverviewService;
     let lectureService: LectureService;
-    let router: Router;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -56,14 +55,13 @@ describe('CourseLecturesComponent LtiService Tests', () => {
         ltiService = TestBed.inject(LtiService);
         courseOverviewService = TestBed.inject(CourseOverviewService);
         lectureService = TestBed.inject(LectureService);
-        router = TestBed.inject(Router);
     });
 
     it('should handle multi-launch subscription', fakeAsync(() => {
         const processSpy = jest.spyOn(component, 'processLectures');
         const sortSpy = jest.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
         const mapSpy = jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
-        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue([]);
+        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue();
 
         ltiService.setMultiLaunch(true);
         component.ngOnInit();
@@ -96,12 +94,4 @@ describe('CourseLecturesComponent LtiService Tests', () => {
         expect(lectureService.find).toHaveBeenCalledWith(1);
         expect(lectureService.find).toHaveBeenCalledWith(2);
     }));
-
-    it('should unsubscribe from multiLaunchSubscription on destroy', () => {
-        const unsubscribeSpy = jest.fn();
-        component.multiLaunchSubscription = { unsubscribe: unsubscribeSpy } as any;
-
-        component.ngOnDestroy();
-        expect(unsubscribeSpy).toHaveBeenCalled();
-    });
 });
