@@ -34,7 +34,7 @@ import {
     faUserSecret,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from '../../shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
@@ -229,14 +229,11 @@ export class FeatureOverviewComponent implements OnInit {
         ];
 
         // only add login feature for tum accounts
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                const accountName = profileInfo.accountName;
-                if (accountName === 'TUM') {
-                    this.features.push(featureLogin);
-                }
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        const accountName = profileInfo.accountName;
+        if (accountName === 'TUM') {
+            this.features.push(featureLogin);
+        }
     }
 
     private setupInstructorFeatures() {

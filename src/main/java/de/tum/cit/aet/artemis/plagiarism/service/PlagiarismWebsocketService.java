@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -9,15 +7,16 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
 
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @Service
 public class PlagiarismWebsocketService {
 
@@ -68,15 +67,5 @@ public class PlagiarismWebsocketService {
      */
     public String getTextExercisePlagiarismCheckTopic(Long textExerciseId) {
         return "/topic/text-exercises/" + textExerciseId + "/plagiarism-check";
-    }
-
-    /**
-     * Return the topic of the plagiarism check for the modeling exercise
-     *
-     * @param modelingExerciseId the id of the exercise
-     * @return the topic
-     */
-    public String getModelingExercisePlagiarismCheckTopic(Long modelingExerciseId) {
-        return "/topic/modeling-exercises/" + modelingExerciseId + "/plagiarism-check";
     }
 }

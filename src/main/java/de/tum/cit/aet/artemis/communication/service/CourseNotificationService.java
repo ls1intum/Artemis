@@ -29,7 +29,8 @@ import de.tum.cit.aet.artemis.communication.repository.CourseNotificationParamet
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 /**
  * Service that handles all course notification logic. Whenever you want to create a new notification use this service
@@ -51,17 +52,20 @@ public class CourseNotificationService {
 
     private final UserCourseNotificationStatusService userCourseNotificationStatusService;
 
+    private final FeatureToggleService featureToggleService;
+
     private final Map<NotificationChannelOption, CourseNotificationBroadcastService> serviceMap;
 
     public CourseNotificationService(CourseNotificationRegistryService courseNotificationRegistryService, CourseNotificationSettingService courseNotificationSettingService,
             CourseNotificationRepository courseNotificationRepository, CourseNotificationParameterRepository courseNotificationParameterRepository,
-            UserCourseNotificationStatusService userCourseNotificationStatusService, UserRepository userRepository, CourseNotificationWebappService webappService,
+            UserCourseNotificationStatusService userCourseNotificationStatusService, FeatureToggleService featureToggleService, CourseNotificationWebappService webappService,
             CourseNotificationPushService pushService, CourseNotificationEmailService emailService) {
         this.courseNotificationRegistryService = courseNotificationRegistryService;
         this.courseNotificationSettingService = courseNotificationSettingService;
         this.courseNotificationRepository = courseNotificationRepository;
         this.courseNotificationParameterRepository = courseNotificationParameterRepository;
         this.userCourseNotificationStatusService = userCourseNotificationStatusService;
+        this.featureToggleService = featureToggleService;
         this.serviceMap = Map.of(NotificationChannelOption.WEBAPP, webappService, NotificationChannelOption.PUSH, pushService, NotificationChannelOption.EMAIL, emailService);
     }
 
@@ -73,10 +77,16 @@ public class CourseNotificationService {
      * @param recipients         list of recipients. Will be filtered by user settings.
      */
     public void sendCourseNotification(CourseNotification courseNotification, List<User> recipients) {
+        if (!featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            return;
+        }
+
         var supportedChannels = courseNotification.getSupportedChannels();
         var setOfNotifiedUsers = new HashSet<User>();
 
         var courseNotificationEntityId = createCourseNotification(courseNotification);
+
+        courseNotification.notificationId = courseNotificationEntityId;
 
         for (var supportedChannel : supportedChannels) {
             var service = serviceMap.get(supportedChannel);
@@ -163,7 +173,7 @@ public class CourseNotificationService {
      */
     private CourseNotificationDTO convertToCourseNotificationDTO(CourseNotification notification, UserCourseNotificationStatusType status) {
         return new CourseNotificationDTO(notification.getReadableNotificationType(), notification.notificationId, notification.courseId, notification.creationDate,
-                notification.getCourseNotificationCategory(), notification.getParameters(), status);
+                notification.getCourseNotificationCategory(), notification.getParameters(), status, notification.getRelativeWebAppUrl());
     }
 
     /**
@@ -197,7 +207,12 @@ public class CourseNotificationService {
                 continue;
             }
 
-            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, parameters.get(key).toString()));
+            String paramValue = parameters.get(key).toString();
+            if (paramValue.length() > 500) {
+                paramValue = paramValue.substring(0, 499);
+            }
+
+            parameterEntities.add(new CourseNotificationParameter(courseNotificationEntity, key, paramValue));
         }
 
         if (!parameterEntities.isEmpty()) {

@@ -1,6 +1,6 @@
 import { Page } from '@playwright/test';
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { UserCredentials } from '../../users';
 import { Commands } from '../../commands';
 import { ExamStartEndPage } from './ExamStartEndPage';
@@ -95,14 +95,6 @@ export class ExamTestRunPage {
 
     async deleteTestRun(testRunId: number) {
         await this.page.locator(`#testrun-${testRunId}`).locator('.delete-testrun').click();
-        await this.page.locator('#confirm-entity-name').fill('Test Run');
-        const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run/*`);
-        await this.page.locator('#delete').click();
-        await responsePromise;
-    }
-
-    async deleteTestExamTestRun() {
-        await this.page.locator('svg.svg-inline--fa.fa-xmark').nth(1).click();
         await this.page.locator('#confirm-entity-name').fill('Test Run');
         const responsePromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/test-run/*`);
         await this.page.locator('#delete').click();

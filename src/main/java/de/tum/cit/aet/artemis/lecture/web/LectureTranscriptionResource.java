@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
@@ -110,23 +108,6 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * GET /lectures/:lectureId/transcriptions/:transcriptionId : get the transcription for the transcriptionId.
-     *
-     * @param lectureId       the lectureId of the lecture from the transcription
-     * @param transcriptionId the transcriptionId of the transcription to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the transcription, or with status 404 (Not Found)
-     */
-    @GetMapping("{lectureId}/transcription/{transcriptionId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<LectureTranscription> getLectureTranscriptions(@PathVariable Long lectureId, @PathVariable Long transcriptionId) {
-        log.debug("REST request to get transcription {}", transcriptionId);
-        LectureTranscription transcription = lectureTranscriptionRepository.findById(transcriptionId).orElseThrow();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(transcription.getLectureUnit().getLecture(), userRepository.getUserWithGroupsAndAuthorities());
-
-        return ResponseEntity.ok(transcription);
-    }
-
-    /**
      * POST lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
@@ -177,6 +158,10 @@ public class LectureTranscriptionResource {
             return ResponseEntity.badRequest()
                     .headers(HeaderUtil.createAlert(applicationName, "artemisApp.iris.ingestionAlert.transcriptionIngestionError", "lectureUnitDoesNotMatchLecture")).body(null);
         }
+
+        Course course = lectureUnit.getLecture().getCourse();
+        authCheckService.checkIsAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course.getId());
+
         Optional<LectureTranscription> lectureTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
         if (lectureTranscription.isEmpty()) {
             return ResponseEntity.badRequest()

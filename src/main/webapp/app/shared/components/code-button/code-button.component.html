@@ -82,27 +82,15 @@
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
-                @if (!localVCEnabled()) {
-                    <a
-                        [style.flex]="1"
-                        class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [href]="getHttpRepositoryUri() | safeUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <fa-icon [icon]="faExternalLink" />
-                    </a>
-                } @else {
-                    <a
-                        [style.flex]="1"
-                        class="btn btn-secondary btn-sm me-2 open-repository-button"
-                        [routerLink]="routerLinkForRepositoryView()"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <fa-icon [icon]="faExternalLink" />
-                    </a>
-                }
+                <a
+                    [style.flex]="1"
+                    class="btn btn-secondary btn-sm me-2 open-repository-button"
+                    [routerLink]="routerLinkForRepositoryView()"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <fa-icon [icon]="faExternalLink" />
+                </a>
             </div>
         </div>
         <button

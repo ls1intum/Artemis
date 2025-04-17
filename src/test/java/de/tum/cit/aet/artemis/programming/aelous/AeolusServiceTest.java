@@ -111,11 +111,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testRepositoryMapForJavaWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.JAVA;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, false, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);
@@ -139,11 +139,11 @@ class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testRepositoryMapForHaskellWindfileCreation() throws URISyntaxException {
         ProgrammingLanguage language = ProgrammingLanguage.HASKELL;
         String branch = "develop";
-        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO.git");
-        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-test.git");
-        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-solution.git");
-        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux1.git")),
-                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://gitlab.server/scm/PROJECT/REPO-aux2.git")));
+        VcsRepositoryUri repositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO.git");
+        VcsRepositoryUri testRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-test.git");
+        VcsRepositoryUri solutionRepositoryUri = new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-solution.git");
+        var auxiliaryRepositories = List.of(new AuxiliaryRepository.AuxRepoNameWithUri("aux1", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux1.git")),
+                new AuxiliaryRepository.AuxRepoNameWithUri("aux2", new VcsRepositoryUri("https://artemis.server/scm/PROJECT/REPO-aux2.git")));
         var map = aeolusBuildPlanService.createRepositoryMapForWindfile(language, branch, true, repositoryUri, testRepositoryUri, solutionRepositoryUri, auxiliaryRepositories);
         assertThat(map).isNotNull();
         var assignmentDirectory = RepositoryCheckoutService.RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(language);

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,6 +31,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -45,7 +44,7 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 /**
  * REST controller for managing ExerciseGroup.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @RestController
 @RequestMapping("api/exam/")
 public class ExerciseGroupResource {
@@ -209,19 +208,17 @@ public class ExerciseGroupResource {
     /**
      * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id.
      *
-     * @param courseId                     the course to which the exercise group belongs to
-     * @param examId                       the exam to which the exercise group belongs to
-     * @param exerciseGroupId              the id of the exercise group to delete
-     * @param deleteStudentReposBuildPlans boolean which states whether the student repos and build plans should be deleted as well, this is true by default because for LocalVC
-     *                                         and LocalCI, it does not make sense to keep these artifacts
-     * @param deleteBaseReposBuildPlans    boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
-     *                                         LocalCI, it does not make sense to keep these artifacts
+     * @param courseId                  the course to which the exercise group belongs to
+     * @param examId                    the exam to which the exercise group belongs to
+     * @param exerciseGroupId           the id of the exercise group to delete
+     * @param deleteBaseReposBuildPlans boolean which states whether the base repos and build plans should be deleted as well, this is true by default because for LocalVC and
+     *                                      LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
-            @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
+            @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {
         log.info("REST request to delete exercise group : {}", exerciseGroupId);
 
         ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdWithExercisesElseThrow(exerciseGroupId);
@@ -233,7 +230,7 @@ public class ExerciseGroupResource {
         log.info("User {} has requested to delete the exercise group {}", user.getLogin(), exerciseGroup.getTitle());
 
         for (Exercise exercise : exerciseGroup.getExercises()) {
-            exerciseDeletionService.delete(exercise.getId(), deleteStudentReposBuildPlans, deleteBaseReposBuildPlans);
+            exerciseDeletionService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
 
         // Remove the exercise group by removing it from the list of exercise groups of the corresponding exam.

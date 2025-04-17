@@ -1,6 +1,6 @@
 import { Component, inject } from '@angular/core';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -18,10 +18,10 @@ import {
     faFilePowerpoint,
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
-import { FileService } from 'app/shared/http/file.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -46,14 +46,28 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     }
 
     /**
-     * Downloads the file
+     * Downloads the file as the student version if available, otherwise the instructor version
+     * If it is not the student view, it always downloads the original version
      */
     handleDownload() {
         this.logEvent();
 
-        if (this.lectureUnit().attachment?.link) {
-            const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
-            this.fileService.downloadFileByAttachmentName(link!, this.lectureUnit().attachment!.name!);
+        // Determine the link based on the availability of a student version
+        const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
+            this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
+        }
+    }
+
+    handleOriginalVersion() {
+        this.logEvent();
+
+        const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
+
+        if (link) {
+            this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
     }

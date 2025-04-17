@@ -22,7 +22,7 @@
     @if (!showSkeleton) {
         <router-outlet />
     }
-    <jhi-notification-popup />
+    <jhi-course-notification-popup-overlay [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications" />
     @if (showSkeleton && !isShownViaLti) {
         <div>
             @if (isTestRunExam || !isExamStarted) {

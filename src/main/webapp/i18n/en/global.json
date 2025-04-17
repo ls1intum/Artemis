@@ -23,7 +23,6 @@
             "overview": "Course Overview",
             "courses": "Courses",
             "course": "Course Management",
-            "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entities",
                 "course": "Course",
@@ -76,7 +75,6 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
-                "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)",
                 "metis": {
                     "post": "Post",
                     "answerPost": "Reply"
@@ -114,18 +112,13 @@
                 "imprint": "Imprint",
                 "database": "Database",
                 "iris": "Iris Settings",
-                "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
                 "cleanupService": "Cleanup Service",
                 "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings",
-            "guidedTutorial": "Guided tutorial",
-            "startTutorial": "Start tutorial",
-            "restartTutorial": "Restart tutorial",
-            "continueTutorial": "Continue tutorial"
+            "settings": "Settings"
         },
         "form": {
             "username": "Login or email",
@@ -276,7 +269,8 @@
             "search": "Search",
             "select": "Select",
             "sendToIris": "Send To Iris",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Show"
         },
         "detail": {
             "field": "Field",
@@ -358,7 +352,8 @@
         "communication": "Communication",
         "archive": "Course archive",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiarism Cases"
+        "plagiarismCases": "Plagiarism Cases",
+        "settings": "Settings"
     },
     "connectionStatus": {
         "connected": "Connected",

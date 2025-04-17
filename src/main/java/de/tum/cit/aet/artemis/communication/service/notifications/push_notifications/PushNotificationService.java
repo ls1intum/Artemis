@@ -5,7 +5,6 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.Instant;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -37,15 +36,11 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationPushProxyService;
-import de.tum.cit.aet.artemis.communication.service.notifications.InstantNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 
@@ -53,7 +48,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
  * Wraps the sending of iOS and Android Notifications to the Relay Service
  * Implements the encryption of the payload
  */
-public abstract class PushNotificationService implements InstantNotificationService {
+public abstract class PushNotificationService {
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -108,46 +103,6 @@ public abstract class PushNotificationService implements InstantNotificationServ
         catch (RestClientException e) {
             log.error("Could not send {} notifications", getDeviceType().toString());
         }
-    }
-
-    /**
-     * Wrapper to handle a single user the same way as a list of users
-     *
-     * @param notification        to be sent via the channel the implementing service is responsible for
-     * @param user                who should be contacted
-     * @param notificationSubject that is used to provide further information for mails (e.g. exercise, attachment, post, etc.)
-     */
-    @Override
-    @Async
-    public void sendNotification(Notification notification, User user, Object notificationSubject) {
-        sendNotification(notification, Set.of(user), notificationSubject);
-    }
-
-    /**
-     * Handles the finding of deviceConfigurations for all given users.
-     * Constructs the payload to be sent and encrypts it with an AES256 encryption.
-     * Sends the requests to the Hermes relay service with a fire and forget mechanism.
-     *
-     * @param notification        to be sent via the channel the implementing service is responsible for
-     * @param users               who should be contacted
-     * @param notificationSubject that is used to provide further information (e.g. exercise, attachment, post, etc.)
-     */
-    @Override
-    @Async
-    public void sendNotification(Notification notification, Set<User> users, Object notificationSubject) {
-        final NotificationType type = NotificationConstants.findCorrespondingNotificationType(notification.getTitle());
-
-        final List<PushNotificationDeviceConfiguration> userDeviceConfigurations = getRepository().findByUserIn(users, getDeviceType());
-        if (userDeviceConfigurations.isEmpty()) {
-            return;
-        }
-
-        final String date = Instant.now().toString();
-
-        var notificationData = new PushNotificationDataDTO(notification.getTransientPlaceholderValuesAsArray(), notification.getTarget(), type.name(), date,
-                Constants.PUSH_NOTIFICATION_VERSION, null);
-
-        encryptAndSendPushNotifications(notificationData, userDeviceConfigurations);
     }
 
     /**

@@ -7,31 +7,31 @@ import {
     StandardizedCompetencyDTO,
     convertToKnowledgeAreaForTree,
     convertToStandardizedCompetencyForTree,
-} from 'app/entities/competency/standardized-competency.model';
+} from 'app/atlas/shared/entities/standardized-competency.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
-import { getIcon } from 'app/entities/competency.model';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { getIcon } from 'app/atlas/shared/entities/competency.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
-import { StandardizedCompetencyFilterPageComponent } from 'app/shared/standardized-competencies/standardized-competency-filter-page.component';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { StandardizedCompetencyEditComponent } from './standardized-competency-edit.component';
 import { KnowledgeAreaEditComponent } from './knowledge-area-edit.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { StandardizedCompetencyFilterComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter.component';
+import { KnowledgeAreaTreeComponent } from 'app/atlas/shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/standardized-competencies/standardized-competency-filter-page.component';
+import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 
 @Component({
     selector: 'jhi-standardized-competency-management',

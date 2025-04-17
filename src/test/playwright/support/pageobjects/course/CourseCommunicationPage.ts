@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { expect } from '@playwright/test';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the course communication page.

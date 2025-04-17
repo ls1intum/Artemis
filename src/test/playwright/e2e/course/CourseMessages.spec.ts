@@ -1,10 +1,10 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
-import { Channel } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
+import { Channel } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 
 test.describe('Course messages', { tag: '@fast' }, () => {
     let course: Course;

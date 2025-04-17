@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
-import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { faScroll } from '@fortawesome/free-solid-svg-icons';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';

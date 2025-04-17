@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseTask } from 'app/programming/manage/grading/tasks/programming-exercise-task';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseTaskService } from '../programming-exercise-task.service';
 import { Subject } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 @Component({
     selector: 'jhi-programming-exercise-task',
     templateUrl: './programming-exercise-task.component.html',
-    styleUrls: ['../programming-exercise-grading-tasks-table.scss'],
+    styleUrls: ['../programming-exercise-grading-tasks-table/programming-exercise-grading-tasks-table.scss'],
     imports: [FaIconComponent, FormsModule, TestCasePassedBuildsChartComponent, ArtemisTranslatePipe],
 })
 export class ProgrammingExerciseTaskComponent implements OnInit {

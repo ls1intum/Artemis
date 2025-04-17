@@ -1,6 +1,6 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';

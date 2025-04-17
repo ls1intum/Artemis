@@ -1,11 +1,11 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
-import { TextSubmissionService } from 'app/text/overview/text-submission.service';
+import { TextSubmissionService } from 'app/text/overview/service/text-submission.service';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
-import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ExerciseType } from 'app/entities/exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FileWithHasMatch } from 'app/plagiarism/manage/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { escape } from 'lodash-es';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -16,7 +16,7 @@ import { SplitPaneHeaderComponent } from '../split-pane-header/split-pane-header
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
-import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorRepositoryFileService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { DomainChange, DomainType, FileType } from 'app/programming/shared/code-editor/model/code-editor.model';
 
 type FilesWithType = { [p: string]: FileType };

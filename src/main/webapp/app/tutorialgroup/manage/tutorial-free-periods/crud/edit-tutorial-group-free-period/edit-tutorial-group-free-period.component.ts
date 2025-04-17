@@ -1,12 +1,12 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, inject, input } from '@angular/core';
-import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, inject } from '@angular/core';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodFormData } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { Subject, finalize } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { takeUntil } from 'rxjs/operators';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
@@ -15,7 +15,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { captureException } from '@sentry/angular';
-import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
@@ -28,13 +28,13 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private alertService = inject(AlertService);
 
+    @Input() tutorialGroupFreePeriod: TutorialGroupFreePeriod;
+
+    @Input() tutorialGroupsConfiguration: TutorialGroupsConfiguration;
+
+    @Input() course: Course;
+
     isLoading = false;
-
-    tutorialGroupFreePeriod = input.required<TutorialGroupFreePeriod>();
-
-    tutorialGroupsConfiguration = input.required<TutorialGroupsConfiguration>();
-
-    course = input.required<Course>();
 
     isInitialized = false;
 
@@ -48,30 +48,30 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
      * Based on these determinations, it sets up the form data accordingly.
      */
     initialize() {
-        if (!this.tutorialGroupFreePeriod() || !this.course() || !this.tutorialGroupsConfiguration()) {
+        if (!this.tutorialGroupFreePeriod || !this.course || !this.tutorialGroupsConfiguration) {
             captureException('Error: Component not fully configured');
             return;
         }
 
-        const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(this.tutorialGroupFreePeriod());
-        const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(this.tutorialGroupFreePeriod());
+        const isFreePeriod = TutorialGroupFreePeriodsManagementComponent.isFreePeriod(this.tutorialGroupFreePeriod);
+        const isFreePeriodWithinDay = TutorialGroupFreePeriodsManagementComponent.isFreePeriodWithinDay(this.tutorialGroupFreePeriod);
 
         this.formData = {
-            startDate: this.tutorialGroupFreePeriod().start?.tz(this.course().timeZone).toDate(),
-            endDate: isFreePeriod ? this.tutorialGroupFreePeriod().end?.tz(this.course().timeZone).toDate() : undefined,
-            startTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod().start?.tz(this.course().timeZone).toDate() : undefined,
-            endTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod().end?.tz(this.course().timeZone).toDate() : undefined,
-            reason: this.tutorialGroupFreePeriod().reason,
+            startDate: this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate(),
+            endDate: isFreePeriod ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
+            startTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.start?.tz(this.course.timeZone).toDate() : undefined,
+            endTime: isFreePeriodWithinDay ? this.tutorialGroupFreePeriod.end?.tz(this.course.timeZone).toDate() : undefined,
+            reason: this.tutorialGroupFreePeriod.reason,
         };
 
         if (isFreePeriodWithinDay) {
-            const tutorialGroupFreePeriodStart = this.tutorialGroupFreePeriod().start;
-            const tutorialGroupFreePeriodEnd = this.tutorialGroupFreePeriod().end;
+            const tutorialGroupFreePeriodStart = this.tutorialGroupFreePeriod.start;
+            const tutorialGroupFreePeriodEnd = this.tutorialGroupFreePeriod.end;
             if (this.formData.startTime && tutorialGroupFreePeriodStart) {
-                this.formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(this.course().timeZone).hour());
+                this.formData.startTime.setHours(tutorialGroupFreePeriodStart.tz(this.course.timeZone).hour());
             }
             if (this.formData.endTime && tutorialGroupFreePeriodEnd) {
-                this.formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(this.course().timeZone).hour());
+                this.formData.endTime.setHours(tutorialGroupFreePeriodEnd.tz(this.course.timeZone).hour());
             }
         }
 
@@ -89,7 +89,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
         this.isLoading = true;
 
         this.tutorialGroupFreePeriodService
-            .update(this.course().id!, this.tutorialGroupsConfiguration().id!, this.tutorialGroupFreePeriod().id!, tutorialGroupFreePeriodDto)
+            .update(this.course.id!, this.tutorialGroupsConfiguration.id!, this.tutorialGroupFreePeriod.id!, tutorialGroupFreePeriodDto)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

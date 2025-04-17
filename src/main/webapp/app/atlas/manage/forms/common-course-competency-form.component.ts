@@ -1,14 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Lecture } from 'app/entities/lecture.model';
+import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/entities/competency.model';
+import { CompetencyTaxonomy, CourseCompetency, CourseCompetencyValidators, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
 import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competency-form.component';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';

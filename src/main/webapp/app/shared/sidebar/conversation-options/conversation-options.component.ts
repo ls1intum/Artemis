@@ -1,29 +1,28 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
-import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
-import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
-import { catchError, mergeWith } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
+import { catchError } from 'rxjs/operators';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
-import { getAsGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
+import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
-import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
-import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations/other/conversation.util';
-import { MetisService } from 'app/communication/metis.service';
-import { NotificationService } from 'app/shared/notification/notification.service';
+import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
+import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
+import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
-} from 'app/communication/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+} from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -36,7 +35,6 @@ import {
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     conversationService = inject(ConversationService);
     private metisService = inject(MetisService);
-    private notificationService = inject(NotificationService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
 
@@ -74,7 +72,6 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
         this.updateConversationIsFavorite();
         this.updateConversationIsHidden();
         this.updateConversationIsMuted();
-        this.updateConversationShouldNotifyRecipient();
         this.conversationAsChannel = getAsChannelDTO(this.conversation);
         this.channelSubTypeReferenceTranslationKey = getChannelSubTypeReferenceTranslationKey(this.conversationAsChannel?.subType);
         this.channelSubTypeReferenceRouterLink = this.metisService.getLinkForChannelSubType(this.conversationAsChannel);
@@ -175,18 +172,6 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
-        });
-    }
-
-    private updateConversationShouldNotifyRecipient() {
-        this.onUpdateSidebar.pipe(mergeWith(this.onUpdateSidebar), takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (!this.conversation.id) return;
-
-            if (shouldNotifyRecipient(this.conversation)) {
-                this.notificationService.unmuteNotificationsForConversation(this.conversation.id);
-            } else {
-                this.notificationService.muteNotificationsForConversation(this.conversation.id);
-            }
         });
     }
 

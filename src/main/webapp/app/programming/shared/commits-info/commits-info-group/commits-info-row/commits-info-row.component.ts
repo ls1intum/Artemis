@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import type { CommitInfo } from 'app/entities/programming/programming-submission.model';
+import type { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { faAngleDown, faAngleLeft } from '@fortawesome/free-solid-svg-icons';
 import { RouterLink } from '@angular/router';
@@ -27,7 +27,6 @@ export class CommitsInfoRowComponent {
     @Input() firstCommit: boolean;
     @Input() groupCommitCount: number;
     @Input() groupCommitIndex: number;
-    @Input() localVC: boolean;
     @Output() toggleExpandEvent = new EventEmitter<void>();
 
     onToggleExpand() {

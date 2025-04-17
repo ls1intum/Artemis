@@ -1,11 +1,11 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
 import { Commands } from '../../support/commands';
