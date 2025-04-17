@@ -17,11 +17,11 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { MockDirective } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -58,7 +58,7 @@ describe('Test Run Management Component', () => {
                 component = fixture.componentInstance;
                 examManagementService = TestBed.inject(ExamManagementService);
                 accountService = TestBed.inject(AccountService);
-                modalService = fixture.debugElement.injector.get(NgbModal);
+                modalService = TestBed.inject(NgbModal);
                 jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: exam })));
                 jest.spyOn(examManagementService, 'findAllTestRunsForExam').mockReturnValue(of(new HttpResponse({ body: studentExams })));
                 userSpy = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));

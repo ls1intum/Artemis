@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { getElement } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { metisAnswerPostUser2, metisPostExerciseUser1 } from 'test/helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { Subject, of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -38,7 +38,7 @@ import { BulletedListAction } from 'app/shared/monaco-editor/model/actions/bulle
 import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 import { ListAction } from 'app/shared/monaco-editor/model/actions/list.action';
 import monaco from 'monaco-editor';
-import { MockFileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { FileService } from 'app/shared/service/file.service';
 
 describe('PostingsMarkdownEditor', () => {

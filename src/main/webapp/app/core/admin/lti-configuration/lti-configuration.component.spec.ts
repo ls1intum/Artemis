@@ -5,12 +5,12 @@ import { SortService } from 'app/shared/service/sort.service';
 import { LtiConfigurationComponent } from 'app/core/admin/lti-configuration/lti-configuration.component';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import '@angular/localize/init';
 import { MockDirective } from 'ng-mocks';
 
@@ -63,7 +63,7 @@ describe('LtiConfigurationComponent', () => {
         component = fixture.componentInstance;
         fixture.detectChanges();
         component.predicate = 'id';
-        mockAlertService = fixture.debugElement.injector.get(AlertService);
+        mockAlertService = TestBed.inject(AlertService);
     });
 
     it('should create', () => {

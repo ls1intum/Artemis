@@ -6,7 +6,7 @@ import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-op
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
@@ -16,7 +16,6 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { AlertService } from 'app/shared/service/alert.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
@@ -24,9 +23,8 @@ import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversatio
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ConversationDetailDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -63,7 +61,6 @@ examples.forEach((conversation) => {
                     MockProvider(AlertService),
                     MockProvider(NgbModal),
                     { provide: MetisService, useClass: MockMetisService },
-                    { provide: NotificationService, useClass: MockNotificationService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
             }).compileComponents();

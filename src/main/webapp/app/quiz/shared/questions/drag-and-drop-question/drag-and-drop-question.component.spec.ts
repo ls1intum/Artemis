@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { DragAndDropMapping } from 'app/quiz/shared/entities/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/quiz/shared/entities/drag-and-drop-question.model';
 import { DragItem } from 'app/quiz/shared/entities/drag-item.model';
@@ -13,6 +14,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { FitTextDirective } from 'app/quiz/shared/fit-text/fit-text.directive';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('DragAndDropQuestionComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionComponent>;
@@ -37,7 +39,7 @@ describe('DragAndDropQuestionComponent', () => {
                 MockComponent(QuizScoringInfoStudentModalComponent),
                 DragItemComponent,
             ],
-            providers: [MockProvider(DragAndDropQuestionUtil)],
+            providers: [MockProvider(DragAndDropQuestionUtil), { provide: ProfileService, useClass: MockProfileService }],
         })
             .compileComponents()
             .then(() => {

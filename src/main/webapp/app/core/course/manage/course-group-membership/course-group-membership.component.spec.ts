@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseGroupMembershipComponent } from 'app/core/course/manage/course-group-membership/course-group-membership.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
 
 describe('Course Group Membership Component', () => {

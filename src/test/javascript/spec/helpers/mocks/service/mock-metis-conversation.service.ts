@@ -55,4 +55,6 @@ export class MockMetisConversationService {
     markAsRead(): void {}
 
     acceptCodeOfConduct(course: Course) {}
+
+    checkForUnreadMessages = (course: Course) => {};
 }

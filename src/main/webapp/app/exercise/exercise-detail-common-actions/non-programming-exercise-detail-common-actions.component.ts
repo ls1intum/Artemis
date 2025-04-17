@@ -11,17 +11,18 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_PLAGIARISM, PROFILE_IRIS } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, NgbTooltip, DeleteButtonDirective, ArtemisTranslatePipe, FeatureOverlayComponent],
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     private textExerciseService = inject(TextExerciseService);
@@ -46,6 +47,7 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     baseResource: string;
     shortBaseResource: string;
     irisEnabled = false;
+    plagiarismEnabled = false;
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
@@ -75,9 +77,8 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
-        this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
     deleteExercise() {

@@ -76,15 +76,9 @@
                             <div class="d-flex justify-content-between">
                                 @if (programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUri) {
                                     <span>
-                                        <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
-                             the links are disabled--->
-                                        @if (!localVCEnabled) {
-                                            <a href="{{ programmingExercise.templateParticipation!.repositoryUri! }}" target="_blank">Template</a>
-                                        } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE)"
-                                                ><fa-icon [icon]="faDownload" /> Template</a
-                                            >
-                                        }
+                                        <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TEMPLATE)"
+                                            ><fa-icon [icon]="faDownload" /> Template</a
+                                        >
                                     </span>
                                 }
                                 @if (programmingExercise.templateParticipation?.results?.length) {
@@ -98,13 +92,9 @@
                             <div class="d-flex justify-content-between">
                                 @if (programmingExercise.solutionParticipation?.repositoryUri) {
                                     <span>
-                                        @if (!localVCEnabled) {
-                                            <a href="{{ programmingExercise.solutionParticipation!.repositoryUri! }}" target="_blank">Solution</a>
-                                        } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.SOLUTION)"
-                                                ><fa-icon [icon]="faDownload" /> Solution</a
-                                            >
-                                        }
+                                        <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.SOLUTION)"
+                                            ><fa-icon [icon]="faDownload" /> Solution</a
+                                        >
                                     </span>
                                 }
                                 @if (programmingExercise.solutionParticipation?.results?.length) {
@@ -118,25 +108,11 @@
                             <div>
                                 @if (programmingExercise.testRepositoryUri) {
                                     <span>
-                                        @if (!localVCEnabled) {
-                                            <a href="{{ programmingExercise.testRepositoryUri }}" target="_blank">Test</a>
-                                        } @else {
-                                            <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TESTS)"><fa-icon [icon]="faDownload" /> Test</a>
-                                        }
+                                        <a [routerLink]="" (click)="downloadRepository(programmingExercise.id, RepositoryType.TESTS)"><fa-icon [icon]="faDownload" /> Test</a>
                                     </span>
                                 }
                             </div>
                         </td>
-                        @if (!localVCEnabled) {
-                            <td>
-                                @if (programmingExercise.templateParticipation?.buildPlanId) {
-                                    <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a> </span>
-                                }
-                                @if (programmingExercise.solutionParticipation?.buildPlanId) {
-                                    <span> <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a> </span>
-                                }
-                            </td>
-                        }
                         <td class="d-md-table-cell">
                             <div class="d-flex justify-content-between">
                                 <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
@@ -262,9 +238,7 @@
                                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                             jhiDeleteButton
                                             [entityTitle]="programmingExercise.title!"
-                                            deleteQuestion="{{
-                                                localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.single' : 'artemisApp.programmingExercise.delete.question'
-                                            }}"
+                                            deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.single"
                                             (delete)="deleteProgrammingExercise(programmingExercise.id!, $event)"
                                             [dialogError]="dialogError$"
                                             [additionalChecks]="
@@ -312,9 +286,7 @@
                         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                         jhiDeleteButton
                         [entityTitle]="'Multiple Programming Exercises'"
-                        deleteQuestion="{{
-                            localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.multiple' : 'artemisApp.exerciseActions.deleteMultipleExercisesQuestion'
-                        }}"
+                        deleteQuestion="artemisApp.programmingExercise.delete.questionLocalVC.multiple"
                         (delete)="deleteMultipleProgrammingExercises(selectedExercises, $event)"
                         [requireConfirmationOnlyForAdditionalChecks]="true"
                         [additionalChecks]="

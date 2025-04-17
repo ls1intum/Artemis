@@ -103,6 +103,7 @@ public class AdminCourseResource {
             groups.add(courseGroup.teachingAssistantGroupName());
             groups.add(courseGroup.studentGroupName());
         });
+        groups.remove(null); // remove a potential null group
         return ResponseEntity.ok().body(groups);
     }
 

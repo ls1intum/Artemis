@@ -5,7 +5,7 @@ import { CodeEditorStatusComponent } from 'app/programming/shared/code-editor/st
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorStatusComponent', () => {

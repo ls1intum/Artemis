@@ -165,7 +165,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     sidebarData: SidebarData;
     accordionConversationGroups: AccordionGroups;
     sidebarConversations: SidebarCardElement[] = [];
-    profileSubscription?: Subscription;
     isCollapsed = false;
     isProduction = true;
     isTestServer = false;
@@ -294,10 +293,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     performChannelAction(channelAction: ChannelAction) {
@@ -374,7 +371,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.openSidebarEventSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.toggleSidebarEventSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.breakpointSubscription?.unsubscribe();
     }
 
@@ -416,6 +412,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     initializeCourseWideSearchConfig() {
         this.courseWideSearchConfig = new CourseWideSearchConfig();
         this.courseWideSearchConfig.searchTerm = '';
+        this.courseWideSearchConfig.filterToCourseWide = true;
         this.courseWideSearchConfig.filterToUnresolved = false;
         this.courseWideSearchConfig.filterToOwn = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;

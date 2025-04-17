@@ -31,7 +31,7 @@ import {
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI } from 'app/app.constants';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -112,6 +112,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     isCommunicationEnabled = false;
 
     atlasEnabled = false;
+    examEnabled = false;
     irisEnabled = false;
     ltiEnabled = false;
 
@@ -130,14 +131,11 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
             this.subscribeToCourseUpdates(courseId);
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
-                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                this.ltiEnabled = profileInfo.activeProfiles.includes(PROFILE_LTI);
-                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-            }
-        });
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
         // Notify the course access storage service that the course has been accessed
         this.courseAccessStorageService.onCourseAccessed(

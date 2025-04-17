@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { PlagiarismCaseInstructorDetailViewComponent } from 'app/plagiarism/manage/instructor-view/detail-view/plagiarism-case-instructor-detail-view.component';
 import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
@@ -8,20 +9,19 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Observable, ReplaySubject, of } from 'rxjs';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
-import { MockNotificationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -51,9 +51,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(AlertService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -62,7 +62,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         fixture = TestBed.createComponent(PlagiarismCaseInstructorDetailViewComponent);
         component = fixture.componentInstance;
-        plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
         jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
         saveVerdictSpy = jest.spyOn(plagiarismCasesService, 'saveVerdict');
     });
@@ -137,7 +137,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should create student notification for course exercise', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         component.plagiarismCase = plagiarismCase;
@@ -161,7 +161,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should create student notification for exam exercise', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         const examTitle = 'Exam Title';
@@ -190,7 +190,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should create student notification with empty names and titles', () => {
-        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateService = TestBed.inject(TranslateService);
         const translateServiceSpy = jest.spyOn(translateService, 'instant');
 
         component.plagiarismCase = {
@@ -218,7 +218,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     });
 
     it('should notify student', () => {
-        const successSpy = jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
+        const successSpy = jest.spyOn(TestBed.inject(AlertService), 'success');
 
         component.courseId = 1;
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;

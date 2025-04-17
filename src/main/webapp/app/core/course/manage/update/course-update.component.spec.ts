@@ -19,31 +19,31 @@ import { SecuredImageComponent } from 'app/shared/image/secured-image.component'
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ImageCropperComponent } from 'app/shared/image-cropper/component/image-cropper.component';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import dayjs from 'dayjs/esm';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { By } from '@angular/platform-browser';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { cloneDeep } from 'lodash-es';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { ImageCropperModalComponent } from 'app/core/course/manage/image-cropper-modal/image-cropper-modal.component';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
-import { MockFeatureToggleService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-feature-toggle.service';
-import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from '../../../../app.constants';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockResizeObserver } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockFeatureToggleService } from 'test/helpers/mocks/service/mock-feature-toggle.service';
+import { MODULE_FEATURE_ATLAS, PROFILE_LTI } from 'app/app.constants';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -95,7 +95,6 @@ describe('Course Management Update Component', () => {
         course.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
-        course.courseIcon = 'testCourseIcon';
         course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
@@ -108,17 +107,15 @@ describe('Course Management Update Component', () => {
         TestBed.configureTestingModule({
             imports: [MockModule(ReactiveFormsModule), MockModule(FormsModule), ImageCropperComponent, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
-                {
-                    provide: ActivatedRoute,
-                    useValue: route,
-                },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
-
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -164,9 +161,8 @@ describe('Course Management Update Component', () => {
 
     describe('ngOnInit', () => {
         it('should get course, profile and fill the form', fakeAsync(() => {
-            const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-            const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
+            const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+            const getProfileStub = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
             const organization = new Organization();
             organization.id = 12344;
             const getOrganizationsStub = jest.spyOn(organizationService, 'getOrganizationsByCourse').mockReturnValue(of([organization]));
@@ -176,7 +172,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseOrganizations).toEqual([organization]);
             expect(getOrganizationsStub).toHaveBeenCalledOnce();
             expect(getOrganizationsStub).toHaveBeenCalledWith(course.id);
-            expect(getProfileStub).toHaveBeenCalledOnce();
+            expect(getProfileStub).toHaveBeenCalledTimes(4);
             expect(comp.customizeGroupNames).toBeTrue();
             expect(comp.course.studentGroupName).toBe('artemis-dev');
             expect(comp.course.teachingAssistantGroupName).toBe('artemis-dev');
@@ -864,6 +860,7 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(LoadImageService),
             ],
             declarations: [
@@ -946,9 +943,8 @@ describe('Course Management Student Course Analytics Dashboard Update', () => {
         // Simulate a user who is an admin
         jest.spyOn(accountService, 'isAdmin').mockReturnValue(true);
 
-        const profileInfo = { inProduction: false, activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as ProfileInfo;
-        const profileInfoSubject = new BehaviorSubject<ProfileInfo>(profileInfo).asObservable();
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoSubject);
+        const profileInfo = { activeProfiles: [PROFILE_LTI], activeModuleFeatures: [MODULE_FEATURE_ATLAS] } as unknown as ProfileInfo;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfo);
 
         const featureToggleStub = featureToggleSpy.mockImplementation((feature: string) => {
             if (feature === FeatureToggle.StudentCourseAnalyticsDashboard || feature === FeatureToggle.LearningPaths) {
@@ -1008,7 +1004,7 @@ describe('Course Management Update Component Create', () => {
                 (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 component = fixture.componentInstance;
-                httpMock = TestBed.inject(HttpTestingController);
+                httpMock = fixture.debugElement.injector.get(HttpTestingController);
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });

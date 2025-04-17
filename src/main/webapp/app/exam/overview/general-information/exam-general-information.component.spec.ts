@@ -4,7 +4,7 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExamGeneralInformationComponent } from 'app/exam/overview/general-information/exam-general-information.component';
 import dayjs from 'dayjs/esm';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 let fixture: ComponentFixture<ExamGeneralInformationComponent>;

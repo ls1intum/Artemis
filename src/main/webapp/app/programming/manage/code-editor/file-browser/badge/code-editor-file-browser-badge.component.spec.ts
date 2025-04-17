@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { FileBadge, FileBadgeType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/programming/manage/code-editor/file-browser/badge/code-editor-file-browser-badge.component';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CodeEditorFileBrowserBadgeComponent', () => {
     let component: CodeEditorFileBrowserBadgeComponent;

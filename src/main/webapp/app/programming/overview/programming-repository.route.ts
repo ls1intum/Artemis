@@ -1,7 +1,5 @@
 import { Routes } from '@angular/router';
 import { Authority } from 'app/shared/constants/authority.constants';
-
-import { LocalVCGuard } from 'app/programming/shared/services/localvc-guard.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 export const routes: Routes = [
@@ -12,7 +10,7 @@ export const routes: Routes = [
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':repositoryId/commit-history',
@@ -21,7 +19,7 @@ export const routes: Routes = [
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
     {
         path: ':repositoryId/commit-history/:commitHash',
@@ -30,6 +28,6 @@ export const routes: Routes = [
             authorities: [Authority.USER],
             pageTitle: 'artemisApp.repository.commitHistory.commitDetails.title',
         },
-        canActivate: [UserRouteAccessService, LocalVCGuard],
+        canActivate: [UserRouteAccessService],
     },
 ];

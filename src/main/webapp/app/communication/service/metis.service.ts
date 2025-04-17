@@ -29,7 +29,6 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -63,17 +62,20 @@ export class MetisService implements OnDestroy {
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
     private courseWideTopicSubscription: Subscription;
+    private activeConversationSubscription: Subscription;
 
     course: Course;
 
     constructor() {
-        const notificationService = inject(NotificationService);
-
         this.accountService.identity().then((user: User) => {
             this.user = user!;
-        });
 
-        this.courseWideTopicSubscription = notificationService.newOrUpdatedMessage.subscribe(this.handleNewOrUpdatedMessage);
+            const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
+            this.websocketService.subscribe(conversationTopic);
+            this.activeConversationSubscription = this.websocketService.receive(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+                this.handleNewOrUpdatedMessage(postDTO);
+            });
+        });
     }
 
     get posts(): Observable<Post[]> {
@@ -128,7 +130,12 @@ export class MetisService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.websocketService.unsubscribe(this.subscriptionChannel);
         }
-        this.courseWideTopicSubscription.unsubscribe();
+        if (this.courseWideTopicSubscription) {
+            this.courseWideTopicSubscription.unsubscribe();
+        }
+        if (this.activeConversationSubscription) {
+            this.activeConversationSubscription.unsubscribe();
+        }
     }
 
     getPageType(): PageType {
@@ -155,6 +162,16 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
+
+            if (this.courseWideTopicSubscription) {
+                this.courseWideTopicSubscription.unsubscribe();
+            }
+
+            const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
+            this.websocketService.subscribe(coursewideTopic);
+            this.courseWideTopicSubscription = this.websocketService.receive(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+                this.handleNewOrUpdatedMessage(postDTO);
+            });
         }
     }
 
@@ -178,7 +195,7 @@ export class MetisService implements OnDestroy {
         if (
             forceUpdate ||
             postContextFilter?.courseId !== this.currentPostContextFilter?.courseId ||
-            postContextFilter?.conversationId !== this.currentPostContextFilter?.conversationId ||
+            postContextFilter?.conversationIds !== this.currentPostContextFilter?.conversationIds ||
             this.hasDifferentContexts(postContextFilter) ||
             postContextFilter?.plagiarismCaseId !== this.currentPostContextFilter?.plagiarismCaseId ||
             postContextFilter?.page !== this.currentPostContextFilter?.page
@@ -311,7 +328,7 @@ export class MetisService implements OnDestroy {
     public fetchAllPinnedPosts(conversationId: number): Observable<Post[]> {
         const pinnedFilter: PostContextFilter = {
             courseId: this.courseId,
-            conversationId: conversationId,
+            conversationIds: [conversationId],
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
             pinnedOnly: true,
@@ -658,15 +675,13 @@ export class MetisService implements OnDestroy {
 
     private handleNewOrUpdatedMessage = (postDTO: MetisPostDTO): void => {
         const postConvId = postDTO.post.conversation?.id;
-        const postIsNotFromCurrentConversation = this.currentPostContextFilter.conversationId && postConvId !== this.currentPostContextFilter.conversationId;
+        const isValidPostContext = !!postConvId && !!this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length > 0;
+        const postIsFromCurrentConversation = isValidPostContext && this.currentPostContextFilter.conversationIds?.includes(postConvId);
+        const postIsPrivate = !!this.currentPostContextFilter.filterToCourseWide && !getAsChannelDTO(postDTO.post.conversation)?.isCourseWide;
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
-        const postIsNotFromSelectedCourseWideChannels =
-            this.currentPostContextFilter.courseWideChannelIds?.length !== undefined &&
-            (!getAsChannelDTO(postDTO.post.conversation)?.isCourseWide ||
-                (this.currentPostContextFilter.courseWideChannelIds.length > 0 && postConvId && !this.currentPostContextFilter.courseWideChannelIds.includes(postConvId)));
 
-        if (postIsNotFromCurrentConversation || postIsNotFromSelectedCourseWideChannels || postIsNotFromCurrentPlagiarismCase) {
+        if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
 
@@ -697,8 +712,8 @@ export class MetisService implements OnDestroy {
                     }
                 }
 
-                if (this.currentPostContextFilter.conversationId && postDTO.post.author?.id !== this.user.id) {
-                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationId).subscribe();
+                if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
+                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds[0]).subscribe();
                 }
 
                 this.addTags(postDTO.post.tags);
@@ -799,24 +814,43 @@ export class MetisService implements OnDestroy {
      * Retrieves the source posts for a given set of post IDs.
      *
      * @param postIds - An array of numeric post IDs to retrieve source posts for.
-     * @returns An observable containing the source posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source posts or undefined if the IDs are invalid or not existent.
      */
-    getSourcePostsByIds(postIds: number[]) {
-        if (postIds) return this.postService.getSourcePostsByIds(this.courseId, postIds);
-        else return;
+    getSourcePostsByIds(postIds: number[]): Observable<Post[] | undefined> {
+        if (postIds) {
+            return this.postService.getSourcePostsByIds(this.courseId, postIds).pipe(
+                catchError((error) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(() => error);
+                }),
+            );
+        } else {
+            return of(undefined);
+        }
     }
 
     /**
      * Retrieves the source answer posts for a given set of answer post IDs.
      *
      * @param answerPostIds - An array of numeric answer post IDs to retrieve source answer posts for.
-     * @returns An observable containing the source answer posts or undefined if the IDs are invalid.
+     * @returns An observable containing the source answer posts or undefined if the IDs are invalid or not existent.
      */
-    getSourceAnswerPostsByIds(answerPostIds: number[]) {
-        if (answerPostIds) return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds);
-        else return;
+    getSourceAnswerPostsByIds(answerPostIds: number[]): Observable<AnswerPost[] | undefined> {
+        if (answerPostIds) {
+            return this.answerPostService.getSourceAnswerPostsByIds(this.courseId, answerPostIds).pipe(
+                catchError((error) => {
+                    if (error.status === 404) {
+                        return of(undefined);
+                    }
+                    return throwError(() => error);
+                }),
+            );
+        } else {
+            return of(undefined);
+        }
     }
-
     /**
      * Creates forwarded messages by associating original posts with a target conversation.
      *
@@ -897,10 +931,10 @@ export class MetisService implements OnDestroy {
     }
 
     private hasDifferentContexts(other: PostContextFilter): boolean {
-        this.currentPostContextFilter.courseWideChannelIds?.sort((a, b) => a - b);
-        other.courseWideChannelIds?.sort((a, b) => a - b);
+        this.currentPostContextFilter.conversationIds?.sort((a, b) => a - b);
+        other.conversationIds?.sort((a, b) => a - b);
 
-        return this.currentPostContextFilter.courseWideChannelIds?.toString() !== other.courseWideChannelIds?.toString();
+        return this.currentPostContextFilter.conversationIds?.toString() !== other.conversationIds?.toString();
     }
 
     /**

@@ -3,18 +3,12 @@ import { EMPTY, Observable, Subject, of, throwError } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
-import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SortDirective } from 'app/shared/sort/directive/sort.directive';
-import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
@@ -22,43 +16,49 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { generateExampleTutorialGroupsConfiguration } from '../../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
-import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockNotificationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
-import { MockMetisConversationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
-import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
 import { CourseSidebarComponent } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
-import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TeamService } from 'app/exercise/team/team.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
-import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
+import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
+import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
+import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { CourseOverviewComponent } from 'app/core/course/overview/course-overview/course-overview.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
-import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -77,13 +77,6 @@ const exercise2: Exercise = {
     dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
-const quizExercise: QuizExercise = {
-    id: 7,
-    numberOfAssessmentsOfCorrectionRounds: [],
-    studentAssignedTeamIdComputed: false,
-    secondCorrectionEnabled: true,
-};
-
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
@@ -98,7 +91,6 @@ const course1: Course = {
         'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
         'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
-    courseIcon: 'path/to/icon.png',
     courseIconPath: 'api/core/files/path/to/icon.png',
 };
 const course2: Course = {
@@ -146,13 +138,14 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
     let courseSidebarService: CourseSidebarService;
+    let profileService: ProfileService;
+    let modalService: NgbModal;
 
     let metisConversationService: MetisConversationService;
 
@@ -194,20 +187,20 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(ArtemisServerDateService),
                 MockProvider(AlertService),
                 MockProvider(ChangeDetectorRef),
-                MockProvider(ProfileService),
                 MockProvider(TutorialGroupsService),
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
+                MockProvider(NgbModal),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -216,18 +209,20 @@ describe('CourseOverviewComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
                 component = fixture.componentInstance;
-                component.isShownViaLti = false;
+
+                component.isShownViaLti.set(false);
                 courseSidebarService = TestBed.inject(CourseSidebarService);
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
                 examParticipationService = TestBed.inject(ExamParticipationService);
                 teamService = TestBed.inject(TeamService);
+                profileService = TestBed.inject(ProfileService);
+                modalService = TestBed.inject(NgbModal);
                 tutorialGroupsService = TestBed.inject(TutorialGroupsService);
                 tutorialGroupsConfigurationService = TestBed.inject(TutorialGroupsConfigurationService);
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
@@ -247,6 +242,11 @@ describe('CourseOverviewComponent', () => {
                 findAllForDropdownSpy = jest
                     .spyOn(courseService, 'findAllForDropdown')
                     .mockReturnValue(of(new HttpResponse({ body: coursesDropdown, headers: new HttpHeaders() })));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+                    activeModuleFeatures: [MODULE_FEATURE_ATLAS],
+                    activeProfiles: [PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD],
+                    testServer: false,
+                } as unknown as ProfileInfo);
             });
     }));
 
@@ -287,7 +287,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
-        component.course = { id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true };
+        component.course.set({ id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Dashboard');
@@ -296,11 +296,24 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items with default items', () => {
-        component.course = { id: 123, lectures: [], exams: [] };
+        component.course.set({ id: 123, lectures: [], exams: [] });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
         expect(sidebarItems[0].title).toContain('Exercises');
         expect(sidebarItems[1].title).toContain('Lectures');
+    });
+
+    it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
+        component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
+        component.atlasEnabled.set(true);
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems[2].title).toContain('Competencies');
+        expect(sidebarItems[3].title).toContain('Learning Path');
+    });
+    it('should create faq item when faqs are enabled', () => {
+        component.course.set({ id: 123, faqEnabled: true });
+        const sidebarItems = component.getSidebarItems();
+        expect(sidebarItems[2].title).toContain('FAQs');
     });
 
     it('loads conversations when switching to message tab once', async () => {
@@ -314,10 +327,10 @@ describe('CourseOverviewComponent', () => {
         expect(getCourseStub).toHaveBeenCalled();
 
         expect(metisConversationServiceStub).toHaveBeenCalledTimes(0);
-
+        const baseUrl = '/' + 'courses/' + course1.id;
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
-            route.snapshot.firstChild!.routeConfig!.path = tab;
+            jest.spyOn(router, 'url', 'get').mockReturnValue(baseUrl + '/' + tab);
             component.onSubRouteActivate({ controlConfiguration: undefined });
 
             expect(metisConversationServiceStub).toHaveBeenCalledOnce();
@@ -334,7 +347,7 @@ describe('CourseOverviewComponent', () => {
         route.snapshot.firstChild!.routeConfig!.path = 'exercises';
         component.onSubRouteActivate({ controlConfiguration: undefined });
 
-        expect(component.hasUnreadMessages).toBe(hasNewMessages);
+        expect(component.hasUnreadMessages()).toBe(hasNewMessages);
 
         const tabs = ['communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
@@ -349,7 +362,7 @@ describe('CourseOverviewComponent', () => {
         const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService');
 
-        component.course = { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED };
+        component.course.set({ courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED });
 
         const tabs = ['exercises', 'communication', 'exercises', 'communication'];
         tabs.forEach((tab) => {
@@ -365,11 +378,12 @@ describe('CourseOverviewComponent', () => {
         // mock error response
         findOneForDashboardStub.mockReturnValue(
             throwError(
-                new HttpResponse({
-                    body: course1,
-                    headers: new HttpHeaders(),
-                    status: 403,
-                }),
+                () =>
+                    new HttpResponse({
+                        body: course1,
+                        headers: new HttpHeaders(),
+                        status: 403,
+                    }),
             ),
         );
         const findOneForRegistrationStub = jest.spyOn(courseService, 'findOneForRegistration');
@@ -487,6 +501,20 @@ describe('CourseOverviewComponent', () => {
         expect(bool).toBeFalse();
     });
 
+    it('should contain unenrollment as course action when allowed', () => {
+        component.course.set({ unenrollmentEnabled: true, unenrollmentEndDate: dayjs().add(1, 'days') });
+        const courseActionItems = component.getCourseActionItems();
+        expect(courseActionItems.length).toBeGreaterThan(0);
+        expect(courseActionItems[0].title).toContain('Unenroll');
+    });
+
+    it('should open modal on triggering unenrollment option', () => {
+        const mockModalRef = { componentInstance: {} } as NgbModalRef;
+        const modalServiceSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef);
+        component.courseActionItemClick(component.getUnenrollItem());
+        expect(modalServiceSpy).toHaveBeenCalledOnce();
+    });
+
     it('should have competencies and tutorial groups', () => {
         const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
 
@@ -509,9 +537,9 @@ describe('CourseOverviewComponent', () => {
 
         expect(component.hasCompetencies()).toBeTrue();
         expect(component.hasTutorialGroups()).toBeTrue();
-        expect(component.course?.competencies).not.toBeEmpty();
-        expect(component.course?.prerequisites).not.toBeEmpty();
-        expect(component.course?.tutorialGroups).not.toBeEmpty();
+        expect(component.course()?.competencies).not.toBeEmpty();
+        expect(component.course()?.prerequisites).not.toBeEmpty();
+        expect(component.course()?.tutorialGroups).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
@@ -542,8 +570,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledWith('/topic/courses/' + course.id + '/quizExercises');
     });
 
     it('should do ngOnDestroy', () => {
@@ -572,80 +599,60 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should toggle sidebar based on isNavbarCollapsed', () => {
-        component.isNavbarCollapsed = true;
+        component.isNavbarCollapsed.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).not.toBeNull();
 
-        component.isNavbarCollapsed = false;
+        component.isNavbarCollapsed.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.container-closed')).toBeNull();
     });
 
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed).toBeTrue();
+        expect(component.isNavbarCollapsed()).toBeTrue();
 
         component.toggleCollapseState();
-        expect(component.isNavbarCollapsed).toBeFalse();
+        expect(component.isNavbarCollapsed()).toBeFalse();
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
+        component.isExamStarted.set(true);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).not.toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).not.toBeNull();
 
-        component.isExamStarted = false;
+        component.isExamStarted.set(false);
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('.exam-wrapper')).toBeNull();
         expect(fixture.nativeElement.querySelector('.exam-is-active')).toBeNull();
     });
 
-    it('should display/hide sidebar if exam is started/over', () => {
+    it('should examStarted value to true when exam is started', async () => {
         (examParticipationService as any).examIsStarted$ = of(true);
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeTrue();
-
-        component.isExamStarted = false;
-        fixture.detectChanges();
-        expect(fixture.nativeElement.querySelector('mat-sidenav').hidden).toBeFalse();
-    });
-
-    it('should display/hide course title bar if exam is started/over', () => {
-        (examParticipationService as any).examIsStarted$ = of(true);
-        const getCourseStub = jest.spyOn(courseStorageService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        fixture.detectChanges();
-        const courseTitleBar = fixture.debugElement.query(By.css('#course-title-bar-test'));
-        const displayStyle = courseTitleBar.nativeElement.style.display;
-        expect(displayStyle).toBe('none');
-
-        component.isExamStarted = false;
-        fixture.detectChanges();
-        const courseTitleBar2 = fixture.debugElement.query(By.css('#course-title-bar-test'));
-        const displayStyle2 = courseTitleBar2.nativeElement.style.display;
-        expect(displayStyle2).toBe('flex');
+        await component.ngOnInit();
+        expect(component.isExamStarted()).toBeTrue();
     });
 
     it('should initialize courses attribute when page is loaded', async () => {
         await component.ngOnInit();
 
-        expect(component.courses).toEqual(courses);
-        expect(component.courses?.length).toBe(1);
+        expect(component.courses()).toEqual(courses);
+        expect(component.courses()?.length).toBe(1);
     });
 
     it('should not initialize courses attribute when page has error while loading', async () => {
         findAllForDropdownSpy.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         await component.ngOnInit();
-        expect(component.courses?.length).toBeUndefined();
+        expect(component.courses()?.length).toBeUndefined();
     });
 
     it('should not display current course in dropdown', async () => {
         await component.ngOnInit();
 
-        expect(component.courses).toEqual(courses);
-        expect(component.courses?.pop()).toBe(course2);
+        expect(component.courses()).toEqual(courses);
+        expect(component.courses()?.pop()).toBe(course2);
     });
 
     it('should unsubscribe from dashboardSubscription on ngOnDestroy', () => {
@@ -660,12 +667,24 @@ describe('CourseOverviewComponent', () => {
     it('should toggle isCollapsed when service emits corresponding event', () => {
         fixture.detectChanges();
         courseSidebarService.openSidebar();
-        expect(component.isSidebarCollapsed).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBeTrue();
 
         courseSidebarService.closeSidebar();
-        expect(component.isSidebarCollapsed).toBeFalse();
+        expect(component.isSidebarCollapsed()).toBeFalse();
 
         courseSidebarService.toggleSidebar();
-        expect(component.isSidebarCollapsed).toBeTrue();
+        expect(component.isSidebarCollapsed()).toBeTrue();
+    });
+
+    it('should switch course and navigate to the correct URL', async () => {
+        const navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/1/exercises');
+
+        component.switchCourse(course2);
+        await Promise.resolve();
+
+        expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
+        expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'exercises']);
     });
 });
