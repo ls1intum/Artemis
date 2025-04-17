@@ -30,6 +30,8 @@ build/*
 .cache
 # exclude the .gradle cache
 .gradle
+# do not exclude the script for copying the pdfjs worker
+!src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs
 
 #########################
 # exclude Artemis configs
