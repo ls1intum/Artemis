@@ -34,6 +34,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     ],
 })
 export class AppComponent implements OnInit, OnDestroy {
+    protected readonly FeatureToggle = FeatureToggle;
+
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -150,6 +152,4 @@ export class AppComponent implements OnInit, OnDestroy {
         this.courseOverviewSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }
