@@ -58,4 +58,8 @@ public class StudentExamApi extends AbstractExamApi {
         return studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
                 .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
     }
+
+    public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {
+        return studentExamRepository.findByExamIdAndUserId(examId, userId);
+    }
 }
