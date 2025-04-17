@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
@@ -12,12 +12,14 @@ import { LtiService } from 'app/shared/service/lti.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { RouterTestingModule } from '@angular/router/testing';
 
-describe('CourseLecturesComponent LtiService Tests', () => {
+describe('CourseLecturesComponent', () => {
     let component: CourseLecturesComponent;
     let fixture: ComponentFixture<CourseLecturesComponent>;
     let ltiService: LtiService;
     let courseOverviewService: CourseOverviewService;
     let lectureService: LectureService;
+
+    let lecture: Lecture;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -50,6 +52,10 @@ describe('CourseLecturesComponent LtiService Tests', () => {
             ],
         });
 
+        lecture = new Lecture();
+        lecture.id = 6;
+        lecture.title = 'Introduction to Computer Science';
+
         fixture = TestBed.createComponent(CourseLecturesComponent);
         component = fixture.componentInstance;
         ltiService = TestBed.inject(LtiService);
@@ -61,7 +67,7 @@ describe('CourseLecturesComponent LtiService Tests', () => {
         const processSpy = jest.spyOn(component, 'processLectures');
         const sortSpy = jest.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
         const mapSpy = jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
-        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue();
+        const groupSpy = jest.spyOn(courseOverviewService, 'groupLecturesByStartDate').mockReturnValue([lecture]);
 
         ltiService.setMultiLaunch(true);
         component.ngOnInit();
