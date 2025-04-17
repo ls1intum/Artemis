@@ -61,7 +61,7 @@ public class SlideUnhideScheduleService {
         log.debug("Scheduling {} hidden slides for unhiding", hiddenSlidesProjection.size());
 
         for (SlideUnhideDTO slideDTO : hiddenSlidesProjection) {
-            scheduleSlideUnhiding(slideDTO);
+            scheduleSlideUnhidingByDTO(slideDTO);
         }
     }
 
@@ -71,7 +71,7 @@ public class SlideUnhideScheduleService {
      *
      * @param slideDTO The slide DTO containing id and hidden datetime
      */
-    public void scheduleSlideUnhiding(SlideUnhideDTO slideDTO) {
+    public void scheduleSlideUnhidingByDTO(SlideUnhideDTO slideDTO) {
         if (slideDTO.hidden() == null) {
             return;
         }
@@ -91,6 +91,20 @@ public class SlideUnhideScheduleService {
             scheduledTasks.put(slideDTO.id(), scheduledTask);
             log.debug("Scheduled slide {} to be unhidden at {}", slideDTO.id(), unhideDate);
         }
+    }
+
+    /**
+     * Fetches a slide by ID and schedules it for unhiding.
+     * This method retrieves the slide from the repository, creates a SlideUnhideDTO,
+     * and passes it to the scheduleSlideUnhiding method.
+     *
+     * @param slideId The ID of the slide to be scheduled for unhiding
+     */
+    public void scheduleSlideUnhiding(Long slideId) {
+        slideRepository.findById(slideId).ifPresent(slide -> {
+            SlideUnhideDTO slideDTO = new SlideUnhideDTO(slide.getId(), slide.getHidden());
+            scheduleSlideUnhidingByDTO(slideDTO);
+        });
     }
 
     /**
