@@ -117,15 +117,18 @@
                             </div>
                         </a>
                         @if (isLast && !isNavbarCollapsed()) {
-                            <div
-                                class="double-arrow px-2"
-                                [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
-                                [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
-                                (click)="toggleCollapseState.emit()"
-                            >
-                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
-                                    <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
-                                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                            <div class="ms-n1">
+                                <div
+                                    class="double-arrow px-2"
+                                    [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
+                                    [ngbTooltip]="'Collapse Menu (Ctrl + M)'"
+                                    [container]="'body'"
+                                    (click)="toggleCollapseState.emit()"
+                                >
+                                    <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed()" aria-controls="collapseBasic">
+                                        <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                                        <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                                    </div>
                                 </div>
                             </div>
                         }

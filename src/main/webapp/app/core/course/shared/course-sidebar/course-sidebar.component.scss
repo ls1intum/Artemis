@@ -178,3 +178,15 @@ a:not(.btn):not(.tab-link):hover {
         display: none; /* Hide the sidebar when printing */
     }
 }
+.custom-tooltip-class .ngb-tooltip-window {
+    position: absolute !important;
+    top: -79px !important; /* Adjust vertical positioning */
+    left: 500px !important; /* Adjust horizontal positioning */
+    transform: translate(0, 0) !important; /* Override any existing transforms */
+    z-index: 1050 !important; /* Ensure it's above other content */
+}
+
+.custom-tooltip-class .ngb-tooltip-arrow {
+    left: 50% !important;
+    transform: translateX(-50%) !important; /* Center the arrow */
+}
