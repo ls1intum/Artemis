@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.lecture.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +25,9 @@ public class SlideUnhideService {
 
     private final SlideUnhideExecutionService slideUnhideExecutionService;
 
-    private final ScheduleService scheduleService;
+    private final Optional<ScheduleService> scheduleService;
 
-    public SlideUnhideService(SlideUnhideExecutionService slideUnhideExecutionService, ScheduleService scheduleService) {
+    public SlideUnhideService(SlideUnhideExecutionService slideUnhideExecutionService, Optional<ScheduleService> scheduleService) {
         this.slideUnhideExecutionService = slideUnhideExecutionService;
         this.scheduleService = scheduleService;
     }
@@ -42,8 +43,8 @@ public class SlideUnhideService {
     public void handleSlideHiddenUpdate(Slide slide) {
         ZonedDateTime hiddenUntil = slide.getHidden();
 
-        // Cancel any existing tasks first
-        scheduleService.cancelScheduledTaskForSlideLifecycle(slide.getId(), SlideLifecycle.UNHIDE);
+        // Cancel any existing tasks first if schedule service is available
+        scheduleService.ifPresent(service -> service.cancelScheduledTaskForSlideLifecycle(slide.getId(), SlideLifecycle.UNHIDE));
 
         if (hiddenUntil == null) {
             log.debug("Slide {} is not hidden, no need to schedule unhiding", slide.getId());
@@ -58,7 +59,8 @@ public class SlideUnhideService {
         }
         else {
             log.debug("Scheduling unhiding of slide {} at {}", slide.getId(), hiddenUntil);
-            scheduleService.scheduleSlideTask(slide, SlideLifecycle.UNHIDE, () -> slideUnhideExecutionService.unhideSlide(slide.getId()), "Slide Unhiding");
+            scheduleService
+                    .ifPresent(service -> service.scheduleSlideTask(slide, SlideLifecycle.UNHIDE, () -> slideUnhideExecutionService.unhideSlide(slide.getId()), "Slide Unhiding"));
         }
     }
 
@@ -69,7 +71,7 @@ public class SlideUnhideService {
      */
     public void unhideSlide(Long slideId) {
         log.debug("Manual unhiding of slide {}", slideId);
-        scheduleService.cancelScheduledTaskForSlideLifecycle(slideId, SlideLifecycle.UNHIDE);
+        scheduleService.ifPresent(service -> service.cancelScheduledTaskForSlideLifecycle(slideId, SlideLifecycle.UNHIDE));
         slideUnhideExecutionService.unhideSlide(slideId);
     }
 }
