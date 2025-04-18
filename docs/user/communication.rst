@@ -605,11 +605,11 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 500
 .. |messages| image:: communication/direct-message-page.png
     :width: 1000
-.. |slide-preview| image:: communication/slide-preview.png
+.. |slide-preview| image:: communication/slide-preview-message.png
     :width: 600
 .. |slide-menu| image:: communication/slide-menu-view.png
     :width: 1000
-.. |slide-view| image:: communication/slide-view.png
+.. |slide-view| image:: communication/slide-open.png
     :width: 600
 .. |link-preview-view| image:: communication/link-preview-single.png
     :width: 600
@@ -617,11 +617,11 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 600
 .. |channel-creation| image:: communication/channel-creation.png
     :width: 600
-.. |forwarded-message| image:: communication/forwarded-message.png
+.. |forwarded-message| image:: communication/forward-view.png
     :width: 800
-.. |forward-message-dialog| image:: communication/forward-message-dialog.png
+.. |forward-message-dialog| image:: communication/forward-dialog.png
     :width: 800
-.. |expanded-thread| image:: communication/expanded-thread.png
+.. |expanded-thread| image:: communication/expanded.png
     :width: 1000
 .. |channel-settings| image:: communication/channel-settings.png
     :width: 800
@@ -633,5 +633,5 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 700
 .. |reply-as-post| image:: communication/reply-as-post.png
     :width: 900
-.. |save-messages| image:: communication/save-messages.png
+.. |save-messages| image:: communication/save-message.png
     :width: 1000
