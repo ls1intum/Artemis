@@ -34,20 +34,6 @@ describe('User Service', () => {
             req.flush([Authority.USER, Authority.ADMIN]);
         });
 
-        it('should call correct URL to update lastNotificationRead', () => {
-            service.updateLastNotificationRead().subscribe();
-            const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/notification-date';
-            expect(req.request.url).toBe(`${resourceUrl}`);
-        });
-
-        it('should call correct URL to update notification visibility', () => {
-            service.updateNotificationVisibility(true).subscribe();
-            const req = httpMock.expectOne({ method: 'PUT' });
-            const resourceUrl = 'api/core/users/notification-visibility';
-            expect(req.request.url).toBe(`${resourceUrl}`);
-        });
-
         it('should call correct URL to initialize LTI user', () => {
             service.initializeLTIUser().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
