@@ -597,6 +597,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Refactored version combining updateAttachmentWithFile and updateAttachmentUnitStudentVersion
      */
     async updateAttachmentWithFile(): Promise<void> {
+        // Validate hidden slides dates before proceeding
+        if (!this.validateHiddenSlidesDates()) {
+            return;
+        }
+
         this.isSaving.set(true);
 
         try {
@@ -935,6 +940,48 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         this.selectedPages.set(new Set());
+    }
+
+    /**
+     * Validates that all hidden slide dates are valid (not in the past)
+     * @returns true if all dates are valid, false otherwise
+     */
+    private validateHiddenSlidesDates(): boolean {
+        const now = dayjs();
+        const hiddenPagesMap = this.hiddenPages();
+
+        // Find affected pages by mapping slideIds to page orders for error messages
+        const slideIdToOrderMap = new Map<string, number>();
+        this.pageOrder().forEach((page) => {
+            slideIdToOrderMap.set(page.slideId, page.order);
+        });
+
+        // Collect invalid pages to show in error message
+        const invalidPageOrders: number[] = [];
+
+        for (const [slideId, pageData] of Object.entries(hiddenPagesMap)) {
+            if (pageData.date.isSame(this.FOREVER, 'day')) {
+                continue;
+            }
+
+            // Check if the date is in the past
+            if (pageData.date.isBefore(now)) {
+                const pageOrder = slideIdToOrderMap.get(slideId);
+                if (pageOrder !== undefined) {
+                    invalidPageOrders.push(pageOrder);
+                }
+            }
+        }
+
+        // If we found invalid pages, show error and return false
+        if (invalidPageOrders.length > 0) {
+            invalidPageOrders.sort((a, b) => a - b);
+            const pagesList = invalidPageOrders.join(', ');
+            this.alertService.error('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: pagesList });
+            return false;
+        }
+
+        return true;
     }
 
     /**

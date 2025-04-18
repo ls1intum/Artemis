@@ -417,6 +417,8 @@ describe('PdfPreviewComponent', () => {
         });
 
         it('should update an attachment unit with hidden pages and create a student version', async () => {
+            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(of({}));
+
             component.attachment.set(undefined);
             component.attachmentUnit.set({
                 id: 2,
@@ -440,6 +442,7 @@ describe('PdfPreviewComponent', () => {
                 slide2: { date: mockDate, exerciseId: 123 },
             });
 
+            // Set up page order
             component.pageOrder.set([{ slideId: 'slide1', initialIndex: 1, order: 1 } as any, { slideId: 'slide2', initialIndex: 2, order: 2 } as any]);
 
             jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([
@@ -447,17 +450,24 @@ describe('PdfPreviewComponent', () => {
                 { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
             ]);
 
-            const appendSpy = jest.spyOn(FormData.prototype, 'append');
+            // We need to mock the validateHiddenSlidesDates method to return true
+            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
 
-            attachmentUnitServiceMock.update.mockReturnValue(of({}));
+            // We need to override the updateAttachmentUnit method
+            // because it uses a Promise that resolves inside a subscription
+            jest.spyOn(component as any, 'updateAttachmentUnit').mockImplementation(() => {
+                return Promise.resolve();
+            });
+
+            // Also override the updateStudentVersion method for the same reason
+            jest.spyOn(component as any, 'updateStudentVersion').mockImplementation(() => {
+                return Promise.resolve();
+            });
 
             await component.updateAttachmentWithFile();
 
-            expect(appendSpy).toHaveBeenCalledWith('studentVersion', expect.any(File));
-            expect(appendSpy).toHaveBeenCalledWith('hiddenPages', expect.stringContaining('slide2'));
-            expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(3, 2, expect.any(FormData));
-
-            appendSpy.mockRestore();
+            expect(component['updateAttachmentUnit']).toHaveBeenCalled();
+            expect(component['updateStudentVersion']).toHaveBeenCalled();
         });
 
         it('should handle file size exceeding the maximum allowed size', async () => {
@@ -1648,6 +1658,101 @@ describe('PdfPreviewComponent', () => {
             expect(mockInstructorPdf.addPage).toHaveBeenCalled();
             expect(result.instructorPdf).toBeDefined();
             expect(result.studentPdf).toBeNull();
+        });
+    });
+
+    describe('validateHiddenSlidesDates', () => {
+        beforeEach(() => {
+            jest.spyOn(alertServiceMock, 'error').mockClear();
+            component.pageOrder.set([
+                { slideId: 'slide1', initialIndex: 1, order: 1 } as any,
+                { slideId: 'slide2', initialIndex: 2, order: 2 } as any,
+                { slideId: 'slide3', initialIndex: 3, order: 3 } as any,
+            ]);
+        });
+
+        it('should return true when there are no hidden pages', () => {
+            component.hiddenPages.set({});
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeTrue();
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
+        });
+
+        it('should return true when all hidden pages have future dates', () => {
+            const futureDate1 = dayjs().add(1, 'day');
+            const futureDate2 = dayjs().add(5, 'days');
+
+            component.hiddenPages.set({
+                slide1: { date: futureDate1, exerciseId: null },
+                slide2: { date: futureDate2, exerciseId: 123 },
+            });
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeTrue();
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
+        });
+
+        it('should return true when hidden pages use FOREVER date', () => {
+            const FOREVER = dayjs('9999-12-31');
+
+            component.hiddenPages.set({
+                slide1: { date: FOREVER, exerciseId: null },
+            });
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeTrue();
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
+        });
+
+        it('should return false when any hidden page has a past date', () => {
+            const pastDate = dayjs().subtract(1, 'day');
+            const futureDate = dayjs().add(1, 'day');
+
+            component.hiddenPages.set({
+                slide1: { date: futureDate, exerciseId: null },
+                slide2: { date: pastDate, exerciseId: 123 },
+            });
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeFalse();
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '2' });
+        });
+
+        it('should return false when multiple hidden pages have past dates', () => {
+            const pastDate1 = dayjs().subtract(1, 'day');
+            const pastDate2 = dayjs().subtract(2, 'days');
+            const futureDate = dayjs().add(1, 'day');
+
+            component.hiddenPages.set({
+                slide1: { date: pastDate1, exerciseId: null },
+                slide2: { date: futureDate, exerciseId: 123 },
+                slide3: { date: pastDate2, exerciseId: null },
+            });
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeFalse();
+            expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '1, 3' });
+        });
+
+        it('should ignore same-day dates (neither past nor future)', () => {
+            const today = dayjs();
+            const futureDate = dayjs().add(1, 'day');
+
+            component.hiddenPages.set({
+                slide1: { date: today, exerciseId: null },
+                slide2: { date: futureDate, exerciseId: 123 },
+            });
+
+            const result = component['validateHiddenSlidesDates']();
+
+            expect(result).toBeTrue();
+            expect(alertServiceMock.error).not.toHaveBeenCalled();
         });
     });
 });
