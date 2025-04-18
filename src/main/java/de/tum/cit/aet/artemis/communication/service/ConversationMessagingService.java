@@ -9,14 +9,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -28,7 +24,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -38,10 +33,6 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnnouncementNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotificationFactory;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
@@ -49,11 +40,8 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationMessageReposi
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -63,8 +51,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -76,42 +62,28 @@ public class ConversationMessagingService extends PostingService {
 
     private final ConversationService conversationService;
 
-    private final ConversationNotificationService conversationNotificationService;
-
     private final ConversationMessageRepository conversationMessageRepository;
 
     private final ChannelAuthorizationService channelAuthorizationService;
 
-    private final GroupNotificationService groupNotificationService;
-
-    private final SingleUserNotificationRepository singleUserNotificationRepository;
-
     private final CourseNotificationService courseNotificationService;
 
     private final PostRepository postRepository;
-
-    private final FeatureToggleService featureToggleService;
 
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ConversationNotificationService conversationNotificationService, ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository,
-            GroupNotificationService groupNotificationService, SingleUserNotificationRepository singleUserNotificationRepository,
-            CourseNotificationService courseNotificationService, PostRepository postRepository, FeatureToggleService featureToggleService,
-            SingleUserNotificationService singleUserNotificationService) {
+            ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService,
+            PostRepository postRepository, SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
-        this.conversationNotificationService = conversationNotificationService;
         this.channelAuthorizationService = channelAuthorizationService;
-        this.groupNotificationService = groupNotificationService;
-        this.singleUserNotificationRepository = singleUserNotificationRepository;
         this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
-        this.featureToggleService = featureToggleService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
@@ -177,10 +149,8 @@ public class ConversationMessagingService extends PostingService {
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
-        ConversationNotification notification = conversationNotificationService.createNotification(createdMessage, conversation, course,
-                createdConversationMessage.mentionedUsers());
         preparePostForBroadcast(createdMessage);
-        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE, notification);
+        PostDTO postDTO = new PostDTO(createdMessage, MetisCrudAction.CREATE);
         createdMessage.getConversation().hideDetails();
         if (createdConversationMessage.completeConversation() instanceof Channel channel && channel.getIsCourseWide()) {
             // We don't need the list of participants for course-wide channels. We can delay the db query and send the WS messages first
@@ -210,96 +180,61 @@ public class ConversationMessagingService extends PostingService {
             log.debug("      broadcastForPost DONE");
         }
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            var post = createdConversationMessage.messageWithHiddenDetails();
-            var author = post.getAuthor();
-            String channelType = switch (conversation) {
-                case OneToOneChat ignored -> "oneToOneChat";
-                case GroupChat ignored -> "groupChat";
-                default -> "channel";
-            };
+        var post = createdConversationMessage.messageWithHiddenDetails();
+        var author = post.getAuthor();
 
-            var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
-                    .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
+        String channelType = switch (conversation) {
+            case OneToOneChat ignored -> "oneToOneChat";
+            case GroupChat ignored -> "groupChat";
+            default -> "channel";
+        };
 
-            if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-                var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
-                        post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
+        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
+                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
 
-                // Announcements are always sent, even for hidden/muted channels
-                courseNotificationService.sendCourseNotification(newAnnouncementNotification,
-                        recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
-                            var user = new User(summary.userId());
-                            user.setLogin(summary.userLogin());
-                            user.setEmail(summary.userEmail());
-                            user.setFirstName(summary.firstName());
-                            user.setLastName(summary.lastName());
-                            user.setLangKey(summary.userLangKey());
-                            return user;
-                        }).toList());
-            }
-            else {
-                var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
-                        conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
+        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
+            var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
+                    post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
 
-                var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
+            // Announcements are always sent, even for hidden/muted channels
+            courseNotificationService.sendCourseNotification(newAnnouncementNotification,
+                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
+                        var user = new User(summary.userId());
+                        user.setLogin(summary.userLogin());
+                        user.setEmail(summary.userEmail());
+                        user.setFirstName(summary.firstName());
+                        user.setLastName(summary.lastName());
+                        user.setLangKey(summary.userLangKey());
+                        return user;
+                    }).toList());
+        }
+        else {
+            var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
+                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
 
-                // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
-                // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
-                courseNotificationService.sendCourseNotification(newPostNotification,
-                        recipientSummaries.stream()
-                                .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
-                                        && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
-                                        && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
-                                .map((summary) -> {
-                                    var user = new User(summary.userId());
-                                    user.setLogin(summary.userLogin());
-                                    return user;
-                                }).toList());
-            }
+            var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
 
-            var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
-                    post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(),
-                    post.getAuthor().getId(), post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
-
-            this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+            // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
+            // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
+            courseNotificationService.sendCourseNotification(newPostNotification,
+                    recipientSummaries.stream()
+                            .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
+                                    && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
+                                    && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
+                            .map((summary) -> {
+                                var user = new User(summary.userId());
+                                user.setLogin(summary.userLogin());
+                                return user;
+                            }).toList());
         }
 
-        sendAndSaveNotifications(notification, createdConversationMessage, recipientSummaries);
-    }
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(), post.getAuthor().getId(),
+                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
 
-    /**
-     * Sends and saves notifications for users that have not already been notified via broadcast notifications
-     *
-     * @param notification               the notification for the message
-     * @param createdConversationMessage the new message and associated data
-     * @param recipientSummaries         set of setting summaries for the recipients
-     */
-    private void sendAndSaveNotifications(ConversationNotification notification, CreatedConversationMessage createdConversationMessage,
-            Set<ConversationNotificationRecipientSummary> recipientSummaries) {
-        Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
-        User author = createdMessage.getAuthor();
-        Conversation conversation = createdConversationMessage.completeConversation();
-        Course course = conversation.getCourse();
-
-        Set<User> mentionedUsers = createdConversationMessage.mentionedUsers().stream()
-                .map(user -> new User(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(), user.getLangKey(), user.getEmail())).collect(Collectors.toSet());
-
-        Set<User> notificationRecipients = filterNotificationRecipients(author, conversation, recipientSummaries, mentionedUsers);
-
-        if (!featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            conversationNotificationService.notifyAboutNewMessage(createdMessage, notification, notificationRecipients);
-            log.debug("      conversationNotificationService.notifyAboutNewMessage DONE");
-        }
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
-        log.debug("      incrementUnreadMessagesCountOfParticipants DONE");
-
-        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel() && !featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            saveAnnouncementNotification(createdMessage, channel, course, notificationRecipients);
-            log.debug("      saveAnnouncementNotification DONE");
-        }
-        log.debug("      notifyAboutMessageCreation DONE");
     }
 
     /**
@@ -310,48 +245,6 @@ public class ConversationMessagingService extends PostingService {
      */
     private static Set<User> mapToUsers(Set<ConversationNotificationRecipientSummary> webSocketRecipients) {
         return webSocketRecipients.stream()
-                .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
-                .collect(Collectors.toSet());
-    }
-
-    /**
-     * Filters the given list of recipients for users that should receive a notification about a new message.
-     * <p>
-     * The author will be filtered out, unless he is also in the list of mentioned users.
-     * If the conversation is not an announcement channel, the method filters out participants, that have muted or hidden the conversation.
-     * If the conversation is not visible to students, the method also filters out students from the provided list of recipients.
-     *
-     * @param author                 the author of the message
-     * @param conversation           the conversation the new message has been written in
-     * @param notificationRecipients the list of users that should be filtered
-     * @param mentionedUsers         users mentioned within the message
-     * @return filtered list of users that are supposed to receive a notification
-     */
-    private Set<User> filterNotificationRecipients(User author, Conversation conversation, Set<ConversationNotificationRecipientSummary> notificationRecipients,
-            Set<User> mentionedUsers) {
-        // Initialize filter with check for author
-        Predicate<ConversationNotificationRecipientSummary> filter = recipientSummary -> !Objects.equals(recipientSummary.userId(), author.getId());
-
-        if (conversation instanceof Channel channel) {
-            // If a channel is not an announcement channel, filter out users, that muted or hid the conversation
-            if (!channel.getIsAnnouncementChannel()) {
-                filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
-            }
-
-            // If a channel is not visible to students, filter out participants that are only students
-            if (!conversationService.isChannelVisibleToStudents(channel)) {
-                filter = filter.and(ConversationNotificationRecipientSummary::isAtLeastTutorInCourse);
-            }
-        }
-        else {
-            filter = filter.and(ConversationNotificationRecipientSummary::shouldNotifyRecipient);
-        }
-
-        var mentionedUserIds = mentionedUsers.stream().map(User::getId).collect(Collectors.toSet());
-        // We explicitly also want to add the author to the recipients in case he tagged himself
-        filter = filter.or(summary -> mentionedUserIds.contains(summary.userId()));
-
-        return notificationRecipients.stream().filter(filter)
                 .map(summary -> new User(summary.userId(), summary.userLogin(), summary.firstName(), summary.lastName(), summary.userLangKey(), summary.userEmail()))
                 .collect(Collectors.toSet());
     }
@@ -511,49 +404,5 @@ public class ConversationMessagingService extends PostingService {
     @Override
     public String getEntityName() {
         return METIS_POST_ENTITY_NAME;
-    }
-
-    /**
-     * Saves announcement notifications for each course group
-     *
-     * @param message    message that triggered the notification
-     * @param channel    announcement channel the message belongs to
-     * @param course     course the channel belongs to
-     * @param recipients channel members, if the channel is not course-wide
-     */
-    private void saveAnnouncementNotification(Post message, Channel channel, Course course, Set<User> recipients) {
-        // create post for notification
-        Post postForNotification = new Post();
-        postForNotification.setId(message.getId());
-        postForNotification.setAuthor(message.getAuthor());
-        postForNotification.setConversation(channel);
-        postForNotification.setCreationDate(message.getCreationDate());
-        postForNotification.setTitle(message.getTitle());
-
-        // create html content
-        Parser parser = Parser.builder().build();
-        String htmlPostContent;
-        try {
-            Node document = parser.parse(message.getContent());
-            HtmlRenderer renderer = HtmlRenderer.builder().build();
-            htmlPostContent = renderer.render(document);
-        }
-        catch (Exception e) {
-            htmlPostContent = "";
-        }
-        postForNotification.setContent(htmlPostContent);
-
-        if (channel.getIsCourseWide()) {
-            groupNotificationService.notifyAllGroupsAboutNewAnnouncement(postForNotification, course);
-        }
-        else {
-            String[] placeholders = new String[] { course.getTitle(), message.getContent(), message.getCreationDate().toString(), channel.getName(), message.getAuthor().getName(),
-                    "channel" };
-            Set<SingleUserNotification> announcementNotifications = recipients.stream().map(recipient -> SingleUserNotificationFactory.createNotification(postForNotification,
-                    NotificationType.NEW_ANNOUNCEMENT_POST, NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, placeholders, recipient)).collect(Collectors.toSet());
-            announcementNotifications.add(SingleUserNotificationFactory.createNotification(postForNotification, NotificationType.NEW_ANNOUNCEMENT_POST,
-                    NotificationConstants.NEW_ANNOUNCEMENT_POST_TEXT, placeholders, postForNotification.getAuthor()));
-            singleUserNotificationRepository.saveAll(announcementNotifications);
-        }
     }
 }
