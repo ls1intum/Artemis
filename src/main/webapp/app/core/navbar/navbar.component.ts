@@ -6,16 +6,15 @@ import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbCollapse, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { PROFILE_ATLAS, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, PROFILE_IRIS, PROFILE_LOCALCI, PROFILE_LTI, VERSION } from 'app/app.constants';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, Event, NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -61,8 +60,6 @@ import { ActiveMenuDirective } from './active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
-import { GuidedTourComponent } from 'app/core/guided-tour/guided-tour.component';
-import { NotificationSidebarComponent } from 'app/core/notification/notification-sidebar/notification-sidebar.component';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 import { LoadingNotificationComponent } from 'app/core/loading-notification/loading-notification.component';
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
@@ -74,7 +71,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     styleUrls: ['navbar.scss'],
     imports: [
         NgClass,
-        NotificationSidebarComponent,
         ThemeSwitchComponent,
         NgbDropdown,
         RouterLinkActive,
@@ -90,7 +86,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
         NgTemplateOutlet,
         NgbCollapse,
         SystemNotificationComponent,
-        GuidedTourComponent,
         FindLanguageFromKeyPipe,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
@@ -99,7 +94,6 @@ import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.ser
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
     private translateService = inject(TranslateService);
@@ -118,14 +112,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     testServer: boolean;
     isNavbarCollapsed: boolean;
-    isTourAvailable: boolean;
     gitCommitId: string;
     gitBranchName: string;
     gitTimestamp: string;
     gitUsername: string;
     isBuildAgentDetails = false;
     languages = LANGUAGES;
-    openApiEnabled?: boolean;
     modalRef: NgbModalRef;
     version: string;
     currAccount?: User;
@@ -139,6 +131,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isExamActive = false;
     examActiveCheckFuture?: ReturnType<typeof setTimeout>;
     atlasEnabled = false;
+    examEnabled = false;
     irisEnabled: boolean;
     localCIActive = false;
     ltiEnabled: boolean;
@@ -229,27 +222,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProduction = profileInfo.inProduction;
-                this.testServer = profileInfo.testServer ?? false;
-                this.openApiEnabled = profileInfo.openApiEnabled;
-                this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                this.gitBranchName = profileInfo.git.branch;
-                this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
-                this.gitUsername = profileInfo.git.commit.user.name;
-                this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS);
-                this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-                this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
-                this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.inProduction = this.profileService.isProduction();
+        this.testServer = this.profileService.isTestServer();
+        this.gitCommitId = profileInfo.git.commit.id.abbrev;
+        this.gitBranchName = profileInfo.git.branch;
+        this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+        this.gitUsername = profileInfo.git.commit.user.name;
+        this.atlasEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+        this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+        this.localCIActive = profileInfo?.activeProfiles.includes(PROFILE_LOCALCI);
+        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
 
         this.standardizedCompetencySubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies).subscribe((isActive) => {
             this.standardizedCompetenciesEnabled = isActive;
         });
-
-        this.subscribeForGuidedTourAvailability();
 
         // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
@@ -332,7 +320,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
         lti_configuration: 'artemisApp.lti.home.title',
         teams: 'artemisApp.team.home.title',
-        exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
         competency_management: 'artemisApp.competency.manage.title',
         prerequisite_management: 'artemisApp.prerequisite.manage.title',
@@ -794,16 +781,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
     }
 
-    /**
-     * Check if a guided tour is available for the current route to display the start tour button in the account menu
-     */
-    subscribeForGuidedTourAvailability(): void {
-        // Check availability after first subscribe call since the router event been triggered already
-        this.guidedTourService.getGuidedTourAvailabilityStream().subscribe((isAvailable) => {
-            this.isTourAvailable = isAvailable;
-        });
-    }
-
     changeLanguage(languageKey: string) {
         if (this.currAccount) {
             this.accountService.updateLanguage(languageKey).subscribe({
@@ -841,23 +818,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     getImageUrl() {
         return this.accountService.getImageUrl();
-    }
-
-    /**
-     * Determine the label for initiating the guided tour based on the last seen tour step
-     */
-    guidedTourInitLabel(): string {
-        switch (this.guidedTourService.getLastSeenTourStepForInit()) {
-            case -1: {
-                return 'global.menu.restartTutorial';
-            }
-            case 0: {
-                return 'global.menu.startTutorial';
-            }
-            default: {
-                return 'global.menu.continueTutorial';
-            }
-        }
     }
 
     /**

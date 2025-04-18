@@ -24,8 +24,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -33,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
 
@@ -53,7 +54,7 @@ public class AssessmentService {
 
     protected final ResultService resultService;
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     protected final SubmissionRepository submissionRepository;
 
@@ -61,7 +62,7 @@ public class AssessmentService {
 
     private final SubmissionService submissionService;
 
-    protected final Optional<LtiNewResultService> ltiNewResultService;
+    protected final Optional<LtiApi> ltiApi;
 
     protected final SingleUserNotificationService singleUserNotificationService;
 
@@ -69,7 +70,7 @@ public class AssessmentService {
 
     public AssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
+            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
             SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
         this.complaintResponseService = complaintResponseService;
         this.complaintRepository = complaintRepository;
@@ -79,9 +80,9 @@ public class AssessmentService {
         this.resultService = resultService;
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.userRepository = userRepository;
-        this.ltiNewResultService = ltiNewResultService;
+        this.ltiApi = ltiApi;
         this.singleUserNotificationService = singleUserNotificationService;
         this.resultWebsocketService = resultWebsocketService;
     }
@@ -155,7 +156,8 @@ public class AssessmentService {
             // Tutors can assess exam exercises only after the last student has finished the exam and before the publishing result date
             if (isExamMode && !isAtLeastInstructor) {
                 final Exam exam = exercise.getExerciseGroup().getExam();
-                ZonedDateTime latestExamDueDate = examDateService.getLatestIndividualExamEndDate(exam.getId());
+                ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+                ZonedDateTime latestExamDueDate = api.getLatestIndividualExamEndDate(exam.getId());
                 if (latestExamDueDate.isAfter(ZonedDateTime.now()) || (exam.getPublishResultsDate() != null && exam.getPublishResultsDate().isBefore(ZonedDateTime.now()))) {
                     return false;
                 }
@@ -243,10 +245,10 @@ public class AssessmentService {
         result.setCompletionDate(ZonedDateTime.now());
         result = resultRepository.submitResult(result, exercise);
 
-        if (ltiNewResultService.isPresent()) {
+        if (ltiApi.isPresent()) {
             // Note: we always need to report the result (independent of the assessment due date) over LTI, if LTI is configured.
             // Otherwise, it might never become visible in the external system
-            ltiNewResultService.get().onNewResult((StudentParticipation) result.getParticipation());
+            ltiApi.get().onNewResult((StudentParticipation) result.getParticipation());
         }
         return result;
     }

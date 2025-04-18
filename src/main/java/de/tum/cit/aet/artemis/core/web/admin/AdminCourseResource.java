@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 
 /**
  * REST controller for managing Course.
@@ -74,16 +74,16 @@ public class AdminCourseResource {
 
     private final FileService fileService;
 
-    private final Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService;
+    private final Optional<LtiApi> ltiApi;
 
     public AdminCourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, AuditEventRepository auditEventRepository,
-            FileService fileService, Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, ChannelService channelService) {
+            FileService fileService, Optional<LtiApi> ltiApi, ChannelService channelService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.fileService = fileService;
-        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.ltiApi = ltiApi;
         this.channelService = channelService;
     }
 
@@ -103,6 +103,7 @@ public class AdminCourseResource {
             groups.add(courseGroup.teachingAssistantGroupName());
             groups.add(courseGroup.studentGroupName());
         });
+        groups.remove(null); // remove a potential null group
         return ResponseEntity.ok().body(groups);
     }
 
@@ -140,8 +141,8 @@ public class AdminCourseResource {
         course.validateAccuracyOfScores();
         course.validateStartAndEndDate();
 
-        if (course.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
-            onlineCourseConfigurationService.get().createOnlineCourseConfiguration(course);
+        if (course.isOnlineCourse() && ltiApi.isPresent()) {
+            ltiApi.get().createOnlineCourseConfiguration(course);
         }
 
         courseService.setDefaultGroupsIfNotSet(course);
@@ -192,9 +193,7 @@ public class AdminCourseResource {
     @GetMapping("courses/{courseId}/deletion-summary")
     public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
         log.debug("REST request to get deletion summary course: {}", courseId);
-        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-
-        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(courseId));
     }
 
     /**

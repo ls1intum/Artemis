@@ -91,10 +91,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 88.71,
-            branches: 74.39,
-            functions: 82.86,
-            lines: 88.77,
+            statements: 88.98,
+            branches: 75.18,
+            functions: 82.98,
+            lines: 89.05,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
@@ -107,7 +107,6 @@ module.exports = {
             {
                 tsconfig: '<rootDir>/tsconfig.spec.json',
                 stringifyContentPathRegex: '\\.html$',
-                isolatedModules: true,
                 diagnostics: {
                     ignoreCodes: [151001],
                 },
@@ -116,21 +115,12 @@ module.exports = {
     },
     modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/', '<rootDir>/build/'],
     testTimeout: 3000,
-    testMatch: [
-        '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/directive/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/entities/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/integration/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/pipe/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/service/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
-        '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts',
+    testMatch: ['<rootDir>/src/main/webapp/app/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/**/*.integration.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',
-        'test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
+        '^test/(.*)': '<rootDir>/src/test/javascript/spec/$1',
         '@assets/(.*)': '<rootDir>/src/main/webapp/assets/$1',
         '@core/(.*)': '<rootDir>/src/main/webapp/app/core/$1',
         '@env': '<rootDir>/src/main/webapp/environments/environment',

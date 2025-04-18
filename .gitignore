@@ -160,6 +160,7 @@ local-vcs-repos
 /exports
 /legal/server-integration-test
 data-exports/
+/src/main/webapp/content/scripts/pdf.worker.min.mjs
 
 ######################
 # Gradle Wrapper

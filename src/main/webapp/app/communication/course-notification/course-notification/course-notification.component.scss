@@ -20,6 +20,15 @@ $notification-padding-x: 1.2rem;
     border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
 }
 
+.course-notification-redirect-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+
 .course-notification-close {
     color: var(--secondary);
     position: absolute;
@@ -34,6 +43,7 @@ $notification-padding-x: 1.2rem;
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    z-index: 2;
 
     transition: opacity 0.3s ease-in-out;
 }
@@ -75,9 +85,17 @@ $notification-padding-x: 1.2rem;
 
 .course-notification-date {
     position: absolute;
-    top: $notification-padding-y + 0.2rem;
+    top: $notification-padding-y - 0.4rem;
     right: $notification-padding-y;
     text-align: right;
+    color: var(--secondary);
+    font-size: 80%;
+
+    transition: right 0.2s ease-in-out;
+}
+
+.course-notification:hover .course-notification-date {
+    right: $notification-padding-y + 0.5rem;
 }
 
 .course-notification-content {
@@ -87,11 +105,6 @@ $notification-padding-x: 1.2rem;
     line-clamp: 2;
     -webkit-box-orient: vertical;
     font-size: 90%;
-}
-
-.course-notification-date {
-    color: var(--secondary);
-    font-size: 80%;
 }
 
 .course-notification-loading-indicator {
