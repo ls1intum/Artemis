@@ -1,0 +1,114 @@
+<!-- quick-actions.component.html -->
+<div class="quick-actions-container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Quick Actions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap justify-content-between">
+                        <!-- Add Exercise Button -->
+                        <button class="btn btn-primary action-btn mb-3" (click)="openExerciseModal(exerciseModal)"><i class="fas fa-plus-circle"></i> Add Exercise</button>
+
+                        <!-- Add Lecture Button -->
+                        <button class="btn btn-info action-btn mb-3" (click)="navigateToPage('/lecture/add')"><i class="fas fa-chalkboard-teacher"></i> Add Lecture</button>
+
+                        <!-- Add Exam Button -->
+                        <button class="btn btn-warning action-btn mb-3" (click)="navigateToPage('/exam/add')"><i class="fas fa-file-alt"></i> Add Exam</button>
+
+                        <!-- Add FAQ Button -->
+                        <button class="btn btn-success action-btn mb-3" (click)="navigateToPage('/faq/add')"><i class="fas fa-question-circle"></i> Add FAQ</button>
+
+                        <!-- Manage Users Button -->
+                        <div class="dropdown mb-3">
+                            <button class="btn btn-secondary action-btn dropdown-toggle" type="button" id="userManagementDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-users"></i> Manage Users
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="userManagementDropdown">
+                                <li>
+                                    <div class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                        <span>Students: 4</span>
+                                        <button class="btn btn-sm btn-primary" (click)="addUser('student')">Add</button>
+                                    </div>
+                                    <a class="dropdown-item" (click)="navigateToUserManagement('student')">Manage Students</a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <div class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                        <span>Tutors: 3</span>
+                                        <button class="btn btn-sm btn-primary" (click)="addUser('tutor')">Add</button>
+                                    </div>
+                                    <a class="dropdown-item" (click)="navigateToUserManagement('tutor')">Manage Tutors</a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <div class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                        <span>Editors: 2 </span>
+                                        <button class="btn btn-sm btn-primary" (click)="addUser('editor')">Add</button>
+                                    </div>
+                                    <a class="dropdown-item" (click)="navigateToUserManagement('editor')">Manage Editors</a>
+                                </li>
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <div class="px-3 py-2 d-flex justify-content-between align-items-center">
+                                        <span>Instructors: 1</span>
+                                        <button class="btn btn-sm btn-primary" (click)="addUser('instructor')">Add</button>
+                                    </div>
+                                    <a class="dropdown-item" (click)="navigateToUserManagement('instructor')">Manage Instructors</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Exercise Type Modal -->
+<ng-template #exerciseModal let-modal>
+    <div class="modal-header bg-primary text-white">
+        <h4 class="modal-title">Add Exercise</h4>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="modal.dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="list-group">
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Programming Exercise</span>
+                <div>
+                    <button class="btn btn-primary btn-sm mx-1" (click)="createExercise('programming')">Create</button>
+                    <button class="btn btn-secondary btn-sm" (click)="importExercise('programming', null)">Import</button>
+                </div>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Modeling Exercise</span>
+                <div>
+                    <button class="btn btn-primary btn-sm mx-1" (click)="createExercise('modeling')">Create</button>
+                    <button class="btn btn-secondary btn-sm" (click)="importExercise('modeling', null)">Import</button>
+                </div>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Quiz Exercise</span>
+                <div>
+                    <button class="btn btn-primary btn-sm mx-1" (click)="createExercise('quiz')">Create</button>
+                    <button class="btn btn-secondary btn-sm" (click)="importExercise('quiz', null)">Import</button>
+                </div>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>File Upload Exercise</span>
+                <div>
+                    <button class="btn btn-primary btn-sm mx-1" (click)="createExercise('fileupload')">Create</button>
+                    <button class="btn btn-secondary btn-sm" (click)="importExercise('fileupload', null)">Import</button>
+                </div>
+            </div>
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>Text Exercise</span>
+                <div>
+                    <button class="btn btn-primary btn-sm mx-1" (click)="createExercise('text')">Create</button>
+                    <button class="btn btn-secondary btn-sm" (click)="importExercise('text', null)">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-template>
