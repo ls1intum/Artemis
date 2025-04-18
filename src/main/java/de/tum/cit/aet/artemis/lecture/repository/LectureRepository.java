@@ -47,21 +47,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.lectureUnits
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lu.attachment
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments attachment
-                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
-                LEFT JOIN FETCH lectureUnit.attachment luAttachment
-                LEFT JOIN FETCH lectureUnit.slides slides
-            WHERE lecture.course.id = :courseId
-            """)
-    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture

@@ -5,8 +5,12 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -27,11 +31,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
@@ -47,11 +54,14 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.dto.SlideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureImportService;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
 
@@ -66,6 +76,8 @@ public class LectureResource {
     private static final Logger log = LoggerFactory.getLogger(LectureResource.class);
 
     private static final String ENTITY_NAME = "lecture";
+
+    private final SlideRepository slideRepository;
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -92,7 +104,7 @@ public class LectureResource {
 
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ExerciseService exerciseService, ChannelService channelService,
-            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi) {
+            ChannelRepository channelRepository, Optional<CompetencyApi> competencyApi, SlideRepository slideRepository) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -103,6 +115,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyApi = competencyApi;
+        this.slideRepository = slideRepository;
     }
 
     /**
@@ -200,18 +213,69 @@ public class LectureResource {
      */
     @GetMapping("courses/{courseId}/lectures-with-slides")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Lecture>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Lectures with slides of the units for the course with id : {}", courseId);
+    public ResponseEntity<List<LectureDTO>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
+        log.info("Getting all lectures with slides for course {}", courseId);
+        long start = System.currentTimeMillis();
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
+        Set<Long> attachmentUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream()).filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+                .map(DomainObject::getId).collect(Collectors.toSet());
 
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Set<Lecture> lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(courseId);
-        lectures = lectureService.filterVisibleLecturesWithActiveAttachments(course, lectures, user);
-        lectures.forEach(lectureService::filterActiveAttachmentUnits);
-        lectures.forEach(lectureService::filterHiddenPagesOfAttachmentUnits);
-        return ResponseEntity.ok().body(lectures);
+        // Load slides separately to avoid too large data exchange
+        Set<SlideDTO> slides = slideRepository.findVisibleSlidesByAttachmentUnits(attachmentUnitIds);
+
+        // Group slides by attachment unit id to combine them into the DTOs
+        Map<Long, List<SlideDTO>> slidesByAttachmentUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentUnitId));
+        // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
+        List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).peek(lectureDTO -> {
+            List<AttachmentUnitDTO> attachmentUnitDTOs = lectureDTO.lectureUnits;
+            for (AttachmentUnitDTO attachmentUnitDTO : attachmentUnitDTOs) {
+                List<SlideDTO> slidesForAttachmentUnit = slidesByAttachmentUnitId.get(attachmentUnitDTO.id);
+                if (slidesForAttachmentUnit != null) {
+                    // remove unnecessary fields from the slide DTOs
+                    var finalSlides = slidesForAttachmentUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                            .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
+                    attachmentUnitDTO.slides.addAll(finalSlides);
+                }
+            }
+        }).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
+
+        log.info("     Finished getting all lectures with slides in {}ms", System.currentTimeMillis() - start);
+        return ResponseEntity.ok().body(lectureDTOs);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record LectureDTO(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, List<AttachmentDTO> attachments,
+            List<AttachmentUnitDTO> lectureUnits) {
+
+        public static LectureDTO from(Lecture lecture) {
+            // only attachments visible to students are included
+            List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
+            // only attachment units visible to students are included
+            List<AttachmentUnitDTO> attachmentUnitDTOs = lecture.getLectureUnits().stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+                    .map(lectureUnit -> (AttachmentUnit) lectureUnit).filter(AttachmentUnit::isVisibleToStudents).map(AttachmentUnitDTO::from).toList();
+            return new LectureDTO(lecture.getId(), lecture.getTitle(), lecture.getVisibleDate(), lecture.getStartDate(), lecture.getEndDate(), attachmentDTOs, attachmentUnitDTOs);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentDTO(Long id, String link, String name, ZonedDateTime releaseDate) {
+
+        public static AttachmentDTO from(Attachment attachment) {
+            return new AttachmentDTO(attachment.getId(), attachment.getLink(), attachment.getName(), attachment.getReleaseDate());
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public record AttachmentUnitDTO(Long id, String name, List<SlideDTO> slides, AttachmentDTO attachment, ZonedDateTime releaseDate, String type) {
+
+        public static AttachmentUnitDTO from(AttachmentUnit attachmentUnit) {
+            return new AttachmentUnitDTO(attachmentUnit.getId(), attachmentUnit.getName(), new ArrayList<>(), AttachmentDTO.from(attachmentUnit.getAttachment()),
+                    attachmentUnit.getReleaseDate(), "attachment");
+        }
     }
 
     /**

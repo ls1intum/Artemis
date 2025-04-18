@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterModule } from '@angular/router';
-import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { LectureAttachmentsComponent } from 'app/lecture/manage/lecture-attachments/lecture-attachments.component';
@@ -32,7 +31,6 @@ describe('LectureAttachmentsComponent', () => {
     let lectureService: LectureService;
     let attachmentService: AttachmentService;
     let attachmentServiceFindAllByLectureIdStub: jest.SpyInstance;
-    let attachmentServiceCreateStub: jest.SpyInstance;
     let attachmentServiceUpdateStub: jest.SpyInstance;
 
     const lecture = {

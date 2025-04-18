@@ -44,7 +44,6 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         private readonly fileService: FileService,
     ) {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
-        // TODO: do we really need all lectures and slides, this call is quite heavy and slow???
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {
             const lectures = response.body;
             if (lectures) {
