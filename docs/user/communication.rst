@@ -587,11 +587,11 @@ As soon as the announcement is created, all participants who did not actively re
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
     :width: 500
-.. |messaging-page| image:: communication/messaging-page.png
+.. |messaging-page| image:: communication/message-page.png
     :width: 1000
-.. |lecture-view| image:: communication/lecture-view.png
+.. |lecture-view| image:: communication/lecture-page.png
     :width: 1000
-.. |exercise-view| image:: communication/exercise-view.png
+.. |exercise-view| image:: communication/exercise-page.png
     :width: 1000
 .. |message-references| image:: communication/message-references.png
     :width: 750
@@ -603,15 +603,15 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 500
 .. |student-role| image:: communication/user-authorities/student-role.png
     :width: 500
-.. |messages| image:: communication/direct-messages.png
+.. |messages| image:: communication/direct-message-page.png
     :width: 1000
 .. |slide-preview| image:: communication/slide-preview.png
     :width: 600
-.. |slide-menu| image:: communication/slide-menu.png
+.. |slide-menu| image:: communication/slide-menu-view.png
     :width: 1000
 .. |slide-view| image:: communication/slide-view.png
     :width: 600
-.. |link-preview-view| image:: communication/link-preview-view.png
+.. |link-preview-view| image:: communication/link-preview-single.png
     :width: 600
 .. |link-preview-multiple| image:: communication/link-preview-multiple.png
     :width: 600
@@ -625,9 +625,9 @@ As soon as the announcement is created, all participants who did not actively re
     :width: 1000
 .. |channel-settings| image:: communication/channel-settings.png
     :width: 800
-.. |pinned-messages-button| image:: communication/pinned-messages-button.png
+.. |pinned-messages-button| image:: communication/pinned-button.png
     :width: 1000
-.. |applied-pinned filter| image:: communication/applied-pinned-filter.png
+.. |applied-pinned filter| image:: communication/applied-pinned-filtering.png
     :width: 1000
 .. |as-message-checkbox| image:: communication/as-message-checkbox.png
     :width: 700
