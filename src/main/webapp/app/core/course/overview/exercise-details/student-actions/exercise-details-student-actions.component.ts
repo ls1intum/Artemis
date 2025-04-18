@@ -29,6 +29,7 @@ import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exerc
 import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { HttpErrorResponse } from '@angular/common/http';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 
 @Component({
@@ -50,15 +51,21 @@ import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/subm
     styleUrls: ['../../course-overview/course-overview.scss'],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faUsers = faUsers;
+    protected readonly faEye = faEye;
+    protected readonly faPlayCircle = faPlayCircle;
+    protected readonly faRedo = faRedo;
+
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
+
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-
-    readonly FeatureToggle = FeatureToggle;
-    readonly ExerciseType = ExerciseType;
-    readonly InitializationState = InitializationState;
-    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -84,13 +91,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     athenaEnabled = false;
     routerLink: string;
     numberOfGradedParticipationResults: number;
-
-    // Icons
-    readonly faFolderOpen = faFolderOpen;
-    readonly faUsers = faUsers;
-    readonly faEye = faEye;
-    readonly faPlayCircle = faPlayCircle;
-    readonly faRedo = faRedo;
 
     ngOnInit(): void {
         this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
@@ -188,8 +188,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         }
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.exercise.startError');
+                error: (err: HttpErrorResponse) => {
+                    const responseCodesWithErrorKeySentByServer = [403];
+                    if (!responseCodesWithErrorKeySentByServer.includes(err.status)) {
+                        this.alertService.error('artemisApp.exercise.startError');
+                    }
                 },
             });
     }

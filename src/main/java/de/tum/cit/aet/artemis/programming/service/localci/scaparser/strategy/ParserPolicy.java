@@ -36,9 +36,11 @@ public class ParserPolicy {
 
         return switch (tool) {
             case CHECKSTYLE -> new CheckstyleParser();
+            case CLANG_TIDY -> new SarifParser(StaticCodeAnalysisTool.CLANG_TIDY, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
             case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
+            case LINTR -> new SarifParser(StaticCodeAnalysisTool.LINTR, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());

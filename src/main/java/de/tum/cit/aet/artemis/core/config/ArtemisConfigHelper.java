@@ -52,6 +52,16 @@ public class ArtemisConfigHelper {
         return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
     }
 
+    /**
+     * Check if the tutorial group feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the tutorial group feature is enabled, false otherwise
+     */
+    public boolean isTutorialGroupEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, environment);
+    }
+
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {
         Boolean value = environment.getProperty(key, Boolean.class);
         if (value == null) {

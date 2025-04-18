@@ -100,6 +100,7 @@ public class DatabaseMigration {
         // Initialize migration paths here in the correct order
         migrationPaths.add(new MigrationPath("5.12.9")); // required for migration to 6.0.0 until 7.0.0
         migrationPaths.add(new MigrationPath("6.9.6"));  // required for migration to 7.0.0 until 8.0.0
+        migrationPaths.add(new MigrationPath("7.10.5"));  // required for migration to 8.0.0 until 9.0.0
 
         // Add more migrations here as needed
     }

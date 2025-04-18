@@ -281,16 +281,18 @@
             </a>
         }
         @if (course.timeZone || course.isAtLeastInstructor) {
-            <a
-                [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
-                class="btn btn-primary me-1 mb-1 hidden-if-mobile"
-                [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
-                id="course-card-open-tutorial-groups"
-            >
-                <fa-icon [icon]="faPersonChalkboard" />
-                <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
+                <a
+                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                    [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+                    class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+                    [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
+                    id="course-card-open-tutorial-groups"
+                >
+                    <fa-icon [icon]="faPersonChalkboard" />
+                    <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         @if (course.isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="atlasEnabled">
