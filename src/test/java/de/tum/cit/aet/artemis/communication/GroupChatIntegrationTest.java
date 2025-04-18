@@ -25,8 +25,6 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
@@ -34,9 +32,6 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "grtest";
 
     private static final int NUMBER_OF_STUDENTS = 11;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -362,7 +357,6 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendAddedToChannelNotificationWhenRegisteringUsersToGroupChat() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
 
         GroupChatDTO chat = createGroupChatWithStudent1To3();
 
@@ -379,15 +373,11 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         });
 
         conversationRepository.deleteById(chat.getId());
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendRemovedFromChannelNotificationWhenUnregisteringUsersFromGroupChat() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         GroupChatDTO chat = createGroupChatWithStudent1To3();
 
         request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of(testPrefix + "student2"),
@@ -403,7 +393,6 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         });
 
         conversationRepository.deleteById(chat.getId());
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     private GroupChatDTO createGroupChatWithStudent1To3() throws Exception {
