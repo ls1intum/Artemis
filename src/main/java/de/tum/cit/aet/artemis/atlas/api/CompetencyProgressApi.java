@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -56,18 +55,5 @@ public class CompetencyProgressApi extends AbstractAtlasApi {
 
     public void deleteAll(Set<Competency> competencies) {
         competencyRepository.deleteAll(competencies);
-    }
-
-    /**
-     * Updates the progress for all competencies of the given courses.
-     *
-     * @param activeCourses the active courses
-     */
-    public void updateProgressForCoursesAsync(List<Course> activeCourses) {
-        activeCourses.forEach(course -> {
-            List<Competency> competencies = competencyRepository.findByCourseIdOrderById(course.getId());
-            // Asynchronously update the progress for each competency
-            competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
-        });
     }
 }

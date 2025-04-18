@@ -107,7 +107,7 @@ class MailServiceTest {
 
         mailSendingService = new MailSendingService(jHipsterProperties, javaMailSender);
 
-        mailService = new MailService(messageSource, templateEngine, timeService, mailSendingService);
+        mailService = new MailService(messageSource, templateEngine, mailSendingService);
         ReflectionTestUtils.setField(mailService, "artemisServerUrl", new URI("http://localhost:8080").toURL());
     }
 

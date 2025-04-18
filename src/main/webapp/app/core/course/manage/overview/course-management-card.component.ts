@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
@@ -34,7 +34,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './course-management-overview-statistics.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -55,7 +54,6 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
         CourseManagementExerciseRowComponent,
         CourseManagementOverviewStatisticsComponent,
         NgbTooltip,
-        FeatureToggleLinkDirective,
         FeatureToggleHideDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -76,6 +74,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
 
     atlasEnabled = false;
     examEnabled = false;
+    tutorialGroupEnabled = false;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
 
@@ -125,6 +124,7 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     ngOnInit() {
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
         this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
     }
 
     ngOnChanges() {

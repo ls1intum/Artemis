@@ -1,22 +1,21 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
-@Profile(PROFILE_CORE)
+@Conditional(TutorialGroupEnabled.class)
 @Service
 public class TutorialGroupFreePeriodService {
 
