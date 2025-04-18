@@ -18,7 +18,9 @@ public enum MessageTopic {
     STUDENT_EXAM_RESCHEDULE_DURING_CONDUCTION("student-exam-reschedule-during-conduction"),
     PARTICIPANT_SCORE_SCHEDULE("participant-score-schedule"),
     QUIZ_EXERCISE_START_SCHEDULE("quiz-exercise-start-schedule"),
-    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel");
+    QUIZ_EXERCISE_START_CANCEL("quiz-exercise-start-cancel"),
+    SLIDE_UNHIDE_SCHEDULE("slide-unhide-schedule"),
+    SLIDE_UNHIDE_SCHEDULE_CANCEL("slide-unhide-schedule-cancel");
     // @formatter:on
 
     private final String topic;
