@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { Subscription } from 'rxjs';
-import { filter, take } from 'rxjs/operators';
+import { Subscription, of } from 'rxjs';
+import { catchError, filter, skip, take } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -106,10 +106,26 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * This method is called when the component is initialized or when the post changes
      */
     requestSuggestion(): void {
-        const post = this.post();
-        if (post) {
-            this.tutorSuggestionSubscription = this.chatService.requestTutorSuggestion().subscribe();
-        }
+        this.chatService
+            .currentMessages()
+            .pipe(
+                skip(1), // Skip the initial potentially empty emission
+                take(1),
+                catchError(() => of([])),
+            )
+            .subscribe((messages) => {
+                const lastMessage = messages[messages.length - 1];
+                const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
+                if (shouldRequest) {
+                    const post = this.post();
+                    if (post) {
+                        this.tutorSuggestionSubscription = this.chatService
+                            .requestTutorSuggestion()
+                            .pipe(catchError(() => of(undefined)))
+                            .subscribe();
+                    }
+                }
+            });
     }
 
     /**

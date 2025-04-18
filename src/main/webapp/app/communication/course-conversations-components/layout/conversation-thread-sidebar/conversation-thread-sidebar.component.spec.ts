@@ -96,7 +96,7 @@ describe('ConversationThreadSidebarComponent', () => {
 
     it('should set isAtLeastTutor based on account service', fakeAsync(() => {
         const isAtLeastTutorInCourseSpy = jest.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourse').mockReturnValue(true);
-        component.ngAfterViewInit();
+        component.ngOnInit();
         tick();
         expect(isAtLeastTutorInCourseSpy).toHaveBeenCalled();
     }));

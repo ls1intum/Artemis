@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComponentRef } from '@angular/core';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { of } from 'rxjs';
+import { concat, of, throwError } from 'rxjs';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProvider } from 'ng-mocks';
@@ -130,7 +130,9 @@ describe('TutorSuggestionComponent', () => {
     it('should call requestSuggestion when sessionId emits in ngOnChanges', fakeAsync(() => {
         const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+        const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
+
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         (chatService as any).sessionId$ = of(123);
         component['irisEnabled'] = true;
@@ -143,7 +145,10 @@ describe('TutorSuggestionComponent', () => {
         jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
         jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
         jest.spyOn(chatService, 'currentStages').mockReturnValue(of([]));
-        jest.spyOn(chatService, 'currentMessages').mockReturnValue(of([]));
+
+        const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
+
+        jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
         jest.spyOn(chatService, 'currentError').mockReturnValue(of());
         jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         (chatService as any).sessionId$ = of(123);
@@ -173,4 +178,38 @@ describe('TutorSuggestionComponent', () => {
         expect(component.suggestion).toEqual(mockMessages[1]);
         expect(component.messages).toEqual(mockMessages);
     }));
+
+    describe('requestSuggestion', () => {
+        it('should request suggestion when there are no messages after error fallback', fakeAsync(() => {
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(
+                concat(
+                    throwError(() => new Error('empty')),
+                    of([]),
+                ),
+            );
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['requestSuggestion']();
+            tick();
+            expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+        }));
+
+        it('should request suggestion when second message emission contains LLM message', fakeAsync(() => {
+            const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
+
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['requestSuggestion']();
+            tick();
+            expect(requestTutorSuggestionSpy).toHaveBeenCalled();
+        }));
+
+        it('should not request suggestion when last message is not from LLM', fakeAsync(() => {
+            const mockMessages = [{ id: 1, sender: 'USER' }] as IrisMessage[];
+            jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
+            const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
+            component['requestSuggestion']();
+            tick();
+            expect(requestTutorSuggestionSpy).not.toHaveBeenCalled();
+        }));
+    });
 });
