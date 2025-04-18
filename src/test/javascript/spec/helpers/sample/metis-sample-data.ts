@@ -35,7 +35,6 @@ export const metisTutor = { id: 4, name: 'username4', login: 'login4', groups: [
 
 export const metisTags = ['Tag1', 'Tag2'];
 
-export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;
 export const metisReactionUser2 = { id: 2, user: metisUser2, emojiId: 'smile', creationDate: undefined } as Reaction;
 export const metisReactionToCreate = { emojiId: 'cheerio', creationDate: undefined } as Reaction;
 
