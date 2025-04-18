@@ -99,6 +99,11 @@ class StaticCodeAnalysisParserUnitTest {
     }
 
     @Test
+    void testClangTidyParser() throws IOException {
+        testParserWithFile("clang-tidy.sarif", "clang-tidy.json");
+    }
+
+    @Test
     void testClippyParser() throws IOException {
         testParserWithFile("clippy.sarif", "clippy.json");
     }

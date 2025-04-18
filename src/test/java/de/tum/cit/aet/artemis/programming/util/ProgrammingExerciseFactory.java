@@ -353,6 +353,7 @@ public class ProgrammingExerciseFactory {
             case SPOTBUGS -> "BAD_PRACTICE";
             case PMD -> "Best Practices";
             case CHECKSTYLE -> "coding";
+            case CLANG_TIDY -> "Lint";
             case CLIPPY -> "Style";
             case DART_ANALYZE -> "LINT";
             case ESLINT, RUBOCOP, LINTR -> "Lint";
