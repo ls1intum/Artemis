@@ -45,6 +45,8 @@ export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
 
 export const MODULE_FEATURE_TEXT = 'text';
 
+export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
+
 export const PROFILE_IRIS = 'iris';
 
 export const PROFILE_LTI = 'lti';
