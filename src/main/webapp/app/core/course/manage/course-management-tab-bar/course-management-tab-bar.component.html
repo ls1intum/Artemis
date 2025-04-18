@@ -2,10 +2,12 @@
     <div class="mt-n3">
         <jhi-header-course [course]="course" />
         <div class="tab-bar">
-            <a class="tab-link" [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
-                <fa-icon [icon]="faGraduationCap" />
-                <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="examEnabled" placement="right">
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'exams']" routerLinkActive="active">
+                    <fa-icon [icon]="faGraduationCap" />
+                    <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exams"></span>
+                </a>
+            </jhi-feature-overlay>
             <a class="tab-link" [routerLink]="['/course-management', course.id, 'exercises']" routerLinkActive="active">
                 <fa-icon [icon]="faListAlt" />
                 <span class="tab-link-text" jhiTranslate="artemisApp.courseOverview.menu.exercises"></span>
@@ -34,16 +36,18 @@
                 </a>
             }
             @if (course.tutorialGroupsConfiguration || course.isAtLeastInstructor) {
-                <a
-                    class="tab-link"
-                    [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
-                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                    routerLinkActive="active"
-                    [class.active]="shouldHighlightTutorialsLink()"
-                >
-                    <fa-icon [icon]="faPersonChalkboard" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
-                </a>
+                <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
+                    <a
+                        class="tab-link"
+                        [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
+                        [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                        routerLinkActive="active"
+                        [class.active]="shouldHighlightTutorialsLink()"
+                    >
+                        <fa-icon [icon]="faPersonChalkboard" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
+                    </a>
+                </jhi-feature-overlay>
             }
             @if (course.isAtLeastInstructor) {
                 <jhi-feature-overlay [enabled]="atlasEnabled">

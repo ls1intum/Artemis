@@ -47,7 +47,7 @@ These messages can also be created on the detail page of the lecture they belong
 
 Exemplary lecture detail page with messages:
 
-|lecture-messages|
+|lecture-view|
 
 Exercise Messages
 ^^^^^^^^^^^^^^^^^
@@ -58,7 +58,7 @@ These messages can also be created on the detail page of the exercise they belon
 
 Exemplary exercise detail page with messages:
 
-|exercise-messages|
+|exercise-view|
 
 Private Communication
 ----------------------
@@ -93,12 +93,7 @@ If the message content contains links, a preview of the link will be shown under
 of what that link is about. If they prefer not to have a preview, they can hover over the preview and click the appearing `X` button.
 The preview will be removed.
 
-|link-preview|
-
-If the message contains more than one link, the preview will not have a preview image of the link to have more compact previews
-for multiple links.
-
-|link-preview-multiple|
+|link-preview-view|
 
 
 .. _communication features availability list:
@@ -127,7 +122,7 @@ Communication Features Availability
     <span style="background-color: #6c757d; padding: 3px 6px; border-radius: 8px; color: white; font-weight: bold; display: inline-block; width: 150px; text-align: center;">NOT PLANNED</span>
 
 
-The following table represents the currently available communication features of Artemis on the different platforms. Note that not all 
+The following table represents the currently available communication features of Artemis on the different platforms. Note that not all
 features are available to every user, which is why **Actor restrictions** have been added. The following sections will explore this in more
 detail.
 
@@ -338,10 +333,10 @@ Available features on each platform
 | | to various notification types)                     |                                      |                    |                     |                     |
 +------------------------------------------------------+--------------------------------------+--------------------+---------------------+---------------------+
 
-.. note:: 
+.. note::
     - Leave chat option is available on the web app for groups only, on iOS for groups and non course-wide channels, and on Android for channels, groups, and DMs.
     - Creating a group chat on iOS and Android can be achieved via the 'Create Chat' option. It becomes a group when more than one user is added.
-    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat. 
+    - Starting a conversation on the web app from a profile is available when clicking on the user's name in the chat.
     - Downloading sent images in the chat is only available through the browser option on the web app.
     - Seeing who reacted to a post is available when hovering over a reaction on the web app.
 
@@ -370,26 +365,39 @@ A simplified version of this feature is available on the exercise and lecture de
 
 To search within a specific channel in the communications module, users can navigate to the desired channel and utilize the search bar located in that channel.
 
+Filter Pinned Messages within a Conversation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If there are any pinned messages in a conversation, a button labeled "*x* pinned messages", where *x* is the number of pinned messages,
+appears at the top right of the conversation view. By clicking this button, users can filter and view only the pinned messages
+within that conversation. Clicking the button again returns the view to the regular conversation.
+
+Pinned Messages Button
+
+|pinned-messages-button|
+
+Applied Pinned Messages Filtering
+
+|applied-pinned filter|
+
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
 
-To build trust between users utilizing the system's communication features, we prepend a role badge to the author’s name in the
-headers of messages and their replies. The badge we introduce differs according to the role of the author within the course
-and reveals their highest authoritative role. Via tooltips that are shown as users hover over these badges (see images below),
-the system displays a brief explanation of that specific role. This way, the system builds trust in the author, and readers
+To build trust between users utilizing the system's communication features, we display the user's role below their name in the headers of messages and their replies.
+When hovering over the displayed role, a tooltip appears showing a brief explanation of that specific role. This way, the system builds trust in the author, and readers
 can tangibly confirm the origin of the shared information.
 
 Instructor Authority
 
-|instructor-user|
+|instructor-role|
 
 Tutor Authority
 
-|tutor-user|
+|tutor-role|
 
 Student Authority
 
-|student-user|
+|student-role|
 
 React on Messages
 ^^^^^^^^^^^^^^^^^
@@ -406,7 +414,7 @@ and attachments of these lectures. All references are then prepended with icons 
 to help users distinguish them conveniently. In the image below, we see all possible types of references that can be created
 in an Artemis message.
 
-|message-with-references|
+|message-references|
 
 Reference Course Exercises
 """"""""""""""""""""""""""
@@ -450,14 +458,14 @@ Reference Lecture Unit Slides
 Users can refer to lecture unit slides of the current course, via the dropdown menu ``Lecture``. Here, slides can be found when users
 hover over a specific unit, see image below.
 
-|slide-reference-menu|
+|slide-menu|
 
 After the user references a single slide they can see it as an image included in the message. Additionally, they can preview the slide
 in order to easily read the content by clicking the image.
 
-|slide-reference|
+|slide-preview|
 
-|referenced-slide-preview|
+|slide-view|
 
 Reference other course members
 """"""""""""""""""""""""""""""
@@ -480,6 +488,41 @@ It also highlights the correct answer for other students that have a similar pro
 
 |resolved-post|
 
+Forward Messages
+^^^^^^^^^^^^^^^^
+
+Users can forward any message to another conversation within the same course. In the forward message dialog, they can add
+additional content using the input field. At the top of the dialog, users can search for channels or users by typing into
+the input bar and selecting from the auto-suggestions. They can select multiple conversations at once to forward the message
+to several destinations simultaneously. On the forwarded message view, users can navigate to the exact location of the original
+message by clicking the *View Conversation* button.
+
+Forward Message Dialog
+
+|forward-message-dialog|
+
+Forwarded Message View
+
+|forwarded-message|
+
+Save Messages
+^^^^^^^^^^^^^
+
+Users can save messages and access them later from the Saved Messages section in the sidebar. Saved messages are
+organized into three categories: *In Progress*, *Completed*, and *Archived*. Messages initially appear in the *In Progress*
+section and can be marked as done to move them to *Completed*, or archived to move them to the *Archived* section.
+Clicking on a saved message navigates the user directly to its exact location within the conversation.
+
+|save-messages|
+
+Expand Thread to Full-Screen
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Users can expand a thread to cover the entire conversation view by clicking the expand button located at the top right
+corner of the answer thread. Clicking the same button again returns the thread to its original size.
+
+|expanded-thread|
+
 Features for Moderators
 -----------------------
 
@@ -488,8 +531,16 @@ The following features are only available for moderators, not for students.
 Pin Messages
 ^^^^^^^^^^^^
 
-By clicking the pushpin icon next to the reaction button of a message, a moderator can *pin* the message.
-As a consequence, the message is highlighted to receive higher attention.
+By using the "Pin message" button, either from the right-click dropdown menu or from the action bar that appears at the top right corner
+of a message when hovering over it, a moderator can *pin* the message. As a consequence, the message is highlighted to receive higher attention.
+
+Toggle Channel Privacy
+^^^^^^^^^^^^^^^^^^^^^^
+
+Moderators have the ability to seamlessly toggle a channel’s privacy between private and public using
+the toggle button in the channel settings.
+
+|channel-settings|
 
 Features for Instructors
 ------------------------
@@ -509,6 +560,13 @@ The video below provides a demonstration for the creation of a course-wide chann
         Watch this video on TUM-Live.
     </iframe>
 
+Besides automatic creation during lecture, exercise, or exam setup, moderators can also manually create new channels later
+if needed. When creating a channel, they must choose between a *selective* channel (default option) and a *course-wide* channel.
+In a *selective* channel, users are added manually after the channel is created. In a *course-wide* channel, all users
+enrolled in the course are automatically added as members.
+
+|channel-creation|
+
 Message Announcements
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -519,31 +577,47 @@ As soon as the announcement is created, all participants who did not actively re
 
 .. |communication-toggle| image:: communication/communication-checkbox.png
     :width: 500
-.. |messaging-page| image:: communication/messaging-page.png
+.. |messaging-page| image:: communication/message-page.png
     :width: 1000
-.. |lecture-messages| image:: communication/lecture-messages.png
+.. |lecture-view| image:: communication/lecture-page.png
     :width: 1000
-.. |exercise-messages| image:: communication/exercise-messages.png
+.. |exercise-view| image:: communication/exercise-page.png
     :width: 1000
-.. |message-with-references| image:: communication/message-with-all-references.png
+.. |message-references| image:: communication/references.png
     :width: 750
-.. |resolved-post| image:: communication/resolved-post.png
-    :width: 400
-.. |instructor-user| image:: communication/user-authorities/instructor.png
-    :width: 500
-.. |tutor-user| image:: communication/user-authorities/tutor.png
-    :width: 500
-.. |student-user| image:: communication/user-authorities/student.png
-    :width: 500
-.. |messages| image:: communication/messages.png
-    :width: 1000
-.. |slide-reference| image:: communication/slide-reference.png
+.. |resolved-post| image:: communication/mark-resolved.png
     :width: 600
-.. |slide-reference-menu| image:: communication/slide-reference-menu.png
+.. |instructor-role| image:: communication/user-authorities/instructor-role.png
+    :width: 500
+.. |tutor-role| image:: communication/user-authorities/tutor-role.png
+    :width: 500
+.. |student-role| image:: communication/user-authorities/student-role.png
+    :width: 500
+.. |messages| image:: communication/direct-message-page.png
     :width: 1000
-.. |referenced-slide-preview| image:: communication/referenced-slide-preview.png
+.. |slide-preview| image:: communication/slide-preview-message.png
     :width: 600
-.. |link-preview| image:: communication/link-preview.png
+.. |slide-menu| image:: communication/slide-menu-view.png
+    :width: 1000
+.. |slide-view| image:: communication/slide-open.png
+    :width: 600
+.. |link-preview-view| image:: communication/link-preview-single.png
     :width: 600
 .. |link-preview-multiple| image:: communication/link-preview-multiple.png
     :width: 600
+.. |channel-creation| image:: communication/channel-creation.png
+    :width: 600
+.. |forwarded-message| image:: communication/forward-view.png
+    :width: 800
+.. |forward-message-dialog| image:: communication/forward-dialog.png
+    :width: 800
+.. |expanded-thread| image:: communication/expanded.png
+    :width: 1000
+.. |channel-settings| image:: communication/channel-settings.png
+    :width: 800
+.. |pinned-messages-button| image:: communication/pinned-button.png
+    :width: 1000
+.. |applied-pinned filter| image:: communication/applied-pinned-filtering.png
+    :width: 1000
+.. |save-messages| image:: communication/save-message.png
+    :width: 1000

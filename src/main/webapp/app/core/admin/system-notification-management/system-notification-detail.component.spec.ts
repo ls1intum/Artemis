@@ -8,9 +8,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('SystemNotificationManagementDetailComponent', () => {

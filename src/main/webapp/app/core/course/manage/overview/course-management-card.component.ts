@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
-import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS } from 'app/app.constants';
+import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseRowType } from 'app/core/course/manage/overview/course-management-exercise-row.component';
@@ -75,6 +75,8 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
     @Input() courseWithUsers: Course | undefined;
 
     atlasEnabled = false;
+    examEnabled = false;
+    tutorialGroupEnabled = false;
 
     statisticsPerExercise = new Map<number, CourseManagementOverviewExerciseStatisticsDTO>();
 
@@ -123,6 +125,8 @@ export class CourseManagementCardComponent implements OnInit, OnChanges {
 
     ngOnInit() {
         this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+        this.tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
     }
 
     ngOnChanges() {

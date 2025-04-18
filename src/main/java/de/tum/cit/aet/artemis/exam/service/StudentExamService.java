@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_EXERCISE_START_STATUS;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.Instant;
@@ -27,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.CacheManager;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 /**
  * Service Implementation for managing StudentExam.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class StudentExamService {
 
