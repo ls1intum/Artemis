@@ -5,14 +5,14 @@
             class="vw-100"
             [ngClass]="{
                 'exam-wrapper exam-is-active': isExamStarted(),
-                'exam-height-dev': isExamStarted() && (!isProduction() || isTestServer()),
-                'sidenav-height-dev': !isProduction() || isTestServer(),
+                'exam-height-dev': isExamStarted() && (!isProduction || isTestServer),
+                'sidenav-height-dev': !isProduction || isTestServer,
                 'container-closed': isNavbarCollapsed(),
             }"
         >
             <mat-sidenav
                 disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction() || isTestServer() }"
+                [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
                 class="module-bg rounded-3"
                 opened="true"
                 mode="side"
@@ -25,8 +25,8 @@
                     [courseActionItems]="courseActionItems()"
                     [isNavbarCollapsed]="isNavbarCollapsed()"
                     [isExamStarted]="isExamStarted()"
-                    [isProduction]="isProduction()"
-                    [isTestServer]="isTestServer()"
+                    [isProduction]="isProduction"
+                    [isTestServer]="isTestServer"
                     [hasUnreadMessages]="hasUnreadMessages()"
                     [communicationRouteLoaded]="communicationRouteLoaded()"
                     (switchCourse)="switchCourse($event)"
@@ -38,8 +38,8 @@
             <mat-sidenav-content
                 [ngClass]="{
                     'exam-wrapper': isExamStarted(),
-                    'exam-height-dev': isExamStarted() && (!isProduction() || isTestServer()),
-                    'sidenav-height-dev': !isProduction() || isTestServer(),
+                    'exam-height-dev': isExamStarted() && (!isProduction || isTestServer),
+                    'sidenav-height-dev': !isProduction || isTestServer,
                 }"
             >
                 @if (course()) {
@@ -55,7 +55,7 @@
                                 <a
                                     class="btn btn-sm btn-outline-secondary"
                                     [ngClass]="{ 'd-none d-sm-block': pageTitle() === 'communication' }"
-                                    [routerLink]="['/course-management', course()?.id]"
+                                    [routerLink]="manageViewLink()"
                                     jhiTranslate="artemisApp.courseOverview.manage"
                                 ></a>
                             </div>
@@ -75,7 +75,7 @@
                         class="course-body-container"
                         [ngClass]="{
                             'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar(),
-                            'content-height-dev': !isProduction() || isTestServer(),
+                            'content-height-dev': !isProduction || isTestServer,
                             'mx-2': !isExamStarted(),
                         }"
                     >
