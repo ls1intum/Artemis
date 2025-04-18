@@ -1,6 +1,5 @@
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { VOTE_EMOJI_ID } from 'app/communication/metis.util';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
