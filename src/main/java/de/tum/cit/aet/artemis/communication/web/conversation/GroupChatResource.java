@@ -33,12 +33,10 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -59,15 +57,10 @@ public class GroupChatResource extends ConversationManagementResource {
 
     private final ConversationDTOService conversationDTOService;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
-    private final FeatureToggleService featureToggleService;
-
     private final CourseNotificationService courseNotificationService;
 
-    public GroupChatResource(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository, CourseRepository courseRepository,
-            GroupChatAuthorizationService groupChatAuthorizationService, ConversationService conversationService, GroupChatService groupChatService,
-            GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService, FeatureToggleService featureToggleService,
+    public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
+            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService,
             CourseNotificationService courseNotificationService) {
         super(courseRepository);
         this.userRepository = userRepository;
@@ -76,8 +69,6 @@ public class GroupChatResource extends ConversationManagementResource {
         this.groupChatService = groupChatService;
         this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
-        this.singleUserNotificationService = singleUserNotificationService;
-        this.featureToggleService = featureToggleService;
         this.courseNotificationService = courseNotificationService;
     }
 

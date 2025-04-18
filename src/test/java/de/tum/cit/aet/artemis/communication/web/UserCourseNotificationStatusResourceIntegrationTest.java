@@ -22,8 +22,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificati
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
@@ -36,16 +34,12 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
     @Autowired
     private UserCourseNotificationStatusTestRepository userCourseNotificationStatusRepository;
 
-    @Autowired
-    private FeatureToggleService featureToggleService;
-
     private User user;
 
     private Course course;
 
     @BeforeEach
     void setUp() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         course = courseUtilService.createCourse();
@@ -69,23 +63,6 @@ class UserCourseNotificationStatusResourceIntegrationTest extends AbstractSpring
         var newStatus = userCourseNotificationStatusRepository.findByCourseNotificationId(courseNotification.getId());
 
         assertThat(newStatus.getStatus()).isEqualTo(UserCourseNotificationStatusType.SEEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotUpdateNotificationStatusWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-        var courseNotification = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
-        courseNotificationRepository.save(courseNotification);
-
-        var status = new UserCourseNotificationStatus(courseNotification, user, UserCourseNotificationStatusType.UNSEEN);
-        userCourseNotificationStatusRepository.save(status);
-
-        String requestBody = "{\"statusType\":\"SEEN\", \"notificationIds\":[" + courseNotification.getId() + "]}";
-
-        request.performMvcRequest(
-                MockMvcRequestBuilders.put("/api/communication/notification/" + course.getId() + "/status").contentType(MediaType.APPLICATION_JSON).content(requestBody))
-                .andExpect(status().isForbidden());
     }
 
     @Test
