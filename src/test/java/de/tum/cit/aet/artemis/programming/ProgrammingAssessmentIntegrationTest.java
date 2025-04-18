@@ -333,7 +333,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         addAssessmentFeedbackAndCheckScore(feedbacks, 1.0, 0D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 50D);
         addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
-        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 100D);
+        addAssessmentFeedbackAndCheckScore(feedbacks, 5.0, 150D);
     }
 
     @Test
