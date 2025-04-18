@@ -21,12 +21,9 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingSer
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
 @Profile(PROFILE_CORE)
 @RestController
-@FeatureToggle(Feature.CourseSpecificNotifications)
 @RequestMapping("api/communication/")
 public class UserCourseNotificationSettingResource {
 

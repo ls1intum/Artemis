@@ -23,7 +23,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.ATLAS_ENABLED_PROPERTY_NAME,
         Constants.EXAM_ENABLED_PROPERTY_NAME,
         Constants.PLAGIARISM_ENABLED_PROPERTY_NAME,
-        Constants.TEXT_ENABLED_PROPERTY_NAME
+        Constants.TEXT_ENABLED_PROPERTY_NAME,
+        Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME
     );
     // @formatter:on
 
@@ -32,7 +33,8 @@ class ModuleFeatureInfoContributorTest {
         Constants.MODULE_FEATURE_ATLAS,
         Constants.MODULE_FEATURE_EXAM,
         Constants.MODULE_FEATURE_PLAGIARISM,
-        Constants.MODULE_FEATURE_TEXT
+        Constants.MODULE_FEATURE_TEXT,
+        Constants.MODULE_FEATURE_TUTORIALGROUP
     );
     // @formatter:on
 
