@@ -30,10 +30,10 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     @PostConstruct
     public void init() {
-        int authOptionsTimeout = 300; // 5 minutes
+        int authOptionsTimeToLive = 300; // 5 minutes
 
         var mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(authOptionsTimeout);
+        mapConfig.setTimeToLiveSeconds(authOptionsTimeToLive);
         authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
