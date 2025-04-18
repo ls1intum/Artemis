@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 
 import org.apache.commons.io.FileUtils;
@@ -54,6 +53,8 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final StaticCodeAnalysisService staticCodeAnalysisService;
 
+    private final ProgrammingExerciseRepositoryService programmingExerciseRepositoryService;
+
     private final RepositoryService repositoryService;
 
     private final GitService gitService;
@@ -64,14 +65,13 @@ public class ProgrammingExerciseImportFromFileService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    private static final List<String> SHORT_NAME_REPLACEMENT_EXCLUSIONS = List.of("gradle-wrapper.jar");
-
     public ProgrammingExerciseImportFromFileService(ProgrammingExerciseService programmingExerciseService, ZipFileService zipFileService,
-            StaticCodeAnalysisService staticCodeAnalysisService, RepositoryService repositoryService, GitService gitService, FileService fileService, ProfileService profileService,
-            BuildPlanRepository buildPlanRepository) {
+            StaticCodeAnalysisService staticCodeAnalysisService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService, RepositoryService repositoryService,
+            GitService gitService, FileService fileService, ProfileService profileService, BuildPlanRepository buildPlanRepository) {
         this.programmingExerciseService = programmingExerciseService;
         this.zipFileService = zipFileService;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
+        this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.repositoryService = repositoryService;
         this.gitService = gitService;
         this.fileService = fileService;
@@ -103,8 +103,8 @@ public class ProgrammingExerciseImportFromFileService {
 
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
+            checkDetailsJsonExists(importExerciseDir);
             checkRepositoriesExist(importExerciseDir);
-            var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
             newProgrammingExercise = programmingExerciseService.createProgrammingExercise(originalProgrammingExercise);
@@ -113,7 +113,15 @@ public class ProgrammingExerciseImportFromFileService {
             }
             Path pathToDirectoryWithImportedContent = exerciseFilePath.toAbsolutePath().getParent().resolve(FilenameUtils.getBaseName(exerciseFilePath.toString()));
             copyEmbeddedFiles(pathToDirectoryWithImportedContent);
-            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, oldShortName, user);
+            importRepositoriesFromFile(newProgrammingExercise, importExerciseDir, user);
+
+            try {
+                programmingExerciseRepositoryService.adjustProjectNames(getProgrammingExerciseFromDetailsFile(importExerciseDir).getTitle(), newProgrammingExercise);
+            }
+            catch (GitAPIException | IOException e) {
+                log.error("Error during adjustment of placeholders of ProgrammingExercise {}", newProgrammingExercise.getTitle(), e);
+            }
+
             newProgrammingExercise.setCourse(course);
             // It doesn't make sense to import a build plan on a local CI setup.
             if (profileService.isJenkinsActive()) {
@@ -168,8 +176,14 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
-    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, String oldExerciseShortName, User user)
-            throws IOException, GitAPIException, URISyntaxException {
+    /**
+     * Imports the repositories from the extracted zip file.
+     *
+     * @param newExercise the new programming exercise to which the repositories should be imported
+     * @param basePath    the path to the extracted zip file
+     * @param user        the user performing the import
+     */
+    private void importRepositoriesFromFile(ProgrammingExercise newExercise, Path basePath, User user) throws IOException, GitAPIException, URISyntaxException {
         Repository templateRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTemplateRepositoryUri()), false);
         Repository solutionRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getSolutionRepositoryUri()), false);
         Repository testRepo = gitService.getOrCheckoutRepository(new VcsRepositoryUri(newExercise.getTestRepositoryUri()), false);
@@ -179,8 +193,6 @@ public class ProgrammingExerciseImportFromFileService {
         }
 
         copyImportedExerciseContentToRepositories(templateRepo, solutionRepo, testRepo, auxiliaryRepositories, basePath);
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), List.of(solutionRepo, templateRepo, testRepo));
-        replaceImportedExerciseShortName(Map.of(oldExerciseShortName, newExercise.getShortName()), auxiliaryRepositories);
 
         gitService.stageAllChanges(templateRepo);
         gitService.stageAllChanges(solutionRepo);
@@ -196,12 +208,6 @@ public class ProgrammingExerciseImportFromFileService {
             gitService.commitAndPush(auxRepo, "Import auxiliary repo from file", true, user);
         }
 
-    }
-
-    private void replaceImportedExerciseShortName(Map<String, String> replacements, List<Repository> repositories) {
-        for (Repository repository : repositories) {
-            fileService.replaceVariablesInFileRecursive(repository.getLocalPath(), replacements, SHORT_NAME_REPLACEMENT_EXCLUSIONS);
-        }
     }
 
     private void copyImportedExerciseContentToRepositories(Repository templateRepo, Repository solutionRepo, Repository testRepo, List<Repository> auxiliaryRepositories,
@@ -229,7 +235,7 @@ public class ProgrammingExerciseImportFromFileService {
      * @param repository the repository to which the content should be copied
      * @param repoName   the name of the repository
      * @param basePath   the path to the extracted zip file
-     **/
+     */
     private void copyExerciseContentToRepository(Repository repository, String repoName, Path basePath) throws IOException {
         // @formatter:off
         FileUtils.copyDirectory(
@@ -244,6 +250,13 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
+    /**
+     * Reads the programming exercise details from the JSON file in the extracted zip path.
+     *
+     * @param extractedZipPath the path to the extracted zip file containing the exercise details
+     * @return the programming exercise object deserialized from the JSON file
+     * @throws IOException if there is an error reading the file
+     */
     private ProgrammingExercise getProgrammingExerciseFromDetailsFile(Path extractedZipPath) throws IOException {
         var exerciseJsonPath = retrieveExerciseJsonPath(extractedZipPath);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -273,6 +286,29 @@ public class ProgrammingExerciseImportFromFileService {
         }
     }
 
+    /**
+     * Checks if the Exercise-Details.json file exists in the extracted zip directory.
+     *
+     * @param path the path to the extracted zip directory
+     * @throws IOException              if there is an error reading the directory
+     * @throws BadRequestAlertException if the Exercise-Details.json file is not found or not unique
+     */
+    private void checkDetailsJsonExists(Path path) throws IOException {
+        try (Stream<Path> stream = Files.walk(path)) {
+            long count = stream.filter(Files::isRegularFile)
+                    .filter(file -> file.getFileName().toString().startsWith(ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX))
+                    .filter(file -> file.toString().endsWith(".json")).count();
+
+            if (count == 0) {
+                throw new BadRequestAlertException("The Exercise-Details.json file is missing in the uploaded zip file.", "programmingExercise", "exerciseJsonNotFound");
+            }
+
+            if (count > 1) {
+                throw new BadRequestAlertException("Multiple Exercise-Details.json files found in the uploaded zip file.", "programmingExercise", "multipleExerciseJsonFiles");
+            }
+        }
+    }
+
     private Path retrieveRepositoryDirectoryPath(Path dirPath, String repoName) {
         List<Path> result;
         try (Stream<Path> walk = Files.walk(dirPath)) {
@@ -289,6 +325,13 @@ public class ProgrammingExerciseImportFromFileService {
         return result.getFirst();
     }
 
+    /**
+     * Retrieves the path to the Exercise-Details.json file in the extracted zip path.
+     *
+     * @param dirPath the path to the extracted zip file containing the exercise details
+     * @return the path to the Exercise-Details.json file
+     * @throws IOException if there is an error reading the file
+     */
     private Path retrieveExerciseJsonPath(Path dirPath) throws IOException {
         List<Path> result;
         try (Stream<Path> stream = Files.walk(dirPath)) {

@@ -48,6 +48,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isTextExerciseEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TEXT);
         }
+        if (artemisConfigHelper.isTutorialGroupEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
+        }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
 }

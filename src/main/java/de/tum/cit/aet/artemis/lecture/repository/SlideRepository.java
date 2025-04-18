@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 
 /**
  * Spring Data JPA repository for the Attachment Unit entity.
@@ -25,11 +26,16 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
     List<Slide> findAllByAttachmentUnitId(Long attachmentUnitId);
 
     /**
-     * Find all slides that have a non-null hidden timestamp
+     * Find all slides with non-null hidden field but only returns the id and hidden fields
      *
-     * @return List of all slides with a hidden timestamp
+     * @return list containing only slide ids and hidden timestamps
      */
-    List<Slide> findAllByHiddenNotNull();
+    @Query("""
+            SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO(s.id, s.hidden)
+            FROM Slide s
+            WHERE s.hidden IS NOT NULL
+            """)
+    List<SlideUnhideDTO> findHiddenSlidesProjection();
 
     /**
      * Find slides for a specific attachment unit where the hidden field is not null
@@ -46,7 +52,11 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      * @param exerciseId The ID of the exercise
      * @return List of slides associated with the exercise
      */
-    @Query("SELECT s FROM Slide s WHERE s.exercise.id = :exerciseId")
+    @Query("""
+            SELECT s
+            FROM Slide s
+            WHERE s.exercise.id = :exerciseId
+            """)
     List<Slide> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**

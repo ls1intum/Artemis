@@ -314,7 +314,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"
 
     // required by the Websocket Broker Connection in WebsocketConfiguration (due to multi node setup support)
-    implementation "io.projectreactor.netty:reactor-netty-core:1.2.4"
+    implementation "io.projectreactor.netty:reactor-netty-core:1.2.5"
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
@@ -367,7 +367,7 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.4.7-jre"
+    implementation "com.google.guava:guava:33.4.8-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -423,9 +423,7 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.4.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
-    // NOTE: cannot update due to "Syntax error in SQL statement "WITH ids_to_delete" --> should be resolved when we collapse the changelogs again for Artemis 8.0
-//    testImplementation "com.h2database:h2:2.3.232"
-    testImplementation "com.h2database:h2:2.2.224"
+    testImplementation "com.h2database:h2:2.3.232"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250107"

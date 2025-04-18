@@ -12,7 +12,6 @@ import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -21,19 +20,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [
-        AlertOverlayComponent,
-        CdkScrollable,
-        NgClass,
-        NgStyle,
-        PageRibbonComponent,
-        RouterOutlet,
-        FooterComponent,
-        CourseNotificationPopupOverlayComponent,
-        FeatureToggleHideDirective,
-    ],
+    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, FooterComponent, CourseNotificationPopupOverlayComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
+    protected readonly FeatureToggle = FeatureToggle;
+
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -150,6 +141,4 @@ export class AppComponent implements OnInit, OnDestroy {
         this.courseOverviewSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }

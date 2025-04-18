@@ -1,8 +1,8 @@
 import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { NavigationEnd, RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { filter, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 
@@ -85,7 +85,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
-    isOverviewPage = signal(false);
+    isSettingsPage = signal(false);
+    studentViewLink = signal<string[]>([]);
 
     // we cannot use signals here because the child component doesn't expect it
     dialogErrorSource = new Subject<string>();
@@ -130,10 +131,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         this.subscription = this.route.firstChild?.params.subscribe((params: { courseId: string }) => {
             const id = Number(params.courseId);
             this.handleCourseIdChange(id);
-            this.checkIfOverviewPage();
-        });
-        this.urlSubscription = this.router.events.pipe(filter((event) => event instanceof NavigationEnd)).subscribe(() => {
-            this.checkIfOverviewPage();
+            this.checkIfSettingsPage();
         });
 
         this.featureToggleSub = this.featureToggleService.getFeatureToggleActive(FeatureToggle.LearningPaths).subscribe((isActive) => {
@@ -148,15 +146,54 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
     }
 
-    private checkIfOverviewPage() {
+    protected handleNavigationEndActions(): void {
+        this.checkIfSettingsPage();
+        this.determineStudentViewLink();
+    }
+
+    private checkIfSettingsPage() {
         const currentUrl = this.router.url;
-        const isDetailsPage = currentUrl.endsWith(`/${this.courseId()}`) || currentUrl.endsWith(`/${this.courseId()}/`);
-        this.isOverviewPage.set(isDetailsPage);
+        const isSettingsPage = currentUrl.endsWith(`/course-management/${this.courseId()}/settings`);
+        this.isSettingsPage.set(isSettingsPage);
     }
 
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
+        this.determineStudentViewLink();
         this.subscribeToCourseUpdates(courseId);
+    }
+
+    determineStudentViewLink() {
+        const courseIdString = this.courseId().toString();
+        const routerUrl = this.router.url;
+        const baseStudentPath = ['/courses', courseIdString];
+
+        const routeMappings = [
+            { urlPart: 'exams', targetPath: [...baseStudentPath, 'exams'] },
+            { urlPart: 'exercises', targetPath: [...baseStudentPath, 'exercises'] },
+            { urlPart: 'lectures', targetPath: [...baseStudentPath, 'lectures'] },
+            { urlPart: 'communication', targetPath: [...baseStudentPath, 'communication'] },
+            { urlPart: 'learning-path-management', targetPath: [...baseStudentPath, 'learning-path'] },
+            { urlPart: 'competency-management', targetPath: [...baseStudentPath, 'competencies'] },
+            { urlPart: 'faqs', targetPath: [...baseStudentPath, 'faq'] },
+            {
+                urlPart: ['tutorial-groups', 'tutorial-groups-checklist'],
+                targetPath: [...baseStudentPath, 'tutorial-groups'],
+                matcher: (url: string | string[], parts: string[]) => parts.some((part) => url.includes(part)),
+            },
+            { urlPart: 'course-statistics', targetPath: [...baseStudentPath, 'statistics'] },
+        ];
+
+        const defaultPath = [...baseStudentPath, 'exercises'];
+
+        const matchedRoute = routeMappings.find((route) => {
+            if (route.matcher) {
+                return route.matcher(routerUrl, Array.isArray(route.urlPart) ? route.urlPart : [route.urlPart]);
+            }
+            return routerUrl.includes(route.urlPart);
+        });
+
+        this.studentViewLink.set(matchedRoute ? matchedRoute.targetPath : defaultPath);
     }
 
     private subscribeToCourseUpdates(courseId: number) {
@@ -267,13 +304,13 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addLtiItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (this.ltiEnabled() && currentCourse.onlineCourse) {
+        if (this.ltiEnabled && currentCourse.onlineCourse) {
             sidebarItems.push(this.sidebarItemService.getLtiConfigurationItem(this.courseId()));
         }
     }
 
     private addBuildQueueItem(sidebarItems: SidebarItem[]) {
-        if (this.localCIActive()) {
+        if (this.localCIActive) {
             sidebarItems.push(this.sidebarItemService.getBuildQueueItem(this.courseId()));
         }
     }
@@ -294,7 +331,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getAtlasItems() {
         const atlasItems: SidebarItem[] = [];
-        if (this.atlasEnabled()) {
+        if (this.atlasEnabled) {
             atlasItems.push(this.sidebarItemService.getCompetenciesManagementItem(this.courseId()));
             if (this.learningPathsActive()) {
                 atlasItems.push(this.sidebarItemService.getLearningPathManagementItem(this.courseId()));
@@ -321,7 +358,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
     private getIrisSettingsItem() {
         const irisItems: SidebarItem[] = [];
-        if (this.irisEnabled()) {
+        if (this.irisEnabled) {
             irisItems.push(this.sidebarItemService.getIrisSettingsItem(this.courseId()));
         }
         return irisItems;
