@@ -105,12 +105,12 @@ public class SecurityConfiguration {
     private String port;
 
     @PostConstruct
-    public void validateConfiguration() {
+    public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
             try {
-                new URI(serverUrl).toURL();
+                new URI(serverUrl).toURL(); // will throw if URL is invalid, return value is not required
                 if (!port.matches("\\d+")) {
-                    throw new IllegalStateException("Invalid port configuration: " + port);
+                    throw new IllegalStateException("Invalid port configuration, the port expected to consit of digits only (8080, 80, ...) but was: " + port);
                 }
             }
             catch (URISyntaxException | MalformedURLException e) {
