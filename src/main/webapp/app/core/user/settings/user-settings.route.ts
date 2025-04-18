@@ -33,13 +33,6 @@ export const routes: Routes = [
                 },
             },
             {
-                path: 'notifications',
-                loadComponent: () => import('app/core/user/settings/notification-settings/notification-settings.component').then((m) => m.NotificationSettingsComponent),
-                data: {
-                    pageTitle: 'artemisApp.userSettings.categories.NOTIFICATION_SETTINGS',
-                },
-            },
-            {
                 path: 'science',
                 loadComponent: () => import('app/core/user/settings/science-settings/science-settings.component').then((m) => m.ScienceSettingsComponent),
                 data: {

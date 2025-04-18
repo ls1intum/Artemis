@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashSet;
@@ -14,12 +12,13 @@ import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousExamSessions;
@@ -37,7 +36,7 @@ import inet.ipaddr.IPAddressString;
 /**
  * Service Implementation for managing ExamSession.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamSessionService {
 

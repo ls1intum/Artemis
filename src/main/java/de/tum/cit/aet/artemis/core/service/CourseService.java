@@ -59,15 +59,11 @@ import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
-import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.CourseNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -83,7 +79,6 @@ import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
@@ -120,7 +115,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupApi;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
-import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupNotificationApi;
+import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupApiNotPresentException;
 
 /**
  * Service Implementation for managing Course.
@@ -146,8 +141,6 @@ public class CourseService {
 
     private final LectureService lectureService;
 
-    private final GroupNotificationRepository groupNotificationRepository;
-
     private final UserService userService;
 
     private final Optional<ExerciseGroupApi> exerciseGroupApi;
@@ -159,8 +152,6 @@ public class CourseService {
     private final Optional<ExamRepositoryApi> examRepositoryApi;
 
     private final Optional<ExamMetricsApi> examMetricsApi;
-
-    private final GroupNotificationService groupNotificationService;
 
     private final CourseRepository courseRepository;
 
@@ -212,8 +203,6 @@ public class CourseService {
 
     private final LectureRepository lectureRepository;
 
-    private final Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi;
-
     private final PostRepository postRepository;
 
     private final AnswerPostRepository answerPostRepository;
@@ -230,19 +219,18 @@ public class CourseService {
 
     public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            GroupNotificationRepository groupNotificationRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi,
-            Optional<CompetencyProgressApi> competencyProgressApi, GroupNotificationService groupNotificationService, Optional<ExamRepositoryApi> examRepositoryApi,
-            Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
-            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
-            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, LectureRepository lectureRepository,
-            Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
-            Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
-            LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseNotificationRepository courseNotificationRepository) {
+            AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService,
+            GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository,
+            TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository,
+            ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository,
+            PresentationPointsCalculationService presentationPointsCalculationService, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            ConversationRepository conversationRepository, Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi,
+            LectureRepository lectureRepository, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<PrerequisitesApi> prerequisitesApi,
+            Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository,
+            FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
+            CourseNotificationRepository courseNotificationRepository) {
         this.examMetricsApi = examMetricsApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -250,13 +238,11 @@ public class CourseService {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureService = lectureService;
-        this.groupNotificationRepository = groupNotificationRepository;
         this.exerciseGroupApi = exerciseGroupApi;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
         this.examDeletionApi = examDeletionApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.groupNotificationService = groupNotificationService;
         this.examRepositoryApi = examRepositoryApi;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
@@ -279,7 +265,6 @@ public class CourseService {
         this.learningPathApi = learningPathApi;
         this.irisSettingsApi = irisSettingsApi;
         this.lectureRepository = lectureRepository;
-        this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.prerequisitesApi = prerequisitesApi;
         this.competencyRelationApi = competencyRelationApi;
@@ -527,7 +512,6 @@ public class CourseService {
      * <li>All Exercises including:
      * submissions, participations, results, repositories and build plans, see {@link ExerciseDeletionService#delete}</li>
      * <li>All Lectures and their Attachments, see {@link LectureService#delete}</li>
-     * <li>All GroupNotifications of the course, see {@link GroupNotificationRepository#delete}</li>
      * <li>All default groups created by Artemis, see {@link UserService#deleteGroup}</li>
      * <li>All Exams, see {@link ExamDeletionApi#delete}</li>
      * <li>The Grading Scale if such exists, see {@link GradingScaleRepository#delete}</li>
@@ -555,11 +539,10 @@ public class CourseService {
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
-        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new ApiProfileNotPresentException(TutorialGroupApi.class, PROFILE_CORE));
+        TutorialGroupApi api = tutorialGroupApi.orElseThrow(() -> new TutorialGroupApiNotPresentException(TutorialGroupApi.class));
         var tutorialGroups = api.findAllByCourseId(course.getId());
         // we first need to delete notifications and channels, only then we can delete the tutorial group
         tutorialGroups.forEach(tutorialGroup -> {
-            tutorialGroupNotificationApi.ifPresent(notApi -> notApi.deleteAllByTutorialGroupId(tutorialGroup.getId()));
             tutorialGroupChannelManagementApi.ifPresent(manApi -> manApi.deleteTutorialGroupChannel(tutorialGroup));
             api.deleteById(tutorialGroup.getId());
         });
@@ -608,9 +591,6 @@ public class CourseService {
     }
 
     private void deleteNotificationsOfCourse(Course course) {
-        List<GroupNotification> notifications = groupNotificationRepository.findAllByCourseId(course.getId());
-        groupNotificationRepository.deleteAll(notifications);
-
         var courseNotifications = courseNotificationRepository.findAllByCourseId(course.getId());
 
         courseNotificationRepository.deleteAll(courseNotifications);
@@ -984,8 +964,6 @@ public class CourseService {
         // This contains possible errors encountered during the archive process
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_STARTED, exportErrors);
-
         try {
             // Create course archives directory if it doesn't exist
             Files.createDirectories(courseArchivesDirPath);
@@ -999,10 +977,6 @@ public class CourseService {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.saveAndFlush(course);
             }
-            else {
-                groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
-                return;
-            }
         }
         catch (Exception e) {
             var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
@@ -1010,7 +984,6 @@ public class CourseService {
             log.info(error);
         }
 
-        groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FINISHED, exportErrors);
         log.info("archive course took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
@@ -1060,10 +1033,8 @@ public class CourseService {
             // explicitly set the registration number
             user.setVisibleRegistrationNumber(user.getRegistrationNumber());
             // remove some values which are not needed in the client
-            user.setLastNotificationRead(null);
             user.setActivationKey(null);
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setCreatedDate(null);
         });
         removeUserVariables(usersInGroup);
@@ -1214,10 +1185,8 @@ public class CourseService {
      */
     private void removeUserVariables(Iterable<User> usersInGroup) {
         usersInGroup.forEach(user -> {
-            user.setLastNotificationRead(null);
             user.setActivationKey(null);
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setCreatedDate(null);
         });
     }

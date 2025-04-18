@@ -525,31 +525,28 @@
                 }
             </div>
             <!-- timezone -->
-            @if (tutorialGroupsFeatureActivated) {
-                <div class="col-auto border border-warning p-3">
-                    <span class="badge rounded-pill text-bg-warning ms-1">BETA</span>
-                    <label class="form-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
-                    @if (timeZoneChanged) {
-                        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.changeWarning"></div>
-                    }
-                    <div jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.beta"></div>
-                    <input
-                        id="timeZone"
-                        type="text"
-                        class="form-control"
-                        formControlName="timeZone"
-                        [placeholder]="'Europe/Berlin'"
-                        [resultFormatter]="tzResultFormatter"
-                        [inputFormatter]="tzInputFormatter"
-                        [ngbTypeahead]="tzSearch"
-                        [editable]="false"
-                        #timeZoneInput="ngbTypeahead"
-                        (focus)="tzFocus$.next($any($event).target.value)"
-                        (click)="tzClick$.next($any($event).target.value)"
-                    />
-                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
-                </div>
-            }
+            <div class="col-auto mt-3">
+                <label class="form-label" for="timeZone" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.label"></label>
+                @if (timeZoneChanged) {
+                    <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.changeWarning"></div>
+                }
+                <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.beta"></div>
+                <input
+                    id="timeZone"
+                    type="text"
+                    class="form-control"
+                    formControlName="timeZone"
+                    [placeholder]="'Europe/Berlin'"
+                    [resultFormatter]="tzResultFormatter"
+                    [inputFormatter]="tzInputFormatter"
+                    [ngbTypeahead]="tzSearch"
+                    [editable]="false"
+                    #timeZoneInput="ngbTypeahead"
+                    (focus)="tzFocus$.next($any($event).target.value)"
+                    (click)="tzClick$.next($any($event).target.value)"
+                />
+                <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.timeZoneInput.explanation"></div>
+            </div>
             <div class="mt-3 d-flex">
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>

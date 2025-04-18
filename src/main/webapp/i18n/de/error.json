@@ -101,6 +101,13 @@
         "memoryLimitInvalid": "Die Speicherbegrenzung ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt und größer als 6MB ist.",
         "cpuCountInvalid": "Die CPU-Anzahl ist ungültig. Bitte stelle sicher, dass es sich um eine positive Ganzzahl handelt.",
         "memorySwapLimitInvalid": "Die maximale Swap-Speichergröße ist ungültig. Bitte stelle sicher, dass er größer oder gleich 0 ist.",
-        "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags."
+        "dockerFlagsParsingError": "Fehler beim Parsen der Docker-Flags.",
+        "dueDateOver": {
+            "noParticipationPossible": "Das Abgabedatum der Übung ist bereits abgelaufen, du kannst nicht mehr an dieser Übung teilnehmen.",
+            "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen."
+        },
+        "teamExercise": {
+            "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."
+        }
     }
 }

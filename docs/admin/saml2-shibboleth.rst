@@ -33,7 +33,7 @@ The new (and old) security filter chain is presented in the following figure:
 
 The feature is configured by the application-saml2.yml file.
 You can configure multiple identity providers.
-In addition, the SAML2 feature allows to decide whether a user can obtain a password (see "info.saml2.enable-password").
+In addition, the SAML2 feature allows to decide whether a user can obtain a password (see "info.saml2.enablePassword").
 This app password allows to use the connected services as VCS and CI as usual with the local user credentials.
 
 You can see the structure of the saml2 configuration in the following:
@@ -81,15 +81,15 @@ You can see the structure of the saml2 configuration in the following:
     info:
         saml2:
             # Name of the button to login with SAML2
-            button-label: 'SAML2 Login'
+            buttonLabel: 'SAML2 Login'
             # Name of the identity provider (e.g., University X Account). Only used for the text at login page
-            identity-provider-name: 'Shibboleth Account'
+            identityProviderName: 'Shibboleth Account'
             # Hide the password login form. If true, the password login form is hidden and only the SAML2 login button is shown.
-            password-login-disabled: false
+            passwordLoginDisabled: false
             # Sends a e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
             # services such as Jenkins. It also allows the users to use password-based Git workflow.
             # It also enables the password reset function in Artemis.
-            enable-password: true
+            enablePassword: true
 
 Example configuration
 ^^^^^^^^^^^^^^^^^^^^^
@@ -107,10 +107,10 @@ The SAML2 configuration of Artemis could look like this:
         lang-key-pattern: 'de'
     info:
         saml2:
-            button-label: 'Shibboleth Login'
-            enable-password: false
-            password-login-disabled: true
-            identity-provider-name: 'Shibboleth Account'
+            buttonLabel: 'Shibboleth Login'
+            enablePassword: false
+            passwordLoginDisabled: true
+            identityProviderName: 'Shibboleth Account'
     spring:
         security:
             saml2:

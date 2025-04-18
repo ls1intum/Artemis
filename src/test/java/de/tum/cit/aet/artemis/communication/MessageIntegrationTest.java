@@ -46,12 +46,9 @@ import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
@@ -61,8 +58,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -86,13 +81,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private ConversationNotificationRepository conversationNotificationRepository;
-
-    @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private List<Post> existingCourseWideMessages;
 
@@ -182,11 +171,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
-        // Since we are testing old notifications
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
-        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
         Post postToSave = new Post();
@@ -200,26 +186,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         // conversation participants should be notified via one broadcast
         verify(websocketMessagingService, never()).sendMessageToUser(anyString(), anyString(), any(PostDTO.class));
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
-
-        if (isAnnouncement) {
-            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
-            verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
-        }
-        else {
-            verify(mailService, never()).sendNotification(any(Notification.class), any(User.class), any(Post.class));
-        }
-
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
-        // Since we are testing old notifications
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
-        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
 
         Post postToSave = new Post();
@@ -234,11 +207,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
         verify(websocketMessagingService, never()).sendMessage(eq("/topic/metis/courses/" + courseId), any(PostDTO.class));
-
-        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(otherParticipant.getUser()), any(Post.class));
-        verify(mailService, timeout(2000).times(1)).sendNotification(any(ConversationNotification.class), eq(author.getUser()), any(Post.class));
-
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
@@ -329,11 +297,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
 
-        ConversationNotification notificationForPost = conversationNotificationRepository.findAll().stream().filter(notification -> createdPost.equals(notification.getMessage()))
-                .findFirst().orElseThrow();
-
         verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/metis/courses/" + course.getId()),
-                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost) && postDTO.notification().equals(notificationForPost)));
+                (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(createdPost)));
     }
 
     @ParameterizedTest
@@ -797,7 +762,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Post> pinnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         assertThat(pinnedPosts).hasSize(1);
-        assertThat(pinnedPosts.get(0).getId()).isEqualTo(updatedPinnedPost.getId());
+        assertThat(pinnedPosts.getFirst().getId()).isEqualTo(updatedPinnedPost.getId());
 
         params.set("pinnedOnly", "false");
         List<Post> allPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -907,8 +872,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendCourseNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannelWithTwoStudents();
         Post postToSave = new Post();
         postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
@@ -927,8 +890,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendMentionNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         User mentionedUser = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         var channel = createChannelWithTwoStudents();
@@ -949,8 +910,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
@@ -1035,18 +994,13 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     /**
-     * Calls the POST /messages endpoint to create a new message and awaits the asynchronously executed code
-     * <p>
-     * This method awaits the asynchronous calls, by checking that the notification for the new message has been stored in the database,
-     * which is a call close to the end of the asynchronously executed code.
+     * Calls the POST /messages endpoint to create a new message
      *
      * @param postToSave post to save in the database
      * @return saved post
      */
     private Post createPostAndAwaitAsyncCode(Post postToSave) throws Exception {
-        Post savedPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
-        await().until(() -> conversationNotificationRepository.findAll().stream().map(ConversationNotification::getMessage).collect(Collectors.toSet()).contains(savedPost));
-        return savedPost;
+        return request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
     }
 
     private static List<CourseInformationSharingConfiguration> courseInformationSharingConfigurationProvider() {
