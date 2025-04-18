@@ -7,6 +7,8 @@ artemis:
         enabled: true
     text:
         enabled: true
+    tutorialgroup:
+        enabled: true
 
 spring:
     liquibase:
