@@ -37,8 +37,6 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -67,9 +65,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -194,7 +189,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         return channel;
     }
 
-    private AnswerPost testCreateChannelAnswer(Channel channel, int wantedNumberOfWSMessages) throws Exception {
+    private void testCreateChannelAnswer(Channel channel, int wantedNumberOfWSMessages) throws Exception {
         Post message = existingConversationPostsWithAnswers.getFirst();
         message.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(message);
@@ -220,7 +215,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(savedMessage)));
 
-        return createdAnswerPost;
     }
 
     @ParameterizedTest
@@ -662,8 +656,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendCourseNotificationWhenFeatureIsEnabled() throws Exception {
 
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannelWithTwoStudents();
         var post = existingConversationPostsWithAnswers.getFirst();
         post.setConversation(channel);
@@ -686,7 +678,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendMentionNotificationWhenUserMentioned() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
 
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 

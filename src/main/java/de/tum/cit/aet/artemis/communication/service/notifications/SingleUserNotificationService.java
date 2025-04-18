@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.ExerciseAssessedNotification;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
-import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -207,24 +205,6 @@ public class SingleUserNotificationService {
                 plagiarismCaseExercise.getSanitizedExerciseTitle(), plagiarismCaseExercise.getType(), plagiarismCase.getVerdict().toString());
 
         courseNotificationService.sendCourseNotification(plagiarismCaseVerdictNotification, List.of(student));
-    }
-
-    /**
-     * Record to store tutorial group, users and responsible user in one notification subject.
-     */
-    public record TutorialGroupNotificationSubject(TutorialGroup tutorialGroup, Set<User> users, User responsibleUser) {
-    }
-
-    /**
-     * Record to store conversation, user and responsible user in one notification subject.
-     */
-    public record ConversationNotificationSubject(Conversation conversation, User user, User responsibleUser) {
-    }
-
-    /**
-     * Record to store Answer post, users and responsible user in one notification subject.
-     */
-    public record NewReplyNotificationSubject(AnswerPost answerPost, User user, User responsibleUser) {
     }
 
     /**
