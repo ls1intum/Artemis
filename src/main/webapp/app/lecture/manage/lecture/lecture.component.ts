@@ -17,15 +17,15 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { SortService } from 'app/shared/service/sort.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
-import { TranslateDirective } from '../../../shared/language/translate.directive';
-import { DocumentationButtonComponent } from '../../../shared/components/documentation-button/documentation-button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from '../../../shared/sort/directive/sort.directive';
-import { SortByDirective } from '../../../shared/sort/directive/sort-by.directive';
-import { DeleteButtonDirective } from '../../../shared/delete-dialog/directive/delete-button.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { HtmlForMarkdownPipe } from '../../../shared/pipes/html-for-markdown.pipe';
+import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 
 export enum LectureDateFilter {
     PAST = 'filterPast',
