@@ -34,10 +34,10 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String loginOrEmail) {
-        log.debug("Authenticating {}", loginOrEmail);
-        log.debug("length of string {}", loginOrEmail.length());
+        log.info("Authenticating {}", loginOrEmail);
+        log.info("length of string {}", loginOrEmail.length());
         long printableCharCount = loginOrEmail.chars().filter(ch -> !Character.isISOControl(ch) && !Character.isWhitespace(ch)).count();
-        log.debug("Number of printable characters: {}", printableCharCount);
+        log.info("Number of printable characters: {}", printableCharCount);
         String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
 
         User user;
@@ -52,6 +52,7 @@ public class DomainUserDetailsService implements UserDetailsService {
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by login in the database"));
         }
 
+        log.debug("User found: login={}, email={}, activated={}, grantedAuthorities={}", user.getLogin(), user.getEmail(), user.getActivated(), user.getGrantedAuthorities());
         // if (!user.isInternal()) {
         // throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
         // }
@@ -59,9 +60,19 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
+        log.info("Checking if user is activated: lowercaseLogin={}, login={}, activated={}", lowercaseLogin, user.getLogin(), user.getActivated());
+
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
         }
-        return new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
+        log.info("user is activated, trying to create spring security user");
+
+        String password = user.getPassword();
+        if (password == null || password.isEmpty()) {
+            log.warn("User {} has a null or empty password, using a default placeholder password", user.getLogin());
+            password = ""; // Provide a default value or handle this case as needed
+        }
+
+        return new org.springframework.security.core.userdetails.User(user.getLogin(), password, user.getGrantedAuthorities());
     }
 }
