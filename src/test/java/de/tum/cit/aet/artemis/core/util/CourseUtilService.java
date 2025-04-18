@@ -632,13 +632,6 @@ public class CourseUtilService {
         programmingSubmission.addResult(resultProgramming);
         resultProgramming.setSubmission(programmingSubmission);
 
-        // Save results
-        resultRepo.save(resultModeling);
-        resultRepo.save(resultText);
-        resultRepo.save(resultFileUpload);
-        resultRepo.save(resultQuiz);
-        resultRepo.save(resultProgramming);
-
         // Save submissions
         modelingSubmission = submissionRepository.save(modelingSubmission);
         textSubmission = submissionRepository.save(textSubmission);
