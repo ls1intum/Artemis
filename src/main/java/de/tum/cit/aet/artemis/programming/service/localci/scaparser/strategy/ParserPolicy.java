@@ -40,6 +40,7 @@ public class ParserPolicy {
             case CLIPPY -> new SarifParser(StaticCodeAnalysisTool.CLIPPY, new ClippyCategorizer());
             case DART_ANALYZE -> new SarifParser(StaticCodeAnalysisTool.DART_ANALYZE, new DartAnalyzeCategorizer());
             case ESLINT -> new SarifParser(StaticCodeAnalysisTool.ESLINT, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
+            case LINTR -> new SarifParser(StaticCodeAnalysisTool.LINTR, new SingleCategoryCategorizer(GENERIC_LINT_CATEGORY));
             case PMD -> new PMDParser();
             case PMD_CPD -> new PMDCPDParser();
             case RUBOCOP -> new SarifParser(StaticCodeAnalysisTool.RUBOCOP, new RubocopCategorizer(), new RubocopMessageProcessor());

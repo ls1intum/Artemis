@@ -19,6 +19,7 @@ public enum StaticCodeAnalysisTool {
     DART_ANALYZE("dart_analyze.sarif"),
     ESLINT("eslint.sarif"),
     GCC("gcc.xml"),
+    LINTR("lintr_results.sarif"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
     RUBOCOP("rubocop.sarif"),
@@ -41,6 +42,7 @@ public enum StaticCodeAnalysisTool {
         map.put(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD));
         map.put(ProgrammingLanguage.JAVASCRIPT, List.of(ESLINT));
         map.put(ProgrammingLanguage.PYTHON, List.of(RUFF));
+        map.put(ProgrammingLanguage.R, List.of(LINTR));
         map.put(ProgrammingLanguage.RUBY, List.of(RUBOCOP));
         map.put(ProgrammingLanguage.RUST, List.of(CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT));

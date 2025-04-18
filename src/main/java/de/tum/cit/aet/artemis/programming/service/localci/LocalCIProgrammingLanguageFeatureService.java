@@ -74,7 +74,7 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(MATLAB, new ProgrammingLanguageFeature(MATLAB, false, false, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), true));
         programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, true, true, false, false, List.of(), true));
-        programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), true));
+        programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(RUBY, new ProgrammingLanguageFeature(RUBY, false, true, false, false, false, List.of(), true));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, true, true, false, false, List.of(), true));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), true));
