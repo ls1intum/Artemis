@@ -39,6 +39,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationLifecycleService;
+import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
+import de.tum.cit.aet.artemis.lecture.service.SlideLifecycleService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -52,6 +55,8 @@ public class ScheduleService {
     private final ExerciseLifecycleService exerciseLifecycleService;
 
     private final ParticipationLifecycleService participationLifecycleService;
+
+    private final SlideLifecycleService slideLifecycleService;
 
     private interface LifecycleKey {
 
@@ -74,10 +79,21 @@ public class ScheduleService {
         }
     }
 
+    private record SlideLifecycleKey(Long slideId, SlideLifecycle lifecycle) implements LifecycleKey {
+
+        public void logInformation(String taskName, String formattedTime, Future.State state, long delay) {
+            log.debug("    Slide: {}, Lifecycle: {}, Name: {}, Scheduled Run Time: {}, State: {}, Remaining Delay: {} s", slideId(), lifecycle(), taskName, formattedTime, state,
+                    delay);
+        }
+    }
+
     private record ScheduledTaskName(ScheduledFuture<?> future, String name) {
     }
 
     public record ScheduledExerciseEvent(Long exerciseId, ExerciseLifecycle lifecycle, String name, ZonedDateTime scheduledTime, Future.State state) {
+    }
+
+    public record ScheduledSlideEvent(Long slideId, SlideLifecycle lifecycle, String name, ZonedDateTime scheduledTime, Future.State state) {
     }
 
     private final ConcurrentMap<ExerciseLifecycleKey, Set<ScheduledTaskName>> scheduledExerciseTasks = new ConcurrentHashMap<>();
@@ -85,13 +101,17 @@ public class ScheduleService {
     // triple of exercise id, participation id, and lifecycle
     private final ConcurrentMap<ParticipationLifecycleKey, Set<ScheduledTaskName>> scheduledParticipationTasks = new ConcurrentHashMap<>();
 
+    private final ConcurrentMap<SlideLifecycleKey, Set<ScheduledTaskName>> scheduledSlideTasks = new ConcurrentHashMap<>();
+
     private final TaskScheduler taskScheduler;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss");
 
-    public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService) {
+    public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService,
+            SlideLifecycleService slideLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.participationLifecycleService = participationLifecycleService;
+        this.slideLifecycleService = slideLifecycleService;
 
         // Initialize the TaskScheduler
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
@@ -124,24 +144,40 @@ public class ScheduleService {
     }
 
     /**
-     * Initializes and schedules periodic logging and cleanup tasks for scheduled exercises
-     * and participation tasks. This method is triggered automatically when the application
+     * Get all scheduled slide events.
+     *
+     * @param pageable the pagination information
+     * @return a page of scheduled slide events
+     */
+    public Page<ScheduledSlideEvent> findAllSlideEvents(Pageable pageable) {
+        // Flatten the map into a list of ScheduledSlideEvent
+        var allEvents = scheduledSlideTasks.entrySet().stream().flatMap(entry -> entry.getValue().stream().map(task -> {
+            // Calculate the scheduled time from the future's delay
+            var scheduledTime = ZonedDateTime.now().plusSeconds(task.future().getDelay(TimeUnit.SECONDS));
+            return new ScheduledSlideEvent(entry.getKey().slideId(), entry.getKey().lifecycle(), task.name(), scheduledTime, task.future().state());
+        })).sorted(Comparator.comparing(ScheduledSlideEvent::scheduledTime)).toList();
+
+        // Apply pagination
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), allEvents.size());
+        List<ScheduledSlideEvent> paginatedEvents = start < allEvents.size() ? allEvents.subList(start, end) : new ArrayList<>();
+
+        return new PageImpl<>(paginatedEvents, pageable, allEvents.size());
+    }
+
+    /**
+     * Initializes and schedules periodic logging and cleanup tasks for scheduled exercises,
+     * participation tasks, and slide tasks. This method is triggered automatically when the application
      * is fully started.
      *
      * <p>
      * Every 15 seconds, this method:
      * <ul>
-     * <li>Logs the total number of scheduled exercise and participation tasks.</li>
-     * <li>Iterates through scheduled exercise tasks and logs their details, including
+     * <li>Logs the total number of scheduled tasks for exercises, participations, and slides.</li>
+     * <li>Iterates through scheduled tasks and logs their details, including
      * execution time and state. It removes tasks that are no longer running.</li>
-     * <li>Iterates through scheduled participation tasks and logs their details,
-     * including execution time and state. It removes tasks that are no longer running.</li>
-     * <li>Cleans up empty entries from both task maps to avoid memory leaks.</li>
+     * <li>Cleans up empty entries from all task maps to avoid memory leaks.</li>
      * </ul>
-     *
-     * <p>
-     * The scheduling mechanism ensures that outdated or completed tasks do not persist in
-     * memory unnecessarily while maintaining visibility into scheduled tasks.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void startup() {
@@ -168,6 +204,17 @@ public class ScheduleService {
             // clean up empty entries in the map
             scheduledParticipationTasks.entrySet().removeIf(entry -> entry.getValue().isEmpty());
 
+            log.debug("Number of scheduled Slide Tasks: {}", scheduledSlideTasks.values().stream().mapToLong(Set::size).sum());
+
+            // if the map is not empty and there is at least still one future in the values map, log the tasks and remove the ones that are not running anymore
+            if (!scheduledSlideTasks.isEmpty() && scheduledSlideTasks.values().stream().anyMatch(set -> !set.isEmpty())) {
+                log.debug("  Scheduled Slide Tasks:");
+                scheduledSlideTasks.forEach(this::removeNonRunningTasks);
+            }
+
+            // clean up empty entries in the map
+            scheduledSlideTasks.entrySet().removeIf(entry -> entry.getValue().isEmpty());
+
         }, Duration.ofSeconds(15));
     }
 
@@ -188,6 +235,11 @@ public class ScheduleService {
         scheduledExerciseTasks.put(task, convert(futures, name));
     }
 
+    private void addScheduledSlideTasks(Slide slide, SlideLifecycle lifecycle, Set<ScheduledFuture<?>> futures, String name) {
+        SlideLifecycleKey task = new SlideLifecycleKey(slide.getId(), lifecycle);
+        scheduledSlideTasks.put(task, convert(futures, name));
+    }
+
     private Set<ScheduledTaskName> convert(Set<ScheduledFuture<?>> futures, String name) {
         return futures.stream().map(future -> new ScheduledTaskName(future, name)).collect(Collectors.toSet());
     }
@@ -195,6 +247,11 @@ public class ScheduleService {
     private void removeScheduledExerciseTask(Long exerciseId, ExerciseLifecycle lifecycle) {
         ExerciseLifecycleKey task = new ExerciseLifecycleKey(exerciseId, lifecycle);
         scheduledExerciseTasks.remove(task);
+    }
+
+    private void removeScheduledSlideTask(Long slideId, SlideLifecycle lifecycle) {
+        SlideLifecycleKey task = new SlideLifecycleKey(slideId, lifecycle);
+        scheduledSlideTasks.remove(task);
     }
 
     private void addScheduledParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Set<ScheduledFuture<?>> futures, String name) {
@@ -273,6 +330,22 @@ public class ScheduleService {
     }
 
     /**
+     * Schedule a task for the given Slide for the provided SlideLifecycle.
+     *
+     * @param slide     Slide
+     * @param lifecycle SlideLifecycle
+     * @param task      Runnable task to be executed on the lifecycle hook
+     * @param name      Name of the task
+     */
+    public void scheduleSlideTask(Slide slide, SlideLifecycle lifecycle, Runnable task, String name) {
+        // check if already scheduled for slide. if so, cancel.
+        // no slide should be scheduled more than once.
+        cancelScheduledTaskForSlideLifecycle(slide.getId(), lifecycle);
+        ScheduledFuture<?> scheduledTask = slideLifecycleService.scheduleTask(slide, lifecycle, task);
+        addScheduledSlideTasks(slide, lifecycle, new HashSet<>(List.of(scheduledTask)), name);
+    }
+
+    /**
      * Schedule a task for the given participation for the provided lifecycle.
      *
      * @param participation for which a scheduled action should be created.
@@ -311,6 +384,22 @@ public class ScheduleService {
     }
 
     /**
+     * Cancel possible scheduled tasks for a provided slide.
+     *
+     * @param slideId   id of the slide for which a potentially scheduled task is canceled
+     * @param lifecycle the lifecycle for which the schedule should be canceled
+     */
+    public void cancelScheduledTaskForSlideLifecycle(Long slideId, SlideLifecycle lifecycle) {
+        var task = new SlideLifecycleKey(slideId, lifecycle);
+        var taskNames = scheduledSlideTasks.get(task);
+        if (taskNames != null) {
+            log.debug("Cancelling scheduled task {} for Slide (#{}).", lifecycle, slideId);
+            taskNames.forEach(taskName -> taskName.future().cancel(true));
+            removeScheduledSlideTask(slideId, lifecycle);
+        }
+    }
+
+    /**
      * Cancel possible schedules tasks for a provided participation.
      *
      * @param exerciseId      id of the exercise for which a potentially scheduled task is canceled
@@ -340,12 +429,25 @@ public class ScheduleService {
     }
 
     /**
+     * Cancels all scheduled tasks for all {@link SlideLifecycle SlideLifecycles} for the given slide.
+     *
+     * @param slideId of the slide itself.
+     */
+    public void cancelAllScheduledSlideTasks(Long slideId) {
+        for (final SlideLifecycle lifecycle : SlideLifecycle.values()) {
+            cancelScheduledTaskForSlideLifecycle(slideId, lifecycle);
+        }
+    }
+
+    /**
      * Cancels all futures tasks, only use this for testing purposes
      */
     public void clearAllTasks() {
         scheduledParticipationTasks.values().forEach(taskNames -> taskNames.forEach(taskName -> taskName.future().cancel(true)));
         scheduledExerciseTasks.values().forEach(taskNames -> taskNames.forEach(taskName -> taskName.future().cancel(true)));
+        scheduledSlideTasks.values().forEach(taskNames -> taskNames.forEach(taskName -> taskName.future().cancel(true)));
         scheduledParticipationTasks.clear();
         scheduledExerciseTasks.clear();
+        scheduledSlideTasks.clear();
     }
 }
