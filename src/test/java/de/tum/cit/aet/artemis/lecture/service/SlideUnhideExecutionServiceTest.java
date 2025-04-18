@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -20,7 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentUnitTestRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -30,9 +28,6 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     private static final String TEST_PREFIX = "slideunhideexecutionservicetest";
 
     @Mock
-    private SlideRepository slideRepository;
-
-    @Mock
     private AttachmentService attachmentService;
 
     @Autowired
@@ -40,6 +35,9 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
     @Autowired
     private SlideTestRepository slideTestRepository;
+
+    @Autowired
+    private AttachmentUnitTestRepository attachmentUnitRepository;
 
     private SlideUnhideExecutionService slideUnhideExecutionService;
 
@@ -52,8 +50,8 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
 
-        // Create the service with mocks
-        slideUnhideExecutionService = new SlideUnhideExecutionService(slideRepository, attachmentService);
+        // Create the service with slideTestRepository instead of mocked slideRepository
+        slideUnhideExecutionService = new SlideUnhideExecutionService(slideTestRepository, attachmentService);
 
         // Create test data
         AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(1, true);
@@ -68,14 +66,13 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_withValidSlideAndAttachment() {
-        // Setup mock repository to return the test slide
-        when(slideRepository.findById(testSlide.getId())).thenReturn(Optional.of(testSlide));
-
         // Call the method to test
         slideUnhideExecutionService.unhideSlide(testSlide.getId());
 
-        // Verify unhideSlide repository method was called
-        verify(slideRepository).unhideSlide(testSlide.getId());
+        // Verify the slide was unhidden in the database
+        Optional<Slide> unhiddenSlide = slideTestRepository.findById(testSlide.getId());
+        assert unhiddenSlide.isPresent();
+        assert unhiddenSlide.get().getHidden() == null;
 
         // Verify student version was regenerated
         verify(attachmentService).regenerateStudentVersion(testAttachment);
@@ -84,14 +81,11 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_whenSlideNotFound() {
-        // Setup mock repository to return empty optional
-        when(slideRepository.findById(999L)).thenReturn(Optional.empty());
+        // Use a non-existent ID
+        Long nonExistentId = 999L;
 
         // Call the method to test
-        slideUnhideExecutionService.unhideSlide(999L);
-
-        // Verify unhideSlide repository method was not called
-        verify(slideRepository, never()).unhideSlide(anyLong());
+        slideUnhideExecutionService.unhideSlide(nonExistentId);
 
         // Verify student version was not regenerated
         verify(attachmentService, never()).regenerateStudentVersion(any());
@@ -100,19 +94,20 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_withNoAttachmentUnit() {
-        // Create a slide with no attachment unit
+        // Create a slide with no attachment unit and save it
         Slide slideWithoutAttachment = new Slide();
-        slideWithoutAttachment.setId(888L);
         slideWithoutAttachment.setHidden(ZonedDateTime.now());
-
-        // Setup mock repository to return the test slide
-        when(slideRepository.findById(slideWithoutAttachment.getId())).thenReturn(Optional.of(slideWithoutAttachment));
+        slideWithoutAttachment.setSlideNumber(1);
+        slideWithoutAttachment.setSlideImagePath("temp/placeholder.jpg"); // Set a valid slide image path
+        slideWithoutAttachment = slideTestRepository.save(slideWithoutAttachment);
 
         // Call the method to test
         slideUnhideExecutionService.unhideSlide(slideWithoutAttachment.getId());
 
-        // Verify unhideSlide repository method was called
-        verify(slideRepository).unhideSlide(slideWithoutAttachment.getId());
+        // Verify the slide was unhidden in the database
+        Optional<Slide> unhiddenSlide = slideTestRepository.findById(slideWithoutAttachment.getId());
+        assert unhiddenSlide.isPresent();
+        assert unhiddenSlide.get().getHidden() == null;
 
         // Verify student version was not regenerated
         verify(attachmentService, never()).regenerateStudentVersion(any());
@@ -123,21 +118,25 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     void testUnhideSlide_withAttachmentUnitButNoAttachment() {
         // Create a slide with attachment unit but no attachment
         AttachmentUnit unitWithoutAttachment = new AttachmentUnit();
-        unitWithoutAttachment.setId(777L);
+        unitWithoutAttachment.setDescription("Test Unit Without Attachment");
+
+        // Save the attachment unit
+        unitWithoutAttachment = attachmentUnitRepository.save(unitWithoutAttachment);
 
         Slide slideWithUnitButNoAttachment = new Slide();
-        slideWithUnitButNoAttachment.setId(777L);
         slideWithUnitButNoAttachment.setHidden(ZonedDateTime.now());
         slideWithUnitButNoAttachment.setAttachmentUnit(unitWithoutAttachment);
-
-        // Setup mock repository to return the test slide
-        when(slideRepository.findById(slideWithUnitButNoAttachment.getId())).thenReturn(Optional.of(slideWithUnitButNoAttachment));
+        slideWithUnitButNoAttachment.setSlideNumber(1);
+        slideWithUnitButNoAttachment.setSlideImagePath("temp/placeholder.jpg"); // Set a valid slide image path
+        slideWithUnitButNoAttachment = slideTestRepository.save(slideWithUnitButNoAttachment);
 
         // Call the method to test
         slideUnhideExecutionService.unhideSlide(slideWithUnitButNoAttachment.getId());
 
-        // Verify unhideSlide repository method was called
-        verify(slideRepository).unhideSlide(slideWithUnitButNoAttachment.getId());
+        // Verify the slide was unhidden in the database
+        Optional<Slide> unhiddenSlide = slideTestRepository.findById(slideWithUnitButNoAttachment.getId());
+        assert unhiddenSlide.isPresent();
+        assert unhiddenSlide.get().getHidden() == null;
 
         // Verify student version was not regenerated
         verify(attachmentService, never()).regenerateStudentVersion(any());
@@ -146,21 +145,18 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUnhideSlide_withRegenerationException() {
-        // Setup mock repository to return the test slide
-        when(slideRepository.findById(testSlide.getId())).thenReturn(Optional.of(testSlide));
-
         // Setup attachmentService to throw exception
         doThrow(new RuntimeException("Test exception")).when(attachmentService).regenerateStudentVersion(any());
 
         // Call the method to test
         slideUnhideExecutionService.unhideSlide(testSlide.getId());
 
-        // Verify unhideSlide repository method was still called
-        verify(slideRepository).unhideSlide(testSlide.getId());
+        // Verify the slide was still unhidden in the database
+        Optional<Slide> unhiddenSlide = slideTestRepository.findById(testSlide.getId());
+        assert unhiddenSlide.isPresent();
+        assert unhiddenSlide.get().getHidden() == null;
 
         // Verify student version regeneration was attempted
         verify(attachmentService).regenerateStudentVersion(testAttachment);
-
-        // Note: We can't directly verify logging, but the test should pass if no exception is thrown
     }
 }

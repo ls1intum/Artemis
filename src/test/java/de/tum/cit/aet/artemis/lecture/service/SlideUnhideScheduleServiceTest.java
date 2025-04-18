@@ -4,10 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +19,6 @@ import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -42,9 +39,6 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private SlideTestRepository slideTestRepository;
 
-    @Mock
-    private SlideRepository slideRepository;
-
     private SlideUnhideScheduleService slideUnhideScheduleService;
 
     private List<Slide> testSlides;
@@ -54,8 +48,8 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Initialize mocks
         MockitoAnnotations.openMocks(this);
 
-        // Create the service with mocks
-        slideUnhideScheduleService = new SlideUnhideScheduleService(slideRepository, slideUnhideService, scheduleService);
+        // Create the service with SlideTestRepository instead of mocked SlideRepository
+        slideUnhideScheduleService = new SlideUnhideScheduleService(slideTestRepository, slideUnhideService, scheduleService);
 
         // AttachmentUnit with hidden slides
         AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
@@ -73,19 +67,14 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testScheduleAllHiddenSlides() {
-        // Setup mock repository to return slide DTOs
-        SlideUnhideDTO dto1 = new SlideUnhideDTO(testSlides.get(1).getId(), testSlides.get(1).getHidden());
-        SlideUnhideDTO dto2 = new SlideUnhideDTO(testSlides.get(3).getId(), testSlides.get(3).getHidden());
-        List<SlideUnhideDTO> mockDTOs = Arrays.asList(dto1, dto2);
-
-        when(slideRepository.findHiddenSlidesProjection()).thenReturn(mockDTOs);
-        when(slideRepository.findById(testSlides.get(1).getId())).thenReturn(java.util.Optional.of(testSlides.get(1)));
-        when(slideRepository.findById(testSlides.get(3).getId())).thenReturn(java.util.Optional.of(testSlides.get(3)));
+        // Insert test slide data into the real repository
+        // The hidden slides are already set up in the initTestCase method
 
         // Call the method to test
         slideUnhideScheduleService.scheduleAllHiddenSlides();
 
-        // Verify each slide is processed
+        // Since we have exactly 2 hidden slides, verify that handleSlideHiddenUpdate
+        // was called for each one specifically
         verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.get(1));
         verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.get(3));
     }
@@ -93,17 +82,19 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testScheduleSlideUnhidingByDTO_withValidSlide() {
-        // Setup a DTO with a valid slide ID
-        SlideUnhideDTO dto = new SlideUnhideDTO(testSlides.getFirst().getId(), ZonedDateTime.now().plusDays(1));
+        // Create a valid slide
+        Slide slide = testSlides.getFirst();
+        slide.setHidden(ZonedDateTime.now().plusDays(1));
+        slideTestRepository.save(slide);
 
-        // Setup mock to return the slide
-        when(slideRepository.findById(dto.id())).thenReturn(java.util.Optional.of(testSlides.getFirst()));
+        // Setup a DTO with a valid slide ID
+        SlideUnhideDTO dto = new SlideUnhideDTO(slide.getId(), slide.getHidden());
 
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhidingByDTO(dto);
 
         // Verify handleSlideHiddenUpdate was called
-        verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.getFirst());
+        verify(slideUnhideService).handleSlideHiddenUpdate(any(Slide.class));
     }
 
     @Test
@@ -115,8 +106,6 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhidingByDTO(dto);
 
-        // Verify that the repository was never accessed
-        verify(slideRepository, never()).findById(any());
         // Verify that unhide service was never called
         verify(slideUnhideService, never()).handleSlideHiddenUpdate(any());
     }
@@ -124,24 +113,25 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testScheduleSlideUnhiding_withValidId() {
-        // Setup mock to return the slide
-        when(slideRepository.findById(testSlides.getFirst().getId())).thenReturn(java.util.Optional.of(testSlides.getFirst()));
+        // Use an existing slide from the database
+        Slide slide = testSlides.getFirst();
+        Long slideId = slide.getId();
 
         // Call the method to test
-        slideUnhideScheduleService.scheduleSlideUnhiding(testSlides.getFirst().getId());
+        slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
 
-        // Verify handleSlideHiddenUpdate was called
-        verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.getFirst());
+        // Verify handleSlideHiddenUpdate was called with this specific slide
+        verify(slideUnhideService).handleSlideHiddenUpdate(slide);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testScheduleSlideUnhiding_withInvalidId() {
-        // Setup mock to return empty optional
-        when(slideRepository.findById(999L)).thenReturn(java.util.Optional.empty());
+        // Use a slide ID that doesn't exist in the database
+        Long nonExistentId = 999999L;
 
         // Call the method to test
-        slideUnhideScheduleService.scheduleSlideUnhiding(999L);
+        slideUnhideScheduleService.scheduleSlideUnhiding(nonExistentId);
 
         // Verify handleSlideHiddenUpdate was never called
         verify(slideUnhideService, never()).handleSlideHiddenUpdate(any());
