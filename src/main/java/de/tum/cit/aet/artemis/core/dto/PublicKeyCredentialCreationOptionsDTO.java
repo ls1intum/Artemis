@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.webauthn;
+package de.tum.cit.aet.artemis.core.dto;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -14,8 +14,8 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.api.ResidentKeyRequirement;
 
-public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCredentialUserEntity user, ArtemisAttestationConveyancePreference attestation,
-        ArtemisPublicKeyCredentialRpEntity rp, List<ArtemisPublicKeyCredentialParameters> pubKeyCredParams, ArtemisAuthenticatorSelectionCriteria authenticatorSelection,
+public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCredentialUserEntity user, ArtemisAttestationConveyancePreferenceDTO attestation,
+        ArtemisPublicKeyCredentialRpEntityDTO rp, List<ArtemisPublicKeyCredentialParametersDTO> pubKeyCredParams, ArtemisAuthenticatorSelectionCriteriaDTO authenticatorSelection,
         List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions, Duration timeout) implements Serializable {
 
     public PublicKeyCredentialCreationOptions toPublicKeyCredentialCreationOptions() {
@@ -31,7 +31,7 @@ public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCr
                 .id(rp().id())
                 .build()
             )
-             .pubKeyCredParams(ArtemisPublicKeyCredentialParameters.convertToPublicKeyCredentialParameters(pubKeyCredParams()))
+             .pubKeyCredParams(ArtemisPublicKeyCredentialParametersDTO.convertToPublicKeyCredentialParameters(pubKeyCredParams()))
              .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
                  .authenticatorAttachment(authenticatorSelection().authenticatorAttachment())
                  .residentKey(ResidentKeyRequirement.valueOf(authenticatorSelection().residentKey()))

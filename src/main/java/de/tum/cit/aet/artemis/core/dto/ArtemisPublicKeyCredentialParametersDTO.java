@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.webauthn;
+package de.tum.cit.aet.artemis.core.dto;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -9,9 +9,9 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialParamete
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
 /**
- * @see org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters;
+ * @see org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters
  */
-public record ArtemisPublicKeyCredentialParameters(PublicKeyCredentialType type, long coseAlgorithmIdentifier) implements Serializable {
+public record ArtemisPublicKeyCredentialParametersDTO(PublicKeyCredentialType type, long coseAlgorithmIdentifier) implements Serializable {
 
     private enum COSEAlgorithm {
 
@@ -54,7 +54,7 @@ public record ArtemisPublicKeyCredentialParameters(PublicKeyCredentialType type,
         return COSEAlgorithm.fromValue((int) coseAlgorithmIdentifier).getCredentialParameters();
     }
 
-    public static List<PublicKeyCredentialParameters> convertToPublicKeyCredentialParameters(List<ArtemisPublicKeyCredentialParameters> artemisParams) {
-        return Arrays.asList(artemisParams.stream().map(ArtemisPublicKeyCredentialParameters::toPublicKeyCredentialParameters).toArray(PublicKeyCredentialParameters[]::new));
+    public static List<PublicKeyCredentialParameters> convertToPublicKeyCredentialParameters(List<ArtemisPublicKeyCredentialParametersDTO> artemisParams) {
+        return Arrays.asList(artemisParams.stream().map(ArtemisPublicKeyCredentialParametersDTO::toPublicKeyCredentialParameters).toArray(PublicKeyCredentialParameters[]::new));
     }
 }

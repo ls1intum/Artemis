@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository.webauthn;
+package de.tum.cit.aet.artemis.core.dto;
 
 import java.io.Serializable;
 
@@ -7,6 +7,6 @@ import java.io.Serializable;
 /**
  * @see org.springframework.security.web.webauthn.api.AttestationConveyancePreference
  */
-public record ArtemisAttestationConveyancePreference(String value) implements Serializable {
+public record ArtemisAttestationConveyancePreferenceDTO(String value) implements Serializable {
 
 }

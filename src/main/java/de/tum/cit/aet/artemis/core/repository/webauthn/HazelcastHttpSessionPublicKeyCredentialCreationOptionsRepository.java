@@ -17,6 +17,12 @@ import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.dto.ArtemisAttestationConveyancePreferenceDTO;
+import de.tum.cit.aet.artemis.core.dto.ArtemisAuthenticatorSelectionCriteriaDTO;
+import de.tum.cit.aet.artemis.core.dto.ArtemisPublicKeyCredentialParametersDTO;
+import de.tum.cit.aet.artemis.core.dto.ArtemisPublicKeyCredentialRpEntityDTO;
+import de.tum.cit.aet.artemis.core.dto.PublicKeyCredentialCreationOptionsDTO;
+
 public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
@@ -81,12 +87,12 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         return new PublicKeyCredentialCreationOptionsDTO(
             options.getChallenge(),
             options.getUser(),
-            new ArtemisAttestationConveyancePreference(options.getAttestation().getValue()),
-            new ArtemisPublicKeyCredentialRpEntity(options.getRp().getName(), options.getRp().getId()),
+            new ArtemisAttestationConveyancePreferenceDTO(options.getAttestation().getValue()),
+            new ArtemisPublicKeyCredentialRpEntityDTO(options.getRp().getName(), options.getRp().getId()),
             options.getPubKeyCredParams().stream()
-                .map(param -> new ArtemisPublicKeyCredentialParameters(param.getType(), param.getAlg().getValue()))
+                .map(param -> new ArtemisPublicKeyCredentialParametersDTO(param.getType(), param.getAlg().getValue()))
                 .toList(),
-            new ArtemisAuthenticatorSelectionCriteria(
+            new ArtemisAuthenticatorSelectionCriteriaDTO(
                 options.getAuthenticatorSelection().getAuthenticatorAttachment(),
                 options.getAuthenticatorSelection().getResidentKey().toString(),
                 options.getAuthenticatorSelection().getUserVerification()),
