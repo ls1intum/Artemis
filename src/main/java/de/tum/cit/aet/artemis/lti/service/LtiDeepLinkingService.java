@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -198,12 +197,9 @@ public class LtiDeepLinkingService {
      * Create a content item for a group of exercises.
      */
     private LtiContentItem setGroupedExerciseContentItem(String courseId, Set<Long> exerciseIds) {
-        List<Exercise> exercises = new ArrayList<>();
 
-        for (Long exerciseId : exerciseIds) {
-            Optional<Exercise> exerciseOpt = exerciseRepository.findById(exerciseId);
-            exerciseOpt.ifPresent(exercises::add);
-        }
+        List<Exercise> exercises = exerciseRepository.findAllById(exerciseIds);
+
         if (exercises.isEmpty()) {
             throw new BadRequestAlertException("No exercises found.", "LTI", "exercisesNotFound");
         }
@@ -224,12 +220,9 @@ public class LtiDeepLinkingService {
      * Create a content item for a group of lectures.
      */
     private LtiContentItem setGroupedLectureContentItem(String courseId, Set<Long> lectureIds) {
-        List<Lecture> lectures = new ArrayList<>();
 
-        for (Long lectureId : lectureIds) {
-            Optional<Lecture> lectureOpt = lectureRepository.findById(lectureId);
-            lectureOpt.ifPresent(lectures::add);
-        }
+        List<Lecture> lectures = lectureRepository.findAllById(lectureIds);
+
         if (lectures.isEmpty()) {
             throw new BadRequestAlertException("No lectures found.", "LTI", "lecturesNotFound");
         }

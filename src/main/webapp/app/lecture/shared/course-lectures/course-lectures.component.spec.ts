@@ -70,9 +70,9 @@ describe('CourseLecturesComponent', () => {
         ltiService.setMultiLaunch(false);
 
         expect(component.isMultiLaunch).toBeFalse();
-        expect(processSpy).toHaveBeenCalled();
-        expect(sortSpy).toHaveBeenCalled();
-        expect(mapSpy).toHaveBeenCalled();
+        expect(processSpy).toHaveBeenCalledOnce();
+        expect(sortSpy).toHaveBeenCalledOnce();
+        expect(mapSpy).toHaveBeenCalledOnce();
     }));
 
     it('should fetch lectures for multi-launch when lectureIDs are provided', fakeAsync(() => {
