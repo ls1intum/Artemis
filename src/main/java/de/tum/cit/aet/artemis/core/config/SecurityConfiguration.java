@@ -305,17 +305,18 @@ public class SecurityConfiguration {
         if (passkeyEnabled) {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
             URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();
-            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
-                    publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialCreationOptionsRepository(), publicKeyCredentialRequestOptionsRepository());
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
+                converter,
+                jwtCookieService,
+                userDetailsService,
+                publicKeyCredentialUserEntityRepository,
+                userCredentialRepository,
+                publicKeyCredentialCreationOptionsRepository(),
+                publicKeyCredentialRequestOptionsRepository()
+            );
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(
-                        clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString(),
-                        ensureTrailingSlash(clientUrlToRegisterPasskey.toString()),
-                        ensureTrailingSlash(clientUrlWithPort.toString()),
-                        clientUrlToRegisterPasskey.getHost(), "http://localhost:9000", "http://localhost:8083"
-                    )
-//                    .allowedOrigins(clientUrl.toString()) // with this version passkeys can be registered
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString())
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
             });
@@ -330,10 +331,6 @@ public class SecurityConfiguration {
 
         // Builds and returns the SecurityFilterChain.
         return http.build();
-    }
-
-    private String ensureTrailingSlash(String url) {
-        return url.endsWith("/") ? url : url + "/";
     }
 
     /**
