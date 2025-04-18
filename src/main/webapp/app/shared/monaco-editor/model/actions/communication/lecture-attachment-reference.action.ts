@@ -1,4 +1,5 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { inject } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -38,12 +39,11 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
 
     lecturesWithDetails: LectureWithDetails[] = [];
 
-    constructor(
-        // TODO: use inject instead of constructor injection
-        private readonly metisService: MetisService,
-        private readonly lectureService: LectureService,
-        private readonly fileService: FileService,
-    ) {
+    private readonly metisService = inject(MetisService);
+    private readonly lectureService = inject(LectureService);
+    private readonly fileService = inject(FileService);
+
+    constructor() {
         super(LectureAttachmentReferenceAction.ID, 'artemisApp.metis.editor.lecture');
         // TODO: do we really need all lectures and slides, this call is quite heavy and slow???
         firstValueFrom(this.lectureService.findAllByCourseIdWithSlides(this.metisService.getCourse().id!)).then((response) => {

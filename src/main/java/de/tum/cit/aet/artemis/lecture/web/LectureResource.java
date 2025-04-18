@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
-import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -321,31 +320,6 @@ public class LectureResource {
     }
 
     /**
-     * GET /lectures/:lectureId/details-with-slides : get the "lectureId" lecture with active lecture units and with slides.
-     *
-     * @param lectureId the lectureId of the lecture to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the lecture including posts, lecture units and competencies, or with status 404 (Not Found)
-     */
-    @GetMapping("lectures/{lectureId}/details-with-slides")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Lecture> getLectureWithDetailsAndSlides(@PathVariable long lectureId) {
-        log.debug("REST request to get lecture {} with details with slides ", lectureId);
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(lectureId);
-        Course course = lecture.getCourse();
-        if (course == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkIsAllowedToSeeLectureElseThrow(lecture, user);
-
-        competencyApi.orElseThrow(() -> new AtlasNotPresentException(CompetencyApi.class)).addCompetencyLinksToExerciseUnits(lecture);
-        lectureService.filterActiveAttachmentUnits(lecture);
-        lectureService.filterActiveAttachments(lecture, user);
-        lectureService.filterHiddenPagesOfAttachmentUnits(lecture);
-        return ResponseEntity.ok(lecture);
-    }
-
-    /**
      * GET /lectures/:lectureId/title : Returns the title of the lecture with the given id
      *
      * @param lectureId the id of the lecture
@@ -370,20 +344,12 @@ public class LectureResource {
         Set<Exercise> exercisesWithAllInformationNeeded = exerciseService
                 .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
-        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
-            if (lectureUnit == null) {
-                return false;
-            }
-            if (lectureUnit instanceof ExerciseUnit) {
-                return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
-            }
-            else if (lectureUnit instanceof AttachmentUnit) {
-                return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-            }
-            else {
-                return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-            }
+        List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> switch (lectureUnit) {
+            case null -> false;
+            case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                    && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
+            case AttachmentUnit attachmentUnit -> attachmentUnit.getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+            default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 
