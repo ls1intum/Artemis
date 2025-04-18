@@ -181,7 +181,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     private loadAll() {
         this.lectureService
-            .findAllByCourseIdWithSlides(this.courseId)
+            .findAllByCourseId(this.courseId)
             .pipe(
                 filter((res: HttpResponse<Lecture[]>) => res.ok),
                 map((res: HttpResponse<Lecture[]>) => res.body),
