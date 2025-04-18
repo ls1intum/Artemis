@@ -7,6 +7,8 @@ artemis:
         enabled: true
     text:
         enabled: true
+    tutorialgroup:
+        enabled: true
     user-management:
       passkey:
         enabled: true # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME

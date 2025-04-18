@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -251,8 +252,13 @@ public class ChannelResource extends ConversationManagementResource {
         if (createdChannel.getIsCourseWide() && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
             var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), createdChannel.getName(),
                     createdChannel.getId());
-            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(
-                    Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName()));
+            // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
+            Set<String> groupNames = new HashSet<>();
+            groupNames.add(course.getStudentGroupName());
+            groupNames.add(course.getTeachingAssistantGroupName());
+            groupNames.add(course.getEditorGroupName());
+            groupNames.add(course.getInstructorGroupName());
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
 
             courseNotificationService.sendCourseNotification(addedToChannelNotification,
                     recipients.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());

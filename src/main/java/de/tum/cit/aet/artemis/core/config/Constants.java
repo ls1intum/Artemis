@@ -129,16 +129,6 @@ public final class Constants {
 
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
-    public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
-
-    public static final String BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE = "Build run triggered for programming exercise";
-
-    public static final String BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE = "All builds triggered for programming exercise";
-
-    public static final String PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION = "When stashing the changes for the student repositories, not all operations were successful. Number of failed operations: ";
-
-    public static final String PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION = "The unsubmitted changes in the student repositories for this programming exercise were stashed successfully.";
-
     /**
      * Maximum length in the database for the feedback detail text.
      */
@@ -405,6 +395,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_TEXT = "text";
 
     /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -425,6 +420,11 @@ public final class Constants {
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
 
     /**
+     * The name of the property used to enable or disable tutorial group functionality.
+     */
+    public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
+
+    /**
      * The name of the property used to enable or disable the passkey authentication functionality.
      */
     public static final String PASSKEY_ENABLED_PROPERTY_NAME = "artemis.user-management.passkey.enabled";
@@ -443,11 +443,6 @@ public final class Constants {
      * The value of the version field we send with each push notification to the native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_VERSION = 1;
-
-    /**
-     * The value of the version field we send with each push notification to the native clients (Android & iOS).
-     */
-    public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
 
     /**
      * The directory in the docker container in which the build script is executed
