@@ -136,12 +136,15 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
         var createCredentialOptionsFilter = new ArtemisPublicKeyCredentialCreationOptionsFilter(rpOperations);
         createCredentialOptionsFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
 
+        var webAuthnRegistrationFilter = new WebAuthnRegistrationFilter(userCredentialRepository, rpOperations);
+        webAuthnRegistrationFilter.setCreationOptionsRepository(publicKeyCredentialCreationOptionsRepository);
+
         var authOptionsFilter = new PublicKeyCredentialRequestOptionsFilter(rpOperations);
         authOptionsFilter.setRequestOptionsRepository(publicKeyCredentialRequestOptionsRepository);
 
         webAuthnAuthnFilter.setAuthenticationManager(new ProviderManager(new WebAuthnAuthenticationProvider(rpOperations, userDetailsService)));
         http.addFilterBefore(webAuthnAuthnFilter, BasicAuthenticationFilter.class);
-        http.addFilterAfter(new WebAuthnRegistrationFilter(userCredentialRepository, rpOperations), AuthorizationFilter.class);
+        http.addFilterAfter(webAuthnRegistrationFilter, AuthorizationFilter.class);
         http.addFilterBefore(createCredentialOptionsFilter, AuthorizationFilter.class);
         http.addFilterBefore(authOptionsFilter, AuthorizationFilter.class);
     }

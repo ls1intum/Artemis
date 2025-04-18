@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
-import java.time.Duration;
-import java.util.List;
 import java.util.Set;
 
 import jakarta.annotation.PostConstruct;
@@ -12,10 +10,7 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.web.webauthn.api.Bytes;
-import org.springframework.security.web.webauthn.api.ImmutablePublicKeyCredentialUserEntity;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 
 import com.hazelcast.cluster.Member;
@@ -55,10 +50,12 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
+        // TODO sessionId appears to change and not to equal the requestedSessionId - is there a better way than using the userId?
+        var userId = request.getRemoteUser();
 
         if (options != null) {
             // creationOptionsMap.put(session.getId(), toDTO(options));
-            creationOptionsMap.put(session.getId(), toDTO(options));
+            creationOptionsMap.put(userId, toDTO(options));
         }
         else {
             // TODO verify this has no unwanted sideeffects (e.g. save method called with null options on different node)
@@ -68,61 +65,36 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     }
 
     public PublicKeyCredentialCreationOptions load(HttpServletRequest request) {
-        String sessionId = request.getRequestedSessionId();
-        if (sessionId == null) {
-            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialCreationOptions.");
+        var userId = request.getRemoteUser();
+        if (userId == null) {
+            log.warn("User ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialCreationOptions.");
             return null;
         }
 
-        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
+        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", userId);
         logHazelcastMap();
-        return fromDTO(creationOptionsMap.get(sessionId));
+        return creationOptionsMap.get(userId).toPublicKeyCredentialCreationOptions();
     }
 
     private PublicKeyCredentialCreationOptionsDTO toDTO(PublicKeyCredentialCreationOptions options) {
-        PublicKeyCredentialCreationOptionsDTO dto = new PublicKeyCredentialCreationOptionsDTO();
-        dto.setRpName(options.getRp().getName());
-        dto.setUserId(options.getUser().getId().toBase64UrlString());
-        dto.setUserName(options.getUser().getName());
-        dto.setUserDisplayName(options.getUser().getDisplayName());
-        dto.setChallenge(options.getChallenge().toBase64UrlString());
-        dto.setPubKeyCredParams(options.getPubKeyCredParams().stream().map(param -> param.getAlg().toString()).toList());
-        // dto.setPublicKeyCredentialCreationOptions(options);
-        return dto;
-    }
-
-    private PublicKeyCredentialCreationOptions fromDTO(PublicKeyCredentialCreationOptionsDTO dto) {
         //@formatter:off
-        return PublicKeyCredentialCreationOptions.builder()
-            .rp(org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity.builder()
-                .name(dto.getRpName())
-                .id("example-id") // todo replace with actual id
-                .build())
-            .user(ImmutablePublicKeyCredentialUserEntity.builder().id(Bytes.fromBase64(dto.getUserId())).name(dto.getUserName()).displayName(dto.getUserDisplayName()).build())
-            .challenge(Bytes.fromBase64(dto.getChallenge()))
-            .pubKeyCredParams(dto.getPubKeyCredParams().stream()
-                .map(this::mapToPublicKeyCredentialParameters)
-                .toList())
-            .timeout(Duration.ofSeconds(300)) // Example timeout
-            .excludeCredentials(List.of()) // Example empty list
-            .authenticatorSelection(null) // Example null value
-            .attestation(null) // Example null value
-            .extensions(null) // Example null value
-            .build();
+        return new PublicKeyCredentialCreationOptionsDTO(
+            options.getChallenge(),
+            options.getUser(),
+            new ArtemisAttestationConveyancePreference(options.getAttestation().getValue()),
+            new ArtemisPublicKeyCredentialRpEntity(options.getRp().getName(), options.getRp().getId()),
+            options.getPubKeyCredParams().stream()
+                .map(param -> new ArtemisPublicKeyCredentialParameters(param.getType(), param.getAlg().getValue()))
+                .toList(),
+            new ArtemisAuthenticatorSelectionCriteria(
+                options.getAuthenticatorSelection().getAuthenticatorAttachment(),
+                options.getAuthenticatorSelection().getResidentKey().toString(),
+                options.getAuthenticatorSelection().getUserVerification()),
+            options.getExcludeCredentials(),
+            options.getExtensions(),
+            options.getTimeout()
+        );
         //@formatter:on
-    }
-
-    private PublicKeyCredentialParameters mapToPublicKeyCredentialParameters(String alg) {
-        return switch (Integer.parseInt(alg)) {
-            case -7 -> PublicKeyCredentialParameters.ES256;
-            case -35 -> PublicKeyCredentialParameters.ES384;
-            case -36 -> PublicKeyCredentialParameters.ES512;
-            case -257 -> PublicKeyCredentialParameters.RS256;
-            case -258 -> PublicKeyCredentialParameters.RS384;
-            case -259 -> PublicKeyCredentialParameters.RS512;
-            case -8 -> PublicKeyCredentialParameters.EdDSA;
-            default -> throw new IllegalArgumentException("Unsupported algorithm: " + alg);
-        };
     }
 
     private void logClusterMembers(HazelcastInstance hazelcastInstance) {
@@ -144,7 +116,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         }
         else {
             creationOptionsMap.forEach((key, value) -> {
-                log.info("\tEntry in Hazelcast map '{}': Key = {}, Challenge = {}", MAP_NAME, key, value.getChallenge());
+                log.info("\tEntry in Hazelcast map '{}': Key = {}, Challenge = {}", MAP_NAME, key, value.challenge());
             });
         }
     }

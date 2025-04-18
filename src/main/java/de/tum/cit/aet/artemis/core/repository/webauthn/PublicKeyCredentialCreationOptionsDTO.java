@@ -1,68 +1,46 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.List;
 
-public class PublicKeyCredentialCreationOptionsDTO implements Serializable {
+import org.springframework.security.web.webauthn.api.AttestationConveyancePreference;
+import org.springframework.security.web.webauthn.api.AuthenticationExtensionsClientInputs;
+import org.springframework.security.web.webauthn.api.AuthenticatorSelectionCriteria;
+import org.springframework.security.web.webauthn.api.Bytes;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialDescriptor;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialRpEntity;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
+import org.springframework.security.web.webauthn.api.ResidentKeyRequirement;
 
-    private String rpName;
+public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCredentialUserEntity user, ArtemisAttestationConveyancePreference attestation,
+        ArtemisPublicKeyCredentialRpEntity rp, List<ArtemisPublicKeyCredentialParameters> pubKeyCredParams, ArtemisAuthenticatorSelectionCriteria authenticatorSelection,
+        List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions, Duration timeout) implements Serializable {
 
-    private String userId;
-
-    private String userName;
-
-    private String userDisplayName;
-
-    private String challenge;
-
-    private List<String> pubKeyCredParams;
-
-    // Getters and setters
-    public String getRpName() {
-        return rpName;
-    }
-
-    public void setRpName(String rpName) {
-        this.rpName = rpName;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getUserDisplayName() {
-        return userDisplayName;
-    }
-
-    public void setUserDisplayName(String userDisplayName) {
-        this.userDisplayName = userDisplayName;
-    }
-
-    public String getChallenge() {
-        return challenge;
-    }
-
-    public void setChallenge(String challenge) {
-        this.challenge = challenge;
-    }
-
-    public List<String> getPubKeyCredParams() {
-        return pubKeyCredParams;
-    }
-
-    public void setPubKeyCredParams(List<String> pubKeyCredParams) {
-        this.pubKeyCredParams = pubKeyCredParams;
+    public PublicKeyCredentialCreationOptions toPublicKeyCredentialCreationOptions() {
+        //@formatter:off
+        return PublicKeyCredentialCreationOptions.builder()
+            .challenge(challenge())
+            .user(user())
+            .attestation(
+                AttestationConveyancePreference.valueOf(attestation().value())
+            )
+            .rp(PublicKeyCredentialRpEntity.builder()
+                .name(rp().name())
+                .id(rp().id())
+                .build()
+            )
+             .pubKeyCredParams(ArtemisPublicKeyCredentialParameters.convertToPublicKeyCredentialParameters(pubKeyCredParams()))
+             .authenticatorSelection(AuthenticatorSelectionCriteria.builder()
+                 .authenticatorAttachment(authenticatorSelection().authenticatorAttachment())
+                 .residentKey(ResidentKeyRequirement.valueOf(authenticatorSelection().residentKey()))
+                 .userVerification(authenticatorSelection().userVerification())
+                 .build())
+            .excludeCredentials(excludeCredentials())
+            .extensions(extensions())
+            .timeout(timeout())
+            .build();
+        //@formatter:on
     }
 }
