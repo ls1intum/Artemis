@@ -56,7 +56,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             authOptionsMap.put(session.getId(), options);
         }
         else {
-            // TODO verify this has no unwanted sideeffects (e.g. save method called with null options on different node)
+            // TODO verify this has no unwanted side-effects (e.g. save method called with null options on different node)
             // hazelcastMap.remove(session.getId());
         }
         logHazelcastMap();

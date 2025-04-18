@@ -41,12 +41,14 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
+import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -193,6 +195,11 @@ public class SecurityConfiguration {
         return new HazelcastPublicKeyCredentialRequestOptionsRepository(hazelcastInstance);
     }
 
+    @Bean
+    public PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository() {
+        return new HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(hazelcastInstance);
+    }
+
     /**
      * Defines the hierarchy of roles within the application's security context.
      * <p>
@@ -299,7 +306,7 @@ public class SecurityConfiguration {
             URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
             URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(converter, jwtCookieService, userDetailsService,
-                    publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialRequestOptionsRepository());
+                    publicKeyCredentialUserEntityRepository, userCredentialRepository, publicKeyCredentialCreationOptionsRepository(), publicKeyCredentialRequestOptionsRepository());
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
                     .allowedOrigins(
