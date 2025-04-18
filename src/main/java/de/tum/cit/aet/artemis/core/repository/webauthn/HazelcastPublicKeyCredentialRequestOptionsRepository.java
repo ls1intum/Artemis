@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
+import java.util.Set;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 
+import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -58,7 +61,17 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         logHazlecastMap();
     }
 
+    public void logClusterMembers(HazelcastInstance hazelcastInstance) {
+        Set<Member> members = hazelcastInstance.getCluster().getMembers();
+        log.info("Current Hazelcast cluster has {} member(s):", members.size());
+        for (Member member : members) {
+            log.info("\tMember UUID: {}, Address: {}", member.getUuid(), member.getAddress());
+        }
+    }
+
     private void logHazlecastMap() {
+        logClusterMembers(hazelcastInstance);
+
         int size = authOptionsMap.size();
         log.info("Hazelcast map '{}' contains {} entries.", MAP_NAME, size);
 
