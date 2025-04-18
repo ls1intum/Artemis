@@ -121,7 +121,6 @@ export class CourseSidebarItemService {
             icon: faPersonChalkboard,
             title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
-            featureToggle: FeatureToggle.TutorialGroups,
             hidden: false,
         };
     }
@@ -251,7 +250,6 @@ export class CourseSidebarItemService {
     getNotificationSettingsItem(): SidebarItem {
         return {
             routerLink: 'settings',
-            featureToggle: FeatureToggle.CourseSpecificNotifications,
             icon: faCog,
             title: 'Notification Settings',
             translation: 'artemisApp.courseOverview.menu.settings',
