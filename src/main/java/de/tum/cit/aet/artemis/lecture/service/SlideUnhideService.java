@@ -1,135 +1,32 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledFuture;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.ApplicationListener;
-import org.springframework.scheduling.TaskScheduler;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.lecture.domain.Attachment;
-import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
- * Service that dynamically schedules tasks to unhide slides at their expiration time.
+ * Service for managing slide unhiding operations in a multi-node environment.
+ * This service handles the messaging aspects.
  */
-// TODO: currently disabled because of a misconfiguration, scheduling must be independent of secondary nodes
-// @Profile(PROFILE_SCHEDULING)
-// @Service
-public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {
+@Profile(PROFILE_CORE)
+@Service
+public class SlideUnhideService {
 
-    private final SlideRepository slideRepository;
+    private final InstanceMessageSendService instanceMessageSendService;
 
-    private final TaskScheduler taskScheduler;
-
-    private final AttachmentService attachmentService;
-
-    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
+    private final SlideUnhideExecutionService slideUnhideExecutionService;
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
-    public SlideUnhideService(SlideRepository slideRepository, TaskScheduler taskScheduler, AttachmentService attachmentService) {
-        this.slideRepository = slideRepository;
-        this.taskScheduler = taskScheduler;
-        this.attachmentService = attachmentService;
-    }
-
-    /**
-     * Method called when the application is ready.
-     * It loads all hidden slides and schedules tasks to unhide them at their expiration time.
-     */
-    @Override
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        scheduleAllHiddenSlides();
-    }
-
-    /**
-     * Loads all slides with a non-null hidden timestamp and schedules their unhiding.
-     */
-    public void scheduleAllHiddenSlides() {
-        List<Slide> hiddenSlides = slideRepository.findAllByHiddenNotNull();
-
-        for (Slide slide : hiddenSlides) {
-            scheduleSlideUnhiding(slide);
-        }
-    }
-
-    /**
-     * Schedules a task to unhide a specific slide at its expiration time.
-     * If the expiration time has already passed, unhides it immediately.
-     *
-     * @param slide The slide to be unhidden
-     */
-    public void scheduleSlideUnhiding(Slide slide) {
-        if (slide.getHidden() == null) {
-            return;
-        }
-
-        // Cancel any existing scheduled task for this slide
-        cancelScheduledUnhiding(slide.getId());
-
-        ZonedDateTime unhideDate = slide.getHidden();
-        Instant unhideTime = unhideDate.toInstant();
-        Instant now = Instant.now();
-
-        if (unhideTime.isBefore(now)) {
-            this.unhideSlide(slide.getId());
-        }
-        else {
-            ScheduledFuture<?> scheduledTask = taskScheduler.schedule(() -> this.unhideSlide(slide.getId()), unhideTime);
-            scheduledTasks.put(slide.getId(), scheduledTask);
-        }
-    }
-
-    /**
-     * Unhides a slide by setting its hidden property to null.
-     * After unhiding, regenerates the student version of the attachment.
-     *
-     * @param slideId The ID of the slide to unhide
-     */
-    public void unhideSlide(Long slideId) {
-        slideRepository.findById(slideId).ifPresent(slide -> {
-            AttachmentUnit attachmentUnit = slide.getAttachmentUnit();
-            Attachment attachment = null;
-            if (attachmentUnit != null) {
-                attachment = attachmentUnit.getAttachment();
-            }
-
-            // Use repository method to handle transaction
-            slideRepository.unhideSlide(slideId);
-            scheduledTasks.remove(slideId);
-
-            // Regenerate student version of the attachment if applicable
-            if (attachment != null) {
-                try {
-                    attachmentService.regenerateStudentVersion(attachment);
-                }
-                catch (Exception e) {
-                    log.error("Failed to regenerate student version for attachment {} after unhiding slide {}: {}", attachment.getId(), slideId, e.getMessage(), e);
-                }
-            }
-        });
-    }
-
-    /**
-     * Cancels a scheduled unhiding task for a slide.
-     *
-     * @param slideId The ID of the slide whose task should be canceled
-     */
-    public void cancelScheduledUnhiding(Long slideId) {
-        ScheduledFuture<?> scheduledTask = scheduledTasks.get(slideId);
-        if (scheduledTask != null) {
-            scheduledTask.cancel(false);
-            scheduledTasks.remove(slideId);
-        }
+    public SlideUnhideService(InstanceMessageSendService instanceMessageSendService, SlideUnhideExecutionService slideUnhideExecutionService) {
+        this.instanceMessageSendService = instanceMessageSendService;
+        this.slideUnhideExecutionService = slideUnhideExecutionService;
     }
 
     /**
@@ -140,10 +37,23 @@ public class SlideUnhideService implements ApplicationListener<ApplicationReadyE
      */
     public void handleSlideHiddenUpdate(Slide slide) {
         if (slide.getHidden() != null) {
-            scheduleSlideUnhiding(slide);
+            // Send message to scheduling node to schedule unhiding
+            instanceMessageSendService.sendSlideUnhideSchedule(slide.getId());
+            log.debug("Sent slide unhide schedule message for slide {} with unhide time {}", slide.getId(), slide.getHidden());
         }
         else {
-            cancelScheduledUnhiding(slide.getId());
+            // Send message to cancel any existing scheduled tasks
+            instanceMessageSendService.sendSlideUnhideScheduleCancel(slide.getId());
+            log.debug("Sent slide unhide cancel message for slide {}", slide.getId());
         }
+    }
+
+    /**
+     * Unhides a slide by delegating to the execution service.
+     *
+     * @param slideId The ID of the slide to unhide
+     */
+    public void unhideSlide(Long slideId) {
+        slideUnhideExecutionService.unhideSlide(slideId);
     }
 }

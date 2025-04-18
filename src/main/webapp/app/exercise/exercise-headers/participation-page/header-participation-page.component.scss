@@ -1,11 +1,11 @@
 @import '../../../../content/scss/artemis-variables';
 
 .course-info-bar--participation {
-    $margin: -1rem;
+    $margin: -0.5rem;
     $top-border-radius: 3px;
 
     min-height: unset;
-    margin: $margin $margin 0 $margin;
+    margin: $margin 0 0 $margin;
     background-color: var(--header-participation-page-info-bar-background);
     border-top-left-radius: $top-border-radius;
     border-top-right-radius: $top-border-radius;

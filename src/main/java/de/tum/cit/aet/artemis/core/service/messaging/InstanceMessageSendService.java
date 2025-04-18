@@ -84,4 +84,18 @@ public interface InstanceMessageSendService {
      * @param quizExerciseId the id of the quiz exercise that should be no longer be scheduled
      */
     void sendQuizExerciseStartCancel(Long quizExerciseId);
+
+    /**
+     * Send a message to schedule the unhiding of a slide at its expiration time
+     *
+     * @param slideId the id of the slide that should be scheduled for unhiding
+     */
+    void sendSlideUnhideSchedule(Long slideId);
+
+    /**
+     * Send a message to cancel the scheduled unhiding of a slide
+     *
+     * @param slideId the id of the slide whose unhiding task should be cancelled
+     */
+    void sendSlideUnhideScheduleCancel(Long slideId);
 }
