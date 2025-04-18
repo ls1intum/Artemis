@@ -51,8 +51,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -72,15 +70,13 @@ public class ConversationMessagingService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     private final SingleUserNotificationService singleUserNotificationService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
             ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService,
-            PostRepository postRepository, FeatureToggleService featureToggleService, SingleUserNotificationService singleUserNotificationService) {
+            PostRepository postRepository, SingleUserNotificationService singleUserNotificationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
                 savedPostRepository);
         this.conversationService = conversationService;
@@ -88,7 +84,6 @@ public class ConversationMessagingService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
-        this.featureToggleService = featureToggleService;
         this.singleUserNotificationService = singleUserNotificationService;
     }
 
@@ -188,58 +183,56 @@ public class ConversationMessagingService extends PostingService {
         var post = createdConversationMessage.messageWithHiddenDetails();
         var author = post.getAuthor();
 
-        if (featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
-            String channelType = switch (conversation) {
-                case OneToOneChat ignored -> "oneToOneChat";
-                case GroupChat ignored -> "groupChat";
-                default -> "channel";
-            };
+        String channelType = switch (conversation) {
+            case OneToOneChat ignored -> "oneToOneChat";
+            case GroupChat ignored -> "groupChat";
+            default -> "channel";
+        };
 
-            var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
-                    .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
+        var mentionedUserRecipients = singleUserNotificationService.filterAllowedRecipientsInMentionedUsers(createdConversationMessage.mentionedUsers(), conversation)
+                .filter((mentionedUser) -> !Objects.equals(mentionedUser.getId(), author.getId())).toList();
 
-            if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
-                var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
-                        post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
+        if (conversation instanceof Channel channel && channel.getIsAnnouncementChannel()) {
+            var newAnnouncementNotification = new NewAnnouncementNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getTitle(),
+                    post.getContent(), author.getName(), author.getImageUrl(), author.getId(), conversation.getId());
 
-                // Announcements are always sent, even for hidden/muted channels
-                courseNotificationService.sendCourseNotification(newAnnouncementNotification,
-                        recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
-                            var user = new User(summary.userId());
-                            user.setLogin(summary.userLogin());
-                            user.setEmail(summary.userEmail());
-                            user.setFirstName(summary.firstName());
-                            user.setLastName(summary.lastName());
-                            user.setLangKey(summary.userLangKey());
-                            return user;
-                        }).toList());
-            }
-            else {
-                var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
-                        conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
-
-                var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
-
-                // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
-                // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
-                courseNotificationService.sendCourseNotification(newPostNotification,
-                        recipientSummaries.stream()
-                                .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
-                                        && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
-                                        && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
-                                .map((summary) -> {
-                                    var user = new User(summary.userId());
-                                    user.setLogin(summary.userLogin());
-                                    return user;
-                                }).toList());
-            }
-
-            var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(),
-                    post.getContent(), post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(),
-                    post.getAuthor().getId(), post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
-
-            this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
+            // Announcements are always sent, even for hidden/muted channels
+            courseNotificationService.sendCourseNotification(newAnnouncementNotification,
+                    recipientSummaries.stream().filter((summary) -> summary.userId() != author.getId()).map((summary) -> {
+                        var user = new User(summary.userId());
+                        user.setLogin(summary.userLogin());
+                        user.setEmail(summary.userEmail());
+                        user.setFirstName(summary.firstName());
+                        user.setLastName(summary.lastName());
+                        user.setLangKey(summary.userLangKey());
+                        return user;
+                    }).toList());
         }
+        else {
+            var newPostNotification = new NewPostNotification(course.getId(), course.getTitle(), course.getCourseIcon(), post.getId(), post.getContent(), conversation.getId(),
+                    conversation.getHumanReadableNameForReceiver(post.getAuthor()), channelType, author.getName(), author.getImageUrl(), author.getId());
+
+            var isChannelVisibleForStudents = (conversation instanceof Channel channel) && conversationService.isChannelVisibleToStudents(channel);
+
+            // We only send notifications to users that are not the author, that are part of the conversation, that have the role rights to see it,
+            // that did not mute or hide it and if they were not mentioned (since they get a separate notification for that)
+            courseNotificationService.sendCourseNotification(newPostNotification,
+                    recipientSummaries.stream()
+                            .filter((summary) -> summary.userId() != author.getId() && !summary.isConversationHidden() && !summary.isConversationMuted()
+                                    && (isChannelVisibleForStudents || summary.isAtLeastTutorInCourse())
+                                    && mentionedUserRecipients.stream().noneMatch((mentionedUser) -> summary.userId() == mentionedUser.getId()))
+                            .map((summary) -> {
+                                var user = new User(summary.userId());
+                                user.setLogin(summary.userLogin());
+                                return user;
+                            }).toList());
+        }
+
+        var mentionCourseNotification = new NewMentionNotification(course.getId(), conversation.getCourse().getTitle(), conversation.getCourse().getCourseIcon(), post.getContent(),
+                post.getCreationDate().toString(), post.getAuthor().getName(), post.getId(), null, null, post.getAuthor().getName(), post.getAuthor().getId(),
+                post.getAuthor().getImageUrl(), null, conversation.getHumanReadableNameForReceiver(post.getAuthor()), conversation.getId());
+
+        this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
     }

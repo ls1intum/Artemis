@@ -8,9 +8,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
@@ -19,7 +17,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { TeamService } from 'app/exercise/team/team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
@@ -50,7 +47,6 @@ import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/cours
         FaIconComponent,
         TranslateDirective,
         CourseNotificationOverviewComponent,
-        FeatureToggleHideDirective,
         CourseTitleBarComponent,
         CourseSidebarComponent,
     ],
