@@ -51,17 +51,31 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        logHazlecastMap();
+        logHazelcastMap();
         if (options != null) {
             authOptionsMap.put(session.getId(), options);
         }
         else {
+            // TODO verify this has no unwanted sideeffects (e.g. save method called with null options on different node)
             // hazelcastMap.remove(session.getId());
         }
-        logHazlecastMap();
+        logHazelcastMap();
     }
 
-    public void logClusterMembers(HazelcastInstance hazelcastInstance) {
+    @Override
+    public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
+        String sessionId = request.getRequestedSessionId();
+        if (sessionId == null) {
+            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
+            return null;
+        }
+
+        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
+        logHazelcastMap();
+        return authOptionsMap.get(sessionId);
+    }
+
+    private void logClusterMembers(HazelcastInstance hazelcastInstance) {
         Set<Member> members = hazelcastInstance.getCluster().getMembers();
         log.info("Current Hazelcast cluster has {} member(s):", members.size());
         for (Member member : members) {
@@ -69,7 +83,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         }
     }
 
-    private void logHazlecastMap() {
+    private void logHazelcastMap() {
         logClusterMembers(hazelcastInstance);
 
         int size = authOptionsMap.size();
@@ -83,22 +97,5 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
                 log.info("\tEntry in Hazelcast map '{}': Key = {}, RP ID = {}, Challenge = {}", MAP_NAME, key, value.getRpId(), value.getChallenge());
             });
         }
-    }
-
-    @Override
-    public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
-        String sessionId = request.getRequestedSessionId();
-        if (sessionId == null) {
-            log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
-            return null;
-        }
-
-        log.info("Loading PublicKeyCredentialRequestOptions for session id {}", sessionId);
-
-        // load from hazelcast, if it is stored there
-        // if (hazelcastMap.containsKey(sessionId)) {
-        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
-        logHazlecastMap();
-        return authOptionsMap.get(sessionId);
     }
 }

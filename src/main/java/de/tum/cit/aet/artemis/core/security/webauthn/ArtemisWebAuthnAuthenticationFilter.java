@@ -1,8 +1,5 @@
 package de.tum.cit.aet.artemis.core.security.webauthn;
 
-import java.io.IOException;
-
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -56,15 +53,8 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
     private PublicKeyCredentialRequestOptionsRepository requestOptionsRepository;
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
-
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         log.debug("Attempting to authenticate");
-        // Log request details
-        // log.warn("Request Origin: {}", request.getHeader("Origin"));
-        // log.info("Request Method: {}", request.getMethod());
-        // log.info("Request URI: {}", request.getRequestURI());
-        // request.getHeaderNames().asIterator().forEachRemaining(header -> log.info("Request Header: {} = {}", header, request.getHeader(header)));
-        // request.getParameterMap().forEach((key, value) -> log.info("Request Parameter: {} = {}", key, String.join(", ", value)));
 
         ServletServerHttpRequest httpRequest = new ServletServerHttpRequest(request);
         ResolvableType resolvableType = ResolvableType.forClassWithGenerics(PublicKeyCredential.class, AuthenticatorAssertionResponse.class);
@@ -92,6 +82,7 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
 
         WebAuthnAuthenticationRequestToken token = new WebAuthnAuthenticationRequestToken(authenticationRequest);
         log.debug("WebAuthnAuthenticationRequestToken created: Principal={}, Credentials={}", token.getPrincipal(), token.getCredentials());
+
         // Perform authentication and log details
         Authentication authentication;
         try {
