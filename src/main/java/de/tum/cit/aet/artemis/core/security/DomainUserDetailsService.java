@@ -30,14 +30,8 @@ public class DomainUserDetailsService implements UserDetailsService {
         this.userRepository = userRepository;
     }
 
-    // TODO find a better fix without changing the behaviour of this service
-
     @Override
     public UserDetails loadUserByUsername(final String loginOrEmail) {
-        log.info("Authenticating {}", loginOrEmail);
-        log.info("length of string {}", loginOrEmail.length());
-        long printableCharCount = loginOrEmail.chars().filter(ch -> !Character.isISOControl(ch) && !Character.isWhitespace(ch)).count();
-        log.info("Number of printable characters: {}", printableCharCount);
         String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
 
         User user;
@@ -52,10 +46,6 @@ public class DomainUserDetailsService implements UserDetailsService {
                     .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by login in the database"));
         }
 
-        log.debug("User found: login={}, email={}, activated={}, grantedAuthorities={}", user.getLogin(), user.getEmail(), user.getActivated(), user.getGrantedAuthorities());
-        // if (!user.isInternal()) {
-        // throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
-        // }
         return createSpringSecurityUser(lowercaseLoginOrEmail, user);
     }
 
@@ -65,14 +55,21 @@ public class DomainUserDetailsService implements UserDetailsService {
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
         }
-        log.info("user is activated, trying to create spring security user");
 
         String password = user.getPassword();
-        if (password == null || password.isEmpty()) {
-            log.warn("User {} has a null or empty password, using a default placeholder password", user.getLogin());
-            password = ""; // Provide a default value or handle this case as needed
+        boolean isExternalUserWithoutPassword = password == null && !user.isInternal();
+        if (isExternalUserWithoutPassword) {
+            // SpringSecurity user cannot be created with null password, so we need a temporary placeholder password
+            password = PasswordGenerator.generateTemporaryPassword();
         }
 
-        return new org.springframework.security.core.userdetails.User(user.getLogin(), password, user.getGrantedAuthorities());
+        org.springframework.security.core.userdetails.User springUser = new org.springframework.security.core.userdetails.User(user.getLogin(), password,
+                user.getGrantedAuthorities());
+
+        if (user.getPassword() == null) {
+            springUser.eraseCredentials(); // TODO test if it works, otherwise we need to set a temporary password
+        }
+
+        return springUser;
     }
 }
