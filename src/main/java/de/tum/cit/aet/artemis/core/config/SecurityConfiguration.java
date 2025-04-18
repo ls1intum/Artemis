@@ -120,7 +120,7 @@ public class SecurityConfiguration {
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserDetailsService userDetailsService, HazelcastInstance hazelcastInstance) {
+            UserDetailsService userDetailsService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;

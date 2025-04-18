@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 
@@ -16,16 +18,27 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
 
-    private static final String MAP_NAME = "PublicKeyCredentialRequestOptions";
+    private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
-    private final IMap<String, PublicKeyCredentialRequestOptions> hazelcastMap;
+    private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
 
     static final String DEFAULT_ATTR_NAME = PublicKeyCredentialRequestOptionsRepository.class.getName().concat(".ATTR_NAME");
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(HazelcastInstance hazelcastInstance) {
-        this.hazelcastMap = hazelcastInstance.getMap(MAP_NAME);
+    private final HazelcastInstance hazelcastInstance;
+
+    @PostConstruct
+    public void init() {
+        int authOptionsTimeout = 300; // 5 minutes
+
+        var mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
+        mapConfig.setTimeToLiveSeconds(authOptionsTimeout);
+        authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
+    }
+
+    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     @Override
@@ -37,7 +50,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
         logHazlecastMap();
         if (options != null) {
-            hazelcastMap.put(session.getId(), options);
+            authOptionsMap.put(session.getId(), options);
         }
         else {
             // hazelcastMap.remove(session.getId());
@@ -46,28 +59,22 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
     }
 
     private void logHazlecastMap() {
-        log.info("Logging all elements in the Hazelcast map:");
-        log.info("Hazelcast size: {}", hazelcastMap.size());
-        hazelcastMap.forEach((key, value) -> log.info("Key: {}, rpId: {}, challenge: {}", key, value.getRpId(), value.getChallenge().toString()));
-    }
+        int size = authOptionsMap.size();
+        log.info("Hazelcast map '{}' contains {} entries.", MAP_NAME, size);
 
-    private String getSessionId(HttpServletRequest request) {
-        log.info("Getting session id for request {}", request.getRequestURI());
-
-        // HttpSession session = request.getSession(false);
-
-        // boolean sessionExistsInLocalStorage = session == null;
-        // if (sessionExistsInLocalStorage) {
-        // return request.getSession().getId();
-        // }
-
-        // this should only happen in multinode environments when the session was created on another node (with the `webauthn/authenticate/options` endpoint)
-        return request.getRequestedSessionId();
+        if (size == 0) {
+            log.info("Hazelcast map '{}' is empty.", MAP_NAME);
+        }
+        else {
+            authOptionsMap.forEach((key, value) -> {
+                log.info("\tEntry in Hazelcast map '{}': Key = {}, RP ID = {}, Challenge = {}", MAP_NAME, key, value.getRpId(), value.getChallenge());
+            });
+        }
     }
 
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
-        String sessionId = getSessionId(request);
+        String sessionId = request.getRequestedSessionId();
         if (sessionId == null) {
             log.warn("Session ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialRequestOptions.");
             return null;
@@ -79,23 +86,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         // if (hazelcastMap.containsKey(sessionId)) {
         log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
         logHazlecastMap();
-        return hazelcastMap.get(sessionId);
-        // }
-
-        // not found in hazelcast => we have a new request => read from request options and store it in hazelcast
-        // HttpSession session = request.getSession(false);
-        // if (session == null) {
-        // log.error("Session is null. Unable to load PublicKeyCredentialRequestOptions.");
-        // return null;
-        // }
-        // PublicKeyCredentialRequestOptions options = (PublicKeyCredentialRequestOptions) session.getAttribute(this.attrName);
-        //
-        // log.info("request options from session attribute: {}", options);
-        //
-        // hazelcastMap.put(sessionId, options);
-        //
-        // logHazlecastMap();
-        //
-        // return options;
+        return authOptionsMap.get(sessionId);
     }
 }
