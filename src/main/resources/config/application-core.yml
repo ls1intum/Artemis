@@ -11,7 +11,7 @@ artemis:
         enabled: true
     user-management:
       passkey:
-        enabled: true # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+        enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
 
 spring:
     liquibase:
