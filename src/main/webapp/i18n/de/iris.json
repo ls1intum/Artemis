@@ -125,7 +125,8 @@
                 "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
                 "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
                 "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
-                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten."
+                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten.",
+                "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription an Pyris"
             }
         }
     }

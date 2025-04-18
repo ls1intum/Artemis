@@ -25,7 +25,7 @@
 /src/main/java/de/tum/cit/aet/artemis/programming    @ls1intum/programming-maintainers
 /src/main/java/de/tum/cit/aet/artemis/quiz           @ls1intum/quiz-maintainers
 
-# Client code
+# Client code & client tests
 /src/main/webapp/app/atlas          @ls1intum/atlas-maintainers
 /src/main/webapp/app/buildagent     @ls1intum/programming-maintainers
 /src/main/webapp/app/communication  @ls1intum/communication-maintainers
@@ -50,24 +50,9 @@
 /src/test/java/de/tum/cit/aet/artemis/programming    @ls1intum/programming-maintainers
 /src/test/java/de/tum/cit/aet/artemis/quiz           @ls1intum/quiz-maintainers
 
-# Client tests
-/src/test/javascript/spec/component/exercises/programming       @ls1intum/programming-maintainers
-/src/test/javascript/spec/component/exercises/quiz              @ls1intum/quiz-maintainers
-/src/test/javascript/spec/component/iris                        @ls1intum/iris-maintainers
-/src/test/javascript/spec/component/lecture                     @ls1intum/lectures-maintainers
-/src/test/javascript/spec/component/lecture-unit                @ls1intum/lectures-maintainers
-/src/test/javascript/spec/component/modeling-assessment         @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/modeling-assessment-editor  @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/modeling-editor             @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/modeling-exercise           @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/modeling-explanation-editor @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/modeling-submission         @ls1intum/apollon-maintainers
-/src/test/javascript/spec/component/plagiarism                  @ls1intum/plagiarism-maintainers
-/src/test/javascript/spec/component/programming-assessment      @ls1intum/programming-maintainers
-/src/test/javascript/spec/component/programming-exercise        @ls1intum/programming-maintainers
-/src/test/javascript/spec/component/quiz-exercise               @ls1intum/quiz-maintainers
-/src/test/javascript/spec/component/quiz-statistic              @ls1intum/quiz-maintainers
-/src/test/javascript/spec/component/short-answer-question       @ls1intum/quiz-maintainers
+# Client integration tests
+/src/test/javascript/spec/integration/code-editor     @ls1intum/programming-maintainers
+
 
 # Other
 /docker     @ls1intum/operations-maintainers

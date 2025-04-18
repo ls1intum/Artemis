@@ -1,0 +1,158 @@
+@import '../../../../../../../../node_modules/bootstrap/scss/functions';
+@import '../../../../../../../../node_modules/bootstrap/scss/variables';
+@import '../../../../../../../../node_modules/bootstrap/scss/mixins';
+@import './course-variables';
+
+// ng-deep needed to remove scrollbar from mat-sidebar
+::ng-deep .mat-drawer-inner-container {
+    overflow: hidden !important;
+}
+
+.sidebar-wrapper {
+    overflow-x: hidden;
+    position: sticky;
+    width: 100vw;
+    margin: -1rem -1rem;
+}
+
+.mat-drawer-side {
+    border: none;
+}
+
+.mat-drawer-container {
+    height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
+
+    &.sidenav-height-dev {
+        height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
+    }
+
+    @media (max-width: 768px) {
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
+        height: calc(100dvh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
+    }
+
+    &.exam-wrapper {
+        height: 100vh !important;
+    }
+
+    .mat-drawer {
+        box-sizing: content-box;
+        width: $menu-width-open;
+        transition: width 0.2s ease-in-out !important;
+        height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules));
+
+        &.sidenav-height-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev) - var(--spacing-modules));
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod) - var(--spacing-modules)) !important;
+        }
+    }
+
+    .mat-drawer-content {
+        position: sticky;
+        z-index: 1;
+        display: block;
+        height: calc(100vh - var(--sidebar-footer-height-prod));
+        width: calc(100vw - $menu-width-open);
+        overflow: hidden;
+        margin-left: $menu-width-open !important;
+        transition:
+            width 0.2s ease-in-out,
+            margin-left 0.2s ease-in-out !important;
+
+        &.exam-wrapper {
+            height: 100vh !important;
+        }
+
+        &.sidenav-height-dev {
+            height: calc(100vh - var(--sidebar-footer-height-dev));
+        }
+
+        @media (max-width: 768px) {
+            height: calc(100vh - var(--sidebar-footer-height-prod)) !important;
+            height: calc(100dvh - var(--sidebar-footer-height-prod)) !important;
+        }
+    }
+
+    &.container-closed {
+        .mat-drawer {
+            width: $menu-width-closed;
+        }
+
+        .mat-drawer-content {
+            width: calc(100vw - $menu-width-closed);
+            margin-left: $menu-width-closed !important;
+        }
+    }
+
+    &.exam-is-active {
+        .mat-drawer-content {
+            width: 100vw;
+            margin-left: 0px !important;
+        }
+    }
+
+    @media screen and (max-width: 960px) {
+        .mat-drawer {
+            width: $menu-width-closed;
+        }
+
+        .mat-drawer-content {
+            width: calc(100vw - $menu-width-closed);
+            margin-left: $menu-width-closed !important;
+        }
+    }
+}
+
+a:not(.btn):not(.tab-link):hover {
+    text-decoration: none !important;
+}
+
+.refresh-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.1s ease-out opacity;
+
+    &.active {
+        background-color: var(--overview-refresh-overlay-bg-color);
+        opacity: 1;
+        pointer-events: auto;
+        transition: 0.2s ease-in opacity;
+    }
+
+    .ng-fa-icon {
+        position: relative;
+        top: calc(50vh - 150px - 2.5vh);
+        transform: translateY(-50%);
+        color: var(--overview-refresh-overlay-color);
+    }
+}
+
+.module-bg {
+    background-color: var(--module-bg);
+}
+
+@media print {
+    .mat-drawer {
+        display: none !important; /* Hide the sidebar */
+    }
+
+    .mat-drawer-container,
+    .mat-drawer-container.container-closed {
+        .mat-drawer-content {
+            margin-left: 0 !important; /* Remove any left margin or padding if necessary */
+            width: 100% !important; /* Make the content full width */
+        }
+    }
+}

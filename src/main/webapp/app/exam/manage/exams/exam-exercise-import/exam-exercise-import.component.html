@@ -90,6 +90,7 @@
                                             <input
                                                 type="checkbox"
                                                 class="form-check-input"
+                                                [disabled]="!isExerciseTypeEnabled(exercise.type)"
                                                 [checked]="exerciseIsSelected(exercise, exerciseGroup)"
                                                 (click)="onSelectExercise(exercise, exerciseGroup)"
                                             />

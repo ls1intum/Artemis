@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -15,7 +14,7 @@ import java.util.stream.Collectors;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -26,6 +25,7 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 /**
  * Spring Data JPA repository for the ExamRepository entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Repository
 public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
 
@@ -381,7 +381,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
-    long countByCourse_Id(Long courseId);
+    long countByCourse_Id(long courseId);
 
     /**
      * Returns the title of the exam with the given id.
@@ -506,5 +506,4 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
                 AND registeredUsers.user.id = :userId
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
-
 }

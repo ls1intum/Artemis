@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
@@ -43,9 +43,10 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
         //     modelingExercise = await response.json();
         // });
 
-        test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment }) => {
+        test('Tutor can assess a submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, modelingExerciseAssessment, toggleSidebar }) => {
             await login(tutor, '/course-management');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);
+            await toggleSidebar();
             await courseManagement.checkIfStudentSubmissionExists(studentOne.username);
             await login(tutor, '/course-management');
             await courseManagement.openAssessmentDashboardOfCourse(course.id!);

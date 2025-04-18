@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.communication.service;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -25,8 +25,6 @@ import de.tum.cit.aet.artemis.communication.domain.PostingType;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -95,9 +93,7 @@ public abstract class PostingService {
         }
         catch (Exception e) {
             post.setIsSaved(false);
-            post.getAnswers().forEach(answer -> {
-                answer.setIsSaved(false);
-            });
+            post.getAnswers().forEach(answer -> answer.setIsSaved(false));
         }
     }
 
@@ -106,9 +102,8 @@ public abstract class PostingService {
      *
      * @param updatedAnswerPost answer post that was updated
      * @param course            course the answer post belongs to
-     * @param notification      notification for the update (can be null)
      */
-    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course, Notification notification) {
+    public void preparePostAndBroadcast(AnswerPost updatedAnswerPost, Course course) {
         // we need to explicitly (and newly) add the updated answer post to the answers of the broadcast post to share up-to-date information
         Post updatedPost = updatedAnswerPost.getPost();
         // remove and add operations on sets identify an AnswerPost by its id; to update a certain property of an existing answer post,
@@ -116,7 +111,7 @@ public abstract class PostingService {
         updatedPost.removeAnswerPost(updatedAnswerPost);
         updatedPost.addAnswerPost(updatedAnswerPost);
         preparePostForBroadcast(updatedPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE, notification), course.getId(), null, null);
+        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course.getId(), null, null);
     }
 
     /**
@@ -146,7 +141,7 @@ public abstract class PostingService {
                     recipients = getConversationParticipantsAsSummaries(postConversation);
                 }
                 recipients.forEach(recipient -> websocketMessagingService.sendMessage("/topic/user/" + recipient.userId() + "/notifications/conversations",
-                        new PostDTO(postDTO.post(), postDTO.action(), getNotificationForRecipient(recipient, postDTO.notification(), mentionedUsers))));
+                        new PostDTO(postDTO.post(), postDTO.action())));
             }
         }
         else if (postDTO.post().getPlagiarismCase() != null) {
@@ -223,7 +218,7 @@ public abstract class PostingService {
      * @param posts    the list of posts for which the author roles need to be set
      * @param courseId the ID of the course in which the posts exist
      */
-    protected void setAuthorRoleOfPostings(List<Post> posts, Long courseId) {
+    protected void setAuthorRoleOfPostings(Collection<Post> posts, Long courseId) {
         // prepares a unique set of userIds that authored the current list of postings
         Set<Long> userIds = new HashSet<>();
         posts.forEach(post -> {
@@ -235,7 +230,7 @@ public abstract class PostingService {
         });
 
         // we only fetch the minimal data needed for the mapping to avoid performance issues
-        List<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
+        Set<UserRoleDTO> userRoles = userRepository.findUserRolesInCourse(userIds, courseId);
         log.debug("userRepository.findUserRolesInCourse done for {} authors ", userRoles.size());
 
         Map<Long, UserRoleDTO> authorRoles = userRoles.stream().collect(Collectors.toMap(UserRoleDTO::userId, Function.identity()));
@@ -243,9 +238,7 @@ public abstract class PostingService {
         // sets respective author role to display user authority icon on posting headers
         posts.stream().filter(post -> post.getAuthor() != null).forEach(post -> {
             post.setAuthorRole(authorRoles.get(post.getAuthor().getId()).role());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role());
-            });
+            post.getAnswers().forEach(answerPost -> answerPost.setAuthorRole(authorRoles.get(answerPost.getAuthor().getId()).role()));
         });
     }
 
@@ -313,7 +306,7 @@ public abstract class PostingService {
             matches.put(userLogin, fullName);
         }
 
-        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndLoginIn(matches.keySet());
+        Set<User> mentionedUsers = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(matches.keySet());
 
         if (mentionedUsers.size() != matches.size()) {
             throw new BadRequestAlertException("At least one of the mentioned users does not exist", METIS_POST_ENTITY_NAME, "invalidUserMention");
@@ -331,21 +324,5 @@ public abstract class PostingService {
         });
 
         return mentionedUsers;
-    }
-
-    /**
-     * Returns null of the recipient should not receive a notification
-     *
-     * @param recipient      the recipient
-     * @param notification   the potential notification for the recipient
-     * @param mentionedUsers set of mentioned users in the message
-     * @return null or the provided notification
-     */
-    private Notification getNotificationForRecipient(ConversationNotificationRecipientSummary recipient, Notification notification, Set<User> mentionedUsers) {
-        if (notification instanceof ConversationNotification && !recipient.shouldNotifyRecipient() && !mentionedUsers.contains(new User(recipient.userId()))) {
-            return null;
-        }
-
-        return notification;
     }
 }

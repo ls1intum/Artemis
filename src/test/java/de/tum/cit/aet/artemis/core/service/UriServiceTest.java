@@ -19,9 +19,9 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private final VcsRepositoryUri repositoryUri1 = new VcsRepositoryUri("https://ab12cde@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
 
-    private final VcsRepositoryUri repositoryUri2 = new VcsRepositoryUri("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+    private final VcsRepositoryUri repositoryUri2 = new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
 
-    private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("https://username@artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+    private final VcsRepositoryUri repositoryUri3 = new VcsRepositoryUri("https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
 
     private final VcsRepositoryUri fileRepositoryUri1 = new VcsRepositoryUri(Path.of("C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950").toFile());
 
@@ -47,7 +47,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getRepositorySlugFromRepositoryUri(new VcsRepositoryUri("https://artemistest2gitlab.ase.in.tum.de")));
+                .isThrownBy(() -> uriService.getRepositorySlugFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test
@@ -60,7 +60,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1/ftcscagrading1-username");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getRepositoryPathFromRepositoryUri(new VcsRepositoryUri("https://artemistest2gitlab.ase.in.tum.de")));
+                .isThrownBy(() -> uriService.getRepositoryPathFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test
@@ -73,7 +73,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(repoSlug).isEqualTo("FTCSCAGRADING1");
 
         assertThatExceptionOfType(VersionControlException.class)
-                .isThrownBy(() -> uriService.getProjectKeyFromRepositoryUri(new VcsRepositoryUri("https://artemistest2gitlab.ase.in.tum.de")));
+                .isThrownBy(() -> uriService.getProjectKeyFromRepositoryUri(new VcsRepositoryUri("https://artemistest2.aet.cit.tum.de")));
     }
 
     @Test
@@ -90,7 +90,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
         var solutionProgrammingExerciseParticipation = new SolutionProgrammingExerciseParticipation();
         solutionProgrammingExerciseParticipation.setRepositoryUri(repositoryUri2.toString());
         assertThat(solutionProgrammingExerciseParticipation.getUserIndependentRepositoryUri())
-                .isEqualTo("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+                .isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
 
         var templateProgrammingExerciseParticipation = new TemplateProgrammingExerciseParticipation();
         templateProgrammingExerciseParticipation.setRepositoryUri(repositoryUri1.toString());
@@ -98,11 +98,11 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         var studentParticipation1 = new ProgrammingExerciseStudentParticipation();
         studentParticipation1.setRepositoryUri(repositoryUri2.toString());
-        assertThat(studentParticipation1.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(studentParticipation1.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
 
         var studentParticipation2 = new ProgrammingExerciseStudentParticipation();
         studentParticipation2.setRepositoryUri(repositoryUri3.toString());
-        assertThat(studentParticipation2.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(studentParticipation2.getUserIndependentRepositoryUri()).isEqualTo("https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
 
         assertThat(new ProgrammingExerciseStudentParticipation().getUserIndependentRepositoryUri()).isNull();
 
@@ -114,7 +114,7 @@ class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testGetPlainUrl() {
         assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri1)).isEqualTo("https://repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab12cde.git");
-        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri2)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git");
-        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri3)).isEqualTo("https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
+        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri2)).isEqualTo("https://artemistest2.aet.cit.tum.de/TESTADAPTER/testadapter-exercise.git");
+        assertThat(uriService.getPlainUriFromRepositoryUri(repositoryUri3)).isEqualTo("https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username");
     }
 }

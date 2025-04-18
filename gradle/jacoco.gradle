@@ -1,25 +1,25 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.856, "CLASS": 88]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.856, "CLASS": 89]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
-        "assessment"    :          ["INSTRUCTION": 0.927, "CLASS":  0],
+        "assessment"    :          ["INSTRUCTION": 0.925, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.870, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  6],
+        "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  5],
         "buildagent"    :          ["INSTRUCTION": 0.776, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.895, "CLASS":  2],
-        "core"          :          ["INSTRUCTION": 0.856, "CLASS": 25],
-        "exam"          :          ["INSTRUCTION": 0.895, "CLASS":  4],
-        "exercise"      :          ["INSTRUCTION": 0.918, "CLASS":  0],
-        "fileupload"    :          ["INSTRUCTION": 0.927, "CLASS":  1],
-        "iris"          :          ["INSTRUCTION": 0.750, "CLASS": 26],
-        "lecture"       :          ["INSTRUCTION": 0.910, "CLASS":  0],
+        "communication" :          ["INSTRUCTION": 0.890, "CLASS":  2],
+        "core"          :          ["INSTRUCTION": 0.860, "CLASS": 23],
+        "exam"          :          ["INSTRUCTION": 0.895, "CLASS":  5],
+        "exercise"      :          ["INSTRUCTION": 0.917, "CLASS":  0],
+        "fileupload"    :          ["INSTRUCTION": 0.926, "CLASS":  0],
+        "iris"          :          ["INSTRUCTION": 0.752, "CLASS": 26],
+        "lecture"       :          ["INSTRUCTION": 0.900, "CLASS":  0],
         "lti"           :          ["INSTRUCTION": 0.895, "CLASS":  2],
-        "modeling"      :          ["INSTRUCTION": 0.938, "CLASS":  0],
-        "plagiarism"    :          ["INSTRUCTION": 0.903, "CLASS":  0],
-        "programming"   :          ["INSTRUCTION": 0.764, "CLASS": 15],
+        "modeling"      :          ["INSTRUCTION": 0.932, "CLASS":  0],
+        "plagiarism"    :          ["INSTRUCTION": 0.903, "CLASS":  1],
+        "programming"   :          ["INSTRUCTION": 0.762, "CLASS": 14],
         "quiz"          :          ["INSTRUCTION": 0.892, "CLASS":  7],
-        "text"          :          ["INSTRUCTION": 0.954, "CLASS":  0],
+        "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
         "tutorialgroup" :          ["INSTRUCTION": 0.924, "CLASS":  0],
     ]
     // If no explicit modules defined -> generate reports and validate for each module

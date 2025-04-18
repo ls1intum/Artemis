@@ -1,37 +1,36 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/overview/programming-submission.service';
+import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faCircleNotch, faCodeBranch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/programming-exercise-instructor-submission-state.component';
+import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-instructor-trigger-build-button.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -98,8 +97,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     gradeStepsDTO?: GradeStepsDTO;
     gradeStepsDTOSub: Subscription;
 
-    localVCEnabled = true;
-
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
@@ -109,12 +106,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     exerciseSubmissionState: ExerciseSubmissionState;
 
+    localCIEnabled = true;
     isAdmin = false;
-
     isLoading: boolean;
-
     isSaving: boolean;
-
     afterDueDate = false;
 
     // Icons
@@ -124,7 +119,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     faCircleNotch = faCircleNotch;
     faEraser = faEraser;
     faFilePowerpoint = faFilePowerpoint;
-    faCodeBranch = faCodeBranch;
 
     constructor() {
         this.participationCriteria = {
@@ -139,6 +133,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
         this.registerChangeInParticipations();
         this.isAdmin = this.accountService.isAdmin();
+        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
     }
 
     /**
@@ -185,14 +180,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private loadParticipations(exerciseId: number) {
         this.participationService.findAllParticipationsByExercise(exerciseId, false).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                const programmingExercise = this.exercise as ProgrammingExercise;
-                if (programmingExercise.projectKey) {
-                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                        this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-                    });
-                }
-            }
             this.isLoading = false;
         });
     }

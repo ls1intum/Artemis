@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 
@@ -12,7 +11,7 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -22,13 +21,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @Service
 public class PlagiarismService {
 
@@ -116,7 +116,7 @@ public class PlagiarismService {
 
     /**
      * Retrieves the number of potential plagiarism cases by considering the plagiarism submissions for the exercise
-     * Additionally, it filters out cases for deleted user --> isDeleted = true because we do not delete the user entity entirely.
+     * Additionally, it filters out cases for deleted user --> deleted = true because we do not delete the user entity entirely.
      *
      * @param exerciseId the exercise id for which the potential plagiarism cases should be retrieved
      * @return the number of potential plagiarism cases
@@ -151,7 +151,7 @@ public class PlagiarismService {
     }
 
     /**
-     * Checks if the user the submission belongs to, has not the isDeleted flag set to true
+     * Checks if the user the submission belongs to, has not the deleted flag set to true
      *
      * @param submission the submission to check
      * @return true if the user is NOT deleted, false otherwise

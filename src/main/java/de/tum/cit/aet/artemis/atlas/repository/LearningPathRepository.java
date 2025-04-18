@@ -65,7 +65,7 @@ public interface LearningPathRepository extends ArtemisJpaRepository<LearningPat
             SELECT COUNT (learningPath)
             FROM LearningPath learningPath
             WHERE learningPath.course.id = :courseId
-                AND learningPath.user.isDeleted = FALSE
+                AND learningPath.user.deleted = FALSE
                 AND learningPath.course.studentGroupName MEMBER OF learningPath.user.groups
             """)
     long countLearningPathsOfEnrolledStudentsInCourse(@Param("courseId") long courseId);

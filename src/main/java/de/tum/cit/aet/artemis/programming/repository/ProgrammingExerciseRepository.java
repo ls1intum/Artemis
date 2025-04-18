@@ -65,6 +65,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findByCourseIdWithLatestResultForTemplateSolutionParticipations(@Param("courseId") long courseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation" })
+    Optional<ProgrammingExercise> findWithTemplateParticipationById(long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(long exerciseId);
@@ -503,6 +506,13 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByInstructorOrEditorOrTAGroupNameIn(@Param("groupNames") Set<String> groupNames);
 
+    @Query("""
+            SELECT DISTINCT p.id
+            FROM ProgrammingExercise p
+            WHERE p.exerciseGroup.exam.id = :examId
+            """)
+    Set<Long> findProgrammingExerciseIdsByExamId(@Param("examId") long examId);
+
     // Note: we have to use left join here to avoid issues in the where clause, see the explanation above
     @Query("""
             SELECT pe
@@ -619,6 +629,18 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     // TODO: rename, this method does more than it promises
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId), programmingExerciseId);
+    }
+
+    /**
+     * Find a programming exercise by its id, including template participation.
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     * @throws EntityNotFoundException the programming exercise could not be found.
+     */
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateParticipationElseThrow(long programmingExerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findWithTemplateParticipationById(programmingExerciseId), programmingExerciseId);
     }
 
     /**

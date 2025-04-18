@@ -7,6 +7,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -31,13 +32,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.AddedToChannelNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.ChannelDeletedNotification;
+import de.tum.cit.aet.artemis.communication.domain.course_notifications.RemovedFromChannelNotification;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
@@ -55,6 +59,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
@@ -84,10 +90,15 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
+    private final FeatureToggleService featureToggleService;
+
+    private final CourseNotificationService courseNotificationService;
+
     public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
             ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
             AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi) {
+            ConversationService conversationService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, FeatureToggleService featureToggleService,
+            CourseNotificationService courseNotificationService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -99,6 +110,8 @@ public class ChannelResource extends ConversationManagementResource {
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
+        this.featureToggleService = featureToggleService;
+        this.courseNotificationService = courseNotificationService;
     }
 
     /**
@@ -235,6 +248,22 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         var createdChannel = channelService.createChannel(course, channelDTO.toChannel(), Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
+
+        if (createdChannel.getIsCourseWide() && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+            var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), createdChannel.getName(),
+                    createdChannel.getId());
+            // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
+            Set<String> groupNames = new HashSet<>();
+            groupNames.add(course.getStudentGroupName());
+            groupNames.add(course.getTeachingAssistantGroupName());
+            groupNames.add(course.getEditorGroupName());
+            groupNames.add(course.getInstructorGroupName());
+            var recipients = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
+
+            courseNotificationService.sendCourseNotification(addedToChannelNotification,
+                    recipients.stream().filter(user -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
+        }
+
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDTO(requestingUser, createdChannel));
     }
 
@@ -293,8 +322,12 @@ public class ChannelResource extends ConversationManagementResource {
         var usersToNotify = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         conversationService.deleteConversation(channel);
-        usersToNotify.forEach(
-                user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channel, user, requestingUser, NotificationType.CONVERSATION_DELETE_CHANNEL));
+
+        var course = channel.getCourse();
+        var channelDeletedNotification = new ChannelDeletedNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), channel.getName());
+
+        courseNotificationService.sendCourseNotification(channelDeletedNotification,
+                usersToNotify.stream().filter((user) -> !Objects.equals(user.getId(), requestingUser.getId())).toList());
         return ResponseEntity.ok().build();
     }
 
@@ -422,8 +455,12 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
         Set<User> registeredUsers = channelService.registerUsersToChannel(addAllStudents, addAllTutors, addAllInstructors, usersLoginsToRegister, course, channelFromDatabase);
-        registeredUsers.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
-                NotificationType.CONVERSATION_ADD_USER_CHANNEL));
+
+        var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                channelFromDatabase.getName(), channelFromDatabase.getId());
+
+        courseNotificationService.sendCourseNotification(addedToChannelNotification, registeredUsers.stream().toList());
+
         return ResponseEntity.ok().build();
     }
 
@@ -460,8 +497,11 @@ public class ChannelResource extends ConversationManagementResource {
         }
 
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
-        usersToDeRegister.forEach(user -> singleUserNotificationService.notifyClientAboutConversationCreationOrDeletion(channelFromDatabase, user, requestingUser,
-                NotificationType.CONVERSATION_REMOVE_USER_CHANNEL));
+
+        var removedFromChannelNotification = new RemovedFromChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(),
+                channelFromDatabase.getName(), channelFromDatabase.getId());
+
+        courseNotificationService.sendCourseNotification(removedFromChannelNotification, usersToDeRegister.stream().toList());
         return ResponseEntity.ok().build();
     }
 

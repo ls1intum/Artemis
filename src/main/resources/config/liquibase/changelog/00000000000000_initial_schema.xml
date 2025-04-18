@@ -27,6 +27,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="updated_date" type="datetime(3)"/>
+            <column defaultValueBoolean="false" name="has_forwarded_messages" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="apollon_diagram">
             <column autoIncrement="true" name="id" type="bigint">
@@ -41,6 +44,16 @@
             <column name="latest_version" type="varchar(10)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
+        </createTable>
+        <createTable tableName="assessment_note">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="created_date" type="datetime(3)"/>
+            <column name="last_modified_date" type="datetime(3)"/>
+            <column name="note" type="text"/>
+            <column name="creator_id" type="bigint"/>
+            <column name="result_id" type="bigint"/>
         </createTable>
         <createTable tableName="attachment">
             <column autoIncrement="true" name="id" type="bigint">
@@ -89,6 +102,9 @@
             <column name="triggered_by_push_to" type="varchar(10)"/>
             <column name="build_job_result" type="varchar(10)"/>
             <column name="docker_image" type="varchar(255)"/>
+            <column name="build_job_id" type="varchar(255)"/>
+            <column name="result_id" type="bigint"/>
+            <column name="build_submission_date" type="datetime(3)"/>
         </createTable>
         <createTable tableName="build_log_entry">
             <column autoIncrement="true" name="id" type="bigint">
@@ -116,6 +132,19 @@
             </column>
             <column name="build_plan" type="varchar(10000)"/>
         </createTable>
+        <createTable tableName="cleanup_job_execution">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="delete_from" type="timestamp"/>
+            <column name="delete_to" type="timestamp"/>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="deleted_at" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operation_type" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <createTable tableName="competency">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -126,20 +155,18 @@
             </column>
             <column name="course_id" type="bigint"/>
             <column name="taxonomy" type="varchar(31)"/>
-            <column defaultValueNumeric="100" name="mastery_threshold" type="int"/>
+            <column name="mastery_threshold" type="int">
+                <constraints nullable="false"/>
+            </column>
             <column name="soft_due_date" type="datetime(3)"/>
             <column defaultValueBoolean="false" name="optional" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="linked_standardized_competency_id" type="bigint"/>
-        </createTable>
-        <createTable tableName="competency_course">
-            <column name="competency_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
+            <column name="discriminator" type="varchar(1)">
+                <constraints nullable="false"/>
             </column>
-            <column name="course_id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
+            <column name="linked_course_competency_id" type="bigint"/>
         </createTable>
         <createTable tableName="competency_exercise">
             <column name="competency_id" type="bigint">
@@ -148,6 +175,26 @@
             <column name="exercise_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
+            <column defaultValueNumeric="0.5" name="link_weight" type="double">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="competency_jol">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="competency_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="jol_value" type="tinyint(3)"/>
+            <column name="judgement_time" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0.0" name="competency_progress" type="double"/>
+            <column defaultValueNumeric="0.0" name="competency_confidence" type="double"/>
         </createTable>
         <createTable tableName="competency_learning_path">
             <column name="competency_id" type="bigint">
@@ -163,6 +210,9 @@
             </column>
             <column name="lecture_unit_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0.5" name="link_weight" type="double">
+                <constraints nullable="false"/>
             </column>
         </createTable>
         <createTable tableName="competency_relation">
@@ -185,13 +235,16 @@
             <column name="progress" type="double"/>
             <column name="confidence" type="double"/>
             <column name="last_modified_date" type="timestamp"/>
+            <column defaultValue="NO_REASON" name="confidence_reason" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="complaint">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="accepted" type="boolean"/>
-            <column name="complaint_text" type="TEXT"/>
+            <column name="complaint_text" type="text"/>
             <column name="submitted_time" type="datetime(3)"/>
             <column name="result_id" type="bigint"/>
             <column name="student_id" type="bigint"/>
@@ -204,7 +257,7 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="response_text" type="TEXT"/>
+            <column name="response_text" type="text"/>
             <column name="submitted_time" type="datetime(3)"/>
             <column name="complaint_id" type="bigint"/>
             <column name="reviewer_id" type="bigint"/>
@@ -230,7 +283,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="last_message_date" type="datetime(3)"/>
-            <column defaultValue="O" name="discriminator" type="CHAR(1)">
+            <column defaultValue="O" name="discriminator" type="char(1)">
                 <constraints nullable="false"/>
             </column>
             <column name="name" type="varchar(30)"/>
@@ -323,6 +376,32 @@
             </column>
             <column name="info_sharing_messaging_code_of_conduct" type="longtext"/>
             <column defaultValueBoolean="false" name="restricted_athena_modules_access" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="student_course_analytics_dashboard_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueBoolean="false" name="faq_enabled" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="course_learner_profile">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="aim_for_grade_or_bonus" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="time_investment" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueNumeric="0" name="repetition_intensity" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="learner_profile_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -439,6 +518,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="example_solution_publication_date" type="datetime(3)"/>
+            <column defaultValueBoolean="false" name="exam_with_attendance_check" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="exam_live_event">
             <column autoIncrement="true" name="id" type="bigint">
@@ -457,10 +539,13 @@
             <column name="discriminator" type="varchar(1)">
                 <constraints nullable="false"/>
             </column>
-            <column name="text_content" type="TEXT"/>
+            <column name="text_content" type="text"/>
             <column name="old_working_time" type="int"/>
             <column name="new_working_time" type="int"/>
             <column name="course_wide" type="boolean"/>
+            <column name="problem_statement" type="longtext"/>
+            <column name="exercise_id" type="bigint"/>
+            <column name="exercise_name" type="varchar(255)"/>
         </createTable>
         <createTable tableName="exam_session">
             <column autoIncrement="true" name="id" type="bigint">
@@ -561,7 +646,6 @@
                 <constraints unique="true"/>
             </column>
             <column name="template_participation_id" type="bigint"/>
-            <column name="sequential_test_runs" type="boolean"/>
             <column name="assessment_type" type="varchar(25)"/>
             <column name="presentation_score_enabled" type="boolean"/>
             <column name="team_assignment_config_id" type="bigint"/>
@@ -636,6 +720,35 @@
             </column>
             <column name="rating" type="tinyint(3)"/>
         </createTable>
+        <createTable tableName="faq">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="question_title" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question_answer" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="course_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="faq_state" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="varchar(45)"/>
+            <column name="last_modified_by" type="varchar(45)"/>
+            <column name="last_modified_date" type="datetime(3)"/>
+            <column name="created_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="faq_category">
+            <column name="faq_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="varchar(255)"/>
+        </createTable>
         <createTable tableName="feedback">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -652,6 +765,36 @@
             <column name="visibility" type="tinyint(3)"/>
             <column name="type" type="tinyint(3)"/>
             <column name="test_case_id" type="bigint"/>
+        </createTable>
+        <createTable tableName="file_upload">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="path" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="server_file_path" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="filename" type="varchar(512)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="entity_id" type="bigint"/>
+            <column name="entity_type" type="tinyint(3)"/>
+            <column name="creation_date" type="datetime(3)"/>
+        </createTable>
+        <createTable tableName="forwarded_message">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="source_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_type" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="destination_post_id" type="bigint"/>
+            <column name="destination_answer_id" type="bigint"/>
         </createTable>
         <createTable tableName="grade_step">
             <column autoIncrement="true" name="id" type="bigint">
@@ -721,38 +864,16 @@
             <column name="guided_tour_step" type="int"/>
             <column name="guided_tour_state" type="int"/>
         </createTable>
-        <createTable tableName="iris_code_editor_sub_settings">
-            <column name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="chat_template_id" type="bigint"/>
-            <column name="problem_statement_generation_template_id" type="bigint"/>
-            <column name="solution_repo_generation_template_id" type="bigint"/>
-            <column name="template_repo_generation_template_id" type="bigint"/>
-            <column name="test_repo_generation_template_id" type="bigint"/>
-        </createTable>
-        <createTable tableName="iris_exercise_plan_message_content">
+        <createTable tableName="ide">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-        </createTable>
-        <createTable tableName="iris_exercise_plan_step">
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="exercise_plan_id" type="bigint">
+            <column name="name" type="varchar(50)">
                 <constraints nullable="false"/>
             </column>
-            <column name="exercise_component" type="varchar(20)">
+            <column name="deep_link" type="varchar(200)">
                 <constraints nullable="false"/>
             </column>
-            <column name="instructions" type="TEXT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="execution_stage" type="varchar(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="exercise_plan_step_order" type="int"/>
         </createTable>
         <createTable tableName="iris_json_message_content">
             <column autoIncrement="true" name="id" type="bigint">
@@ -791,52 +912,52 @@
             <column name="discriminator" type="varchar(31)">
                 <constraints nullable="false"/>
             </column>
-            <column name="code_hint_id" type="bigint"/>
             <column name="creation_date" type="datetime(3)">
                 <constraints nullable="false"/>
             </column>
             <column name="course_id" type="bigint"/>
+            <column name="latest_suggestions" type="text"/>
+            <column name="lecture_id" type="bigint"/>
         </createTable>
         <createTable tableName="iris_settings">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="iris_chat_settings_id" type="bigint"/>
-            <column name="iris_hestia_settings_id" type="bigint"/>
             <column name="discriminator" type="varchar(64)"/>
             <column name="exercise_id" type="bigint"/>
             <column name="course_id" type="bigint"/>
-            <column name="current_version" type="int"/>
-            <column name="enable_auto_update_chat" type="boolean"/>
-            <column name="enable_auto_update_hestia" type="boolean"/>
-            <column name="enable_auto_update_code_editor" type="boolean"/>
-            <column name="iris_code_editor_settings_id" type="bigint"/>
             <column name="iris_competency_generation_settings_id" type="bigint"/>
-            <column name="enable_auto_update_competency_generation" type="boolean"/>
+            <column name="iris_lecture_ingestion_settings_id" type="bigint"/>
+            <column name="iris_text_exercise_chat_settings_id" type="bigint"/>
+            <column name="iris_course_chat_settings_id" type="bigint"/>
+            <column name="iris_faq_ingestion_settings_id" type="bigint"/>
+            <column name="iris_lecture_chat_settings_id" type="bigint"/>
         </createTable>
         <createTable tableName="iris_sub_settings">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="enabled" type="boolean"/>
-            <column name="template_id" type="bigint"/>
-            <column name="preferred_model" type="varchar(100)"/>
             <column name="rate_limit" type="int"/>
             <column name="rate_limit_timeframe_hours" type="int"/>
             <column name="discriminator" type="varchar(64)"/>
-            <column name="allowed_models" type="varchar(2000)"/>
-        </createTable>
-        <createTable tableName="iris_template">
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
+            <column defaultValueBoolean="false" name="auto_ingest_on_lecture_attachment_upload" type="boolean">
+                <constraints nullable="false"/>
             </column>
-            <column name="content" type="longtext"/>
+            <column name="allowed_variants" type="varchar(2000)"/>
+            <column name="selected_variant" type="varchar(100)"/>
+            <column name="enabled_for_categories" type="varchar(500)"/>
+            <column name="disabled_proactive_events" type="varchar(2000)"/>
+            <column defaultValueBoolean="false" name="auto_ingest_on_faq_creation" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="iris_text_message_content">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="text_content" type="TEXT">
+            <column name="text_content" type="text">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -897,10 +1018,9 @@
             <column defaultValueBoolean="false" name="is_deleted" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="iris_accepted" type="datetime(3)"/>
-            <column name="ssh_public_key" type="varchar(1000)"/>
-            <column name="ssh_public_key_hash" type="varchar(100)"/>
+            <column name="external_llm_usage_accepted" type="datetime(3)"/>
             <column name="vcs_access_token_expiry_date" type="datetime(3)"/>
+            <column name="learner_profile_id" type="bigint"/>
         </createTable>
         <createTable tableName="jhi_user_authority">
             <column name="user_id" type="bigint">
@@ -923,18 +1043,9 @@
             <column name="description" type="varchar(2000)"/>
             <column name="parent_id" type="bigint"/>
         </createTable>
-        <createTable tableName="learning_goal_relation">
+        <createTable tableName="learner_profile">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="tail_learning_goal_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="head_learning_goal_id" type="bigint">
-                <constraints nullable="false"/>
-            </column>
-            <column name="type" type="varchar(31)">
-                <constraints nullable="false"/>
             </column>
         </createTable>
         <createTable tableName="learning_path">
@@ -944,6 +1055,9 @@
             <column name="user_id" type="bigint"/>
             <column name="course_id" type="bigint"/>
             <column name="progress" type="int"/>
+            <column defaultValueBoolean="false" name="started_by_student" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="lecture">
             <column autoIncrement="true" name="id" type="bigint">
@@ -982,6 +1096,29 @@
             <column defaultValueComputed="CURRENT_TIMESTAMP" name="completed_date" type="timestamp">
                 <constraints nullable="false"/>
             </column>
+        </createTable>
+        <createTable tableName="llm_token_usage_request">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="model" type="varchar(255)"/>
+            <column name="service_pipeline_id" type="varchar(255)"/>
+            <column name="num_input_tokens" type="int"/>
+            <column name="cost_per_million_input_tokens" type="float(12)"/>
+            <column name="num_output_tokens" type="int"/>
+            <column name="cost_per_million_output_tokens" type="float(12)"/>
+            <column name="trace_id" type="bigint"/>
+        </createTable>
+        <createTable tableName="llm_token_usage_trace">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="service" type="varchar(255)"/>
+            <column name="course_id" type="bigint"/>
+            <column name="exercise_id" type="bigint"/>
+            <column name="user_id" type="bigint"/>
+            <column name="time" type="datetime(3)"/>
+            <column name="iris_message_id" type="bigint"/>
         </createTable>
         <createTable tableName="long_feedback_text">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1074,7 +1211,7 @@
             </column>
         </createTable>
         <createTable tableName="model_element">
-            <column name="model_element_id" type="CHAR(36)">
+            <column name="model_element_id" type="char(36)">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="model_element_type" type="varchar(30)"/>
@@ -1213,6 +1350,20 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="participation_vcs_access_token">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vcs_access_token" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <createTable tableName="plagiarism_case">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -1244,7 +1395,7 @@
             <column name="plagiarism_result_id" type="bigint"/>
             <column name="submission_a_id" type="bigint"/>
             <column name="submission_b_id" type="bigint"/>
-            <column name="similarity" type="FLOAT(12)"/>
+            <column name="similarity" type="float(12)"/>
             <column name="status" type="int"/>
         </createTable>
         <createTable tableName="plagiarism_comparison_matches">
@@ -1336,6 +1487,9 @@
             <column name="answer_count" type="int"/>
             <column name="vote_count" type="int"/>
             <column name="updated_date" type="datetime(3)"/>
+            <column defaultValueBoolean="false" name="has_forwarded_messages" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="post_tag">
             <column name="post_id" type="bigint">
@@ -1356,6 +1510,36 @@
             <column name="exercise_id" type="bigint"/>
             <column name="programming_exercise_auxiliary_repositories_order" type="int"/>
         </createTable>
+        <createTable tableName="programming_exercise_build_config">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="sequential_test_runs" type="boolean"/>
+            <column name="branch" type="varchar(128)"/>
+            <column name="build_plan_configuration" type="longtext"/>
+            <column name="build_script" type="longtext"/>
+            <column defaultValueBoolean="false" name="checkout_solution_repository" type="boolean"/>
+            <column name="checkout_path" type="varchar(128)"/>
+            <column defaultValueNumeric="0" name="timeout_seconds" type="int"/>
+            <column name="docker_flags" type="longtext"/>
+            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="boolean"/>
+            <column name="build_plan_access_secret" type="varchar(36)"/>
+            <column name="theia_image" type="varchar(128)"/>
+            <column defaultValueBoolean="false" name="allow_branching" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch_regex" type="varchar(128)"/>
+            <column name="assignment_checkout_path" type="varchar(128)"/>
+            <column name="solution_checkout_path" type="varchar(128)"/>
+        </createTable>
+        <createTable tableName="programming_exercise_build_statistics">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueNumeric="0" name="build_duration_seconds" type="bigint"/>
+            <column defaultValueNumeric="0" name="build_count_when_updated" type="bigint"/>
+            <column name="exercise_id" type="bigint"/>
+        </createTable>
         <createTable tableName="programming_exercise_details">
             <column name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -1369,17 +1553,13 @@
             <column name="max_static_code_analysis_penalty" type="int"/>
             <column name="project_type" type="int"/>
             <column defaultValueBoolean="false" name="show_test_names_to_students" type="boolean"/>
-            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="boolean">
-                <constraints nullable="false"/>
-            </column>
-            <column name="branch" type="varchar(16)"/>
             <column defaultValueBoolean="false" name="release_tests_with_example_solution" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="build_plan_access_secret" type="varchar(36)"/>
-            <column name="build_plan_configuration" type="longtext"/>
-            <column defaultValueBoolean="false" name="checkout_solution_repository" type="boolean"/>
-            <column name="build_script" type="longtext"/>
+            <column name="programming_exercise_build_config_id" type="bigint"/>
+            <column defaultValueBoolean="false" name="allow_online_ide" type="boolean">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
         <createTable tableName="programming_exercise_git_diff_entry">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1414,8 +1594,8 @@
             <column name="file_path" type="varchar(512)"/>
             <column name="line" type="int"/>
             <column name="previous_line" type="int"/>
-            <column name="code" type="TEXT"/>
-            <column name="previous_code" type="TEXT"/>
+            <column name="code" type="text"/>
+            <column name="previous_code" type="text"/>
             <column name="test_case_id" type="bigint"/>
             <column name="code_hint_id" type="bigint"/>
         </createTable>
@@ -1465,6 +1645,10 @@
             <column name="user_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
+            <column defaultValueNumeric="0" name="api_type" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version_code" type="varchar(10)"/>
         </createTable>
         <createTable tableName="quiz_batch">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1506,7 +1690,7 @@
             <column name="explanation" type="varchar(500)"/>
             <column name="hint" type="varchar(255)"/>
             <column name="randomize_order" type="boolean"/>
-            <column name="points" type="int"/>
+            <column name="points" type="double"/>
             <column name="scoring_type" type="varchar(255)"/>
             <column name="exercise_id" type="bigint"/>
             <column name="quiz_questions_order" type="bigint"/>
@@ -1593,6 +1777,24 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+        <createTable tableName="saved_post">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="post_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="post_type" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="completed_at" type="datetime(3)"/>
+        </createTable>
         <createTable tableName="science_event">
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
@@ -1672,7 +1874,7 @@
             <column name="attachment_unit_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="slide_number" type="SMALLint"/>
+            <column name="slide_number" type="smallint"/>
         </createTable>
         <createTable tableName="source">
             <column autoIncrement="true" name="id" type="bigint">
@@ -1978,7 +2180,7 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="day_of_week" type="SMALLint">
+            <column name="day_of_week" type="smallint">
                 <constraints nullable="false"/>
             </column>
             <column name="start_time" type="varchar(30)">
@@ -1990,7 +2192,7 @@
             <column name="location" type="longtext">
                 <constraints nullable="false"/>
             </column>
-            <column name="repetition_frequency" type="SMALLint">
+            <column name="repetition_frequency" type="smallint">
                 <constraints nullable="false"/>
             </column>
             <column name="valid_from_inclusive" type="varchar(30)">
@@ -2046,12 +2248,73 @@
             </column>
             <column name="user_groups" type="varchar(255)"/>
         </createTable>
+        <createTable tableName="user_ide_mapping">
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="programming_language" type="varchar(50)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="ide_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
         <createTable tableName="user_organization">
             <column name="user_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="organization_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+        <createTable tableName="user_public_ssh_key">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="label" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="public_key" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="key_hash" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="creation_date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_used_date" type="timestamp"/>
+            <column name="expiry_date" type="timestamp"/>
+        </createTable>
+        <createTable tableName="vcs_access_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_action_type" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authentication_mechanism" type="tinyint(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_hash" type="varchar(40)"/>
+            <column name="ip_address" type="varchar(45)"/>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
             </column>
         </createTable>
         <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
@@ -2086,9 +2349,6 @@
         </createIndex>
         <createIndex indexName="FK5qmi3mh5y1mt9ysht4nx34nvf" tableName="drag_and_drop_mapping">
             <column name="drag_item_id"/>
-        </createIndex>
-        <createIndex indexName="FK62a43f39191eabc8ec94a2385" tableName="competency_course">
-            <column name="course_id"/>
         </createIndex>
         <createIndex indexName="FK6drbcvqf26cahd0j1u9ff0rtr" tableName="submitted_answer">
             <column name="quiz_question_id"/>
@@ -2126,38 +2386,53 @@
         <createIndex indexName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" tableName="exercise">
             <column name="plagiarism_detection_config_id"/>
         </createIndex>
+        <createIndex indexName="FK_FORWARDED_MESSAGES_ANSWER_POST" tableName="forwarded_message">
+            <column name="destination_answer_id"/>
+        </createIndex>
+        <createIndex indexName="FK_FORWARDED_MESSAGES_POST" tableName="forwarded_message">
+            <column name="destination_post_id"/>
+        </createIndex>
+        <createIndex indexName="FK_IRIS_SESSION_ON_LECTURE" tableName="iris_session">
+            <column name="lecture_id"/>
+        </createIndex>
         <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS" tableName="iris_settings">
             <column name="iris_chat_settings_id"/>
-        </createIndex>
-        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS" tableName="iris_settings">
-            <column name="iris_code_editor_settings_id"/>
         </createIndex>
         <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" tableName="iris_settings">
             <column name="iris_competency_generation_settings_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_HESTIA_SETTINGS" tableName="iris_settings">
-            <column name="iris_hestia_settings_id"/>
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_FAQ_INGESTION_SETTINGS" tableName="iris_settings">
+            <column name="iris_faq_ingestion_settings_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_CHATTEMPLATE" tableName="iris_code_editor_sub_settings">
-            <column name="chat_template_id"/>
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS" tableName="iris_settings">
+            <column name="iris_lecture_ingestion_settings_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_PROBLEMSTATEMENTGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
-            <column name="problem_statement_generation_template_id"/>
+        <createIndex indexName="FK_IRIS_SETTINGS_ON_LECTURE_CHAT_SETTINGS" tableName="iris_settings">
+            <column name="iris_lecture_chat_settings_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_SOLUTIONREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
-            <column name="solution_repo_generation_template_id"/>
+        <createIndex indexName="FK_LLM_TOKEN_USAGE_REQUEST_ON_EXERCISE" tableName="llm_token_usage_trace">
+            <column name="exercise_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATE" tableName="iris_sub_settings">
-            <column name="template_id"/>
+        <createIndex indexName="FK_LLM_TOKEN_USAGE_REQUEST_ON_IRIS_MESSAGE" tableName="llm_token_usage_trace">
+            <column name="iris_message_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATEREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
-            <column name="template_repo_generation_template_id"/>
+        <createIndex indexName="FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE" tableName="llm_token_usage_request">
+            <column name="trace_id"/>
         </createIndex>
-        <createIndex indexName="FK_IRIS_SUB_SETTINGS_ON_TESTREPOGENERATIONTEMPLATE" tableName="iris_code_editor_sub_settings">
-            <column name="test_repo_generation_template_id"/>
+        <createIndex indexName="FK_LLM_TOKEN_USAGE_REQUEST_ON_USER" tableName="llm_token_usage_trace">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="FK_competency_jol_competency" tableName="competency_jol">
+            <column name="competency_id"/>
+        </createIndex>
+        <createIndex indexName="FK_competency_jol_user" tableName="competency_jol">
+            <column name="user_id"/>
         </createIndex>
         <createIndex indexName="FK_course_id" tableName="conversation">
             <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="FK_creator_id" tableName="assessment_note">
+            <column name="creator_id"/>
         </createIndex>
         <createIndex indexName="FK_exam_id" tableName="exam_user">
             <column name="exam_id"/>
@@ -2165,14 +2440,23 @@
         <createIndex indexName="FK_feedback_test_case_id" tableName="feedback">
             <column name="test_case_id"/>
         </createIndex>
+        <createIndex indexName="FK_participation_vcs_access_token_participation" tableName="participation_vcs_access_token">
+            <column name="participation_id"/>
+        </createIndex>
         <createIndex indexName="FK_qhsd8ovn89o4usyr3fgaqkdjt" tableName="user_groups">
             <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="FK_result_id" tableName="assessment_note">
+            <column name="result_id"/>
         </createIndex>
         <createIndex indexName="FK_slide_id" tableName="slide">
             <column name="attachment_unit_id"/>
         </createIndex>
         <createIndex indexName="FK_student_id_data_export" tableName="data_export">
             <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="FK_user_ide_mapping_ide" tableName="user_ide_mapping">
+            <column name="ide_id"/>
         </createIndex>
         <createIndex indexName="FKa6apwe76xlljxtm3nimrlvppf" tableName="attachment">
             <column name="lecture_id"/>
@@ -2315,10 +2599,22 @@
         <createIndex indexName="FKtyzazcKwI6xRpuhH0DoNiZeWH" tableName="quiz_pool">
             <column name="exam_id"/>
         </createIndex>
-        <createIndex indexName="UC_COMPLAintRESULT_ID_COL" tableName="complaint" unique="true">
+        <createIndex indexName="IDX_ENTITY_ID_ENTITY_TYPE" tableName="file_upload">
+            <column name="entity_id"/>
+            <column name="entity_type"/>
+        </createIndex>
+        <createIndex indexName="IDX_PATH" tableName="file_upload">
+            <column name="path"/>
+        </createIndex>
+        <createIndex indexName="IDX_SAVED_POST_USER_ID_POST_ID_POST_TYPE" tableName="saved_post">
+            <column name="user_id"/>
+            <column name="post_id"/>
+            <column name="post_type"/>
+        </createIndex>
+        <createIndex indexName="UC_COMPLAINTRESULT_ID_COL" tableName="complaint" unique="true">
             <column name="result_id"/>
         </createIndex>
-        <createIndex indexName="UC_COMPLAint_RESPONSECOMPLAint_ID_COL" tableName="complaint_response" unique="true">
+        <createIndex indexName="UC_COMPLAINT_RESPONSECOMPLAINT_ID_COL" tableName="complaint_response" unique="true">
             <column name="complaint_id"/>
         </createIndex>
         <createIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission" unique="true">
@@ -2399,6 +2695,9 @@
         <createIndex indexName="course_start_date" tableName="course">
             <column name="start_date"/>
         </createIndex>
+        <createIndex indexName="deep_link" tableName="ide" unique="true">
+            <column name="deep_link"/>
+        </createIndex>
         <createIndex indexName="exam_end_date" tableName="exam">
             <column name="end_date"/>
         </createIndex>
@@ -2439,6 +2738,12 @@
             <column name="test_name"/>
             <column name="exercise_id"/>
         </createIndex>
+        <createIndex indexName="faq_category_id" tableName="faq_category">
+            <column name="faq_id"/>
+        </createIndex>
+        <createIndex indexName="faq_course_id" tableName="faq">
+            <column name="course_id"/>
+        </createIndex>
         <createIndex indexName="feedback_id" tableName="long_feedback_text" unique="true">
             <column name="feedback_id"/>
         </createIndex>
@@ -2450,6 +2755,9 @@
         </createIndex>
         <createIndex indexName="fk_bonus_bonus_to_grading_scale_id" tableName="bonus">
             <column name="bonus_to_grading_scale_id"/>
+        </createIndex>
+        <createIndex indexName="fk_competency_linked_competency" tableName="competency">
+            <column name="linked_course_competency_id"/>
         </createIndex>
         <createIndex indexName="fk_competency_linked_standardized_competency" tableName="competency">
             <column name="linked_standardized_competency_id"/>
@@ -2481,6 +2789,9 @@
         <createIndex indexName="fk_exam_channel" tableName="conversation">
             <column name="exam_id"/>
         </createIndex>
+        <createIndex indexName="fk_exam_live_event_exercise_id" tableName="exam_live_event">
+            <column name="exercise_id"/>
+        </createIndex>
         <createIndex indexName="fk_exercise" tableName="conversation">
             <column name="exercise_id"/>
         </createIndex>
@@ -2495,9 +2806,6 @@
         </createIndex>
         <createIndex indexName="fk_exercise_hint_task_id" tableName="exercise_hint">
             <column name="task_id"/>
-        </createIndex>
-        <createIndex indexName="fk_exercise_plan_step_id_to_plan_id" tableName="iris_exercise_plan_step">
-            <column name="exercise_plan_id"/>
         </createIndex>
         <createIndex indexName="fk_exercise_team_assignment_config_id" tableName="exercise">
             <column name="team_assignment_config_id"/>
@@ -2517,9 +2825,6 @@
         <createIndex indexName="fk_iris_message_session_id" tableName="iris_message">
             <column name="session_id"/>
         </createIndex>
-        <createIndex indexName="fk_iris_session_code_hint_id" tableName="iris_session">
-            <column name="code_hint_id"/>
-        </createIndex>
         <createIndex indexName="fk_iris_session_course_id" tableName="iris_session">
             <column name="course_id"/>
         </createIndex>
@@ -2528,6 +2833,9 @@
         </createIndex>
         <createIndex indexName="fk_iris_session_user_id" tableName="iris_session">
             <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="fk_iris_settings_iris_course_chat_settings_id" tableName="iris_settings">
+            <column name="iris_course_chat_settings_id"/>
         </createIndex>
         <createIndex indexName="fk_knowledge_area_parent" tableName="knowledge_area">
             <column name="parent_id"/>
@@ -2633,6 +2941,9 @@
         </createIndex>
         <createIndex indexName="fk_post_tag_post_id" tableName="post_tag">
             <column name="post_id"/>
+        </createIndex>
+        <createIndex indexName="fk_programming_exercise_build_config" tableName="programming_exercise_details">
+            <column name="programming_exercise_build_config_id"/>
         </createIndex>
         <createIndex indexName="fk_programming_exercise_git_diff_entry_git_diff_report_id" tableName="programming_exercise_git_diff_entry">
             <column name="git_diff_report_id"/>
@@ -2754,17 +3065,39 @@
         <createIndex indexName="idx_build_job_build_completion_date" tableName="build_job">
             <column name="build_completion_date"/>
         </createIndex>
+        <createIndex indexName="idx_build_job_build_job_id" tableName="build_job" unique="true">
+            <column name="build_job_id"/>
+        </createIndex>
         <createIndex indexName="idx_build_job_build_start_date" tableName="build_job">
             <column name="build_start_date"/>
         </createIndex>
+        <createIndex indexName="idx_build_job_build_submission_date" tableName="build_job">
+            <column name="build_submission_date"/>
+        </createIndex>
         <createIndex indexName="idx_build_job_course_id" tableName="build_job">
             <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="idx_build_job_docker_image_build_start_date" tableName="build_job">
+            <column name="docker_image"/>
+            <column name="build_start_date"/>
         </createIndex>
         <createIndex indexName="idx_build_job_exercise_id" tableName="build_job">
             <column name="exercise_id"/>
         </createIndex>
         <createIndex indexName="idx_build_job_participation_id" tableName="build_job">
             <column name="participation_id"/>
+        </createIndex>
+        <createIndex indexName="idx_build_job_result" tableName="build_job">
+            <column name="build_job_result"/>
+        </createIndex>
+        <createIndex indexName="idx_build_job_result_id" tableName="build_job">
+            <column name="result_id"/>
+        </createIndex>
+        <createIndex indexName="idx_clp_course" tableName="course_learner_profile">
+            <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="idx_clp_learner_profile" tableName="course_learner_profile">
+            <column name="learner_profile_id"/>
         </createIndex>
         <createIndex indexName="idx_exam_id" tableName="exam_live_event">
             <column name="exam_id"/>
@@ -2777,6 +3110,9 @@
             <column name="tail_competency_id"/>
             <column defaultValueNumeric="0" name="type"/>
         </createIndex>
+        <createIndex indexName="idx_llm_token_usage_trace_course_id" tableName="llm_token_usage_trace">
+            <column name="course_id"/>
+        </createIndex>
         <createIndex indexName="idx_persistent_audit_event" tableName="jhi_persistent_audit_event">
             <column name="principal"/>
             <column name="event_date"/>
@@ -2787,14 +3123,30 @@
         <createIndex indexName="idx_reference" tableName="feedback">
             <column name="reference"/>
         </createIndex>
-        <createIndex indexName="idx_ssh_public" tableName="jhi_user">
-            <column name="ssh_public_key_hash"/>
-        </createIndex>
         <createIndex indexName="idx_student_exam_id" tableName="exam_live_event">
             <column name="student_exam_id"/>
         </createIndex>
         <createIndex indexName="idx_tail_competency_id" tableName="competency_relation">
             <column name="tail_competency_id"/>
+        </createIndex>
+        <createIndex indexName="idx_user_learner_profile" tableName="jhi_user">
+            <column name="learner_profile_id"/>
+        </createIndex>
+        <createIndex indexName="idx_user_public_ssh_key_expiry_date" tableName="user_public_ssh_key">
+            <column name="expiry_date"/>
+        </createIndex>
+        <createIndex indexName="idx_user_public_ssh_key_ssh_public_key_hash" tableName="user_public_ssh_key">
+            <column name="key_hash"/>
+        </createIndex>
+        <createIndex indexName="idx_user_public_ssh_key_user_id" tableName="user_public_ssh_key">
+            <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="idx_vcs_access_log_user_participation" tableName="vcs_access_log">
+            <column name="user_id"/>
+            <column name="participation_id"/>
+        </createIndex>
+        <createIndex indexName="idx_vcs_access_token" tableName="participation_vcs_access_token">
+            <column name="vcs_access_token"/>
         </createIndex>
         <createIndex indexName="iris_session_discriminator" tableName="iris_session">
             <column name="discriminator"/>
@@ -2915,6 +3267,9 @@
         <createIndex indexName="submission_id" tableName="coverage_report" unique="true">
             <column name="submission_id"/>
         </createIndex>
+        <createIndex indexName="uc_exercise_id" tableName="programming_exercise_build_statistics" unique="true">
+            <column name="exercise_id"/>
+        </createIndex>
         <createIndex indexName="uc_participant_score" tableName="participant_score" unique="true">
             <column name="user_id"/>
             <column name="team_id"/>
@@ -2942,8 +3297,15 @@
             <column name="user_id"/>
             <column name="exercise_hint_id"/>
         </createIndex>
+        <createIndex indexName="user-participation_unique" tableName="participation_vcs_access_token" unique="true">
+            <column name="user_id"/>
+            <column name="participation_id"/>
+        </createIndex>
         <createIndex indexName="user_groups_user_groups" tableName="user_groups">
             <column name="user_groups"/>
+        </createIndex>
+        <createIndex indexName="vcs_access_log_participation_id" tableName="vcs_access_log">
+            <column name="participation_id"/>
         </createIndex>
         <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_statistic" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="competency_user" constraintName="FK1903cc755394da0466c4ec0934" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
@@ -2960,7 +3322,6 @@
         <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="competency_lecture_unit" constraintName="FK4rflk0awb45txqagwpq2islj2" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="spot_id" baseTableName="short_answer_mapping" constraintName="FK5opt512154y0g5llppcaqe19e" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="short_answer_spot" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="drag_item_id" baseTableName="drag_and_drop_mapping" constraintName="FK5qmi3mh5y1mt9ysht4nx34nvf" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="drag_item" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="competency_course" constraintName="FK62a43f39191eabc8ec94a2385" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="submitted_answer" constraintName="FK6drbcvqf26cahd0j1u9ff0rtr" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="post" constraintName="FK6kgo0sse7sait8q665s16wynf" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="exam_session" constraintName="FK6pok2pdckbv609q1kjcxnguha" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
@@ -2973,28 +3334,42 @@
         <addForeignKeyConstraint baseColumnNames="template_participation_id" baseTableName="exercise" constraintName="FK91br4p8i0d3owf75pqxpnc3o0" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="participation" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="build_plan_id" baseTableName="exercise" constraintName="FK_EXERCISE_ON_BUILDPLAN" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="build_plan" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="plagiarism_detection_config_id" baseTableName="exercise" constraintName="FK_EXERCISE_ON_PLAGIARISM_DETECTION_CONFIG" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="plagiarism_detection_config" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_CODE_EDITOR_SUB_SETTINGS_ON_IRIS_SUB_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="destination_answer_id" baseTableName="forwarded_message" constraintName="FK_FORWARDED_MESSAGES_ANSWER_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="answer_post" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="destination_post_id" baseTableName="forwarded_message" constraintName="FK_FORWARDED_MESSAGES_POST" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="post" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="iris_session" constraintName="FK_IRIS_SESSION_ON_LECTURE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_COURSE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_EXERCISE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="iris_chat_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_CHAT_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="iris_code_editor_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_CODE_EDITOR_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="iris_competency_generation_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_COMPETENCY_GENERATION_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="iris_hestia_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_HESTIA_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="chat_template_id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_CHATTEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="problem_statement_generation_template_id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_PROBLEMSTATEMENTGENERATIONTEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="solution_repo_generation_template_id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_SOLUTIONREPOGENERATIONTEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="template_id" baseTableName="iris_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="template_repo_generation_template_id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_TEMPLATEREPOGENERATIONTEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="test_repo_generation_template_id" baseTableName="iris_code_editor_sub_settings" constraintName="FK_IRIS_SUB_SETTINGS_ON_TESTREPOGENERATIONTEMPLATE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_template" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="iris_faq_ingestion_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_FAQ_INGESTION_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="iris_lecture_ingestion_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_IRIS_LECTURE_INGESTION_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="iris_lecture_chat_settings_id" baseTableName="iris_settings" constraintName="FK_IRIS_SETTINGS_ON_LECTURE_CHAT_SETTINGS" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_COURSE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_EXERCISE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="iris_message_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_IRIS_MESSAGE" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="trace_id" baseTableName="llm_token_usage_request" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_TRACE" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="llm_token_usage_trace" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="llm_token_usage_trace" constraintName="FK_LLM_TOKEN_USAGE_REQUEST_ON_USER" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="saved_post" constraintName="FK_SAVED_POST_USER" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_jol" constraintName="FK_competency_jol_competency" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="competency_jol" constraintName="FK_competency_jol_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="conversation" constraintName="FK_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="course_learner_profile" constraintName="FK_course_learner_profile_course" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="learner_profile_id" baseTableName="course_learner_profile" constraintName="FK_course_learner_profile_learner_profile" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="learner_profile" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="assessment_note" constraintName="FK_creator_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_user" constraintName="FK_exam_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="test_case_id" baseTableName="feedback" constraintName="FK_feedback_test_case_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_test_case" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FK_head_competency_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="head_competency_id" baseTableName="competency_relation" constraintName="FK_head_competency_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="participation_id" baseTableName="participation_vcs_access_token" constraintName="FK_participation_vcs_access_token_participation" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="participation" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="participation_vcs_access_token" constraintName="FK_participation_vcs_access_token_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_groups" constraintName="FK_qhsd8ovn89o4usyr3fgaqkdjt" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="assessment_note" constraintName="FK_result_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="attachment_unit_id" baseTableName="slide" constraintName="FK_slide_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="exam_user" constraintName="FK_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="data_export" constraintName="FK_student_id_data_export" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FK_tail_competency_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tail_competency_id" baseTableName="competency_relation" constraintName="FK_tail_competency_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="ide_id" baseTableName="user_ide_mapping" constraintName="FK_user_ide_mapping_ide" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="ide" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_ide_mapping" constraintName="FK_user_ide_mapping_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="learner_profile_id" baseTableName="jhi_user" constraintName="FK_user_learner_profile" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="learner_profile" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="lecture_unit_id" baseTableName="lecture_unit_user" constraintName="FKa32ac2d7196b96b084a4e9d7e" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture_unit" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="attachment" constraintName="FKa6apwe76xlljxtm3nimrlvppf" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="submitted_answer_id" baseTableName="drag_and_drop_mapping" constraintName="FKa9cfgroc0t8ujct9ux7ub1nyo" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submitted_answer" validate="true"/>
@@ -3003,7 +3378,6 @@
         <addForeignKeyConstraint baseColumnNames="programming_submission_id" baseTableName="build_log_entry" constraintName="FKarrnc5l01jjyixrw6jbu18k6a" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="programming_submission_id" baseTableName="build_log_statistics_entry" constraintName="FKarrnc5l01jjyixrw6jbu18k6b" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="drag_and_drop_mapping" constraintName="FKawq05c6hvxl400ouw5sg89xp9" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="drop_location" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_course" constraintName="FKb2b2f0ffada615a2431fa779e" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="competency_id" baseTableName="competency_user" constraintName="FKba695bf5823818d0997937bc5" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="solution_id" baseTableName="short_answer_mapping" constraintName="FKbiq7gp760m9y8xpycnguw78dp" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="short_answer_solution" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="example_submission" constraintName="FKbkom4atu3covr3trrbldf6bvn" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
@@ -3058,11 +3432,15 @@
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="quiz_pool" constraintName="FKtyzazcKwI6xRpuhH0DoNiZeWH" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="conduct_agreement" constraintName="conduct_agreement_course_idFK" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="conduct_agreement" constraintName="conduct_agreement_user_idFK" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="faq_id" baseTableName="faq_category" constraintName="faq_category_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="faq" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="faq" constraintName="faq_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="feedback" constraintName="feedback_ibfk_1" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="authority_name" baseTableName="jhi_user_authority" constraintName="fk_authority_name" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="name" referencedTableName="jhi_authority" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="bonus_to_grading_scale_id" baseTableName="bonus" constraintName="fk_bonus_bonus_to_grading_scale_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="grading_scale" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="source_grading_scale_id" baseTableName="bonus" constraintName="fk_bonus_source_grading_scale_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="grading_scale" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="linked_standardized_competency_id" baseTableName="competency" constraintName="fk_competency_linked_standardized_competency" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="standardized_competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="result_id" baseTableName="build_job" constraintName="fk_build_job_result" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="result" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="linked_course_competency_id" baseTableName="competency" constraintName="fk_competency_linked_competency" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="competency" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="linked_standardized_competency_id" baseTableName="competency" constraintName="fk_competency_linked_standardized_competency" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="standardized_competency" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="reviewer_id" baseTableName="complaint_response" constraintName="fk_complaint_response_reviwer_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="complaint" constraintName="fk_complaint_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="complaint" constraintName="fk_complaint_team_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="team" validate="true"/>
@@ -3075,6 +3453,7 @@
         <addForeignKeyConstraint baseColumnNames="event_id" baseTableName="jhi_persistent_audit_evt_data" constraintName="fk_evt_pers_audit_evt_data" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="event_id" referencedTableName="jhi_persistent_audit_event" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="conversation" constraintName="fk_exam_channel" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_live_event" constraintName="fk_exam_live_event_exam_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exam_live_event" constraintName="fk_exam_live_event_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="exam_live_event" constraintName="fk_exam_live_event_student_exam_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="conversation" constraintName="fk_exercise" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="exercise" constraintName="fk_exercise_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3082,20 +3461,18 @@
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="exercise_hint_activation" constraintName="fk_exercise_hint_activation_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_hint" constraintName="fk_exercise_hint_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="task_id" baseTableName="exercise_hint" constraintName="fk_exercise_hint_task_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_task" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_exercise_plan_message_content" constraintName="fk_exercise_plan_id_to_content_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message_content" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_plan_id" baseTableName="iris_exercise_plan_step" constraintName="fk_exercise_plan_step_id_to_plan_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_exercise_plan_message_content" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="submission_policy_id" baseTableName="exercise" constraintName="fk_exercise_submission_policy" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission_policy" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="team_assignment_config_id" baseTableName="exercise" constraintName="fk_exercise_team_assignment_config_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="team_assignment_config" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="grading_instruction_id" baseTableName="feedback" constraintName="fk_feedback_grading_instruction_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="grading_instruction" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="grading_criterion" constraintName="fk_grading_criterion_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="grading_criterion_id" baseTableName="grading_instruction" constraintName="fk_grading_instruction_grading_criterion_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="grading_criterion" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="message_id" baseTableName="iris_message_content" constraintName="fk_iris_message_content_message_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="iris_message" constraintName="fk_iris_message_session_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_session" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="code_hint_id" baseTableName="iris_session" constraintName="fk_iris_session_code_hint_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise_hint" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="message_id" baseTableName="iris_message_content" constraintName="fk_iris_message_content_message_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="iris_message" constraintName="fk_iris_message_session_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_session" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="iris_session" constraintName="fk_iris_session_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_session" constraintName="fk_iris_session_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="iris_session" constraintName="fk_iris_session_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="iris_session" constraintName="fk_iris_session_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_json_message_content" constraintName="fk_json_id_to_content_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message_content" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="iris_course_chat_settings_id" baseTableName="iris_settings" constraintName="fk_iris_settings_iris_course_chat_settings_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="CASCADE" referencedColumnNames="id" referencedTableName="iris_sub_settings" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_json_message_content" constraintName="fk_json_id_to_content_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message_content" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="parent_id" baseTableName="knowledge_area" constraintName="fk_knowledge_area_parent" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="knowledge_area" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="lecture_id" baseTableName="conversation" constraintName="fk_lecture" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="lecture" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="feedback_id" baseTableName="long_feedback_text" constraintName="fk_long_feedback_to_feedback" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="feedback" validate="true"/>
@@ -3135,6 +3512,7 @@
         <addForeignKeyConstraint baseColumnNames="plagiarism_case_id" baseTableName="post" constraintName="fk_post_plagiarism_case_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="plagiarism_case" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="post_id" baseTableName="post_tag" constraintName="fk_post_tag_post_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="post" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="programming_exercise_auxiliary_repositories" constraintName="fk_programming_exercise_auxiliary_repositories_exercise" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="programming_exercise_build_config_id" baseTableName="programming_exercise_details" constraintName="fk_programming_exercise_build_config" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_build_config" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="git_diff_report_id" baseTableName="programming_exercise_git_diff_entry" constraintName="fk_programming_exercise_git_diff_entry_git_diff_report_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="programming_exercise_git_diff_report" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="programming_exercise_id" baseTableName="programming_exercise_git_diff_report" constraintName="fk_programming_exercise_git_diff_report_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="code_hint_id" baseTableName="programming_exercise_solution_entry" constraintName="fk_programming_exercise_solution_entry_code_hint_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise_hint" validate="true"/>
@@ -3167,7 +3545,7 @@
         <addForeignKeyConstraint baseColumnNames="feedback_id" baseTableName="text_block" constraintName="fk_text_block_feedback_id" deferrable="false" initiallyDeferred="false" onDelete="SET NULL" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="feedback" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="text_block" constraintName="fk_text_block_submission_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="id" baseTableName="text_exercise_details" constraintName="fk_text_exercise_details" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_text_message_content" constraintName="fk_text_id_to_content_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message_content" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="id" baseTableName="iris_text_message_content" constraintName="fk_text_id_to_content_id" deferrable="false" initiallyDeferred="false" onDelete="CASCADE" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="iris_message_content" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="assessed_exercise_id" baseTableName="tutor_participation" constraintName="fk_tutor_participation_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="tutor_id" baseTableName="tutor_participation" constraintName="fk_tutor_participation_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_group" constraintName="fk_tutorial_course_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
@@ -3182,6 +3560,7 @@
         <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session" constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="tutorial_group_schedule" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="teaching_assistant_id" baseTableName="tutorial_group" constraintName="fk_tutorial_group_teaching_assistant_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="user_public_ssh_key" constraintName="fk_user_public_ssh_key_user" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="student_exam_quiz_question" constraintName="h3Vyx1OiRTSjJQqMmDqx7BRZtvn" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="student_exam" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="quiz_question_id" baseTableName="student_exam_quiz_question" constraintName="nVl82Q7a8WevNKlJYqKcqN0LrX0" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="quiz_question" validate="true"/>
         <loadData encoding="UTF-8"

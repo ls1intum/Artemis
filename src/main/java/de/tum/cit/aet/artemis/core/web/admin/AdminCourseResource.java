@@ -103,6 +103,7 @@ public class AdminCourseResource {
             groups.add(courseGroup.teachingAssistantGroupName());
             groups.add(courseGroup.studentGroupName());
         });
+        groups.remove(null); // remove a potential null group
         return ResponseEntity.ok().body(groups);
     }
 
@@ -192,9 +193,7 @@ public class AdminCourseResource {
     @GetMapping("courses/{courseId}/deletion-summary")
     public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
         log.debug("REST request to get deletion summary course: {}", courseId);
-        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-
-        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(courseId));
     }
 
     /**

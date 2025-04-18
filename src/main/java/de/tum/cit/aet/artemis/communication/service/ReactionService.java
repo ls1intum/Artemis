@@ -114,12 +114,6 @@ public class ReactionService {
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
             mayInteractWithConversationElseThrow(user, updatedPost, course);
-
-            if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
-                // decrease voteCount of post needed for sorting
-                updatedPost.setVoteCount(updatedPost.getVoteCount() - 1);
-            }
-
             // remove reaction and persist post
             updatedPost.removeReaction(reaction);
             postRepository.save(updatedPost);
@@ -172,7 +166,7 @@ public class ReactionService {
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
-        api.preparePostAndBroadcast(answerPost, course, null);
+        api.preparePostAndBroadcast(answerPost, course);
         return savedReaction;
     }
 
@@ -194,12 +188,6 @@ public class ReactionService {
         reaction.setPost(post);
         // save reaction
         savedReaction = reactionRepository.save(reaction);
-
-        if (VOTE_EMOJI_ID.equals(reaction.getEmojiId())) {
-            // increase voteCount of post needed for sorting
-            post.setVoteCount(post.getVoteCount() + 1);
-        }
-
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
         updatedPost.setConversation(post.getConversation());

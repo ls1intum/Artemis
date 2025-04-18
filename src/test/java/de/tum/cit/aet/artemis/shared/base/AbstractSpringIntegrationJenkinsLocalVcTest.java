@@ -53,6 +53,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 
 // TODO: rewrite this test to use LocalVC
@@ -61,12 +62,11 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, PROFILE_SCHEDULING, PROFILE_LOCALVC, PROFILE_JENKINS, PROFILE_ATHENA, PROFILE_LTI, PROFILE_AEOLUS,
         PROFILE_APOLLON })
 @TestPropertySource(properties = { "server.port=49153", "artemis.version-control.url=http://localhost:49153",
-        "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "info.guided-tour.course-group-tutors=artemis-artemistutorial-tutors",
-        "info.guided-tour.course-group-students=artemis-artemistutorial-students", "info.guided-tour.course-group-editors=artemis-artemistutorial-editors",
-        "info.guided-tour.course-group-instructors=artemis-artemistutorial-instructors", "artemis.user-management.use-external=false",
+        "artemis.version-control.ssh-private-key-folder-path=${java.io.tmpdir}", "artemis.user-management.use-external=false",
         "artemis.user-management.course-enrollment.allowed-username-pattern=^(?!authorizationservicestudent2).*$",
         "spring.jpa.properties.hibernate.cache.hazelcast.instance_name=Artemis_jenkins_localvc", "artemis.version-control.ssh-port=1235", "info.contact=test@localhost",
-        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/" })
+        "artemis.version-control.ssh-template-clone-url=ssh://git@localhost:1235/",
+        "artemis.continuous-integration.artemis-authentication-token-value=ThisIsAReallyLongTopSecretTestingToken" })
 public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends AbstractArtemisIntegrationTest {
 
     // please only use this to verify method calls using Mockito. Do not mock methods, instead mock the communication with Jenkins using the corresponding RestTemplate.
@@ -75,6 +75,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVcTest extends Abstra
 
     @MockitoSpyBean
     protected LocalVCService versionControlService;
+
+    @MockitoSpyBean
+    protected LocalVCGitBranchService localVCGitBranchService;
 
     @MockitoSpyBean
     protected JenkinsJobPermissionsService jenkinsJobPermissionsService;
