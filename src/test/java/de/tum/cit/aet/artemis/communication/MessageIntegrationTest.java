@@ -58,8 +58,6 @@ import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -84,9 +82,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private List<Post> existingCourseWideMessages;
 
@@ -176,11 +171,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateConversationPostInCourseWideChannel(boolean isAnnouncement) throws Exception {
-        // Since we are testing old notifications
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createCourseWideChannel(course, "test", isAnnouncement);
-        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student2");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
 
         Post postToSave = new Post();
@@ -200,7 +192,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncementInPrivateChannel() throws Exception {
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test");
-        ConversationParticipant otherParticipant = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
+        conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");
 
         Post postToSave = new Post();
@@ -770,7 +762,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         List<Post> pinnedPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
 
         assertThat(pinnedPosts).hasSize(1);
-        assertThat(pinnedPosts.get(0).getId()).isEqualTo(updatedPinnedPost.getId());
+        assertThat(pinnedPosts.getFirst().getId()).isEqualTo(updatedPinnedPost.getId());
 
         params.set("pinnedOnly", "false");
         List<Post> allPosts = request.getList("/api/communication/courses/" + courseId + "/messages", HttpStatus.OK, Post.class, params);
@@ -880,8 +872,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendCourseNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannelWithTwoStudents();
         Post postToSave = new Post();
         postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
@@ -900,8 +890,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendMentionNotificationForNewPostWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         User mentionedUser = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         var channel = createChannelWithTwoStudents();
@@ -922,8 +910,6 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendAnnouncementNotificationWhenFeatureIsEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         Channel channel = conversationUtilService.createAnnouncementChannel(course, "test-announcement");
         conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "student1");
         ConversationParticipant author = conversationUtilService.addParticipantToConversation(channel, TEST_PREFIX + "instructor1");

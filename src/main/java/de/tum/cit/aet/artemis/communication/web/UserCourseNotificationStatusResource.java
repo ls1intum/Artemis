@@ -16,12 +16,9 @@ import de.tum.cit.aet.artemis.communication.dto.UserCourseNotificationStatusUpda
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
 @Profile(PROFILE_CORE)
 @RestController
-@FeatureToggle(Feature.CourseSpecificNotifications)
 @RequestMapping("api/communication/")
 public class UserCourseNotificationStatusResource {
 

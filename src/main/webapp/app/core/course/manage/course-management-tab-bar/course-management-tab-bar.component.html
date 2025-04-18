@@ -39,7 +39,6 @@
                 <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
                     <a
                         class="tab-link"
-                        [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
                         [routerLink]="['/course-management', course.id, 'tutorial-groups']"
                         routerLinkActive="active"
                         [class.active]="shouldHighlightTutorialsLink()"
