@@ -251,6 +251,12 @@ public class LectureResource {
     public record LectureDTO(Long id, String title, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate, List<AttachmentDTO> attachments,
             List<AttachmentUnitDTO> lectureUnits) {
 
+        /**
+         * Converts a lecture to a DTO. Only the attachments and attachment units that are visible to students are included.
+         *
+         * @param lecture The lecture to convert
+         * @return The converted lecture DTO
+         */
         public static LectureDTO from(Lecture lecture) {
             // only attachments visible to students are included
             List<AttachmentDTO> attachmentDTOs = lecture.getAttachments().stream().filter(Attachment::isVisibleToStudents).map(AttachmentDTO::from).toList();
