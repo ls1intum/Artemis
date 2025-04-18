@@ -222,10 +222,8 @@ public class CourseNotificationSettingService {
             var specifications = userCourseNotificationSettingSpecificationRepository.findAllByUserIdAndCourseId(userId, courseId);
 
             // If custom is specified, we want to overwrite the settings that are present in the database. Note that not all may be present.
-            specifications.forEach(specification -> {
-                notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL, specification.isEmail(),
-                        NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp()));
-            });
+            specifications.forEach(specification -> notificationTypeChannels.put(specification.getCourseNotificationType(), Map.of(NotificationChannelOption.EMAIL,
+                    specification.isEmail(), NotificationChannelOption.PUSH, specification.isPush(), NotificationChannelOption.WEBAPP, specification.isWebapp())));
         }
 
         return new CourseNotificationSettingInfoDTO(presetId, notificationTypeChannels);

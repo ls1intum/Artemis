@@ -8,7 +8,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -34,7 +33,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/core/course/overview/course-registration/course-registration.component';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { MODULE_FEATURE_ATLAS, PROFILE_IRIS, PROFILE_LTI, PROFILE_PROD } from 'app/app.constants';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -54,7 +52,6 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -80,13 +77,6 @@ const exercise2: Exercise = {
     dueDate: dayjs().add(1, 'days'),
     secondCorrectionEnabled: true,
 };
-const quizExercise: QuizExercise = {
-    id: 7,
-    numberOfAssessmentsOfCorrectionRounds: [],
-    studentAssignedTeamIdComputed: false,
-    secondCorrectionEnabled: true,
-};
-
 const courseEmpty: Course = {};
 
 const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
@@ -148,7 +138,6 @@ describe('CourseOverviewComponent', () => {
     let jhiWebsocketService: WebsocketService;
     let courseAccessStorageService: CourseAccessStorageService;
     let router: MockRouter;
-    let jhiWebsocketServiceReceiveStub: jest.SpyInstance;
     let jhiWebsocketServiceSubscribeSpy: jest.SpyInstance;
     let findOneForDashboardStub: jest.SpyInstance;
     let route: ActivatedRoute;
@@ -206,8 +195,6 @@ describe('CourseOverviewComponent', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: NotificationService, useClass: MockNotificationService },
-                { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: NgbDropdown, useClass: MockDirective(NgbDropdown) },
@@ -236,7 +223,6 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketService = TestBed.inject(WebsocketService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
                 metisConversationService = fixture.debugElement.injector.get(MetisConversationService);
-                jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
                 // default for findOneForDashboardStub is to return the course
@@ -319,7 +305,7 @@ describe('CourseOverviewComponent', () => {
 
     it('should create competencies and learning path item if competencies or prerequisites are available and learning paths are enabled', () => {
         component.course.set({ id: 123, numberOfPrerequisites: 3, learningPathsEnabled: true });
-        component.atlasEnabled.set(true);
+        component.atlasEnabled = true;
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems[2].title).toContain('Competencies');
         expect(sidebarItems[3].title).toContain('Learning Path');
@@ -584,8 +570,7 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledOnce();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceSubscribeSpy).toHaveBeenCalledWith('/topic/courses/' + course.id + '/quizExercises');
     });
 
     it('should do ngOnDestroy', () => {
@@ -701,5 +686,82 @@ describe('CourseOverviewComponent', () => {
 
         expect(navigateByUrlSpy).toHaveBeenCalledWith('/', { skipLocationChange: true });
         expect(navigateSpy).toHaveBeenCalledWith(['courses', course2.id, 'exercises']);
+    });
+    describe('determineManageViewLink', () => {
+        beforeEach(() => {
+            component.courseId.set(123);
+            component.course.set({ isAtLeastTutor: true });
+        });
+
+        it('should set exams link when URL includes "exams"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
+            component.course.set({ isAtLeastTutor: true });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exams']);
+        });
+
+        it('should set exercises link when URL includes "exercises"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
+        });
+
+        it('should set lectures link when URL includes "lectures"', () => {
+            component.course.set({ isAtLeastEditor: true });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'lectures']);
+        });
+
+        it('should set communication link when URL includes "communication"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'communication']);
+        });
+
+        it('should set learning-paths-management link when URL includes "learning-path + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'learning-paths-management']);
+        });
+
+        it('should set competency-management link when URL includes "competencies + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competencies');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'competency-management']);
+        });
+
+        it('should set faqs link when URL includes "faq"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faq');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'faqs']);
+        });
+
+        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + instructor"', () => {
+            component.course.set({ isAtLeastInstructor: true });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+        });
+        it('should set tutorial-groups-checklist link when URL includes "tutorial-groups + tutorial groups config' + ' exists + not instructor"', () => {
+            component.course.set({ isAtLeastTutor: true, tutorialGroupsConfiguration: {} });
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'tutorial-groups-checklist']);
+        });
+
+        it('should default to course management base link when URL does not match any condition', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/settings');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123']);
+        });
+
+        it('should set course statistics link when URL includes course statistics', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/statistics');
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'course-statistics']);
+        });
     });
 });

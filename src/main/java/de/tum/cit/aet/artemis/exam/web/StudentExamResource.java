@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exam.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_START_WAIT_TIME_MINUTES;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 import static java.time.ZonedDateTime.now;
 
@@ -20,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 /**
  * REST controller for managing ExerciseGroup.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @RestController
 @RequestMapping("api/exam/")
 public class StudentExamResource {

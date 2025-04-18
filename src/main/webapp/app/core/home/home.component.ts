@@ -117,7 +117,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
-            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2Config && this.profileInfo.saml2Config.passwordLoginDisabled && !loginFormOverride;
+            this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;
         });
     }
 

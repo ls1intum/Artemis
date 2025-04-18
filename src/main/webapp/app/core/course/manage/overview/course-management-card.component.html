@@ -225,15 +225,17 @@
     </div>
     <div class="card-footer">
         @if (course.isAtLeastTutor) {
-            <a
-                [routerLink]="['/course-management', course.id, 'exams']"
-                class="btn btn-primary me-1 mb-1"
-                [ngbTooltip]="'entity.action.exams' | artemisTranslate"
-                id="course-card-open-exams"
-            >
-                <fa-icon [icon]="faGraduationCap" />
-                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="examEnabled" placement="right">
+                <a
+                    [routerLink]="['/course-management', course.id, 'exams']"
+                    class="btn btn-primary me-1 mb-1"
+                    [ngbTooltip]="'entity.action.exams' | artemisTranslate"
+                    id="course-card-open-exams"
+                >
+                    <fa-icon [icon]="faGraduationCap" />
+                    <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         @if (course.isAtLeastTutor) {
             <a
@@ -279,16 +281,17 @@
             </a>
         }
         @if (course.timeZone || course.isAtLeastInstructor) {
-            <a
-                [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
-                class="btn btn-primary me-1 mb-1 hidden-if-mobile"
-                [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
-                id="course-card-open-tutorial-groups"
-            >
-                <fa-icon [icon]="faPersonChalkboard" />
-                <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
+                <a
+                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                    class="btn btn-primary me-1 mb-1 hidden-if-mobile"
+                    [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
+                    id="course-card-open-tutorial-groups"
+                >
+                    <fa-icon [icon]="faPersonChalkboard" />
+                    <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         @if (course.isAtLeastInstructor) {
             <jhi-feature-overlay [enabled]="atlasEnabled">

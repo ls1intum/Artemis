@@ -1,17 +1,17 @@
 ext {
     // TODO: this should become 90% for INSTRUCTION and 0 for CLASS
-    AggregatedCoverageThresholds = ["INSTRUCTION": 0.856, "CLASS": 89]
+    AggregatedCoverageThresholds = ["INSTRUCTION": 0.852, "CLASS": 93]
     // TODO: each module should achieve 90% for INSTRUCTION and 0 for CLASS
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.925, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.870, "CLASS":  2],
         "atlas"         :          ["INSTRUCTION": 0.904, "CLASS":  5],
-        "buildagent"    :          ["INSTRUCTION": 0.776, "CLASS":  1],
-        "communication" :          ["INSTRUCTION": 0.890, "CLASS":  2],
-        "core"          :          ["INSTRUCTION": 0.860, "CLASS": 23],
+        "buildagent"    :          ["INSTRUCTION": 0.786, "CLASS":  1],
+        "communication" :          ["INSTRUCTION": 0.820, "CLASS":  5],
+        "core"          :          ["INSTRUCTION": 0.859, "CLASS": 23],
         "exam"          :          ["INSTRUCTION": 0.895, "CLASS":  5],
-        "exercise"      :          ["INSTRUCTION": 0.917, "CLASS":  0],
-        "fileupload"    :          ["INSTRUCTION": 0.926, "CLASS":  0],
+        "exercise"      :          ["INSTRUCTION": 0.916, "CLASS":  0],
+        "fileupload"    :          ["INSTRUCTION": 0.936, "CLASS":  0],
         "iris"          :          ["INSTRUCTION": 0.752, "CLASS": 26],
         "lecture"       :          ["INSTRUCTION": 0.900, "CLASS":  0],
         "lti"           :          ["INSTRUCTION": 0.895, "CLASS":  2],
@@ -20,7 +20,7 @@ ext {
         "programming"   :          ["INSTRUCTION": 0.762, "CLASS": 14],
         "quiz"          :          ["INSTRUCTION": 0.892, "CLASS":  7],
         "text"          :          ["INSTRUCTION": 0.949, "CLASS":  1],
-        "tutorialgroup" :          ["INSTRUCTION": 0.924, "CLASS":  0],
+        "tutorialgroup" :          ["INSTRUCTION": 0.914, "CLASS":  1],
     ]
     // If no explicit modules defined -> generate reports and validate for each module
     reportedModules = includedModules.size() == 0

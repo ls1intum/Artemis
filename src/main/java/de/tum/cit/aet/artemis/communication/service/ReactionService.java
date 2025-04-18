@@ -32,9 +32,6 @@ public class ReactionService {
 
     private static final String METIS_REACTION_ENTITY_NAME = "posting reaction";
 
-    // constant must be same as it is in the client (metis.util.ts#28)
-    private static final String VOTE_EMOJI_ID = "heavy_plus_sign";
-
     private final UserRepository userRepository;
 
     private final CourseRepository courseRepository;
@@ -166,7 +163,7 @@ public class ReactionService {
         AnswerPost updatedAnswerPost = answerPostRepository.save(answerPost);
         updatedAnswerPost.getPost().setConversation(answerPost.getPost().getConversation());
 
-        api.preparePostAndBroadcast(answerPost, course, null);
+        api.preparePostAndBroadcast(answerPost, course);
         return savedReaction;
     }
 

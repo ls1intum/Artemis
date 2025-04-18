@@ -66,7 +66,6 @@ public class UserSshPublicKeyService {
         }
 
         userSshPublicKeyRepository.save(newUserSshPublicKey);
-        singleUserNotificationService.notifyUserAboutNewlyAddedSshKey(user, newUserSshPublicKey);
     }
 
     /**

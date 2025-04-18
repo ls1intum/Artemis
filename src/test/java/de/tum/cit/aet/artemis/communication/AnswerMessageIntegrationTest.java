@@ -5,7 +5,6 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -28,10 +27,8 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
@@ -40,8 +37,6 @@ import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -70,9 +65,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     private List<Post> existingConversationPostsWithAnswers;
 
@@ -189,24 +181,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         testCreateChannelAnswer(channel, 2);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testSendNotificationWhenDifferentUserAnswersPost() throws Exception {
-        var channel = createChannelWithTwoStudents();
-        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
-        verify(singleUserNotificationService, timeout(2000).times(1)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
-                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testDoNotSendNotificationWhenSameUserAnswersPost() throws Exception {
-        var channel = createChannelWithTwoStudents();
-        var createdAnswerPost = testCreateChannelAnswer(channel, 2);
-        verify(singleUserNotificationService, timeout(2000).times(0)).notifyUserAboutNewMessageReply(eq(createdAnswerPost), any(), any(), any(),
-                eq(NotificationType.CONVERSATION_NEW_REPLY_MESSAGE));
-    }
-
     private Channel createChannelWithTwoStudents() {
         Course course = courseRepository.findByIdElseThrow(courseId);
         Channel channel = conversationUtilService.createPublicChannel(course, "test");
@@ -215,7 +189,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         return channel;
     }
 
-    private AnswerPost testCreateChannelAnswer(Channel channel, int wantedNumberOfWSMessages) throws Exception {
+    private void testCreateChannelAnswer(Channel channel, int wantedNumberOfWSMessages) throws Exception {
         Post message = existingConversationPostsWithAnswers.getFirst();
         message.setConversation(channel);
         Post savedMessage = conversationMessageRepository.save(message);
@@ -241,7 +215,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         verify(websocketMessagingService, timeout(2000).times(wantedNumberOfWSMessages)).sendMessage(anyString(),
                 (Object) argThat(argument -> argument instanceof PostDTO postDTO && postDTO.post().equals(savedMessage)));
 
-        return createdAnswerPost;
     }
 
     @ParameterizedTest
@@ -288,9 +261,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(answerPostRepository.count()).isEqualTo(countBefore + 1);
-
-        // mentioned user is not a member of the conversation and should not be notified
-        verify(websocketMessagingService, never()).sendMessage(eq("/topic/user/" + mentionedUser.getId() + "/notifications"), any(SingleUserNotification.class));
     }
 
     @Test
@@ -686,8 +656,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendCourseNotificationWhenFeatureIsEnabled() throws Exception {
 
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         var channel = createChannelWithTwoStudents();
         var post = existingConversationPostsWithAnswers.getFirst();
         post.setConversation(channel);
@@ -710,7 +678,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentT
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSendMentionNotificationWhenUserMentioned() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
 
         User mentionedUser = userUtilService.getUserByLogin(TEST_PREFIX + "student2");
 

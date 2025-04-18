@@ -141,14 +141,6 @@ public class DataExportCreationService {
             handleCreationFailure(dataExport, e);
             return false;
         }
-        // the data export should be marked as successful even if the email cannot be sent.
-        // The user still receives a webapp notification, that's why we wrap the following block in a try-catch
-        try {
-            singleUserNotificationService.notifyUserAboutDataExportCreation(dataExport);
-        }
-        catch (Exception e) {
-            log.warn("Failed to send email about successful data export creation");
-        }
         return true;
     }
 
@@ -164,7 +156,6 @@ public class DataExportCreationService {
     private void handleCreationFailure(DataExport dataExport, Exception exception) {
         dataExport.setDataExportState(DataExportState.FAILED);
         dataExport = dataExportRepository.save(dataExport);
-        singleUserNotificationService.notifyUserAboutDataExportFailure(dataExport);
         Optional<User> admin = userService.findInternalAdminUser();
         if (admin.isEmpty()) {
             log.warn("No internal admin user found. Cannot send email to admin about data export failure.");
