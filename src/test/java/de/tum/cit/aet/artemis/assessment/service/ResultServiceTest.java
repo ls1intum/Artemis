@@ -163,7 +163,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         programmingExerciseRepository.save(programmingExercise);
         Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
         result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
-
+        result = resultRepository.save(result);
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
 
         assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
