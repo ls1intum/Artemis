@@ -15,6 +15,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreation
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.stereotype.Repository;
 
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -53,7 +54,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     public void init() {
         int registrationOptionsTimeToLive = 300; // 5 minutes
 
-        var mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
+        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
         mapConfig.setTimeToLiveSeconds(registrationOptionsTimeToLive);
         creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
@@ -65,7 +66,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         session.setAttribute(this.attrName, options);
 
         // the sessionId appears to change and does not equal the requestedSessionId, therefore, we use the userId instead
-        var userId = request.getRemoteUser();
+        String userId = request.getRemoteUser();
         if (userId == null) {
             log.warn("User ID is null, could not save PublicKeyCredentialCreationOptions");
             return;
@@ -80,12 +81,18 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
     }
 
     public PublicKeyCredentialCreationOptions load(HttpServletRequest request) {
-        var userId = request.getRemoteUser();
+        String userId = request.getRemoteUser();
         if (userId == null) {
             log.warn("User ID is null. This might indicate that the session does not exist or has expired. Unable to load PublicKeyCredentialCreationOptions.");
             return null;
         }
 
-        return creationOptionsMap.get(userId).toPublicKeyCredentialCreationOptions();
+        PublicKeyCredentialCreationOptionsDTO creationOptions = creationOptionsMap.get(userId);
+        if (creationOptions == null) {
+            log.warn("No cached PublicKeyCredentialCreationOptions found for user '{}'", userId);
+            return null;
+        }
+
+        return creationOptions.toPublicKeyCredentialCreationOptions();
     }
 }
