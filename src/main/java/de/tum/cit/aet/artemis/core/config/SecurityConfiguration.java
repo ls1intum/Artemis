@@ -113,9 +113,6 @@ public class SecurityConfiguration {
             try {
                 clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
                 clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
-                if (!port.matches("\\d+")) {
-                    throw new IllegalStateException("Invalid port configuration, the port expected to consist of digits only (8080, 80, ...) but was: " + port);
-                }
             }
             catch (URISyntaxException | MalformedURLException e) {
                 throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
