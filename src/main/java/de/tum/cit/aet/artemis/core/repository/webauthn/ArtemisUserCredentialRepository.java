@@ -131,14 +131,21 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      * @param userId of the user for which the passkeys should be found
      */
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
-        Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
+        try {
+            Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 
-        List<CredentialRecord> credentialRecords = user
-                .map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList()).orElseGet(List::of);
+            List<CredentialRecord> credentialRecords = user
+                    .map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList())
+                    .orElseGet(List::of);
 
-        return credentialRecords.stream()
-                .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
-                .toList();
+            return credentialRecords.stream()
+                    .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
+                    .toList();
+        }
+        catch (IllegalArgumentException e) {
+            log.warn("Invalid user ID provided: {}", e.getMessage());
+            return List.of();
+        }
     }
 
     public static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
