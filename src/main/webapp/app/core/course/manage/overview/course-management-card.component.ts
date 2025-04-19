@@ -34,7 +34,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementExerciseRowComponent } from './course-management-exercise-row.component';
 import { CourseManagementOverviewStatisticsComponent } from './course-management-overview-statistics.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -55,7 +54,6 @@ import { getContrastingTextColor } from 'app/shared/util/color.utils';
         CourseManagementExerciseRowComponent,
         CourseManagementOverviewStatisticsComponent,
         NgbTooltip,
-        FeatureToggleLinkDirective,
         FeatureToggleHideDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,

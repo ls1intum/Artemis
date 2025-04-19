@@ -29,8 +29,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTe
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -70,9 +68,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private ExamUtilService examUtilService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -129,8 +124,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private static final ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
 
     private static final ZonedDateTime ANCIENT_TIME = ZonedDateTime.now().minusHours(2);
-
-    private static final int NUMBER_OF_ALL_GROUPS = 4;
 
     /**
      * Sets up all needed mocks and their wanted behavior.
@@ -198,8 +191,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     /// Exercise Update / Release & Scheduling related Tests
@@ -339,8 +330,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateAttachmentChangeNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         lecture = new Lecture();
         lecture.setCourse(course);
 
@@ -361,8 +350,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateExercisePracticeNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -377,8 +364,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateQuizExerciseStartedNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -393,8 +378,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateExerciseUpdateNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -409,8 +392,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateExerciseUpdateForEditorsAndInstructorsWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -425,8 +406,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateExerciseReleasedNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -441,8 +420,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateNewFeedbackRequestNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         groupNotificationService.notifyTutorGroupAboutNewFeedbackRequest(exercise);
 
         await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -457,8 +434,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Test
     void shouldCreateDuplicateTestCaseNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         exercise.setReleaseDate(FUTURE_TIME);
         exercise.setDueDate(FUTURISTIC_TIME);
         exerciseRepository.save(exercise);
@@ -474,13 +449,10 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             assertThat(hasDuplicateTestCaseNotification).isTrue();
         });
 
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateProgrammingTestCasesChangedNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         programmingExercise.setCourse(course);
 
         groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
@@ -506,15 +478,11 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             assertThat(recipientIds).doesNotContain(student.getId());
         });
 
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateProgrammingBuildRunUpdateNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         programmingExercise.setCourse(course);
-        String notificationText = "Build run status has been updated";
 
         groupNotificationService.notifyEditorAndInstructorGroupsAboutBuildRunUpdate(programmingExercise);
 
@@ -539,6 +507,5 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
             assertThat(recipientIds).doesNotContain(student.getId());
         });
 
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 }
