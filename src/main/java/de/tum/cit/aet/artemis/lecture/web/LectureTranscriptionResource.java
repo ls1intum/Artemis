@@ -4,6 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -108,4 +113,45 @@ public class LectureTranscriptionResource {
 
         return ResponseEntity.ok(dto);
     }
+
+    /**
+     * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber : Create a transcription from Nebula.
+     *
+     * @param lectureId     the ID of the lecture
+     * @param lectureUnitId the ID of the lecture unit
+     * @param requestBody   the request containing the video URL
+     * @return the created transcription
+     * @throws Exception if the Nebula call fails
+     */
+    @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
+    public ResponseEntity<LectureTranscription> createFromNebula(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody Map<String, String> requestBody)
+            throws Exception {
+
+        // Step 1: Get video URL
+        String videoUrl = requestBody.get("videoUrl");
+
+        // Step 2: Prepare request to Nebula
+        HttpClient httpClient = HttpClient.newHttpClient();
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Map<String, Object> nebulaRequest = new HashMap<>();
+        nebulaRequest.put("video_url", videoUrl);
+        nebulaRequest.put("lecture_id", lectureId);
+
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:5000/transcribe")).header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(nebulaRequest))).build();
+
+        // Step 3: Send request to Nebula and parse response
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Nebula call failed: " + response.body());
+        }
+
+        // Step 4: Deserialize into LectureTranscriptionDTO
+        LectureTranscriptionDTO transcriptionDTO = objectMapper.readValue(response.body(), LectureTranscriptionDTO.class);
+
+        // Step 5: Reuse the existing method to save the transcription
+        return createLectureTranscription(transcriptionDTO, lectureId, lectureUnitId);
+    }
+
 }
