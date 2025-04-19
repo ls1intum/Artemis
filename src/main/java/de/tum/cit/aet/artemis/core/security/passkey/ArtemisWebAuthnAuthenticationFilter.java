@@ -11,6 +11,8 @@ import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenti
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
+ * We want to set the custom {@link ArtemisHttpMessageConverterAuthenticationSuccessHandler} here to make sure the JWT token is set in the response
+ *
  * @see org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter
  */
 public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationFilter {

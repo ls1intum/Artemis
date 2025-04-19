@@ -41,8 +41,7 @@ public class ArtemisWebAuthnAuthenticationProvider implements AuthenticationProv
     /**
      * Creates a new instance.
      *
-     * @param relyingPartyOperations the {@link WebAuthnRelyingPartyOperations} to use.
-     *                                   Cannot be null.
+     * @param relyingPartyOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
      * @param userRepository         the {@link UserRepository} to use. Cannot be null.
      */
     public ArtemisWebAuthnAuthenticationProvider(WebAuthnRelyingPartyOperations relyingPartyOperations, UserRepository userRepository) {
