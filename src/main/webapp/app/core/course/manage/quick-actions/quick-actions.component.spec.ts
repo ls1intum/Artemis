@@ -36,7 +36,7 @@ describe('QuickActionsComponent', () => {
         fixture.detectChanges();
     });
 
-    it('handles gracefully when no course id is provided', () => {
+    it('should handle gracefully when no course id is provided', () => {
         fixture.componentRef.setInput('course', {});
         const routerSpy = jest.spyOn(router, 'navigate');
         component.linkToExamCreation();

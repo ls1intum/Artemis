@@ -21,7 +21,6 @@ import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 
 export enum DoughnutChartType {
@@ -350,7 +349,4 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.getCourseDetailSections();
         });
     }
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 }
