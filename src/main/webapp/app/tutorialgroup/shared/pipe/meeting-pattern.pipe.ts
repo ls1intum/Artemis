@@ -1,3 +1,4 @@
+import { inject } from '@angular/core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,11 +14,12 @@ import { getDayTranslationKey } from 'app/tutorialgroup/shared/util/weekdays';
 export class MeetingPatternPipe implements PipeTransform {
     removeSecondsPipe = new RemoveSecondsPipe();
 
-    constructor(private translateService: TranslateService) {}
+    private translateService = inject(TranslateService);
 
     /**
      * Transforms a tutorial group schedule to a translated meeting pattern.
      * @param schedule The tutorial group schedule to transform.
+     * @param includeRepetitionFrequency whether the repetition frequency should be included in the output.
      * @returns The translated meeting pattern.
      */
     transform(schedule: TutorialGroupSchedule | undefined, includeRepetitionFrequency = false): string {

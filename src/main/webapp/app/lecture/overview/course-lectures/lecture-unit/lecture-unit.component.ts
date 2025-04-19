@@ -1,3 +1,4 @@
+import { inject } from '@angular/core';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -17,7 +18,7 @@ import { Router } from '@angular/router';
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent {
-    constructor(private router: Router) {}
+    private router = inject(Router);
 
     protected faDownload = faDownload;
     protected faSquareCheck = faSquareCheck;
