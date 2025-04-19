@@ -150,6 +150,40 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisSession.class, HttpStatus.FORBIDDEN);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
+        var post = createPostInExerciseChat(exercise, TEST_PREFIX);
+        post.setCourse(course);
+        post = postRepository.saveAndFlush(post); // Ensure post is persisted
+        var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
+        irisSession.setPost(post); // Ensure session contains the post
+
+        // Create a message to initialize the session
+        var message = new IrisMessage();
+        message.addContent(new IrisTextMessageContent("Initial message for tutor suggestion"));
+        message.setSender(IrisMessageSender.TUT_SUG);
+        message.setSession(irisSession);
+        irisMessageService.saveMessage(message, irisSession, IrisMessageSender.TUT_SUG);
+
+        // Mock pipeline execution and ensure status updates are called
+        pipelineDone.set(false);
+        Post finalPost = post;
+        irisRequestMockProvider.mockTutorSuggestionResponse(dto -> {
+            assertThat(dto.settings().authenticationToken()).isNotNull();
+            assertThat(dto.post()).isNotNull();
+            assertThat(dto.post().id()).isEqualTo(finalPost.getId());
+            assertThat(dto.post().content()).isEqualTo(finalPost.getContent());
+            pipelineDone.set(true);
+        });
+
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
+
+        assertThat(response.getContent().getFirst().toString()).contains("Initial message for tutor suggestion");
+        assertThat(response.getSender()).isEqualTo(IrisMessageSender.TUT_SUG);
+    }
+
     private static String tutorSuggestionUrl(long sessionId) {
         return "/api/iris/tutor-suggestion/" + sessionId + "/sessions";
     }
