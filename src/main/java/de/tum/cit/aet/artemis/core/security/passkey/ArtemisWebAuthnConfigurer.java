@@ -164,6 +164,10 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     }
 
     private WebAuthnRelyingPartyOperations webAuthnRelyingPartyOperations(PublicKeyCredentialUserEntityRepository userEntities, UserCredentialRepository userCredentials) {
+        if (relyingPartyId == null || relyingPartyName == null) {
+            throw new IllegalStateException(
+                    "WebAuthn relyingPartyId and relyingPartyName must be configured for passkey authentication; rpId: " + relyingPartyId + ", rpName: " + relyingPartyName);
+        }
         Optional<WebAuthnRelyingPartyOperations> webauthnOperationsBean = getBeanOrNull(WebAuthnRelyingPartyOperations.class);
         return webauthnOperationsBean.orElseGet(() -> new Webauthn4JRelyingPartyOperations(userEntities, userCredentials,
                 PublicKeyCredentialRpEntity.builder().id(this.relyingPartyId).name(this.relyingPartyName).build(), this.allowedOrigins));
