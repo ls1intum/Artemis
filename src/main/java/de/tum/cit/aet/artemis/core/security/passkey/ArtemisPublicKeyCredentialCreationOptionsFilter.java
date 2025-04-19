@@ -35,10 +35,18 @@ import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
+ * <p>
  * A {@link jakarta.servlet.Filter} that renders the
  * {@link PublicKeyCredentialCreationOptions} for <a href=
  * "https://w3c.github.io/webappsec-credential-management/#dom-credentialscontainer-create">creating</a>
  * a new credential.
+ * </p>
+ * <p>
+ * This class is based on {@link org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter}
+ * But we need to set a different {@link PublicKeyCredentialCreationOptionsRepository} to make sure the passkey registration works well on multinode-systems.
+ * Therefore, we need to provide {@link ArtemisPublicKeyCredentialCreationOptionsFilter#setCreationOptionsRepository} so we can use
+ * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * </p>
  *
  * @see org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter
  */
