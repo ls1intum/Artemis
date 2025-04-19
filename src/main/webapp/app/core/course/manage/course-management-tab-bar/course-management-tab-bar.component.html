@@ -36,16 +36,17 @@
                 </a>
             }
             @if (course.tutorialGroupsConfiguration || course.isAtLeastInstructor) {
-                <a
-                    class="tab-link"
-                    [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
-                    [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                    routerLinkActive="active"
-                    [class.active]="shouldHighlightTutorialsLink()"
-                >
-                    <fa-icon [icon]="faPersonChalkboard" />
-                    <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
-                </a>
+                <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
+                    <a
+                        class="tab-link"
+                        [routerLink]="['/course-management', course.id, 'tutorial-groups']"
+                        routerLinkActive="active"
+                        [class.active]="shouldHighlightTutorialsLink()"
+                    >
+                        <fa-icon [icon]="faPersonChalkboard" />
+                        <span class="tab-link-text" jhiTranslate="artemisApp.entities.tutorialGroup.plural"></span>
+                    </a>
+                </jhi-feature-overlay>
             }
             @if (course.isAtLeastInstructor) {
                 <jhi-feature-overlay [enabled]="atlasEnabled">

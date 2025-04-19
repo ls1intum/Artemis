@@ -209,7 +209,7 @@ For example, you could add a reactive flag to your component that indicates whet
         isDark = false;
         themeSubscription: Subscription;
 
-        constructor(private themeService: ThemeService) {}
+        private themeService = inject(ThemeService);
 
         ngOnInit() {
             this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => {

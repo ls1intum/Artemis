@@ -19,8 +19,6 @@ export enum PageType {
     PLAGIARISM_CASE_STUDENT = 'PLAGIARISM_CASE_STUDENT',
 }
 
-export const VOTE_EMOJI_ID = 'heavy_plus_sign';
-
 export enum SortDirection {
     ASCENDING = 'ASCENDING',
     DESCENDING = 'DESCENDING',

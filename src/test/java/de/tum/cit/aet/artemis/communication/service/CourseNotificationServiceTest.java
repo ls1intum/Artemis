@@ -40,9 +40,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationPa
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationServiceTest {
@@ -65,9 +62,6 @@ class CourseNotificationServiceTest {
     private UserCourseNotificationStatusService userCourseNotificationStatusService;
 
     @Mock
-    private UserTestRepository userRepository;
-
-    @Mock
     private CourseNotificationWebappService webappService;
 
     @Mock
@@ -76,18 +70,14 @@ class CourseNotificationServiceTest {
     @Mock
     private CourseNotificationEmailService emailService;
 
-    @Mock
-    private FeatureToggleService featureToggleService;
-
     @BeforeEach
     void setUp() {
         courseNotificationService = new CourseNotificationService(courseNotificationRegistryService, courseNotificationSettingService, courseNotificationRepository,
-                courseNotificationParameterRepository, userCourseNotificationStatusService, featureToggleService, webappService, pushService, emailService);
+                courseNotificationParameterRepository, userCourseNotificationStatusService, webappService, pushService, emailService);
     }
 
     @Test
     void shouldSendNotificationsToAllChannelsWhenMultipleChannelsSupported() {
-        when(featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)).thenReturn(true);
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
         List<User> allRecipients = List.of(createTestUser(1L), createTestUser(2L));
         List<User> webappRecipients = List.of(createTestUser(1L));
@@ -111,7 +101,6 @@ class CourseNotificationServiceTest {
 
     @Test
     void shouldCreateCourseNotificationWhenSending() {
-        when(featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)).thenReturn(true);
         TestNotification notification = createTestNotification(NotificationChannelOption.WEBAPP);
         List<User> recipients = List.of(createTestUser(1L));
 
@@ -154,6 +143,7 @@ class CourseNotificationServiceTest {
         assertThat(result.content()).hasSize(1);
 
         var dto = result.content().getFirst();
+        assertThat(dto).isNotNull();
         assertThat(dto.notificationType()).isEqualTo("testNotification");
         assertThat(dto.courseId()).isEqualTo(123L);
     }
@@ -180,7 +170,7 @@ class CourseNotificationServiceTest {
     }
 
     private TestNotification createTestNotification(NotificationChannelOption... supportedChannels) {
-        return new TestNotification(1L, 123L, ZonedDateTime.now(), new HashMap<String, String>(Map.of("key1", "val1", "key2", "val2")), supportedChannels);
+        return new TestNotification(1L, 123L, ZonedDateTime.now(), new HashMap<>(Map.of("key1", "val1", "key2", "val2")), supportedChannels);
     }
 
     private CourseNotification createTestCourseNotificationEntity(Long id) {
@@ -201,7 +191,8 @@ class CourseNotificationServiceTest {
 
         final Set<NotificationChannelOption> supportedChannels;
 
-        // This constructor is needed for the test case shouldReturnCourseNotificationsWhenRequested
+        @SuppressWarnings("unused")
+        // This constructor is needed for the test case shouldReturnCourseNotificationsWhenRequested (using reflection)
         TestNotification(Long notificationId, Long courseId, ZonedDateTime creationDate, Map<String, String> parameters) {
             super(notificationId, courseId, creationDate, parameters);
             this.supportedChannels = Set.of(NotificationChannelOption.WEBAPP);

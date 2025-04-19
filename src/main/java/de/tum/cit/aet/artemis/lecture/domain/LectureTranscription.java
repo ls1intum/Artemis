@@ -10,8 +10,6 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
@@ -31,7 +29,6 @@ public class LectureTranscription extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "lecture_unit_id", unique = true)
-    @JsonIgnore
     private LectureUnit lectureUnit;
 
     public LectureTranscription() {

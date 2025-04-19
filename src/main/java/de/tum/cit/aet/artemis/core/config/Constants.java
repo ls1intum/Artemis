@@ -403,6 +403,11 @@ public final class Constants {
     public static final String MODULE_FEATURE_TEXT = "text";
 
     /**
+     * The name of the module feature used for Atlas functionality.
+     */
+    public static final String MODULE_FEATURE_TUTORIALGROUP = "tutorialgroup";
+
+    /**
      * The name of the property used to enable or disable Atlas functionality.
      */
     public static final String ATLAS_ENABLED_PROPERTY_NAME = "artemis.atlas.enabled";
@@ -421,6 +426,11 @@ public final class Constants {
      * The name of the property used to enable or disable text exercise functionality.
      */
     public static final String TEXT_ENABLED_PROPERTY_NAME = "artemis.text.enabled";
+
+    /**
+     * The name of the property used to enable or disable tutorial group functionality.
+     */
+    public static final String TUTORIAL_GROUP_ENABLED_PROPERTY_NAME = "artemis.tutorialgroup.enabled";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
