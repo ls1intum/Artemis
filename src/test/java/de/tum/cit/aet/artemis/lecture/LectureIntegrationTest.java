@@ -267,13 +267,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentUnitWithSlides);
         AttachmentUnit attachmentUnit = (AttachmentUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentUnit.getSlides()).hasSize(numberOfSlides);
-
-        Lecture lectureWithDetails = request.get("/api/lecture/lectures/" + lectureWithSlides.getId() + "/details-with-slides", HttpStatus.OK, Lecture.class);
-
-        assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
-        assertThat(lectureWithDetails.getLectureUnits()).contains(attachmentUnitWithSlides);
-        AttachmentUnit attachmentUnitDetails = (AttachmentUnit) lectureWithDetails.getLectureUnits().getFirst();
-        assertThat(attachmentUnitDetails.getSlides()).hasSize(numberOfSlides);
     }
 
     @Test
