@@ -29,13 +29,24 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 
 /**
+ * <p>
  * Configures WebAuthn for Spring Security applications using a custom {@link ArtemisWebAuthnAuthenticationFilter}.
- * In contrast to the Spring Security implementation, we want to set a JWT in the response.
+ * </p>
+ * Customizations:
+ * <ul>
+ * <li>Using a custom {@link ArtemisWebAuthnAuthenticationProvider}</li>
+ * <li>Using a custom {@link ArtemisWebAuthnAuthenticationFilter}, where we set a JWT token in the response</li>
+ * <li>
+ * Using custom repositories for register & authenticate option requests, as the default implementation in
+ * memory storage would not work on multinode systems (instead we are using hazelcast
+ * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository}
+ * {@link de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository})
+ * </li>
+ * </ul>
  *
- * @see WebAuthnConfigurer on which this class is based and which can probably replace this custom class once a
- *      configuration of the in {@link WebAuthnAuthenticationFilter} configured
- *      {@link org.springframework.security.web.authentication.HttpMessageConverterAuthenticationSuccessHandler}
- *      can be modified / overwriten by specifying a bean.
+ * @see WebAuthnConfigurer on which our implementation is based and which might be able to replace our customizations
+ *      with configuration options in future SpringSecurity versions (our implementation is based on
+ *      <a href="https://docs.spring.io/spring-security/reference/servlet/authentication/passkeys.html">SpringSecurity 6.4.4</a>)
  */
 public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends WebAuthnConfigurer<H> {
 
