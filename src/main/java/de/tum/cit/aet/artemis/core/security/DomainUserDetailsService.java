@@ -50,8 +50,6 @@ public class DomainUserDetailsService implements UserDetailsService {
     }
 
     private org.springframework.security.core.userdetails.User createSpringSecurityUser(String lowercaseLogin, User user) {
-        log.info("Checking if user is activated: lowercaseLogin={}, login={}, activated={}", lowercaseLogin, user.getLogin(), user.getActivated());
-
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
         }
