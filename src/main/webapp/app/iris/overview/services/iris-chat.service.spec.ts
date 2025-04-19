@@ -235,11 +235,10 @@ describe('IrisChatService', () => {
     });
 
     it('should request tutor suggestion if sessionId is set', fakeAsync(() => {
-        const post = { id: 99, content: 'Test post' } as any;
         service.sessionId = id;
         const httpStub = jest.spyOn(httpService, 'createTutorSuggestion').mockReturnValueOnce(of());
 
-        service.requestTutorSuggestion(post).subscribe((res) => {
+        service.requestTutorSuggestion().subscribe((res) => {
             expect(res).toBeUndefined();
         });
 
@@ -248,11 +247,9 @@ describe('IrisChatService', () => {
     }));
 
     it('should throw error if sessionId is undefined on tutor suggestion', fakeAsync(() => {
-        const post = { id: 99, content: 'Test post' } as any;
-
         service.sessionId = undefined;
 
-        service.requestTutorSuggestion(post).subscribe({
+        service.requestTutorSuggestion().subscribe({
             error: (err) => {
                 expect(err.message).toBe('Not initialized');
             },
