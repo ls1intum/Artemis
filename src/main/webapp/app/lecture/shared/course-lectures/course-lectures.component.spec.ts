@@ -1,101 +1,37 @@
-import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { ActivatedRoute, RouterModule } from '@angular/router';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbDropdownModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateService } from '@ngx-translate/core';
-import { LocalStorageService } from 'ngx-webstorage';
+import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { CourseLecturesComponent } from 'app/lecture/shared/course-lectures/course-lectures.component';
-import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { provideHttpClient } from '@angular/common/http';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
+import { LtiService } from 'app/shared/service/lti.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { RouterTestingModule } from '@angular/router/testing';
 
-@Component({ selector: 'jhi-course-lecture-row', template: '' })
-class CourseLectureRowStubComponent {
-    @Input() lecture: Lecture;
-    @Input() course: Course;
-}
-
-describe('CourseLectures', () => {
-    let courseLecturesComponentFixture: ComponentFixture<CourseLecturesComponent>;
-    let courseLecturesComponent: CourseLecturesComponent;
-    let course: Course;
-    let lecture1: Lecture;
-    let lecture2: Lecture;
-    let lecture3: Lecture;
+describe('CourseLecturesComponent', () => {
+    let component: CourseLecturesComponent;
+    let fixture: ComponentFixture<CourseLecturesComponent>;
+    let ltiService: LtiService;
+    let courseOverviewService: CourseOverviewService;
+    let lectureService: LectureService;
 
     beforeEach(() => {
-        course = new Course();
-        course.id = 1;
-
-        const wednesdayBase = dayjs('18-03-2020', 'DD-MM-YYYY');
-        const wednesdayBefore = dayjs('11-03-2020', 'DD-MM-YYYY');
-        const wednesdayAfter = dayjs('25-03-2020', 'DD-MM-YYYY');
-
-        lecture1 = new Lecture();
-        lecture1.id = 1;
-        lecture1.startDate = wednesdayBase;
-        lecture2 = new Lecture();
-        lecture2.id = 2;
-        lecture2.startDate = wednesdayBefore;
-        lecture3 = new Lecture();
-        lecture3.id = 3;
-        lecture3.startDate = wednesdayAfter;
-        course.lectures = [lecture1, lecture2, lecture3];
-
         TestBed.configureTestingModule({
-            imports: [NgbDropdownModule, RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
-            declarations: [
-                CourseLecturesComponent,
-                CourseLectureRowStubComponent,
-                SidebarComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockPipe(SearchFilterPipe),
-                MockComponent(SidePanelComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockComponent(SearchFilterComponent),
-            ],
+            imports: [RouterTestingModule, CourseLecturesComponent],
+            declarations: [],
             providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
+                LtiService,
                 MockProvider(CourseStorageService, {
-                    getCourse: () => {
-                        return course;
-                    },
-                    subscribeToCourseUpdates: () => {
-                        return of(course);
-                    },
+                    getCourse: () => ({ id: 1, lectures: [] }) as Course,
+                    subscribeToCourseUpdates: () => of({} as Course),
                 }),
-                { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(ExerciseService),
-                MockProvider(CourseOverviewService, {
-                    getUpcomingLecture: () => {
-                        return lecture3;
-                    },
-                    sortLectures: () => {
-                        return [lecture1, lecture1, lecture3];
-                    },
+                MockProvider(CourseOverviewService),
+                MockProvider(LectureService, {
+                    find: () => of(new HttpResponse({ body: new Lecture() })),
                 }),
                 {
                     provide: ActivatedRoute,
@@ -103,42 +39,57 @@ describe('CourseLectures', () => {
                         parent: {
                             params: of({ courseId: '1' }),
                         },
-                        params: of({ lectureId: lecture1.id }),
+                        firstChild: {
+                            snapshot: {
+                                params: {},
+                            },
+                        },
+                        queryParams: of({}),
                     },
                 },
-                { provide: LocalStorageService, useClass: MockSyncStorage },
-                { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                courseLecturesComponentFixture = TestBed.createComponent(CourseLecturesComponent);
-                courseLecturesComponent = courseLecturesComponentFixture.componentInstance;
-            });
+        });
+
+        fixture = TestBed.createComponent(CourseLecturesComponent);
+        component = fixture.componentInstance;
+        ltiService = TestBed.inject(LtiService);
+        courseOverviewService = TestBed.inject(CourseOverviewService);
+        lectureService = TestBed.inject(LectureService);
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
+    it('should handle multi-launch subscription', fakeAsync(() => {
+        const processSpy = jest.spyOn(component, 'processLectures');
+        const sortSpy = jest.spyOn(courseOverviewService, 'sortLectures').mockReturnValue([]);
+        const mapSpy = jest.spyOn(courseOverviewService, 'mapLecturesToSidebarCardElements').mockReturnValue([]);
 
-    it('should initialize', () => {
-        courseLecturesComponentFixture.detectChanges();
-        expect(courseLecturesComponent).not.toBeNull();
-        courseLecturesComponent.ngOnDestroy();
-    });
+        ltiService.setMultiLaunch(true);
+        component.ngOnInit();
 
-    it('should sort correctly', fakeAsync(() => {
-        courseLecturesComponentFixture.detectChanges();
+        expect(component.isMultiLaunch).toBeTrue();
 
-        // check if the lectures are sorted correctly inside the groups
-        const lectures = courseLecturesComponent.sortedLectures;
-        for (let i = 0; i < lectures.length - 1; i++) {
-            const firstLecture = lectures[i];
-            const secondLecture = lectures[i + 1];
-            const firstStartDate = firstLecture.startDate ? firstLecture.startDate.valueOf() : dayjs().valueOf();
-            const secondStartDate = secondLecture.startDate ? secondLecture.startDate.valueOf() : dayjs().valueOf();
+        ltiService.setMultiLaunch(false);
 
-            expect(firstStartDate).toBeLessThanOrEqual(secondStartDate);
-        }
+        expect(component.isMultiLaunch).toBeFalse();
+        expect(processSpy).toHaveBeenCalledOnce();
+        expect(sortSpy).toHaveBeenCalledOnce();
+        expect(mapSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should fetch lectures for multi-launch when lectureIDs are provided', fakeAsync(() => {
+        const lecture1 = new Lecture();
+        lecture1.id = 1;
+        const lecture2 = new Lecture();
+        lecture2.id = 2;
+
+        jest.spyOn(lectureService, 'find').mockImplementation((id: number) => of(new HttpResponse({ body: id === 1 ? lecture1 : lecture2 })));
+
+        (TestBed.inject(ActivatedRoute) as any).queryParams = of({ lectureIDs: '1,2' });
+
+        component.ngOnInit();
+
+        expect(component.multiLaunchLectureIDs).toEqual([1, 2]);
+        expect(lectureService.find).toHaveBeenCalledTimes(4);
+        expect(lectureService.find).toHaveBeenCalledWith(1);
+        expect(lectureService.find).toHaveBeenCalledWith(2);
     }));
 });
