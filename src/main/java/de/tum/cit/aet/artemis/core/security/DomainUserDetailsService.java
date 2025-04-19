@@ -32,20 +32,24 @@ public class DomainUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(final String loginOrEmail) {
+        log.debug("Authenticating {}", loginOrEmail);
         String lowercaseLoginOrEmail = loginOrEmail.toLowerCase(Locale.ENGLISH);
 
         User user;
         if (SecurityUtils.isEmail(lowercaseLoginOrEmail)) {
             // It's an email, try to find the user based on the email
-            user = userRepository.findOneWithGroupsAndAuthoritiesByEmail(lowercaseLoginOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by email in the database"));
+            user = userRepository.findOneWithGroupsAndAuthoritiesByEmailAndInternal(lowercaseLoginOrEmail, true)
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
         }
         else {
             // It's a login, try to find the user based on the login
-            user = userRepository.findOneWithGroupsAndAuthoritiesByLogin(lowercaseLoginOrEmail)
-                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found by login in the database"));
+            user = userRepository.findOneWithGroupsAndAuthoritiesByLoginAndInternal(lowercaseLoginOrEmail, true)
+                    .orElseThrow(() -> new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " was not found in the database"));
         }
 
+        if (!user.isInternal()) {
+            throw new UsernameNotFoundException("User " + lowercaseLoginOrEmail + " is an external user and thus was not found as an internal user.");
+        }
         return createSpringSecurityUser(lowercaseLoginOrEmail, user);
     }
 
@@ -53,24 +57,6 @@ public class DomainUserDetailsService implements UserDetailsService {
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User " + lowercaseLogin + " was not activated");
         }
-
-        String password = user.getPassword();
-        boolean isExternalUserWithoutPassword = password == null && !user.isInternal();
-        boolean usedTemporaryPasswordForCreation = false;
-        if (isExternalUserWithoutPassword) {
-            // SpringSecurity user cannot be created with a null password, so we need a temporary placeholder password
-            // The temporary password should be erased after the user is created, to ensure that the user cannot log in with it (TODO does this assumption hold?)
-            password = PasswordGenerator.generateTemporaryPassword(); // could be set to an empty string as well, but setting a temporary value might be less error-prone
-            usedTemporaryPasswordForCreation = true;
-        }
-
-        org.springframework.security.core.userdetails.User springUser = new org.springframework.security.core.userdetails.User(user.getLogin(), password,
-                user.getGrantedAuthorities());
-
-        if (usedTemporaryPasswordForCreation) {
-            springUser.eraseCredentials(); // TODO verify which effects this has (assumption: no login with password possible on that user object)
-        }
-
-        return springUser;
+        return new org.springframework.security.core.userdetails.User(user.getLogin(), user.getPassword(), user.getGrantedAuthorities());
     }
 }

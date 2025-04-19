@@ -48,6 +48,7 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository;
 import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
@@ -85,7 +86,7 @@ public class SecurityConfiguration {
 
     private final UserCredentialRepository userCredentialRepository;
 
-    private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -122,7 +123,7 @@ public class SecurityConfiguration {
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserDetailsService userDetailsService, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            UserRepository userRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
@@ -132,7 +133,7 @@ public class SecurityConfiguration {
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
-        this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
         this.hazelcastInstance = hazelcastInstance;
     }
 
@@ -308,7 +309,7 @@ public class SecurityConfiguration {
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
                 converter,
                 jwtCookieService,
-                userDetailsService,
+                userRepository,
                 publicKeyCredentialUserEntityRepository,
                 userCredentialRepository,
                 publicKeyCredentialCreationOptionsRepository(),
