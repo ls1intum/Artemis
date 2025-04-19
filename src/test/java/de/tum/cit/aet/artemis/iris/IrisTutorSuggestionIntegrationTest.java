@@ -138,7 +138,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
             pipelineDone.set(true);
         });
 
-        var response = request.postWithResponseBody(irisSessionUrl(post.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
+        var response = request.postWithResponseBody(irisSessionUrl(irisSession.getId()) + "/messages", message, IrisMessage.class, HttpStatus.CREATED);
         await().atMost(java.time.Duration.ofSeconds(5)).until(pipelineDone::get);
         assertThat(response.getContent().getFirst().toString()).contains("Test tutor suggestion request");
     }
