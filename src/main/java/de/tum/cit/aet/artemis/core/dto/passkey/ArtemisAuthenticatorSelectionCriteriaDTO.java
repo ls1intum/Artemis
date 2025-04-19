@@ -21,7 +21,7 @@ public record ArtemisAuthenticatorSelectionCriteriaDTO(AuthenticatorAttachment a
 
     public ArtemisAuthenticatorSelectionCriteriaDTO(AuthenticatorAttachment authenticatorAttachment, String residentKey, UserVerificationRequirement userVerification) {
         this.authenticatorAttachment = authenticatorAttachment;
-        this.residentKey = Objects.requireNonNullElse(residentKey, ResidentKeyRequirement.DISCOURAGED).toString(); // should not be null
+        this.residentKey = Objects.requireNonNullElse(residentKey, ResidentKeyRequirement.DISCOURAGED).toString();
         this.userVerification = userVerification;
     }
 
