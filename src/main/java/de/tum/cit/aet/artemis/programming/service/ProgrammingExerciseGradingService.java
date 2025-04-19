@@ -320,8 +320,10 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Finally, save the new result once and make sure the order column between submission and result is maintained
-        processedResult.setSubmission(programmingSubmission);
+        // workaround to avoid scheduling the participant score update twice. The update will only run when a submission is present.
+        processedResult.setSubmission(null);
         processedResult = resultRepository.save(processedResult);
+        processedResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
