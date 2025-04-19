@@ -5,8 +5,8 @@ import org.springframework.context.annotation.ConditionContext;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 
 /**
- * Condition to check if the Exam module is enabled.
- * Based on this condition, Spring components concerning exam functionality can be enabled or disabled.
+ * Condition to check if the Passkey feature is enabled.
+ * Based on this condition, Spring components concerning Passkey functionality can be enabled or disabled.
  */
 public class PasskeyEnabled implements Condition {
 
