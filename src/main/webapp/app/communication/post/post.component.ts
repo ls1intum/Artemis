@@ -138,7 +138,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         super();
         this.course = this.metisService.getCourse() ?? throwError('Course not found');
         effect(() => {
-            this.hasOriginalPostBeenDeleted = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+            const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
+            const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
+            this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
         });
     }
 
