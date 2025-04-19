@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -11,10 +12,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
@@ -52,6 +55,9 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     @Autowired
     private PostTestRepository postRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
 
     @Autowired
     private CourseTestRepository courseRepository;
@@ -155,6 +161,11 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
     void testExecuteTutorSuggestionPipelineShouldSendStatusUpdates() throws Exception {
         var post = createPostInExerciseChat(exercise, TEST_PREFIX);
         post.setCourse(course);
+        AnswerPost answer = new AnswerPost();
+        answer.setAuthor(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+        answer.setContent("Test content");
+        answer = answerPostRepository.save(answer);
+        post.setAnswers(Set.of(answer));
         post = postRepository.saveAndFlush(post); // Ensure post is persisted
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         irisSession.setPost(post); // Ensure session contains the post
