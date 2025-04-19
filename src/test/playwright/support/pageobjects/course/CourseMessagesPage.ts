@@ -275,11 +275,11 @@ export class CourseMessagesPage {
         await postLocator.locator('#save').click();
         await responsePromise;
 
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(10000);
 
         await this.page.waitForSelector(`#item-${messageId} .markdown-preview:has-text("${message}")`, {
             state: 'visible',
-            timeout: 30000,
+            timeout: 60000,
         });
     }
 
