@@ -8,6 +8,7 @@ export class MockProfileService {
             activeProfiles: [],
             activeModuleFeatures: [],
             testServer: false,
+            passkeyEnabled: false,
         }) as unknown as ProfileInfo;
 
     public isProfileActive = (profile: string): boolean => this.getProfileInfo().activeProfiles?.includes(profile) ?? false;
