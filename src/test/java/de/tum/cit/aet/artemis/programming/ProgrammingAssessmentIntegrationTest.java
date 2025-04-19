@@ -1007,7 +1007,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
 
-        programmingExerciseStudentParticipation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        ZonedDateTime individualDueDate = ZonedDateTime.now();
+        programmingExerciseStudentParticipation.setIndividualDueDate(individualDueDate);
         studentParticipationRepository.save(programmingExerciseStudentParticipation);
 
         Result result = programmingExerciseStudentParticipation.getResults().stream().findFirst().orElseThrow();
@@ -1020,7 +1021,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 Result.class, HttpStatus.OK, params);
 
         var responseParticipation = (ProgrammingExerciseStudentParticipation) responseResult.getSubmission().getParticipation();
-        assertThat(responseParticipation.getIndividualDueDate()).isNull();
+        assertThat(responseParticipation.getIndividualDueDate()).isEqualTo(individualDueDate);
         // TODO: add some meaningful assertions here related to the feedback request
     }
 
