@@ -31,6 +31,7 @@ export class ProfileService {
         return this.profileInfo.activeProfiles?.includes(profile) ?? false;
     }
 
+    // TODO: rename to isFeatureActive
     public isModuleFeatureActive(feature: string) {
         return this.profileInfo.activeModuleFeatures?.includes(feature) ?? false;
     }

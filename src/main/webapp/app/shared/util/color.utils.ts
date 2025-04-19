@@ -14,8 +14,8 @@ export const getBackgroundColorHue = (seed: string | undefined): string => {
 
 /**
  * Returns the brightness of a color. The calculation is based on https://www.w3.org/TR/AERT/#color-contrast
- * @param {string} color - The color in hex format.
- * @returns {number} - The brightness of the color.
+ * @param color - The color in hex format.
+ * @returns number - The brightness of the color.
  */
 export const getColorBrightness = (color: string): number => {
     // Remove the hash at the start if it's there
