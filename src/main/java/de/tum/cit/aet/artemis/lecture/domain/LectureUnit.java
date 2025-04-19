@@ -111,7 +111,7 @@ public abstract class LectureUnit extends DomainObject implements LearningObject
         this.competencyLinks = competencyLinks;
     }
 
-    // NOTE: we explicitly do not add LectureTranscription here to avoid Hibernate loading issues because of its OneToOne relationship with is automatically EAGER and cannot be set
+    // NOTE: we explicitly do not add LectureTranscription here to avoid Hibernate loading issues because of its OneToOne relationship which is automatically EAGER and cannot be set
     // to LAZY
 
     @JsonIgnore(false)

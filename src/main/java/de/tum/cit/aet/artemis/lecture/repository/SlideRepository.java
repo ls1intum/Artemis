@@ -67,7 +67,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
      *
      * @param slideId The ID of the slide to unhide
      */
-    @Transactional // ok because of delete
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE Slide s
@@ -80,7 +80,7 @@ public interface SlideRepository extends ArtemisJpaRepository<Slide, Long> {
             SELECT new de.tum.cit.aet.artemis.lecture.dto.SlideDTO(s.id, s.slideNumber, s.hidden, s.attachmentUnit.id)
             FROM Slide s
             WHERE s.attachmentUnit.id IN :attachmentUnitIds
-                AND s.hidden IS NULL OR s.hidden > CURRENT_TIMESTAMP()
+                AND (s.hidden IS NULL OR s.hidden > CURRENT_TIMESTAMP())
             """)
     Set<SlideDTO> findVisibleSlidesByAttachmentUnits(@Param("attachmentUnitIds") Set<Long> attachmentUnitIds);
 }
