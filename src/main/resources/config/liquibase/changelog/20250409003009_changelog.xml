@@ -7,7 +7,7 @@
             <column autoIncrement="true" name="id" type="bigint">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
-            <column name="credential_id" type="varchar(32)">
+            <column name="credential_id" type="varchar(64)">
                 <constraints nullable="false" unique="true"/>
             </column>
             <column name="user_id" type="bigint">
