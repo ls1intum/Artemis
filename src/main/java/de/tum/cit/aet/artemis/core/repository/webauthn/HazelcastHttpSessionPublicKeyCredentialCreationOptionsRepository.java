@@ -66,6 +66,11 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
         // the sessionId appears to change and does not equal the requestedSessionId, therefore, we use the userId instead
         var userId = request.getRemoteUser();
+        if (userId == null) {
+            log.warn("User ID is null, could not save PublicKeyCredentialCreationOptions");
+            return;
+        }
+
         if (options != null) {
             creationOptionsMap.put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
         }
