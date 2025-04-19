@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.dto.passkey;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import org.springframework.security.web.webauthn.api.AuthenticatorAttachment;
 import org.springframework.security.web.webauthn.api.AuthenticatorSelectionCriteria;
@@ -18,8 +19,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record ArtemisAuthenticatorSelectionCriteriaDTO(AuthenticatorAttachment authenticatorAttachment, String residentKey, UserVerificationRequirement userVerification)
         implements Serializable {
 
+    public ArtemisAuthenticatorSelectionCriteriaDTO(AuthenticatorAttachment authenticatorAttachment, String residentKey, UserVerificationRequirement userVerification) {
+        this.authenticatorAttachment = authenticatorAttachment;
+        this.residentKey = Objects.requireNonNullElse(residentKey, ResidentKeyRequirement.DISCOURAGED).toString(); // should not be null
+        this.userVerification = userVerification;
+    }
+
     public AuthenticatorSelectionCriteria toAuthenticatorSelectionCriteria() {
-        return AuthenticatorSelectionCriteria.builder().authenticatorAttachment(authenticatorAttachment()).residentKey(ResidentKeyRequirement.valueOf(residentKey()))
-                .userVerification(userVerification()).build();
+        // @formatter:off
+        return AuthenticatorSelectionCriteria.builder()
+            .authenticatorAttachment(authenticatorAttachment())
+            .residentKey(ResidentKeyRequirement.valueOf(residentKey()))
+            .userVerification(userVerification())
+            .build();
+        // @formatter:on
     }
 }
