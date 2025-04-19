@@ -1,16 +1,26 @@
+import { TestBed } from '@angular/core/testing';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MeetingPatternPipe } from 'app/tutorialgroup/shared/pipe/meeting-pattern.pipe';
+import { RemoveSecondsPipe } from 'app/tutorialgroup/shared/pipe/remove-seconds.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('MeetingPatternPipe', () => {
-    const translateService = {
-        instant: jest.fn(),
-    };
-
-    const pipe = new MeetingPatternPipe(translateService as unknown as TranslateService);
+    let pipe: MeetingPatternPipe;
+    let translateService: TranslateService;
+    let translateSpy: jest.SpyInstance;
 
     beforeEach(() => {
-        translateService.instant.mockClear();
+        TestBed.configureTestingModule({
+            imports: [RemoveSecondsPipe],
+            providers: [MeetingPatternPipe, { provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .compileComponents()
+            .then(() => {
+                translateService = TestBed.inject(TranslateService);
+                pipe = TestBed.inject(MeetingPatternPipe);
+                translateSpy = jest.spyOn(translateService, 'instant');
+            });
     });
 
     it('should return an empty string if schedule is undefined', () => {
@@ -19,7 +29,7 @@ describe('MeetingPatternPipe', () => {
 
     it('should return an empty string', () => {
         const schedule = undefined;
-        translateService.instant.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key) => key);
 
         const result = pipe.transform(schedule, true);
         expect(result).toBe('');
@@ -33,12 +43,12 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateService.instant.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key) => key);
 
         const result = pipe.transform(schedule, true);
 
         expect(result).toBe('artemisApp.generic.repetitions.everyWeek, artemisApp.generic.weekdays.monday, 14:00 - 15:00');
-        expect(translateService.instant).toHaveBeenCalledTimes(2);
+        expect(translateSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should return a translated meeting pattern for a valid every two week schedule', () => {
@@ -48,12 +58,12 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateService.instant.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key) => key);
 
         const result = pipe.transform(schedule, true);
 
         expect(result).toBe('artemisApp.generic.repetitions.everyNWeeks, artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
-        expect(translateService.instant).toHaveBeenCalledTimes(2);
+        expect(translateSpy).toHaveBeenCalledTimes(2);
     });
 
     it('should return a translated meeting pattern without meeting frequency by default', () => {
@@ -63,11 +73,11 @@ describe('MeetingPatternPipe', () => {
             startTime: '14:00:00',
             endTime: '15:00:00',
         };
-        translateService.instant.mockImplementation((key) => key);
+        translateSpy.mockImplementation((key) => key);
 
         const result = pipe.transform(schedule);
 
         expect(result).toBe('artemisApp.generic.weekdays.tuesday, 14:00 - 15:00');
-        expect(translateService.instant).toHaveBeenCalledOnce();
+        expect(translateSpy).toHaveBeenCalledOnce();
     });
 });
