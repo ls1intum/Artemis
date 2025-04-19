@@ -185,6 +185,15 @@ public class PasskeyCredential extends AbstractAuditingEntity {
         this.lastUsed = lastUsed;
     }
 
+    /**
+     * Converts the current {@link PasskeyCredential} entity into a {@link CredentialRecord} object.
+     * <p>
+     * This method maps the fields of the {@link PasskeyCredential} entity to an immutable
+     * {@link CredentialRecord} object, which is used for WebAuthn-related operations.
+     * </p>
+     *
+     * @return A {@link CredentialRecord} object containing the mapped data from this entity.
+     */
     public CredentialRecord toCredentialRecord() {
         // @formatter:off
         return ImmutableCredentialRecord.builder()

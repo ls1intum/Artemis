@@ -15,9 +15,24 @@ import jakarta.validation.Payload;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Base64Url {
 
+    /**
+     * Error message to be returned if the validation fails.
+     *
+     * @return the error message
+     */
     String message() default "must be a valid base64url-encoded string";
 
+    /**
+     * Groups for categorizing constraints.
+     *
+     * @return the groups
+     */
     Class<?>[] groups() default {};
 
+    /**
+     * Payload for clients to specify additional information about the validation failure.
+     *
+     * @return the payload
+     */
     Class<? extends Payload>[] payload() default {};
 }

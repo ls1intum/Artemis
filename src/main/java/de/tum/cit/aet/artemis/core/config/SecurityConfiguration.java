@@ -107,6 +107,15 @@ public class SecurityConfiguration {
 
     private URL clientUrlToAuthenticateWithPasskey;
 
+    /**
+     * Validates the configuration for allowed origins when passkey authentication is enabled.
+     * <p>
+     * This method ensures that the server URL and port are correctly configured for WebAuthn
+     * when passkey authentication is enabled. If the configuration is invalid, an exception is thrown.
+     * </p>
+     *
+     * @throws IllegalStateException if the server URL configuration is invalid
+     */
     @PostConstruct
     public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
