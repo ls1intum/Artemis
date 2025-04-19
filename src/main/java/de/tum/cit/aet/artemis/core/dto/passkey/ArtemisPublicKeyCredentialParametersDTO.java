@@ -52,6 +52,9 @@ public record ArtemisPublicKeyCredentialParametersDTO(PublicKeyCredentialType ty
     }
 
     public PublicKeyCredentialParameters toPublicKeyCredentialParameters() {
+        if (type != PublicKeyCredentialType.PUBLIC_KEY) {
+            throw new IllegalArgumentException("Only PUBLIC_KEY credential type is supported, got " + type);
+        }
         return COSEAlgorithm.fromValue((int) coseAlgorithmIdentifier).getCredentialParameters();
     }
 
