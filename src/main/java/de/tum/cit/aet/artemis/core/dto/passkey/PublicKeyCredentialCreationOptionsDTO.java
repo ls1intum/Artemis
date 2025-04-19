@@ -10,10 +10,13 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreation
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialDescriptor;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialUserEntity;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * {@link PublicKeyCredentialCreationOptions} is not serializable, which is a problem for synchronizing via hazelcast across multiple nodes.
  * We synchronize {@link PublicKeyCredentialCreationOptionsDTO} instead and serialize/deserialize it to/from {@link PublicKeyCredentialCreationOptions}.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCredentialUserEntity user, ArtemisAttestationConveyancePreferenceDTO attestation,
         ArtemisPublicKeyCredentialRpEntityDTO rp, List<ArtemisPublicKeyCredentialParametersDTO> pubKeyCredParams, ArtemisAuthenticatorSelectionCriteriaDTO authenticatorSelection,
         List<PublicKeyCredentialDescriptor> excludeCredentials, AuthenticationExtensionsClientInputs extensions, Duration timeout) implements Serializable {
