@@ -58,16 +58,19 @@ public class DomainUserDetailsService implements UserDetailsService {
 
         String password = user.getPassword();
         boolean isExternalUserWithoutPassword = password == null && !user.isInternal();
+        boolean usedTemporaryPasswordForCreation = false;
         if (isExternalUserWithoutPassword) {
-            // SpringSecurity user cannot be created with null password, so we need a temporary placeholder password
-            password = PasswordGenerator.generateTemporaryPassword();
+            // SpringSecurity user cannot be created with a null password, so we need a temporary placeholder password
+            // The temporary password should be erased after the user is created, to ensure that the user cannot log in with it (TODO does this assumption hold?)
+            password = PasswordGenerator.generateTemporaryPassword(); // could be set to an empty string as well, but setting a temporary value might be less error-prone
+            usedTemporaryPasswordForCreation = true;
         }
 
         org.springframework.security.core.userdetails.User springUser = new org.springframework.security.core.userdetails.User(user.getLogin(), password,
                 user.getGrantedAuthorities());
 
-        if (user.getPassword() == null) {
-            springUser.eraseCredentials(); // TODO test if it works, otherwise we need to set a temporary password
+        if (usedTemporaryPasswordForCreation) {
+            springUser.eraseCredentials(); // TODO verify which effects this has (assumption: no login with password possible on that user object)
         }
 
         return springUser;
