@@ -46,11 +46,7 @@ import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import com.hazelcast.core.HazelcastInstance;
-
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository;
-import de.tum.cit.aet.artemis.core.repository.webauthn.HazelcastPublicKeyCredentialRequestOptionsRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
@@ -88,7 +84,9 @@ public class SecurityConfiguration {
 
     private final UserRepository userRepository;
 
-    private final HazelcastInstance hazelcastInstance;
+    private final PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository;
+
+    private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
@@ -127,19 +125,22 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
             JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
+            PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository,
             PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
-            UserRepository userRepository, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+            UserRepository userRepository) {
         this.converter = converter;
         this.corsFilter = corsFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.jwtCookieService = jwtCookieService;
         this.passwordService = passwordService;
         this.profileService = profileService;
+        this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
+        this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
         this.tokenProvider = tokenProvider;
         this.userCredentialRepository = userCredentialRepository;
         this.userRepository = userRepository;
-        this.hazelcastInstance = hazelcastInstance;
     }
 
     /**
@@ -194,16 +195,6 @@ public class SecurityConfiguration {
         DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
         expressionHandler.setRoleHierarchy(roleHierarchy());
         return expressionHandler;
-    }
-
-    @Bean
-    public PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository() {
-        return new HazelcastPublicKeyCredentialRequestOptionsRepository(hazelcastInstance);
-    }
-
-    @Bean
-    public PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository() {
-        return new HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(hazelcastInstance);
     }
 
     /**
@@ -315,8 +306,8 @@ public class SecurityConfiguration {
                 userRepository,
                 publicKeyCredentialUserEntityRepository,
                 userCredentialRepository,
-                publicKeyCredentialCreationOptionsRepository(),
-                publicKeyCredentialRequestOptionsRepository()
+                publicKeyCredentialCreationOptionsRepository,
+                publicKeyCredentialRequestOptionsRepository
             );
             http.with(webAuthnConfigurer, configurer -> {
                 configurer

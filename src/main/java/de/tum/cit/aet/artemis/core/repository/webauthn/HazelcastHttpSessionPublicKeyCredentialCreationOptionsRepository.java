@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,8 +10,10 @@ import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
+import org.springframework.stereotype.Repository;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
@@ -25,6 +29,8 @@ import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOption
  * These options are removed from the shared storage once the registration process is completed or after a predefined time to live.
  * </p>
  */
+@Profile(PROFILE_CORE)
+@Repository
 public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
