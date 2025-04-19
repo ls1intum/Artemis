@@ -58,7 +58,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     @Override
     public void delete(Bytes credentialId) {
-        log.info("delete: id={}", credentialId.toBase64UrlString());
         passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).ifPresent(passkeyCredentialsRepository::delete);
     }
 
@@ -89,8 +88,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                                             toPasskeyCredential(credentialRecord, user)
                                     )
                             );
-
-                    log.info("save: user={}, userId={}, externalId={}, label={}", user.getName(), user.getId(), user.getExternalId(), credentialRecord.getLabel());
                 });
         // @formatter:on
     }
@@ -118,8 +115,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      */
     @Override
     public List<CredentialRecord> findByUserId(Bytes userId) {
-        log.info("findByUserId: userId={}", userId);
-
         // FIXME - the userId format is not clear yet
         // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId
         // Maybe related to ArtemisPublicKeyCredentialUserEntityRepository.save - could be the case that the options requests sets a temporary userId
