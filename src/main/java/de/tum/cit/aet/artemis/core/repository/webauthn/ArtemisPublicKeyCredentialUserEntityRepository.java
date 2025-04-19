@@ -64,13 +64,32 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
         return userRepository.findOneByLogin(login).map(ArtemisPublicKeyCredentialUserEntityRepository::mapToUserEntity).orElse(null);
     }
 
+    /**
+     * <p>
+     * This method will be called by the SpringSecurity WebAuthn implementation on passkey login (on every authentication).
+     * </p>
+     * <p>
+     * The user entity will not contain useful information, e.g.
+     * <ul>
+     * <li>id=FpaBAewJEbgnGd1U0cqdyUp94hfaboE9Ubir-k6ScTP</li>
+     * <li>name=anonymousUser</li>
+     * <li>displayName=anonymousUser</li>
+     * </p>
+     * <b>We therefore do not save the information in the database.<br>
+     * </b>
+     * In the context of WebAuthn and passkey user entity updates should not be required.
+     * If you want to update the user entity, use the {@link UserRepository} instead.
+     */
     @Override
     public void save(PublicKeyCredentialUserEntity userEntity) {
-        log.warn("save not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");
-        log.warn("user entity that should have been saved: id={}, name={}, displayName={}", userEntity.getId().toBase64UrlString(), userEntity.getName(),
-                userEntity.getDisplayName());
+        log.debug("save not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");
     }
 
+    /**
+     * It should not be required to delete the user entity in the context of webAuthn and passkey logins, therefore, this
+     * repository does not implement this functionality. Use {@link UserRepository} instead if you want to delete a
+     * user entity.
+     */
     @Override
     public void delete(Bytes id) {
         log.warn("delete not implemented in ArtemisPublicKeyCredentialUserEntityRepository, use UserRepository instead");

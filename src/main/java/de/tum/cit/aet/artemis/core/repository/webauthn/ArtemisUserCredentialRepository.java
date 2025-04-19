@@ -107,19 +107,30 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      * <p>
      * Finds all credential records associated with a given user ID.
      * </p>
-     * <b>IMPORTANT: The userId format is not clear yet, and this method will always return an empty list.
-     * This method will be called from Spring Security WebAuthn implementation when registering a new passkey and when authenticating.</b>
+     * <p>
+     * <i>Note: {@link ArtemisPublicKeyCredentialUserEntityRepository#save} will be called on authentication with passkey by SpringSecurity
+     * but this does not seem to contain useful information. In the case an exception will be thrown, as the random id is not a long, which
+     * we expect for our user ids.<br>
+     * Therefore, we handle the error of an invalid id format gracefully and return an empty list.</i>
+     * </p>
      *
      * @param userId to search for a user.
      * @return list of {@link CredentialRecord} associated with the user.
      */
     @Override
     public List<CredentialRecord> findByUserId(Bytes userId) {
-        // FIXME - the userId format is not clear yet
-        // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId
-        // Maybe related to ArtemisPublicKeyCredentialUserEntityRepository.save - could be the case that the options requests sets a temporary userId
-        log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
-        return List.of();
+        try {
+            Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
+
+            return user.map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList())
+                    .orElseGet(List::of);
+        }
+        catch (IllegalArgumentException e) {
+            // this will occur on authentication as the userId is set to a random id there
+            // we might want to customize the implementation, so neither the ArtemisPublicKeyCredentialUserEntityRepository#save
+            // method nor the ArtemisUserCredentialRepository#findByUserId method is called during passkey authentication
+            return List.of(); // for now, we just return an empty list when an unknown userId format is passed
+        }
     }
 
     /**
