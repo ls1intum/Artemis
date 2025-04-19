@@ -274,6 +274,13 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
+
+        await this.page.waitForTimeout(10000);
+
+        await this.page.waitForSelector(`#item-${messageId} .markdown-preview:has-text("${message}")`, {
+            state: 'visible',
+            timeout: 60000,
+        });
     }
 
     /**
