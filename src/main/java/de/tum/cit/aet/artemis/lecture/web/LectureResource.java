@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -212,13 +213,10 @@ public class LectureResource {
      * @return the ResponseEntity with status 200 (OK) and the set of lectures in body
      */
     @GetMapping("courses/{courseId}/lectures-with-slides")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastStudentInCourse
     public ResponseEntity<List<LectureDTO>> getLecturesWithSlidesForCourse(@PathVariable Long courseId) {
         log.info("Getting all lectures with slides for course {}", courseId);
         long start = System.currentTimeMillis();
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         var lectures = lectureRepository.findAllByCourseIdWithAttachmentsAndLectureUnits(courseId).stream().filter(Lecture::isVisibleToStudents).collect(Collectors.toSet());
         Set<Long> attachmentUnitIds = lectures.stream().flatMap(lecture -> lecture.getLectureUnits().stream()).filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
@@ -230,20 +228,15 @@ public class LectureResource {
         // Group slides by attachment unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
-        List<LectureDTO> lectureDTOs = lectures.stream()
-            .map(LectureDTO::from)
-            .sorted(Comparator.comparingLong(LectureDTO::id))
-            .toList();
-        
+        List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
+
         lectureDTOs.forEach(lectureDTO -> {
             for (AttachmentUnitDTO attachmentUnitDTO : lectureDTO.lectureUnits) {
                 List<SlideDTO> slidesForAttachmentUnit = slidesByAttachmentUnitId.get(attachmentUnitDTO.id);
                 if (slidesForAttachmentUnit != null) {
                     // remove unnecessary fields from the slide DTOs
-                    var finalSlides = slidesForAttachmentUnit.stream()
-                        .map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
-                        .sorted(Comparator.comparingInt(SlideDTO::slideNumber))
-                        .toList();
+                    var finalSlides = slidesForAttachmentUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                            .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
                     attachmentUnitDTO.slides.addAll(finalSlides);
                 }
             }
