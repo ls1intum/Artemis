@@ -330,6 +330,7 @@ public class ExerciseResource {
         exercise.setStudentParticipations(new HashSet<>());
         for (StudentParticipation participation : participations) {
             // By filtering the results available yet, they can become null for the exercise.
+            exercise.filterResultsForStudents(participation);
             if (participation.getResults() != null) {
                 participation.getResults().forEach(Result::filterSensitiveInformation);
             }

@@ -10,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import jakarta.annotation.Nullable;
@@ -598,15 +597,21 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Get all results of a student participation which are rated or unrated
+     * Filters results in all submissions of a student participation, removing any that don't meet criteria.
      *
-     * @param participation The current participation
-     * @return all results which are completed and are either automatic or manually assessed
+     * @param participation The participation containing submissions to filter
+     *                          Results are kept only if they:
+     *                          - have completed assessment AND
+     *                          - are either automatic OR the assessment due date has passed
      */
     @Override
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
-        return participation.getResults().stream().filter(result -> result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this)))
-                .collect(Collectors.toSet());
+    public void filterResultsForStudents(Participation participation) {
+        participation.getSubmissions().forEach(submission -> {
+            List<Result> results = submission.getResults();
+            if (results != null && !results.isEmpty()) {
+                results.removeIf(result -> !(result.isAssessmentComplete() && (result.isAutomatic() || ExerciseDateService.isAfterAssessmentDueDate(this))));
+            }
+        });
     }
 
     /**
