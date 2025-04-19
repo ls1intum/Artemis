@@ -624,18 +624,18 @@ public class ExamService {
         boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-        // To prevent LazyInitializationException.
         if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
-                // Also set the latest result into the participation as the client expects it there for programming exercises
                 Result latestResult = lastSubmission.getLatestResult();
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
                     lastSubmission.setResults(List.of(latestResult));
                 }
-                participation.setSubmissions(Set.of(lastSubmission));
+            }
+            else {
+                lastSubmission.setResults(List.of());
             }
         }
     }
