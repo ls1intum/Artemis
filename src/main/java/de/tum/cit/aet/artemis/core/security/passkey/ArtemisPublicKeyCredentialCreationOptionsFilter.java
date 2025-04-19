@@ -36,10 +36,8 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * <p>
- * A {@link jakarta.servlet.Filter} that renders the
- * {@link PublicKeyCredentialCreationOptions} for <a href=
- * "https://w3c.github.io/webappsec-credential-management/#dom-credentialscontainer-create">creating</a>
- * a new credential.
+ * A {@link jakarta.servlet.Filter} that renders the {@link PublicKeyCredentialCreationOptions} for <a href=
+ * "https://w3c.github.io/webappsec-credential-management/#dom-credentialscontainer-create">creating</a> a new credential.
  * </p>
  * <p>
  * This class is based on {@link org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsFilter}
@@ -68,8 +66,7 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
     /**
      * Creates a new instance.
      *
-     * @param rpOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be
-     *                         null.
+     * @param rpOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
      */
     public ArtemisPublicKeyCredentialCreationOptionsFilter(WebAuthnRelyingPartyOperations rpOperations) {
         Assert.notNull(rpOperations, "rpOperations cannot be null");
@@ -79,8 +76,7 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
     /**
      * Sets the {@link PublicKeyCredentialCreationOptionsRepository} to use.
      *
-     * @param publicKeyCredentialCreationOptionsRepository the
-     *                                                         {@link PublicKeyCredentialCreationOptionsRepository} to use. Cannot be null.
+     * @param publicKeyCredentialCreationOptionsRepository the {@link PublicKeyCredentialCreationOptionsRepository} to use. Cannot be null.
      */
     public void setCreationOptionsRepository(PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository) {
         Assert.notNull(publicKeyCredentialCreationOptionsRepository, "publicKeyCredentialCreationOptionsRepository cannot be null");
