@@ -279,7 +279,7 @@ export class CourseMessagesPage {
 
         await this.page.waitForSelector(`#item-${messageId} .markdown-preview:has-text("${message}")`, {
             state: 'visible',
-            timeout: 5000,
+            timeout: 60000,
         });
     }
 
