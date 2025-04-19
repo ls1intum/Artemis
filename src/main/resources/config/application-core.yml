@@ -10,8 +10,8 @@ artemis:
     tutorialgroup:
         enabled: true
     user-management:
-      passkey:
-        enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
+        passkey:
+            enabled: false # used by Constants.PASSKEY_ENABLED_PROPERTY_NAME
 
 spring:
     liquibase:

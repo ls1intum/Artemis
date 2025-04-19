@@ -51,6 +51,9 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isTutorialGroupEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
         }
+        if (artemisConfigHelper.isPasskeyEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.FEATURE_ATLAS);
+        }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
 }

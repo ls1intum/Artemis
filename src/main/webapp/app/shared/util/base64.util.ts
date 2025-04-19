@@ -1,38 +1,43 @@
 /**
- * Decodes a base64url encoded string into an ArrayBuffer.
- * Base64url is a URL-safe variant of base64 that uses '-' instead of '+' and '_' instead of '/'.
+ * Decode a Base64URL‐encoded payload into raw bytes.
  *
- * @param base64url - The base64url encoded string to decode
- * @returns The decoded data as ArrayBuffer
- * @throws Error if the input is not a valid base64url string
+ * Base64URL is a URL‐safe variant of Base64:
+ *  - '-' replaces '+'
+ *  - '_' replaces '/'
+ *  - padding ('=') may be omitted
+ *
+ * @param input - Base64URL data as a string or any BufferSource.
+ * @returns An ArrayBuffer containing the decoded bytes.
+ * @throws TypeError if `input` is neither string nor BufferSource.
  */
-export function decodeBase64url(base64url: any): ArrayBuffer {
-    const lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    const reverseLookup = new Uint8Array(256);
-
-    for (let i = 0; i < lookup.length; i++) {
-        reverseLookup[lookup.charCodeAt(i)] = i;
+export function decodeBase64url(input: string | BufferSource): ArrayBuffer {
+    // 1) Turn BufferSource into string
+    let b64url: string;
+    if (typeof input === 'string') {
+        b64url = input;
+    } else if (ArrayBuffer.isView(input) || input instanceof ArrayBuffer) {
+        b64url = new TextDecoder().decode(input as ArrayBuffer);
+    } else {
+        throw new TypeError(`Expected string or BufferSource, but got ${typeof input}`);
     }
 
-    const base64urlLength = base64url.length;
+    // 2) Normalize to standard Base64
+    //    - swap URL chars back
+    //    - pad with '=' to a multiple of 4
+    const b64 = b64url
+        .replace(/-/g, '+')
+        .replace(/_/g, '/')
+        .padEnd(Math.ceil(b64url.length / 4) * 4, '=');
 
-    const placeHolderLength = base64url.charAt(base64urlLength - 2) === '=' ? 2 : base64url.charAt(base64urlLength - 1) === '=' ? 1 : 0;
-    const bufferLength = (base64urlLength * 3) / 4 - placeHolderLength;
+    // 3) Decode to binary string
+    const binary = window.atob(b64);
 
-    const arrayBuffer = new ArrayBuffer(bufferLength);
-    const uint8Array = new Uint8Array(arrayBuffer);
-
-    let j = 0;
-    for (let i = 0; i < base64urlLength; i += 4) {
-        const tmp0 = reverseLookup[base64url.charCodeAt(i)];
-        const tmp1 = reverseLookup[base64url.charCodeAt(i + 1)];
-        const tmp2 = reverseLookup[base64url.charCodeAt(i + 2)];
-        const tmp3 = reverseLookup[base64url.charCodeAt(i + 3)];
-
-        uint8Array[j++] = (tmp0 << 2) | (tmp1 >> 4);
-        uint8Array[j++] = ((tmp1 & 15) << 4) | (tmp2 >> 2);
-        uint8Array[j++] = ((tmp2 & 3) << 6) | (tmp3 & 63);
+    // 4) Build ArrayBuffer from char codes
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+        bytes[i] = binary.charCodeAt(i);
     }
 
-    return arrayBuffer;
+    return bytes.buffer;
 }

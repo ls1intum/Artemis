@@ -42,7 +42,6 @@ import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-
         MarkdownEditorMonacoComponent,
         LectureUpdatePeriodComponent,
         FaIconComponent,
-        LectureAttachmentsComponent,
         LectureUpdateUnitsComponent,
         NgbTooltip,
         ArtemisTranslatePipe,

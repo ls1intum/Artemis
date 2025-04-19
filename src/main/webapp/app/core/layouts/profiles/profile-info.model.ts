@@ -153,7 +153,6 @@ export class ProfileInfo {
     public operatorName: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[] = [];
     public registrationEnabled?: boolean;
-    public passkeyEnabled: boolean;
     public repositoryAuthenticationMechanisms: string[];
     public saml2?: Saml2Config;
     public sentry: SentryConfig;

@@ -519,6 +519,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      *
      * @return the external id of the user, or null if the id is null
      */
+    @JsonIgnore
     public Bytes getExternalId() {
         if (this.getId() == null) {
             return null;

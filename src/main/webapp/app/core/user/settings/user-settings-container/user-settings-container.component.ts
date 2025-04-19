@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
-import { addPublicFilePrefix } from 'app/app.constants';
+import { FEATURE_PASSKEY, addPublicFilePrefix } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -29,7 +29,7 @@ export class UserSettingsContainerComponent implements OnInit {
     isAtLeastTutor = false;
 
     ngOnInit() {
-        this.isPasskeyEnabled = this.profileService.getProfileInfo().passkeyEnabled;
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
 
         this.accountService
             .getAuthenticationState()

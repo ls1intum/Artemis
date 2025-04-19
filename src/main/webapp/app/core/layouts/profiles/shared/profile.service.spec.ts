@@ -115,7 +115,6 @@ export const expectedProfileInfo: ProfileInfo = {
     operatorName: 'TUM',
     programmingLanguageFeatures: programmingLanguageFeatures,
     registrationEnabled: true,
-    passkeyEnabled: false,
     repositoryAuthenticationMechanisms: ['ssh', 'token', 'password'],
     sentry: { dsn: 'https://e52d0b9b6b61769f50b088634b4bc781@sentry.ase.in.tum.de/2' },
     sshCloneURLTemplate: 'ssh://git@artemistest2.aet.cit.tum.de:2222/',
