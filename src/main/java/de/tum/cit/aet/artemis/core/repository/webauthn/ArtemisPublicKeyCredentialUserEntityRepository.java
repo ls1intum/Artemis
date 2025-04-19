@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  *
  * @see PublicKeyCredentialUserEntityRepository
  * @see UserRepository
- * @see de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer
+ * @see de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer
  */
 @Profile(PROFILE_CORE)
 @Repository

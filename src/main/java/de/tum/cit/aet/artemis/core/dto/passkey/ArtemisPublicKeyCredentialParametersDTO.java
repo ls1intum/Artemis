@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.dto;
+package de.tum.cit.aet.artemis.core.dto.passkey;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -8,9 +8,14 @@ import org.springframework.security.web.webauthn.api.COSEAlgorithmIdentifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
+ * We cannot directly use the SpringSecurity object as it is not serializable.
+ *
  * @see org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ArtemisPublicKeyCredentialParametersDTO(PublicKeyCredentialType type, long coseAlgorithmIdentifier) implements Serializable {
 
     private enum COSEAlgorithm {
@@ -30,10 +35,6 @@ public record ArtemisPublicKeyCredentialParametersDTO(PublicKeyCredentialType ty
         COSEAlgorithm(int value, PublicKeyCredentialParameters credentialParameters) {
             this.value = value;
             this.credentialParameters = credentialParameters;
-        }
-
-        public int getValue() {
-            return value;
         }
 
         public PublicKeyCredentialParameters getCredentialParameters() {

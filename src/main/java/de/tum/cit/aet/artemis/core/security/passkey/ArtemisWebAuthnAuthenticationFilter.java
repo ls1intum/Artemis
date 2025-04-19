@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.webauthn;
+package de.tum.cit.aet.artemis.core.security.passkey;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

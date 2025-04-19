@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
-import java.util.Set;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,15 +11,14 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialCreationOptions;
 import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 
-import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.core.dto.ArtemisAttestationConveyancePreferenceDTO;
-import de.tum.cit.aet.artemis.core.dto.ArtemisAuthenticatorSelectionCriteriaDTO;
-import de.tum.cit.aet.artemis.core.dto.ArtemisPublicKeyCredentialParametersDTO;
-import de.tum.cit.aet.artemis.core.dto.ArtemisPublicKeyCredentialRpEntityDTO;
-import de.tum.cit.aet.artemis.core.dto.PublicKeyCredentialCreationOptionsDTO;
+import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisAttestationConveyancePreferenceDTO;
+import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisAuthenticatorSelectionCriteriaDTO;
+import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisPublicKeyCredentialParametersDTO;
+import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisPublicKeyCredentialRpEntityDTO;
+import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
 public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
@@ -35,7 +32,6 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
     private static final String MAP_NAME = "http-session-public-key-credential-creation-options-map";
 
-    // private IMap<String, PublicKeyCredentialCreationOptions> creationOptionsMap;
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
 
     public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
@@ -60,14 +56,12 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         var userId = request.getRemoteUser();
 
         if (options != null) {
-            // creationOptionsMap.put(session.getId(), toDTO(options));
             creationOptionsMap.put(userId, toDTO(options));
         }
         else {
-            // TODO verify this has no unwanted sideeffects (e.g. save method called with null options on different node)
-            // hazelcastMap.remove(session.getId());
+            // TODO verify this has no unwanted side effects (e.g. save method called with null options on different node)
+            creationOptionsMap.remove(session.getId());
         }
-        logHazelcastMap();
     }
 
     public PublicKeyCredentialCreationOptions load(HttpServletRequest request) {
@@ -77,8 +71,7 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             return null;
         }
 
-        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", userId);
-        logHazelcastMap();
+        log.debug("Searching PublicKeyCredentialRequestOptions in hazelcast for user with id {}", userId);
         return creationOptionsMap.get(userId).toPublicKeyCredentialCreationOptions();
     }
 
@@ -102,29 +95,4 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         );
         //@formatter:on
     }
-
-    private void logClusterMembers(HazelcastInstance hazelcastInstance) {
-        Set<Member> members = hazelcastInstance.getCluster().getMembers();
-        log.info("Current Hazelcast cluster has {} member(s):", members.size());
-        for (Member member : members) {
-            log.info("\tMember UUID: {}, Address: {}", member.getUuid(), member.getAddress());
-        }
-    }
-
-    private void logHazelcastMap() {
-        logClusterMembers(hazelcastInstance);
-
-        int size = creationOptionsMap.size();
-        log.info("Hazelcast map '{}' contains {} entries.", MAP_NAME, size);
-
-        if (size == 0) {
-            log.info("Hazelcast map '{}' is empty.", MAP_NAME);
-        }
-        else {
-            creationOptionsMap.forEach((key, value) -> {
-                log.info("\tEntry in Hazelcast map '{}': Key = {}, Challenge = {}", MAP_NAME, key, value.challenge());
-            });
-        }
-    }
-
 }

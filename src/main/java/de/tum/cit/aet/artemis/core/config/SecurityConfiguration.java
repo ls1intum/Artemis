@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
-import de.tum.cit.aet.artemis.core.security.webauthn.ArtemisWebAuthnConfigurer;
+import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;

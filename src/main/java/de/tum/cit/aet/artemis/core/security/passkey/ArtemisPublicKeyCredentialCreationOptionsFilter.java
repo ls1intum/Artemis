@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.webauthn;
+package de.tum.cit.aet.artemis.core.security.passkey;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
