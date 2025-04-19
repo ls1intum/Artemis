@@ -105,13 +105,18 @@ public class SecurityConfiguration {
     @Value("${client.port:${server.port}}")
     private String port;
 
+    private URL clientUrlToRegisterPasskey;
+
+    private URL clientUrlToAuthenticateWithPasskey;
+
     @PostConstruct
     public void validatePasskeyAllowedOriginConfiguration() {
         if (passkeyEnabled) {
             try {
-                new URI(serverUrl).toURL(); // will throw if URL is invalid, return value is not required
+                clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
+                clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
                 if (!port.matches("\\d+")) {
-                    throw new IllegalStateException("Invalid port configuration, the port expected to consit of digits only (8080, 80, ...) but was: " + port);
+                    throw new IllegalStateException("Invalid port configuration, the port expected to consist of digits only (8080, 80, ...) but was: " + port);
                 }
             }
             catch (URISyntaxException | MalformedURLException e) {
@@ -304,8 +309,6 @@ public class SecurityConfiguration {
             //.httpBasic(Customizer.withDefaults());
 
         if (passkeyEnabled) {
-            URL clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
-            URL clientUrlWithPort = new URI(serverUrl + ":" + port).toURL();
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
                 converter,
                 jwtCookieService,
@@ -317,7 +320,7 @@ public class SecurityConfiguration {
             );
             http.with(webAuthnConfigurer, configurer -> {
                 configurer
-                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlWithPort.toString())
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString())
                     .rpId(clientUrlToRegisterPasskey.getHost())
                     .rpName("Artemis");
             });
