@@ -20,12 +20,22 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 /**
+ * A distributed implementation of {@link PublicKeyCredentialRequestOptionsRepository} using Hazelcast
+ * to store and synchronize WebAuthn authentication request options across multiple nodes.
+ *
  * <p>
- * To ensure synchronization of WebAuthn authentication request options across multiple nodes, Hazelcast is utilized.
+ * This implementation ensures that authentication challenges (e.g., Face ID, fingerprint scan)
+ * remain consistent in clustered environments, supporting stateless or load-balanced deployments.
  * </p>
+ *
  * <p>
- * Authentication options are short-lived, as the only user interaction in between is authentication (e.g., via Face ID).<br>
- * These options are removed from the shared storage once the authentication process is completed or after a predefined time to live.
+ * The repository stores options in Hazelcast with a short time-to-live (2 minutes by default),
+ * since authentication is a fast, single-step user interaction. Stored options are removed after use
+ * or expiration.
+ * </p>
+ *
+ * <p>
+ * This bean is only active under the {@code core} Spring profile.
  * </p>
  */
 @Profile(PROFILE_CORE)
@@ -34,16 +44,37 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
 
+    /** Hazelcast map name for storing credential request options */
     private static final String MAP_NAME = "public-key-credentials-request-options-map";
 
-    private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
-
+    /** Default session attribute name used to store options in the local session */
     static final String DEFAULT_ATTR_NAME = PublicKeyCredentialRequestOptionsRepository.class.getName().concat(".ATTR_NAME");
 
+    /** Session attribute name used internally */
     private final String attrName = DEFAULT_ATTR_NAME;
 
+    /** Hazelcast instance injected via constructor */
     private final HazelcastInstance hazelcastInstance;
 
+    /** Reference to the Hazelcast distributed map */
+    private IMap<String, PublicKeyCredentialRequestOptions> authOptionsMap;
+
+    /**
+     * Constructs the repository using the injected Hazelcast instance.
+     *
+     * @param hazelcastInstance the shared Hazelcast cluster instance
+     */
+    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+    }
+
+    /**
+     * Initializes the Hazelcast map configuration after dependency injection.
+     *
+     * <p>
+     * Sets the time-to-live for WebAuthn request options to 2 minutes.
+     * </p>
+     */
     @PostConstruct
     public void init() {
         int AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS = 120; // 2 minutes
@@ -53,10 +84,18 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
-    public HazelcastPublicKeyCredentialRequestOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
-        this.hazelcastInstance = hazelcastInstance;
-    }
-
+    /**
+     * Saves the given {@link PublicKeyCredentialRequestOptions} in both the local HTTP session
+     * and the Hazelcast distributed map.
+     *
+     * <p>
+     * If {@code options} is {@code null}, the entry is removed instead.
+     * </p>
+     *
+     * @param request  the current HTTP request (used to get the session)
+     * @param response the current HTTP response (not used)
+     * @param options  the WebAuthn challenge options to store or remove
+     */
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
         HttpSession session = request.getSession();
@@ -70,6 +109,13 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         }
     }
 
+    /**
+     * Loads the previously saved {@link PublicKeyCredentialRequestOptions} from the Hazelcast map
+     * using the requested session ID from the HTTP request.
+     *
+     * @param request the HTTP request (used to extract session ID)
+     * @return the stored {@link PublicKeyCredentialRequestOptions}, or {@code null} if not found or session is missing
+     */
     @Override
     public PublicKeyCredentialRequestOptions load(HttpServletRequest request) {
         String sessionId = request.getRequestedSessionId();

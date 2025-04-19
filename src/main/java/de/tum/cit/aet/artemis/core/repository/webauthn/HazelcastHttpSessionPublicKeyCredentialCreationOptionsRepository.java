@@ -22,12 +22,21 @@ import com.hazelcast.map.IMap;
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
 /**
+ * A distributed implementation of {@link PublicKeyCredentialCreationOptionsRepository} using Hazelcast
+ * to store and synchronize WebAuthn credential creation options across nodes in a clustered deployment.
+ *
  * <p>
- * To ensure synchronization of WebAuthn credential creation options across multiple nodes, Hazelcast is utilized.
+ * This is used during the WebAuthn registration (passkey creation) process. Credential options are short-lived
+ * and stored with a time-to-live (TTL) of 5 minutes. After registration is complete or the TTL expires, the entry is removed.
  * </p>
+ *
  * <p>
- * Credential creation options are short-lived, as they are only used during the registration process (e.g., when creating a new passkey).<br>
- * These options are removed from the shared storage once the registration process is completed or after a predefined time to live.
+ * Instead of using session IDs, this implementation indexes options by the authenticated {@code userId} (from {@link HttpServletRequest#getRemoteUser()}),
+ * to ensure consistency in environments where session IDs may change unexpectedly.
+ * </p>
+ *
+ * <p>
+ * Activated only under the {@code core} Spring profile.
  * </p>
  */
 @Profile(PROFILE_CORE)
@@ -36,20 +45,30 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
 
+    /** Default attribute name for storing creation options in session (not used for loading) */
     static final String DEFAULT_ATTR_NAME = HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class.getName().concat("ATTR_NAME");
 
     private final String attrName = DEFAULT_ATTR_NAME;
 
     private final HazelcastInstance hazelcastInstance;
 
+    /** Name of the Hazelcast map used for credential creation options */
     private static final String MAP_NAME = "http-session-public-key-credential-creation-options-map";
 
     private IMap<String, PublicKeyCredentialCreationOptionsDTO> creationOptionsMap;
 
+    /**
+     * Constructs the repository using the injected Hazelcast instance.
+     *
+     * @param hazelcastInstance the Hazelcast cluster instance
+     */
     public HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
 
+    /**
+     * Initializes the Hazelcast map with a TTL of 5 minutes for credential creation options.
+     */
     @PostConstruct
     public void init() {
         int registrationOptionsTimeToLive = 300; // 5 minutes
@@ -59,6 +78,19 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         creationOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
+    /**
+     * Saves the {@link PublicKeyCredentialCreationOptions} both in the HTTP session and the distributed Hazelcast map.
+     *
+     * <p>
+     * The HTTP session is used locally, while the Hazelcast map ensures distributed availability.
+     * The user ID (from {@code request.getRemoteUser()}) is used as the key instead of the session ID,
+     * due to inconsistencies in session ID handling during WebAuthn flows.
+     * </p>
+     *
+     * @param request  the HTTP request, used to get the session and remote user
+     * @param response the HTTP response (not used)
+     * @param options  the credential creation options to store; if {@code null}, the entry is removed
+     */
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialCreationOptions options) {
 
@@ -80,6 +112,13 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
         }
     }
 
+    /**
+     * Loads the previously saved {@link PublicKeyCredentialCreationOptions} from the Hazelcast map
+     * using the authenticated user ID.
+     *
+     * @param request the HTTP request, used to extract the user ID
+     * @return the restored credential creation options, or {@code null} if not found or user not authenticated
+     */
     public PublicKeyCredentialCreationOptions load(HttpServletRequest request) {
         String userId = request.getRemoteUser();
         if (userId == null) {

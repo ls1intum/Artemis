@@ -135,7 +135,18 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
     }
 
     /**
-     * @param userId of the user for which the passkeys should be found
+     * Finds all passkey credentials for the given user ID and returns them as DTOs.
+     *
+     * <p>
+     * The method performs the following steps:
+     * <ul>
+     * <li>Looks up the {@link User} entity based on the given {@code userId} (converted from {@link Bytes} to {@code long}).</li>
+     * <li>If the user exists, fetches associated {@link PasskeyCredential} entities and maps them to {@link CredentialRecord}.</li>
+     * <li>Converts each {@link CredentialRecord} to a simplified {@link PasskeyDTO} containing only essential metadata.</li>
+     * </ul>
+     *
+     * @param userId the user's ID as a {@link Bytes} object (WebAuthn-compatible identifier).
+     * @return a list of {@link PasskeyDTO} representing passkey credentials for the user; an empty list if the user is not found.
      */
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
@@ -148,6 +159,18 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
                 .toList();
     }
 
+    /**
+     * Updates an existing {@link PasskeyCredential} entity with the data from a {@link CredentialRecord} and links it to the specified {@link User}.
+     *
+     * <p>
+     * This method is useful when reusing an existing {@code PasskeyCredential} instance (e.g., from persistence context)
+     * and updating it with fresh data from the credential record.
+     *
+     * @param credential       the {@link PasskeyCredential} instance to update.
+     * @param credentialRecord the data source containing credential metadata and WebAuthn information.
+     * @param user             the {@link User} entity to associate the credential with.
+     * @return the updated {@link PasskeyCredential} instance.
+     */
     public static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
         credential.setUser(user);
         credential.setLabel(credentialRecord.getLabel());
@@ -166,6 +189,14 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         return credential;
     }
 
+    /**
+     * Creates a new {@link PasskeyCredential} instance initialized with the data from the given {@link CredentialRecord}
+     * and links it to the specified {@link User}.
+     *
+     * @param credentialRecord the record containing credential data to initialize the entity.
+     * @param user             the {@link User} to associate the credential with.
+     * @return a new {@link PasskeyCredential} populated from the credential record.
+     */
     private static PasskeyCredential toPasskeyCredential(CredentialRecord credentialRecord, User user) {
         return toPasskeyCredential(new PasskeyCredential(), credentialRecord, user);
     }
