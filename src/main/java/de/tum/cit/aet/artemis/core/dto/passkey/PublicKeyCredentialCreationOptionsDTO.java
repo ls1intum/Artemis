@@ -29,4 +29,25 @@ public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCr
             .build();
         //@formatter:on
     }
+
+    public static PublicKeyCredentialCreationOptionsDTO publicKeyCredentialCreationOptionsToDTO(PublicKeyCredentialCreationOptions options) {
+        //@formatter:off
+        return new PublicKeyCredentialCreationOptionsDTO(
+            options.getChallenge(),
+            options.getUser(),
+            new ArtemisAttestationConveyancePreferenceDTO(options.getAttestation().getValue()),
+            new ArtemisPublicKeyCredentialRpEntityDTO(options.getRp().getName(), options.getRp().getId()),
+            options.getPubKeyCredParams().stream()
+                .map(param -> new ArtemisPublicKeyCredentialParametersDTO(param.getType(), param.getAlg().getValue()))
+                .toList(),
+            new ArtemisAuthenticatorSelectionCriteriaDTO(
+                options.getAuthenticatorSelection().getAuthenticatorAttachment(),
+                options.getAuthenticatorSelection().getResidentKey().toString(),
+                options.getAuthenticatorSelection().getUserVerification()),
+            options.getExcludeCredentials(),
+            options.getExtensions(),
+            options.getTimeout()
+        );
+        //@formatter:on
+    }
 }

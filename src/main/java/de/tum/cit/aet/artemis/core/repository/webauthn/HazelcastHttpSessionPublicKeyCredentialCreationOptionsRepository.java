@@ -14,12 +14,17 @@ import org.springframework.security.web.webauthn.registration.PublicKeyCredentia
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisAttestationConveyancePreferenceDTO;
-import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisAuthenticatorSelectionCriteriaDTO;
-import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisPublicKeyCredentialParametersDTO;
-import de.tum.cit.aet.artemis.core.dto.passkey.ArtemisPublicKeyCredentialRpEntityDTO;
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
 
+/**
+ * <p>
+ * To ensure synchronization of WebAuthn credential creation options across multiple nodes, Hazelcast is utilized.
+ * </p>
+ * <p>
+ * Credential creation options are short-lived, as they are only used during the registration process (e.g., when creating a new passkey).<br>
+ * These options are removed from the shared storage once the registration process is completed or after a predefined time to live.
+ * </p>
+ */
 public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository implements PublicKeyCredentialCreationOptionsRepository {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository.class);
@@ -52,14 +57,13 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
 
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
-        // TODO sessionId appears to change and not to equal the requestedSessionId - is there a better way than using the userId?
-        var userId = request.getRemoteUser();
 
+        // the sessionId appears to change and does not equal the requestedSessionId, therefore, we use the userId instead
+        var userId = request.getRemoteUser();
         if (options != null) {
-            creationOptionsMap.put(userId, toDTO(options));
+            creationOptionsMap.put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options));
         }
         else {
-            // TODO verify this has no unwanted side effects (e.g. save method called with null options on different node)
             creationOptionsMap.remove(session.getId());
         }
     }
@@ -71,28 +75,6 @@ public class HazelcastHttpSessionPublicKeyCredentialCreationOptionsRepository im
             return null;
         }
 
-        log.debug("Searching PublicKeyCredentialRequestOptions in hazelcast for user with id {}", userId);
         return creationOptionsMap.get(userId).toPublicKeyCredentialCreationOptions();
-    }
-
-    private PublicKeyCredentialCreationOptionsDTO toDTO(PublicKeyCredentialCreationOptions options) {
-        //@formatter:off
-        return new PublicKeyCredentialCreationOptionsDTO(
-            options.getChallenge(),
-            options.getUser(),
-            new ArtemisAttestationConveyancePreferenceDTO(options.getAttestation().getValue()),
-            new ArtemisPublicKeyCredentialRpEntityDTO(options.getRp().getName(), options.getRp().getId()),
-            options.getPubKeyCredParams().stream()
-                .map(param -> new ArtemisPublicKeyCredentialParametersDTO(param.getType(), param.getAlg().getValue()))
-                .toList(),
-            new ArtemisAuthenticatorSelectionCriteriaDTO(
-                options.getAuthenticatorSelection().getAuthenticatorAttachment(),
-                options.getAuthenticatorSelection().getResidentKey().toString(),
-                options.getAuthenticatorSelection().getUserVerification()),
-            options.getExcludeCredentials(),
-            options.getExtensions(),
-            options.getTimeout()
-        );
-        //@formatter:on
     }
 }
