@@ -3,18 +3,13 @@ package de.tum.cit.aet.artemis.core.repository.webauthn;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
-import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
-import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.stereotype.Repository;
 
@@ -34,7 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * {@link PasskeyCredentialsRepository}, and {@link UserRepository} to manage credential data and user associations.
  * </p>
  * <p>
- * Note: The {@code findByUserId} method, which will be called from Spring Security WebAuthn implementation will is not fully implemented due to unclear user ID format.
+ * Note: The {@code findByUserId} method, which will be called from Spring Security WebAuthn implementation is not fully implemented due to unclear user ID format.
  * </p>
  *
  * @see UserCredentialRepository
@@ -54,14 +49,11 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
 
     private final UserRepository userRepository;
 
-    private final HttpServletRequest request;
-
     public ArtemisUserCredentialRepository(ArtemisPublicKeyCredentialUserEntityRepository artemisPublicKeyCredentialUserEntityRepository,
-            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository, HttpServletRequest request) {
+            PasskeyCredentialsRepository passkeyCredentialsRepository, UserRepository userRepository) {
         this.artemisPublicKeyCredentialUserEntityRepository = artemisPublicKeyCredentialUserEntityRepository;
         this.passkeyCredentialsRepository = passkeyCredentialsRepository;
         this.userRepository = userRepository;
-        this.request = request;
     }
 
     @Override
@@ -108,14 +100,8 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
      */
     @Override
     public CredentialRecord findByCredentialId(Bytes credentialId) {
-        log.info("findByCredentialId: id={}", credentialId.toBase64UrlString());
-
-        return passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).map(credential -> {
-            log.info("Credential found: id={}, userId={}", credential.getCredentialId(), credential.getUser().getId());
-            User user = userRepository.findById(Objects.requireNonNull(credential.getUser().getId())).orElseThrow();
-            return toCredentialRecord(credential, user.getExternalId());
-        }).orElseGet(() -> {
-            log.info("No credential found for id={}", credentialId.toBase64UrlString());
+        return passkeyCredentialsRepository.findByCredentialId(credentialId.toBase64UrlString()).map(PasskeyCredential::toCredentialRecord).orElseGet(() -> {
+            log.debug("No credential found for id={}", credentialId.toBase64UrlString());
             return null;
         });
     }
@@ -138,54 +124,24 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         // (in /webauthn/authenticate/options request), we need to find out how to convert it to the externalId
         // Maybe related to ArtemisPublicKeyCredentialUserEntityRepository.save - could be the case that the options requests sets a temporary userId
         log.warn("findByUserId not implemented yet - will always return an empty list, the format of the userId is not clear yet");
-
-        // log.warn("current session id: {}", getSessionId(request));
-
-        Optional<User> user = Optional.empty(); // TODO properly retrieve the user
-        return user.map(
-                passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
-                .orElseGet(List::of);
+        return List.of();
     }
 
     /**
      * @param userId of the user for which the passkeys should be found
      */
     public List<PasskeyDTO> findPasskeyDtosByUserId(Bytes userId) {
-        log.info("findPasskeyDtosByUserId: userId={}", userId);
-        log.info("findPasskeyDtosByUserId: userId bytesToLong={}", BytesConverter.bytesToLong(userId));
-
         Optional<User> user = userRepository.findById(BytesConverter.bytesToLong(userId));
 
-        List<CredentialRecord> credentialRecords = user.map(
-                passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(cred -> toCredentialRecord(cred, passkeyUser.getExternalId())).toList())
-                .orElseGet(List::of);
+        List<CredentialRecord> credentialRecords = user
+                .map(passkeyUser -> passkeyCredentialsRepository.findByUser(passkeyUser.getId()).stream().map(PasskeyCredential::toCredentialRecord).toList()).orElseGet(List::of);
 
         return credentialRecords.stream()
                 .map(credential -> new PasskeyDTO(credential.getCredentialId().toBase64UrlString(), credential.getLabel(), credential.getCreated(), credential.getLastUsed()))
                 .toList();
     }
 
-    private static CredentialRecord toCredentialRecord(PasskeyCredential credential, Bytes userId) {
-        // @formatter:off
-        return ImmutableCredentialRecord.builder()
-            .userEntityUserId(userId)
-            .label(credential.getLabel())
-            .credentialType(PublicKeyCredentialType.valueOf(credential.getCredentialType().label()))
-            .credentialId(Bytes.fromBase64(credential.getCredentialId()))
-            .publicKey(credential.getPublicKeyCose())
-            .signatureCount(credential.getSignatureCount())
-            .uvInitialized(credential.getUvInitialized())
-            .transports(credential.getTransports())
-            .backupEligible(credential.getBackupEligible())
-            .backupState(credential.getBackupState())
-            .attestationObject(credential.getAttestationObject())
-            .lastUsed(credential.getLastUsed())
-            .created(credential.getCreatedDate())
-            .build();
-        // @formatter:on
-    }
-
-    private static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
+    public static PasskeyCredential toPasskeyCredential(PasskeyCredential credential, CredentialRecord credentialRecord, User user) {
         credential.setUser(user);
         credential.setLabel(credentialRecord.getLabel());
         credential.setCredentialType(PasskeyType.fromLabel(credentialRecord.getCredentialType().getValue()));

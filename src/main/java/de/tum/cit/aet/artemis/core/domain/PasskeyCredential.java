@@ -14,7 +14,10 @@ import jakarta.persistence.Table;
 
 import org.springframework.security.web.webauthn.api.AuthenticatorTransport;
 import org.springframework.security.web.webauthn.api.Bytes;
+import org.springframework.security.web.webauthn.api.CredentialRecord;
+import org.springframework.security.web.webauthn.api.ImmutableCredentialRecord;
 import org.springframework.security.web.webauthn.api.PublicKeyCose;
+import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
@@ -180,5 +183,25 @@ public class PasskeyCredential extends AbstractAuditingEntity {
 
     public void setLastUsed(Instant lastUsed) {
         this.lastUsed = lastUsed;
+    }
+
+    public CredentialRecord toCredentialRecord() {
+        // @formatter:off
+        return ImmutableCredentialRecord.builder()
+            .userEntityUserId(getUser().getExternalId())
+            .label(getLabel())
+            .credentialType(PublicKeyCredentialType.valueOf(getCredentialType().label()))
+            .credentialId(Bytes.fromBase64(getCredentialId()))
+            .publicKey(getPublicKeyCose())
+            .signatureCount(getSignatureCount())
+            .uvInitialized(getUvInitialized())
+            .transports(getTransports())
+            .backupEligible(getBackupEligible())
+            .backupState(getBackupState())
+            .attestationObject(getAttestationObject())
+            .lastUsed(getLastUsed())
+            .created(getCreatedDate())
+            .build();
+        // @formatter:on
     }
 }
