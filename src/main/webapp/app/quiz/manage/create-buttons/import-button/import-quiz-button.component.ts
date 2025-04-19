@@ -1,7 +1,7 @@
 import { Component, inject, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faCheckDouble, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCheckDouble, faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -21,7 +21,6 @@ export class ImportQuizButtonComponent {
     course = input<Course | undefined>();
     translationKey = input<string>('artemisApp.quizExercise.home.importLabel');
 
-    protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
     protected readonly faCheckDouble = faCheckDouble;
 
@@ -33,7 +32,7 @@ export class ImportQuizButtonComponent {
         modalRef.componentInstance.exerciseType = ExerciseType.QUIZ;
         modalRef.result.then((result: QuizExercise) => {
             this.modalService.dismissAll();
-            this.router.navigate(['course-management', this.course()?.id, 'quiz-exercises', result.id, 'import']);
+            this.router.navigate(['/course-management', this.course()?.id, 'quiz-exercises', result.id, 'import']);
         });
     }
 }

@@ -19,7 +19,7 @@ export class ExerciseImportButtonComponent extends ExerciseManageButtonComponent
         modalRef.componentInstance.exerciseType = this.exerciseType();
         modalRef.result.then((result: Exercise) => {
             this.modalService.dismissAll();
-            this.router.navigate(['course-management', this.course()?.id, this.exerciseType + '-exercises', result.id, 'import']);
+            this.router.navigate(['/course-management', this.course()?.id, this.exerciseType() + '-exercises', result.id, 'import']);
         });
     }
 }

@@ -32,13 +32,13 @@ export class ImportProgrammingButtonComponent {
             this.modalService.dismissAll();
             //when the file is uploaded we set the id to undefined.
             if (result.id === undefined) {
-                this.router.navigate(['course-management', this.course()?.id, 'programming-exercises', 'import-from-file'], {
+                this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import-from-file'], {
                     state: {
                         programmingExerciseForImportFromFile: result,
                     },
                 });
             } else {
-                this.router.navigate(['course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
+                this.router.navigate(['/course-management', this.course()?.id, 'programming-exercises', 'import', result.id]);
             }
         });
     }

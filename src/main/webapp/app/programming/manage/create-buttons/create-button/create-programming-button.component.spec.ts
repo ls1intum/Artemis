@@ -1,30 +1,46 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CreateProgrammingButtonComponent } from './create-programming-button.component';
-import { ActivatedRoute } from '@angular/router';
-import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { CreateProgrammingButtonComponent } from 'app/programming/manage/create-buttons/create-button/create-programming-button.component';
 import { provideHttpClient } from '@angular/common/http';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockComponent } from 'ng-mocks';
 
-describe('ProgrammingCreateButton', () => {
+describe('CreateProgrammingButtonComponent', () => {
     let component: CreateProgrammingButtonComponent;
     let fixture: ComponentFixture<CreateProgrammingButtonComponent>;
+    let router: Router;
+    let modalService: NgbModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(FaIconComponent)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: ActivatedRoute, useValue: new MockActivatedRoute() }, provideHttpClient()],
+            imports: [CreateProgrammingButtonComponent],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: Router, useClass: MockRouter },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                provideHttpClient(),
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CreateProgrammingButtonComponent);
         component = fixture.componentInstance;
+        router = TestBed.inject(Router);
+        modalService = TestBed.inject(NgbModal);
+        fixture.componentRef.setInput('course', { id: 123 });
         fixture.detectChanges();
     });
 
-    it('should create', () => {
-        expect(component).toBeTruthy();
+    it('should link to exercise creation', () => {
+        jest.spyOn(router, 'navigate');
+        jest.spyOn(modalService, 'dismissAll');
+
+        component.linkToExerciseCreation();
+
+        expect(modalService.dismissAll).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'new']);
     });
 });

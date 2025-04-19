@@ -1,21 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { Router } from '@angular/router';
-import {
-    faChalkboardUser,
-    faChartBar,
-    faClipboard,
-    faFileImport,
-    faGraduationCap,
-    faKeyboard,
-    faListAlt,
-    faPause,
-    faPlus,
-    faQuestion,
-    faTimes,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboard, faFileImport, faGraduationCap, faKeyboard, faListAlt, faPlus, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CreateProgrammingButtonComponent } from 'app/programming/manage/create-buttons/create-button/create-programming-button.component';
@@ -30,7 +17,6 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
     selector: 'jhi-add-exercise-modal',
     imports: [
         TranslateDirective,
-        ButtonComponent,
         CreateProgrammingButtonComponent,
         ImportProgrammingButtonComponent,
         CreateQuizButtonComponent,
@@ -42,16 +28,13 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
 })
 export class AddExerciseModalComponent {
     private activeModal = inject(NgbActiveModal);
-    private router = inject(Router);
     course: Course;
 
     protected readonly faTimes = faTimes;
-    protected readonly faPause = faPause;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faKeyboard = faKeyboard;
     protected readonly faPlus = faPlus;
     protected readonly faFileImport = faFileImport;
@@ -68,13 +51,6 @@ export class AddExerciseModalComponent {
 
     confirm() {
         this.activeModal.close(true);
-    }
-    linkToProgrammingExerciseCreation() {
-        if (!this.course.id) {
-            return;
-        }
-        this.activeModal.close(true);
-        this.router.navigate(['course-management', this.course.id, 'programming-exercises', 'new']);
     }
 
     protected readonly FeatureToggle = FeatureToggle;

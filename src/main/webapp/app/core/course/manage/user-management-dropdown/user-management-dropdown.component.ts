@@ -1,6 +1,6 @@
 import { Component, OnInit, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { IconDefinition, faChalkboardUser, faClipboard, faGraduationCap, faListAlt, faPersonChalkboard, faQuestion, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faClipboard, faGraduationCap, faListAlt, faPersonChalkboard, faQuestion, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -25,10 +25,8 @@ export class UserManagementDropdownComponent implements OnInit {
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
-    protected readonly faList = faListAlt;
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faQuestion = faQuestion;
     protected readonly faUser = faUser;
 

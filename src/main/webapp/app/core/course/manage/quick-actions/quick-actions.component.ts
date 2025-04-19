@@ -30,19 +30,19 @@ export class QuickActionsComponent {
         if (!this.course()?.id) {
             return;
         }
-        this.router.navigate(['course-management', this.course()?.id, 'lectures', 'new']);
+        this.router.navigate(['/course-management', this.course()?.id, 'lectures', 'new']);
     }
     linkToExamCreation() {
         if (!this.course()?.id) {
             return;
         }
-        this.router.navigate(['course-management', this.course()?.id, 'exams', 'new']);
+        this.router.navigate(['/course-management', this.course()?.id, 'exams', 'new']);
     }
     linkToFaqCreation() {
         if (!this.course()?.id) {
             return;
         }
-        this.router.navigate(['course-management', this.course()?.id, 'faqs', 'new']);
+        this.router.navigate(['/course-management', this.course()?.id, 'faqs', 'new']);
     }
     openAddExerciseModal() {
         const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'lg', backdrop: 'static' });
