@@ -377,7 +377,7 @@ public final class Constants {
     /**
      * The name of the module feature used for Passkey functionality.
      */
-    public static final String FEATURE_ATLAS = "passkey";
+    public static final String FEATURE_PASSKEY = "passkey";
 
     /**
      * The name of the module feature used for Atlas functionality.

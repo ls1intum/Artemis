@@ -52,7 +52,7 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
         }
         if (artemisConfigHelper.isPasskeyEnabled(environment)) {
-            enabledArtemisFeatures.add(Constants.FEATURE_ATLAS);
+            enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY);
         }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }
