@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.dto.passkey;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.security.web.webauthn.api.COSEAlgorithmIdentifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialParameters;
@@ -52,7 +53,7 @@ public record ArtemisPublicKeyCredentialParametersDTO(PublicKeyCredentialType ty
     }
 
     public PublicKeyCredentialParameters toPublicKeyCredentialParameters() {
-        if (type != PublicKeyCredentialType.PUBLIC_KEY) {
+        if (!Objects.equals(type.getValue(), PublicKeyCredentialType.PUBLIC_KEY.getValue())) {
             throw new IllegalArgumentException("Only PUBLIC_KEY credential type is supported, got " + type);
         }
         return COSEAlgorithm.fromValue((int) coseAlgorithmIdentifier).getCredentialParameters();
