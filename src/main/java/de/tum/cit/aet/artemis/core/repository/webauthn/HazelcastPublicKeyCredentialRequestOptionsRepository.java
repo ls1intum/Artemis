@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.core.repository.webauthn;
 
-import java.util.Set;
-
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,7 +11,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 
-import com.hazelcast.cluster.Member;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
@@ -51,7 +48,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
-        logHazelcastMap();
         if (options != null) {
             authOptionsMap.put(session.getId(), options);
         }
@@ -59,7 +55,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             // TODO verify this has no unwanted side-effects (e.g. save method called with null options on different node)
             // hazelcastMap.remove(session.getId());
         }
-        logHazelcastMap();
     }
 
     @Override
@@ -70,32 +65,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             return null;
         }
 
-        log.info("Searching PublicKeyCredentialRequestOptions in hazelcast for session with id {}", sessionId);
-        logHazelcastMap();
+        log.debug("Searching PublicKeyCredentialRequestOptions in hazelcast map for session with id {}", sessionId);
         return authOptionsMap.get(sessionId);
-    }
-
-    private void logClusterMembers(HazelcastInstance hazelcastInstance) {
-        Set<Member> members = hazelcastInstance.getCluster().getMembers();
-        log.info("Current Hazelcast cluster has {} member(s):", members.size());
-        for (Member member : members) {
-            log.info("\tMember UUID: {}, Address: {}", member.getUuid(), member.getAddress());
-        }
-    }
-
-    private void logHazelcastMap() {
-        logClusterMembers(hazelcastInstance);
-
-        int size = authOptionsMap.size();
-        log.info("Hazelcast map '{}' contains {} entries.", MAP_NAME, size);
-
-        if (size == 0) {
-            log.info("Hazelcast map '{}' is empty.", MAP_NAME);
-        }
-        else {
-            authOptionsMap.forEach((key, value) -> {
-                log.info("\tEntry in Hazelcast map '{}': Key = {}, RP ID = {}, Challenge = {}", MAP_NAME, key, value.getRpId(), value.getChallenge());
-            });
-        }
     }
 }

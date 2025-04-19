@@ -54,7 +54,7 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        log.debug("Attempting to authenticate");
+        log.info("Attempting to authenticate");
 
         ServletServerHttpRequest httpRequest = new ServletServerHttpRequest(request);
         ResolvableType resolvableType = ResolvableType.forClassWithGenerics(PublicKeyCredential.class, AuthenticatorAssertionResponse.class);
@@ -78,10 +78,10 @@ public class ArtemisWebAuthnAuthenticationFilter extends WebAuthnAuthenticationF
         log.info("PublicKeyCredential: ID={}, Type={}", publicKeyCredential.getId(), publicKeyCredential.getType());
 
         RelyingPartyAuthenticationRequest authenticationRequest = new RelyingPartyAuthenticationRequest(requestOptions, publicKeyCredential);
-        log.debug("RelyingPartyAuthenticationRequest created: {}", authenticationRequest);
+        log.info("RelyingPartyAuthenticationRequest created: {}", authenticationRequest);
 
         WebAuthnAuthenticationRequestToken token = new WebAuthnAuthenticationRequestToken(authenticationRequest);
-        log.debug("WebAuthnAuthenticationRequestToken created: Principal={}, Credentials={}", token.getPrincipal(), token.getCredentials());
+        log.info("WebAuthnAuthenticationRequestToken created: Principal={}, Credentials={}", token.getPrincipal(), token.getCredentials());
 
         // Perform authentication and log details
         Authentication authentication;
