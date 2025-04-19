@@ -11,9 +11,19 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestOptions;
 import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
 
+import com.hazelcast.config.MapConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+/**
+ * <p>
+ * To ensure synchronization of WebAuthn authentication request options across multiple nodes, Hazelcast is utilized.
+ * </p>
+ * <p>
+ * Authentication options are short-lived, as the only user interaction in between is authentication (e.g., via Face ID).<br>
+ * These options are removed from the shared storage once the authentication process is completed or after a predefined time to live.
+ * </p>
+ */
 public class HazelcastPublicKeyCredentialRequestOptionsRepository implements PublicKeyCredentialRequestOptionsRepository {
 
     private static final Logger log = LoggerFactory.getLogger(HazelcastPublicKeyCredentialRequestOptionsRepository.class);
@@ -30,10 +40,10 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     @PostConstruct
     public void init() {
-        int authOptionsTimeToLive = 120; // 2 minutes
+        int AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS = 120; // 2 minutes
 
-        var mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
-        mapConfig.setTimeToLiveSeconds(authOptionsTimeToLive);
+        MapConfig mapConfig = hazelcastInstance.getConfig().getMapConfig(MAP_NAME);
+        mapConfig.setTimeToLiveSeconds(AUTH_OPTIONS_TIME_TO_LIVE_IN_SECONDS);
         authOptionsMap = hazelcastInstance.getMap(MAP_NAME);
     }
 
@@ -43,8 +53,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
 
     @Override
     public void save(HttpServletRequest request, HttpServletResponse response, PublicKeyCredentialRequestOptions options) {
-        log.info("Saving PublicKeyCredentialRequestOptions to session with id {}", request.getSession().getId());
-
         HttpSession session = request.getSession();
         session.setAttribute(this.attrName, options);
 
@@ -52,8 +60,7 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             authOptionsMap.put(session.getId(), options);
         }
         else {
-            // TODO verify this has no unwanted side-effects (e.g. save method called with null options on different node)
-            // hazelcastMap.remove(session.getId());
+            authOptionsMap.remove(session.getId());
         }
     }
 
@@ -65,7 +72,6 @@ public class HazelcastPublicKeyCredentialRequestOptionsRepository implements Pub
             return null;
         }
 
-        log.debug("Searching PublicKeyCredentialRequestOptions in hazelcast map for session with id {}", sessionId);
         return authOptionsMap.get(sessionId);
     }
 }
