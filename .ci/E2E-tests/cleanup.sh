@@ -42,15 +42,3 @@ for i in {1..5}; do
         sleep 1
     fi
 done
-
-# Run the Gradle task to generate the JaCoCo report
-echo "Generating JaCoCo report using Gradle task: $REPORT_TASK"
-cd $ARTEMIS_PATH
-./gradlew $REPORT_TASK
-
-# Handle errors
-if [[ $? -ne 0 ]]; then
-    echo "Failed to generate JaCoCo report. Please check the Gradle logs."
-else
-    echo "JaCoCo report generated successfully. Check the output directory for details."
-fi
