@@ -230,18 +230,24 @@ public class LectureResource {
         // Group slides by attachment unit id to combine them into the DTOs
         Map<Long, List<SlideDTO>> slidesByAttachmentUnitId = slides.stream().collect(Collectors.groupingBy(SlideDTO::attachmentUnitId));
         // Convert visible lectures to DTOs (filtering active attachments) and add non hidden slides to the DTOs
-        List<LectureDTO> lectureDTOs = lectures.stream().map(LectureDTO::from).peek(lectureDTO -> {
-            List<AttachmentUnitDTO> attachmentUnitDTOs = lectureDTO.lectureUnits;
-            for (AttachmentUnitDTO attachmentUnitDTO : attachmentUnitDTOs) {
+        List<LectureDTO> lectureDTOs = lectures.stream()
+            .map(LectureDTO::from)
+            .sorted(Comparator.comparingLong(LectureDTO::id))
+            .toList();
+        
+        lectureDTOs.forEach(lectureDTO -> {
+            for (AttachmentUnitDTO attachmentUnitDTO : lectureDTO.lectureUnits) {
                 List<SlideDTO> slidesForAttachmentUnit = slidesByAttachmentUnitId.get(attachmentUnitDTO.id);
                 if (slidesForAttachmentUnit != null) {
                     // remove unnecessary fields from the slide DTOs
-                    var finalSlides = slidesForAttachmentUnit.stream().map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
-                            .sorted(Comparator.comparingInt(SlideDTO::slideNumber)).toList();
+                    var finalSlides = slidesForAttachmentUnit.stream()
+                        .map(slideDTO -> new SlideDTO(slideDTO.id(), slideDTO.slideNumber(), null, null))
+                        .sorted(Comparator.comparingInt(SlideDTO::slideNumber))
+                        .toList();
                     attachmentUnitDTO.slides.addAll(finalSlides);
                 }
             }
-        }).sorted(Comparator.comparingLong(LectureDTO::id)).toList();
+        });
 
         log.info("     Finished getting all lectures with slides in {}ms", System.currentTimeMillis() - start);
         return ResponseEntity.ok().body(lectureDTOs);
