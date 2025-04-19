@@ -23,10 +23,18 @@ public record PublicKeyCredentialCreationOptionsDTO(Bytes challenge, PublicKeyCr
         return PublicKeyCredentialCreationOptions.builder()
             .challenge(challenge())
             .user(user())
-            .attestation(attestation().toAttestationConveyancePreference())
-            .rp(rp().toPublicKeyCredentialRpEntity())
-            .pubKeyCredParams(ArtemisPublicKeyCredentialParametersDTO.convertToPublicKeyCredentialParameters(pubKeyCredParams()))
-            .authenticatorSelection(authenticatorSelection().toAuthenticatorSelectionCriteria())
+            .attestation(attestation() != null
+                ? attestation().toAttestationConveyancePreference()
+                : null)
+            .rp(rp() != null
+                ? rp().toPublicKeyCredentialRpEntity()
+                : null)
+            .pubKeyCredParams(pubKeyCredParams() != null
+                ? ArtemisPublicKeyCredentialParametersDTO.convertToPublicKeyCredentialParameters(pubKeyCredParams())
+                : null)
+            .authenticatorSelection(authenticatorSelection() != null
+                ? authenticatorSelection().toAuthenticatorSelectionCriteria()
+                : null)
             .excludeCredentials(excludeCredentials())
             .extensions(extensions())
             .timeout(timeout())
