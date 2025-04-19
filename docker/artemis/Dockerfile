@@ -108,17 +108,23 @@ ENV LANG=en_US.UTF-8
 ENV LANGUAGE=en_US.UTF-8
 
 # Create directories for volumes, create artemis user and set right owners
+# Also create the directory structure for the JaCoCo agent
 RUN \
-  mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
+  mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content /opt/playwright/lib \
   && groupadd --gid ${GID} artemis \
   && useradd -m --gid ${GID} --uid ${UID} --shell /bin/bash artemis \
-  && chown -R artemis:artemis /opt/artemis
+  && chown -R artemis:artemis /opt/artemis \
+  && chown -R artemis:artemis /opt/playwright
 USER artemis:artemis
 
 # Copy Artemis.war to execution location
 WORKDIR /opt/artemis
 
 COPY --chown=artemis:artemis --from=war_file ${WAR_FILE_PATH}/*.war Artemis.war
+
+# Copy the JaCoCo agent from the build context (assuming context is project root)
+# Make sure this path matches the location relative to where docker build is run
+COPY --chown=artemis:artemis docker/playwright/lib/org.jacoco.agent-0.8.13-runtime.jar /opt/playwright/lib/org.jacoco.agent-0.8.13-runtime.jar
 
 VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
