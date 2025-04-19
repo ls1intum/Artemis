@@ -8,6 +8,10 @@ public class PasswordGenerator {
 
     private static final int PASSWORD_LENGTH = 32;
 
+    private PasswordGenerator() {
+        // prevent instantiation
+    }
+
     /**
      * <p>
      * USE WITH CAUTION: <b>THIS METHOD SHOULD NOT BE USED FOR GENERATING ACTUALLY USED PASSWORDS OR EVEN LONG-TERM PASSWORDS.</b>
