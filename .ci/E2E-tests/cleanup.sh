@@ -34,7 +34,7 @@ REPORT_TASK="jacocoE2EReport"
 # Check if the .exec file exists, with a timeout of 5 seconds
 echo "Waiting for JaCoCo .exec file to be generated at: $EXEC_FILE"
 for i in {1..5}; do
-    if [[ -f "$EXEC_FILE" ]]; then
+    if [ -f "$EXEC_FILE" ]; then
         echo "JaCoCo .exec file found: $EXEC_FILE"
         break
     else
