@@ -1,0 +1,10 @@
+<button
+    class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+    queryParamsHandling="merge"
+    id="create-quiz-button"
+    (click)="linkToExerciseCreation()"
+>
+    <fa-icon [icon]="faPlus" />
+    <span [jhiTranslate]="translationKey()"></span>
+    <fa-icon [icon]="faCheckDouble" />
+</button>

@@ -22,6 +22,8 @@
                     "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Short Answer: {{ shortCount }}"
                 }
             },
+            "create": "Create Quiz",
+            "import": "Import Quiz",
             "created": "Created new Quiz Exercise with identifier {{ param }}",
             "updated": "Updated Quiz Exercise with identifier {{ param }}",
             "deleted": "Deleted Quiz Exercise with identifier {{ param }}",

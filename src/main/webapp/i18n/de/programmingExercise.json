@@ -12,6 +12,8 @@
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
+            "create": "Programmierung erstellen",
+            "import": "Programmierung importieren",
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",

@@ -270,7 +270,15 @@
             "select": "Select",
             "sendToIris": "Send To Iris",
             "faq": "FAQ",
-            "show": "Show"
+            "show": "Show",
+            "addExercise": "Add exercise",
+            "addLecture": "Add lecture",
+            "addFaq": "Add FAQ",
+            "addExam": "Add exam",
+            "addStudent": "Add student",
+            "addTutor": "Add tutor",
+            "addEditor": "Add editor",
+            "addInstructor": "Add instructor"
         },
         "detail": {
             "field": "Field",

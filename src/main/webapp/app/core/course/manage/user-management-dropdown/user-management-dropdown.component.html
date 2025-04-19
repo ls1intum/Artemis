@@ -1,0 +1,16 @@
+<div ngbDropdown class="d-inline">
+    <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>
+        <fa-icon [icon]="faUser" />
+        <span class="d-none d-md-inline"> {{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
+    </button>
+    <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
+        @for (userAddAction of userAddActions; track userAddAction) {
+            <a class="btn" [routerLink]="userAddAction.routerLink" ngbDropdownItem>
+                @if (userAddAction.icon) {
+                    <fa-icon [fixedWidth]="true" [icon]="userAddAction.icon" class="ms-2 me-3" />
+                }
+                <span [jhiTranslate]="userAddAction.translationKey"></span>
+            </a>
+        }
+    </div>
+</div>

@@ -1,0 +1,52 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span jhiTranslate="entity.action.addExercise"></span>
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="d-flex flex-column gap-2">
+            <div class="d-flex">
+                <div class="w-50 pe-2">
+                    <jhi-programming-create-button [course]="course" [translationKey]="'artemisApp.programmingExercise.create'" />
+                </div>
+                <div class="w-50 ps-2">
+                    <jhi-programming-import-button [course]="course" [translationKey]="'artemisApp.programmingExercise.import'" />
+                </div>
+            </div>
+            <div class="d-flex">
+                <div class="w-50 pe-2">
+                    <jhi-quiz-create-button [course]="course" [translationKey]="'artemisApp.quizExercise.create'" />
+                </div>
+                <div class="w-50 ps-2">
+                    <jhi-quiz-import-button [course]="course" [translationKey]="'artemisApp.quizExercise.import'" />
+                </div>
+            </div>
+            <div class="d-flex">
+                <div class="w-50 pe-2">
+                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.MODELING" [translationKey]="'artemisApp.modelingExercise.create'" />
+                </div>
+                <div class="w-50 ps-2">
+                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.MODELING" [translationKey]="'artemisApp.modelingExercise.import'" />
+                </div>
+            </div>
+            <div class="d-flex">
+                <div class="w-50 pe-2">
+                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.TEXT" [translationKey]="'artemisApp.textExercise.create'" />
+                </div>
+                <div class="w-50 ps-2">
+                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.TEXT" [translationKey]="'artemisApp.textExercise.import'" />
+                </div>
+            </div>
+            <div class="d-flex">
+                <div class="w-50 pe-2">
+                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" [translationKey]="'artemisApp.fileUploadExercise.create'" />
+                </div>
+                <div class="w-50 ps-2">
+                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" [translationKey]="'artemisApp.fileUploadExercise.import'" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

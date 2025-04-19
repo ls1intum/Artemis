@@ -14,6 +14,8 @@
             },
             "wordCount": "Number of words: {{ count }}",
             "characterCount": "Number of characters: {{ count }}",
+            "create": "Create Text",
+            "import": "Import Text",
             "created": "Created new Text Exercise with identifier {{ param }}",
             "updated": "Updated Text Exercise with identifier {{ param }}",
             "deleted": "Deleted Text Exercise with identifier {{ param }}",

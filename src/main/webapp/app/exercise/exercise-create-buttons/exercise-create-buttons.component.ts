@@ -1,46 +1,17 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ExerciseImportWrapperComponent } from 'app/exercise/import/exercise-import-wrapper/exercise-import-wrapper.component';
-import { getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { Router, RouterLink } from '@angular/router';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
+import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 
 @Component({
     selector: 'jhi-exercise-create-buttons',
     templateUrl: './exercise-create-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective],
+    imports: [RouterLink, FaIconComponent, ExerciseCreateButtonComponent, ExerciseImportButtonComponent],
 })
-export class ExerciseCreateButtonsComponent implements OnInit {
-    private router = inject(Router);
-    private modalService = inject(NgbModal);
-
-    @Input() course: Course;
-    @Input() exerciseType: ExerciseType;
-
-    translationLabel: string;
-
-    faPlus = faPlus;
-    faFileImport = faFileImport;
-
-    getExerciseTypeIcon = getIcon;
-
-    ngOnInit(): void {
-        if (this.exerciseType === ExerciseType.FILE_UPLOAD) {
-            this.translationLabel = 'fileUpload';
-        } else {
-            this.translationLabel = this.exerciseType;
-        }
-    }
-
-    openImportModal() {
-        const modalRef = this.modalService.open(ExerciseImportWrapperComponent, { size: 'lg', backdrop: 'static' });
-        modalRef.componentInstance.exerciseType = this.exerciseType;
-        modalRef.result.then((result: Exercise) => {
-            this.router.navigate(['course-management', this.course.id, this.exerciseType + '-exercises', result.id, 'import']);
-        });
-    }
+export class ExerciseCreateButtonsComponent {
+    course = input<Course | undefined>();
+    exerciseType = input<ExerciseType>();
 }

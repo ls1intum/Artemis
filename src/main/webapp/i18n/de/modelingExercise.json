@@ -7,6 +7,8 @@
                 "editLabel": "Modellierungsaufgabe bearbeiten",
                 "importLabel": "Modellierungsaufgabe importieren"
             },
+            "create": "Modellierung erstellen",
+            "import": "Modellierung importieren",
             "created": "Modellierungsaufgabe erstellt mit ID {{ param }}",
             "updated": "Modellierungsaufgabe aktualisiert mit ID {{ param }}",
             "deleted": "Modellierungsaufgabe gelöscht mit ID {{ param }}",

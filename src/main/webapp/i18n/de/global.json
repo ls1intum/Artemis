@@ -270,7 +270,15 @@
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
             "faq": "FAQ",
-            "show": "Anzeigen"
+            "show": "Anzeigen",
+            "addExercise": "Aufgabe hinzufügen",
+            "addLecture": "Vorlesung hinzufügen",
+            "addFaq": "FAQ hinzufügen",
+            "addExam": "Klausur hinzufügen",
+            "addStudent": "Studierenden hinzufügen",
+            "addTutor": "Tutor:in hinzufügen",
+            "addEditor": "Editor:in hinzufügen",
+            "addInstructor": "Lehrenden hinzufügen"
         },
         "detail": {
             "field": "Feld",
