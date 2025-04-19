@@ -22,29 +22,35 @@
                 </div>
             </div>
             <div class="d-flex flex-wrap gap-2">
-                <jhi-button
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.MEDIUM"
-                    [title]="'entity.action.addExercise'"
-                    [icon]="faListAlt"
-                    (onClick)="openAddExerciseModal()"
-                />
-                <jhi-button
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.MEDIUM"
-                    [title]="'entity.action.addLecture'"
-                    [icon]="faChalkboardUser"
-                    (onClick)="linkToLectureCreation()"
-                />
-                <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="ButtonSize.MEDIUM" [title]="'entity.action.addFaq'" [icon]="faQuestion" (onClick)="linkToFaqCreation()" />
-                <jhi-button
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.MEDIUM"
-                    [title]="'entity.action.addExam'"
-                    [icon]="faGraduationCap"
-                    (onClick)="linkToExamCreation()"
-                />
-                <jhi-user-management-dropdown [courseId]="course()?.id" />
+                @if (course()?.isAtLeastEditor) {
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.MEDIUM"
+                        [title]="'entity.action.addExercise'"
+                        [icon]="faListAlt"
+                        (onClick)="openAddExerciseModal()"
+                    />
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.MEDIUM"
+                        [title]="'entity.action.addLecture'"
+                        [icon]="faChalkboardUser"
+                        (onClick)="linkToLectureCreation()"
+                    />
+                }
+                @if (course()?.faqEnabled) {
+                    <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="ButtonSize.MEDIUM" [title]="'entity.action.addFaq'" [icon]="faQuestion" (onClick)="linkToFaqCreation()" />
+                }
+                @if (course()?.isAtLeastInstructor) {
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.MEDIUM"
+                        [title]="'entity.action.addExam'"
+                        [icon]="faGraduationCap"
+                        (onClick)="linkToExamCreation()"
+                    />
+                    <jhi-user-management-dropdown [courseId]="course()?.id" />
+                }
             </div>
         </div>
     </div>
