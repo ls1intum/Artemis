@@ -321,9 +321,8 @@ public class ProgrammingExerciseGradingService {
 
         // Finally, save the new result once and make sure the order column between submission and result is maintained
         processedResult.setSubmission(programmingSubmission);
-        processedResult = resultRepository.save(processedResult);
         programmingSubmission.addResult(processedResult);
-        programmingSubmissionRepository.save(programmingSubmission);
+        processedResult = resultRepository.save(processedResult);
 
         return processedResult;
     }
