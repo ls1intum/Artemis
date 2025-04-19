@@ -129,6 +129,7 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
             // this will occur on authentication as the userId is set to a random id there
             // we might want to customize the implementation, so neither the ArtemisPublicKeyCredentialUserEntityRepository#save
             // method nor the ArtemisUserCredentialRepository#findByUserId method is called during passkey authentication
+            log.debug("Cannot convert WebAuthn userId '{}' to long – returning empty credential list", userId.toBase64UrlString(), e);
             return List.of(); // for now, we just return an empty list when an unknown userId format is passed
         }
     }
