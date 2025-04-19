@@ -53,8 +53,6 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
 
     @Override
     public PublicKeyCredentialUserEntity findById(Bytes id) {
-        log.debug("findById: id={}", id.toBase64UrlString());
-
         return findArtemisUserById(id).map(ArtemisPublicKeyCredentialUserEntityRepository::mapToUserEntity).orElse(null);
     }
 
@@ -63,8 +61,6 @@ public class ArtemisPublicKeyCredentialUserEntityRepository implements PublicKey
      */
     @Override
     public PublicKeyCredentialUserEntity findByUsername(String login) {
-        log.debug("findByUsername: username={}", login);
-
         return userRepository.findOneByLogin(login).map(ArtemisPublicKeyCredentialUserEntityRepository::mapToUserEntity).orElse(null);
     }
 

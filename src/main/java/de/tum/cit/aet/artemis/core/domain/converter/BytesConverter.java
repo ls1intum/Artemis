@@ -43,7 +43,7 @@ public class BytesConverter implements AttributeConverter<Bytes, byte[]> {
      * @param value the Bytes object to be converted
      * @return the Long value represented by the decoded Bytes object
      */
-    public static Long bytesToLong(Bytes value) {
+    public static Long bytesToLong(Bytes value) throws IllegalArgumentException {
         byte[] decodedBytes = Base64.getDecoder().decode(value.toBase64UrlString());
         String decodedString = new String(decodedBytes);
         return Long.parseLong(decodedString);
