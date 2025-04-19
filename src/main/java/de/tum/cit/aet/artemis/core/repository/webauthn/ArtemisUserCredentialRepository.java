@@ -120,13 +120,6 @@ public class ArtemisUserCredentialRepository implements UserCredentialRepository
         });
     }
 
-    public String getSessionId(HttpServletRequest request) {
-        if (request.getSession(false) != null) {
-            return request.getSession().getId();
-        }
-        return null; // Return null if no session exists
-    }
-
     /**
      * <p>
      * Finds all credential records associated with a given user ID.
