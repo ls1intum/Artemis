@@ -40,21 +40,25 @@ describe('UserManagementDropdownComponent', () => {
                 icon: faSchool,
                 routerLink: ['/course-management/123/groups/students'],
                 translationKey: 'entity.action.addStudent',
+                id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
                 routerLink: ['/course-management/123/groups/tutors'],
                 translationKey: 'entity.action.addTutor',
+                id: 'add-tutor',
             },
             {
                 icon: faListAlt,
                 routerLink: ['/course-management/123/groups/editors'],
                 translationKey: 'entity.action.addEditor',
+                id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
                 routerLink: ['/course-management/123/groups/instructors'],
                 translationKey: 'entity.action.addInstructor',
+                id: 'add-instructor',
             },
         ]);
     });
