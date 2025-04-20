@@ -265,7 +265,6 @@ dependencies {
     // Support YML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
-
     // Avoid outdated version of netty to prevent security issues
     implementation("net.minidev:json-smart") { version { 				strictly "2.5.2" } }
 
@@ -318,6 +317,10 @@ dependencies {
     implementation "org.springframework:spring-messaging:${spring_framework_version}"
     // required for the connection to Hermes (push notifications)
     implementation "org.springframework.retry:spring-retry:2.0.11"
+
+    // passkey functionality to simplify login
+    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.0.RELEASE"
+    implementation 'com.webauthn4j:webauthn4j-core:0.29.0.RELEASE'
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"

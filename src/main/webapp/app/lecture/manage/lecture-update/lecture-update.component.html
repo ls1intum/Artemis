@@ -49,15 +49,6 @@
                         <fa-icon [icon]="faSave" class="me-1" /><span jhiTranslate="entity.action.save"></span>
                     </button>
                 </div>
-                @if (isEditMode()) {
-                    <div>
-                        <h3 id="artemisApp.lecture.sections.attachments"><span jhiTranslate="artemisApp.lecture.sections.attachments"></span></h3>
-                        <p id="artemisApp.lecture.sections.attachmentsDescription">
-                            <span jhiTranslate="artemisApp.lecture.sections.attachmentsDescription"></span>
-                        </p>
-                        <jhi-lecture-attachments [lectureId]="lecture().id" [showHeader]="false" />
-                    </div>
-                }
             </div>
             @if (isEditMode()) {
                 <div class="mt-3">
