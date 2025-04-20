@@ -1,5 +1,5 @@
 import { Component, inject, input } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -7,12 +7,14 @@ import { faChalkboardUser, faChartBar, faClipboard, faGraduationCap, faListAlt, 
 import { AddExerciseModalComponent } from 'app/core/course/manage/quick-actions/add-exercise-modal/add-exercise-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
     styleUrls: ['./quick-actions.component.scss'],
-    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective],
+    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, FaIconComponent, RouterLink],
 })
 export class QuickActionsComponent {
     course = input<Course | undefined>();
@@ -46,7 +48,13 @@ export class QuickActionsComponent {
         this.router.navigate(['/course-management', this.course()?.id, 'faqs', 'new']);
     }
     openAddExerciseModal() {
-        const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'md' });
         modalRef.componentInstance.course = this.course();
+    }
+
+    protected readonly FeatureToggle = FeatureToggle;
+
+    closeAddExerciseModal() {
+        this.modalService.dismissAll();
     }
 }
