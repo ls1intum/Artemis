@@ -666,7 +666,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
+        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
                 RepoIdentifierProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
@@ -692,7 +692,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         latestResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), latestResult);
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
+        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
                 RepoIdentifierProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
@@ -730,7 +730,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         while (foundParticipation.isPresent());
 
         var repoName = extractRepoName(repoUrl.toString());
-        String body = request.get("/api/programming-exercise-participations/repo-name/" + repoName, HttpStatus.NOT_FOUND, String.class);
+        String body = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -739,7 +739,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming-exercise-participations/repo-name/" + repoName, HttpStatus.FORBIDDEN, String.class);
+        String body = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -753,7 +753,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        String body = request.get("/api/programming-exercise-participations/repo-name/" + repoName, HttpStatus.FORBIDDEN, String.class);
+        String body = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.FORBIDDEN, String.class);
     }
 
     String extractRepoName(String repoUrl) {
