@@ -73,9 +73,9 @@ jobs:
     runs-on: aet-large-ubuntu
     timeout-minutes: 60
     permissions:
-    - id-token: write
-    - contents: read
-    - checks: write
+      id-token: write
+      contents: read
+      checks: write
 
     steps:
     - uses: actions/checkout@v4
