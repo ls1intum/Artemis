@@ -14,6 +14,7 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -26,9 +27,13 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+
     protected readonly chatService = inject(IrisChatService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private accountService = inject(AccountService);
 
     messagesSubscription: Subscription;
     irisSettingsSubscription: Subscription;
@@ -43,14 +48,19 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     error?: IrisErrorMessageKey;
 
     irisEnabled = false;
+    isAtLeastTutor = false;
 
     post = input<Post>();
     course = input<Course>();
 
     ngOnInit(): void {
+        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+            return;
+        }
         const course = this.course();
         const post = this.post();
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        if (!this.isAtLeastTutor || post?.resolved) {
             return;
         }
         if (course?.id && post) {
@@ -143,7 +153,4 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         });
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 }

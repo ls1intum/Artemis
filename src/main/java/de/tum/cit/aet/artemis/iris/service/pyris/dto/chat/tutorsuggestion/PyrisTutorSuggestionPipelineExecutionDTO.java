@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 /**
  * Represents the execution of a pipeline for a tutor suggestion chat session.
  *
- * @param courseDTO     courseDTO of the course post is in
+ * @param course        courseDTO of the course post is in
  * @param exerciseId    exerciseId of the exercise the post might related to
  * @param post          post for that the suggestion is made
  * @param chatHistory   chat history of the session
@@ -24,6 +24,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param initialStages initial stages of the pipeline
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisTutorSuggestionPipelineExecutionDTO(Optional<PyrisCourseDTO> courseDTO, Optional<Integer> exerciseId, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory,
-        PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
+public record PyrisTutorSuggestionPipelineExecutionDTO(PyrisCourseDTO course, Optional<Integer> exerciseId, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory, PyrisUserDTO user,
+        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages) {
 }
