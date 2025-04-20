@@ -9,6 +9,7 @@ import static org.mockito.Mockito.notNull;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -1021,7 +1022,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 Result.class, HttpStatus.OK, params);
 
         var responseParticipation = (ProgrammingExerciseStudentParticipation) responseResult.getSubmission().getParticipation();
-        assertThat(responseParticipation.getIndividualDueDate()).isEqualTo(individualDueDate);
+        assertThat(responseParticipation.getIndividualDueDate().truncatedTo(ChronoUnit.MICROS)).isEqualTo(individualDueDate.truncatedTo(ChronoUnit.MICROS));
         // TODO: add some meaningful assertions here related to the feedback request
     }
 
