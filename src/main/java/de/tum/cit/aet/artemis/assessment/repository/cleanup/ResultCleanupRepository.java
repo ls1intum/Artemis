@@ -34,9 +34,15 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
     @Modifying
     @Transactional // ok because of delete
     @Query("""
-            DELETE
-            FROM Result r
-            WHERE r.submission IS NULL OR r.submission.participation IS NULL
+            DELETE FROM Result r
+            WHERE r.id IN (
+                SELECT r2.id
+                FROM Result r2
+                    LEFT JOIN r2.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                    OR p IS NULL
+            )
             """)
     int deleteResultWithoutParticipationAndSubmission();
 
@@ -50,7 +56,10 @@ public interface ResultCleanupRepository extends ArtemisJpaRepository<Result, Lo
     @Query("""
             SELECT COUNT(r)
             FROM Result r
-            WHERE r.submission IS NULL OR r.submission.participation IS NULL
+                LEFT JOIN r.submission s
+                LEFT JOIN s.participation p
+            WHERE s IS NULL
+                OR p IS NULL
             """)
     int countResultWithoutParticipationAndSubmission();
 

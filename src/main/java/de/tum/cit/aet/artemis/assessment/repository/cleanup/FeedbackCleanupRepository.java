@@ -33,10 +33,14 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM Feedback f
-            WHERE f.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL OR r.submission.participation IS NULL
+            WHERE f.id IN (
+                SELECT f2.id
+                FROM Feedback f2
+                    LEFT JOIN f2.result r
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                   OR p IS NULL
             )
             """)
     int deleteFeedbackForOrphanResults();
@@ -49,11 +53,11 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     @Query("""
             SELECT COUNT(f)
             FROM Feedback f
-            WHERE f.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL OR r.submission.participation IS NULL
-            )
+                LEFT JOIN f.result r
+                LEFT JOIN r.submission s
+                LEFT JOIN s.participation p
+            WHERE s IS NULL
+                OR p IS NULL
             """)
     int countFeedbackForOrphanResults();
 

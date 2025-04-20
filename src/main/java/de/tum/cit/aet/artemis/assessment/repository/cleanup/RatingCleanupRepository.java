@@ -29,14 +29,15 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
     @Modifying
     @Transactional // ok because of delete
     @Query("""
-            DELETE
-            FROM Rating rt
-            WHERE rt.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    OR r.submission.participation IS NULL
-                )
+            DELETE FROM Rating rt
+                WHERE rt.result.id IN (
+                    SELECT r.id
+                    FROM Result r
+                        LEFT JOIN r.submission s
+                        LEFT JOIN s.participation p
+                    WHERE s IS NULL
+                        OR p IS NULL
+            )
             """)
     int deleteOrphanRating();
 
@@ -48,13 +49,15 @@ public interface RatingCleanupRepository extends ArtemisJpaRepository<Rating, Lo
      */
     @Query("""
             SELECT COUNT(rt)
-            FROM Rating rt
-            WHERE rt.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    OR r.submission.participation IS NULL
-                )
+                FROM Rating rt
+                WHERE rt.result.id IN (
+                    SELECT r.id
+                    FROM Result r
+                        LEFT JOIN r.submission     s
+                        LEFT JOIN s.participation  p
+                    WHERE s IS NULL
+                        OR p IS NULL
+            )
             """)
     int countOrphanRating();
 }

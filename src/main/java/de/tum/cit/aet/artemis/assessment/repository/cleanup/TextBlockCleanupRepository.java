@@ -35,11 +35,14 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Transactional // ok because of delete
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
+            WHERE tb.feedback.id IN (
+                SELECT f.id
                 FROM Feedback f
                     LEFT JOIN f.result r
-                WHERE r.submission IS NULL OR r.submission.participation IS NULL
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                    OR p IS NULL
             )
             """)
     int deleteTextBlockForOrphanResults();
@@ -53,11 +56,14 @@ public interface TextBlockCleanupRepository extends ArtemisJpaRepository<TextBlo
     @Query("""
             SELECT COUNT(tb)
             FROM TextBlock tb
-            WHERE tb.feedback IN (
-                SELECT f
-                FROM Feedback f
-                    LEFT JOIN f.result r
-                WHERE r.submission IS NULL OR r.submission.participation IS NULL
+               WHERE tb.feedback.id IN (
+                   SELECT f.id
+                   FROM Feedback f
+                       LEFT JOIN f.result r
+                       LEFT JOIN r.submission s
+                       LEFT JOIN s.participation p
+                   WHERE s IS NULL
+                       OR p IS NULL
             )
             """)
     int countTextBlockForOrphanResults();

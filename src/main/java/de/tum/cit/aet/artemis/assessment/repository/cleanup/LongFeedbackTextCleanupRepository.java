@@ -38,7 +38,11 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
             WHERE lft.feedback.id IN (
                 SELECT f.id
                 FROM Feedback f
-                WHERE f.result.submission IS NULL OR f.result.submission.participation IS NULL
+                    LEFT JOIN f.result r
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                    OR p IS NULL
             )
             """)
     int deleteLongFeedbackTextForOrphanResult();
@@ -52,11 +56,12 @@ public interface LongFeedbackTextCleanupRepository extends ArtemisJpaRepository<
     @Query("""
             SELECT COUNT(lft)
             FROM LongFeedbackText lft
-            WHERE lft.feedback.id IN (
-                SELECT f.id
-                FROM Feedback f
-                WHERE f.result.submission IS NULL OR f.result.submission.participation IS NULL
-                )
+                JOIN lft.feedback f
+                LEFT JOIN f.result r
+                LEFT JOIN r.submission s
+                LEFT JOIN s.participation p
+            WHERE s IS NULL
+                OR p IS NULL
             """)
     int countLongFeedbackTextForOrphanResult();
 
