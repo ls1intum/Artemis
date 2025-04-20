@@ -72,6 +72,7 @@ jobs:
   server-tests:
     runs-on: aet-large-ubuntu
     timeout-minutes: 60
+    permissions: read-all
     steps:
     - uses: actions/checkout@v4
     - name: Setup Java
