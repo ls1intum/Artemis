@@ -18,6 +18,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 
@@ -141,6 +142,17 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
             WHERE s.participation.id = :participationId
             """)
     List<ProgrammingSubmission> findAllByParticipationIdWithResults(@Param("participationId") long participationId);
+
+    @Query("""
+            SELECT DISTINCT s
+            FROM ProgrammingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks f
+            WHERE s.participation.id = :participationId
+                AND (s.id IS NULL OR s.id = (SELECT MAX(s2.id) FROM ProgrammingSubmission s2 WHERE s2.participation.id = :participationId))
+                AND (r.id IS NULL OR r.id = (SELECT MAX(re2.id) FROM s.results re2))
+            """)
+    Optional<Submission> findLatestWithLatestResultAndFeedbacksByParticipationId(@Param("participationId") long participationId);
 
     /**
      * Get the programming submission with the given id from the database. The submission is loaded together with exercise it belongs to, its result, the feedback of the result and

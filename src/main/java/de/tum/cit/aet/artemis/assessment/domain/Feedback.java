@@ -83,6 +83,12 @@ public class Feedback extends DomainObject {
     private ProgrammingExerciseTestCase testCase;
 
     /**
+     * Reference to the test case id to query this without loading the test case object.
+     */
+    @Column(name = "test_case_id", insertable = false, updatable = false)
+    private Long testCaseId;
+
+    /**
      * Absolute score for the assessed element (e.g. +0.5, -1.0, +2.0, etc.)
      */
     @Column(name = "credits")
@@ -245,6 +251,10 @@ public class Feedback extends DomainObject {
 
     public ProgrammingExerciseTestCase getTestCase() {
         return testCase;
+    }
+
+    public Long getTestCaseId() {
+        return testCaseId;
     }
 
     public void setTestCase(ProgrammingExerciseTestCase testCase) {
