@@ -1080,19 +1080,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var submission1 = participationUtilService.addSubmission(participation1, new TextSubmission());
         var submission2 = participationUtilService.addSubmission(participation2, new TextSubmission());
         var submission3 = participationUtilService.addSubmission(participation3, new TextSubmission());
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, participation1.findLatestSubmission().orElseThrow());
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation1.findLatestSubmission().orElseThrow());
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation2.findLatestSubmission().orElseThrow());
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation2.findLatestSubmission().orElseThrow());
-        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, participation3.findLatestSubmission().orElseThrow());
-        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, participation3.findLatestSubmission().orElseThrow());
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission1);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission1);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission2);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, null, submission3);
+        participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission3);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResults", "true");
         var participations = request.getList("/api/exercise/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                // TODO jfr how should it really be now? if we excpect results, submissions can not be empty anymore
-                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
+                .allMatch(p -> p.getStudent().isPresent()).as("Each participation should have 1 submission").allMatch(p -> p.getSubmissionCount() == 1);
         var recievedParticipation1 = participations.stream().filter(participation -> participation.getParticipant().equals(participation1.getParticipant())).findAny();
         var recievedParticipation2 = participations.stream().filter(participation -> participation.getParticipant().equals(participation2.getParticipant())).findAny();
         var recievedParticipation3 = participations.stream().filter(participation -> participation.getParticipant().equals(participation3.getParticipant())).findAny();

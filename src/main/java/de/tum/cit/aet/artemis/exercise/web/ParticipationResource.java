@@ -648,7 +648,6 @@ public class ParticipationResource {
                             .max(Comparator.naturalOrder());
                     participation.setSubmissions(lastLegalSubmission.map(Set::of).orElse(Collections.emptySet()));
                 }
-                resultService.filterSensitiveInformationIfNecessary(participation, participation.getResults(), Optional.empty());
             });
         }
         else {

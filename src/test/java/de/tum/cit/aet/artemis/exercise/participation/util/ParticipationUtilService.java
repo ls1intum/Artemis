@@ -400,7 +400,9 @@ public class ParticipationUtilService {
     public Result addResultToSubmission(AssessmentType assessmentType, ZonedDateTime completionDate, Submission submission) {
         Result result = new Result().submission(submission).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         submission.addResult(result);
-        return resultRepo.save(result);
+        result = resultRepo.save(result);
+        submissionRepository.save(submission);
+        return result;
     }
 
     /**
