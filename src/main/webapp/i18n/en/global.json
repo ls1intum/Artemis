@@ -91,6 +91,7 @@
                 "password": "Password",
                 "sessions": "Sessions",
                 "login": "Sign in",
+                "loginWithPasskey": "Sign in with a passkey",
                 "logout": "Sign out",
                 "register": "Register"
             },
@@ -191,6 +192,7 @@
         "item-count": "Showing {{first}} - {{second}} of {{total}} items."
     },
     "entity": {
+        "actions": "Actions",
         "action": {
             "add": "Add",
             "addblob": "Add blob",
@@ -201,6 +203,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "deleteQuestion": "Are you sure you want to delete?",
             "noButtonTextDelete": "",
             "unlink": "Unlink",
             "confirm": "Confirm",

@@ -91,6 +91,7 @@
                 "password": "Passwort",
                 "sessions": "Sitzungen",
                 "login": "Anmelden",
+                "loginWithPasskey": "Mit einem Passkey anmelden",
                 "logout": "Abmelden",
                 "register": "Registrierung"
             },
@@ -191,6 +192,7 @@
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
+        "actions": "Aktionen",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
@@ -198,6 +200,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
