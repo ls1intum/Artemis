@@ -23,9 +23,11 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
@@ -42,11 +44,15 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -230,7 +236,32 @@ public class PyrisPipelineService {
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant) {
         var post = session.getPost();
         var course = post.getCoursePostingBelongsTo();
+        var conversation = post.getConversation();
+        Exercise exercise;
+        Lecture lecture;
+        if (conversation instanceof Channel channel) {
+            exercise = channel.getExercise();
+            lecture = channel.getLecture();
+        }
+        else {
+            exercise = null;
+            lecture = null;
+        }
+        Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
+        Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
+        if (exercise != null && exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
+            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+            var programmingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
+            programmingExerciseDTOOptional = Optional.of(programmingExerciseDTO);
+        }
+        else if (exercise != null && exercise.getExerciseType() == ExerciseType.TEXT) {
+            TextExercise textExercise = (TextExercise) exercise;
+            var textExerciseDTO = PyrisTextExerciseDTO.ofWithExampleSolution(textExercise);
+            textExerciseDTOOptional = Optional.of(textExerciseDTO);
+        }
         // @formatter:off
+        Optional<PyrisTextExerciseDTO> finalTextExerciseDTOOptional = textExerciseDTOOptional;
+        Optional<PyrisProgrammingExerciseDTO> finalProgrammingExerciseDTOOptional = programmingExerciseDTOOptional;
         executePipeline(
             "tutor-suggestion",
             variant,
@@ -243,7 +274,9 @@ public class PyrisPipelineService {
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 new PyrisUserDTO(session.getUser()),
                 executionDto.settings(),
-                executionDto.initialStages()
+                executionDto.initialStages(),
+                finalTextExerciseDTOOptional,
+                finalProgrammingExerciseDTOOptional
             ),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
