@@ -1,4 +1,4 @@
-<button [id]="'create-' + exerciseType + '-exercise'" class="btn btn-primary jh-create-entity text-truncate mb-1 me-1" (click)="linkToExerciseCreation()">
+<button [id]="'create-' + exerciseType() + '-exercise'" class="btn btn-primary jh-create-entity text-truncate mb-1 me-1" (click)="linkToExerciseCreation()">
     <fa-icon [icon]="faPlus" />
     <span [jhiTranslate]="translationLabel">Create new Exercise</span>
     <fa-icon [icon]="icon" />
