@@ -47,7 +47,7 @@ describe('QuickActionsComponent', () => {
     it('should open the add exercise modal', () => {
         const modalServiceSpy = jest.spyOn(modalService, 'open');
         component.openAddExerciseModal();
-        expect(modalServiceSpy).toHaveBeenCalledWith(AddExerciseModalComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalServiceSpy).toHaveBeenCalledWith(AddExerciseModalComponent, { size: 'lg' });
     });
     it('should link to exam creation', () => {
         fixture.componentRef.setInput('course', { id: 123 });

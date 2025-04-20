@@ -48,7 +48,7 @@ export class QuickActionsComponent {
         this.router.navigate(['/course-management', this.course()?.id, 'faqs', 'new']);
     }
     openAddExerciseModal() {
-        const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'md' });
+        const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'lg' });
         modalRef.componentInstance.course = this.course();
     }
 
