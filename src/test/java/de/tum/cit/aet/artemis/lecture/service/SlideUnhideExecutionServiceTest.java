@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -71,8 +72,8 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
         // Verify the slide was unhidden in the database
         Optional<Slide> unhiddenSlide = slideTestRepository.findById(testSlide.getId());
-        assert unhiddenSlide.isPresent();
-        assert unhiddenSlide.get().getHidden() == null;
+        assertThat(unhiddenSlide).isPresent();
+        assertThat(unhiddenSlide.get().getHidden()).isNull();
 
         // Verify student version was regenerated
         verify(attachmentService).regenerateStudentVersion(testAttachment);
@@ -106,8 +107,8 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
         // Verify the slide was unhidden in the database
         Optional<Slide> unhiddenSlide = slideTestRepository.findById(slideWithoutAttachment.getId());
-        assert unhiddenSlide.isPresent();
-        assert unhiddenSlide.get().getHidden() == null;
+        assertThat(unhiddenSlide).isPresent();
+        assertThat(unhiddenSlide.get().getHidden()).isNull();
 
         // Verify student version was not regenerated
         verify(attachmentService, never()).regenerateStudentVersion(any());
@@ -135,8 +136,8 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
         // Verify the slide was unhidden in the database
         Optional<Slide> unhiddenSlide = slideTestRepository.findById(slideWithUnitButNoAttachment.getId());
-        assert unhiddenSlide.isPresent();
-        assert unhiddenSlide.get().getHidden() == null;
+        assertThat(unhiddenSlide).isPresent();
+        assertThat(unhiddenSlide.get().getHidden()).isNull();
 
         // Verify student version was not regenerated
         verify(attachmentService, never()).regenerateStudentVersion(any());
@@ -153,8 +154,8 @@ class SlideUnhideExecutionServiceTest extends AbstractSpringIntegrationIndepende
 
         // Verify the slide was still unhidden in the database
         Optional<Slide> unhiddenSlide = slideTestRepository.findById(testSlide.getId());
-        assert unhiddenSlide.isPresent();
-        assert unhiddenSlide.get().getHidden() == null;
+        assertThat(unhiddenSlide).isPresent();
+        assertThat(unhiddenSlide.get().getHidden()).isNull();
 
         // Verify student version regeneration was attempted
         verify(attachmentService).regenerateStudentVersion(testAttachment);
