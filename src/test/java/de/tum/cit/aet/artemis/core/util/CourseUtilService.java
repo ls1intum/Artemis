@@ -579,15 +579,6 @@ public class CourseUtilService {
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
 
-        // Connect participations to results and vice versa
-        // TODO Michal Kawka I don't know if I can simply remove that or need to connect them via submissions
-
-        // participationModeling.addResult(resultModeling);
-        // participationText.addResult(resultText);
-        // participationFileUpload.addResult(resultFileUpload);
-        // participationQuiz.addResult(resultQuiz);
-        // participationProgramming.addResult(resultProgramming);
-
         // Save participations
         participationModeling = studentParticipationRepo.save(participationModeling);
         participationText = studentParticipationRepo.save(participationText);
@@ -744,14 +735,6 @@ public class CourseUtilService {
         Result resultProgramming = generateResult(true, 20D);
         resultProgramming.setAssessmentType(AssessmentType.AUTOMATIC);
         resultProgramming.setCompletionDate(ZonedDateTime.now());
-
-        // Connect participations to results and vice versa
-        // TODO Michal Kawka I don't know if I can simply remove that or need to connect them via submissions
-        // resultModeling.setParticipation(participationModeling);
-        // resultText.setParticipation(participationText);
-        // resultFileUpload.setParticipation(participationFileUpload);
-        // resultQuiz.setParticipation(participationQuiz);
-        // resultProgramming.setParticipation(participationProgramming);
 
         // Save participations
         participationModeling = studentParticipationRepo.save(participationModeling);

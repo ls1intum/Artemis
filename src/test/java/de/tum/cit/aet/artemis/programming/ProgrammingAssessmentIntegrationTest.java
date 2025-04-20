@@ -297,7 +297,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(10.0);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
-        // TODO Michal Kawka we might need to set up a submission here
         manualResult.getSubmission().getParticipation().setExercise(programmingExercise);
 
         // setting up student submission
@@ -433,7 +432,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
-        // TODO Michal Kawka we might need to set up a submission here
 
         request.putWithResponseBody("/api/programming/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.FORBIDDEN);
