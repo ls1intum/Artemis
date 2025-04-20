@@ -61,7 +61,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeVisible();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (1)` })).toBeVisible();
+            await expect(courseManagement.getNumberOfStudents().filter({ hasText: '1' })).toBeVisible();
 
             await navigationBar.openCourseManagement();
             await courseManagement.openStudentOverviewOfCourse(course.id!);
@@ -69,7 +69,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeHidden();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (0)` })).toBeVisible();
+            await expect(courseManagement.getNumberOfStudents().filter({ hasText: '0' })).toBeVisible();
         });
 
         test.afterEach(async ({ courseManagementAPIRequests }) => {

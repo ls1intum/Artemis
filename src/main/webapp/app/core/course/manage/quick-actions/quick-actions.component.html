@@ -4,20 +4,20 @@
             <div class="d-flex flex-wrap align-items-center mb-3">
                 <div class="d-flex flex-nowrap">
                     <div class="text-center me-4">
-                        <div class="small text-muted">Students</div>
-                        <div class="fw-bold">{{ course()?.numberOfStudents || 0 }}</div>
+                        <div class="small text-muted" jhiTranslate="artemisApp.course.students"></div>
+                        <div class="fw-bold" id="number-of-students">{{ course()?.numberOfStudents || 0 }}</div>
                     </div>
                     <div class="text-center me-4">
-                        <div class="small text-muted">Tutors</div>
-                        <div class="fw-bold">{{ course()?.numberOfTeachingAssistants || 0 }}</div>
+                        <div class="small text-muted" jhiTranslate="artemisApp.course.tutors"></div>
+                        <div class="fw-bold" id="number-of-tutors">{{ course()?.numberOfTeachingAssistants || 0 }}</div>
                     </div>
                     <div class="text-center me-4">
-                        <div class="small text-muted">Editors</div>
-                        <div class="fw-bold">{{ course()?.numberOfEditors || 0 }}</div>
+                        <div class="small text-muted" jhiTranslate="artemisApp.course.editors"></div>
+                        <div class="fw-bold" id="number-of-editors">{{ course()?.numberOfEditors || 0 }}</div>
                     </div>
                     <div class="text-center me-2">
-                        <div class="small text-muted">Instructors</div>
-                        <div class="fw-bold">{{ course()?.numberOfInstructors || 0 }}</div>
+                        <div class="small text-muted" jhiTranslate="artemisApp.course.instructors"></div>
+                        <div class="fw-bold" id="number-of-instructors">{{ course()?.numberOfInstructors || 0 }}</div>
                     </div>
                 </div>
             </div>

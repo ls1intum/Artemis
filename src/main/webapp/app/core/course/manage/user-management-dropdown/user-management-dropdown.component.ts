@@ -11,6 +11,7 @@ export interface UserAddAction {
     icon: IconDefinition;
     routerLink: string | string[];
     translationKey: string;
+    id: string;
 }
 
 @Component({
@@ -39,21 +40,25 @@ export class UserManagementDropdownComponent implements OnInit {
                 icon: faSchool,
                 routerLink: [`/course-management/${this.courseId()}/groups/students`],
                 translationKey: 'entity.action.addStudent',
+                id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
                 routerLink: [`/course-management/${this.courseId()}/groups/tutors`],
                 translationKey: 'entity.action.addTutor',
+                id: 'add-tutor',
             },
             {
                 icon: faListAlt,
                 routerLink: [`/course-management/${this.courseId()}/groups/editors`],
                 translationKey: 'entity.action.addEditor',
+                id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
                 routerLink: [`/course-management/${this.courseId()}/groups/instructors`],
                 translationKey: 'entity.action.addInstructor',
+                id: 'add-instructor',
             },
         ];
     }

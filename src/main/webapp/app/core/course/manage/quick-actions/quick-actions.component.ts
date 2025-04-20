@@ -6,12 +6,13 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { faChalkboardUser, faChartBar, faClipboard, faGraduationCap, faListAlt, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { AddExerciseModalComponent } from 'app/core/course/manage/quick-actions/add-exercise-modal/add-exercise-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
     styleUrls: ['./quick-actions.component.scss'],
-    imports: [ButtonComponent, UserManagementDropdownComponent],
+    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective],
 })
 export class QuickActionsComponent {
     course = input<Course | undefined>();
