@@ -75,6 +75,13 @@
                 "shortAnswerMapping": "Short Answer Mapping",
                 "programmingExerciseTestCase": "Programming Exercise Test Case",
                 "exerciseHint": "Exercise Hint",
+                "exerciseTypes": {
+                    "programming": "Programming",
+                    "modeling": "Modeling",
+                    "text": "Text",
+                    "fileUpload": "File Upload",
+                    "quiz": "Quiz"
+                },
                 "metis": {
                     "post": "Post",
                     "answerPost": "Reply"
@@ -193,6 +200,7 @@
     },
     "entity": {
         "actions": "Actions",
+        "quickActions": "Quick Actions",
         "action": {
             "add": "Add",
             "addblob": "Add blob",

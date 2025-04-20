@@ -7,10 +7,9 @@
     </div>
     <div class="modal-body">
         <div class="d-flex flex-column gap-2">
-            <!-- Programming Exercise -->
             <div class="row align-items-center g-0">
                 <div class="col-4 pe-0">
-                    <strong>Programming:</strong>
+                    <strong jhiTranslate="global.menu.entities.exerciseTypes.programming"></strong>
                 </div>
                 <div class="col-4">
                     <jhi-programming-create-button [course]="course" [translationKey]="'global.generic.create'" />
@@ -20,10 +19,9 @@
                 </div>
             </div>
 
-            <!-- Quiz Exercise -->
             <div class="row align-items-center g-0">
                 <div class="col-4 pe-0">
-                    <strong>Quiz:</strong>
+                    <strong jhiTranslate="global.menu.entities.exerciseTypes.quiz"></strong>
                 </div>
                 <div class="col-4">
                     <jhi-quiz-create-button [course]="course" [translationKey]="'global.generic.create'" />
@@ -33,10 +31,9 @@
                 </div>
             </div>
 
-            <!-- Modeling Exercise -->
             <div class="row align-items-center g-0">
                 <div class="col-4 pe-0">
-                    <strong>Modeling:</strong>
+                    <strong jhiTranslate="global.menu.entities.exerciseTypes.modeling"></strong>
                 </div>
                 <div class="col-4">
                     <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.MODELING" [translationKey]="'global.generic.create'" />
@@ -46,10 +43,9 @@
                 </div>
             </div>
 
-            <!-- Text Exercise -->
             <div class="row align-items-center g-0">
                 <div class="col-4 pe-0">
-                    <strong>Text:</strong>
+                    <strong jhiTranslate="global.menu.entities.exerciseTypes.text"></strong>
                 </div>
                 <div class="col-4">
                     <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.TEXT" [translationKey]="'global.generic.create'" />
@@ -59,10 +55,9 @@
                 </div>
             </div>
 
-            <!-- File Upload Exercise -->
             <div class="row align-items-center g-0">
                 <div class="col-4 pe-0">
-                    <strong>File Upload:</strong>
+                    <strong jhiTranslate="global.menu.entities.exerciseTypes.fileUpload"></strong>
                 </div>
                 <div class="col-4">
                     <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" [translationKey]="'global.generic.create'" />
