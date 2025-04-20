@@ -10,6 +10,7 @@ import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-butt
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
+import { faFileUpload, faFont, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExerciseCreateButtonComponent', () => {
     let component: ExerciseCreateButtonComponent;
@@ -44,5 +45,28 @@ describe('ExerciseCreateButtonComponent', () => {
 
         expect(modalService.dismissAll).toHaveBeenCalledOnce();
         expect(router.navigate).toHaveBeenCalledWith(['/course-management', 123, `${exerciseType}-exercises`, 'new']);
+    });
+    it.each([
+        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.createLabel' },
+        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.createLabel' },
+        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.createLabel' },
+    ])('should determine correct translation key and icon', ({ exerciseType, expectedIcon, expectedTranslationLabel }) => {
+        fixture.componentRef.setInput('exerciseType', exerciseType);
+        component.ngOnInit();
+        expect(component.icon).toEqual(expectedIcon);
+        expect(component.translationLabel).toEqual(expectedTranslationLabel);
+    });
+    it('should use translation key when provided', () => {
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
+        fixture.componentRef.setInput('translationKey', 'custom.translation.key');
+        component.ngOnInit();
+        expect(component.translationLabel).toBe('custom.translation.key');
+    });
+
+    it('should not set icon or translation label if exerciseType is not provided', () => {
+        fixture.componentRef.setInput('exerciseType', undefined);
+        component.ngOnInit();
+        expect(component.icon).toBeUndefined();
+        expect(component.translationLabel).toBeUndefined();
     });
 });

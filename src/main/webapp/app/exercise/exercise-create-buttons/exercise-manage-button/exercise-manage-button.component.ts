@@ -17,7 +17,7 @@ export abstract class ExerciseManageButtonComponent implements OnInit {
     protected router = inject(Router);
     protected modalService = inject(NgbModal);
 
-    protected icon: IconProp;
+    icon: IconProp;
     ngOnInit(): void {
         if (!this.exerciseType()) {
             return;
