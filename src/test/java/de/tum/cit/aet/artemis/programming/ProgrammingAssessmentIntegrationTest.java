@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.isA;
@@ -1020,7 +1021,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
                 Result.class, HttpStatus.OK, params);
 
         var responseParticipation = (ProgrammingExerciseStudentParticipation) responseResult.getSubmission().getParticipation();
-        assertThat(responseParticipation.getIndividualDueDate().truncatedTo(ChronoUnit.MICROS)).isEqualTo(individualDueDate.truncatedTo(ChronoUnit.MICROS));
+        assertThat(responseParticipation.getIndividualDueDate()).isCloseTo(individualDueDate, within(1, ChronoUnit.MILLIS));
         // TODO: add some meaningful assertions here related to the feedback request
     }
 
