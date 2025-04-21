@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExamSummaryComponent } from 'app/exam/overview/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
@@ -28,7 +27,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { input } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 const user = { id: 1, name: 'Test User' } as User;
 

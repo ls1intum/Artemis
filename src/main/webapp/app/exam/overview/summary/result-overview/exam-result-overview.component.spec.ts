@@ -24,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 import { input } from '@angular/core';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;

@@ -14,7 +14,6 @@ import { SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { MockProfileService } from '../../../../../helpers/mocks/service/mock-profile.service';
 import { input } from '@angular/core';
 
 describe('TextExamSummaryComponent', () => {

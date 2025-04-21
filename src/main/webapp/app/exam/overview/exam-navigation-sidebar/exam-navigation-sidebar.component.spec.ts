@@ -17,7 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
 import { input, model } from '@angular/core';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
