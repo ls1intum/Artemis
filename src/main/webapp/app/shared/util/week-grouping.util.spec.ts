@@ -2,7 +2,7 @@ import { MIN_ITEMS_TO_GROUP_BY_WEEK, WeekGroupingUtil } from './week-grouping.ut
 import { SidebarCardElement } from '../types/sidebar';
 import dayjs from 'dayjs/esm';
 
-describe('WeekGroupingUtil • getGroupedByWeek', () => {
+describe('WeekGroupingUtil', () => {
     it('returns a single group without header for the special exam sections', () => {
         const items: SidebarCardElement[] = [
             {
@@ -40,89 +40,53 @@ describe('WeekGroupingUtil • getGroupedByWeek', () => {
 
     it('returns a single group while searching (no headers)', () => {
         const items: SidebarCardElement[] = [
-            {
-                title: 'Item 1',
-                id: 'i1',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-01'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Item 2',
-                id: 'i2',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-02'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Other',
-                id: 'i3',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-03'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
+            { title: 'Item 1', id: 'i1', size: 'M', startDate: dayjs('2024-01-01') },
+            { title: 'Item 2', id: 'i2', size: 'M', startDate: dayjs('2024-01-02') },
+            { title: 'Other', id: 'i3', size: 'M', startDate: dayjs('2024-01-03') },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'item');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'item');
         expect(groups).toHaveLength(1);
         expect(groups[0].showDateHeader).toBeFalsy();
         expect(groups[0].items).toHaveLength(2);
         expect(groups[0].items.map((i) => i.title)).toEqual(['Item 1', 'Item 2']);
     });
 
-    it('searches in both title and type', () => {
+    it('searches in both title and type for lectures', () => {
         const items: SidebarCardElement[] = [
-            {
-                title: 'Normal Item',
-                id: 'n1',
-                size: 'M',
-                type: 'quiz',
-                exercise: {
-                    dueDate: dayjs('2024-01-01'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Quiz Title',
-                id: 'n2',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-02'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Other',
-                id: 'n3',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-03'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
+            { title: 'Lecture 1', id: 'l1', size: 'M', type: 'lecture', startDate: dayjs('2024-01-01') },
+            { title: 'Lecture 2', id: 'l2', size: 'M', startDate: dayjs('2024-01-02') },
+            { title: 'Lecture 3', id: 'l3', size: 'M', startDate: dayjs('2024-01-03') },
+            { title: 'Lecture 4', id: 'l4', size: 'M', startDate: dayjs('2024-01-04') },
+            { title: 'Lecture 5', id: 'l5', size: 'M', startDate: dayjs('2024-01-05') },
+            { title: 'Lecture 6', id: 'l6', size: 'M', startDate: dayjs('2024-01-07') },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'exercise', 'quiz');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture', 'lecture');
         expect(groups).toHaveLength(1);
-        expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Normal Item', 'Quiz Title']));
+        expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Lecture 1', 'Lecture 2', 'Lecture 3', 'Lecture 4', 'Lecture 5', 'Lecture 6']));
+    });
+
+    it('displays correct week range title', () => {
+        const items: SidebarCardElement[] = [
+            { title: 'L1', id: 'm1', size: 'M', startDate: dayjs('2024-01-01') },
+            { title: 'L2', id: 'w1', size: 'M', startDate: dayjs('2024-01-03') },
+            { title: 'L3', id: 'w1', size: 'M', startDate: dayjs('2024-01-04') },
+            { title: 'L4', id: 'm2', size: 'M', startDate: dayjs('2024-01-08') },
+            { title: 'L5', id: 'w2', size: 'M', startDate: dayjs('2024-01-10') },
+            { title: 'L6', id: 'w2', size: 'M', startDate: dayjs('2024-01-10') },
+        ];
+
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture');
+        expect(groups).toHaveLength(2);
+
+        // First group should be Week 2 (Jan 8-14)
+        expect(groups[0].start!.format('DD MMM YYYY')).toBe('07 Jan 2024');
+        expect(groups[0].end!.format('DD MMM YYYY')).toBe('13 Jan 2024');
+
+        // Second group should be Week 1 (Jan 1-7)
+        expect(groups[1].start!.format('DD MMM YYYY')).toBe('31 Dec 2023');
+        expect(groups[1].end!.format('DD MMM YYYY')).toBe('06 Jan 2024');
     });
 
     it('keeps a single group when item count ≤ MIN_ITEMS_TO_GROUP_BY_WEEK', () => {
@@ -198,81 +162,48 @@ describe('WeekGroupingUtil • getGroupedByWeek', () => {
     it('splits week boundaries correctly', () => {
         const items: SidebarCardElement[] = [
             {
-                title: 'Sun 1',
+                title: 'Week 1 - Sun',
                 id: 's1',
                 size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-07'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
+                startDate: dayjs('2024-01-07'),
             },
             {
-                title: 'Sun 2',
-                id: 's2',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-07'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Mon 1',
+                title: 'Week 1 - Mon',
                 id: 'm1',
                 size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-08'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
+                startDate: dayjs('2024-01-08'),
             },
             {
-                title: 'Mon 2',
-                id: 'm2',
-                size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-08'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
-            },
-            {
-                title: 'Sat 1',
+                title: 'Week 1 - Sat',
                 id: 't1',
                 size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-13'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
+                startDate: dayjs('2024-01-13'),
             },
             {
-                title: 'Sat 2',
+                title: 'Week 2 - Sun',
+                id: 's2',
+                size: 'M',
+                startDate: dayjs('2024-01-14'),
+            },
+            {
+                title: 'Week 2 - Mon',
+                id: 'm2',
+                size: 'M',
+                startDate: dayjs('2024-01-15'),
+            },
+            {
+                title: 'Week 2 - Sat',
                 id: 't2',
                 size: 'M',
-                exercise: {
-                    dueDate: dayjs('2024-01-13'),
-                    numberOfAssessmentsOfCorrectionRounds: [],
-                    studentAssignedTeamIdComputed: false,
-                    secondCorrectionEnabled: false,
-                },
+                startDate: dayjs('2024-01-20'),
             },
         ];
 
-        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'exercise');
+        const groups = WeekGroupingUtil.getGroupedByWeek(items, 'lecture');
 
-        // first group is ISO week beginning 2024-01-08
-        expect(groups[0].start!.isSame(dayjs('2024-01-08'), 'week')).toBeTruthy();
-        expect(groups[1].start!.isSame(dayjs('2024-01-01'), 'week')).toBeTruthy();
-
-        expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Mon 1', 'Mon 2', 'Sat 1', 'Sat 2']));
-        expect(groups[1].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Sun 1', 'Sun 2']));
+        expect(groups).toHaveLength(2);
+        expect(groups[0].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Week 2 - Sun', 'Week 2 - Mon', 'Week 2 - Sat']));
+        expect(groups[1].items.map((i) => i.title)).toEqual(expect.arrayContaining(['Week 1 - Sun', 'Week 1 - Mon', 'Week 1 - Sat']));
     });
 
     it('handles lectures with startDate', () => {
