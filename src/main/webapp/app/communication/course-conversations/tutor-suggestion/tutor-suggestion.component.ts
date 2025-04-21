@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
-import { catchError, filter, skip, take } from 'rxjs/operators';
+import { catchError, filter, skip, switchMap, take } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -116,26 +116,41 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * This method is called when the component is initialized or when the post changes
      */
     requestSuggestion(): void {
-        this.chatService
-            .currentMessages()
-            .pipe(
-                skip(1), // Skip the initial potentially empty emission
-                take(1),
-                catchError(() => of([])),
-            )
-            .subscribe((messages) => {
-                const lastMessage = messages[messages.length - 1];
-                const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
-                if (shouldRequest) {
-                    const post = this.post();
-                    if (post) {
-                        this.tutorSuggestionSubscription = this.chatService
-                            .requestTutorSuggestion()
-                            .pipe(catchError(() => of(undefined)))
-                            .subscribe();
-                    }
-                }
-            });
+        const post = this.post();
+        if (!post) {
+            return;
+        }
+
+        const waitForSessionAndMessages$ = this.chatService.sessionId$.pipe(
+            filter((id): id is number => !!id),
+            take(1),
+            switchMap(() =>
+                this.chatService.currentMessages().pipe(
+                    skip(1), // The initial message is not relevant as the system is sending an empty array first
+                    take(1),
+                    catchError((err) => {
+                        this.error = IrisErrorMessageKey.SESSION_LOAD_FAILED;
+                        return of([]);
+                    }),
+                ),
+            ),
+        );
+
+        this.tutorSuggestionSubscription = waitForSessionAndMessages$.subscribe((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
+            if (shouldRequest) {
+                this.chatService
+                    .requestTutorSuggestion()
+                    .pipe(
+                        catchError((err) => {
+                            this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                            return of(undefined);
+                        }),
+                    )
+                    .subscribe();
+            }
+        });
     }
 
     /**

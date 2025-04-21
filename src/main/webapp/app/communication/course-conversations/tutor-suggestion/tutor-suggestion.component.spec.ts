@@ -188,6 +188,7 @@ describe('TutorSuggestionComponent', () => {
 
     describe('requestSuggestion', () => {
         it('should request suggestion when there are no messages after error fallback', fakeAsync(() => {
+            (chatService as any).sessionId$ = of(123);
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(
                 concat(
                     throwError(() => new Error('empty')),
@@ -201,6 +202,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('should request suggestion when second message emission contains LLM message', fakeAsync(() => {
+            (chatService as any).sessionId$ = of(123);
             const mockMessages = [{ id: 2, sender: 'TUT_SUG' }] as IrisMessage[];
 
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(concat(of([]), of(mockMessages)));
@@ -211,6 +213,7 @@ describe('TutorSuggestionComponent', () => {
         }));
 
         it('should not request suggestion when last message is not from LLM', fakeAsync(() => {
+            (chatService as any).sessionId$ = of(123);
             const mockMessages = [{ id: 1, sender: 'USER' }] as IrisMessage[];
             jest.spyOn(chatService, 'currentMessages').mockReturnValue(of(mockMessages));
             const requestTutorSuggestionSpy = jest.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
