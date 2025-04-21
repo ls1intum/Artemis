@@ -1,8 +1,8 @@
-import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationThreadSidebarComponent } from 'app/communication/course-conversations-components/layout/conversation-thread-sidebar/conversation-thread-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { PostComponent } from 'app/communication/post/post.component';
 import { MessageReplyInlineInputComponent } from 'app/communication/message/message-reply-inline-input/message-reply-inline-input.component';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -12,7 +12,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentRef, runInInjectionContext, signal } from '@angular/core';
 import { TutorSuggestionComponent } from 'app/communication/course-conversations/tutor-suggestion/tutor-suggestion.component';
-import { AccountService } from 'app/core/auth/account.service';
 
 describe('ConversationThreadSidebarComponent', () => {
     let component: ConversationThreadSidebarComponent;
@@ -30,10 +29,7 @@ describe('ConversationThreadSidebarComponent', () => {
                 MockDirective(TranslateDirective),
                 MockComponent(TutorSuggestionComponent),
             ],
-            providers: [MockProvider(AccountService)],
         }).compileComponents();
-
-        TestBed.inject(AccountService);
     }));
 
     beforeEach(() => {
@@ -93,11 +89,4 @@ describe('ConversationThreadSidebarComponent', () => {
         expect(component.isExpanded).toBeFalse();
         expect(closeMock).toHaveBeenCalledTimes(2);
     });
-
-    it('should set isAtLeastTutor based on account service', fakeAsync(() => {
-        const isAtLeastTutorInCourseSpy = jest.spyOn(TestBed.inject(AccountService), 'isAtLeastTutorInCourse').mockReturnValue(true);
-        component.ngOnInit();
-        tick();
-        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalled();
-    }));
 });

@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
-import { catchError, filter, skip, take } from 'rxjs/operators';
+import { catchError, filter, skip, switchMap, take } from 'rxjs/operators';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -14,6 +14,7 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -26,9 +27,13 @@ import { Course } from 'app/core/course/shared/entities/course.model';
     imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
+    protected readonly IrisLogoSize = IrisLogoSize;
+    protected readonly IrisTextMessageContent = IrisTextMessageContent;
+
     protected readonly chatService = inject(IrisChatService);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private accountService = inject(AccountService);
 
     messagesSubscription: Subscription;
     irisSettingsSubscription: Subscription;
@@ -43,14 +48,19 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     error?: IrisErrorMessageKey;
 
     irisEnabled = false;
+    isAtLeastTutor = false;
 
     post = input<Post>();
     course = input<Course>();
 
     ngOnInit(): void {
+        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+            return;
+        }
         const course = this.course();
         const post = this.post();
-        if (!this.profileService.isProfileActive(PROFILE_IRIS)) {
+        this.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(course);
+        if (!this.isAtLeastTutor || post?.resolved) {
             return;
         }
         if (course?.id && post) {
@@ -106,26 +116,41 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * This method is called when the component is initialized or when the post changes
      */
     requestSuggestion(): void {
-        this.chatService
-            .currentMessages()
-            .pipe(
-                skip(1), // Skip the initial potentially empty emission
-                take(1),
-                catchError(() => of([])),
-            )
-            .subscribe((messages) => {
-                const lastMessage = messages[messages.length - 1];
-                const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
-                if (shouldRequest) {
-                    const post = this.post();
-                    if (post) {
-                        this.tutorSuggestionSubscription = this.chatService
-                            .requestTutorSuggestion()
-                            .pipe(catchError(() => of(undefined)))
-                            .subscribe();
-                    }
-                }
-            });
+        const post = this.post();
+        if (!post) {
+            return;
+        }
+
+        const waitForSessionAndMessages$ = this.chatService.sessionId$.pipe(
+            filter((id): id is number => !!id),
+            take(1),
+            switchMap(() =>
+                this.chatService.currentMessages().pipe(
+                    skip(1), // The initial message is not relevant as the system is sending an empty array first
+                    take(1),
+                    catchError((err) => {
+                        this.error = IrisErrorMessageKey.SESSION_LOAD_FAILED;
+                        return of([]);
+                    }),
+                ),
+            ),
+        );
+
+        this.tutorSuggestionSubscription = waitForSessionAndMessages$.subscribe((messages) => {
+            const lastMessage = messages[messages.length - 1];
+            const shouldRequest = messages.length === 0 || !(lastMessage?.sender === IrisSender.LLM);
+            if (shouldRequest) {
+                this.chatService
+                    .requestTutorSuggestion()
+                    .pipe(
+                        catchError((err) => {
+                            this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                            return of(undefined);
+                        }),
+                    )
+                    .subscribe();
+            }
+        });
     }
 
     /**
@@ -143,7 +168,4 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         });
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
-
-    protected readonly IrisLogoSize = IrisLogoSize;
-    protected readonly IrisTextMessageContent = IrisTextMessageContent;
 }

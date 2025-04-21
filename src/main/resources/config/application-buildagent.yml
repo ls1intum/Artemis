@@ -6,6 +6,7 @@
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
+# TODO: we should make sure this is not required here, because build agent could never enable those modules / features
 artemis:
     atlas:
       enabled: false
@@ -17,6 +18,9 @@ artemis:
       enabled: false
     tutorialgroup:
       enabled: false
+    user-management:
+      passkey:
+        enabled: false
 
     repo-clone-path: ./repos
     repo-download-clone-path: ./repos-download

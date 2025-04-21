@@ -236,6 +236,9 @@ public class PyrisPipelineService {
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant) {
         var post = session.getPost();
         var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course is null for post " + post.getId());
+        }
         var conversation = post.getConversation();
         Exercise exercise;
         Lecture lecture;
@@ -268,7 +271,7 @@ public class PyrisPipelineService {
             eventVariant,
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
-                Optional.of(new PyrisCourseDTO(course)),
+                new PyrisCourseDTO(course),
                 Optional.empty(),
                 new PyrisPostDTO(post),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),

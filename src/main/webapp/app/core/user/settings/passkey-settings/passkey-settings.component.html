@@ -1,0 +1,71 @@
+<h1 jhiTranslate="artemisApp.userSettings.passkeys"></h1>
+@if (currentUser()) {
+    <div class="list-group d-block">
+        <div class="list-group-item">
+            <dt>
+                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></span>
+                <br />
+                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.onlyOnePerAuthenticator"></span>
+            </dt>
+        </div>
+
+        <div class="list-group-item">
+            @if (registeredPasskeys().length) {
+                <table class="table table-striped flex">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th class="col-4" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
+                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></th>
+                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></th>
+                            <th class="col-2" jhiTranslate="entity.actions"></th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @for (passkey of registeredPasskeys(); track passkey.credentialId) {
+                            <tr>
+                                <td>
+                                    {{ passkey.label }}
+                                </td>
+                                <td>
+                                    {{ passkey.created | artemisDate }}
+                                </td>
+                                <td>
+                                    {{ passkey.lastUsed | artemisDate }}
+                                </td>
+                                <td>
+                                    <button
+                                        jhiDeleteButton
+                                        (delete)="deletePasskey(passkey)"
+                                        [disabled]="isDeletingPasskey"
+                                        [dialogError]="dialogError$"
+                                        deleteQuestion="artemisApp.userSettings.passkeySettingsPage.deletePasskeyQuestion"
+                                        [fetchEntitySummary]="getDeleteSummary(passkey)"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            } @else {
+                <div jhiTranslate="artemisApp.userSettings.passkeySettingsPage.noneRegistered"></div>
+            }
+        </div>
+
+        <div class="list-group-item">
+            <div class="btn-group" role="group" aria-label="Actions">
+                <jhi-button
+                    class="d-flex"
+                    id="add-new-token-button"
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.SMALL"
+                    [icon]="faPlus"
+                    [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
+                    (onClick)="addNewPasskey()"
+                />
+            </div>
+        </div>
+    </div>
+}

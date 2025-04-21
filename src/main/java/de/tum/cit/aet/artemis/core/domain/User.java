@@ -34,6 +34,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.webauthn.api.Bytes;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -45,6 +46,7 @@ import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -137,7 +139,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     /**
      * The expiry date of the VCS access token.
-     * This is used for checking if a access token needs to be renewed.
+     * This is used for checking if an access token needs to be renewed.
      */
     @Nullable
     @JsonIgnore
@@ -510,5 +512,18 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setLearnerProfile(LearnerProfile learnerProfile) {
         this.learnerProfile = learnerProfile;
+    }
+
+    /**
+     * In our case the external id matches our internal id, but it is expected in a different format
+     *
+     * @return the external id of the user, or null if the id is null
+     */
+    @JsonIgnore
+    public Bytes getExternalId() {
+        if (this.getId() == null) {
+            return null;
+        }
+        return BytesConverter.longToBytes(this.getId());
     }
 }
