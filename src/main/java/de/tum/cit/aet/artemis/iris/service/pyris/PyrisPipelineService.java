@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
-import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -241,14 +241,24 @@ public class PyrisPipelineService {
         }
         var conversation = post.getConversation();
         Exercise exercise;
-        Lecture lecture;
+        Optional<List<Long>> lectureUnitIdsOptional;
+        Optional<Long> lectureIdOptional;
         if (conversation instanceof Channel channel) {
             exercise = channel.getExercise();
-            lecture = channel.getLecture();
+            var lecture = channel.getLecture();
+            if (lecture != null) {
+                lectureIdOptional = Optional.of(lecture.getId());
+                lectureUnitIdsOptional = Optional.of(lecture.getLectureUnits().stream().map(DomainObject::getId).toList());
+            }
+            else {
+                lectureIdOptional = Optional.empty();
+                lectureUnitIdsOptional = Optional.empty();
+            }
         }
         else {
+            lectureUnitIdsOptional = Optional.empty();
             exercise = null;
-            lecture = null;
+            lectureIdOptional = Optional.empty();
         }
         Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
         Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
@@ -272,14 +282,15 @@ public class PyrisPipelineService {
             pyrisJobService.addTutorSuggestionJob(post.getId(), course.getId(), session.getId()),
             executionDto -> new PyrisTutorSuggestionPipelineExecutionDTO(
                 new PyrisCourseDTO(course),
-                Optional.empty(),
                 new PyrisPostDTO(post),
                 pyrisDTOService.toPyrisMessageDTOList(session.getMessages()),
                 new PyrisUserDTO(session.getUser()),
                 executionDto.settings(),
                 executionDto.initialStages(),
                 finalTextExerciseDTOOptional,
-                finalProgrammingExerciseDTOOptional
+                finalProgrammingExerciseDTOOptional,
+                lectureIdOptional,
+                lectureUnitIdsOptional
             ),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
