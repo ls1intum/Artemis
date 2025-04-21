@@ -51,6 +51,15 @@ core:
   - data export
   - migration
   - caseSensitive: false
+  - passkey
+  - security
+  - authentication
+  - authorization
+  - login
+  - registration
+  - password
+  - user
+  - token
 
 exam:
   - exam
