@@ -140,6 +140,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
         );
     }
 
+    /**
+     * Sets the public course icon path for the specific course (by prepending the REST-path prefix).
+     */
     private setCourseIcons(): void {
         this.courses.forEach((course) => {
             course.courseIconPath = addPublicFilePrefix(course.courseIcon);
