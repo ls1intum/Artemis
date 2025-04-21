@@ -1,4 +1,4 @@
-<div class="course-info-bar mt-0">
+<div class="mx-n1 course-info-bar mt-0">
     <div class="row align-items-center justify-content-end">
         <div class="col-12 col-lg-7 general-info">
             <div class="d-flex align-items-center">
@@ -31,10 +31,13 @@
                         <a [routerLink]="['/course-management', course.id, 'grading-system']" class="tab-item btn btn-info btn-md ms-1 me-1">
                             <fa-icon [icon]="faClipboard" /> <span jhiTranslate="artemisApp.course.gradingSystem"></span>
                         </a>
-                        <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
-                            <fa-icon [icon]="faHeartBroken" />
-                            <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
-                        </a>
+
+                        <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                            <a [routerLink]="['/course-management', course.id, 'plagiarism-cases']" class="tab-item btn btn-info btn-md">
+                                <fa-icon [icon]="faHeartBroken" />
+                                <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases"></span>
+                            </a>
+                        </jhi-feature-overlay>
                     }
                 </div>
             }

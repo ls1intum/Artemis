@@ -43,6 +43,9 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercis
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -70,6 +73,7 @@ import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.com
         GradingInstructionsDetailsComponent,
         FormFooterComponent,
         ArtemisTranslatePipe,
+        FeatureOverlayComponent,
     ],
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -83,6 +87,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     private courseService = inject(CourseManagementService);
     private eventManager = inject(EventManager);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private profileService = inject(ProfileService);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly documentationType: DocumentationType = 'Text';
@@ -103,6 +108,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     isExamMode: boolean;
     isImport = false;
     AssessmentType = AssessmentType;
+    isPlagiarismEnabled = false;
 
     textExercise: TextExercise;
     backupExercise: TextExercise;
@@ -203,6 +209,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
             )
             .subscribe();
 
+        this.isPlagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
+
         this.isSaving = false;
         this.notificationText = undefined;
     }
@@ -212,6 +220,7 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
         this.pointsSubscription?.unsubscribe();
         this.bonusPointsSubscription?.unsubscribe();
         this.plagiarismSubscription?.unsubscribe();
+        this.teamSubscription?.unsubscribe();
     }
 
     calculateFormSectionStatus() {

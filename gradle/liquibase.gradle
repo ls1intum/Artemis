@@ -50,13 +50,14 @@ def liquibaseCommand(command) {
             classpath sourceSets.main.runtimeClasspath
             classpath configurations.liquibaseRuntime
         }
-        mainClass = "liquibase.integration.commandline.Main"
+        mainClass = "liquibase.integration.commandline.LiquibaseCommandLine"
 
         args = [
             "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml",
             "--referenceUsername=root",
             "--referencePassword=",
-            "--referenceUrl=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
+            // we need an empty database to compare with for the creation of the new initial schema
+            "--referenceUrl=jdbc:mysql://localhost:3306/ArtemisEmpty?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",
             "--username=root",
             "--password=",
             "--url=jdbc:mysql://localhost:3306/Artemis?&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC",

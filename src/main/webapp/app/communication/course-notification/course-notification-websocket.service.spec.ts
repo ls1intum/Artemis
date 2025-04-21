@@ -8,14 +8,18 @@ import { CourseNotification } from 'app/communication/shared/entities/course-not
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 
 describe('CourseNotificationWebsocketService', () => {
     let service: CourseNotificationWebsocketService;
     let websocketServiceMock: jest.Mocked<WebsocketService>;
     let courseNotificationServiceMock: jest.Mocked<CourseNotificationService>;
     let courseManagementServiceMock: jest.Mocked<CourseManagementService>;
+    let accountServiceMock: jest.Mocked<AccountService>;
     let coursesSubject: BehaviorSubject<Course[] | undefined>;
     let websocketReceiveSubject: Subject<CourseNotification>;
+    let userSubject: BehaviorSubject<User | null>;
 
     beforeEach(() => {
         websocketReceiveSubject = new Subject<CourseNotification>();
@@ -33,12 +37,18 @@ describe('CourseNotificationWebsocketService', () => {
             getCoursesForNotifications: jest.fn().mockReturnValue(coursesSubject),
         } as unknown as jest.Mocked<CourseManagementService>;
 
+        userSubject = new BehaviorSubject<User | null>(null);
+        accountServiceMock = {
+            getAuthenticationState: jest.fn().mockReturnValue(userSubject),
+        } as unknown as jest.Mocked<AccountService>;
+
         TestBed.configureTestingModule({
             providers: [
                 CourseNotificationWebsocketService,
                 { provide: WebsocketService, useValue: websocketServiceMock },
                 { provide: CourseNotificationService, useValue: courseNotificationServiceMock },
                 { provide: CourseManagementService, useValue: courseManagementServiceMock },
+                { provide: AccountService, useValue: accountServiceMock },
             ],
         });
 
@@ -53,95 +63,194 @@ describe('CourseNotificationWebsocketService', () => {
         expect(service).toBeTruthy();
     });
 
-    it('should subscribe to courses on initialization', () => {
-        const courses = [
-            { id: 1, title: 'Course 1' },
-            { id: 2, title: 'Course 2' },
-        ] as Course[];
+    describe('Course subscriptions', () => {
+        it('should subscribe to courses on initialization when user is authenticated', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
 
-        coursesSubject.next(courses);
+            const courses = [
+                { id: 1, title: 'Course 1' },
+                { id: 2, title: 'Course 2' },
+            ] as Course[];
 
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(2);
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
-        expect(websocketServiceMock.receive).toHaveBeenCalledTimes(2);
-        expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/1');
-        expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            coursesSubject.next(courses);
+
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledTimes(2);
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            expect(websocketServiceMock.receive).toHaveBeenCalledTimes(2);
+            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/1');
+            expect(websocketServiceMock.receive).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+        });
+
+        it('should not resubscribe to same course twice', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+            jest.clearAllMocks();
+
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+
+            coursesSubject.next(courses);
+            coursesSubject.next(courses);
+
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
+            expect(websocketServiceMock.receive).toHaveBeenCalledOnce();
+        });
+
+        it('should handle incoming notifications and pass them to the notification service', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
+
+            const incomingNotification: CourseNotification = {
+                notificationId: 123,
+                courseId: 1,
+                notificationType: 'newPostNotification',
+                category: 'GENERAL' as unknown as CourseNotificationCategory,
+                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
+                // @ts-ignore
+                creationDate: new Date('2024-01-15T10:00:00'),
+                parameters: { key: 'value' },
+            };
+
+            websocketReceiveSubject.next(incomingNotification);
+
+            expect(courseNotificationServiceMock.addNotification).toHaveBeenCalledOnce();
+
+            expect(courseNotificationServiceMock.addNotification.mock.calls[0][0]).toBe(1);
+
+            const processedNotification = courseNotificationServiceMock.addNotification.mock.calls[0][1];
+            expect(processedNotification.notificationId).toBe(123);
+            expect(processedNotification.courseId).toBe(1);
+            expect(processedNotification.notificationType).toBe('newPostNotification');
+            expect(processedNotification.creationDate).toBeDefined();
+            expect(processedNotification.parameters).toEqual({ key: 'value' });
+        });
+
+        it('should emit received notifications via websocketNotification$ observable', async () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const notificationPromise = firstValueFrom(service.websocketNotification$);
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
+            const incomingNotification: CourseNotification = {
+                notificationId: 123,
+                courseId: 1,
+                notificationType: 'newPostNotification',
+                category: 'GENERAL' as unknown as CourseNotificationCategory,
+                status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
+                // @ts-ignore
+                creationDate: new Date('2024-01-15T10:00:00'),
+                parameters: { key: 'value' },
+            };
+
+            websocketReceiveSubject.next(incomingNotification);
+
+            const receivedNotification = await notificationPromise;
+            expect(receivedNotification.notificationId).toBe(123);
+            expect(receivedNotification.courseId).toBe(1);
+        });
+
+        it('should do nothing when courses list is undefined', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            coursesSubject.next(undefined);
+            expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
+        });
+
+        it('should handle courses without IDs properly', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const courses = [{ title: 'Course without ID' }, { id: 2, title: 'Course 2' }] as Course[];
+
+            coursesSubject.next(courses);
+
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+        });
     });
 
-    it('should not resubscribe to same course twice', () => {
-        jest.clearAllMocks();
+    describe('User subscription handling', () => {
+        it('should not subscribe to courses when user is not authenticated', () => {
+            userSubject.next(null);
 
-        const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            expect(courseManagementServiceMock.getCoursesForNotifications).not.toHaveBeenCalled();
+            expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
+        });
 
-        coursesSubject.next(courses);
-        coursesSubject.next(courses);
+        it('should cleanup subscriptions and resubscribe when user changes', () => {
+            const user1 = { id: 'user1' } as unknown as User;
+            userSubject.next(user1);
 
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
-        expect(websocketServiceMock.receive).toHaveBeenCalledOnce();
+            const courses1 = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses1);
+
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/1');
+
+            jest.clearAllMocks();
+
+            const user2 = { id: 'user2' } as unknown as User;
+            userSubject.next(user2);
+
+            expect(courseManagementServiceMock.getCoursesForNotifications).toHaveBeenCalledOnce();
+
+            const courses2 = [{ id: 2, title: 'Course 2' }] as Course[];
+            coursesSubject.next(courses2);
+
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+        });
+
+        it('should not resubscribe when the same user is emitted twice', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
+
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
+
+            expect(courseManagementServiceMock.getCoursesForNotifications).toHaveBeenCalledOnce();
+            expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
+
+            jest.clearAllMocks();
+
+            userSubject.next(user);
+
+            expect(courseManagementServiceMock.getCoursesForNotifications).not.toHaveBeenCalled();
+            expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
+        });
     });
 
-    it('should handle incoming notifications and pass them to the notification service', () => {
-        const courses = [{ id: 1, title: 'Course 1' }] as Course[];
-        coursesSubject.next(courses);
+    describe('Cleanup', () => {
+        it('should properly clean up subscriptions on ngOnDestroy', () => {
+            const cleanupSpy = jest.spyOn(service as any, 'cleanupSubscriptions');
 
-        const incomingNotification: CourseNotification = {
-            notificationId: 123,
-            courseId: 1,
-            notificationType: 'newPostNotification',
-            category: 'GENERAL' as unknown as CourseNotificationCategory,
-            status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-            // @ts-ignore
-            creationDate: new Date('2024-01-15T10:00:00'),
-            parameters: { key: 'value' },
-        };
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
 
-        websocketReceiveSubject.next(incomingNotification);
+            const courses = [{ id: 1, title: 'Course 1' }] as Course[];
+            coursesSubject.next(courses);
 
-        expect(courseNotificationServiceMock.addNotification).toHaveBeenCalledOnce();
+            service.ngOnDestroy();
 
-        expect(courseNotificationServiceMock.addNotification.mock.calls[0][0]).toBe(1);
+            expect(cleanupSpy).toHaveBeenCalled();
+        });
 
-        const processedNotification = courseNotificationServiceMock.addNotification.mock.calls[0][1];
-        expect(processedNotification.notificationId).toBe(123);
-        expect(processedNotification.courseId).toBe(1);
-        expect(processedNotification.notificationType).toBe('newPostNotification');
-        // We can't directly compare the dayjs object, but we can check its functionality
-        expect(processedNotification.creationDate).toBeDefined();
-        expect(processedNotification.parameters).toEqual({ key: 'value' });
-    });
-    it('should emit received notifications via websocketNotification$ observable', async () => {
-        const notificationPromise = firstValueFrom(service.websocketNotification$);
-        const courses = [{ id: 1, title: 'Course 1' }] as Course[];
-        coursesSubject.next(courses);
-        const incomingNotification: CourseNotification = {
-            notificationId: 123,
-            courseId: 1,
-            notificationType: 'newPostNotification',
-            category: 'GENERAL' as unknown as CourseNotificationCategory,
-            status: 'UNSEEN' as unknown as CourseNotificationViewingStatus,
-            //@ts-ignore
-            creationDate: new Date('2024-01-15T10:00:00'),
-            parameters: { key: 'value' },
-        };
+        it('should unsubscribe from existing course subscription on cleanup', () => {
+            const user = { id: 'user1' } as unknown as User;
+            userSubject.next(user);
 
-        websocketReceiveSubject.next(incomingNotification);
+            const unsubscribeSpy = jest.fn();
 
-        const receivedNotification = await notificationPromise;
-        expect(receivedNotification.notificationId).toBe(123);
-        expect(receivedNotification.courseId).toBe(1);
-    });
-    it('should do nothing when courses list is undefined', () => {
-        coursesSubject.next(undefined);
-        expect(websocketServiceMock.subscribe).not.toHaveBeenCalled();
-    });
+            (service as any).coursesSubscription = { unsubscribe: unsubscribeSpy };
 
-    it('should handle courses without IDs properly', () => {
-        const courses = [{ title: 'Course without ID' }, { id: 2, title: 'Course 2' }] as Course[];
+            (service as any).cleanupSubscriptions();
 
-        coursesSubject.next(courses);
-
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledOnce();
-        expect(websocketServiceMock.subscribe).toHaveBeenCalledWith('/user/topic/communication/notification/2');
+            expect(unsubscribeSpy).toHaveBeenCalled();
+            expect((service as any).coursesSubscription).toBeUndefined();
+        });
     });
 });

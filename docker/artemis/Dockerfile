@@ -38,6 +38,9 @@ COPY gradle gradle/
 # copy npm related files and install node modules
 # (from https://stackoverflow.com/questions/63961934/how-to-use-docker-build-cache-when-version-bumping-a-react-app)
 COPY package.json package-lock.json ./
+# also copy this script which is required by postinstall lifecycle hook
+COPY src/main/webapp/app/lecture/manage/pdf-preview/pdfjs_copy_worker_script.mjs ./src/main/webapp/app/lecture/manage/pdf-preview/
+
 RUN \
   # Mount global cache for Gradle (project cache in /opt/artemis/.gradle doesn't seem to be populated)
   --mount=type=cache,target=/root/.gradle/caches \

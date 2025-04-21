@@ -2,7 +2,7 @@
     "artemisApp": {
         "fileUploadExercise": {
             "home": {
-                "title": "File Upload Exercises",
+                "title": "File Upload Exercise",
                 "createLabel": "Create File Upload Exercise",
                 "editLabel": "Edit File Upload Exercise",
                 "importLabel": "Import File Upload Exercise"

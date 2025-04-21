@@ -49,7 +49,7 @@
         </div>
     }
 
-    @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
+    @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData.key) {
         @if (isEmojiCount()) {
             <div>
                 <button

@@ -11,7 +11,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -50,7 +50,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-    private featureToggleService = inject(FeatureToggleService);
 
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
@@ -67,7 +66,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
-    tutorialEnabled = false;
 
     isAdmin = false;
 
@@ -88,7 +86,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     async ngOnInit() {
-        this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
         this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
@@ -263,15 +260,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (this.tutorialEnabled) {
-            // insert tutorial detail after lti detail
-            details.splice(4, 0, {
-                type: DetailType.Text,
-                title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-                titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
-                data: { text: this.course.timeZone },
-            });
-        }
+        details.splice(4, 0, {
+            type: DetailType.Text,
+            title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
+            titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
+            data: { text: this.course.timeZone },
+        });
 
         if (this.ltiEnabled) {
             // insert lti detail after testCourse detail

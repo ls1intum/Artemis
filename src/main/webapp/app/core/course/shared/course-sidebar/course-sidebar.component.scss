@@ -53,22 +53,31 @@ jhi-secured-image {
 }
 
 .double-arrow {
-    transform: translateX(calc(100% - 30px)); // Position relative to container width
-    transition: transform ease 0.3s;
-    cursor: pointer;
-    width: 30px;
-    align-items: center;
-    justify-content: center;
+    width: 100%;
     display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    padding-right: 10px;
 }
 
+.menu-closed.double-arrow {
+    justify-content: center;
+    padding-right: 0;
+}
+.double-arrow-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 40px;
+    transition: transform 0.3s ease;
+    transform: rotate(180deg);
+}
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
-}
-
-.double-arrow-icon {
-    transform: rotate(180deg);
-    transition: transform ease 0.3s 0.3s;
+    padding-left: 0;
+    margin-left: -3px;
+    min-width: 40px;
 }
 
 .me-negative {
@@ -116,6 +125,15 @@ jhi-secured-image {
     width: 100%;
     background-color: var(--link-item-bg);
     color: var(--link-item-color);
+}
+// We have to override this style from globals.scss here as we only want to target the span with the text inside
+a:not(.btn):not(.tab-link):hover {
+    text-decoration: none !important;
+}
+.nav-link-sidebar:hover span {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
 }
 
 .three-dots {

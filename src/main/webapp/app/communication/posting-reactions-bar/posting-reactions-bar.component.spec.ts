@@ -33,7 +33,6 @@ import {
 } from 'test/helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { Conversation, ConversationDTO, ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { User } from 'app/core/user/user.model';
@@ -45,7 +44,6 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { of } from 'rxjs';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('PostingReactionsBarComponent', () => {
@@ -88,7 +86,6 @@ describe('PostingReactionsBarComponent', () => {
                 { provide: MetisService, useClass: MetisService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },

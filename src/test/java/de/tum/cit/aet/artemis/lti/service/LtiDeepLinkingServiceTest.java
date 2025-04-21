@@ -13,6 +13,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -269,13 +270,17 @@ class LtiDeepLinkingServiceTest {
         long exerciseId1 = 2L;
         long exerciseId2 = 3L;
 
+        Set<Long> exerciseIds = new HashSet<>();
+
         Exercise exercise1 = createMockExercise(exerciseId1, courseId);
         Exercise exercise2 = createMockExercise(exerciseId2, courseId);
 
-        when(exerciseRepository.findById(exerciseId1)).thenReturn(Optional.of(exercise1));
-        when(exerciseRepository.findById(exerciseId2)).thenReturn(Optional.of(exercise2));
+        List<Exercise> exercises = new ArrayList<>();
+        exercises.add(exercise1);
+        exercises.add(exercise2);
 
-        Set<Long> exerciseIds = new HashSet<>();
+        when(exerciseRepository.findAllById(exerciseIds)).thenReturn(exercises);
+
         exerciseIds.add(exerciseId1);
         exerciseIds.add(exerciseId2);
 
@@ -284,6 +289,39 @@ class LtiDeepLinkingServiceTest {
         assertThat(deepLinkResponse).isNotNull();
         assertThat(deepLinkResponse).contains("test_jwt");
 
+    }
+
+    @Test
+    void testPerformDeepLinkingWithGroupedLectures() throws MalformedURLException, URISyntaxException {
+        createMockOidcIdToken();
+        when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
+
+        long courseId = 1L;
+        long lectureId1 = 2L;
+        long lectureId2 = 3L;
+
+        Set<Long> lectureIds = new HashSet<>();
+        lectureIds.add(lectureId1);
+        lectureIds.add(lectureId2);
+
+        when(lectureRepository.findAllById(lectureIds)).thenReturn(new ArrayList<>());
+
+        Lecture lecture1 = new Lecture();
+        lecture1.setId(lectureId1);
+
+        Lecture lecture2 = new Lecture();
+        lecture2.setId(lectureId2);
+
+        List<Lecture> lectures = new ArrayList<>();
+        lectures.add(lecture1);
+        lectures.add(lecture2);
+
+        when(lectureRepository.findAllById(lectureIds)).thenReturn(lectures);
+
+        String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, lectureIds, DeepLinkingType.GROUPED_LECTURE);
+
+        assertThat(deepLinkResponse).isNotNull();
+        assertThat(deepLinkResponse).contains("test_jwt");
     }
 
     @Test

@@ -12,6 +12,7 @@
 # Proxy Environment
 # Forward /login and /saml2 to the Artemis Server.
 
+# NOTE: the following values are used in SAML2Properties and are automatically mapped to Java during server startup
 saml2:
     # Define the patterns used when generating users. SAML2 Attributes can be substituted by surrounding them with
     # curly brackets. E.g. username: '{user_attribute}'. Missing attributes get replaced with an empty string.
@@ -49,15 +50,16 @@ spring:
                     #     assertingparty:
                     #         metadata-uri: URL_TO_METADATA_HERE # If your IdP does not publish its metadata you can generate it here: https://www.samltool.com/idp_metadata.php
 
+# NOTE: the following values are exposed over the REST endpoint `management/info` to the client and automatically mapped in profile.service.ts so they are available right after the client app start
 info.saml2:
     # The name of the SAML2 identity provider shown on the login page (optional)
-    identity-provider-name:
+    identityProviderName:
     # The label for the SAML2 login button (e.g., 'Shibboleth Login')
-    button-label: 'SAML2 Login'
+    buttonLabel: 'SAML2 Login'
     # Disables the password-based login user interface, but leaves the API enabled.
     # Use the URL query parameter '?showLoginForm' to display the login form nevertheless.
-    password-login-disabled: false
+    passwordLoginDisabled: false
     # Sends an e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
     # external services (e.g. Jenkins). This allows the users to use password-based Git workflows.
     # Enables the password reset function in Artemis.
-    enable-password: true
+    enablePassword: true

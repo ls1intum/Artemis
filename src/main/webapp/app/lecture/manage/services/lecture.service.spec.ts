@@ -95,22 +95,6 @@ describe('Lecture Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should find a lecture with details and with slides in the database', async () => {
-            const returnedFromService = { ...elemDefault };
-            const expected = { ...returnedFromService, posts: [] };
-            const lectureId = elemDefault.id!;
-            service
-                .findWithDetailsWithSlides(lectureId)
-                .pipe(take(1))
-                .subscribe((resp) => (expectedResult = resp));
-            const req = httpMock.expectOne({
-                url: `${resourceUrl}/${lectureId}/details-with-slides`,
-                method: 'GET',
-            });
-            req.flush(returnedFromService);
-            expect(expectedResult.body).toEqual(expected);
-        });
-
         it('should find a lecture in the database', async () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };

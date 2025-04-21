@@ -47,6 +47,10 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from '../../../layouts/profiles/profile-info.model';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -54,6 +58,7 @@ describe('CourseScoresComponent', () => {
     let courseService: CourseManagementService;
     let gradingSystemService: GradingSystemService;
     let plagiarismCasesService: PlagiarismCasesService;
+    let profileService: ProfileService;
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
@@ -321,6 +326,7 @@ describe('CourseScoresComponent', () => {
                     },
                 }),
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -332,10 +338,16 @@ describe('CourseScoresComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 gradingSystemService = TestBed.inject(GradingSystemService);
                 plagiarismCasesService = TestBed.inject(PlagiarismCasesService);
+
                 const participationScoreService = TestBed.inject(ParticipantScoresService);
                 findCourseScoresSpy = jest
                     .spyOn(participationScoreService, 'findCourseScores')
                     .mockReturnValue(of(new HttpResponse({ body: [courseScoreStudent1, courseScoreStudent2] })));
+
+                profileService = fixture.debugElement.injector.get(ProfileService);
+                const profileInfo = { activeModuleFeatures: [MODULE_FEATURE_PLAGIARISM] } as ProfileInfo;
+                const getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoMock.mockReturnValue(profileInfo);
             });
     });
 

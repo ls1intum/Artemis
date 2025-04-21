@@ -11,11 +11,9 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import dayjs from 'dayjs/esm';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
@@ -49,7 +47,6 @@ describe('Plagiarism Cases Student View Component', () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: TranslateService, useClass: MockTranslateService },

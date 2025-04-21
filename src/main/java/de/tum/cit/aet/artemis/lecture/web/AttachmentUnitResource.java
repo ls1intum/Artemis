@@ -137,7 +137,7 @@ public class AttachmentUnitResource {
                 pageOrder);
 
         if (notificationText != null) {
-            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
+            groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment());
         }
 
         return ResponseEntity.ok(savedAttachmentUnit);

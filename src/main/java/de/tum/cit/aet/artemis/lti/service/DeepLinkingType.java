@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.lti.service;
 
 public enum DeepLinkingType {
 
-    EXERCISE, GROUPED_EXERCISE, LECTURE, COMPETENCY, LEARNING_PATH, IRIS;
+    EXERCISE, GROUPED_EXERCISE, LECTURE, GROUPED_LECTURE, COMPETENCY, LEARNING_PATH, IRIS;
 
     /**
      * Get the enum value from a string.

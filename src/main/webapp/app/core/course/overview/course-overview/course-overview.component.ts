@@ -8,9 +8,7 @@ import { NgClass, NgTemplateOutlet } from '@angular/common';
 import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-
 import { faChartBar, faChevronLeft, faChevronRight, faCircleNotch, faDoorOpen, faEye, faListAlt, faSync, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TeamAssignmentPayload } from 'app/exercise/shared/entities/team/team.model';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
@@ -19,7 +17,6 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { TeamService } from 'app/exercise/team/team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { CourseTitleBarComponent } from 'app/core/course/shared/course-title-bar/course-title-bar.component';
 import { BaseCourseContainerComponent } from 'app/core/course/shared/course-base-container/course-base-container.component';
@@ -50,7 +47,6 @@ import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/cours
         FaIconComponent,
         TranslateDirective,
         CourseNotificationOverviewComponent,
-        FeatureToggleHideDirective,
         CourseTitleBarComponent,
         CourseSidebarComponent,
     ],
@@ -70,6 +66,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     private examStartedSubscription: Subscription;
+    manageViewLink = signal<string[]>(['']);
 
     courseActionItems = signal<CourseActionItem[]>([]);
     canUnenroll = signal<boolean>(false);
@@ -111,6 +108,10 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         this.sidebarItems.set(this.getSidebarItems());
     }
 
+    protected handleNavigationEndActions() {
+        this.determineManageViewLink();
+    }
+
     handleCourseIdChange(courseId: number): void {
         this.courseId.set(courseId);
     }
@@ -118,6 +119,37 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
     async initAfterCourseLoad() {
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
+    }
+
+    determineManageViewLink() {
+        if (!this.course()) {
+            return;
+        }
+
+        const courseIdString = this.courseId().toString();
+        const routerUrl = this.router.url;
+        const baseManagementPath = ['/course-management', courseIdString];
+        const routeMappings = [
+            { urlPart: 'exams', targetPath: [...baseManagementPath, 'exams'] },
+            { urlPart: 'exercises', targetPath: [...baseManagementPath, 'exercises'] },
+            { urlPart: 'lectures', targetPath: [...baseManagementPath, 'lectures'], permissionCheck: () => this.course()?.isAtLeastEditor },
+            { urlPart: 'communication', targetPath: [...baseManagementPath, 'communication'] },
+            { urlPart: 'learning-path', targetPath: [...baseManagementPath, 'learning-paths-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
+            { urlPart: 'competencies', targetPath: [...baseManagementPath, 'competency-management'], permissionCheck: () => this.course()?.isAtLeastInstructor },
+            { urlPart: 'faq', targetPath: [...baseManagementPath, 'faqs'] },
+            { urlPart: 'statistics', targetPath: [...baseManagementPath, 'course-statistics'] },
+            {
+                urlPart: 'tutorial-groups',
+                targetPath: [...baseManagementPath, 'tutorial-groups-checklist'],
+                permissionCheck: () => this.course()?.isAtLeastInstructor || this.course()?.tutorialGroupsConfiguration,
+            },
+        ];
+
+        const matchedRoute = routeMappings.find((route) => {
+            return routerUrl.includes(route.urlPart) && (!route.permissionCheck || route.permissionCheck());
+        });
+
+        this.manageViewLink.set(matchedRoute ? matchedRoute.targetPath : baseManagementPath);
     }
 
     /**
@@ -225,7 +257,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             sidebarItems.push(tutorialGroupsItem);
         }
 
-        if (this.atlasEnabled() && this.hasCompetencies()) {
+        if (this.atlasEnabled && this.hasCompetencies()) {
             const competenciesItem = this.sidebarItemService.getCompetenciesItem();
             sidebarItems.push(competenciesItem);
 
@@ -363,7 +395,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
 
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.websocketService.subscribe(this.quizExercisesChannel);
-            this.websocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
+            this.websocketService.receive(this.quizExercisesChannel)?.subscribe((quizExercise: QuizExercise) => {
                 quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 const currentCourse = this.course();
