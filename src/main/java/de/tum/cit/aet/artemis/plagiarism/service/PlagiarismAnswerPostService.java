@@ -16,7 +16,6 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 
 @Conditional(PlagiarismEnabled.class)
 @Service
@@ -37,16 +37,12 @@ public class PlagiarismAnswerPostService extends PostingService {
 
     private final PostRepository postRepository;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     protected PlagiarismAnswerPostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, PostRepository postRepository, ExerciseRepository exerciseRepository, WebsocketMessagingService websocketMessagingService,
-            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            ConversationParticipantRepository conversationParticipantRepository, SavedPostRepository savedPostRepository) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.answerPostRepository = answerPostRepository;
         this.postRepository = postRepository;
-        this.singleUserNotificationService = singleUserNotificationService;
     }
 
     /**

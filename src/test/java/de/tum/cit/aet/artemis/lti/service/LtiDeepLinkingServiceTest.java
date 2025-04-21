@@ -304,7 +304,7 @@ class LtiDeepLinkingServiceTest {
         lectureIds.add(lectureId1);
         lectureIds.add(lectureId2);
 
-        when(lectureRepository.findAllById(lectureIds)).thenReturn(new ArrayList<>());
+        when(lectureRepositoryApi.findAllById(lectureIds)).thenReturn(new ArrayList<>());
 
         Lecture lecture1 = new Lecture();
         lecture1.setId(lectureId1);
@@ -316,7 +316,7 @@ class LtiDeepLinkingServiceTest {
         lectures.add(lecture1);
         lectures.add(lecture2);
 
-        when(lectureRepository.findAllById(lectureIds)).thenReturn(lectures);
+        when(lectureRepositoryApi.findAllById(lectureIds)).thenReturn(lectures);
 
         String deepLinkResponse = ltiDeepLinkingService.performDeepLinking(oidcIdToken, "test_registration_id", courseId, lectureIds, DeepLinkingType.GROUPED_LECTURE);
 

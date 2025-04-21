@@ -203,8 +203,6 @@ public class CourseService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    private final Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi;
-
     private final PostRepository postRepository;
 
     private final AnswerPostRepository answerPostRepository;
@@ -221,16 +219,15 @@ public class CourseService {
 
     public CourseService(Optional<ExamMetricsApi> examMetricsApi, Optional<LectureApi> lectureApi, Optional<LectureRepositoryApi> lectureRepositoryApi,
             CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, GroupNotificationRepository groupNotificationRepository, AuditEventRepository auditEventRepository, UserService userService,
-            Optional<ExamDeletionApi> examDeletionApi, Optional<CompetencyProgressApi> competencyProgressApi, GroupNotificationService groupNotificationService,
-            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService,
-            GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository,
-            TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository,
-            ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository,
-            PresentationPointsCalculationService presentationPointsCalculationService, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
-            ConversationRepository conversationRepository, Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi,
-            Optional<TutorialGroupNotificationApi> tutorialGroupNotificationApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi,
+            Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
+            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
+            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
+            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
+            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
+            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
+            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi,
             Optional<PrerequisitesApi> prerequisitesApi, Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository,
             AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi,
             LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, CourseNotificationRepository courseNotificationRepository) {
@@ -242,7 +239,6 @@ public class CourseService {
         this.exerciseDeletionService = exerciseDeletionService;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
-        this.groupNotificationRepository = groupNotificationRepository;
         this.exerciseGroupApi = exerciseGroupApi;
         this.auditEventRepository = auditEventRepository;
         this.userService = userService;
@@ -269,7 +265,6 @@ public class CourseService {
         this.conversationRepository = conversationRepository;
         this.learningPathApi = learningPathApi;
         this.irisSettingsApi = irisSettingsApi;
-        this.tutorialGroupNotificationApi = tutorialGroupNotificationApi;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
         this.prerequisitesApi = prerequisitesApi;
         this.competencyRelationApi = competencyRelationApi;

@@ -223,7 +223,7 @@ public class LtiDeepLinkingService {
      */
     private LtiContentItem setGroupedLectureContentItem(String courseId, Set<Long> lectureIds) {
 
-        List<Lecture> lectures = lectureRepository.findAllById(lectureIds);
+        List<Lecture> lectures = lectureRepositoryApi.map(api -> api.findAllById(lectureIds)).orElse(List.of());
 
         if (lectures.isEmpty()) {
             throw new BadRequestAlertException("No lectures found.", "LTI", "lecturesNotFound");

@@ -10,13 +10,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Slide;
  * Service for managing slide unhiding operations in a multi-node environment.
  * This service handles the messaging aspects.
  */
-// TODO: currently disabled because of a misconfiguration, scheduling must be independent of secondary nodes
-// TODO: remove exception from src/test/java/de/tum/cit/aet/artemis/lecture/architecture/LectureApiArchitectureTest.java
-// @Profile(PROFILE_SCHEDULING)
-// @Service
-public class SlideUnhideService implements ApplicationListener<ApplicationReadyEvent> {
-
-    private final SlideRepository slideRepository;
+@Profile(PROFILE_CORE)
+@Service
+public class SlideUnhideService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
