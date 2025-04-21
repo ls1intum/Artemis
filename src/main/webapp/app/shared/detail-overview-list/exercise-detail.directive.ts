@@ -1,5 +1,4 @@
 import { ComponentRef, Directive, Input, OnDestroy, OnInit, Type, ViewContainerRef, inject } from '@angular/core';
-import { ProgrammingBuildStatisticsComponent } from 'app/shared/detail-overview-list/components/programming-build-statistics/programming-build-statistics.component';
 import { Detail, ShownDetail } from 'app/shared/detail-overview-list/detail.model';
 import { DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { TextDetailComponent } from 'app/shared/detail-overview-list/components/text-detail/text-detail.component';
@@ -37,7 +36,6 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
                 | ProgrammingAuxiliaryRepositoryButtonsDetailComponent
                 | ProgrammingTestStatusDetailComponent
                 | ProgrammingDiffReportDetailComponent
-                | ProgrammingBuildStatisticsComponent
             >;
         } = {
             [DetailType.Text]: TextDetailComponent,
@@ -48,7 +46,6 @@ export class ExerciseDetailDirective implements OnInit, OnDestroy {
             [DetailType.ProgrammingAuxiliaryRepositoryButtons]: ProgrammingAuxiliaryRepositoryButtonsDetailComponent,
             [DetailType.ProgrammingTestStatus]: ProgrammingTestStatusDetailComponent,
             [DetailType.ProgrammingDiffReport]: ProgrammingDiffReportDetailComponent,
-            [DetailType.ProgrammingBuildStatistics]: ProgrammingBuildStatisticsComponent,
         };
 
         const detailComponent = detailTypeToComponent[this.detail.type];

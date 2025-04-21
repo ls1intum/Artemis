@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import javaBuildErrorSubmission from '../../fixtures/exercise/programming/java/build_error/submission.json';

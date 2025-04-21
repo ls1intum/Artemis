@@ -8,9 +8,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
+class TheiaConfigurationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private TheiaConfiguration theiaConfiguration;

@@ -181,7 +181,6 @@ public class IrisSettingsService {
      * This method initializes the Iris faq settings for a course.
      *
      * @param settings The course settings
-     * @return The combined Iris settings for the course
      */
     private void initializeIrisFaqIngestionSettings(IrisGlobalSettings settings) {
         var irisFaqIngestionSubSettings = settings.getIrisFaqIngestionSettings();

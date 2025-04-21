@@ -38,6 +38,7 @@ export default tseslint.config(
             'jest.config.js',
             'prebuild.mjs',
             'rules/**/*.js',
+            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
         ],
     },
     eslint.configs.recommended,
@@ -143,7 +144,7 @@ export default tseslint.config(
         },
     },
     {
-        files: ['src/test/javascript/**'],
+        files: ['src/test/javascript/**','src/main/webapp/app/**/*.spec.ts'],
         plugins: {
             jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,

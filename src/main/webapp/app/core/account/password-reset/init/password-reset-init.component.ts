@@ -33,19 +33,11 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     externalResetModalRef: NgbModalRef | undefined;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.useExternal = profileInfo.useExternal;
-                this.externalCredentialProvider = profileInfo.externalCredentialProvider;
-                const lang = this.translateService.currentLang;
-                const linkMap = profileInfo.externalPasswordResetLinkMap;
-                if (linkMap.get(lang)) {
-                    this.externalPasswordResetLink = linkMap.get(lang);
-                } else {
-                    this.externalPasswordResetLink = linkMap.get('en');
-                }
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.useExternal = profileInfo.useExternal;
+        this.externalCredentialProvider = profileInfo.externalCredentialProvider;
+        const lang = this.translateService.currentLang;
+        this.externalPasswordResetLink = profileInfo.externalPasswordResetLinkMap?.[lang] ?? profileInfo.externalPasswordResetLinkMap?.['en'];
     }
 
     ngAfterViewInit(): void {

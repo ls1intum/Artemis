@@ -11,14 +11,14 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
 import { isExamExercise } from 'app/shared/util/utils';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { UserService } from 'app/core/user/shared/user.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -64,9 +64,7 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     protected readonly ExerciseType = ExerciseType;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-        });
+        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.isExamExercise = isExamExercise(this.exercise());
         if (this.isExamExercise || !this.exercise().id) {
             return;

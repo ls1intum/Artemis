@@ -1,12 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { Subject, Subscription } from 'rxjs';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { CourseNotificationCategory } from 'app/communication/shared/entities/course-notification/course-notification-category';
 import { CourseNotificationViewingStatus } from 'app/communication/shared/entities/course-notification/course-notification-viewing-status';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { AccountService } from 'app/core/auth/account.service';
+import { User } from 'app/core/user/user.model';
 
 /**
  * Service for handling course notification websocket connections.
@@ -16,23 +18,54 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 @Injectable({
     providedIn: 'root',
 })
-export class CourseNotificationWebsocketService {
+export class CourseNotificationWebsocketService implements OnDestroy {
     private websocketService = inject(WebsocketService);
     private courseNotificationService = inject(CourseNotificationService);
     private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
 
     private courseWebsocketSubscriptions: Record<number, Subscription> = {};
     private websocketNotificationSubject = new Subject<CourseNotification>();
+    private userSubscription: Subscription;
+    private coursesSubscription: Subscription | undefined = undefined;
+
+    private currentUser: User | undefined;
 
     public websocketNotification$ = this.websocketNotificationSubject.asObservable();
 
     constructor() {
-        this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
+        this.userSubscription = this.accountService.getAuthenticationState().subscribe((user) => {
+            if (user && (this.currentUser === undefined || this.currentUser.id !== user.id)) {
+                this.currentUser = user;
+
+                this.cleanupSubscriptions();
+                this.subscribeToUserCourses();
+            }
+        });
+    }
+
+    /**
+     * Clean up all subscriptions when the service is destroyed
+     */
+    ngOnDestroy(): void {
+        this.cleanupSubscriptions();
+        this.userSubscription.unsubscribe();
+    }
+
+    /**
+     * Subscribes to all courses for the current user
+     */
+    private subscribeToUserCourses(): void {
+        if (this.coursesSubscription) {
+            this.coursesSubscription.unsubscribe();
+        }
+
+        this.coursesSubscription = this.courseManagementService.getCoursesForNotifications().subscribe((courses) => {
             if (!courses) {
                 return;
             }
 
-            courses!.forEach((course) => {
+            courses.forEach((course) => {
                 if (course.id) {
                     this.subscribeToCourseTopic(course.id);
                 }
@@ -73,5 +106,23 @@ export class CourseNotificationWebsocketService {
             });
 
         return this.courseWebsocketSubscriptions[courseId];
+    }
+
+    /**
+     * Cleans up all websocket and course subscriptions
+     */
+    private cleanupSubscriptions(): void {
+        if (this.coursesSubscription) {
+            this.coursesSubscription.unsubscribe();
+            this.coursesSubscription = undefined;
+        }
+
+        Object.keys(this.courseWebsocketSubscriptions).forEach((courseId) => {
+            const numericCourseId = Number(courseId);
+            if (this.courseWebsocketSubscriptions[numericCourseId]) {
+                this.courseWebsocketSubscriptions[numericCourseId].unsubscribe();
+                delete this.courseWebsocketSubscriptions[numericCourseId];
+            }
+        });
     }
 }

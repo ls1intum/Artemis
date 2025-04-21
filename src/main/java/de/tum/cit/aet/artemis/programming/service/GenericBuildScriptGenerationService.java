@@ -37,7 +37,7 @@ public class GenericBuildScriptGenerationService extends BuildScriptGenerationSe
                     programmingExercise.isStaticCodeAnalysisEnabled(), buildConfig.hasSequentialTestRuns());
         }
         catch (IOException e) {
-            log.error("Failed to generate build script for programming exercise " + programmingExercise.getId(), e);
+            log.error("Failed to generate build script for programming exercise {}", programmingExercise.getId(), e);
         }
         return null;
     }

@@ -4,16 +4,16 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ProgrammingLanguageFeatureService } from 'app/programming/service/programming-language-feature/programming-language-feature.service';
+import { ProgrammingLanguageFeatureService } from 'app/programming/shared/services/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import {
     APP_NAME_PATTERN_FOR_SWIFT,
@@ -37,8 +37,8 @@ import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/su
 import { ModePickerOption } from 'app/exercise/mode-picker/mode-picker.component';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
-import { PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
-import { AeolusService } from 'app/programming/service/aeolus.service';
+import { MODULE_FEATURE_PLAGIARISM, PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
+import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseInformationComponent } from 'app/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { ProgrammingExerciseModeComponent } from 'app/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
@@ -53,13 +53,14 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercis
 import { FormSectionStatus, FormStatusBarComponent } from 'app/shared/form/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';
 import { FileService } from 'app/shared/service/file.service';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
 
 export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
-    styleUrls: ['../programming-exercise-form.scss'],
+    styleUrls: ['../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         DocumentationButtonComponent,
@@ -72,6 +73,7 @@ export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
         ProgrammingExerciseGradingComponent,
         ExerciseUpdatePlagiarismComponent,
         FormFooterComponent,
+        FeatureOverlayComponent,
     ],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
@@ -143,7 +145,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isEdit: boolean;
     isCreate: boolean;
     isExamMode: boolean;
-    isLocal: boolean;
+    isLocalCIEnabled: boolean;
     hasUnsavedChanges = false;
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
@@ -179,8 +181,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public sequentialTestRunsAllowed = false;
     public auxiliaryRepositoriesSupported = false;
     auxiliaryRepositoriesValid = signal<boolean>(true);
-    public customBuildPlansSupported: string = '';
+    public customBuildPlansSupported = '';
     public theiaEnabled = false;
+    public plagiarismEnabled = false;
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -505,24 +508,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.setPackageNamePattern(this.selectedProgrammingLanguage);
 
         // Checks if the current environment is production
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.inProductionEnvironment = profileInfo.inProduction;
-            }
-        });
+        this.inProductionEnvironment = this.profileService.isProduction();
+        if (this.profileService.isProfileActive(PROFILE_LOCALCI)) {
+            this.isLocalCIEnabled = true;
+            this.customBuildPlansSupported = PROFILE_LOCALCI;
+        }
+        if (this.profileService.isProfileActive(PROFILE_AEOLUS)) {
+            this.customBuildPlansSupported = PROFILE_AEOLUS;
+        }
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo?.activeProfiles.includes(PROFILE_LOCALCI)) {
-                this.customBuildPlansSupported = PROFILE_LOCALCI;
-                this.isLocal = true;
-            }
-            if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
-                this.customBuildPlansSupported = PROFILE_AEOLUS;
-            }
-            if (profileInfo?.activeProfiles.includes(PROFILE_THEIA)) {
-                this.theiaEnabled = true;
-            }
-        });
+        this.theiaEnabled = this.profileService.isProfileActive(PROFILE_THEIA);
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
         this.defineSupportedProgrammingLanguages();
     }
 

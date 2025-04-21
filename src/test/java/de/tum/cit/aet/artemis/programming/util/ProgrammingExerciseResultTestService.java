@@ -141,8 +141,6 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExercise programmingExercise;
 
-    private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
-
     private SolutionProgrammingExerciseParticipation solutionParticipation;
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
@@ -161,7 +159,7 @@ public class ProgrammingExerciseResultTestService {
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise(false, programmingLanguage);
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExercise);
-        programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
+        ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = programmingExerciseUtilService.addProgrammingExerciseToCourse(course, true, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
@@ -243,7 +241,7 @@ public class ProgrammingExerciseResultTestService {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/assessment/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
+        request.postWithoutLocation("/api/programming/public/programming-exercises/new-result", alteredObj, HttpStatus.OK, httpHeaders);
     }
 
     public static Object convertBuildResultToJsonObject(BuildResultNotification requestBodyMap) {
@@ -504,7 +502,4 @@ public class ProgrammingExerciseResultTestService {
         return solutionParticipation;
     }
 
-    public ProgrammingExerciseStudentParticipation getProgrammingExerciseStudentParticipation() {
-        return programmingExerciseStudentParticipation;
-    }
 }

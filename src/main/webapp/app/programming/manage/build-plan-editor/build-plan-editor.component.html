@@ -1,0 +1,57 @@
+<div class="d-flex align-content-between flex-wrap mb-2">
+    @if (!loadingResults) {
+        <div class="f-flex flex-column">
+            <div>
+                <span class="me-1" jhiTranslate="artemisApp.participation.templateParticipation"></span>
+                @if (programmingExercise.templateParticipation) {
+                    <jhi-updating-result
+                        [exercise]="programmingExercise"
+                        [participation]="programmingExercise.templateParticipation!"
+                        [showUngradedResults]="true"
+                        [personalParticipation]="false"
+                    />
+                }
+            </div>
+            <div>
+                <span class="me-1" jhiTranslate="artemisApp.participation.solutionParticipation"></span>
+                @if (programmingExercise.solutionParticipation) {
+                    <jhi-updating-result
+                        [exercise]="programmingExercise"
+                        [participation]="programmingExercise.solutionParticipation!"
+                        [showUngradedResults]="true"
+                        [personalParticipation]="false"
+                    />
+                }
+            </div>
+        </div>
+    }
+    <button
+        id="submit_button"
+        type="button"
+        class="btn btn-success navbar-btn ms-auto"
+        [disabled]="!this.buildPlan"
+        (click)="submit()"
+        [ngbTooltip]="'artemisApp.editor.submitDescription' | artemisTranslate"
+    >
+        <span>
+            <fa-icon [icon]="farPlayCircle" />
+            <span jhiTranslate="artemisApp.editor.submit"></span>
+        </span>
+    </button>
+</div>
+<div class="card build-plan-editor">
+    <jhi-code-editor-header [fileName]="'artemisApp.programmingExercise.buildplan' | artemisTranslate" [isLoading]="isLoading" (onValidateTabSize)="updateTabSize($event)" />
+    <div class="d-flex card-body build-plan-editor__content">
+        <div class="build-plan-editor__content__editor">
+            <jhi-monaco-editor
+                #editor
+                id="build-plan-editor"
+                [stickyScroll]="false"
+                [readOnly]="isLoading"
+                [shrinkToFit]="false"
+                [textChangedEmitDelay]="200"
+                (textChanged)="onTextChanged($event)"
+            />
+        </div>
+    </div>
+</div>

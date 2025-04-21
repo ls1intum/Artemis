@@ -43,9 +43,6 @@ public class ProgrammingSubmission extends Submission {
     @Column(name = "build_failed")
     private boolean buildFailed;
 
-    @Column(name = "build_artifact")
-    private boolean buildArtifact;
-
     // Only present if buildFailed == true
     @OneToMany(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
@@ -98,14 +95,6 @@ public class ProgrammingSubmission extends Submission {
         this.buildFailed = buildFailed;
     }
 
-    public boolean isBuildArtifact() {
-        return buildArtifact;
-    }
-
-    public void setBuildArtifact(boolean buildArtifact) {
-        this.buildArtifact = buildArtifact;
-    }
-
     public List<BuildLogEntry> getBuildLogEntries() {
         return buildLogEntries;
     }
@@ -125,7 +114,7 @@ public class ProgrammingSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + ", type=" + getType() + '}';
+        return "ProgrammingSubmission{" + "commitHash='" + commitHash + "', buildFailed=" + buildFailed + ", type=" + getType() + '}';
     }
 
     @Override

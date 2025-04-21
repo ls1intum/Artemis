@@ -10,5 +10,4 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record PropertyBag(@JsonAnySetter Map<String, Object> additionalProperties) {
-
 }

@@ -1,10 +1,10 @@
 import { Component, OnChanges, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { faArrowRight, faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBookmark, faCheck, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -24,11 +24,11 @@ import { AnswerPost } from 'app/communication/shared/entities/answer-post.model'
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import dayjs from 'dayjs/esm';
-import { ConversationService } from 'app/communication/conversations/conversation.service';
-import { MetisConversationService } from '../metis-conversation.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { ConversationService } from 'app/communication/conversations/service/conversation.service';
+import { MetisConversationService } from '../service/metis-conversation.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
-import { ForwardMessageDialogComponent } from 'app/communication/course-conversations/forward-message-dialog/forward-message-dialog.component';
+import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 
 const PIN_EMOJI_ID = 'pushpin';
@@ -94,6 +94,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly faCheck = faCheck;
     readonly faPencilAlt = faPencilAlt;
     readonly faArrowRight = faArrowRight;
+    readonly faInfoCircle = faInfoCircle;
     readonly faTrash = faTrashAlt;
     readonly faShare = faShare;
 
@@ -125,6 +126,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
     showAnswers = input<boolean>();
+    showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
     isCommunicationPage = input<boolean>();
     lastReadDate = input<dayjs.Dayjs>();
@@ -506,12 +508,12 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                             const userLogins = selection.users.map((user) => user.login!);
 
                             if (userLogins.length > 0) {
-                                let newConversation: Conversation | null = null;
+                                let newConversation: Conversation | undefined = undefined;
 
                                 if (userLogins.length === 1) {
                                     try {
                                         const response = await this.metisConversationService.createDirectConversation(userLogins[0]).toPromise();
-                                        newConversation = (response?.body ?? null) as Conversation;
+                                        newConversation = (response?.body ?? undefined) as Conversation;
                                         if (newConversation) {
                                             allSelections.push(newConversation);
                                         }

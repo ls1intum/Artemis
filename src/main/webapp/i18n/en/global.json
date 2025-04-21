@@ -91,6 +91,7 @@
                 "password": "Password",
                 "sessions": "Sessions",
                 "login": "Sign in",
+                "loginWithPasskey": "Sign in with a passkey",
                 "logout": "Sign out",
                 "register": "Register"
             },
@@ -114,14 +115,11 @@
                 "iris": "Iris Settings",
                 "lti": "LTI Configuration",
                 "standardizedCompetencies": "Standardized Competencies",
-                "cleanupService": "Cleanup Service"
+                "cleanupService": "Cleanup Service",
+                "lectureTranscription": "Lecture Transcription"
             },
             "language": "Language",
-            "settings": "Settings",
-            "guidedTutorial": "Guided tutorial",
-            "startTutorial": "Start tutorial",
-            "restartTutorial": "Restart tutorial",
-            "continueTutorial": "Continue tutorial"
+            "settings": "Settings"
         },
         "form": {
             "username": "Login or email",
@@ -194,6 +192,7 @@
         "item-count": "Showing {{first}} - {{second}} of {{total}} items."
     },
     "entity": {
+        "actions": "Actions",
         "action": {
             "add": "Add",
             "addblob": "Add blob",
@@ -204,6 +203,7 @@
             "dashboard": "Dashboard",
             "exportRepos": "Download Repositories",
             "delete": "Delete",
+            "deleteQuestion": "Are you sure you want to delete?",
             "noButtonTextDelete": "",
             "unlink": "Unlink",
             "confirm": "Confirm",
@@ -248,7 +248,7 @@
             "lecture": "Lectures",
             "attachments": "Attachments",
             "saveAttachment": "Save attachment",
-            "addAttachment": "Add attachment",
+            "addAttachment": "Add attachment as lecture unit",
             "assessmentDashboard": "Assessment",
             "instructorDashboard": "Instructor Dashboard",
             "exerciseDashboard": "Exercise Dashboard",
@@ -272,7 +272,8 @@
             "search": "Search",
             "select": "Select",
             "sendToIris": "Send To Iris",
-            "faq": "FAQ"
+            "faq": "FAQ",
+            "show": "Show"
         },
         "detail": {
             "field": "Field",
@@ -354,7 +355,8 @@
         "communication": "Communication",
         "archive": "Course archive",
         "faq": "FAQ",
-        "plagiarismCases": "Plagiarism Cases"
+        "plagiarismCases": "Plagiarism Cases",
+        "settings": "Settings"
     },
     "connectionStatus": {
         "connected": "Connected",

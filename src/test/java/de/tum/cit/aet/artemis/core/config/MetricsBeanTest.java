@@ -333,7 +333,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         // Only one of the two quizzes ends in the next 15 minutes
         assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
-        assertMetricEquals(3 * 1, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(3, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // No active users
         assertMetricEquals(0, "artemis.scheduled.exercises.due.student_multiplier.active.14", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
@@ -351,7 +351,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         // Two quizzes are released within the next 15 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
-        assertMetricEquals(3 * 1, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(3, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // Add activity to another user
         quizExerciseUtilService.saveQuizSubmission(exerciseUtilService.getFirstExerciseWithType(course1, QuizExercise.class), ParticipationFactory.generateQuizSubmission(true),
@@ -419,11 +419,11 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         // Two exams start within the next 15 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
-        assertMetricEquals(1 * 2, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
+        assertMetricEquals(2, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
         // Two exams ends within the next 120 minutes
         assertMetricEquals(2, "artemis.scheduled.exams.due.count", "range", "15");
-        assertMetricEquals(1 * 2, "artemis.scheduled.exams.due.student_multiplier", "range", "15"); // 2 + 1 students are registered for the exam, but they are duplicate users
+        assertMetricEquals(2, "artemis.scheduled.exams.due.student_multiplier", "range", "15"); // 2 + 1 students are registered for the exam, but they are duplicate users
 
         var registeredExamUser4 = new ExamUser();
         registeredExamUser4.setUser(users.get(2));
@@ -437,7 +437,7 @@ class MetricsBeanTest extends AbstractSpringIntegrationIndependentTest {
 
         // Two exams start within the next 15 minutes, but have the same users (-> Users are only counted once)
         assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "15");
-        assertMetricEquals(1 * 2 + 1 * 1, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
+        assertMetricEquals(2 + 1, "artemis.scheduled.exams.release.student_multiplier", "range", "15");
 
         // Exam exercises are not returned in the exercises metrics
         assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");

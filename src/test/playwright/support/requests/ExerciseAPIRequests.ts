@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { Page } from 'playwright-core';
 
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';

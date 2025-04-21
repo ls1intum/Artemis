@@ -6,7 +6,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';

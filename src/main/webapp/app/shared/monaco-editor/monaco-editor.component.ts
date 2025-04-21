@@ -7,7 +7,7 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
+import { MonacoEditorService } from 'app/shared/monaco-editor/service/monaco-editor.service';
 import { getOS } from 'app/shared/util/os-detector.util';
 import Graphemer from 'graphemer';
 

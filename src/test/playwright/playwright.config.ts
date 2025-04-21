@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import { parseNumber } from './support/utils';
 import 'app/shared/util/map.extension';
@@ -41,7 +41,7 @@ export default defineConfig({
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
             timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
         // Tests with @slow tag. These tests are expected to run longer
         // than faster tests and have higher timeout.
@@ -49,7 +49,10 @@ export default defineConfig({
             name: 'slow-tests',
             grep: /@slow/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
         },
         // Tests with @sequential tag. These tests are triggering programming exercise submissions.
         // Running only one programming exercise evaluation at a time could make the tests more stable.
@@ -58,7 +61,10 @@ export default defineConfig({
             name: 'sequential-tests',
             grep: /@sequential/,
             timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                browserName: 'chromium',
+                viewport: { width: 1920, height: 1080 },
+            },
         },
     ],
 });

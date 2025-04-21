@@ -43,8 +43,8 @@ import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -78,7 +78,7 @@ public class DataExportExerciseCreationService {
 
     private final DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     // we define the field as optional to allow the application to start even if the apollon profile is not active
     private final Optional<ApollonConversionService> apollonConversionService;
@@ -93,12 +93,12 @@ public class DataExportExerciseCreationService {
 
     public DataExportExerciseCreationService(@Value("${artemis.repo-download-clone-path}") Path repoClonePath, FileService fileService,
             ProgrammingExerciseExportService programmingExerciseExportService, DataExportQuizExerciseCreationService dataExportQuizExerciseCreationService,
-            PlagiarismCaseRepository plagiarismCaseRepository, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<ApollonConversionService> apollonConversionService, ComplaintRepository complaintRepository,
             ExerciseRepository exerciseRepository, ResultService resultService, AuthorizationCheckService authCheckService) {
         this.fileService = fileService;
         this.programmingExerciseExportService = programmingExerciseExportService;
         this.dataExportQuizExerciseCreationService = dataExportQuizExerciseCreationService;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.apollonConversionService = apollonConversionService;
         this.complaintRepository = complaintRepository;
         this.exerciseRepository = exerciseRepository;
@@ -405,7 +405,12 @@ public class DataExportExerciseCreationService {
      * @throws IOException if the file cannot be written
      */
     private void createPlagiarismCaseInfoExport(Exercise exercise, Path exercisePath, long userId) throws IOException {
-        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
+        if (plagiarismCaseApi.isEmpty()) {
+            return;
+        }
+
+        PlagiarismCaseApi api = plagiarismCaseApi.get();
+        var plagiarismCaseOptional = api.findByStudentIdAndExerciseIdWithPostAndAnswerPost(userId, exercise.getId());
         List<String> headers = new ArrayList<>();
         var dataStreamBuilder = Stream.builder();
         if (plagiarismCaseOptional.isEmpty()) {

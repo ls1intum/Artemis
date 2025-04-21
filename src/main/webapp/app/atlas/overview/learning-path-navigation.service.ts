@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { LearningPathNavigationDTO, LearningPathNavigationObjectDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathNavigationService {

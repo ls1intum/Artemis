@@ -33,6 +33,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -62,7 +63,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -92,6 +93,9 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 @Profile(PROFILE_CORE)
 @Service
 public class ProgrammingExerciseService {
+
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
 
     /**
      * Java package name Regex according to Java 14 JLS
@@ -185,7 +189,7 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
-    private final Optional<IrisSettingsService> irisSettingsService;
+    private final Optional<IrisSettingsApi> irisSettingsApi;
 
     private final Optional<AeolusTemplateService> aeolusTemplateService;
 
@@ -212,8 +216,7 @@ public class ProgrammingExerciseService {
             ExerciseSpecificationService exerciseSpecificationService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, ChannelService channelService, ProgrammingSubmissionService programmingSubmissionService,
-            Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
-            Optional<BuildScriptGenerationService> buildScriptGenerationService,
+            Optional<IrisSettingsApi> irisSettingsApi, Optional<AeolusTemplateService> aeolusTemplateService, Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<CompetencyProgressApi> competencyProgressApi,
             ProgrammingExerciseBuildConfigService programmingExerciseBuildConfigService) {
@@ -241,7 +244,7 @@ public class ProgrammingExerciseService {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.channelService = channelService;
         this.programmingSubmissionService = programmingSubmissionService;
-        this.irisSettingsService = irisSettingsService;
+        this.irisSettingsApi = irisSettingsApi;
         this.aeolusTemplateService = aeolusTemplateService;
         this.buildScriptGenerationService = buildScriptGenerationService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -276,7 +279,6 @@ public class ProgrammingExerciseService {
      */
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         final User exerciseCreator = userRepository.getUser();
-        VersionControlService versionControl = versionControlService.orElseThrow();
 
         // The client sends a solution and template participation object (filled with null values) when creating a programming exercise.
         // When saving the object leads to an exception at runtime.
@@ -296,7 +298,7 @@ public class ProgrammingExerciseService {
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
         // Step 1: Setting constant facts for a programming exercise
         savedProgrammingExercise.generateAndSetProjectKey();
-        savedProgrammingExercise.getBuildConfig().setBranch(versionControl.getDefaultBranchOfArtemis());
+        savedProgrammingExercise.getBuildConfig().setBranch(defaultBranch);
 
         // Step 2: Creating repositories for new exercise
         programmingExerciseRepositoryService.createRepositoriesForNewExercise(savedProgrammingExercise);
@@ -357,8 +359,8 @@ public class ProgrammingExerciseService {
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(finalSavedProgrammingExercise));
 
         // Step 13: Set Iris settings
-        if (irisSettingsService.isPresent()) {
-            irisSettingsService.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
+        if (irisSettingsApi.isPresent()) {
+            irisSettingsApi.get().setEnabledForExerciseByCategories(savedProgrammingExercise, new HashSet<>());
         }
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
@@ -629,8 +631,7 @@ public class ProgrammingExerciseService {
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise)));
 
-        irisSettingsService
-                .ifPresent(settingsService -> settingsService.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
+        irisSettingsApi.ifPresent(api -> api.setEnabledForExerciseByCategories(savedProgrammingExercise, programmingExerciseBeforeUpdate.getCategories()));
 
         return savedProgrammingExercise;
     }
@@ -852,7 +853,7 @@ public class ProgrammingExerciseService {
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
-        irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(programmingExercise));
+        irisSettingsApi.ifPresent(api -> api.deleteSettingsFor(programmingExercise));
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();

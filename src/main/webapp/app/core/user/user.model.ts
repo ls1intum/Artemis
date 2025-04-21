@@ -10,7 +10,6 @@ export class User extends Account {
     public createdDate?: Date;
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
-    public lastNotificationRead?: dayjs.Dayjs;
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
@@ -31,7 +30,6 @@ export class User extends Account {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
-        lastNotificationRead?: dayjs.Dayjs,
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
@@ -45,7 +43,6 @@ export class User extends Account {
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
-        this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;

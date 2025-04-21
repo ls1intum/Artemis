@@ -269,7 +269,8 @@
             "imageCropper": {
                 "title": "Crop your image",
                 "uploadTitle": "Add an icon"
-            }
+            },
+            "overview": "Overview"
         },
         "courseStatistics": {
             "statistics": "Statistics",

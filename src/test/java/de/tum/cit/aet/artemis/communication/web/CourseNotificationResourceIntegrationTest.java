@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTe
 import de.tum.cit.aet.artemis.communication.test_repository.UserCourseNotificationStatusTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -53,7 +52,6 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void setUp() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         course = courseUtilService.createCourse();
@@ -73,22 +71,6 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
         request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1))).andExpect(jsonPath("$.content[0].notificationType").value("newPostNotification"))
                 .andExpect(jsonPath("$.content[0].courseId").value(course.getId()));
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReturnNotificationsWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
-        var courseNotification = new CourseNotification(course, (short) 1, ZonedDateTime.now(), ZonedDateTime.now());
-
-        courseNotificationRepository.save(courseNotification);
-
-        var userCourseNotificationStatus = new UserCourseNotificationStatus(courseNotification, user, UserCourseNotificationStatusType.UNSEEN);
-
-        userCourseNotificationStatusTestRepository.save(userCourseNotificationStatus);
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/" + course.getId() + "?page=0&size=20")).andExpect(status().isForbidden());
     }
 
     @Test
@@ -156,13 +138,5 @@ class CourseNotificationResourceIntegrationTest extends AbstractSpringIntegratio
                 .andExpect(jsonPath("$.channels[*]").value(org.hamcrest.Matchers.containsInAnyOrder(NotificationChannelOption.values()[0].name(),
                         NotificationChannelOption.values()[1].name(), NotificationChannelOption.values()[2].name())))
                 .andExpect(jsonPath("$.notificationTypes").isNotEmpty());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldNotReturnNotificationInfoWhenFeatureIsDisabled() throws Exception {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
-        request.performMvcRequest(MockMvcRequestBuilders.get("/api/communication/notification/info")).andExpect(status().isForbidden());
     }
 }

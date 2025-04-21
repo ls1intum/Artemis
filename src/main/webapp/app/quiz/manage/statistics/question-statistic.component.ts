@@ -2,7 +2,7 @@ import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { QuizQuestionStatistic } from 'app/quiz/shared/entities/quiz-question-statistic.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { QuizExerciseService } from 'app/quiz/manage/quiz-exercise.service';
+import { QuizExerciseService } from 'app/quiz/manage/service/quiz-exercise.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { Subscription } from 'rxjs';

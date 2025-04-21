@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
-import { CompetencyService } from 'app/atlas/manage/competency.service';
+import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { CompetencyFormComponent } from 'app/atlas/manage/forms/competency/competency-form.component';

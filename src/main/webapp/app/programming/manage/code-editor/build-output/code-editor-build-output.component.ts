@@ -1,11 +1,11 @@
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
-import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/service/code-editor-submission.service';
-import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
+import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Interactable } from '@interactjs/core/Interactable';

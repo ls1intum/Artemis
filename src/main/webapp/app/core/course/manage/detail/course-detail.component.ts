@@ -4,19 +4,19 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { PROFILE_ATHENA, PROFILE_IRIS, PROFILE_LTI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Subscription, firstValueFrom } from 'rxjs';
-import { Course } from 'app/core/shared/entities/course.model';
-import { CourseManagementService } from '../course-management.service';
-import { CourseManagementDetailViewDto } from 'app/core/course/manage/course-management-detail-view-dto.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from '../services/course-management.service';
+import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
@@ -50,7 +50,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-    private featureToggleService = inject(FeatureToggleService);
 
     readonly DoughnutChartType = DoughnutChartType;
     readonly FeatureToggle = FeatureToggle;
@@ -67,7 +66,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
-    tutorialEnabled = false;
 
     isAdmin = false;
 
@@ -88,11 +86,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * On init load the course information and subscribe to listen for changes in courses.
      */
     async ngOnInit() {
-        this.tutorialEnabled = await firstValueFrom(this.featureToggleService.getFeatureToggleActive(FeatureToggle.TutorialGroups));
-        const profileInfo = await firstValueFrom(this.profileService.getProfileInfo());
-        this.ltiEnabled = profileInfo?.activeProfiles.includes(PROFILE_LTI);
-        this.isAthenaEnabled = profileInfo?.activeProfiles.includes(PROFILE_ATHENA);
-        this.irisEnabled = profileInfo?.activeProfiles.includes(PROFILE_IRIS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             // TODO: Outdated, as we now have a bunch more sub settings
@@ -264,15 +260,12 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             });
         }
 
-        if (this.tutorialEnabled) {
-            // insert tutorial detail after lti detail
-            details.splice(4, 0, {
-                type: DetailType.Text,
-                title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
-                titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
-                data: { text: this.course.timeZone },
-            });
-        }
+        details.splice(4, 0, {
+            type: DetailType.Text,
+            title: 'artemisApp.forms.configurationForm.timeZoneInput.label',
+            titleHelpText: 'artemisApp.forms.configurationForm.timeZoneInput.beta',
+            data: { text: this.course.timeZone },
+        });
 
         if (this.ltiEnabled) {
             // insert lti detail after testCourse detail

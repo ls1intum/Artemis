@@ -45,20 +45,25 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
         if (exercise instanceof ProgrammingExercise) {
             // Note: for text submissions 'file' must be null
             // Note: we want to get the relative path within the repository and not the absolute path
-            var submissionDirectoryAbsoluteFile = submissionDirectory.getAbsoluteFile();
-            var tokenAbsoluteFile = token.getFile().getAbsoluteFile();
-            var filePath = submissionDirectoryAbsoluteFile.toPath().relativize(tokenAbsoluteFile.toPath());
-            // remove the first element, because it is the parent folder in which the whole repo was saved
-            var fileStringWithinRepository = filePath.toString();
-            if (filePath.getNameCount() > 1) {
-                fileStringWithinRepository = filePath.subpath(1, filePath.getNameCount()).toString();
-            }
+            final var fileStringWithinRepository = getString(token, submissionDirectory);
             textSubmissionElement.setFile(fileStringWithinRepository);
         }
         textSubmissionElement.setLength(token.getLength());
         textSubmissionElement.setPlagiarismSubmission(plagiarismSubmission);
 
         return textSubmissionElement;
+    }
+
+    private static String getString(Token token, File submissionDirectory) {
+        var submissionDirectoryAbsoluteFile = submissionDirectory.getAbsoluteFile();
+        var tokenAbsoluteFile = token.getFile().getAbsoluteFile();
+        var filePath = submissionDirectoryAbsoluteFile.toPath().relativize(tokenAbsoluteFile.toPath());
+        // remove the first element, because it is the parent folder in which the whole repo was saved
+        var fileStringWithinRepository = filePath.toString();
+        if (filePath.getNameCount() > 1) {
+            fileStringWithinRepository = filePath.subpath(1, filePath.getNameCount()).toString();
+        }
+        return fileStringWithinRepository;
     }
 
     public int getColumn() {

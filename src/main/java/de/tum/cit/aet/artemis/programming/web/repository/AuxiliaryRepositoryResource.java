@@ -47,8 +47,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCGitBranchService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
-import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**
  * Executes requested actions on the auxiliary repository of a programming exercise. Only available to TAs, Instructors and Admins.
@@ -60,12 +60,15 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
+    private final Optional<LocalVCGitBranchService> localVCGitBranchService;
+
     public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
-            RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
-        super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
-                localVCServletService);
+            RepositoryService repositoryService, ProgrammingExerciseRepository programmingExerciseRepository, RepositoryAccessService repositoryAccessService,
+            Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            Optional<LocalVCGitBranchService> localVCGitBranchService) {
+        super(profileService, userRepository, authCheckService, gitService, repositoryService, programmingExerciseRepository, repositoryAccessService, localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
+        this.localVCGitBranchService = localVCGitBranchService;
     }
 
     @Override
@@ -99,7 +102,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
         AuxiliaryRepository auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(auxiliaryRepo.getExercise().getId());
-        return versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
+        return localVCGitBranchService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Override
@@ -192,9 +195,6 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     public ResponseEntity<Map<String, String>> updateAuxiliaryFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId,
             @RequestBody List<FileSubmission> submissions, @RequestParam Boolean commit, Principal principal) {
 
-        if (versionControlService.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
-        }
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         ProgrammingExercise exercise = auxiliaryRepository.getExercise();
 

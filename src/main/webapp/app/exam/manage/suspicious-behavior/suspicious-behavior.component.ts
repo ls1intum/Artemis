@@ -3,17 +3,17 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SuspiciousExamSessions, SuspiciousSessionsAnalysisOptions } from 'app/exam/shared/entities/exam-session.model';
 import { SuspiciousSessionsService } from 'app/exam/manage/suspicious-behavior/suspicious-sessions.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { PlagiarismResultsService } from 'app/plagiarism/shared/plagiarism-results.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { PlagiarismResultsService } from 'app/plagiarism/shared/services/plagiarism-results.service';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PlagiarismCasesOverviewComponent } from 'app/exam/manage/suspicious-behavior/plagiarism-cases-overview/plagiarism-cases-overview.component';
 import { FormsModule } from '@angular/forms';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-suspicious-behavior',

@@ -3,48 +3,51 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, of, Subject, throwError } from 'rxjs';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { DomainType, FileType, RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { problemStatement } from '../../helpers/sample/problemStatement.json';
-import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
-import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/code-editor-instructor-and-editor-container.component';
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
-import { CodeEditorBuildLogService, CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { problemStatement } from 'test/helpers/sample/problemStatement.json';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
+import {
+    CodeEditorBuildLogService,
+    CodeEditorRepositoryFileService,
+    CodeEditorRepositoryService,
+} from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { DomainService } from 'app/programming/shared/code-editor/service/code-editor-domain.service';
+import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';
-import { MockActivatedRouteWithSubjects } from '../../helpers/mocks/activated-route/mock-activated-route-with-subjects';
-import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
-import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
-import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { MockParticipationService } from '../../helpers/mocks/service/mock-participation.service';
-import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { MockActivatedRouteWithSubjects } from 'test/helpers/mocks/activated-route/mock-activated-route-with-subjects';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockCodeEditorRepositoryService } from 'test/helpers/mocks/service/mock-code-editor-repository.service';
+import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockCodeEditorRepositoryFileService } from 'test/helpers/mocks/service/mock-code-editor-repository-file.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationService } from 'test/helpers/mocks/service/mock-participation.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
-import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge.component';
+import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from 'app/programming/manage/status/programming-exercise-instructor-exercise-status.component';
-import { UpdatingResultComponent } from 'app/exercise/result/updating-result.component';
-import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
+import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
+import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExerciseEditableInstructionComponent } from 'app/programming/manage/instructions-editor/programming-exercise-editable-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid.component';
+import { CodeEditorGridComponent } from 'app/programming/shared/code-editor/layout/code-editor-grid/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/programming/shared/code-editor/actions/code-editor-actions.component';
 import { CodeEditorFileBrowserComponent } from 'app/programming/manage/code-editor/file-browser/code-editor-file-browser.component';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
@@ -60,7 +63,7 @@ import { CourseExerciseService } from 'app/exercise/course-exercises/course-exer
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { mockCodeEditorMonacoViewChildren } from '../../helpers/mocks/mock-instance.helper';
+import { mockCodeEditorMonacoViewChildren } from 'test/helpers/mocks/mock-instance.helper';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -69,7 +72,6 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('CodeEditorInstructorIntegration', () => {
     let comp: CodeEditorInstructorAndEditorContainerComponent;
     let containerFixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
-    let containerDebugElement: DebugElement;
     let domainService: DomainService;
     let route: ActivatedRoute;
 
@@ -93,8 +95,8 @@ describe('CodeEditorInstructorIntegration', () => {
     // Workaround for an error with MockComponent(). You can remove this once https://github.com/help-me-mom/ng-mocks/issues/8634 is resolved.
     mockCodeEditorMonacoViewChildren();
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorInstructorAndEditorContainerComponent,
@@ -139,54 +141,45 @@ describe('CodeEditorInstructorIntegration', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 MockProvider(ProfileService, {
-                    getProfileInfo: () => of(mockProfileInfo),
+                    getProfileInfo: () => mockProfileInfo,
                 }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                containerFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
-                comp = containerFixture.componentInstance;
-                containerDebugElement = containerFixture.debugElement;
-
-                const codeEditorRepositoryService = containerDebugElement.injector.get(CodeEditorRepositoryService);
-                const codeEditorRepositoryFileService = containerDebugElement.injector.get(CodeEditorRepositoryFileService);
-                const participationWebsocketService = containerDebugElement.injector.get(ParticipationWebsocketService);
-                const resultService = containerDebugElement.injector.get(ResultService);
-                const buildLogService = containerDebugElement.injector.get(CodeEditorBuildLogService);
-                const programmingExerciseParticipationService = containerDebugElement.injector.get(ProgrammingExerciseParticipationService);
-                const programmingExerciseService = containerDebugElement.injector.get(ProgrammingExerciseService);
-                domainService = containerDebugElement.injector.get(DomainService);
-                route = containerDebugElement.injector.get(ActivatedRoute);
-                containerDebugElement.injector.get(Router);
-                checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
-                getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
-                subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
-                findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
-
-                routeSubject = new Subject<Params>();
-                // @ts-ignore
-                (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
-
-                checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
-                getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
-                subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
-                getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
-                getLatestResultWithFeedbacksStub = jest
-                    .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
-                    .mockReturnValue(throwError(() => new Error('no result')));
-                getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
-                navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
-
-                findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
-                findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
-
-                subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
-                getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
-                checkIfRepositoryIsCleanStub.mockReturnValue(checkIfRepositoryIsCleanSubject);
-            });
+        }).compileComponents();
+        containerFixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = containerFixture.componentInstance;
+        const codeEditorRepositoryService = TestBed.inject(CodeEditorRepositoryService);
+        const codeEditorRepositoryFileService = TestBed.inject(CodeEditorRepositoryFileService);
+        const participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
+        const resultService = TestBed.inject(ResultService);
+        const buildLogService = TestBed.inject(CodeEditorBuildLogService);
+        const programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
+        const programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+        domainService = TestBed.inject(DomainService);
+        route = TestBed.inject(ActivatedRoute);
+        TestBed.inject(Router);
+        checkIfRepositoryIsCleanSubject = new Subject<{ isClean: boolean }>();
+        getRepositoryContentSubject = new Subject<{ [fileName: string]: FileType }>();
+        subscribeForLatestResultOfParticipationSubject = new BehaviorSubject<Result | null>(null);
+        findWithParticipationsSubject = new Subject<{ body: ProgrammingExercise }>();
+        routeSubject = new Subject<Params>();
+        // @ts-ignore
+        (route as MockActivatedRouteWithSubjects).setSubject(routeSubject);
+        checkIfRepositoryIsCleanStub = jest.spyOn(codeEditorRepositoryService, 'getStatus');
+        getRepositoryContentStub = jest.spyOn(codeEditorRepositoryFileService, 'getRepositoryContent');
+        subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
+        getFeedbackDetailsForResultStub = jest.spyOn(resultService, 'getFeedbackDetailsForResult');
+        getLatestResultWithFeedbacksStub = jest
+            .spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback')
+            .mockReturnValue(throwError(() => new Error('no result')));
+        getBuildLogsStub = jest.spyOn(buildLogService, 'getBuildLogs');
+        navigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate');
+        findWithParticipationsStub = jest.spyOn(programmingExerciseService, 'findWithTemplateAndSolutionParticipationAndResults');
+        findWithParticipationsStub.mockReturnValue(findWithParticipationsSubject);
+        subscribeForLatestResultOfParticipationStub.mockReturnValue(subscribeForLatestResultOfParticipationSubject);
+        getRepositoryContentStub.mockReturnValue(getRepositoryContentSubject);
+        checkIfRepositoryIsCleanStub.mockReturnValue(checkIfRepositoryIsCleanSubject);
     });
 
     afterEach(() => {

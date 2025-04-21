@@ -2,9 +2,6 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { SubmissionType } from 'app/exercise/shared/entities/submission/submission.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercise/result/result.utils';
@@ -12,37 +9,6 @@ import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProces
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
         return template.replace('{buildPlanId}', buildPlanId).replace('{projectKey}', projectKey);
-    }
-};
-
-export const createCommitUrl = (
-    template: string | undefined,
-    projectKey: string | undefined,
-    participation: Participation | undefined,
-    submission: ProgrammingSubmission | undefined,
-): string | undefined => {
-    const projectKeyLowerCase = projectKey?.toLowerCase();
-    let repoSlugPostfix: string | undefined = undefined;
-    if (participation?.type === ParticipationType.PROGRAMMING) {
-        const studentParticipation = participation as ProgrammingExerciseStudentParticipation;
-        if (studentParticipation.repositoryUri) {
-            repoSlugPostfix = studentParticipation.participantIdentifier;
-            if (isPracticeMode(studentParticipation)) {
-                repoSlugPostfix = 'practice-' + repoSlugPostfix;
-            }
-        }
-    } else if (participation?.type === ParticipationType.TEMPLATE) {
-        // In case of a test submisson, we need to use the test repository
-        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'exercise';
-    } else if (participation?.type === ParticipationType.SOLUTION) {
-        // In case of a test submisson, we need to use the test repository
-        repoSlugPostfix = submission?.type === SubmissionType.TEST ? 'tests' : 'solution';
-    }
-    if (repoSlugPostfix && template && projectKeyLowerCase) {
-        return template
-            .replace('{projectKey}', projectKeyLowerCase)
-            .replace('{repoSlug}', projectKeyLowerCase + '-' + repoSlugPostfix)
-            .replace('{commitHash}', submission?.commitHash ?? '');
     }
 };
 

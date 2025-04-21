@@ -122,16 +122,12 @@
                         <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
                             @if (value && getRepositoryLink(row, value)) {
                                 <span>
-                                    @if (!localVCEnabled) {
-                                        <a href="{{ getRepositoryLink(row, value) }}" target="_blank" rel="noreferrer noopener">Repository Link</a>
-                                    } @else {
-                                        <jhi-code-button
-                                            class="ms-2"
-                                            [smallButtons]="true"
-                                            [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, row.id]"
-                                            [repositoryUri]="getRepositoryLink(row, value)!"
-                                        />
-                                    }
+                                    <jhi-code-button
+                                        class="ms-2"
+                                        [smallButtons]="true"
+                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, row.id]"
+                                        [repositoryUri]="getRepositoryLink(row, value)!"
+                                    />
                                 </span>
                             }
                         </ng-template>
@@ -148,7 +144,7 @@
                         <ng-template ngx-datatable-cell-template let-row="row">
                             @if (row) {
                                 <span>
-                                    @if (!localVCEnabled) {
+                                    @if (!localCIEnabled) {
                                         <a href="{{ row.buildPlanUrl }}" target="_blank" rel="noreferrer">
                                             {{ row.buildPlanId }}
                                         </a>
