@@ -143,7 +143,9 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
          * @return the converted DTO
          */
         public static RepoNameCourseDTO of(Course course) {
-            return new RepoNameCourseDTO(course.getId(), course.getTitle(), course.getShortName());
+            return Optional.ofNullable(course)
+                    .map(c -> new RepoNameCourseDTO(c.getId(), c.getTitle(), c.getShortName()))
+                    .orElse(null);
         }
     }
 
