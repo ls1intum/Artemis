@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param initialStages initial stages of the pipeline
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisTutorSuggestionPipelineExecutionDTO(PyrisCourseDTO courseDTO, Optional<Integer> exerciseId, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory,
-        PyrisUserDTO user, PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, Optional<PyrisTextExerciseDTO> textExerciseDTO,
+public record PyrisTutorSuggestionPipelineExecutionDTO(PyrisCourseDTO course, Optional<Integer> exerciseId, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory, PyrisUserDTO user,
+        PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, Optional<PyrisTextExerciseDTO> textExerciseDTO,
         Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO) {
 }
