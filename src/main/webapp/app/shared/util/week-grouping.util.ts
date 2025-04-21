@@ -31,8 +31,8 @@ export class WeekGroupingUtil {
      * @returns A unique string identifier for the week
      */
     static getWeekKey(date: dayjs.Dayjs): string {
-        const startOfWeek = date.startOf('isoWeek');
-        const endOfWeek = date.endOf('isoWeek');
+        const startOfWeek = date.startOf('week');
+        const endOfWeek = date.endOf('week');
         return `${startOfWeek.year()} - ${startOfWeek.format('DD MMM YYYY')} - ${endOfWeek.format('DD MMM YYYY')}`;
     }
 
