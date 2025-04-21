@@ -18,6 +18,12 @@ public class HashUtils {
         return KeyUtils.getFingerPrint(BuiltinDigests.sha256.create(), key);
     }
 
+    /**
+     * Hashes a secret using SHA-256.
+     *
+     * @param secret the secret to hash
+     * @return the hashed secret
+     */
     public static byte[] hashSha256(String secret) {
         try {
             MessageDigest digest = MessageDigest.getInstance(MessageDigestAlgorithms.SHA_256);

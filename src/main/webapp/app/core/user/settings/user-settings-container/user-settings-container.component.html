@@ -34,6 +34,9 @@
                     >
                     </a>
                 }
+                @if (isPasskeyEnabled) {
+                    <a class="list-group-item btn btn-outline-primary" routerLink="passkeys" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.passkeys"></a>
+                }
                 <a class="list-group-item btn btn-outline-primary" routerLink="ide-preferences" routerLinkActive="active">
                     <!--Default IDE Settings-->
                     <span jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></span>
