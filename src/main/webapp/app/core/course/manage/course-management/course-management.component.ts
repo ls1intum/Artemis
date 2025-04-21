@@ -17,6 +17,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CourseManagementCardComponent } from '../overview/course-management-card.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course',
@@ -87,6 +88,9 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
                 this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
                 this.sortCoursesIntoSemesters();
 
+                // Set the course icons for each course
+                this.setCourseIcons();
+
                 // First fetch important data like title for each exercise
                 this.fetchExercises();
 
@@ -134,6 +138,12 @@ export class CourseManagementComponent implements OnInit, OnDestroy {
                     return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
                 })
         );
+    }
+
+    private setCourseIcons(): void {
+        this.courses.forEach((course) => {
+            course.courseIconPath = addPublicFilePrefix(course.courseIcon);
+        });
     }
 
     /**
