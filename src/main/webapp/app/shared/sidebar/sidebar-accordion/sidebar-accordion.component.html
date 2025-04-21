@@ -25,10 +25,19 @@
             @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <hr class="my-0" />
                 <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-module">
-                    @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.weekRange) {
-                        @if (weekGroup.weekRange && weekGroup.weekRange !== 'No Date' && groupKey !== 'noDate') {
+                    @for (weekGroup of getGroupedByWeek(groupKey); track weekGroup.start?.valueOf()) {
+                        @if (weekGroup.showDateHeader) {
                             <div class="text-muted small p-2">
-                                {{ weekGroup.weekRange }}
+                                {{
+                                    weekGroup.isNoDate
+                                        ? ('artemisApp.courseOverview.sidebar.noDate' | artemisTranslate)
+                                        : ('artemisApp.courseOverview.sidebar.weekRange'
+                                          | artemisTranslate
+                                              : {
+                                                    start: (weekGroup.start | artemisDate: 'long-date'),
+                                                    end: (weekGroup.end | artemisDate: 'long-date'),
+                                                })
+                                }}
                             </div>
                         }
                         <div class="bg-body p-2">

@@ -6,25 +6,16 @@ import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
 import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
-import dayjs from 'dayjs/esm';
-import isoWeek from 'dayjs/plugin/isoWeek';
-
-dayjs.extend(isoWeek);
-
-interface WeekGroup {
-    weekRange: string;
-    items: SidebarCardElement[];
-}
-
-const MIN_ITEMS_TO_GROUP_BY_WEEK = 5;
+import { WeekGroup, WeekGroupingUtil } from 'app/shared/util/week-grouping.util';
 
 @Component({
     selector: 'jhi-sidebar-accordion',
     templateUrl: './sidebar-accordion.component.html',
     styleUrls: ['./sidebar-accordion.component.scss'],
-    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, SearchFilterPipe],
+    imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, ArtemisDatePipe, SearchFilterPipe],
 })
 export class SidebarAccordionComponent implements OnChanges, OnInit {
     protected readonly Object = Object;
@@ -105,83 +96,7 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         localStorage.setItem('sidebar.accordion.collapseState.' + this.storageId + '.byCourse.' + this.courseId, JSON.stringify(this.collapseState));
     }
 
-    private getWeekKey(date: dayjs.Dayjs): string {
-        const weekStart = date.startOf('isoWeek');
-        const weekEnd = date.endOf('isoWeek');
-        const year = weekStart.year();
-        return `${year} - ${weekStart.format('DD MMM YYYY')} - ${weekEnd.format('DD MMM YYYY')}`;
-    }
-
     getGroupedByWeek(groupKey: string): WeekGroup[] {
-        const items = this.groupedData[groupKey].entityData;
-
-        // Apply search filter
-        const filteredItems = this.searchValue
-            ? items.filter((item) => item.title?.toLowerCase().includes(this.searchValue.toLowerCase()) || item.type?.toLowerCase().includes(this.searchValue.toLowerCase()))
-            : items;
-
-        // For exams, always return as a single group without week ranges
-        if (groupKey === 'real' || groupKey === 'test' || groupKey === 'attempt') {
-            return [{ weekRange: '', items: filteredItems }];
-        }
-
-        if (filteredItems.length <= MIN_ITEMS_TO_GROUP_BY_WEEK || this.searchValue) {
-            return [{ weekRange: '', items: filteredItems }];
-        }
-
-        const weekGroups = new Map<string, SidebarCardElement[]>();
-
-        for (const item of filteredItems) {
-            const date = item.exercise?.dueDate || item.startDateWithTime || item.startDate;
-            if (!date) {
-                const noDateKey = 'No Date';
-                const noDateGroup = weekGroups.get(noDateKey) || [];
-                noDateGroup.push(item);
-                weekGroups.set(noDateKey, noDateGroup);
-                continue;
-            }
-
-            const weekKey = this.getWeekKey(date);
-            const group = weekGroups.get(weekKey) || [];
-            group.push(item);
-            weekGroups.set(weekKey, group);
-        }
-
-        // Sort items within each group by date (newest first)
-        for (const [, items] of weekGroups) {
-            items.sort((a, b) => {
-                const dateA = a.exercise?.dueDate || a.startDateWithTime || a.startDate;
-                const dateB = b.exercise?.dueDate || b.startDateWithTime || b.startDate;
-                if (!dateA && !dateB) return 0;
-                if (!dateA) return 1;
-                if (!dateB) return -1;
-                return dateB.valueOf() - dateA.valueOf();
-            });
-        }
-
-        return Array.from(weekGroups.entries())
-            .map(([weekRange, items]) => {
-                const displayRange = weekRange === 'No Date' ? weekRange : weekRange.split(' - ').slice(1).join(' - ');
-                return { weekRange: displayRange, items };
-            })
-            .sort((a, b) => {
-                if (a.weekRange === 'No Date') return 1;
-                if (b.weekRange === 'No Date') return -1;
-
-                const aFullKey = Array.from(weekGroups.keys()).find((key) => key.includes(a.weekRange));
-                const bFullKey = Array.from(weekGroups.keys()).find((key) => key.includes(b.weekRange));
-
-                if (!aFullKey || !bFullKey) return 0;
-
-                const [aYear] = aFullKey.split(' - ');
-                const [bYear] = bFullKey.split(' - ');
-                if (aYear !== bYear) {
-                    return Number(bYear) - Number(aYear);
-                }
-
-                const aDate = dayjs(a.weekRange.split(' - ')[0], 'DD MMM');
-                const bDate = dayjs(b.weekRange.split(' - ')[0], 'DD MMM');
-                return bDate.valueOf() - aDate.valueOf();
-            });
+        return WeekGroupingUtil.getGroupedByWeek(this.groupedData[groupKey].entityData, groupKey, this.searchValue);
     }
 }
