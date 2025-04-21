@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
-import de.tum.cit.aet.artemis.programming.dto.RepoIdentifierProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammingIntegrationIndependentTest {
 
@@ -666,8 +666,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
-                RepoIdentifierProgrammingStudentParticipationDTO.class);
+        RepoNameProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
+                RepoNameProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
         assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
@@ -692,18 +692,18 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         latestResult = participationUtilService.addFeedbackToResult(new Feedback().testCase(testCases[0]), latestResult);
 
         var repoName = extractRepoName(participation.getRepositoryUri());
-        RepoIdentifierProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
-                RepoIdentifierProgrammingStudentParticipationDTO.class);
+        RepoNameProgrammingStudentParticipationDTO participationDTO = request.get("/api/programming/programming-exercise-participations/repo-name/" + repoName, HttpStatus.OK,
+                RepoNameProgrammingStudentParticipationDTO.class);
 
         assertThat(participationDTO.id()).isEqualTo(participation.getId());
         assertThat(participationDTO.exercise().id()).isEqualTo(participation.getExercise().getId());
         assertThat(participationDTO.exercise().course().id()).isEqualTo(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId());
 
         assertThat(participationDTO.submissions()).hasSize(1);
-        var submissionDTO = participationDTO.submissions().toArray(RepoIdentifierProgrammingStudentParticipationDTO.RepoIdentifierSubmissionDTO[]::new)[0];
+        var submissionDTO = participationDTO.submissions().toArray(RepoNameProgrammingStudentParticipationDTO.RepoNameSubmissionDTO[]::new)[0];
         assertThat(submissionDTO.id()).isEqualTo(latestResult.getSubmission().getId());
         assertThat(submissionDTO.results()).hasSize(1);
-        var resultDTO = submissionDTO.results().toArray(RepoIdentifierProgrammingStudentParticipationDTO.RepoIdentifierResultDTO[]::new)[0];
+        var resultDTO = submissionDTO.results().toArray(RepoNameProgrammingStudentParticipationDTO.RepoNameResultDTO[]::new)[0];
         assertThat(resultDTO.id()).isEqualTo(latestResult.getId());
         assertThat(resultDTO.feedbacks()).isNotEmpty();
         for (var feedbackDTO : resultDTO.feedbacks()) {

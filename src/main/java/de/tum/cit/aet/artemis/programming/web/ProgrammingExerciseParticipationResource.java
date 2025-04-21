@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
-import de.tum.cit.aet.artemis.programming.dto.RepoIdentifierProgrammingStudentParticipationDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepoNameProgrammingStudentParticipationDTO;
 import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -201,7 +201,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise-participations/repo-name/{repoName}")
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RepoIdentifierProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(
+    public ResponseEntity<RepoNameProgrammingStudentParticipationDTO> getStudentParticipationWithLatestSubmissionLatestResultFeedbacksByRepoName(
             @PathVariable("repoName") String repoName) {
 
         String repoUrl;
@@ -242,7 +242,7 @@ public class ProgrammingExerciseParticipationResource {
             resultService.filterSensitiveInformationIfNecessary(participation, results, Optional.empty());
         }
 
-        return ResponseEntity.ok(RepoIdentifierProgrammingStudentParticipationDTO.of(participation));
+        return ResponseEntity.ok(RepoNameProgrammingStudentParticipationDTO.of(participation));
     }
 
     /**
