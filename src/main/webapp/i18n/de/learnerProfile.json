@@ -1,18 +1,18 @@
 {
     "artemisApp": {
         "learnerProfile": {
-            "initialValueHint": "Der initiale Wert, welcher vom System für die Statistik verwendet wird.",
-            "currentValueHint": "Der aktuelle Wert. Berechnet vom initialen Wert sowie deinen interaktionen mit Artemis.",
+            "initialValueHint": "Der Initialwert, welcher vom System für die Statistik verwendet wird.",
+            "currentValueHint": "Der aktuelle Wert, berechnet aus dem Initialwert und deinen Interaktionen mit Artemis.",
             "courseLearnerProfile": {
-                "title": "Kurs Lerner Profil",
+                "title": "Kurs-Lernprofil",
                 "selectCourse": "Kurs auswählen...",
-                "description": "Hier kannst du dein kursspezifisches Lerner Profil einsehen und aktualisieren.",
+                "description": "Hier kannst du dein kursspezifisches Lernprofil einsehen und aktualisieren.",
                 "initialState": "Ursprünglicher Zustand",
                 "currentState": "Aktueller Zustand",
                 "aimForGradeOrBonus": "Note oder zusätzliches Wissen fokussieren",
-                "timeInvestment": "Zeit Investment",
+                "timeInvestment": "Zeitaufwand",
                 "repetitionIntensity": "Wiederholungsintensität",
-                "profileSaved": "Profil gespeichert"
+                "profileSaved": "Lernprofil gespeichert"
             }
         }
     }

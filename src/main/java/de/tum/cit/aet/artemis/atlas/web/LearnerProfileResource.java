@@ -30,8 +30,14 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 @RequestMapping("api/atlas/")
 public class LearnerProfileResource {
 
+    /**
+     * Minimum value allowed for profile fields representing values on a Likert scale.
+     */
     private static final int MIN_PROFILE_VALUE = 1;
 
+    /**
+     * Maximum value allowed for profile fields representing values on a Likert scale.
+     */
     private static final int MAX_PROFILE_VALUE = 5;
 
     private static final Logger log = LoggerFactory.getLogger(LearnerProfileResource.class);
@@ -49,7 +55,7 @@ public class LearnerProfileResource {
      * GET /learner-profiles/course-learner-profiles : get a Map of a {@link de.tum.cit.aet.artemis.core.domain.Course} id
      * to the corresponding {@link CourseLearnerProfile} of the logged-in user.
      *
-     * @return The ResponseEntity with status 200 (OK) and with body containing a map of DTOs, wich contain per course profile data.
+     * @return The ResponseEntity with status 200 (OK) and with the body containing a map of DTOs, which contains per course profile data.
      */
     @GetMapping("course-learner-profiles")
     @EnforceAtLeastStudent
