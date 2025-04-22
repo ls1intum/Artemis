@@ -14,10 +14,12 @@ public enum StaticCodeAnalysisTool {
 
     // @formatter:off
     CHECKSTYLE("checkstyle-result.xml"),
+    CLANG_TIDY("clang-tidy.sarif"),
     CLIPPY("clippy.sarif"),
     DART_ANALYZE("dart_analyze.sarif"),
     ESLINT("eslint.sarif"),
     GCC("gcc.xml"),
+    LINTR("lintr_results.sarif"),
     PMD("pmd.xml"),
     PMD_CPD("cpd.xml"),
     RUBOCOP("rubocop.sarif"),
@@ -33,11 +35,14 @@ public enum StaticCodeAnalysisTool {
 
     static {
         Map<ProgrammingLanguage, List<StaticCodeAnalysisTool>> map = new EnumMap<>(ProgrammingLanguage.class);
+
         map.put(ProgrammingLanguage.C, List.of(GCC));
+        map.put(ProgrammingLanguage.C_PLUS_PLUS, List.of(CLANG_TIDY));
         map.put(ProgrammingLanguage.DART, List.of(DART_ANALYZE));
         map.put(ProgrammingLanguage.JAVA, List.of(SPOTBUGS, CHECKSTYLE, PMD, PMD_CPD));
         map.put(ProgrammingLanguage.JAVASCRIPT, List.of(ESLINT));
         map.put(ProgrammingLanguage.PYTHON, List.of(RUFF));
+        map.put(ProgrammingLanguage.R, List.of(LINTR));
         map.put(ProgrammingLanguage.RUBY, List.of(RUBOCOP));
         map.put(ProgrammingLanguage.RUST, List.of(CLIPPY));
         map.put(ProgrammingLanguage.SWIFT, List.of(SWIFTLINT));

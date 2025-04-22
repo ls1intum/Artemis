@@ -174,12 +174,6 @@ describe('CourseSidebarItemService', () => {
             });
         });
 
-        it('getTutorialGroupsItem should include feature toggle', () => {
-            const item = service.getTutorialGroupsItem(courseId);
-
-            expect(item.featureToggle).toBe(FeatureToggle.TutorialGroups);
-        });
-
         it('getCompetenciesManagementItem should return correct item', () => {
             const item = service.getCompetenciesManagementItem(courseId);
 
@@ -306,12 +300,6 @@ describe('CourseSidebarItemService', () => {
                 testId: 'lti-settings',
                 hidden: false,
             });
-        });
-
-        it('getNotificationSettingsItem should include feature toggle', () => {
-            const item = service.getNotificationSettingsItem();
-
-            expect(item.featureToggle).toBe(FeatureToggle.CourseSpecificNotifications);
         });
 
         it('getCourseSettingsItem should return correct item', () => {

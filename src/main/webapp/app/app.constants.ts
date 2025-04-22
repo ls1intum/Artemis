@@ -37,11 +37,17 @@ export const PROFILE_LOCALCI = 'localci';
 
 export const PROFILE_AEOLUS = 'aeolus';
 
+export const FEATURE_PASSKEY = 'passkey';
+
 export const MODULE_FEATURE_ATLAS = 'atlas';
+
+export const MODULE_FEATURE_EXAM = 'exam';
 
 export const MODULE_FEATURE_PLAGIARISM = 'plagiarism';
 
 export const MODULE_FEATURE_TEXT = 'text';
+
+export const MODULE_FEATURE_TUTORIALGROUP = 'tutorialgroup';
 
 export const PROFILE_IRIS = 'iris';
 

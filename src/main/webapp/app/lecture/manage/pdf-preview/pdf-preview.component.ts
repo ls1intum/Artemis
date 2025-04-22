@@ -28,7 +28,6 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 import { ButtonType } from 'app/shared/components/button/button.component';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
 import * as PDFJS from 'pdfjs-dist';
-import 'pdfjs-dist/build/pdf.worker';
 
 interface PdfOperation {
     type: 'MERGE' | 'DELETE' | 'HIDE' | 'SHOW' | 'REORDER';

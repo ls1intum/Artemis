@@ -19,7 +19,6 @@ import dayjs from 'dayjs/esm';
 import { NavigationEnd, Params, Router } from '@angular/router';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -34,7 +33,6 @@ export class MetisConversationService implements OnDestroy {
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
     private router = inject(Router);
-    private notificationService = inject(NotificationService);
 
     // Stores the conversation of the course where the current user is a member
     private conversationsOfUser: ConversationDTO[] = [];
@@ -65,12 +63,13 @@ export class MetisConversationService implements OnDestroy {
     constructor() {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
-        });
-
-        this.activeConversationSubscription = this.notificationService.newOrUpdatedMessage.subscribe((postDTO: MetisPostDTO) => {
-            if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
-                this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
-            }
+            const conversationTopic = `/topic/user/${this.userId}/notifications/conversations`;
+            this.websocketService.subscribe(conversationTopic);
+            this.activeConversationSubscription = this.websocketService.receive(conversationTopic)?.subscribe((postDTO: MetisPostDTO) => {
+                if (postDTO.action === MetisPostAction.CREATE && postDTO.post.author?.id !== this.userId) {
+                    this.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
+                }
+            });
         });
     }
 
@@ -456,7 +455,7 @@ export class MetisConversationService implements OnDestroy {
         }
     }
 
-    private handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
+    handleNewMessage(conversationId: number | undefined, lastMessageDate: dayjs.Dayjs | undefined) {
         const conversationsCopy = [...this.conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationId);
         if (indexOfCachedConversation !== -1) {

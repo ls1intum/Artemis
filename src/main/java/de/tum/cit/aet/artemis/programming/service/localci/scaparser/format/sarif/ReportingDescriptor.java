@@ -33,6 +33,15 @@ public record ReportingDescriptor(String id, Set<String> deprecatedIds, String g
         URI helpUri, MultiformatMessageString help, PropertyBag properties) {
 
     /**
+     * Create a ReportingDescriptor from a rule id without any optional fields.
+     *
+     * @param id A stable, opaque identifier for the report.
+     */
+    public ReportingDescriptor(String id) {
+        this(id, null, null, null, null, null, null, null, null, null, null, null, null);
+    }
+
+    /**
      * An array of stable, opaque identifiers by which this report was known in some previous version of the analysis tool.
      */
     public Optional<Set<String>> getOptionalDeprecatedIds() {

@@ -28,6 +28,11 @@ class ArtemisConfigHelperTest {
     }
 
     @Test
+    void testExamProperty() {
+        testProperty(artemisConfigHelper::isExamEnabled, Constants.EXAM_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
     void testPlagiarismProperty() {
         testProperty(artemisConfigHelper::isPlagiarismEnabled, Constants.PLAGIARISM_ENABLED_PROPERTY_NAME);
     }
@@ -35,6 +40,11 @@ class ArtemisConfigHelperTest {
     @Test
     void testTextExerciseProperty() {
         testProperty(artemisConfigHelper::isTextExerciseEnabled, Constants.TEXT_ENABLED_PROPERTY_NAME);
+    }
+
+    @Test
+    void testTutorialgroupProperty() {
+        testProperty(artemisConfigHelper::isTutorialGroupEnabled, Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME);
     }
 
     private void testProperty(Function<Environment, Boolean> propertyTest, String propertyName) {

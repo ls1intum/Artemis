@@ -29,7 +29,6 @@ import { Post } from 'app/communication/shared/entities/post.model';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
@@ -63,17 +62,20 @@ export class MetisService implements OnDestroy {
     private cachedTotalNumberOfPosts: number;
     private subscriptionChannel?: string;
     private courseWideTopicSubscription: Subscription;
+    private activeConversationSubscription: Subscription;
 
     course: Course;
 
     constructor() {
-        const notificationService = inject(NotificationService);
-
         this.accountService.identity().then((user: User) => {
             this.user = user!;
-        });
 
-        this.courseWideTopicSubscription = notificationService.newOrUpdatedMessage.subscribe(this.handleNewOrUpdatedMessage);
+            const conversationTopic = `/topic/user/${this.user.id}/notifications/conversations`;
+            this.websocketService.subscribe(conversationTopic);
+            this.activeConversationSubscription = this.websocketService.receive(conversationTopic).subscribe((postDTO: MetisPostDTO) => {
+                this.handleNewOrUpdatedMessage(postDTO);
+            });
+        });
     }
 
     get posts(): Observable<Post[]> {
@@ -128,7 +130,12 @@ export class MetisService implements OnDestroy {
         if (this.subscriptionChannel) {
             this.websocketService.unsubscribe(this.subscriptionChannel);
         }
-        this.courseWideTopicSubscription.unsubscribe();
+        if (this.courseWideTopicSubscription) {
+            this.courseWideTopicSubscription.unsubscribe();
+        }
+        if (this.activeConversationSubscription) {
+            this.activeConversationSubscription.unsubscribe();
+        }
     }
 
     getPageType(): PageType {
@@ -155,6 +162,16 @@ export class MetisService implements OnDestroy {
         if (course && (this.courseId === undefined || this.courseId !== course.id)) {
             this.courseId = course.id!;
             this.course = course;
+
+            if (this.courseWideTopicSubscription) {
+                this.courseWideTopicSubscription.unsubscribe();
+            }
+
+            const coursewideTopic = `/topic/metis/courses/${this.courseId}`;
+            this.websocketService.subscribe(coursewideTopic);
+            this.courseWideTopicSubscription = this.websocketService.receive(coursewideTopic).subscribe((postDTO: MetisPostDTO) => {
+                this.handleNewOrUpdatedMessage(postDTO);
+            });
         }
     }
 

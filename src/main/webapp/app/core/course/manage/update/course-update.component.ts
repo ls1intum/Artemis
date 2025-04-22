@@ -4,7 +4,7 @@ import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, ValidatorFn, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course, CourseInformationSharingConfiguration, isCommunicationEnabled, isMessagingEnabled, unsetCourseIcon } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -23,7 +23,7 @@ import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes,
 import { base64StringToBlob } from 'app/shared/util/blob-util';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/core/course/manage/services/course-admin.service';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -85,7 +85,6 @@ export class CourseUpdateComponent implements OnInit {
     private modalService = inject(NgbModal);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
-    private featureToggleService = inject(FeatureToggleService);
     private accountService = inject(AccountService);
 
     CachingStrategy = CachingStrategy;
@@ -127,7 +126,6 @@ export class CourseUpdateComponent implements OnInit {
     atlasEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
-    tutorialGroupsFeatureActivated = false;
 
     private courseStorageService = inject(CourseStorageService);
 
@@ -268,19 +266,6 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
-
-        this.featureToggleService
-            .getFeatureToggleActive(FeatureToggle.TutorialGroups)
-            .pipe(
-                tap((active) => {
-                    this.tutorialGroupsFeatureActivated = active;
-                }),
-            )
-            .subscribe(() => {
-                if (this.tutorialGroupsFeatureActivated && this.courseForm) {
-                    this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
-                }
-            });
 
         this.isAdmin = this.accountService.isAdmin();
     }

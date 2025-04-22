@@ -240,6 +240,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
         test('Deletes an existing course', async ({ navigationBar, courseManagement }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
+            await courseManagement.openCourseSettings();
             await courseManagement.deleteCourse(course);
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });

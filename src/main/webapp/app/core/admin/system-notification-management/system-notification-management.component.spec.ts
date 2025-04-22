@@ -10,16 +10,16 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
 import '@angular/localize/init';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
 
 describe('SystemNotificationManagementComponent', () => {
     let managementComponentFixture: ComponentFixture<SystemNotificationManagementComponent>;

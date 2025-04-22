@@ -85,7 +85,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         postRepository.save(post);
 
-        preparePostAndBroadcast(savedAnswerPost, course, null);
+        preparePostAndBroadcast(savedAnswerPost, course);
 
         return savedAnswerPost;
     }
@@ -130,7 +130,7 @@ public class PlagiarismAnswerPostService extends PostingService {
             existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-        this.preparePostAndBroadcast(updatedAnswerPost, course, null);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }
 
@@ -219,14 +219,5 @@ public class PlagiarismAnswerPostService extends PostingService {
         if (!user.getId().equals(answerPost.getAuthor().getId())) {
             throw new AccessForbiddenException("You are not allowed to edit this post");
         }
-    }
-
-    /**
-     * Sends out a request to the SingleUserNotificationService to inform the instructor about a reply to a post related to a plagiarism case.
-     *
-     * @param post the post that has received a reply
-     */
-    public void informInstructorAboutPostReply(Post post) {
-        singleUserNotificationService.notifyInstructionAboutPlagiarismCaseReply(post.getPlagiarismCase(), post.getAuthor());
     }
 }

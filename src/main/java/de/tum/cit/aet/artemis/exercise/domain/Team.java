@@ -209,7 +209,6 @@ public class Team extends AbstractAuditingEntity implements Participant {
     public void filterSensitiveInformation() {
         this.students.forEach(student -> {
             student.setLangKey(null);
-            student.setLastNotificationRead(null);
         });
     }
 
