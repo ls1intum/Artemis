@@ -23,6 +23,10 @@
                     "groupedExercises": {
                         "header": "Activate exercise grouping:",
                         "selector": "If activated, selecting multiple exercises in the table will group them and display them in the Artemis sidebar within the exercise view"
+                    },
+                    "groupedLectures": {
+                        "header": "Activate lecture grouping:",
+                        "selector": "If activated, selecting multiple lectures in the table will group them and display them in the Artemis sidebar within the lecture view"
                     }
                 }
             },

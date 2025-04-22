@@ -60,10 +60,7 @@ export class Lti13DeepLinkingComponent implements OnInit {
 
     //grouping
     isExerciseGroupingActive = false;
-
-    //dropdowns
-    isExerciseDropdownOpen = false;
-    isLectureDropdownOpen = false;
+    isLectureGroupingActive = false;
 
     // Icons
     faSort = faSort;
@@ -164,6 +161,10 @@ export class Lti13DeepLinkingComponent implements OnInit {
         this.isExerciseGroupingActive = true;
     }
 
+    activateLectureGrouping() {
+        this.isLectureGroupingActive = true;
+    }
+
     selectLecture(lectureId: number | undefined) {
         if (lectureId !== undefined) {
             if (this.selectedLectures?.has(lectureId)) {
@@ -226,7 +227,11 @@ export class Lti13DeepLinkingComponent implements OnInit {
                 }
                 contentIds = Array.from(this.selectedExercises).join(',');
             } else if (this.selectedLectures?.size) {
-                resourceType = DeepLinkingType.LECTURE;
+                if (this.isLectureGroupingActive) {
+                    resourceType = DeepLinkingType.GROUPED_LECTURE;
+                } else {
+                    resourceType = DeepLinkingType.LECTURE;
+                }
                 contentIds = Array.from(this.selectedLectures).join(',');
             } else if (this.isCompetencySelected) {
                 resourceType = DeepLinkingType.COMPETENCY;

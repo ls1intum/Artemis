@@ -33,11 +33,11 @@ public interface FileUploadRepository extends ArtemisJpaRepository<FileUpload, L
      * @return List of file uploads that do not have a conversation entity connected to them
      */
     @Query("""
-                SELECT f
-                FROM FileUpload f
-                    LEFT JOIN Conversation c ON f.entityId = c.id
-                WHERE f.entityType = 0
-                    AND c.id IS NULL
+            SELECT f
+            FROM FileUpload f
+                LEFT JOIN Conversation c ON f.entityId = c.id
+            WHERE f.entityType = 0
+                AND c.id IS NULL
             """)
     List<FileUpload> findOrphanedConversationReferences();
 
@@ -49,10 +49,10 @@ public interface FileUploadRepository extends ArtemisJpaRepository<FileUpload, L
      * @return List of file uploads that do not have an entity and were created before a given date
      */
     @Query("""
-                SELECT f
-                FROM FileUpload f
-                WHERE (f.entityType IS NULL OR f.entityId IS NULL)
-                    AND f.creationDate < :cutoffDate
+            SELECT f
+            FROM FileUpload f
+            WHERE (f.entityType IS NULL OR f.entityId IS NULL)
+                AND f.creationDate < :cutoffDate
             """)
     List<FileUpload> findNullEntityReferences(@Param("cutoffDate") ZonedDateTime cutoffDate);
 }
