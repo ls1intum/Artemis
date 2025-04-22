@@ -47,24 +47,6 @@ const programmingSubmission = {
     commitHash: '123456789ab',
 } as ProgrammingSubmission;
 
-const programmingParticipation = {
-    id: 4,
-    student: user,
-    submissions: [programmingSubmission],
-    type: ParticipationType.PROGRAMMING,
-    participantIdentifier: 'student1',
-    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
-} as ProgrammingExerciseStudentParticipation;
-
-const programmingExercise = {
-    id: 4,
-    type: ExerciseType.PROGRAMMING,
-    studentParticipations: [programmingParticipation],
-    exerciseGroup,
-    projectKey: 'TEST',
-    dueDate: dayjs().subtract(5, 'minutes'),
-} as ProgrammingExercise;
-
 const feedbackReference = {
     id: 1,
     result: { id: 2 } as Result,
@@ -91,6 +73,25 @@ const result = {
     feedbacks: [feedback],
     assessmentType: AssessmentType.MANUAL,
 } as Result;
+
+const programmingParticipation = {
+    id: 4,
+    student: user,
+    submissions: [programmingSubmission],
+    type: ParticipationType.PROGRAMMING,
+    participantIdentifier: 'student1',
+    repositoryUri: 'https://username@artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username',
+    results: [result],
+} as ProgrammingExerciseStudentParticipation;
+
+const programmingExercise = {
+    id: 4,
+    type: ExerciseType.PROGRAMMING,
+    studentParticipations: [programmingParticipation],
+    exerciseGroup,
+    projectKey: 'TEST',
+    dueDate: dayjs().subtract(5, 'minutes'),
+} as ProgrammingExercise;
 
 describe('ProgrammingExamSummaryComponent', () => {
     let component: ProgrammingExamSummaryComponent;
