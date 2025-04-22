@@ -56,11 +56,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           BRANCH_NAME=${{ github.event.inputs.branch_name }}
-          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop'."
+          REPO_NAME=${{ github.repository }}
+          echo "Checking if PR exists for branch: $BRANCH_NAME targeting 'develop' in $REPO_NAME (excluding forks)."
 
           PR_DETAILS=$(gh api repos/${{ github.repository }}/pulls \
             --paginate \
-            --jq ".[] | select(.head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
+            --jq ".[] | select(.head.repo.full_name == \"$REPO_NAME\" and .head.ref == \"$BRANCH_NAME\" and .base.ref == \"develop\") | {number: .number, sha: .head.sha}")
 
           PR_NUMBER=$(echo "$PR_DETAILS" | jq -r ".number")
           PR_HEAD_SHA=$(echo "$PR_DETAILS" | jq -r ".sha")
