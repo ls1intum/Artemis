@@ -39,6 +39,8 @@ import { addPublicFilePrefix } from 'app/app.constants';
     ],
 })
 export class TutorialGroupDetailComponent implements OnChanges {
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private artemisMarkdownService = inject(ArtemisMarkdownService);
     private changeDetectorRef = inject(ChangeDetectorRef);
     private translateService = inject(TranslateService);
@@ -126,6 +128,4 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
         this.getTutorialDetail();
     }
-
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }

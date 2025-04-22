@@ -46,6 +46,8 @@ import { addPublicFilePrefix } from 'app/app.constants';
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private ngUnsubscribe = new Subject<void>();
 
     activeConversation = input.required<ConversationDTO>();
@@ -308,6 +310,4 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             this.onUserNameClicked.emit(memberId);
         }
     }
-
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
