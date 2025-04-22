@@ -10,6 +10,7 @@ $transition-color-length: 0.2s;
 
 .sidebar-container {
     width: $menu-width-open;
+
     &.collapsed {
         width: $menu-width-closed !important;
     }
@@ -65,6 +66,7 @@ jhi-secured-image {
     justify-content: center;
     padding-right: 0;
 }
+
 .double-arrow-icon {
     display: inline-flex;
     align-items: center;
@@ -73,6 +75,7 @@ jhi-secured-image {
     transition: transform 0.3s ease;
     transform: rotate(180deg);
 }
+
 .menu-closed .double-arrow-icon {
     transform: rotate(0deg);
     padding-left: 0;
@@ -126,10 +129,12 @@ jhi-secured-image {
     background-color: var(--link-item-bg);
     color: var(--link-item-color);
 }
+
 // We have to override this style from globals.scss here as we only want to target the span with the text inside
 a:not(.btn):not(.tab-link):hover {
     text-decoration: none !important;
 }
+
 .nav-link-sidebar:hover span {
     text-decoration: underline;
     text-underline-offset: 3px;
@@ -138,6 +143,7 @@ a:not(.btn):not(.tab-link):hover {
 
 .three-dots {
     cursor: pointer;
+
     &:hover {
         color: var(--link-item-color);
     }
@@ -155,6 +161,7 @@ a:not(.btn):not(.tab-link):hover {
     border: 1px solid var(--border-color);
     z-index: 3000;
     border-radius: 4px;
+
     &.fixedContentSize {
         max-height: 171px; // To avoid cut offs in the dropdown menu content (4 items)
     }
@@ -178,15 +185,21 @@ a:not(.btn):not(.tab-link):hover {
         display: none; /* Hide the sidebar when printing */
     }
 }
+
 // Without ng-deep we fail to override the styles from the tooltip
 ::ng-deep .double-arrow-tooltip {
+    // without this styling the tooltip is positioned with some distance to the left of the collapse icon when the sidebar is expanded.
+    // the margin bottom ensures the tooltip does not overlap with the collapse icon
     left: 2rem !important;
     margin-bottom: 0.25rem !important;
 }
+
 ::ng-deep .double-arrow-tooltip-no-bottom-items {
     left: 5.75rem !important;
     margin-bottom: 0.25rem !important;
 }
+
 ::ng-deep .double-arrow-tooltip-collapsed {
+    // without this styling the tooltip is positioned with too much distance to the right of the collapse icon when the sidebar is collapsed.
     left: -2.25rem !important;
 }
