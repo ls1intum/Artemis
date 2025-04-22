@@ -7,7 +7,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { LearningPathLectureUnitComponent } from 'app/atlas/overview/learning-path-lecture-unit/learning-path-lecture-unit.component';
 import { LearningPathExerciseComponent } from 'app/atlas/overview/learning-path-exercise/learning-path-exercise.component';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

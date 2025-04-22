@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, effect, input, output, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, Renderer2, inject, input, output, signal, viewChild } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 type NavigationDirection = 'next' | 'prev';
@@ -9,7 +9,7 @@ type NavigationDirection = 'next' | 'prev';
     styleUrls: ['./pdf-preview-enlarged-canvas.component.scss'],
     imports: [TranslateDirective],
 })
-export class PdfPreviewEnlargedCanvasComponent {
+export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit {
     enlargedContainer = viewChild.required<ElementRef<HTMLDivElement>>('enlargedContainer');
     enlargedCanvas = viewChild.required<ElementRef<HTMLCanvasElement>>('enlargedCanvas');
 
@@ -19,6 +19,7 @@ export class PdfPreviewEnlargedCanvasComponent {
     pdfContainer = input.required<HTMLDivElement>();
     originalCanvas = input<HTMLCanvasElement>();
     totalPages = input<number>(0);
+    initialPage = input<number>();
 
     // Signals
     currentPage = signal<number>(1);
@@ -27,11 +28,17 @@ export class PdfPreviewEnlargedCanvasComponent {
     //Outputs
     isEnlargedViewOutput = output<boolean>();
 
-    constructor() {
-        effect(() => {
-            this.enlargedContainer().nativeElement.style.top = `${this.pdfContainer().scrollTop}px`;
-            this.displayEnlargedCanvas(this.originalCanvas()!);
-        });
+    // Injected services
+    private readonly renderer = inject(Renderer2);
+
+    ngOnInit() {
+        this.currentPage.set(this.initialPage()!);
+        this.displayEnlargedCanvas(this.originalCanvas()!);
+    }
+
+    ngAfterViewInit() {
+        const containerEl = this.enlargedContainer().nativeElement;
+        this.renderer.setStyle(containerEl, 'top', `${this.pdfContainer().scrollTop}px`);
     }
 
     /**
@@ -58,17 +65,16 @@ export class PdfPreviewEnlargedCanvasComponent {
     /**
      * Dynamically updates the canvas size within an enlarged view based on the viewport.
      */
-    adjustCanvasSize = () => {
+    adjustCanvasSize() {
         const canvasElements = this.pdfContainer().querySelectorAll('.pdf-canvas-container canvas');
         if (this.currentPage() - 1 < canvasElements.length) {
             const canvas = canvasElements[this.currentPage() - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
         }
-    };
+    }
 
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedCanvasLoading.set(true);
-        this.currentPage.set(Number(originalCanvas.id));
         this.toggleBodyScroll(true);
         setTimeout(() => {
             this.updateEnlargedCanvas(originalCanvas);

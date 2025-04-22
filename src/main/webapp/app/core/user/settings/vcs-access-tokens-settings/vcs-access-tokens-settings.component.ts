@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { faBan, faCopy, faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
@@ -12,7 +12,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 
 @Component({
@@ -32,16 +32,19 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
     ],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    protected readonly faEdit = faEdit;
+    protected readonly faSave = faSave;
+    protected readonly faTrash = faTrash;
+    protected readonly faCopy = faCopy;
+    protected readonly faBan = faBan;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
 
     currentUser?: User;
 
-    readonly faEdit = faEdit;
-    readonly faSave = faSave;
-    readonly faTrash = faTrash;
-    readonly faCopy = faCopy;
-    readonly faBan = faBan;
     private authStateSubscription: Subscription;
     expiryDate?: dayjs.Dayjs;
     validExpiryDate = false;
@@ -51,9 +54,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
 
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

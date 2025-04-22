@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="head">
+    <head>
+        <title th:text="#{email.courseNotification.newExerciseNotification.title}">New Exercise</title>
+        <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+        <th:block th:replace="~{mail/notification/fragments :: css}"/>
+    </head>
+</th:block>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block>
+        <span th:text="#{email.greetings}">Dear </span>
+        <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+        <br>
+    </th:block>
+    <div class="notification-content">
+        <span th:text="#{email.courseNotification.newExerciseNotification.text(
+            ${parameters['exerciseTitle']},
+            ${parameters['courseTitle']}
+            )}">New exercise released in Artemis.
+        </span>
+
+        <p class="bold-text" th:text="#{email.courseNotification.newExerciseNotification.overview}">Information about this exercise:</p>
+
+        <ul>
+            <th:block th:if="${parameters['difficulty']}">
+                <li>
+                    <th:block th:switch="${parameters['difficulty']}">
+                        <th:block th:case="'EASY'">
+                            <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty} "/>: <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty.easy} "/>
+                        </th:block>
+                        <th:block th:case="'MEDIUM'">
+                            <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty} "/>: <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty.medium} "/>
+                        </th:block>
+                        <th:block th:case="'HARD'">
+                            <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty} "/>: <span th:utext="#{email.courseNotification.newExerciseNotification.difficulty.hard} "/>
+                        </th:block>
+                    </th:block>
+                </li>
+            </th:block>
+
+            <th:block th:if="${parameters['releaseDate']}">
+                <li>
+                    <span th:utext="#{email.courseNotification.newExerciseNotification.releaseDate} "/>: <span th:utext="${parameters['releaseDate']}"/>
+                </li>
+            </th:block>
+
+            <th:block th:if="${parameters['dueDate']}">
+                <li>
+                    <span th:utext="#{email.courseNotification.newExerciseNotification.dueDate} "/>: <span th:utext="${parameters['dueDate']}"/>
+                </li>
+            </th:block>
+
+            <th:block th:if="${parameters['numberOfPoints']}">
+                <li>
+                    <span th:utext="#{email.courseNotification.newExerciseNotification.numberOfPoints} "/>: <span th:utext="${parameters['numberOfPoints']}"/>
+                </li>
+            </th:block>
+        </ul>
+
+        <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<!-- Message Body End -->
+<th:block>
+    <footer>
+        <span th:text="#{email.notification.aux.footer}"/>
+        <a th:href="@{|${serverUrl}/courses/${courseId}/settings|}">
+            <span th:text="#{email.notification.aux.footer.link}"/>
+        </a>
+    </footer>
+</th:block>
+</body>
+</html>

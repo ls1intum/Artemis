@@ -12,6 +12,7 @@ export class CourseNotification {
     public status?: CourseNotificationViewingStatus;
     public creationDate?: dayjs.Dayjs;
     public parameters?: Record<string, string | number | boolean | undefined>;
+    public relativeWebAppUrl?: string;
 
     constructor(
         notificationId: number,
@@ -21,6 +22,7 @@ export class CourseNotification {
         status: CourseNotificationViewingStatus,
         creationDate: dayjs.Dayjs,
         parameters: Record<string, string | number | boolean | undefined>,
+        relativeWebAppUrl: string,
     ) {
         this.status = status;
         this.notificationId = notificationId;
@@ -35,5 +37,6 @@ export class CourseNotification {
         this.category = courseNotificationCategory;
         this.creationDate = creationDate;
         this.parameters = parameters;
+        this.relativeWebAppUrl = relativeWebAppUrl;
     }
 }

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit, inject, input, output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -9,12 +9,12 @@ import { concatMap, finalize, switchMap, take } from 'rxjs/operators';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
-import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/exerciseUnit.service';
+import { ExerciseUnitService } from 'app/lecture/manage/lecture-units/services/exerciseUnit.service';
 import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-create-exercise-unit',

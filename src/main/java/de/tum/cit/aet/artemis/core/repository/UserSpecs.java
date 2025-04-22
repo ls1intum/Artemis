@@ -96,8 +96,8 @@ public class UserSpecs {
         }
         else {
             return (root, query, criteriaBuilder) -> {
-                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.IS_INTERNAL), internal);
-                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.IS_INTERNAL), external);
+                Predicate internalPredicate = criteriaBuilder.equal(root.get(User_.INTERNAL), internal);
+                Predicate externalPredicate = criteriaBuilder.notEqual(root.get(User_.INTERNAL), external);
 
                 return criteriaBuilder.and(internalPredicate, externalPredicate);
             };
@@ -178,7 +178,7 @@ public class UserSpecs {
      */
     public static Specification<User> notSoftDeleted() {
         return (root, query, criteriaBuilder) -> {
-            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.IS_DELETED), false);
+            Predicate notDeletedPredicate = criteriaBuilder.equal(root.get(User_.DELETED), false);
 
             return criteriaBuilder.and(notDeletedPredicate);
         };

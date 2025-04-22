@@ -16,12 +16,16 @@ import de.tum.cit.aet.artemis.communication.domain.setting_presets.IgnoreUserCou
 /**
  * Base class representing a notification type. If you want to create a new notification,
  * extend this and add the {@code @CourseNotificationType(n)} decorator to the class. The n in the decorator
- * represents the database identifier. Make sure to use a unique one. Things to keep in mind for new notifications:
+ * represents the database identifier. Make sure to use a unique one. All protected fields of your class will be serialized
+ * automatically and stored as course notification parameters if not null. Things to keep in mind for new notifications:
  * <ul>
  * <li>For {@code WEBAPP}: Create the translations for the notification in the notification.json
- * {@code artemisApp.courseNotification.{camelCaseClassName}}.</li>
+ * {@code artemisApp.courseNotification.{camelCaseClassName}}. All the protected fields of your notification
+ * will be injected into the translation string automatically. To control the icon that shows for the notification
+ * as well as markdown rendering consult the {@code course-notification.service.ts}.</li>
  * <li>For {@code EMAIL}: Create the e-mail template in the {@code src.resources.templates.mail} directory using {@code {camelCaseClassName}.html}
- * and create the localizations in the {@code src.resources.i18n.messages} directory.</li>
+ * and create the localizations in the {@code src.resources.i18n.messages} directory. All protected fields of your
+ * notification are made available automatically in the thymeleaf template.</li>
  * <li>For {@code PUSH}: Notify android and iOS developers about new notification and create translation strings accordingly</li>
  * </ul>
  *
@@ -72,7 +76,7 @@ public abstract class CourseNotification {
     /**
      * This method initializes the fields in a notification object. This is done to avoid huge walls of boilerplate
      * code when initializing fields as well as avoiding inconsistencies when manually naming keys. Make sure to
-     * use non-null primitive types (+ String) only.
+     * use primitive types (+ String) only.
      */
     private void parseParameters() {
         for (Field field : this.getClass().getDeclaredFields()) {
@@ -217,4 +221,11 @@ public abstract class CourseNotification {
      * @return Returns list of supported channels.
      */
     public abstract List<NotificationChannelOption> getSupportedChannels();
+
+    /**
+     * This function should return the relative webapp url (e.g /courses/:courseId/communication?conversationId=:conversationId).
+     *
+     * @return Returns the relative webapp URL as a string
+     */
+    public abstract String getRelativeWebAppUrl();
 }

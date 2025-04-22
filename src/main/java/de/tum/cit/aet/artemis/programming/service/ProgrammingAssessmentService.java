@@ -24,13 +24,13 @@ import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
-import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
@@ -38,18 +38,14 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 @Service
 public class ProgrammingAssessmentService extends AssessmentService {
 
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
-
     private final Optional<AthenaFeedbackApi> athenaFeedbackApi;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
-            SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, Optional<LtiNewResultService> ltiNewResultService,
-            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
+            SubmissionRepository submissionRepository, Optional<ExamDateApi> examDateApi, UserRepository userRepository, Optional<LtiApi> ltiApi,
+            SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService, Optional<AthenaFeedbackApi> athenaFeedbackApi) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
+                submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
@@ -123,7 +119,7 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
         // Note: we always need to report the result over LTI, even if the assessment due date is not over yet.
         // Otherwise, it might never become visible in the external system
-        ltiNewResultService.ifPresent(newResultService -> newResultService.onNewResult(participation));
+        ltiApi.ifPresent(newResultService -> newResultService.onNewResult(participation));
         if (ExerciseDateService.isAfterAssessmentDueDate(exercise)) {
             resultWebsocketService.broadcastNewResult(participation, newManualResult);
         }

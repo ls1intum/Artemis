@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 export class OnlineCourseConfiguration implements BaseEntity {
     public id?: number;

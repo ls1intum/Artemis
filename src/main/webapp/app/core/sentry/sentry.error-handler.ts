@@ -1,6 +1,6 @@
 import { ErrorHandler, Injectable } from '@angular/core';
 import { captureException, dedupeIntegration, init } from '@sentry/angular';
-import { VERSION } from 'app/app.constants';
+import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 @Injectable({ providedIn: 'root' })
@@ -18,9 +18,9 @@ export class SentryErrorHandler extends ErrorHandler {
 
         if (profileInfo.testServer != undefined) {
             if (profileInfo.testServer) {
-                this.environment = 'test';
+                this.environment = PROFILE_TEST;
             } else {
-                this.environment = 'prod';
+                this.environment = PROFILE_PROD;
             }
         } else {
             this.environment = 'local';
@@ -31,8 +31,10 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: [dedupeIntegration()],
-            tracesSampleRate: this.environment !== 'prod' ? 1.0 : 0.2,
+            tracesSampleRate: this.environment !== PROFILE_PROD ? 1.0 : 0.2,
         });
+
+        this.reportIfPasskeyIsNotSupported();
     }
 
     /**
@@ -49,5 +51,44 @@ export class SentryErrorHandler extends ErrorHandler {
             captureException(exception);
         }
         super.handleError(error);
+    }
+
+    /**
+     * Extracts the date part from an ISO 8601 formatted string.
+     *
+     * @param isoString The ISO 8601 formatted string (e.g., "YYYY-MM-DDTHH:mm:ss.sssZ").
+     * @return The date part of the ISO string (e.g., "YYYY-MM-DD").
+     */
+    private getDatePartFromISOString(isoString: string | null): string {
+        return isoString ? isoString.split('T')[0] : '';
+    }
+
+    private hasBeenReportedToday() {
+        const lastReported = localStorage.getItem('webauthnNotSupportedTimestamp');
+        const dateToday = this.getDatePartFromISOString(new Date().toISOString());
+        const dateLastReported = this.getDatePartFromISOString(lastReported);
+        return lastReported && dateLastReported === dateToday;
+    }
+
+    /**
+     * Reports to Sentry if the browser does not support WebAuthn (required for Passkey authentication).
+     *
+     * The message is only reported once per day per browser of a user.
+     */
+    private reportIfPasskeyIsNotSupported() {
+        const isWebAuthnUsable = window.PublicKeyCredential;
+        if (!isWebAuthnUsable) {
+            if (this.hasBeenReportedToday()) {
+                return;
+            }
+
+            localStorage.setItem('webauthnNotSupportedTimestamp', new Date().toISOString());
+            captureException(new Error('Browser does not support WebAuthn - no Passkey authentication possible'), {
+                tags: {
+                    feature: 'Passkey Authentication',
+                    browser: navigator.userAgent,
+                },
+            });
+        }
     }
 }

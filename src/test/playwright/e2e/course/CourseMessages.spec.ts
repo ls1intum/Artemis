@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID, titleLowercase } from '../../support/utils';
 import { Channel } from 'app/communication/shared/entities/conversation/channel.model';

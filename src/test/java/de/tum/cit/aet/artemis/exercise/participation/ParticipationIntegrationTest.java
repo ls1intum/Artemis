@@ -51,8 +51,11 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -145,6 +148,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
+    private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExamTestRepository examTestRepository;
+
+    @Autowired
+    private StudentExamTestRepository studentExamRepository;
+
+    @Autowired
     private ExamTestRepository examRepository;
 
     @Captor
@@ -188,13 +200,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
-        doReturn(defaultBranch).when(versionControlService).getDefaultBranchOfRepository(any());
+        doReturn(defaultBranch).when(localVCGitBranchService).getDefaultBranchOfRepository(any());
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doReturn(null).when(gitService).getOrCheckoutRepositoryIntoTargetDirectory(any(), any(), anyBoolean());
 
-        doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
+        doNothing().when(continuousIntegrationService).configureBuildPlan(any());
 
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
@@ -303,6 +315,126 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentBeforeDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepository.save(textExercise);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class,
+                HttpStatus.CREATED);
+
+        assertThat(participation).isNotNull();
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Set<User> participationUsers = participation.getStudents();
+        assertThat(participationUsers).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentDueDatePassed() throws Exception {
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        exerciseRepository.save(textExercise);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Students can start participations during the working time of the exam.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentBeforeNormalDueDatePassed() throws Exception {
+        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        Set<User> participationUsers = participation.getStudents();
+        assertThat(participationUsers).contains(user);
+    }
+
+    /**
+     * Students cannot start participations after the working time of the exam.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentAfterNormalDueDatePassed() throws Exception {
+        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Students cannot start participations before the working time of the exam began.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentAfterBeforeStartDatePassed() throws Exception {
+        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().plusHours(1));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().plusHours(2));
+        examTestRepository.save(examTextExercise.getExam());
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Students might have individual working time on exams. If the normal working time is over,
+     * but the individual working time is still ongoing, the student should be able to start a participation.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithOngoingIndividualWorkingTime() throws Exception {
+        String studentLogin = TEST_PREFIX + "student1";
+        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(2));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
+        int threeHours = 3 * 60 * 60;
+        studentExam.setWorkingTime(threeHours);
+        studentExamRepository.save(studentExam);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+
+        assertThat(participation).isNotNull();
+        User user = userUtilService.getUserByLogin(studentLogin);
+        Set<User> participationUsers = participation.getStudents();
+        assertThat(participationUsers).contains(user);
+    }
+
+    /**
+     * If the individual working time has expired, the student should NOT be able to start a participation.
+     *
+     * @see #participateInTextExerciseAsStudentAfterNormalDueDatePassedWithOngoingIndividualWorkingTime
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInTextExerciseAsStudentAfterNormalDueDatePassedWithExpiredIndividualWorkingTime() throws Exception {
+        String studentLogin = TEST_PREFIX + "student1";
+        TextExercise examTextExercise = textExerciseUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        examTextExercise.getExam().setStartDate(ZonedDateTime.now().minusHours(3));
+        examTextExercise.getExam().setEndDate(ZonedDateTime.now().minusHours(1));
+        examTestRepository.save(examTextExercise.getExam());
+
+        StudentExam studentExam = examUtilService.addStudentExamWithUser(examTextExercise.getExam(), studentLogin);
+        int twoHours = 2 * 60 * 60;
+        studentExam.setWorkingTime(twoHours);
+        studentExamRepository.save(studentExam);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + examTextExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void participateInProgrammingExercise_featureDisabled() throws Exception {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
         request.post("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
@@ -330,6 +462,18 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void participateInProgrammingExerciseAsStudentDueDatePassed() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        prepareMocksForProgrammingExercise(user.getLogin(), false);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true);
+
+        request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void participateInProgrammingExerciseAsEditorDueDatePassed() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
@@ -338,12 +482,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         prepareMocksForProgrammingExercise(user.getLogin(), false);
         mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "editor1", Set.of(user), true);
 
-        StudentParticipation participation = request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null,
-                StudentParticipation.class, HttpStatus.CREATED);
-        var participationUsers = participation.getStudents();
-        assertThat(participation).isNotNull();
-        assertThat(participation.isPracticeMode()).isFalse();
-        assertThat(participationUsers).contains(user);
+        request.postWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -477,30 +616,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(participation).isEmpty();
         // Make sure that the result is deleted.
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).isEmpty();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void deleteParticipation_student() throws Exception {
-        // Allow students to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if users do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void deleteParticipation_tutor() throws Exception {
-        // Allow tutors to delete their own participation if it belongs to a guided tour
-        StudentParticipation studentParticipation = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "tutor1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation.getId(), HttpStatus.OK);
-
-        // Returns forbidden if tutors do not delete their own participation
-        StudentParticipation studentParticipation2 = participationUtilService.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        request.delete("/api/exercise/guided-tour/participations/" + studentParticipation2.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test

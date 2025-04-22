@@ -156,7 +156,6 @@ public class ProgrammingExercise extends Exercise {
      *
      * @return The URL of the template repository as a String
      */
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     @JsonIgnore
     public String getTemplateRepositoryUri() {
         if (templateParticipation != null && Hibernate.isInitialized(templateParticipation)) {
@@ -417,8 +416,6 @@ public class ProgrammingExercise extends Exercise {
     public void setBuildConfig(ProgrammingExerciseBuildConfig buildConfig) {
         this.buildConfig = buildConfig;
     }
-
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     /**
      * Gets a URL of the templateRepositoryUri if there is one

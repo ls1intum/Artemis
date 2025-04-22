@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';

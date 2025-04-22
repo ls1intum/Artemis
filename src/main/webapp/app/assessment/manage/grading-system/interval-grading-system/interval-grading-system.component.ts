@@ -11,8 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-interval-grading-system',

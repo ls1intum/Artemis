@@ -6,15 +6,13 @@ import { AccountService } from 'app/core/auth/account.service';
 import { HttpResponse } from '@angular/common/http';
 import { Exercise, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
-import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams.component';
+import { FilterProp as TeamFilterProp } from 'app/exercise/team/teams/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { AssessmentDashboardInformationComponent, AssessmentDashboardInformationEntry } from './assessment-dashboard-information.component';
 import { TutorLeaderboardElement } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.model';
@@ -23,20 +21,23 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';
-import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
+import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment-dashboard/exam-assessment-buttons/exam-assessment-buttons.component';
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
@@ -60,6 +61,7 @@ import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/ass
         ArtemisDatePipe,
         SortDirective,
         SortByDirective,
+        FeatureOverlayComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -69,11 +71,13 @@ export class AssessmentDashboardComponent implements OnInit {
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
-    private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
+
+    plagiarismEnabled = false;
 
     course: Course;
     exam: Exam;
@@ -106,7 +110,6 @@ export class AssessmentDashboardComponent implements OnInit {
     exercisesReverseOrder = false;
 
     tutor: User;
-    exerciseForGuidedTour?: Exercise;
 
     isExamMode = false;
     isTestRun = false;
@@ -134,6 +137,7 @@ export class AssessmentDashboardComponent implements OnInit {
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
     /**
@@ -257,8 +261,6 @@ export class AssessmentDashboardComponent implements OnInit {
                         this.totalAssessmentPercentage = Math.floor((this.totalNumberOfAssessments.total / this.numberOfSubmissions.total) * 100);
                     }
 
-                    // Ensure that the page is loaded when the guided tour is started
-                    this.guidedTourService.componentPageLoaded();
                     this.computeIssuesWithTutorPerformance();
                 },
                 error: (response: string) => this.onError(response),
@@ -343,7 +345,6 @@ export class AssessmentDashboardComponent implements OnInit {
             this.currentlyShownExercises = this.getUnfinishedExercises(exercises);
             // sort exercises by type to get a better overview in the dashboard
             this.sortService.sortByProperty(this.currentlyShownExercises, 'type', true);
-            this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, tutorAssessmentTour, false);
             this.initIsTogglingSecondCorrection();
             this.updateExercises();
         }

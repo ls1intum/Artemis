@@ -50,10 +50,14 @@ export class CourseNotificationSettingSpecificationCardComponent {
                     courseName: 'Patterns in Software Engineering',
                     courseTitle: 'Patterns in Software Engineering',
                     postMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
-                    answerPostMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
+                    replyMarkdownContent: 'Can anybody tell me how to bake chocolate cookies?',
                     courseIconUrl: undefined,
                     channelName: 'tech-support',
+                    exerciseTitle: 'Modeling 123',
+                    unitName: 'Modeling 123',
+                    groupTitle: 'Grp 123',
                 },
+                '/',
             );
             this.channels = this.settingSpecification().channelSetting;
         });
@@ -75,6 +79,6 @@ export class CourseNotificationSettingSpecificationCardComponent {
      * @returns Whether the channel option should be disabled
      */
     isDisabled(option: string, identifier: string) {
-        return CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES[identifier].includes(option as CourseNotificationChannel);
+        return CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES[identifier]?.includes(option as CourseNotificationChannel) || false;
     }
 }

@@ -93,7 +93,7 @@
             type="button"
             [attr.data-mode]="archiveMode"
             id="archiveButton"
-            class="btn btn-warning"
+            class="btn btn-sm btn-warning"
             (click)="openModal(archiveWarningPopup)"
         >
             <fa-icon [hidden]="!isBeingArchived" animation="spin" [icon]="faCircleNotch" />
@@ -102,7 +102,7 @@
         </button>
     }
     @if (displayDownloadArchiveButton) {
-        <button [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-primary" (click)="downloadArchive()">
+        <button [disabled]="isBeingArchived" type="button" [attr.data-mode]="archiveMode" class="btn btn-sm btn-primary" (click)="downloadArchive()">
             <fa-icon [icon]="faDownload" />&nbsp;
             <span jhiTranslate="artemisApp.courseExamArchive.downloadArchive"></span>
         </button>
@@ -112,7 +112,7 @@
             [disabled]="isBeingArchived"
             [attr.data-mode]="archiveMode"
             jhiDeleteButton
-            [buttonSize]="ButtonSize.MEDIUM"
+            [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
             [entityTitle]="course.title!"
             deleteQuestion="artemisApp.course.cleanup.question"
@@ -129,7 +129,7 @@
             [disabled]="isBeingArchived"
             [attr.data-mode]="archiveMode"
             jhiDeleteButton
-            [buttonSize]="ButtonSize.MEDIUM"
+            [buttonSize]="ButtonSize.SMALL"
             [actionType]="ActionType.Cleanup"
             [entityTitle]="exam!.title!"
             deleteQuestion="artemisApp.exam.cleanup.question"

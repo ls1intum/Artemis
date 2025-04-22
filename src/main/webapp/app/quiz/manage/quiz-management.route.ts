@@ -8,7 +8,7 @@ import { Authority } from 'app/shared/constants/authority.constants';
 export const quizManagementRoute: Routes = [
     {
         path: 'quiz-exercises/new',
-        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -18,7 +18,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/export',
-        loadComponent: () => import('./quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
+        loadComponent: () => import('./export/quiz-exercise-export.component').then((m) => m.QuizExerciseExportComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -40,7 +40,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/:exerciseId/edit',
-        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -50,7 +50,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/:exerciseId/import',
-        loadComponent: () => import('./quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
+        loadComponent: () => import('./update/quiz-exercise-update.component').then((m) => m.QuizExerciseUpdateComponent),
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.importLabel',
@@ -60,7 +60,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/:exerciseId/preview',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',
@@ -70,7 +70,7 @@ export const quizManagementRoute: Routes = [
     },
     {
         path: 'quiz-exercises/:exerciseId/solution',
-        loadComponent: () => import('app/quiz/overview/quiz-participation.component').then((m) => m.QuizParticipationComponent),
+        loadComponent: () => import('app/quiz/overview/participation/quiz-participation.component').then((m) => m.QuizParticipationComponent),
         data: {
             authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.quizExercise.home.title',

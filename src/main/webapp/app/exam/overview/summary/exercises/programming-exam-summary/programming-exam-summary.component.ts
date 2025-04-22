@@ -7,13 +7,10 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
-import { ExerciseService } from 'app/exercise/exercise.service';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
-import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { Router } from '@angular/router';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
@@ -29,27 +26,17 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 export class ProgrammingExamSummaryComponent implements OnInit {
     private exerciseService = inject(ExerciseService);
     private exerciseCacheService = inject(ExerciseCacheService, { optional: true });
-    private profileService = inject(ProfileService);
     private router = inject(Router);
 
     @Input() exercise: ProgrammingExercise;
-
     @Input() participation: ProgrammingExerciseStudentParticipation;
-
     @Input() submission: ProgrammingSubmission;
-
     @Input() isTestRun = false;
-
     @Input() exam: Exam;
-
     @Input() isAfterStudentReviewStart = false;
-
     @Input() resultsPublished = false;
-
     @Input() isPrinting = false;
-
     @Input() isAfterResultsArePublished = false;
-
     @Input() instructorView = false;
 
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
@@ -62,11 +49,9 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     feedbackComponentParameters: FeedbackComponentPreparedParams;
 
-    commitUrl: string | undefined;
     commitHash: string | undefined;
 
     routerLink: string;
-    localVCEnabled = true;
     isInCourseManagement = false;
 
     ngOnInit() {
@@ -89,17 +74,6 @@ export class ProgrammingExamSummaryComponent implements OnInit {
                 this.exerciseCacheService ?? this.exerciseService,
             );
         }
-
-        this.updateCommitUrl();
-    }
-
-    private updateCommitUrl() {
-        // Get active profiles, to distinguish between VC systems for the commit link of the result
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            const commitHashURLTemplate = profileInfo?.commitHashURLTemplate;
-            this.commitUrl = createCommitUrl(commitHashURLTemplate, this.exercise.projectKey, this.participation, this.submission);
-            this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
-        });
     }
 
     get routerLinkForRepositoryView(): (string | number)[] {

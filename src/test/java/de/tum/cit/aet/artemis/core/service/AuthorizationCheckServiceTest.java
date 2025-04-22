@@ -210,8 +210,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
         @Autowired
         private CourseTestRepository courseRepository;
 
-        private User student;
-
         private Course getCourseForUnenrollmentAllowedTest() {
             var course = courseUtilService.createCourse();
             course.setUnenrollmentEnabled(true);
@@ -221,11 +219,6 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsLoca
             course.setEndDate(ZonedDateTime.now().plusDays(6));
             course.setStudentGroupName("test-students");
             return course;
-        }
-
-        @BeforeEach
-        void setUp() {
-            this.student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         }
 
         @Test

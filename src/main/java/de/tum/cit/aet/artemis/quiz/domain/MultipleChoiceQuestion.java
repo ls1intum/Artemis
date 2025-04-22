@@ -174,8 +174,6 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         return updateNecessary;
     }
 
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();

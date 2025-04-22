@@ -14,7 +14,7 @@ import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 
 const cssClasses = {
     alreadyMember: 'already-member',

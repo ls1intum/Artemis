@@ -1,3 +1,5 @@
+.. _client-setup:
+
 Client Setup
 ------------
 

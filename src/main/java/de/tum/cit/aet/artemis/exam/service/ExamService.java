@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
@@ -31,7 +30,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
@@ -55,7 +54,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
-import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -75,6 +73,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -95,21 +94,19 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismCaseApi;
+import de.tum.cit.aet.artemis.plagiarism.api.dtos.PlagiarismMapping;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -117,7 +114,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 /**
  * Service Implementation for managing exams.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamService {
 
@@ -162,7 +159,7 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    private final PlagiarismCaseRepository plagiarismCaseRepository;
+    private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
     private final AuthorizationCheckService authorizationCheckService;
 
@@ -178,8 +175,6 @@ public class ExamService {
 
     private final CourseRepository courseRepository;
 
-    private final QuizPoolService quizPoolService;
-
     private final ObjectMapper defaultObjectMapper;
 
     private static final boolean IS_TEST_RUN = false;
@@ -191,10 +186,10 @@ public class ExamService {
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ExamLiveEventsService examLiveEventsService, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             CourseExamExportService courseExamExportService, GitService gitService, GroupNotificationService groupNotificationService,
-            GradingScaleRepository gradingScaleRepository, PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService,
+            GradingScaleRepository gradingScaleRepository, Optional<PlagiarismCaseApi> plagiarismCaseApi, AuthorizationCheckService authorizationCheckService,
             BonusService bonusService, ExerciseDeletionService exerciseDeletionService, SubmittedAnswerRepository submittedAnswerRepository,
             AuditEventRepository auditEventRepository, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository,
-            QuizPoolService quizPoolService, QuizResultService quizResultService) {
+            QuizResultService quizResultService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -211,7 +206,7 @@ public class ExamService {
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.plagiarismCaseApi = plagiarismCaseApi;
         this.authorizationCheckService = authorizationCheckService;
         this.bonusService = bonusService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -219,7 +214,6 @@ public class ExamService {
         this.auditEventRepository = auditEventRepository;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
-        this.quizPoolService = quizPoolService;
         this.defaultObjectMapper = new ObjectMapper();
         this.quizResultService = quizResultService;
     }
@@ -263,8 +257,7 @@ public class ExamService {
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
                 .collect(Collectors.groupingBy(studentParticipation -> studentParticipation.getExercise().getId(), Collectors.counting()));
 
-        List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamId(exam.getId());
-        var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
+        PlagiarismMapping plagiarismMapping = plagiarismCaseApi.map(api -> api.getPlagiarismMappingForExam(exam.getId())).orElse(PlagiarismMapping.empty());
 
         var exerciseGroups = new ArrayList<ExamScoresDTO.ExerciseGroup>();
 
@@ -342,7 +335,7 @@ public class ExamService {
         var exam = examRepository.findByIdElseThrow(studentExam.getExam().getId());
         var gradingScale = gradingScaleRepository.findByExamIdWithBonusFrom(exam.getId());
         Long studentId = studentExam.getUser().getId();
-        List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseRepository.findByExamIdAndStudentId(exam.getId(), studentId);
+        List<PlagiarismCase> plagiarismCasesForStudent = plagiarismCaseApi.map(api -> api.findByExamIdAndStudentId(exam.getId(), studentId)).orElse(List.of());
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesForStudent);
         ExamBonusCalculator examBonusCalculator = createExamBonusCalculator(gradingScale, List.of(studentId));
         var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null, plagiarismMapping, examBonusCalculator);
@@ -1172,19 +1165,6 @@ public class ExamService {
     }
 
     /**
-     * Set properties for quiz exercises in exam
-     *
-     * @param exam The exam for which to set the properties
-     */
-    public void setQuizExamProperties(Exam exam) {
-        Optional<QuizPool> optionalQuizPool = quizPoolService.findByExamId(exam.getId());
-        if (optionalQuizPool.isPresent()) {
-            QuizPool quizPool = optionalQuizPool.get();
-            exam.setQuizExamMaxPoints(quizPool.getMaxPoints());
-        }
-    }
-
-    /**
      * Gets a collection of useful statistics for the tutor exam-assessment-dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
      *
@@ -1241,8 +1221,6 @@ public class ExamService {
         // This contains possible errors encountered during the archive process
         List<String> exportErrors = Collections.synchronizedList(new ArrayList<>());
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_STARTED, exportErrors);
-
         try {
             // Create exam archives directory if it doesn't exist
             Files.createDirectories(examArchivesDirPath);
@@ -1256,10 +1234,6 @@ public class ExamService {
                 exam.setExamArchivePath(archivedExamPath.get().getFileName().toString());
                 examRepository.saveAndFlush(exam);
             }
-            else {
-                groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FAILED, exportErrors);
-                return;
-            }
         }
         catch (IOException e) {
             var error = "Failed to create exam archives directory " + examArchivesDirPath + ": " + e.getMessage();
@@ -1267,7 +1241,6 @@ public class ExamService {
             log.info(error);
         }
 
-        groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, NotificationType.EXAM_ARCHIVE_FINISHED, exportErrors);
         log.info("archive exam took {}", TimeLogUtil.formatDurationFrom(start));
     }
 
@@ -1365,7 +1338,6 @@ public class ExamService {
      */
     public void updateStudentExamsAndRescheduleExercises(Exam exam, int originalExamDuration, int workingTimeChange) {
         var now = now();
-        User instructor = userRepository.getUser();
 
         var studentExams = exam.getStudentExams();
         for (var studentExam : studentExams) {

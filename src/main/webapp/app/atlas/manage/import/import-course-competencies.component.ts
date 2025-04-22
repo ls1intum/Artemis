@@ -6,11 +6,11 @@ import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Component, HostListener, OnInit, inject } from '@angular/core';
 import { faBan, faFileImport, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/button.component';
+import { ButtonType } from 'app/shared/components/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import { CourseCompetencyService } from 'app/atlas/shared/course-competency.service';
+import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 
 /**
  * An abstract component used to import course competencies. Its concrete implementations are

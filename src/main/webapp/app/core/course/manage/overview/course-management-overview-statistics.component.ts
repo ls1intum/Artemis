@@ -3,13 +3,13 @@ import { GraphColors, Graphs } from 'app/exercise/shared/entities/statistics.mod
 import { TranslateService } from '@ngx-translate/core';
 import { Color, LineChartModule, ScaleType } from '@swimlane/ngx-charts';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import * as shape from 'd3-shape';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { ActiveStudentsChart } from 'app/core/course/manage/active-students-chart';
+import { ActiveStudentsChart } from 'app/core/course/shared/entities/active-students-chart';
 
 @Component({
     selector: 'jhi-course-management-overview-statistics',

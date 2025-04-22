@@ -2,10 +2,10 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import dayjs from 'dayjs/esm';
-import { ExerciseDetailsType, ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ResultTemplateStatus, evaluateTemplateStatus } from 'app/exercise/result/result.utils';
 import { FeedbackComponent } from '../feedback.component';
 

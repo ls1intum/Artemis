@@ -37,8 +37,7 @@ public class ToolsInterceptor implements HandlerInterceptor {
             return false;
         }
 
-        if (handler instanceof HandlerMethod && jwtToken != null) {
-            HandlerMethod handlerMethod = (HandlerMethod) handler;
+        if (handler instanceof HandlerMethod handlerMethod && jwtToken != null) {
             Method method = handlerMethod.getMethod();
 
             // Check if the method or its class has the @AllowedTools annotation

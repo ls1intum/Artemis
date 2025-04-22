@@ -68,7 +68,7 @@ public class CourseNotificationRegistryService {
     /**
      * Returns a list of all registered notifications in camelCase format.
      *
-     * @return list of all notifications in camelCase format.
+     * @return map of all notifications in camelCase format.
      */
     public Map<Short, String> getNotificationTypes() {
         Map<Short, String> result = new HashMap<>();

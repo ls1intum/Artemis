@@ -68,8 +68,6 @@ public class TextBlock implements Serializable {
     @JsonIgnore
     private TextSubmission submission;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-
     public String getId() {
         return id;
     }
@@ -171,7 +169,6 @@ public class TextBlock implements Serializable {
     public void setSubmission(TextSubmission textSubmission) {
         this.submission = textSubmission;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object obj) {

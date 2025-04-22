@@ -14,11 +14,11 @@ import { faBan, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-sol
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgClass } from '@angular/common';
 import { TeamsImportFromFileFormComponent } from './teams-import-from-file-form.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TeamExerciseSearchComponent } from '../team-exercise-search/team-exercise-search.component';
 import { TeamStudentsListComponent } from '../team-participate/team-students-list.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

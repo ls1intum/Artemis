@@ -1,5 +1,5 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin } from '../../support/users';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';

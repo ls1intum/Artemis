@@ -9,7 +9,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 
 @Entity
 @DiscriminatorValue(value = "PESP")
@@ -24,8 +23,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     @Column(name = "branch")
     private String branch;
-
-    // TODO: remove isLocked column from the database
 
     public ProgrammingExerciseStudentParticipation() {
         // Default constructor
@@ -57,8 +54,6 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     /**
      * Getter for the stored default branch of the participation.
-     * Use {@link AbstractVersionControlService#getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation)} if you are not sure that the value was already
-     * set in the Artemis database
      *
      * @return the name of the default branch or null if not yet stored in Artemis
      */

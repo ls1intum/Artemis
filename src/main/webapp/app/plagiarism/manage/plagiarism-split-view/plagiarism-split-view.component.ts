@@ -5,7 +5,7 @@ import { PlagiarismComparison } from 'app/plagiarism/shared/entities/PlagiarismC
 import { FromToElement, TextSubmissionElement } from 'app/plagiarism/shared/entities/text/TextSubmissionElement';
 import { Exercise, ExerciseType, getCourseId } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { PlagiarismSubmission } from 'app/plagiarism/shared/entities/PlagiarismSubmission';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { SimpleMatch } from 'app/plagiarism/shared/entities/PlagiarismMatch';
 import dayjs from 'dayjs/esm';

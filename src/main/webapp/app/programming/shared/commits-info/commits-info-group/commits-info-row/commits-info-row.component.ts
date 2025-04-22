@@ -27,7 +27,6 @@ export class CommitsInfoRowComponent {
     @Input() firstCommit: boolean;
     @Input() groupCommitCount: number;
     @Input() groupCommitIndex: number;
-    @Input() localVC: boolean;
     @Output() toggleExpandEvent = new EventEmitter<void>();
 
     onToggleExpand() {

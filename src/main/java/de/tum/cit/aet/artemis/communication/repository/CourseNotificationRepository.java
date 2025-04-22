@@ -52,4 +52,12 @@ public interface CourseNotificationRepository extends ArtemisJpaRepository<Cours
      * @return list of course notifications that should be deleted
      */
     List<CourseNotification> findByDeletionDateBefore(ZonedDateTime date);
+
+    /**
+     * Find all course notifications by course id.
+     *
+     * @param courseId id to query for
+     * @return list of course notifications in the course
+     */
+    List<CourseNotification> findAllByCourseId(long courseId);
 }

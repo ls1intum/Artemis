@@ -144,7 +144,7 @@
         <button
             jhiDeleteButton
             [entityTitle]="exercise.title || ''"
-            deleteQuestion="{{ localVCEnabled ? 'artemisApp.programmingExercise.delete.questionLocalVC.single' : 'artemisApp.programmingExercise.delete.question' }}"
+            deleteQuestion="artemisApp.programmingExercise.delete.question"
             (delete)="deleteProgrammingExercise($event)"
             [dialogError]="dialogError$"
             deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"

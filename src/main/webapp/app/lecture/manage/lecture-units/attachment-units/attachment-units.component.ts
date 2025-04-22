@@ -3,7 +3,7 @@ import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';

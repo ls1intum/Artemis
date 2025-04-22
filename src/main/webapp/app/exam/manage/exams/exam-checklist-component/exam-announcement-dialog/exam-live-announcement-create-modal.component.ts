@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/exam-participation-live-events.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
+import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/overview/services/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { ExamLiveEventComponent } from 'app/exam/shared/events/exam-live-event.component';
 import dayjs from 'dayjs/esm';

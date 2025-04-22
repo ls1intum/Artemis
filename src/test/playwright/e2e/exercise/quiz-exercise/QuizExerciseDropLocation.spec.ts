@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';

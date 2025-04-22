@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { HealthStatus, LearningPathHealthDTO } from 'app/atlas/shared/entities/learning-path-health.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';

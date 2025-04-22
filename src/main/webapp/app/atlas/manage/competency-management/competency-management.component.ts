@@ -14,7 +14,7 @@ import {
     ImportAllCourseCompetenciesModalComponent,
     ImportAllCourseCompetenciesResult,
 } from 'app/atlas/manage/import-all-course-competencies-modal/import-all-course-competencies-modal.component';
-import { CourseCompetencyApiService } from 'app/atlas/shared/course-competency-api.service';
+import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyManagementTableComponent } from 'app/atlas/manage/competency-management/competency-management-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -56,10 +56,6 @@ export class CompetencyManagementComponent implements OnInit {
     competencies = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.COMPETENCY));
     prerequisites = computed(() => this.courseCompetencies().filter((cc) => cc.type === CourseCompetencyType.PREREQUISITE));
 
-    private readonly irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS))), {
-        initialValue: false,
-    });
-
     irisCompetencyGenerationEnabled = signal<boolean>(false);
     standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
 
@@ -69,7 +65,7 @@ export class CompetencyManagementComponent implements OnInit {
             untracked(async () => await this.loadCourseCompetencies(courseId));
         });
         effect(() => {
-            const irisEnabled = this.irisEnabled();
+            const irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
             untracked(async () => {
                 if (irisEnabled) {
                     await this.loadIrisEnabled();

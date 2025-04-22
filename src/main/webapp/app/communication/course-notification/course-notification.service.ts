@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { faComments } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -22,14 +22,62 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 export class CourseNotificationService {
     public static readonly NOTIFICATION_TYPE_ICON_MAP = {
         newPostNotification: faComments,
+        newAnswerNotification: faComments,
+        newMentionNotification: faComments,
+        newAnnouncementNotification: faComments,
+        newExerciseNotification: faRectangleList,
+        exerciseOpenForPracticeNotification: faRectangleList,
+        exerciseAssessedNotification: faRectangleList,
+        exerciseUpdatedNotification: faRectangleList,
+        quizExerciseStartedNotification: faRectangleList,
+        attachmentChangedNotification: faRectangleList,
+        newManualFeedbackRequestNotification: faRectangleList,
+        channelDeletedNotification: faComments,
+        addedToChannelNotification: faComments,
+        removedFromChannelNotification: faComments,
+        duplicateTestCaseNotification: faTriangleExclamation,
+        newCpcPlagiarismCaseNotification: faRectangleList,
+        newPlagiarismCaseNotification: faRectangleList,
+        programmingBuildRunUpdateNotification: faRectangleList,
+        programmingTestCasesChangedNotification: faRectangleList,
+        plagiarismCaseVerdictNotification: faRectangleList,
+        tutorialGroupAssignedNotification: faPersonChalkboard,
+        tutorialGroupUnassignedNotification: faPersonChalkboard,
+        registeredToTutorialGroupNotification: faPersonChalkboard,
+        deregisteredFromTutorialGroupNotification: faPersonChalkboard,
+        tutorialGroupDeletedNotification: faPersonChalkboard,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
         newPostNotification: [CourseNotificationChannel.EMAIL],
+        newAnswerNotification: [CourseNotificationChannel.EMAIL],
+        newMentionNotification: [],
+        newAnnouncementNotification: [],
+        newExerciseNotification: [],
+        exerciseOpenForPracticeNotification: [],
+        exerciseAssessedNotification: [],
+        exerciseUpdatedNotification: [CourseNotificationChannel.EMAIL],
+        quizExerciseStartedNotification: [CourseNotificationChannel.EMAIL],
+        attachmentChangedNotification: [CourseNotificationChannel.EMAIL],
+        newManualFeedbackRequestNotification: [CourseNotificationChannel.EMAIL],
+        channelDeletedNotification: [CourseNotificationChannel.EMAIL],
+        addedToChannelNotification: [CourseNotificationChannel.EMAIL],
+        removedFromChannelNotification: [CourseNotificationChannel.EMAIL],
+        duplicateTestCaseNotification: [],
+        newCpcPlagiarismCaseNotification: [],
+        newPlagiarismCaseNotification: [],
+        programmingBuildRunUpdateNotification: [CourseNotificationChannel.EMAIL],
+        programmingTestCasesChangedNotification: [CourseNotificationChannel.EMAIL],
+        plagiarismCaseVerdictNotification: [],
+        tutorialGroupAssignedNotification: [],
+        tutorialGroupUnassignedNotification: [],
+        registeredToTutorialGroupNotification: [],
+        deregisteredFromTutorialGroupNotification: [],
+        tutorialGroupDeletedNotification: [],
     };
 
     // Parameter keys that should be rendered as markdown
-    public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent'];
+    public static readonly NOTIFICATION_MARKDOWN_PARAMETERS = ['postMarkdownContent', 'replyMarkdownContent'];
 
     private readonly apiEndpoint = '/api/communication/notification/';
     public readonly pageSize = 10;
@@ -320,7 +368,7 @@ export class CourseNotificationService {
         const isYesterday = now.subtract(1, 'day').format('YYYY-MM-DD') === date.format('YYYY-MM-DD');
         const isSameWeek = now.startOf('week').isBefore(date) && now.endOf('week').isAfter(date);
 
-        let key = '';
+        let key: string;
 
         if (diffMinutes <= 5) {
             key = 'now';

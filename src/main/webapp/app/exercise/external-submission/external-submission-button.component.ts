@@ -3,8 +3,8 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExternalSubmissionDialogComponent } from 'app/exercise/external-submission/external-submission-dialog.component';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 
 @Component({
     selector: 'jhi-external-submission',

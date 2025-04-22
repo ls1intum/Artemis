@@ -13,7 +13,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-competencies/admin-standardized-competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { ButtonComponent, ButtonType } from 'app/shared/components/button.component';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { NestedTreeControl } from '@angular/cdk/tree';

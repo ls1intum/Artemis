@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.communication.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -32,8 +33,10 @@ import de.tum.cit.aet.artemis.communication.dto.PostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.SavedPostService;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
@@ -55,33 +58,29 @@ public class SavedPostResource {
 
     private final AnswerPostRepository answerPostRepository;
 
-    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository) {
+    private final UserRepository userRepository;
+
+    public SavedPostResource(SavedPostService savedPostService, PostRepository postRepository, AnswerPostRepository answerPostRepository, UserRepository userRepository) {
         this.savedPostService = savedPostService;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
+        this.userRepository = userRepository;
     }
 
     /**
-     * GET /saved-posts/{courseId}/{status} : Get saved posts of course with specific status
+     * GET /saved-posts : Get saved posts of the course for the logged in user with specific status
      *
      * @param courseId id of course to filter posts
      * @param status   saved post status (progress, completed, archived)
      * @return ResponseEntity with status 200 (Success) if course id and status are ok,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @GetMapping("saved-posts/{courseId}/{status}")
+    @GetMapping("saved-posts")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<PostingDTO>> getSavedPosts(@PathVariable Long courseId, @PathVariable short status) {
-        log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, status);
+    public ResponseEntity<List<PostingDTO>> getSavedPosts(@RequestParam Long courseId, @RequestParam(name = "status") String status) {
+        SavedPostStatus savedPostStatus = SavedPostStatus.fromString(status);
+        log.debug("GET getSavedPosts invoked for course {} and status {}", courseId, savedPostStatus);
         long start = System.nanoTime();
-
-        SavedPostStatus savedPostStatus;
-        try {
-            savedPostStatus = SavedPostStatus.fromDatabaseKey(status);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestAlertException("The provided post status could not be found.", ENTITY_NAME, "savedPostStatusDoesNotExist");
-        }
 
         var savedPosts = savedPostService.getSavedPostsForCurrentUserByStatus(savedPostStatus);
 
@@ -93,16 +92,14 @@ public class SavedPostResource {
         List<PostingDTO> postingList = new ArrayList<>();
 
         for (SavedPost savedPost : savedPosts) {
-            Optional posting;
+            Optional<? extends Posting> optionalPosting;
             if (savedPost.getPostType() == PostingType.ANSWER) {
-                posting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.getPostId())).findFirst();
+                optionalPosting = answerPosts.stream().filter(answerPost -> answerPost.getId().equals(savedPost.getPostId())).findFirst();
             }
             else {
-                posting = posts.stream().filter(post -> post.getId().equals(savedPost.getPostId())).findFirst();
+                optionalPosting = posts.stream().filter(post -> post.getId().equals(savedPost.getPostId())).findFirst();
             }
-            if (posting.isPresent()) {
-                postingList.add(new PostingDTO((Posting) posting.get(), true, savedPost.getStatus().getDatabaseKey()));
-            }
+            optionalPosting.ifPresent(posting -> postingList.add(new PostingDTO(posting, true, savedPost.getStatus())));
         }
 
         log.info("getSavedPosts took {}", TimeLogUtil.formatDurationFrom(start));
@@ -110,16 +107,17 @@ public class SavedPostResource {
     }
 
     /**
-     * POST /saved-posts/{postId}/{type} : Create a new saved post
+     * POST /saved-posts/{postId} : Create a new saved post
      *
      * @param postId post to save
      * @param type   post type (post, answer)
      * @return ResponseEntity with status 201 (Created) if successfully saved post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @PostMapping("saved-posts/{postId}/{type}")
+    @PostMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> savePost(@PathVariable Long postId, @PathVariable short type) {
+    public ResponseEntity<Void> savePost(@PathVariable Long postId, @RequestParam(name = "type") String type) {
+        PostingType postingType = PostingType.fromString(type);
         log.debug("POST savePost invoked for post {}", postId);
         long start = System.nanoTime();
 
@@ -127,31 +125,42 @@ public class SavedPostResource {
             throw new BadRequestAlertException("The maximum amount of saved posts was reached.", ENTITY_NAME, "savedPostMaxReached");
         }
 
-        var post = retrievePostingElseThrow(postId, type);
+        User user = userRepository.getUser();
+        // authorization checks: we need to verify that the user has access to the postings with the given IDs in postingIds
+        // this is the case if the post is in a course wide channel or if the user is part of the OneToOne / Channel
+        switch (postingType) {
+            case POST -> postRepository.userHasAccessToAllPostsElseThrow(Collections.singleton(postId), user.getId());
+            case ANSWER -> answerPostRepository.userHasAccessToAllAnswerPostsElseThrow(Collections.singleton(postId), user.getId());
+        }
 
-        this.savedPostService.savePostForCurrentUser(post);
+        var post = retrievePostingElseThrow(postId, postingType);
+
+        savedPostService.savePostForCurrentUser(post);
 
         log.info("savePost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(null, null, HttpStatus.CREATED);
     }
 
     /**
-     * DELETE /saved-posts/{postId}/{type} : Remove a saved post
+     * DELETE /saved-posts/{postId} : Remove a saved post
      *
      * @param postId post to save
      * @param type   post type (post, answer)
      * @return ResponseEntity with status 204 (No content) if successfully deleted post,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @DeleteMapping("saved-posts/{postId}/{type}")
+    @DeleteMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @PathVariable short type) {
+    public ResponseEntity<Void> deleteSavedPost(@PathVariable Long postId, @RequestParam(name = "type") String type) {
+        PostingType postingType = PostingType.fromString(type);
         log.debug("DELETE deletePost invoked for post {}", postId);
         long start = System.nanoTime();
 
-        var post = retrievePostingElseThrow(postId, type);
+        // the user should only be able to delete his/her own saved posts, this is checked in removeSavedPostForCurrentUser
 
-        if (!this.savedPostService.removeSavedPostForCurrentUser(post)) {
+        var posting = retrievePostingElseThrow(postId, postingType);
+
+        if (!savedPostService.removeSavedPostForCurrentUser(posting)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to delete this bookmark.");
         }
 
@@ -168,51 +177,37 @@ public class SavedPostResource {
      * @return ResponseEntity with status 200 (Success) if successfully updated saved post status,
      *         or with status 400 (Bad Request) if the checks on type or post validity fail
      */
-    @PutMapping("saved-posts/{postId}/{type}")
+    @PutMapping("saved-posts/{postId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @PathVariable short type, @RequestParam(name = "status") short status) {
+    public ResponseEntity<Void> putSavedPost(@PathVariable Long postId, @RequestParam(name = "type") String type, @RequestParam(name = "status") String status) {
+        PostingType postingType = PostingType.fromString(type);
+        SavedPostStatus savedPostStatus = SavedPostStatus.fromString(status);
         log.debug("DELETE putSavedPost invoked for post {}", postId);
         long start = System.nanoTime();
 
-        var post = retrievePostingElseThrow(postId, type);
+        var posting = retrievePostingElseThrow(postId, postingType);
 
-        SavedPostStatus savedPostStatus;
-        try {
-            savedPostStatus = SavedPostStatus.fromDatabaseKey(status);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestAlertException("The provided post status could not be found.", ENTITY_NAME, "savedPostStatusDoesNotExist");
-        }
-
-        this.savedPostService.updateStatusOfSavedPostForCurrentUser(post, savedPostStatus);
+        savedPostService.updateStatusOfSavedPostForCurrentUser(posting, savedPostStatus);
 
         log.info("putSavedPost took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(null, null, HttpStatus.OK);
     }
 
-    private Posting retrievePostingElseThrow(long postId, short type) throws BadRequestAlertException {
-        PostingType postingType;
-
-        try {
-            postingType = PostingType.fromDatabaseKey(type);
-        }
-        catch (IllegalArgumentException e) {
-            throw new BadRequestAlertException("The provided post type could not be found.", ENTITY_NAME, "savedPostTypeDoesNotExist");
-        }
-
-        Posting post;
+    private Posting retrievePostingElseThrow(long postId, PostingType postingType) throws BadRequestAlertException {
+        Posting posting;
         try {
             if (postingType == PostingType.POST) {
-                post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
+                posting = postRepository.findPostOrMessagePostByIdElseThrow(postId);
             }
             else {
-                post = answerPostRepository.findAnswerPostOrMessageByIdElseThrow(postId);
+                posting = answerPostRepository.findAnswerPostOrMessageByIdElseThrow(postId);
             }
         }
         catch (EntityNotFoundException e) {
+            log.error("Could not find post with id {} and type {}", postId, postingType, e);
             throw new BadRequestAlertException("The provided post could not be found.", ENTITY_NAME, "savedPostIdDoesNotExist");
         }
 
-        return post;
+        return posting;
     }
 }

@@ -1,6 +1,6 @@
 import { Participation, getExercise } from 'app/exercise/shared/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { getExerciseDueDate } from 'app/exercise/exercise.utils';
+import { getExerciseDueDate } from 'app/exercise/util/exercise.utils';
 import { SimpleChanges } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
