@@ -27,9 +27,6 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
     templateUrl: './add-exercise-modal.component.html',
 })
 export class AddExerciseModalComponent {
-    private activeModal = inject(NgbActiveModal);
-    course: Course;
-
     protected readonly faTimes = faTimes;
     protected readonly faListAlt = faListAlt;
     protected readonly faChartBar = faChartBar;
@@ -41,6 +38,11 @@ export class AddExerciseModalComponent {
     protected readonly faQuestion = faQuestion;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ExerciseType = ExerciseType;
+
+    private activeModal = inject(NgbActiveModal);
+    course: Course;
 
     /**
      * Closes the modal by dismissing it
@@ -52,7 +54,4 @@ export class AddExerciseModalComponent {
     confirm() {
         this.activeModal.close(true);
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly ExerciseType = ExerciseType;
 }
