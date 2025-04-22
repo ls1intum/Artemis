@@ -1,13 +1,11 @@
-.enable-learning-paths-container {
-    max-width: 500px;
-    text-align: center;
+.card {
+    .card-header,
+    .card-footer {
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
 }
 
-.learning-paths-container {
-    background: var(--bs-card-bg);
-}
-
-.learning-paths-management-container {
-    max-height: 220px;
-    overflow-y: auto;
+.btn[disabled] {
+    cursor: not-allowed;
 }
