@@ -4,6 +4,7 @@ import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizExercise Create Buttons Component', () => {
     let comp: QuizExerciseCreateButtonsComponent;
@@ -15,7 +16,7 @@ describe('QuizExercise Create Buttons Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient()],
         }).compileComponents();
 
         fixture = TestBed.createComponent(QuizExerciseCreateButtonsComponent);
