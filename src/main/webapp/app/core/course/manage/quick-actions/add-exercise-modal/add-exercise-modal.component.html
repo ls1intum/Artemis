@@ -7,65 +7,29 @@
     </div>
     <div class="modal-body">
         <div class="d-flex flex-column gap-2">
-            <div class="row align-items-center g-0">
-                <div class="col-4 pe-0">
-                    <strong jhiTranslate="global.menu.entities.exerciseTypes.programming"></strong>
+            @for (exercise of exerciseTypes; track exercise.type) {
+                <div class="row align-items-center g-0">
+                    <div class="col-4 pe-0">
+                        <strong jhiTranslate="{{ exercise.translationKey }}"></strong>
+                    </div>
+                    <div class="col-4">
+                        <jhi-exercise-create-button
+                            [course]="course"
+                            [translationKey]="'global.generic.create'"
+                            [exerciseType]="exercise.type"
+                            [featureToggle]="exercise.featureToggle"
+                        />
+                    </div>
+                    <div class="col-4">
+                        <jhi-exercise-import-button
+                            [course]="course"
+                            [translationKey]="'entity.action.to-import'"
+                            [exerciseType]="exercise.type"
+                            [featureToggle]="exercise.featureToggle"
+                        />
+                    </div>
                 </div>
-                <div class="col-4">
-                    <jhi-programming-create-button [course]="course" [translationKey]="'global.generic.create'" />
-                </div>
-                <div class="col-4">
-                    <jhi-programming-import-button [course]="course" [translationKey]="'entity.action.to-import'" />
-                </div>
-            </div>
-
-            <div class="row align-items-center g-0">
-                <div class="col-4 pe-0">
-                    <strong jhiTranslate="global.menu.entities.exerciseTypes.quiz"></strong>
-                </div>
-                <div class="col-4">
-                    <jhi-quiz-create-button [course]="course" [translationKey]="'global.generic.create'" />
-                </div>
-                <div class="col-4">
-                    <jhi-quiz-import-button [course]="course" [translationKey]="'entity.action.to-import'" />
-                </div>
-            </div>
-
-            <div class="row align-items-center g-0">
-                <div class="col-4 pe-0">
-                    <strong jhiTranslate="global.menu.entities.exerciseTypes.modeling"></strong>
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.MODELING" [translationKey]="'global.generic.create'" />
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.MODELING" [translationKey]="'entity.action.to-import'" />
-                </div>
-            </div>
-
-            <div class="row align-items-center g-0">
-                <div class="col-4 pe-0">
-                    <strong jhiTranslate="global.menu.entities.exerciseTypes.text"></strong>
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.TEXT" [translationKey]="'global.generic.create'" />
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.TEXT" [translationKey]="'entity.action.to-import'" />
-                </div>
-            </div>
-
-            <div class="row align-items-center g-0">
-                <div class="col-4 pe-0">
-                    <strong jhiTranslate="global.menu.entities.exerciseTypes.fileUpload"></strong>
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-create-button [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" [translationKey]="'global.generic.create'" />
-                </div>
-                <div class="col-4">
-                    <jhi-exercise-import-button [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" [translationKey]="'entity.action.to-import'" />
-                </div>
-            </div>
+            }
         </div>
     </div>
 </div>

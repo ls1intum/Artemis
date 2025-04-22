@@ -4,9 +4,9 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AddExerciseModalComponent } from 'app/core/course/manage/quick-actions/add-exercise-modal/add-exercise-modal.component';
-import { CreateProgrammingButtonComponent } from 'app/programming/manage/create-buttons/create-button/create-programming-button.component';
 import { MockComponent } from 'ng-mocks';
-import { ImportProgrammingButtonComponent } from 'app/programming/manage/create-buttons/import-button/import-programming-button.component';
+import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-create-button/exercise-create-button.component';
+import { ExerciseImportButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-import-button/exercise-import-button.component';
 
 describe('AddExerciseModalComponent', () => {
     let component: AddExerciseModalComponent;
@@ -19,7 +19,7 @@ describe('AddExerciseModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [MockComponent(CreateProgrammingButtonComponent), MockComponent(ImportProgrammingButtonComponent), AddExerciseModalComponent],
+            imports: [MockComponent(ExerciseCreateButtonComponent), MockComponent(ExerciseImportButtonComponent), AddExerciseModalComponent],
             providers: [
                 { provide: NgbActiveModal, useValue: activeModal },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -35,11 +35,5 @@ describe('AddExerciseModalComponent', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
         component.cancel();
         expect(dismissSpy).toHaveBeenCalledWith('cancel');
-    });
-
-    it('should close on confirm', () => {
-        const closeSpy = jest.spyOn(activeModal, 'close');
-        component.confirm();
-        expect(closeSpy).toHaveBeenCalledWith(true);
     });
 });

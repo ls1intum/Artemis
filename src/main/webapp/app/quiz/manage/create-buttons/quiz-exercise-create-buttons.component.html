@@ -1,6 +1,6 @@
 <div class="d-flex flex-wrap justify-content-end">
-    <jhi-quiz-create-button [course]="course()" [translationKey]="'artemisApp.quizExercise.create'" />
-    <jhi-quiz-import-button [course]="course()" />
+    <jhi-exercise-create-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
+    <jhi-exercise-import-button [course]="course()" [exerciseType]="ExerciseType.QUIZ" />
     @if (quizExercisesCount()) {
         <button
             class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"

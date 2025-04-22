@@ -1,46 +1,29 @@
 import { Component, inject } from '@angular/core';
-import { faChartBar, faClipboard, faFileImport, faGraduationCap, faKeyboard, faListAlt, faPlus, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { CreateProgrammingButtonComponent } from 'app/programming/manage/create-buttons/create-button/create-programming-button.component';
-import { ImportProgrammingButtonComponent } from 'app/programming/manage/create-buttons/import-button/import-programming-button.component';
-import { CreateQuizButtonComponent } from 'app/quiz/manage/create-buttons/create-button/create-quiz-button.component';
-import { ImportQuizButtonComponent } from 'app/quiz/manage/create-buttons/import-button/import-quiz-button.component';
-import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
+import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
+import { ExerciseImportButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-import-button/exercise-import-button.component';
+
+interface ExerciseModalRow {
+    type: ExerciseType;
+    translationKey: string;
+    featureToggle?: FeatureToggle;
+}
 
 @Component({
     selector: 'jhi-add-exercise-modal',
-    imports: [
-        TranslateDirective,
-        CreateProgrammingButtonComponent,
-        ImportProgrammingButtonComponent,
-        CreateQuizButtonComponent,
-        ImportQuizButtonComponent,
-        ExerciseCreateButtonComponent,
-        ExerciseImportButtonComponent,
-    ],
+    imports: [TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent],
     templateUrl: './add-exercise-modal.component.html',
 })
 export class AddExerciseModalComponent {
-    protected readonly faTimes = faTimes;
-    protected readonly faListAlt = faListAlt;
-    protected readonly faChartBar = faChartBar;
-    protected readonly faClipboard = faClipboard;
-    protected readonly faGraduationCap = faGraduationCap;
-    protected readonly faKeyboard = faKeyboard;
-    protected readonly faPlus = faPlus;
-    protected readonly faFileImport = faFileImport;
-    protected readonly faQuestion = faQuestion;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
-
     private activeModal = inject(NgbActiveModal);
     course: Course;
 
@@ -51,7 +34,27 @@ export class AddExerciseModalComponent {
         this.activeModal.dismiss('cancel');
     }
 
-    confirm() {
-        this.activeModal.close(true);
-    }
+    exerciseTypes: ExerciseModalRow[] = [
+        {
+            type: ExerciseType.PROGRAMMING,
+            translationKey: 'global.menu.entities.exerciseTypes.programming',
+            featureToggle: FeatureToggle.ProgrammingExercises,
+        },
+        {
+            type: ExerciseType.QUIZ,
+            translationKey: 'global.menu.entities.exerciseTypes.quiz',
+        },
+        {
+            type: ExerciseType.MODELING,
+            translationKey: 'global.menu.entities.exerciseTypes.modeling',
+        },
+        {
+            type: ExerciseType.TEXT,
+            translationKey: 'global.menu.entities.exerciseTypes.text',
+        },
+        {
+            type: ExerciseType.FILE_UPLOAD,
+            translationKey: 'global.menu.entities.exerciseTypes.fileUpload',
+        },
+    ];
 }

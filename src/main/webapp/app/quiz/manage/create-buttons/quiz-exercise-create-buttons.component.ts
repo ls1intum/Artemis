@@ -2,15 +2,16 @@ import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CreateQuizButtonComponent } from 'app/quiz/manage/create-buttons/create-button/create-quiz-button.component';
-import { ImportQuizButtonComponent } from 'app/quiz/manage/create-buttons/import-button/import-quiz-button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faCheckDouble, faFileExport } from '@fortawesome/free-solid-svg-icons';
+import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-create-button/exercise-create-button.component';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ExerciseImportButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-import-button/exercise-import-button.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-create-buttons',
     templateUrl: './quiz-exercise-create-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, CreateQuizButtonComponent, ImportQuizButtonComponent],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent],
 })
 export class QuizExerciseCreateButtonsComponent {
     course = input<Course | undefined>();
@@ -18,4 +19,5 @@ export class QuizExerciseCreateButtonsComponent {
 
     protected readonly faFileExport = faFileExport;
     protected readonly faCheckDouble = faCheckDouble;
+    protected readonly ExerciseType = ExerciseType;
 }

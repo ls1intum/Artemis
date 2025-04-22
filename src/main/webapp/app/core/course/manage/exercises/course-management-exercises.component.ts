@@ -2,23 +2,22 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/create-buttons/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
-import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
+import { ExerciseManageButtonsComponent } from 'app/exercise/exercise-manage-buttons/exercise-manage-buttons.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -28,11 +27,10 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizExerciseComponent,
-        ExerciseCreateButtonsComponent,
+        ExerciseManageButtonsComponent,
         ModelingExerciseComponent,
         TextExerciseComponent,
         FileUploadExerciseComponent,
@@ -40,8 +38,9 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    readonly ExerciseType = ExerciseType;
-    readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     showSearch = false;

@@ -6,11 +6,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
-import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
+import { ExerciseManageButtonsComponent } from 'app/exercise/exercise-manage-buttons/exercise-manage-buttons.component';
 
 describe('Exercise Create Buttons Component', () => {
-    let comp: ExerciseCreateButtonsComponent;
-    let fixture: ComponentFixture<ExerciseCreateButtonsComponent>;
+    let comp: ExerciseManageButtonsComponent;
+    let fixture: ComponentFixture<ExerciseManageButtonsComponent>;
 
     const course = { id: 123 } as Course;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
@@ -26,7 +26,7 @@ describe('Exercise Create Buttons Component', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(ExerciseCreateButtonsComponent);
+        fixture = TestBed.createComponent(ExerciseManageButtonsComponent);
         comp = fixture.componentInstance;
         fixture.componentRef.setInput('course', course);
     });
