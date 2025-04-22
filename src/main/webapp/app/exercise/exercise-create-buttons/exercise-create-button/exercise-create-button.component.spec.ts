@@ -10,7 +10,7 @@ import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-butt
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
-import { faFileUpload, faFont, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
+import { faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ExerciseCreateButtonComponent', () => {
@@ -52,6 +52,7 @@ describe('ExerciseCreateButtonComponent', () => {
         { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.createLabel' },
         { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.createLabel' },
         { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.createLabel' },
+        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.createLabel' },
     ])('should determine correct translation key and icon', ({ exerciseType, expectedIcon, expectedTranslationLabel }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         component.ngOnInit();

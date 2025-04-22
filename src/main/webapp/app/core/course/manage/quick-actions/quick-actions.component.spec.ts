@@ -51,7 +51,7 @@ describe('QuickActionsComponent', () => {
         { section: CourseManagementSection.EXAM, expectedLink: 'exams' },
         { section: CourseManagementSection.LECTURE, expectedLink: 'lectures' },
         { section: CourseManagementSection.FAQ, expectedLink: 'faqs' },
-    ])('should link to correct' + ' section', ({ section, expectedLink }) => {
+    ])('should link to correct section', ({ section, expectedLink }) => {
         fixture.componentRef.setInput('course', { id: 123 });
         const routerSpy = jest.spyOn(router, 'navigate');
         component.navigateToCourseManagementSection(section);

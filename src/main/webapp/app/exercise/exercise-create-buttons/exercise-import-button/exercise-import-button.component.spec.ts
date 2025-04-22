@@ -12,6 +12,7 @@ import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
+import { faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 
 describe('ExerciseImportButtonComponent', () => {
     let component: ExerciseImportButtonComponent;
@@ -44,7 +45,7 @@ describe('ExerciseImportButtonComponent', () => {
         { exerciseType: ExerciseType.FILE_UPLOAD, id: 2 },
         { exerciseType: ExerciseType.PROGRAMMING, id: 2 },
         { exerciseType: ExerciseType.PROGRAMMING, id: undefined },
-    ])('should open import' + ' modal', async ({ exerciseType, id }) => {
+    ])('should open import modal', async ({ exerciseType, id }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         const promise = new Promise((resolve) => {
             resolve({ id, maxPoints: 1 } as Exercise);
@@ -72,5 +73,17 @@ describe('ExerciseImportButtonComponent', () => {
                     expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
                 }
             });
+    });
+
+    it.each([
+        { exerciseType: ExerciseType.MODELING, expectedIcon: faProjectDiagram, expectedTranslationLabel: 'artemisApp.modelingExercise.home.importLabel' },
+        { exerciseType: ExerciseType.FILE_UPLOAD, expectedIcon: faFileUpload, expectedTranslationLabel: 'artemisApp.fileUploadExercise.home.importLabel' },
+        { exerciseType: ExerciseType.TEXT, expectedIcon: faFont, expectedTranslationLabel: 'artemisApp.textExercise.home.importLabel' },
+        { exerciseType: ExerciseType.PROGRAMMING, expectedIcon: faKeyboard, expectedTranslationLabel: 'artemisApp.programmingExercise.home.importLabel' },
+    ])('should determine correct translation key and icon', ({ exerciseType, expectedIcon, expectedTranslationLabel }) => {
+        fixture.componentRef.setInput('exerciseType', exerciseType);
+        component.ngOnInit();
+        expect(component.icon).toEqual(expectedIcon);
+        expect(component.translationLabel).toEqual(expectedTranslationLabel);
     });
 });
