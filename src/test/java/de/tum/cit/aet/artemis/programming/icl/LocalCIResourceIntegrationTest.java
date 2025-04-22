@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.within;
-import static org.awaitility.Awaitility.await;
-
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -12,11 +8,18 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import static org.mockito.Mockito.doReturn;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -46,6 +49,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localciresourceint";
+
+    private ThreadPoolExecutor testExecutor;
 
     protected BuildJobQueueItem job1;
 
@@ -82,6 +87,11 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @BeforeEach
     void createJobs() {
+        // Create a test executor with a single thread
+        testExecutor = new ThreadPoolExecutor(1, 1, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
+        // Mock the getBuildExecutor() method to return our test executor
+        doReturn(testExecutor).when(buildAgentConfiguration).getBuildExecutor();
+
         buildJobRepository.deleteAll();
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
@@ -146,6 +156,16 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
 
     @AfterEach
     void clearDataStructures() {
+        // Shutdown the test executor
+        if (testExecutor != null) {
+            testExecutor.shutdown();
+            try {
+                testExecutor.awaitTermination(5, TimeUnit.SECONDS);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
         sharedQueueProcessingService.init();
         queuedJobs.clear();
         processingJobs.clear();
