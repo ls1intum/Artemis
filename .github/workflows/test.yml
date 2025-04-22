@@ -70,8 +70,9 @@ env:
 jobs:
 
   server-tests:
-    runs-on: ubuntu-latest
+    runs-on: aet-large-ubuntu
     timeout-minutes: 60
+
     steps:
     - uses: actions/checkout@v4
     - name: Setup Java
@@ -271,3 +272,4 @@ jobs:
       run: npm install
     - name: Compile TypeScript Files With Typechecking
       run: npm run compile:ts
+
