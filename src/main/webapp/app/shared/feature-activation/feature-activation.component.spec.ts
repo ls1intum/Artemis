@@ -1,17 +1,16 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { FeatureEnablePageComponent } from './feature-enable-page.component';
+import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 
 describe('FeatureEnablePageComponent', () => {
-    let component: FeatureEnablePageComponent;
-    let fixture: ComponentFixture<FeatureEnablePageComponent>;
+    let component: FeatureActivationComponent;
+    let fixture: ComponentFixture<FeatureActivationComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FeatureEnablePageComponent],
+            imports: [FeatureActivationComponent],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(FeatureEnablePageComponent);
+        fixture = TestBed.createComponent(FeatureActivationComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
     });

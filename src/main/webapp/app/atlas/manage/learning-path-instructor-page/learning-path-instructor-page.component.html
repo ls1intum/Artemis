@@ -23,5 +23,11 @@
         </div>
     </div>
 } @else {
-    <jhi-feature-enable-page />
+    <jhi-feature-activation
+        [title]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
+        [description]="'artemisApp.learningPathManagement.learningPathsDisabled.description'"
+        [buttonText]="'artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel'"
+        [isLoading]="this.isLoading()"
+        (activate)="enableLearningPaths()"
+    />
 }

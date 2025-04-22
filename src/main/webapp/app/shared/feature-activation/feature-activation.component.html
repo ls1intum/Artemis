@@ -1,0 +1,13 @@
+<div class="card mx-auto w-100" style="max-width: 32rem">
+    <div class="card-header text-center">
+        <h5 class="card-title mb-0" [jhiTranslate]="title()"></h5>
+    </div>
+
+    <div class="card-body">
+        <p class="card-text text-center" [jhiTranslate]="description()"></p>
+    </div>
+
+    <div class="card-footer d-flex justify-content-center pb-3">
+        <jhi-button (click)="onActivateClick()" [isLoading]="isLoading()" [title]="buttonText()" />
+    </div>
+</div>
