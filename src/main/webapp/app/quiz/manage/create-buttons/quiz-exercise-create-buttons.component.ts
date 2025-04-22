@@ -14,7 +14,7 @@ import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-butt
     imports: [RouterLink, FaIconComponent, TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent],
 })
 export class QuizExerciseCreateButtonsComponent {
-    course = input<Course | undefined>();
+    course = input.required<Course>();
     quizExercisesCount = input<number>(0);
 
     protected readonly faFileExport = faFileExport;

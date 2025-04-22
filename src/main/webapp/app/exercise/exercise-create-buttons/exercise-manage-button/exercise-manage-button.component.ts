@@ -10,20 +10,17 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     template: '',
 })
 export abstract class ExerciseManageButtonComponent implements OnInit {
-    course = input<Course | undefined>();
-    exerciseType = input<ExerciseType>();
-    translationLabel: string;
-    translationKey = input<string | undefined>();
-    featureToggle = input<FeatureToggle | undefined>();
-
     protected router = inject(Router);
     protected modalService = inject(NgbModal);
 
+    course = input.required<Course>();
+    exerciseType = input.required<ExerciseType>();
+    translationLabel: string;
+    translationKey = input<string | undefined>();
+    featureToggle = input<FeatureToggle | undefined>();
     icon: IconProp;
+
     ngOnInit(): void {
-        if (!this.exerciseType()) {
-            return;
-        }
         this.icon = getIcon(this.exerciseType());
 
         if (this.translationKey()) {
@@ -32,6 +29,7 @@ export abstract class ExerciseManageButtonComponent implements OnInit {
             this.setTranslationLabel();
         }
     }
+
     protected abstract getTranslationSuffix(): string;
 
     setTranslationLabel(): void {

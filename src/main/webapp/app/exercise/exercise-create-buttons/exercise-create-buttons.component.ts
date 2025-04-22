@@ -11,7 +11,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     imports: [ExerciseCreateButtonComponent, ExerciseImportButtonComponent],
 })
 export class ExerciseCreateButtonsComponent {
-    course = input<Course | undefined>();
-    exerciseType = input<ExerciseType>();
+    course = input.required<Course>();
+    exerciseType = input.required<ExerciseType>();
     featureToggle = input<FeatureToggle | undefined>();
 }

@@ -65,11 +65,4 @@ describe('ExerciseCreateButtonComponent', () => {
         component.ngOnInit();
         expect(component.translationLabel).toBe('custom.translation.key');
     });
-
-    it('should not set icon or translation label if exerciseType is not provided', () => {
-        fixture.componentRef.setInput('exerciseType', undefined);
-        component.ngOnInit();
-        expect(component.icon).toBeUndefined();
-        expect(component.translationLabel).toBeUndefined();
-    });
 });
