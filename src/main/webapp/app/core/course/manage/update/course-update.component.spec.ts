@@ -204,7 +204,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
             expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
-            expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIconPath);
+            expect(comp.courseForm.get(['courseIcon'])?.value).toBeNull();
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
             expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
             flush();
