@@ -1,19 +1,23 @@
 import { Component, inject, input } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
-import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faChalkboardUser, faChartBar, faClipboard, faGraduationCap, faListAlt, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { AddExerciseModalComponent } from 'app/core/course/manage/quick-actions/add-exercise-modal/add-exercise-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
+enum CourseManagementSection {
+    LECTURE = 'lectures',
+    EXAM = 'exams',
+    FAQ = 'faqs',
+}
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
-    styleUrls: ['./quick-actions.component.scss'],
     imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, FaIconComponent, RouterLink],
 })
 export class QuickActionsComponent {
@@ -26,35 +30,19 @@ export class QuickActionsComponent {
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faQuestion = faQuestion;
+    protected readonly CourseManagementSection = CourseManagementSection;
     private router = inject(Router);
     private modalService = inject(NgbModal);
+    protected readonly FeatureToggle = FeatureToggle;
 
-    linkToLectureCreation() {
+    navigateToCourseManagementSection(section: CourseManagementSection) {
         if (!this.course()?.id) {
             return;
         }
-        this.router.navigate(['/course-management', this.course()?.id, 'lectures', 'new']);
-    }
-    linkToExamCreation() {
-        if (!this.course()?.id) {
-            return;
-        }
-        this.router.navigate(['/course-management', this.course()?.id, 'exams', 'new']);
-    }
-    linkToFaqCreation() {
-        if (!this.course()?.id) {
-            return;
-        }
-        this.router.navigate(['/course-management', this.course()?.id, 'faqs', 'new']);
+        return this.router.navigate(['/course-management', this.course()?.id, section, 'new']);
     }
     openAddExerciseModal() {
         const modalRef = this.modalService.open(AddExerciseModalComponent as Component, { size: 'md' });
         modalRef.componentInstance.course = this.course();
-    }
-
-    protected readonly FeatureToggle = FeatureToggle;
-
-    closeAddExerciseModal() {
-        this.modalService.dismissAll();
     }
 }

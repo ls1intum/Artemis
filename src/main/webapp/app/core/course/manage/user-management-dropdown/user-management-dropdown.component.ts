@@ -18,7 +18,6 @@ export interface UserAddAction {
     selector: 'jhi-user-management-dropdown',
     templateUrl: './user-management-dropdown.component.html',
     imports: [NgbDropdown, NgbDropdownItem, NgbDropdownToggle, NgbDropdownMenu, ArtemisTranslatePipe, TranslateDirective, RouterLink, FaIconComponent],
-    styleUrls: ['./user-management-dropdown.component.scss'],
 })
 export class UserManagementDropdownComponent {
     protected readonly ButtonType = ButtonType;

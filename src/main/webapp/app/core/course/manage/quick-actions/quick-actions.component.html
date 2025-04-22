@@ -31,7 +31,7 @@
                         <div class="fw-bold" id="number-of-editors-text">{{ course()?.numberOfEditors || 0 }}</div>
                     }
                 </div>
-                <div class="text-center me-2">
+                <div class="text-center me-4">
                     <div class="small text-muted" jhiTranslate="artemisApp.course.instructors"></div>
                     @if (course()?.isAtLeastInstructor) {
                         <a [routerLink]="['/course-management', course()?.id, 'groups', 'instructors']" class="fw-bold" id="number-of-instructors">{{
@@ -58,11 +58,17 @@
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addLecture'"
                     [icon]="faChalkboardUser"
-                    (onClick)="linkToLectureCreation()"
+                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
                 />
             }
             @if (course()?.faqEnabled) {
-                <jhi-button [btnType]="ButtonType.PRIMARY" [btnSize]="ButtonSize.MEDIUM" [title]="'entity.action.addFaq'" [icon]="faQuestion" (onClick)="linkToFaqCreation()" />
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [title]="'entity.action.addFaq'"
+                    [icon]="faQuestion"
+                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
+                />
             }
             @if (course()?.isAtLeastInstructor) {
                 <jhi-button
@@ -70,7 +76,7 @@
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addExam'"
                     [icon]="faGraduationCap"
-                    (onClick)="linkToExamCreation()"
+                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.EXAM)"
                 />
             }
         </div>
