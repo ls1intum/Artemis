@@ -18,6 +18,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSessionsTableComponent } from '../tutorial-group-sessions-table/tutorial-group-sessions-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IconCardComponent } from 'app/tutorialgroup/shared/icon-card/icon-card.component';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -125,4 +126,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
 
         this.getTutorialDetail();
     }
+
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
 }
