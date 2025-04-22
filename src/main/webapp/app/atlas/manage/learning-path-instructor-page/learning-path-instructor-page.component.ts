@@ -12,6 +12,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
+import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
@@ -21,6 +22,7 @@ import { FeatureActivationComponent } from 'app/shared/feature-activation/featur
     styleUrl: './learning-path-instructor-page.component.scss',
 })
 export class LearningPathInstructorPageComponent {
+    protected readonly faNetworkWired = faNetworkWired;
     private readonly activatedRoute = inject(ActivatedRoute);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);

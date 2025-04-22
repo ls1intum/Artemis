@@ -1,7 +1,7 @@
 // learning-path-activation.component.ts
 import { Component, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -12,14 +12,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ButtonComponent, TranslateDirective, FaIconComponent],
 })
 export class FeatureActivationComponent {
-    protected readonly faNetworkWired = faNetworkWired;
     headerTitle = input.required<string>();
     description = input.required<string>();
-    advantagesTitle = input.required<string>();
-    advantages = input.required<string[]>();
-    isLoading = input.required<boolean>();
+    headerIcon = input<IconProp>();
+    isLoading = input<boolean>(false);
     activateButtonText = input.required<string>();
-    activatingButtonText = input.required<string>();
+    secondActivateButtonText = input<string>();
 
     enable = output<void>();
+    enableWithSecondButton = output<void>();
 }

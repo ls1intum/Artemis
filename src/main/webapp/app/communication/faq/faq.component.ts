@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Faq, FaqState } from 'app/communication/shared/entities/faq.model';
-import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCancel, faCheck, faEdit, faFileExport, faFilter, faPencilAlt, faPlus, faQuestion, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -26,6 +26,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { CommonModule } from '@angular/common';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 
 @Component({
     selector: 'jhi-faq',
@@ -43,6 +44,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-cate
         SortByDirective,
         SortDirective,
         CommonModule,
+        FeatureActivationComponent,
     ],
 })
 export class FaqComponent implements OnInit, OnDestroy {
@@ -76,6 +78,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     protected readonly faCancel = faCancel;
     protected readonly faCheck = faCheck;
     protected readonly faFileExport = faFileExport;
+    protected readonly faQuestion = faQuestion;
 
     private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
@@ -223,5 +226,13 @@ export class FaqComponent implements OnInit, OnDestroy {
                 },
             });
         }
+    }
+    enableFaq() {
+        this.faqService.enable(this.courseId).subscribe({
+            next: () => {
+                this.course.faqEnabled = true;
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }

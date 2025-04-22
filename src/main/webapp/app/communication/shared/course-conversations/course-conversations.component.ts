@@ -21,7 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
-import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -61,6 +61,7 @@ import {
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { FeatureActivationComponent } from 'app/shared/feature-activation/feature-activation.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -136,9 +137,12 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
         SavedPostsComponent,
         ConversationThreadSidebarComponent,
         ArtemisTranslatePipe,
+        FeatureActivationComponent,
     ],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
+    protected readonly isCommunicationEnabled = isCommunicationEnabled;
+    protected readonly faComments = faComments;
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private metisConversationService = inject(MetisConversationService);
@@ -640,4 +644,5 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisConversationService.setActiveConversation(id);
         this.changeDetector.detectChanges();
     }
+    enableCommunication(withMessaging?: boolean) {}
 }

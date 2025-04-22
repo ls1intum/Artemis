@@ -1,9 +1,11 @@
 <div class="container my-4">
     <div class="card shadow border-0 bg-light">
         <div class="card-header d-flex align-items-center border-bottom-0 bg-transparent pb-2">
-            <div class="bg-primary text-white rounded-circle p-2 me-3">
-                <fa-icon [icon]="faNetworkWired" />
-            </div>
+            @if (headerIcon()) {
+                <div class="bg-primary text-white rounded-circle p-2 me-3">
+                    <fa-icon [icon]="headerIcon()!" />
+                </div>
+            }
             <h2 class="mb-0" [jhiTranslate]="headerTitle()"></h2>
         </div>
 
@@ -15,8 +17,11 @@
             </div>
         </div>
 
-        <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4 d-flex">
-            <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="(enable.emit)" />
+        <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4 d-flex gap-2">
+            <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="enable.emit()" />
+            @if (secondActivateButtonText()) {
+                <jhi-button [title]="secondActivateButtonText()!" [isLoading]="isLoading()" (onClick)="enableWithSecondButton.emit()" />
+            }
         </div>
     </div>
 </div>

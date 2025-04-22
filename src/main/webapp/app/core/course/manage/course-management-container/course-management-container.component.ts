@@ -50,7 +50,7 @@ import { LectureComponent } from 'app/lecture/manage/lecture/lecture.component';
 import { CourseManagementStatisticsComponent } from 'app/core/course/manage/statistics/course-management-statistics.component';
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ButtonSize } from 'app/shared/components/button/button.component';
-import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
 
 @Component({
@@ -279,7 +279,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         }
         const nonInstructorItems: SidebarItem[] = [];
 
-        const communicationItem = this.addCommunicationsItem(currentCourse);
+        const communicationItem = this.addCommunicationsItem();
         const tutorialGroupItem = this.addTutorialGroupsItem(currentCourse, isInstructor);
         this.addAssessmentItem(nonInstructorItems);
         this.addFaqItem(currentCourse, nonInstructorItems);
@@ -316,7 +316,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastTutor && currentCourse.faqEnabled) {
+        if (currentCourse.isAtLeastTutor) {
             sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
     }
@@ -348,11 +348,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         return tutorialGroupsItem;
     }
 
-    private addCommunicationsItem(currentCourse: Course) {
+    private addCommunicationsItem() {
         const communicationItem: SidebarItem[] = [];
-        if (isCommunicationEnabled(currentCourse)) {
-            communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
-        }
+        communicationItem.push(this.sidebarItemService.getCommunicationsItem(this.courseId()));
         return communicationItem;
     }
 
