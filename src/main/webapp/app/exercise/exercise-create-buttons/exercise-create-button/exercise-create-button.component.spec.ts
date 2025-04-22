@@ -32,6 +32,7 @@ describe('ExerciseCreateButtonComponent', () => {
 
         fixture = TestBed.createComponent(ExerciseCreateButtonComponent);
         component = fixture.componentInstance;
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         router = TestBed.inject(Router);
         modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('course', { id: 123 });

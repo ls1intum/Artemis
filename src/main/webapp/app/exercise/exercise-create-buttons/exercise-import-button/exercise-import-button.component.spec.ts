@@ -35,6 +35,7 @@ describe('ExerciseImportButtonComponent', () => {
         component = fixture.componentInstance;
         modalService = TestBed.inject(NgbModal);
         fixture.componentRef.setInput('course', { id: 123 });
+        fixture.componentRef.setInput('exerciseType', ExerciseType.MODELING);
         router = TestBed.inject(Router);
         fixture.detectChanges();
     });
