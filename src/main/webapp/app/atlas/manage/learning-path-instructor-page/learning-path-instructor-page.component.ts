@@ -11,11 +11,12 @@ import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-tab
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { LearningPathsAnalyticsComponent } from 'app/atlas/manage/learning-paths-analytics/learning-paths-analytics.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FeatureEnablePageComponent } from 'app/shared/feature-enable-page/feature-enable-page.component';
 
 @Component({
     selector: 'jhi-learning-path-instructor-page',
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective],
+    imports: [LearningPathsStateComponent, LearningPathsTableComponent, LearningPathsAnalyticsComponent, TranslateDirective, FeatureEnablePageComponent],
     templateUrl: './learning-path-instructor-page.component.html',
     styleUrl: './learning-path-instructor-page.component.scss',
 })
