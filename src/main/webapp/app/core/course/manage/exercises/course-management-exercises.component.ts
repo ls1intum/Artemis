@@ -2,8 +2,9 @@ import { Component, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseFilter } from 'app/exercise/shared/entities/exercise/exercise-filter.model';
-import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
@@ -17,7 +18,6 @@ import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-e
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -38,9 +38,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    protected readonly ExerciseType = ExerciseType;
-    protected readonly documentationType: DocumentationType = 'Exercise';
-    protected readonly FeatureToggle = FeatureToggle;
+    readonly ExerciseType = ExerciseType;
+    readonly documentationType: DocumentationType = 'Exercise';
 
     course: Course;
     showSearch = false;
