@@ -96,6 +96,7 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.courseIconPath = 'api/core/files/testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = false;
