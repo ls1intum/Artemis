@@ -200,6 +200,7 @@
     },
     "entity": {
         "actions": "Aktionen",
+        "quickActions": "Schnellzugriff",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
@@ -354,7 +355,6 @@
     "feedback": "Feedback",
     "justNow": "gerade eben",
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurückzugehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
-    "quickActions": "Schnellzugriff",
     "overview": {
         "title": "Kursübersicht",
         "aboutUs": "Über",

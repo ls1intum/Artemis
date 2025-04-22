@@ -22,9 +22,6 @@ describe('UserManagementDropdownComponent', () => {
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
-    });
-
-    beforeEach(() => {
         fixture = TestBed.createComponent(UserManagementDropdownComponent);
         component = fixture.componentInstance;
         fixture.detectChanges();
