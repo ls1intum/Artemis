@@ -18,6 +18,7 @@ import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-e
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -38,8 +39,9 @@ import { MODULE_FEATURE_TEXT } from 'app/app.constants';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    readonly ExerciseType = ExerciseType;
-    readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly featureToggle = FeatureToggle;
 
     course: Course;
     showSearch = false;
