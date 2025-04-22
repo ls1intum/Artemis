@@ -14,8 +14,6 @@
             },
             "wordCount": "Anzahl der Wörter: {{ count }}",
             "characterCount": "Anzahl der Zeichen: {{ count }}",
-            "create": "Text erstellen",
-            "import": "Text importieren",
             "created": "Textaufgabe mit ID {{ param }} erstellt",
             "updated": "Textaufgabe mit ID {{ param }} aktualisiert",
             "deleted": "Textaufgabe mit ID {{ param }} gelöscht",

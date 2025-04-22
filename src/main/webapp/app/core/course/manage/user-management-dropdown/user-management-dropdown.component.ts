@@ -1,4 +1,4 @@
-import { Component, OnInit, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IconDefinition, faClipboard, faGraduationCap, faListAlt, faPersonChalkboard, faQuestion, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -10,7 +10,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export interface UserAddAction {
     icon: IconDefinition;
     routerLink: string | string[];
-    translationKey: string;
+    label: string;
     id: string;
 }
 
@@ -20,18 +20,20 @@ export interface UserAddAction {
     imports: [NgbDropdown, NgbDropdownItem, NgbDropdownToggle, NgbDropdownMenu, ArtemisTranslatePipe, TranslateDirective, RouterLink, FaIconComponent],
     styleUrls: ['./user-management-dropdown.component.scss'],
 })
-export class UserManagementDropdownComponent implements OnInit {
-    courseId = input<number | undefined>();
-    userAddActions: UserAddAction[] = [];
-
+export class UserManagementDropdownComponent {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faQuestion = faQuestion;
     protected readonly faUser = faUser;
+    courseId = input<number | undefined>();
+    userAddActions: UserAddAction[] = [];
 
-    ngOnInit() {
+    constructor() {
+        if (!this.courseId()) {
+            return;
+        }
         if (!this.courseId()) {
             return;
         }
@@ -39,25 +41,25 @@ export class UserManagementDropdownComponent implements OnInit {
             {
                 icon: faSchool,
                 routerLink: [`/course-management/${this.courseId()}/groups/students`],
-                translationKey: 'entity.action.addStudent',
+                label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
                 routerLink: [`/course-management/${this.courseId()}/groups/tutors`],
-                translationKey: 'entity.action.addTutor',
+                label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
                 routerLink: [`/course-management/${this.courseId()}/groups/editors`],
-                translationKey: 'entity.action.addEditor',
+                label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
                 routerLink: [`/course-management/${this.courseId()}/groups/instructors`],
-                translationKey: 'entity.action.addInstructor',
+                label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },
         ];

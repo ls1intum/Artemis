@@ -7,8 +7,6 @@
                 "editLabel": "Edit File Upload Exercise",
                 "importLabel": "Import File Upload Exercise"
             },
-            "create": "Create File Upload",
-            "import": "Import File Upload",
             "created": "Created new File Upload Exercise with identifier {{ param }}",
             "updated": "Updated File Upload Exercise with identifier {{ param }}",
             "deleted": "Deleted File Upload Exercise with identifier {{ param }}",
