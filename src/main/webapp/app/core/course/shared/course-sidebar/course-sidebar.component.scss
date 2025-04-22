@@ -178,7 +178,15 @@ a:not(.btn):not(.tab-link):hover {
         display: none; /* Hide the sidebar when printing */
     }
 }
+// Without ng-deep we fail to override the styles from the tooltip
 ::ng-deep .double-arrow-tooltip {
     left: 2rem !important;
     margin-bottom: 0.25rem !important;
+}
+::ng-deep .double-arrow-tooltip-no-bottom-items {
+    left: 5.75rem !important;
+    margin-bottom: 0.25rem !important;
+}
+::ng-deep .double-arrow-tooltip-collapsed {
+    left: -2.25rem !important;
 }
