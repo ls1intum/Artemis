@@ -7,10 +7,8 @@
                     *ngTemplateOutlet="
                         courseStatItem;
                         context: {
-                            label: 'students',
+                            userGroup: 'students',
                             count: course()?.numberOfStudents,
-                            route: 'students',
-                            idPrefix: 'students',
                         }
                     "
                 />
@@ -19,10 +17,8 @@
                     *ngTemplateOutlet="
                         courseStatItem;
                         context: {
-                            label: 'tutors',
+                            userGroup: 'tutors',
                             count: course()?.numberOfTeachingAssistants,
-                            route: 'tutors',
-                            idPrefix: 'tutors',
                         }
                     "
                 />
@@ -31,10 +27,8 @@
                     *ngTemplateOutlet="
                         courseStatItem;
                         context: {
-                            label: 'editors',
+                            userGroup: 'editors',
                             count: course()?.numberOfEditors,
-                            route: 'editors',
-                            idPrefix: 'editors',
                         }
                     "
                 />
@@ -43,10 +37,8 @@
                     *ngTemplateOutlet="
                         courseStatItem;
                         context: {
-                            label: 'instructors',
+                            userGroup: 'instructors',
                             count: course()?.numberOfInstructors,
-                            route: 'instructors',
-                            idPrefix: 'instructors',
                         }
                     "
                 />
@@ -92,13 +84,13 @@
     </div>
 </div>
 
-<ng-template #courseStatItem let-label="label" let-count="count" let-route="route" let-idPrefix="idPrefix">
+<ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
     <div class="text-center me-4">
-        <div class="small text-muted" jhiTranslate="artemisApp.course.{{ label }}"></div>
+        <div class="small text-muted" jhiTranslate="artemisApp.course.{{ userGroup }}"></div>
         @if (course()?.isAtLeastInstructor) {
-            <a [routerLink]="['/course-management', course()?.id, 'groups', route]" class="fw-bold" id="number-of-{{ idPrefix }}">{{ count || 0 }}</a>
+            <a [routerLink]="['/course-management', course()?.id, 'groups', userGroup]" class="fw-bold" id="number-of-{{ userGroup }}">{{ count || 0 }}</a>
         } @else {
-            <div class="fw-bold" id="number-of-{{ idPrefix }}-text">{{ count || 0 }}</div>
+            <div class="fw-bold" id="number-of-{{ userGroup }}-text">{{ count || 0 }}</div>
         }
     </div>
 </ng-template>
