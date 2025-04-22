@@ -55,6 +55,19 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
 
     /**
+     * Gets average rated score for a set of exercise
+     *
+     * @param exercises The set of exercises to get the average rated score for
+     * @return The average rated score as double
+     */
+    @Query("""
+            SELECT AVG(p.lastRatedScore)
+            FROM ParticipantScore p
+            WHERE p.exercise IN :exercises
+            """)
+    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
+
+    /**
      * Gets average score for each exercise
      *
      * @param exercises exercises to get the average score for
