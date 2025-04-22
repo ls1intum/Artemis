@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { QuickActionsComponent } from './quick-actions.component';
+import { CourseManagementSection, QuickActionsComponent } from './quick-actions.component';
 import { Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -39,9 +39,7 @@ describe('QuickActionsComponent', () => {
     it('should handle gracefully when no course id is provided', () => {
         fixture.componentRef.setInput('course', {});
         const routerSpy = jest.spyOn(router, 'navigate');
-        component.linkToExamCreation();
-        component.linkToLectureCreation();
-        component.linkToFaqCreation();
+        component.navigateToCourseManagementSection(CourseManagementSection.EXAM);
         expect(routerSpy).not.toHaveBeenCalled();
     });
     it('should open the add exercise modal', () => {
@@ -49,22 +47,14 @@ describe('QuickActionsComponent', () => {
         component.openAddExerciseModal();
         expect(modalServiceSpy).toHaveBeenCalledWith(AddExerciseModalComponent, { size: 'md' });
     });
-    it('should link to exam creation', () => {
+    it.each([
+        { section: CourseManagementSection.EXAM, expectedLink: 'exams' },
+        { section: CourseManagementSection.LECTURE, expectedLink: 'lectures' },
+        { section: CourseManagementSection.FAQ, expectedLink: 'faqs' },
+    ])('should link to correct' + ' section', ({ section, expectedLink }) => {
         fixture.componentRef.setInput('course', { id: 123 });
         const routerSpy = jest.spyOn(router, 'navigate');
-        component.linkToExamCreation();
-        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'exams', 'new']);
-    });
-    it('should link to lecture creation', () => {
-        fixture.componentRef.setInput('course', { id: 123 });
-        const routerSpy = jest.spyOn(router, 'navigate');
-        component.linkToLectureCreation();
-        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'lectures', 'new']);
-    });
-    it('should link to FAQ creation', () => {
-        fixture.componentRef.setInput('course', { id: 123 });
-        const routerSpy = jest.spyOn(router, 'navigate');
-        component.linkToFaqCreation();
-        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'faqs', 'new']);
+        component.navigateToCourseManagementSection(section);
+        expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, expectedLink, 'new']);
     });
 });

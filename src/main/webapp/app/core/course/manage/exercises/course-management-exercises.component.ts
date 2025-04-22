@@ -10,7 +10,7 @@ import { CourseExerciseCardComponent } from '../course-exercise-card/course-exer
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
-import { ExerciseManageButtonsComponent } from 'app/exercise/exercise-manage-buttons/exercise-manage-buttons.component';
+import { ExerciseCreateButtonsComponent } from 'app/exercise/exercise-create-buttons/exercise-create-buttons.component';
 import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise/modeling-exercise.component';
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
@@ -30,7 +30,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizExerciseComponent,
-        ExerciseManageButtonsComponent,
+        ExerciseCreateButtonsComponent,
         ModelingExerciseComponent,
         TextExerciseComponent,
         FileUploadExerciseComponent,

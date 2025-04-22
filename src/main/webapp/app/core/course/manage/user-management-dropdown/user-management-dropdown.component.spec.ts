@@ -4,9 +4,10 @@ import { faGraduationCap, faListAlt, faPersonChalkboard, faSchool } from '@forta
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('UserManagementDropdownComponent', () => {
     let component: UserManagementDropdownComponent;
@@ -18,6 +19,7 @@ describe('UserManagementDropdownComponent', () => {
                 { provide: TranslateDirective, useClass: MockJhiTranslateDirective },
                 { provide: RouterLink, useClass: MockRouterLinkDirective },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
         }).compileComponents();
     });
@@ -34,30 +36,30 @@ describe('UserManagementDropdownComponent', () => {
 
     it('should initialize userAddActions with correct links and translations when courseId is provided', () => {
         fixture.componentRef.setInput('courseId', 123);
-        component.ngOnInit();
+        fixture.detectChanges();
         expect(component.userAddActions).toEqual([
             {
                 icon: faSchool,
                 routerLink: ['/course-management/123/groups/students'],
-                translationKey: 'entity.action.addStudent',
+                label: 'entity.action.addStudent',
                 id: 'add-student',
             },
             {
                 icon: faPersonChalkboard,
                 routerLink: ['/course-management/123/groups/tutors'],
-                translationKey: 'entity.action.addTutor',
+                label: 'entity.action.addTutor',
                 id: 'add-tutor',
             },
             {
                 icon: faListAlt,
                 routerLink: ['/course-management/123/groups/editors'],
-                translationKey: 'entity.action.addEditor',
+                label: 'entity.action.addEditor',
                 id: 'add-editor',
             },
             {
                 icon: faGraduationCap,
                 routerLink: ['/course-management/123/groups/instructors'],
-                translationKey: 'entity.action.addInstructor',
+                label: 'entity.action.addInstructor',
                 id: 'add-instructor',
             },
         ]);
@@ -65,7 +67,7 @@ describe('UserManagementDropdownComponent', () => {
 
     it('should not initialize userAddActions when courseId is undefined', () => {
         fixture.componentRef.setInput('courseId', undefined);
-        component.ngOnInit();
+        fixture.detectChanges();
         expect(component.userAddActions).toEqual([]);
     });
 });

@@ -11,6 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExerciseImportButtonComponent', () => {
     let component: ExerciseImportButtonComponent;
@@ -25,6 +26,7 @@ describe('ExerciseImportButtonComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
                 { provide: NgbModal, useClass: MockNgbModalService },
+                provideHttpClient(),
             ],
         }).compileComponents();
 
@@ -36,10 +38,16 @@ describe('ExerciseImportButtonComponent', () => {
         fixture.detectChanges();
     });
 
-    it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])('should open import modal', async (exerciseType: ExerciseType) => {
+    it.each([
+        { exerciseType: ExerciseType.MODELING, id: 2 },
+        { exerciseType: ExerciseType.TEXT, id: 2 },
+        { exerciseType: ExerciseType.FILE_UPLOAD, id: 2 },
+        { exerciseType: ExerciseType.PROGRAMMING, id: 2 },
+        { exerciseType: ExerciseType.PROGRAMMING, id: undefined },
+    ])('should open import' + ' modal', async ({ exerciseType, id }) => {
         fixture.componentRef.setInput('exerciseType', exerciseType);
         const promise = new Promise((resolve) => {
-            resolve({ id: 2 } as Exercise);
+            resolve({ id, maxPoints: 1 } as Exercise);
         });
         const openSpy = jest.spyOn(modalService, 'open').mockReturnValue({ componentInstance: {}, result: promise } as NgbModalRef);
         const modalSpy = jest.spyOn(modalService, 'dismissAll');
@@ -54,7 +62,15 @@ describe('ExerciseImportButtonComponent', () => {
             .toResolve()
             .then(() => {
                 expect(modalSpy).toHaveBeenCalledOnce();
-                expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
+                if (id && exerciseType === ExerciseType.PROGRAMMING) {
+                    expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 'import', 2]);
+                } else if (!id && exerciseType === ExerciseType.PROGRAMMING) {
+                    expect(routerSpy).toHaveBeenCalledWith(['/course-management', 123, 'programming-exercises', 'import-from-file'], {
+                        state: { programmingExerciseForImportFromFile: { id: undefined, maxPoints: 1 } },
+                    });
+                } else {
+                    expect(routerSpy).toHaveBeenCalledExactlyOnceWith(['/course-management', 123, `${exerciseType}-exercises`, 2, 'import']);
+                }
             });
     });
 });

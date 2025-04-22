@@ -27,7 +27,7 @@
         [hidden]="shouldHideExerciseCard('programming')"
         [course]="course"
     >
-        <jhi-exercise-manage-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
         <jhi-programming-exercise
             exercises
             [embedded]="true"
@@ -59,7 +59,7 @@
         [hidden]="shouldHideExerciseCard('modeling')"
         [course]="course"
     >
-        <jhi-exercise-manage-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MODELING" />
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.MODELING" />
         <jhi-modeling-exercise
             exercises
             [embedded]="true"
@@ -76,7 +76,7 @@
             [hidden]="shouldHideExerciseCard('text')"
             [course]="course"
         >
-            <jhi-exercise-manage-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.TEXT" />
+            <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.TEXT" />
             <jhi-text-exercise
                 exercises
                 [embedded]="true"
@@ -93,7 +93,7 @@
         [hidden]="shouldHideExerciseCard('file-upload')"
         [course]="course"
     >
-        <jhi-exercise-manage-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" />
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.FILE_UPLOAD" />
         <jhi-file-upload-exercise
             exercises
             [embedded]="true"

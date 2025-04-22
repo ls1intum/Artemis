@@ -11,7 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 
-enum CourseManagementSection {
+export enum CourseManagementSection {
     LECTURE = 'lectures',
     EXAM = 'exams',
     FAQ = 'faqs',

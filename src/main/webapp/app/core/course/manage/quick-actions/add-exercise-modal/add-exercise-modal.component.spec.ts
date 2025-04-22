@@ -5,8 +5,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AddExerciseModalComponent } from 'app/core/course/manage/quick-actions/add-exercise-modal/add-exercise-modal.component';
 import { MockComponent } from 'ng-mocks';
-import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-create-button/exercise-create-button.component';
-import { ExerciseImportButtonComponent } from 'app/exercise/exercise-manage-buttons/exercise-import-button/exercise-import-button.component';
+import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
+import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 
 describe('AddExerciseModalComponent', () => {
     let component: AddExerciseModalComponent;
