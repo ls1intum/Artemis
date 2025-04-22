@@ -95,7 +95,7 @@ describe('Course Management Update Component', () => {
         course.enrollmentConfirmationMessage = 'testEnrollmentConfirmationMessage';
         course.presentationScore = 16;
         course.color = 'testColor';
-        course.courseIconPath = 'api/core/files/testCourseIcon';
+        course.courseIcon = 'testCourseIcon';
         course.timeZone = 'Europe/London';
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = false;
@@ -204,7 +204,7 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.get(['enrollmentEnabled'])?.value).toBe(course.enrollmentEnabled);
             expect(comp.courseForm.get(['enrollmentConfirmationMessage'])?.value).toBe(course.enrollmentConfirmationMessage);
             expect(comp.courseForm.get(['color'])?.value).toBe(course.color);
-            expect(comp.courseForm.get(['courseIcon'])?.value).toBeNull();
+            expect(comp.courseForm.get(['courseIcon'])?.value).toBe(course.courseIcon);
             expect(comp.courseForm.get(['learningPathsEnabled'])?.value).toBe(course.learningPathsEnabled);
             expect(comp.courseForm.get(['studentCourseAnalyticsDashboardEnabled'])?.value).toBe(course.studentCourseAnalyticsDashboardEnabled);
             flush();
