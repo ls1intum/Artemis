@@ -24,10 +24,13 @@
     </div>
 } @else {
     <jhi-feature-activation
-        [title]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
+        [headerTitle]="'artemisApp.learningPathManagement.learningPathsDisabled.title'"
         [description]="'artemisApp.learningPathManagement.learningPathsDisabled.description'"
-        [buttonText]="'artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel'"
+        [activateButtonText]="'artemisApp.learningPathManagement.learningPathsDisabled.buttonLabel'"
         [isLoading]="this.isLoading()"
-        (activate)="enableLearningPaths()"
+        (enable)="enableLearningPaths()"
+        [advantagesTitle]="'Advantages'"
+        [advantages]="[]"
+        [activatingButtonText]="'abc'"
     />
 }

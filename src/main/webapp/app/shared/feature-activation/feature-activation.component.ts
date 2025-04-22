@@ -1,22 +1,25 @@
+// learning-path-activation.component.ts
 import { Component, input, output } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faNetworkWired } from '@fortawesome/free-solid-svg-icons';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-feature-activation',
     templateUrl: './feature-activation.component.html',
-    imports: [TranslateDirective, ButtonComponent],
     styleUrls: ['./feature-activation.component.scss'],
+    imports: [ButtonComponent, TranslateDirective, FaIconComponent],
 })
 export class FeatureActivationComponent {
-    title = input.required<string>();
+    protected readonly faNetworkWired = faNetworkWired;
+    headerTitle = input.required<string>();
     description = input.required<string>();
-    buttonText = input.required<string>();
-    activate = output<void>();
-    isLoading = input<boolean>(false);
-    onActivateClick(): void {
-        if (!this.isLoading()) {
-            this.activate.emit();
-        }
-    }
+    advantagesTitle = input.required<string>();
+    advantages = input.required<string[]>();
+    isLoading = input.required<boolean>();
+    activateButtonText = input.required<string>();
+    activatingButtonText = input.required<string>();
+
+    enable = output<void>();
 }

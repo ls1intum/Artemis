@@ -1,13 +1,22 @@
-<div class="card mx-auto w-100" style="max-width: 32rem">
-    <div class="card-header text-center">
-        <h5 class="card-title mb-0" [jhiTranslate]="title()"></h5>
-    </div>
+<div class="container my-4">
+    <div class="card shadow border-0 bg-light">
+        <div class="card-header d-flex align-items-center border-bottom-0 bg-transparent pb-2">
+            <div class="bg-primary text-white rounded-circle p-2 me-3">
+                <fa-icon [icon]="faNetworkWired" />
+            </div>
+            <h2 class="mb-0" [jhiTranslate]="headerTitle()"></h2>
+        </div>
 
-    <div class="card-body">
-        <p class="card-text text-center" [jhiTranslate]="description()"></p>
-    </div>
+        <div class="card-body pt-3 pb-0 mb-0">
+            <div class="row g-4">
+                <div class="col-md-8">
+                    <p class="fs-5 lh-lg" style="white-space: pre-line" [jhiTranslate]="description()"></p>
+                </div>
+            </div>
+        </div>
 
-    <div class="card-footer d-flex justify-content-center pb-3">
-        <jhi-button (click)="onActivateClick()" [isLoading]="isLoading()" [title]="buttonText()" />
+        <div class="card-footer bg-transparent border-top-0 pt-0 mt-0 pb-4 d-flex">
+            <jhi-button [title]="activateButtonText()" [isLoading]="isLoading()" (onClick)="(enable.emit)" />
+        </div>
     </div>
 </div>
