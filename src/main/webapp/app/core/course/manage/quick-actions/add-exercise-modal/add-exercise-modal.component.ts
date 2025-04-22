@@ -24,17 +24,7 @@ export class AddExerciseModalComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
-    private activeModal = inject(NgbActiveModal);
-    course: Course;
-
-    /**
-     * Closes the modal by dismissing it
-     */
-    cancel() {
-        this.activeModal.dismiss('cancel');
-    }
-
-    exerciseTypes: ExerciseModalRow[] = [
+    protected readonly exerciseTypes: ExerciseModalRow[] = [
         {
             type: ExerciseType.PROGRAMMING,
             translationKey: 'global.menu.entities.exerciseTypes.programming',
@@ -57,4 +47,13 @@ export class AddExerciseModalComponent {
             translationKey: 'global.menu.entities.exerciseTypes.fileUpload',
         },
     ];
+    private activeModal = inject(NgbActiveModal);
+    course: Course;
+
+    /**
+     * Closes the modal by dismissing it
+     */
+    cancel() {
+        this.activeModal.dismiss('cancel');
+    }
 }
