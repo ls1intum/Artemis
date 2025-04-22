@@ -41,7 +41,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 export class CourseManagementExercisesComponent implements OnInit {
     protected readonly ExerciseType = ExerciseType;
     protected readonly documentationType: DocumentationType = 'Exercise';
-    protected readonly featureToggle = FeatureToggle;
+    protected readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     showSearch = false;
