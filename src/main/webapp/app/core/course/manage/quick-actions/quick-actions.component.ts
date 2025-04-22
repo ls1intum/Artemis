@@ -9,6 +9,7 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgTemplateOutlet } from '@angular/common';
 
 enum CourseManagementSection {
     LECTURE = 'lectures',
@@ -18,7 +19,7 @@ enum CourseManagementSection {
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
-    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, FaIconComponent, RouterLink],
+    imports: [ButtonComponent, UserManagementDropdownComponent, TranslateDirective, FaIconComponent, RouterLink, NgTemplateOutlet],
 })
 export class QuickActionsComponent {
     course = input<Course | undefined>();

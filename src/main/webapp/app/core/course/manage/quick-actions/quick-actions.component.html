@@ -3,44 +3,53 @@
     <div class="card-body">
         <div class="d-flex flex-wrap align-items-center mb-3">
             <div class="d-flex flex-nowrap">
-                <div class="text-center me-4">
-                    <div class="small text-muted" jhiTranslate="artemisApp.course.students"></div>
-                    @if (course()?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course()?.id, 'groups', 'students']" class="fw-bold" id="number-of-students">{{
-                            course()?.numberOfStudents || 0
-                        }}</a>
-                    } @else {
-                        <div class="fw-bold" id="number-of-students-text">{{ course()?.numberOfStudents || 0 }}</div>
-                    }
-                </div>
-                <div class="text-center me-4">
-                    <div class="small text-muted" jhiTranslate="artemisApp.course.tutors"></div>
-                    @if (course()?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course()?.id, 'groups', 'tutors']" class="fw-bold" id="number-of-tutors">{{
-                            course()?.numberOfTeachingAssistants || 0
-                        }}</a>
-                    } @else {
-                        <div class="fw-bold" id="number-of-tutors-text">{{ course()?.numberOfTeachingAssistants || 0 }}</div>
-                    }
-                </div>
-                <div class="text-center me-4">
-                    <div class="small text-muted" jhiTranslate="artemisApp.course.editors"></div>
-                    @if (course()?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course()?.id, 'groups', 'editors']" class="fw-bold" id="number-of-editors">{{ course()?.numberOfEditors || 0 }}</a>
-                    } @else {
-                        <div class="fw-bold" id="number-of-editors-text">{{ course()?.numberOfEditors || 0 }}</div>
-                    }
-                </div>
-                <div class="text-center me-4">
-                    <div class="small text-muted" jhiTranslate="artemisApp.course.instructors"></div>
-                    @if (course()?.isAtLeastInstructor) {
-                        <a [routerLink]="['/course-management', course()?.id, 'groups', 'instructors']" class="fw-bold" id="number-of-instructors">{{
-                            course()?.numberOfInstructors || 0
-                        }}</a>
-                    } @else {
-                        <div class="fw-bold" id="number-of-instructors-text">{{ course()?.numberOfInstructors || 0 }}</div>
-                    }
-                </div>
+                <ng-container
+                    *ngTemplateOutlet="
+                        courseStatItem;
+                        context: {
+                            label: 'students',
+                            count: course()?.numberOfStudents,
+                            route: 'students',
+                            idPrefix: 'students',
+                        }
+                    "
+                />
+
+                <ng-container
+                    *ngTemplateOutlet="
+                        courseStatItem;
+                        context: {
+                            label: 'tutors',
+                            count: course()?.numberOfTeachingAssistants,
+                            route: 'tutors',
+                            idPrefix: 'tutors',
+                        }
+                    "
+                />
+
+                <ng-container
+                    *ngTemplateOutlet="
+                        courseStatItem;
+                        context: {
+                            label: 'editors',
+                            count: course()?.numberOfEditors,
+                            route: 'editors',
+                            idPrefix: 'editors',
+                        }
+                    "
+                />
+
+                <ng-container
+                    *ngTemplateOutlet="
+                        courseStatItem;
+                        context: {
+                            label: 'instructors',
+                            count: course()?.numberOfInstructors,
+                            route: 'instructors',
+                            idPrefix: 'instructors',
+                        }
+                    "
+                />
                 @if (course()?.isAtLeastInstructor) {
                     <jhi-user-management-dropdown class="ms-3" [courseId]="course()?.id" />
                 }
@@ -82,3 +91,14 @@
         </div>
     </div>
 </div>
+
+<ng-template #courseStatItem let-label="label" let-count="count" let-route="route" let-idPrefix="idPrefix">
+    <div class="text-center me-4">
+        <div class="small text-muted" jhiTranslate="artemisApp.course.{{ label }}"></div>
+        @if (course()?.isAtLeastInstructor) {
+            <a [routerLink]="['/course-management', course()?.id, 'groups', route]" class="fw-bold" id="number-of-{{ idPrefix }}">{{ count || 0 }}</a>
+        } @else {
+            <div class="fw-bold" id="number-of-{{ idPrefix }}-text">{{ count || 0 }}</div>
+        }
+    </div>
+</ng-template>
