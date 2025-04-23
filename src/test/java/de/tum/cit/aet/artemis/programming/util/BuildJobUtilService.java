@@ -5,6 +5,7 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.time.ZonedDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 public class BuildJobUtilService {
 
     @Autowired
+    @Qualifier("buildJobTestRepository")
     private BuildJobRepository buildJobRepository;
 
     public BuildJob createAndSaveBuildJob(String buildJobId, String name, ProgrammingExercise programmingExercise, Course course,
