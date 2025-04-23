@@ -149,6 +149,9 @@ public class ParticipationUtilService {
     @Value("${artemis.version-control.url}")
     protected String artemisVersionControlUrl;
 
+    @Autowired
+    private ResultTestRepository resultRepository;
+
     /**
      * Creates and saves a Result for a ProgrammingExerciseStudentParticipation associated with the given ProgrammingExercise and login. If no corresponding
      * ProgrammingExerciseStudentParticipation exists, it will be created and saved as well.
@@ -228,14 +231,15 @@ public class ParticipationUtilService {
 
         submission.setType(SubmissionType.MANUAL);
         submission.setParticipation(studentParticipation);
-        submission = submissionRepository.saveAndFlush(submission);
+        submission = submissionRepository.save(submission);
 
         Result result = ParticipationFactory.generateResult(rated, scoreAwarded);
         result.setSubmission(submission);
         result.completionDate(ZonedDateTime.now());
         submission.addResult(result);
-        submission = submissionRepository.saveAndFlush(submission);
-        return submission.getResults().getFirst();
+        resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
     }
 
     /**
