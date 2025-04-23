@@ -1043,11 +1043,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission1.setType(SubmissionType.MANUAL);
         submission1.setBuildFailed(true);
 
-        var submission1Logs = new ArrayList<BuildLogEntry>();
-        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1", submission1));
-        submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
+        var submission1LogsInDatabase = new ArrayList<BuildLogEntry>();
+        submission1LogsInDatabase.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 1", submission1));
+        submission1LogsInDatabase.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
 
-        submission1.setBuildLogEntries(submission1Logs);
+        submission1.setBuildLogEntries(submission1LogsInDatabase);
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission1, TEST_PREFIX + "student1");
         var result1 = participationUtilService.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
 
@@ -1059,11 +1059,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         submission2.setType(SubmissionType.MANUAL);
         submission2.setBuildFailed(true);
 
-        var submission2Logs = new ArrayList<BuildLogEntry>();
-        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1", submission2));
-        submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
+        var submission2LogsInDatabase = new ArrayList<BuildLogEntry>();
+        submission2LogsInDatabase.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 1", submission2));
+        submission2LogsInDatabase.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
 
-        submission2.setBuildLogEntries(submission2Logs);
+        submission2.setBuildLogEntries(submission2LogsInDatabase);
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
@@ -1099,22 +1099,16 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
             var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
                     parameters(Map.of("resultId", result1.getId())));
 
-            assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries().toString());
+            // we expect the logs from the file to be returned if we pass an id, not from the database
+            assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries("submission1-build-job").toString());
+
+            // var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+            // parameters(Map.of("resultId", result2.getId())));
+            // assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries().toString());
         }
 
-        // MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        // mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(true);
-        // mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(
-        // new ByteArrayInputStream(submission1LogsFromFile.getBytes(StandardCharsets.UTF_8))
-        // );
-        // var expectedBuildLogEntriesSubmission1 = BuildLogEntryService.parseBuildLogEntries();
-
-        // Specify to use result1
-
         // Specify to use result2
-        // var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
-        // parameters(Map.of("resultId", result2.getId())));
-        // assertThat(receivedLogs2).isEqualTo(submission2Logs);
+
         //
         // // Without parameters, the latest submission must be used
         // var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
@@ -1321,17 +1315,17 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                 .formatted(buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId);
     }
 
-    public static List<BuildLogEntry> getExpectedBuildLogEntries() {
+    public static List<BuildLogEntry> getExpectedBuildLogEntries(String buildJobId) {
         List<BuildLogEntry> entries = new ArrayList<>();
-        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726065Z"), "~~~~~~~~~~~~~~~~~~~~ Start Build Job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726065Z"), "~~~~~~~~~~~~~~~~~~~~ Start Build Job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726182Z"),
                 "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22 ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973797Z"),
-                "~~~~~~~~~~~~~~~~~~~~ Started container local-ci-submission1-build-job for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+                "~~~~~~~~~~~~~~~~~~~~ Started container local-ci-" + buildJobId + " for build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973988Z"),
                 "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.263789Z"),
-                "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+                "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.297295Z"), "⚙️ executing gradle"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.773578Z"), "Starting a Gradle Daemon (subsequent builds will be faster)"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :clean UP-TO-DATE"));
@@ -1374,76 +1368,15 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2025-04-22T21:49:11.874692+02:00[Europe/Berlin]"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "BUILD FAILED in 6s"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.266843Z"),
-                "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+                "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.267038Z"),
-                "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+                "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job " + buildJobId + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.328894Z"),
-                "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+                "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job " + buildJobId
+                        + " ~~~~~~~~~~~~~~~~~~~~"));
         entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.499956Z"),
-                "Building and testing submission for repository localcoursebuildlogs-artemis_admin and commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job submission1-build-job"));
+                "Building and testing submission for repository localcoursebuildlogs-artemis_admin and commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job "
+                        + buildJobId));
         return entries;
     }
-
-    // public static List<BuildLogEntry> getExpectedBuildLogEntries() {
-    // List<BuildLogEntry> entries = new ArrayList<>();
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726065Z"), "~~~~~~~~~~~~~~~~~~~~ Start Build Job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726182Z"), "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22
-    // ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973797Z"), "~~~~~~~~~~~~~~~~~~~~ Started container local-ci-submission1-build-job for build job
-    // submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973988Z"), "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script
-    // ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.263789Z"), "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job submission1-build-job
-    // ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.297295Z"), "⚙️ executing gradle"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.773578Z"), "Starting a Gradle Daemon (subsequent builds will be faster)"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :clean UP-TO-DATE"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "2025-04-22T21:49:11.872772+02:00[Europe/Berlin]"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :compileJava FAILED"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "/var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';'
-    // expected"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), " buildFailure2"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), " ^"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "1 error"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "FAILURE: Build failed with an exception."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "* What went wrong:"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "Execution failed for task ':compileJava'."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "> Compilation failed; see the compiler output below."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "2025-04-22T21:49:11.873224+02:00[Europe/Berlin]"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "[Incubating] Problems report is available at:
-    // file:///var/tmp/testing-dir/build/reports/problems/problems-report.html"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " /var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';'
-    // expected"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " buildFailure2"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " ^"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " 1 error"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "null"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873230Z"), "* Try:"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "> 2025-04-22T21:49:11.873757+02:00[Europe/Berlin] Check your code and dependencies to fix
-    // the compilation error(s)"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "> Run with --scan to get full insights."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "2025-04-22T21:49:11.873758+02:00[Europe/Berlin]"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"), "Deprecated Gradle features were used in this build, making it incompatible with Gradle
-    // 9.0."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"), "null"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"), "You can use '--warning-mode all' to show the individual deprecation warnings and determine
-    // if they come from your own scripts or plugins."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"), "null"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "For more on this, please refer to
-    // https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation."));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2 actionable tasks: 1 executed, 1 up-to-date"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2025-04-22T21:49:11.874692+02:00[Europe/Berlin]"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "BUILD FAILED in 6s"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.266843Z"), "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job submission1-build-job
-    // ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.267038Z"), "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job
-    // submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.328894Z"), "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container
-    // a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
-    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.499956Z"), "Building and testing submission for repository localcoursebuildlogs-artemis_admin and
-    // commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job submission1-build-job"));
-    // return entries;
-    // }
 }
