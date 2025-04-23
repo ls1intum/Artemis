@@ -1068,43 +1068,73 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
         // TODO works differently now, fix / adjust test
-        BuildJob buildJob = new BuildJob();
-        buildJob.setBuildJobId("submission1-build-job");
-        buildJob.setName("Build Job for Submission 1");
-        buildJob.setExerciseId(programmingExercise.getId());
-        buildJob.setCourseId(course.getId());
-        buildJob.setParticipationId(participation.getId());
-        buildJob.setResult(result1);
-        buildJob.setBuildAgentAddress("http://build-agent-address");
-        buildJob.setBuildSubmissionDate(submission1.getSubmissionDate());
-        buildJob.setBuildStartDate(ZonedDateTime.now());
-        buildJob.setBuildCompletionDate(ZonedDateTime.now().plusMinutes(5));
-        buildJob.setRepositoryType(RepositoryType.USER);
-        buildJob.setRepositoryName("student-repo");
-        buildJob.setCommitHash(submission1.getCommitHash());
-        buildJob.setRetryCount(0);
-        buildJob.setPriority(1);
-        buildJob.setTriggeredByPushTo(RepositoryType.USER);
-        buildJob.setBuildStatus(BuildStatus.ERROR);
-        buildJob.setDockerImage("default-docker-image");
+        String submission1BuildJobId = "submission1-build-job";
+        BuildJob buildJobSubmission1 = new BuildJob();
+        buildJobSubmission1.setBuildJobId(submission1BuildJobId);
+        buildJobSubmission1.setName("Build Job for Submission 1");
+        buildJobSubmission1.setExerciseId(programmingExercise.getId());
+        buildJobSubmission1.setCourseId(course.getId());
+        buildJobSubmission1.setParticipationId(participation.getId());
+        buildJobSubmission1.setResult(result1);
+        buildJobSubmission1.setBuildAgentAddress("http://build-agent-address");
+        buildJobSubmission1.setBuildSubmissionDate(submission1.getSubmissionDate());
+        buildJobSubmission1.setBuildStartDate(ZonedDateTime.now());
+        buildJobSubmission1.setBuildCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        buildJobSubmission1.setRepositoryType(RepositoryType.USER);
+        buildJobSubmission1.setRepositoryName("student-repo");
+        buildJobSubmission1.setCommitHash(submission1.getCommitHash());
+        buildJobSubmission1.setRetryCount(0);
+        buildJobSubmission1.setPriority(1);
+        buildJobSubmission1.setTriggeredByPushTo(RepositoryType.USER);
+        buildJobSubmission1.setBuildStatus(BuildStatus.ERROR);
+        buildJobSubmission1.setDockerImage("default-docker-image");
+        buildJobRepository.save(buildJobSubmission1);
 
-        buildJobRepository.save(buildJob);
+        String submission2BuildJobId = "submission2-build-job";
+        BuildJob buildJobSubmission2 = new BuildJob();
+        buildJobSubmission2.setBuildJobId(submission2BuildJobId);
+        buildJobSubmission2.setName("Build Job for Submission 2");
+        buildJobSubmission2.setExerciseId(programmingExercise.getId());
+        buildJobSubmission2.setCourseId(course.getId());
+        buildJobSubmission2.setParticipationId(participation.getId());
+        buildJobSubmission2.setResult(result2);
+        buildJobSubmission2.setBuildAgentAddress("http://build-agent-address");
+        buildJobSubmission2.setBuildSubmissionDate(submission2.getSubmissionDate());
+        buildJobSubmission2.setBuildStartDate(ZonedDateTime.now());
+        buildJobSubmission2.setBuildCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        buildJobSubmission2.setRepositoryType(RepositoryType.USER);
+        buildJobSubmission2.setRepositoryName("student-repo");
+        buildJobSubmission2.setCommitHash(submission2.getCommitHash());
+        buildJobSubmission2.setRetryCount(0);
+        buildJobSubmission2.setPriority(1);
+        buildJobSubmission2.setTriggeredByPushTo(RepositoryType.USER);
+        buildJobSubmission2.setBuildStatus(BuildStatus.ERROR);
+        buildJobSubmission2.setDockerImage("default-docker-image");
+        buildJobRepository.save(buildJobSubmission2);
 
-        var submission1LogsFromFile = getSubmissionLogs("submission1-build-job");
+        var submission1LogsFromFile = getSubmissionLogs(submission1BuildJobId);
+        var submission2LogsFromFile = getSubmissionLogs(submission2BuildJobId);
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(true);
-            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains("submission1-build-job"))))
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains(submission1BuildJobId)))).thenReturn(true);
+            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains(submission1BuildJobId))))
                     .thenReturn(new ByteArrayInputStream(submission1LogsFromFile.getBytes(StandardCharsets.UTF_8)));
 
-            var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
-                    parameters(Map.of("resultId", result1.getId())));
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains(submission2BuildJobId)))).thenReturn(true);
+            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains(submission2BuildJobId))))
+                    .thenReturn(new ByteArrayInputStream(submission2LogsFromFile.getBytes(StandardCharsets.UTF_8)));
 
             // we expect the logs from the file to be returned if we pass an id, not from the database
-            assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries("submission1-build-job").toString());
+            var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                    parameters(Map.of("resultId", result1.getId())));
+            assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries(submission1BuildJobId).toString());
+
+            var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                    parameters(Map.of("resultId", result2.getId())));
+            assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries(submission2BuildJobId).toString());
 
             // var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
             // parameters(Map.of("resultId", result2.getId())));
-            // assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries().toString());
+            // assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries(submission2BuildJobId).toString());
         }
 
         // Specify to use result2
