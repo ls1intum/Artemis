@@ -4,11 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,8 +139,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTe
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.orElseThrow(),
                 SubmissionType.EXTERNAL);
 
-        List<Long> resultIds = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId()).stream().map(Result::getId)
-                .collect(Collectors.toCollection(ArrayList::new));
+        List<Long> resultIds = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId()).stream().map(Result::getId).toList();
 
         Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(resultIds, participation);
         assertThat(resultBuildJobMap).hasSize(0);
