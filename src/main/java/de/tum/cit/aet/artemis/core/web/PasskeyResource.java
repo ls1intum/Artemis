@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
@@ -81,13 +81,13 @@ public class PasskeyResource {
     /**
      * PUT /passkey/:credentialId : update the label of a passkey for the current user
      *
-     * @param credentialId of the passkey to be updated
-     * @param newLabel     the new label for the passkey
+     * @param credentialId            of the passkey to be updated
+     * @param passkeyWithUpdatedLabel containing the new label for the passkey
      * @return {@link ResponseEntity} with HTTP status 200 (OK) if the update is successful
      */
     @PutMapping("{credentialId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestParam String newLabel) {
+    public ResponseEntity<Void> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
         log.debug("Updating label for passkey with id: {}", credentialId);
 
         User currentUser = userRepository.getUser();
@@ -104,7 +104,7 @@ public class PasskeyResource {
             return ResponseEntity.notFound().build();
         }
 
-        passkeyCredential.setLabel(newLabel);
+        passkeyCredential.setLabel(passkeyWithUpdatedLabel.label());
         passkeyCredentialsRepository.save(passkeyCredential);
         log.debug("Successfully updated label for passkey with id: {}", credentialId);
 
