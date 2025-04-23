@@ -1128,21 +1128,15 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                     parameters(Map.of("resultId", result1.getId())));
             assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries(submission1BuildJobId).toString());
 
+            // we expect the logs from the file to be returned if we pass an id, not from the database
             var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
                     parameters(Map.of("resultId", result2.getId())));
             assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries(submission2BuildJobId).toString());
 
-            // var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
-            // parameters(Map.of("resultId", result2.getId())));
-            // assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries(submission2BuildJobId).toString());
+            // Without parameters, the latest submission must be used (read from database)
+            var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
+            assertThat(receivedLogsLatest).isEqualTo(submission2LogsInDatabase);
         }
-
-        // Specify to use result2
-
-        //
-        // // Without parameters, the latest submission must be used
-        // var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
-        // assertThat(receivedLogsLatest).isEqualTo(submission2Logs);
     }
 
     @Test
