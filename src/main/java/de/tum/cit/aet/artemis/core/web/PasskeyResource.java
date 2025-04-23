@@ -73,7 +73,7 @@ public class PasskeyResource {
         return ResponseEntity.ok(passkeys);
     }
 
-    private ResponseEntity<Void> logAndReturnNotFound(Object... args) {
+    private <T> ResponseEntity<T> logAndReturnNotFound(Object... args) {
         log.warn("Credential with id {} not found in the repository", args);
         return ResponseEntity.notFound().build();
     }
@@ -87,7 +87,7 @@ public class PasskeyResource {
      */
     @PutMapping("{credentialId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Void> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
+    public ResponseEntity<PasskeyDTO> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestBody PasskeyDTO passkeyWithUpdatedLabel) {
         log.debug("Updating label for passkey with id: {}", credentialId);
 
         User currentUser = userRepository.getUser();
@@ -105,10 +105,10 @@ public class PasskeyResource {
         }
 
         passkeyCredential.setLabel(passkeyWithUpdatedLabel.label());
-        passkeyCredentialsRepository.save(passkeyCredential);
-        log.debug("Successfully updated label for passkey with id: {}", credentialId);
+        PasskeyCredential updatedPasskey = passkeyCredentialsRepository.save(passkeyCredential);
 
-        return ResponseEntity.ok().build();
+        log.debug("Successfully updated label for passkey with id: {}", credentialId);
+        return ResponseEntity.ok(updatedPasskey.toDto());
     }
 
     /**
