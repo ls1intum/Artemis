@@ -11,7 +11,9 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
@@ -72,7 +74,41 @@ public class PasskeyResource {
     }
 
     /**
-     * DELETE /passkey/:credentialId : delete passkey with matching id for current user
+     * PUT /passkey/:credentialId : update the label of a passkey for the current user
+     *
+     * @param credentialId of the passkey to be updated
+     * @param newLabel     the new label for the passkey
+     * @return {@link ResponseEntity} with HTTP status 200 (OK) if the update is successful
+     */
+    @PutMapping("{credentialId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> updatePasskeyLabel(@PathVariable @Base64Url String credentialId, @RequestParam String newLabel) {
+        log.debug("Updating label for passkey with id: {}", credentialId);
+
+        User currentUser = userRepository.getUser();
+        Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
+
+        if (credentialToBeUpdated.isEmpty()) {
+            log.warn("Credential with id {} not found in the repository", credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
+        boolean isUserAllowedToUpdatePasskey = passkeyCredential.getUser().getId().equals(currentUser.getId());
+        if (!isUserAllowedToUpdatePasskey) {
+            log.warn("User with id {} tried to update credential with id {} of another user", currentUser.getId(), credentialId);
+            return ResponseEntity.notFound().build();
+        }
+
+        passkeyCredential.setLabel(newLabel);
+        passkeyCredentialsRepository.save(passkeyCredential);
+        log.debug("Successfully updated label for passkey with id: {}", credentialId);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * DELETE /passkey/:credentialId : delete passkey with matching id for the current user
      *
      * @param credentialId of the passkey to be deleted
      * @return {@link ResponseEntity} with HTTP status 204 (No Content) if the deletion is successful
