@@ -115,6 +115,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
             }
+            return;
         }
         await this.updateRegisteredPasskeys();
     }
