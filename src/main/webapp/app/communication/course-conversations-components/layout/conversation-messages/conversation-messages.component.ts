@@ -190,9 +190,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 return;
             }
 
-            if (this._activeConversation && getAsChannelDTO(conversation)?.isArchived !== getAsChannelDTO(this._activeConversation)?.isArchived) {
-                this._activeConversation = conversation;
-            }
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
