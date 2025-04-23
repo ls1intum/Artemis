@@ -305,6 +305,12 @@ public class SecurityConfiguration {
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
 
+        // Conditionally adds configuration for LTI if it is active.
+        if (profileService.isLtiActive()) {
+            // Activates the LTI endpoints and filters.
+            http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
+        }
+
         if (passkeyEnabled) {
             WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
                 converter,
@@ -323,12 +329,6 @@ public class SecurityConfiguration {
             });
         }
         // @formatter:on
-
-        // Conditionally adds configuration for LTI if it is active.
-        if (profileService.isLtiActive()) {
-            // Activates the LTI endpoints and filters.
-            http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
-        }
 
         // Builds and returns the SecurityFilterChain.
         return http.build();
