@@ -1025,6 +1025,12 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         assertThat(receivedLogs).hasSize(3).isEqualTo(buildLogEntries);
     }
 
+    private void mockFileRead(MockedStatic<Files> mockedFiles, String buildJobId, String logsFromFile) {
+        mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains(buildJobId)))).thenReturn(true);
+        mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains(buildJobId))))
+                .thenReturn(new ByteArrayInputStream(logsFromFile.getBytes(StandardCharsets.UTF_8)));
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromFileForSpecificResults() throws Exception {
@@ -1069,13 +1075,8 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         var submission1LogsFromFile = getSubmissionLogs(submission1BuildJobId);
         var submission2LogsFromFile = getSubmissionLogs(submission2BuildJobId);
         try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
-            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains(submission1BuildJobId)))).thenReturn(true);
-            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains(submission1BuildJobId))))
-                    .thenReturn(new ByteArrayInputStream(submission1LogsFromFile.getBytes(StandardCharsets.UTF_8)));
-
-            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains(submission2BuildJobId)))).thenReturn(true);
-            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains(submission2BuildJobId))))
-                    .thenReturn(new ByteArrayInputStream(submission2LogsFromFile.getBytes(StandardCharsets.UTF_8)));
+            mockFileRead(mockedFiles, submission1BuildJobId, submission1LogsFromFile);
+            mockFileRead(mockedFiles, submission2BuildJobId, submission2LogsFromFile);
 
             // we expect the logs from the file to be returned if we pass an id, not from the database
             var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
@@ -1087,7 +1088,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
                     parameters(Map.of("resultId", result2.getId())));
             assertThat(receivedLogs2.toString()).isEqualTo(getExpectedBuildLogEntries(submission2BuildJobId).toString());
 
-            // Without parameters, the latest submission must be used (read from database)
+            // Without parameters, the latest submission must be used (read from the database)
             var receivedLogsLatest = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
             assertThat(receivedLogsLatest).isEqualTo(submission2LogsInDatabase);
         }
