@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
@@ -248,7 +247,10 @@ public class PyrisPipelineService {
             var lecture = channel.getLecture();
             if (lecture != null) {
                 lectureIdOptional = Optional.of(lecture.getId());
-                lectureUnitIdsOptional = Optional.of(lecture.getLectureUnits().stream().map(DomainObject::getId).toList());
+                // Throws a org.hybernate.LazyInitializationException if the lecture units are not loaded will be fixed
+                // with the lecture channel PR
+                // lectureUnitIdsOptional = Optional.of(lecture.getLectureUnits().stream().map(DomainObject::getId).toList());
+                lectureUnitIdsOptional = Optional.empty();
             }
             else {
                 lectureIdOptional = Optional.empty();
