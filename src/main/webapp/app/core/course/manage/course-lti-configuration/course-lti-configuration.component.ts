@@ -1,9 +1,9 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { FormsModule } from '@angular/forms';
@@ -13,9 +13,9 @@ import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOu
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-course-lti-configuration',

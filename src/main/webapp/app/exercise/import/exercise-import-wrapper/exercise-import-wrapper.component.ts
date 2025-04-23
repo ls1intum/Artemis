@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseImportTabsComponent } from '../exercise-import-tabs.component';
+import { ExerciseImportTabsComponent } from '../exercise-import-tabs/exercise-import-tabs.component';
 import { ExerciseImportComponent } from '../exercise-import.component';
 
 @Component({

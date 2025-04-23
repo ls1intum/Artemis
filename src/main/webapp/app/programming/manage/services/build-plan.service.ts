@@ -1,7 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { BuildPlan } from 'app/entities/programming/build-plan.model';
+import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 
 export type EntityResponseType = HttpResponse<BuildPlan>;
 

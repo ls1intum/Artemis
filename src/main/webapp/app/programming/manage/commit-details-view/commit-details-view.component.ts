@@ -1,13 +1,13 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { Subscription, throwError } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
-import { CommitInfo } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo } from 'app/programming/shared/entities/programming-submission.model';
 import dayjs from 'dayjs/esm';
 import { catchError, map, tap } from 'rxjs/operators';
-import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report.component';
+import { GitDiffReportComponent } from 'app/programming/shared/git-diff-report/git-diff-report/git-diff-report.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';

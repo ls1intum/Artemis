@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
+import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 

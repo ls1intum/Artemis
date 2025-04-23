@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDestroy, ViewChild, input } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
@@ -12,7 +12,7 @@ import { ProgrammingExerciseTheiaComponent } from 'app/programming/manage/update
 import { ProgrammingExerciseInputField } from 'app/programming/manage/update/programming-exercise-update.helper';
 import { APP_NAME_PATTERN_FOR_SWIFT } from 'app/shared/constants/input.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { KeyValuePipe } from '@angular/common';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
@@ -20,7 +20,7 @@ import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         FormsModule,

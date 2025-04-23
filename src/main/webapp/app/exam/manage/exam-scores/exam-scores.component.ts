@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SortService } from 'app/shared/service/sort.service';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
@@ -23,17 +23,17 @@ import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { ParticipantScoresService, ScoresDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { captureException } from '@sentry/angular';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
-import { declareExerciseType } from 'app/entities/exercise.model';
+import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { declareExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { faCheckCircle, faDownload, faExclamationTriangle, faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { Course } from 'app/entities/course.model';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
-import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
+import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
+import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {
@@ -57,14 +57,14 @@ import {
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { BonusStrategy } from 'app/entities/bonus.model';
-import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/exam-scores-average-scores-graph.component';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
+import { ExamScoresAverageScoresGraphComponent } from 'app/exam/manage/exam-scores/average-scores-graph/exam-scores-average-scores-graph.component';
 
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { SortDirective } from 'app/shared/sort/sort.directive';
+import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';

@@ -16,9 +16,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A ShortAnswerSolution.
@@ -30,11 +27,9 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class ShortAnswerSolution extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @Column(name = "text")
-    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -85,4 +80,5 @@ public class ShortAnswerSolution extends TempIdObject implements QuizQuestionCom
     public String toString() {
         return "ShortAnswerSolution{" + "id=" + getId() + ", text='" + getText() + "'" + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

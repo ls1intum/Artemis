@@ -618,7 +618,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userTestRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
+        Page<User> allUsers = userTestRepository.findAllWithGroupsByDeletedIsFalse(Pageable.unpaged());
         for (User user : allUsers) {
             if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                 tutors.add(user);

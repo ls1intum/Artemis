@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -23,7 +22,6 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.service.RepositoryCheckoutService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
@@ -89,21 +87,17 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     }
 
     @Override
-    public Document buildBasicConfig(final ProgrammingLanguage programmingLanguage, final Optional<ProjectType> projectType,
-            final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final boolean checkoutSolution, final String buildPlanUrl) {
+    public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean checkoutSolution, String buildPlanUrl) {
         final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, programmingLanguage, checkoutSolution, buildPlanUrl);
-
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
         final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile);
         final var xmlResource = resourceLoaderService.getResource(configFilePath);
         return JenkinsXmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }
 
-    private String getJenkinsfile(final InternalVcsRepositoryURLs internalVcsRepositoryURLs, final ProgrammingLanguage programmingLanguage, final boolean checkoutSolution,
-            final String buildPlanUrl) {
+    private String getJenkinsfile(InternalVcsRepositoryURLs internalVcsRepositoryURLs, ProgrammingLanguage programmingLanguage, boolean checkoutSolution, String buildPlanUrl) {
         final String jenkinsfile = makeSafeForXml(loadJenkinsfile());
         final var replacements = getReplacements(internalVcsRepositoryURLs, programmingLanguage, checkoutSolution, buildPlanUrl);
-
         return replacePipelineScriptParameters(jenkinsfile, replacements);
     }
 

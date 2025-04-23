@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfigHelper;
 
 class PlagiarismDetectionConfigHelperTest {
 

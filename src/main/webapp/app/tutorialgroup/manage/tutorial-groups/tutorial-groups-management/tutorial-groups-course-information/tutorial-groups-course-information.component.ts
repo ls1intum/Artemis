@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

@@ -1,9 +1,9 @@
 import { AfterContentInit, Component, Input, OnDestroy, ViewChild, inject, input, signal } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { SubmissionPolicyType } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';
-import { IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
+import { IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
@@ -20,14 +20,14 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         IncludedInOverallScorePickerComponent,

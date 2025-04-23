@@ -2,18 +2,18 @@ import { Component, computed, inject, input, signal } from '@angular/core';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
-import { ImportTableComponent } from 'app/shared/import-list/import-table.component';
-import { PagingService } from 'app/exercise/manage/paging.service';
+import { PagingService } from 'app/exercise/services/paging.service';
 import { Column } from 'app/shared/import/import.component';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import {
     CourseCompetencyImportSettings,
     ImportCourseCompetenciesSettingsComponent,
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
-import { CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import { CourseCompetencyImportOptionsDTO } from 'app/atlas/shared/entities/competency.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseForImportDTOPagingService } from 'app/core/course/shared/course-for-import-dto-paging-service';
+import { CourseForImportDTOPagingService } from 'app/core/course/shared/services/course-for-import-dto-paging-service';
+import { ImportTableComponent } from 'app/atlas/manage/import-list/import-table.component';
 
 const tableColumns: Column<Course>[] = [
     {

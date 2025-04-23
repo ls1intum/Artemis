@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DocumentationButtonComponent, DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { BaseGradingSystemComponent } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
@@ -12,7 +12,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { GradingSystemPresentationsComponent } from 'app/assessment/manage/grading-system/grading-system-presentations/grading-system-presentations.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-grading-system',

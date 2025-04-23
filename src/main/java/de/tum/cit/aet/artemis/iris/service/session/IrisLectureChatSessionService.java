@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
@@ -22,7 +24,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterface<IrisLectureChatSession>, IrisRateLimitedFeatureInterface {
 
     private final IrisSettingsService irisSettingsService;
@@ -85,7 +86,8 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         pyrisPipelineService.executePipeline("lecture-chat", "default", Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), conversation, new PyrisUserDTO(session.getUser()), dto.settings(), dto.initialStages()),
+                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), conversation, new PyrisUserDTO(session.getUser()), dto.settings(),
+                        dto.initialStages()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages));
     }
 

@@ -1,21 +1,21 @@
 import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
-import { CourseStorageService } from 'app/core/course/manage/course-storage.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseDashboardService } from 'app/core/course/overview/course-dashboard/course-dashboard.service';
-import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/entities/student-metrics.model';
+import { CompetencyInformation, ExerciseMetrics, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { ExerciseLateness } from 'app/core/course/overview/course-dashboard/course-exercise-lateness/course-exercise-lateness.component';
 import { ExercisePerformance } from 'app/core/course/overview/course-dashboard/course-exercise-performance/course-exercise-performance.component';
 import { round } from 'app/shared/util/utils';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import dayjs from 'dayjs/esm';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS, PROFILE_IRIS } from 'app/app.constants';
 import { CompetencyAccordionToggleEvent } from 'app/atlas/overview/competency-accordion/competency-accordion.component';
 import { CourseChatbotComponent } from 'app/iris/overview/course-chatbot/course-chatbot.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -82,13 +82,11 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSubscription = this.route?.parent?.params.subscribe((params) => {
             this.courseId = parseInt(params['courseId'], 10);
 
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo?.activeProfiles.includes(PROFILE_IRIS)) {
-                    this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                        this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
-                    });
-                }
-            });
+            if (this.profileService.isProfileActive(PROFILE_IRIS)) {
+                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                    this.irisEnabled = !!settings?.irisCourseChatSettings?.enabled;
+                });
+            }
         });
         this.setCourse(this.courseStorageService.getCourse(this.courseId));
 
@@ -96,7 +94,7 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
             this.setCourse(course);
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => (this.atlasEnabled = profileInfo.activeProfiles.includes(PROFILE_ATLAS)));
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
     }
 
     ngOnDestroy(): void {

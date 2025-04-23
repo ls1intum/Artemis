@@ -66,10 +66,12 @@
             </a>
         }
         <!-- Plagiarism -->
-        @if ((exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && exercise.isAtLeastEditor) {
-            <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
-                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
-            </a>
+        @if (exercise.type === ExerciseType.TEXT && exercise.isAtLeastEditor) {
+            <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         <!-- Delete exercise -->
         @if (exercise.isAtLeastInstructor) {

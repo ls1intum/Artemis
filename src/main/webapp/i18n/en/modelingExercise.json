@@ -2,7 +2,7 @@
     "artemisApp": {
         "modelingExercise": {
             "home": {
-                "title": "Modeling Exercises",
+                "title": "Modeling Exercise",
                 "createLabel": "Create Modeling Exercise",
                 "editLabel": "Edit Modeling Exercise",
                 "importLabel": "Import Modeling Exercise"
@@ -34,21 +34,6 @@
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {
                 "error": "Apollon conversion is not available"
-            },
-            "clusters": "Clusters",
-            "checkClusters": {
-                "text": "Number of Clusters:",
-                "error": "Retrieving Number of Clusters failed"
-            },
-            "buildClusters": {
-                "action": "Build Clusters",
-                "error": "Building Clusters failed",
-                "success": "Building Clusters were successful"
-            },
-            "deleteClusters": {
-                "action": "Delete Clusters",
-                "error": "Deleting Clusters failed",
-                "success": "Deleting Clusters were successful"
             }
         }
     }

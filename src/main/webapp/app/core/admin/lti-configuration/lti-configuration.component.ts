@@ -1,8 +1,8 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faExclamationTriangle, faPencilAlt, faPlus, faSort, faTrash, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { Subject } from 'rxjs';
@@ -14,12 +14,12 @@ import { combineLatest } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavLinkBase, NgbNavOutlet, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 
 @Component({

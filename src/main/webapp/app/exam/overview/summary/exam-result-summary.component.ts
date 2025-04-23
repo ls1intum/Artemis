@@ -1,38 +1,38 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
-import { StudentExam } from 'app/entities/student-exam.model';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { Exam } from 'app/entities/exam/exam.model';
-import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { ExamParticipationService } from 'app/exam/overview/exam-participation.service';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
-import { PlagiarismCaseInfo } from 'app/plagiarism/shared/types/PlagiarismCaseInfo';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
+import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercise/result/result.utils';
-import { Submission } from 'app/entities/submission.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { faArrowUp, faEye, faEyeSlash, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { cloneDeep } from 'lodash-es';
 import { captureException } from '@sentry/angular';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { isExamResultPublished } from 'app/exam/overview/exam.utils';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExamGeneralInformationComponent } from '../general-information/exam-general-information.component';
 import { ExamResultOverviewComponent } from './result-overview/exam-result-overview.component';
-import { CollapsibleCardComponent } from './collapsible-card.component';
+import { CollapsibleCardComponent } from './collapsible-card/collapsible-card.component';
 import { ExamResultSummaryExerciseCardHeaderComponent } from 'app/exam/overview/summary/exercises/header/exam-result-summary-exercise-card-header.component';
 import { NgClass } from '@angular/common';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TextExamSummaryComponent } from 'app/exam/overview/summary/exercises/text-exam-summary/text-exam-summary.component';
 import { ModelingExamSummaryComponent } from 'app/exam/overview/summary/exercises/modeling-exam-summary/modeling-exam-summary.component';
@@ -66,7 +66,7 @@ type StateBeforeResetting = {
 @Component({
     selector: 'jhi-exam-participation-summary',
     templateUrl: './exam-result-summary.component.html',
-    styleUrls: ['../../../core/course/manage/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
+    styleUrls: ['../../../core/course/manage/course-exercise-card/course-exercise-card.component.scss', '../../../quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
     imports: [
         FaIconComponent,
         TranslateDirective,

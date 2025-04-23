@@ -1,10 +1,7 @@
 import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommitInfo, ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { CommitInfo, ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import dayjs from 'dayjs/esm';
-import { createCommitUrl } from 'app/programming/shared/utils/programming-exercise.utils';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { Subscription } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommitsInfoGroupComponent } from './commits-info-group/commits-info-group.component';
@@ -17,7 +14,6 @@ import { NgStyle } from '@angular/common';
 })
 export class CommitsInfoComponent implements OnInit, OnDestroy {
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
-    private profileService = inject(ProfileService);
 
     @Input() commits?: CommitInfo[];
     @Input() currentSubmissionHash?: string;
@@ -27,53 +23,27 @@ export class CommitsInfoComponent implements OnInit, OnDestroy {
     @Input() exerciseProjectKey?: string;
     @Input() isRepositoryView = false;
 
-    private commitHashURLTemplate: string;
     private commitsInfoSubscription: Subscription;
-    private profileInfoSubscription: Subscription;
     protected isGroupsExpanded = true;
     protected groupedCommits: { key: string; commits: CommitInfo[]; date: string }[] = [];
 
-    localVC = false;
-
     ngOnInit(): void {
-        // Get active profiles, to distinguish between VC systems, and to check if localVC is enabled
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.commitHashURLTemplate = profileInfo.commitHashURLTemplate;
-            this.localVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
-        });
-
         if (!this.commits) {
             if (this.participationId) {
                 this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitsInfoForParticipation(this.participationId).subscribe((commits) => {
                     if (commits) {
                         this.commits = commits;
                     }
-                    this.setCommitDetails();
                     this.groupCommits();
                 });
             }
         } else {
-            this.setCommitDetails();
             this.groupCommits();
         }
     }
 
     ngOnDestroy(): void {
         this.commitsInfoSubscription?.unsubscribe();
-        this.profileInfoSubscription?.unsubscribe();
-    }
-
-    private setCommitDetails() {
-        if (this.commits && this.submissions) {
-            for (const commit of this.commits) {
-                const submission = this.findSubmissionForCommit(commit, this.submissions);
-                commit.commitUrl = createCommitUrl(this.commitHashURLTemplate, this.exerciseProjectKey, submission?.participation, submission);
-            }
-        }
-    }
-
-    private findSubmissionForCommit(commitInfo: CommitInfo, submissions: ProgrammingSubmission[] | undefined) {
-        return submissions?.find((submission) => submission.commitHash === commitInfo.hash);
     }
 
     /**

@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { isRequestToArtemisServer } from './interceptor.util';
+import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
 @Injectable()
 export class BrowserFingerprintInterceptor implements HttpInterceptor {

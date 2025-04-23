@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';

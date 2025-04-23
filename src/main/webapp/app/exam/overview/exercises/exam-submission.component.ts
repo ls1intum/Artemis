@@ -1,8 +1,8 @@
-import { Submission } from 'app/entities/submission.model';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExamPageComponent } from 'app/exam/overview/exercises/exam-page.component';
 import { Directive, input } from '@angular/core';
-import { SubmissionVersion } from 'app/entities/submission-version.model';
+import { SubmissionVersion } from 'app/exam/shared/entities/submission-version.model';
 
 @Directive()
 export abstract class ExamSubmissionComponent extends ExamPageComponent {

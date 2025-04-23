@@ -5,22 +5,18 @@ import jakarta.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @MappedSuperclass
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public abstract class AbstractBaseProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
-    @JsonView(QuizView.Before.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")
-    @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
     @Override

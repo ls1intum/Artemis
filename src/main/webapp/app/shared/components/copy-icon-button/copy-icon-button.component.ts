@@ -3,7 +3,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-copy-icon-button',

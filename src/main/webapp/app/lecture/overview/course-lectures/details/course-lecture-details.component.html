@@ -1,0 +1,154 @@
+@if (isLoading) {
+    <div class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only" jhiTranslate="loading"></span>
+        </div>
+    </div>
+}
+@if (lecture) {
+    <div>
+        <div class="px-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }">
+            <!-- HEADER INFORMATION START -->
+            <div class="mt-2 me-1 course-info-bar">
+                <div class="row">
+                    <div class="col general-info">
+                        <h3>
+                            <span>{{ lecture!.title }}</span>
+                        </h3>
+                        <h4>
+                            @if (lecture?.startDate && lecture?.endDate) {
+                                <span class="me-2">
+                                    {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
+                                    {{ lecture!.endDate | artemisDate: (endsSameDay ? 'time' : 'long') }}
+                                </span>
+                            }
+                        </h4>
+                    </div>
+                    @if (lecture?.course?.isAtLeastEditor) {
+                        <div class="col-auto d-flex align-items-center">
+                            <button
+                                id="manageLectureButton"
+                                class="btn btn-secondary"
+                                (click)="redirectToLectureManagement()"
+                                jhiTranslate="artemisApp.courseOverview.manage"
+                            ></button>
+                        </div>
+                    }
+                </div>
+            </div>
+            <!-- HEADER INFORMATION END -->
+            <!-- LECTURE START -->
+            <div class="row mt-2">
+                <div class="col pe-0 pb-3 flex-grow-1">
+                    @if (lecture.description) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
+                            </div>
+                        </div>
+                        <div class="row mb-2 markdown-preview">
+                            <div class="col-12 col-md-12 markdown-preview" [innerHTML]="lecture.description | htmlForMarkdown"></div>
+                        </div>
+                    }
+                    <!-- LECTURE UNITS START-->
+                    @if (lecture.lectureUnits) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                            </div>
+                            @if (hasPdfLectureUnit) {
+                                <button
+                                    id="downloadButton"
+                                    class="col-auto btn btn-primary btn-sm rounded-pill"
+                                    (click)="downloadMergedFiles()"
+                                    jhiTranslate="artemisApp.courseOverview.lectureDetails.downloadMergedPdf"
+                                ></button>
+                            }
+                        </div>
+                    }
+                    @for (lectureUnit of lectureUnits; track lectureUnit) {
+                        <div class="row m-0 mt-3 d-flex flex-nowrap">
+                            <div class="col-lg-11 p-0 col-10">
+                                @switch (lectureUnit.type) {
+                                    @case (LectureUnitType.EXERCISE) {
+                                        <jhi-exercise-unit [exerciseUnit]="lectureUnit" [course]="lecture!.course!" />
+                                    }
+                                    @case (LectureUnitType.ATTACHMENT) {
+                                        <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.VIDEO) {
+                                        <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.TEXT) {
+                                        <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                    @case (LectureUnitType.ONLINE) {
+                                        <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)" />
+                                    }
+                                }
+                            </div>
+                            <div class="col-lg-1 col-2 my-auto mx-auto width-fit-content">
+                                <jhi-competencies-popover
+                                    [hidden]="!lectureUnit.competencyLinks?.length"
+                                    [courseId]="lecture!.course!.id!"
+                                    [competencyLinks]="lectureUnit.competencyLinks || []"
+                                    [navigateTo]="'courseCompetencies'"
+                                />
+                            </div>
+                        </div>
+                    }
+                    <!-- LECTURE UNITS END-->
+                    @if (lecture.attachments) {
+                        <div class="row mb-2 mt-2 align-items-baseline">
+                            <div class="col-auto">
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.attachments"></h3>
+                            </div>
+                        </div>
+                    }
+                    @if (lecture.attachments) {
+                        <div class="mb-2">
+                            <ul>
+                                @for (attachment of lecture.attachments; track attachment) {
+                                    <li class="mb-3">
+                                        <h5 class="mb-1">
+                                            @if (!isDownloadingLink) {
+                                                <a class="text-primary" (click)="downloadAttachment(attachment.linkUrl, attachment.name)">
+                                                    {{ attachment.name }}
+                                                </a>
+                                            }
+                                            @if (isDownloadingLink === attachment.linkUrl) {
+                                                <a class="text-primary">
+                                                    <fa-icon [icon]="faSpinner" animation="spin" />
+                                                    {{ 'artemisApp.courseOverview.lectureDetails.isDownloading' | artemisTranslate }}
+                                                </a>
+                                            }
+                                            <span class="ms-1 badge bg-info">
+                                                {{ attachmentExtension(attachment) | uppercase }}
+                                            </span>
+                                            @if (attachmentNotReleased(attachment)) {
+                                                <span class="ms-1 badge bg-warning" jhiTranslate="artemisApp.courseOverview.lectureDetails.notReleased"></span>
+                                            }
+                                        </h5>
+                                        <h6 class="text-secondary mb-0 lecture-attachment-details">
+                                            ({{ 'artemisApp.courseOverview.lectureDetails.version' | artemisTranslate }}: {{ attachment.version }} -
+                                            {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }}: {{ attachment.uploadDate | artemisDate }})
+                                        </h6>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <!-- LECTURE END -->
+                <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
+                    @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
+                        <jhi-discussion-section [lecture]="lecture" />
+                    }
+                </div>
+            </div>
+        </div>
+        @if (irisSettings?.irisLectureChatSettings?.enabled) {
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.LECTURE" />
+        }
+    </div>
+}

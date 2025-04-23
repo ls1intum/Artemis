@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Course } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs';
 import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
-import { CourseForArchiveDTO } from 'app/core/course/manage/course-for-archive-dto';
+import { CourseForArchiveDTO } from 'app/core/course/shared/entities/course-for-archive-dto';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

@@ -1,4 +1,4 @@
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';

@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
-import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/types/sidebar';
 import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass, TitleCasePipe } from '@angular/common';
-import { SidebarCardDirective } from '../sidebar-card.directive';
-import { ArtemisTranslatePipe } from '../../pipes/artemis-translate.pipe';
+import { SidebarCardDirective } from '../directive/sidebar-card.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
 
 @Component({
     selector: 'jhi-sidebar-accordion',

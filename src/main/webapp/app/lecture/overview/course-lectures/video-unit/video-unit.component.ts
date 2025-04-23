@@ -1,5 +1,5 @@
 import { Component, computed } from '@angular/core';
-import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
+import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';

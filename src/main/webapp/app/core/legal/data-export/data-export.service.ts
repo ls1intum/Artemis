@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { DataExport } from 'app/entities/data-export.model';
+import { DataExport } from 'app/core/shared/entities/data-export.model';
 
 @Injectable({ providedIn: 'root' })
 export class DataExportService {

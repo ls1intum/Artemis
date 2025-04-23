@@ -20,7 +20,7 @@ export const ltiConfigurationRoute: Routes = [
         children: [
             {
                 path: 'new',
-                loadComponent: () => import('app/core/admin/lti-configuration/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
+                loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                 data: {
                     authorities: [Authority.ADMIN],
                     pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',
@@ -35,7 +35,7 @@ export const ltiConfigurationRoute: Routes = [
                 children: [
                     {
                         path: 'edit',
-                        loadComponent: () => import('app/core/admin/lti-configuration/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
+                        loadComponent: () => import('app/core/admin/lti-configuration/edit/edit-lti-configuration.component').then((m) => m.EditLtiConfigurationComponent),
                         data: {
                             authorities: [Authority.ADMIN],
                             pageTitle: 'artemisApp.lti.addOrEditLtiPlatform',

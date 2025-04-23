@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -145,32 +144,24 @@ class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegration
         courseTestService.testUpdateCourseGroups();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithCourseImage() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithCourseImage();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
         courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
     }
 
-    // TODO: enable or remove the test
-    @Disabled
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
@@ -268,7 +259,7 @@ class CourseLocalVcJenkinsIntegrationTest extends AbstractProgrammingIntegration
         var exercise = courseExercise.stream().findFirst();
         assertThat(exercise).isPresent();
 
-        var user = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
+        var user = userTestRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError());

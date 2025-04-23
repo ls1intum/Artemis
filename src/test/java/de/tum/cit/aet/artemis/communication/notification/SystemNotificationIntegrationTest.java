@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
-import de.tum.cit.aet.artemis.communication.notification.util.NotificationFactory;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -32,18 +31,18 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @BeforeEach
     void initTestCase() {
         // Generate a system notification that has expired.
-        SystemNotification systemNotificationExpired = NotificationFactory.generateSystemNotification(ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusMinutes(25));
+        SystemNotification systemNotificationExpired = generateSystemNotification(ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusMinutes(25));
         systemNotificationRepo.save(systemNotificationExpired);
 
         // Generate a system notification whose notification date is in the future.
-        systemNotificationFuture = NotificationFactory.generateSystemNotification(ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(8));
+        systemNotificationFuture = generateSystemNotification(ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(8));
         systemNotificationRepo.save(systemNotificationFuture);
 
         // Generate an active system notification
-        systemNotificationActive = NotificationFactory.generateSystemNotification(ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25));
+        systemNotificationActive = generateSystemNotification(ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25));
         systemNotificationRepo.save(systemNotificationActive);
 
-        systemNotification = NotificationFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
+        systemNotification = generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
     }
 
     @AfterEach
@@ -133,7 +132,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testUpdateSystemNotification_BadRequest() throws Exception {
-        SystemNotification systemNotification = NotificationFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
+        SystemNotification systemNotification = generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
         request.put("/api/communication/admin/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
@@ -167,5 +166,19 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndepen
         SystemNotification notification = systemNotificationRepo.save(systemNotification);
         assertThat(systemNotificationRepo.findById(notification.getId())).get().as("system notification is not null").isNotNull();
         request.delete("/api/communication/admin/system-notifications/" + notification.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    /**
+     * Generates a SystemNotification with the given arguments.
+     *
+     * @param notificationDate The notification date of the SystemNotification
+     * @param expiryDate       The expiry date of the SystemNotification
+     * @return The generated SystemNotification
+     */
+    public static SystemNotification generateSystemNotification(ZonedDateTime notificationDate, ZonedDateTime expiryDate) {
+        SystemNotification systemNotification = new SystemNotification();
+        systemNotification.setNotificationDate(notificationDate);
+        systemNotification.setExpireDate(expiryDate);
+        return systemNotification;
     }
 }

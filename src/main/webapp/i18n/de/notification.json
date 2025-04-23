@@ -186,6 +186,192 @@
                 "newMessageGroupChat": "Neue Nachricht im Gruppenchat im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}",
                 "newMessageDirect": "Neue Direktnachricht im Kurs \"{{ placeholderValues.0 }}\": {{ placeholderValues.1 }}"
             }
+        },
+        "courseNotification": {
+            "newPostNotification": {
+                "settingsTitle": "Neue Nachricht",
+                "title": "Neue Nachricht",
+                "content": "{{postMarkdownContent}}"
+            },
+            "newAnswerNotification": {
+                "title": "Neue Thread Antwort",
+                "content": "{{replyMarkdownContent}}",
+                "settingsTitle": "Neue Thread Antwort"
+            },
+            "newMentionNotification": {
+                "title": "Du wurdest markiert",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Du wurdest markiert"
+            },
+            "newAnnouncementNotification": {
+                "title": "Neue Ankündigung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue Ankündigung"
+            },
+            "newExerciseNotification": {
+                "title": "Neue Aufgabe",
+                "content": "{{exerciseTitle}} wurde veröffentlicht.",
+                "settingsTitle": "Neue Aufgabe"
+            },
+            "exerciseOpenForPracticeNotification": {
+                "title": "Aufgabe steht bereit",
+                "content": "{{exerciseTitle}} steht nun bereit zur Übung.",
+                "settingsTitle": "Aufgabe steht bereit"
+            },
+            "exerciseAssessedNotification": {
+                "title": "Aufgabe bewertet",
+                "content": "{{exerciseTitle}} wurde bewertet.",
+                "settingsTitle": "Aufgabe bewertet"
+            },
+            "exerciseUpdatedNotification": {
+                "title": "Aufgabe editiert",
+                "content": "{{exerciseTitle}} wurde editiert.",
+                "settingsTitle": "Aufgabe editiert"
+            },
+            "quizExerciseStartedNotification": {
+                "title": "Neue Quiz Aufgabe",
+                "content": "Die Quiz Aufgabe {{exerciseTitle}} hat begonnen.",
+                "settingsTitle": "Neue Quiz Aufgabe"
+            },
+            "attachmentChangedNotification": {
+                "title": "Anhang verändert",
+                "content": "Ein Anhang wurde in {{unitName}} verändert.",
+                "settingsTitle": "Anhang verändert"
+            },
+            "newManualFeedbackRequestNotification": {
+                "title": "Feedback benötigt",
+                "content": "In {{exerciseTitle}} wird Feedback benötigt.",
+                "settingsTitle": "Feedback benötigt"
+            },
+            "duplicateTestCaseNotification": {
+                "title": "Test Duplikat Warnung",
+                "content": "In {{exerciseTitle}} wurde ein Test Duplikat entdeckt.",
+                "settingsTitle": "Test Duplikat Warnung"
+            },
+            "newCpcPlagiarismCaseNotification": {
+                "title": "Neue Übereinstimmung",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neue Übereinstimmung"
+            },
+            "newPlagiarismCaseNotification": {
+                "title": "Neuer Plagiatsfall",
+                "content": "{{postMarkdownContent}}",
+                "settingsTitle": "Neuer Plagiatsfall"
+            },
+            "programmingBuildRunUpdateNotification": {
+                "title": "Build Update",
+                "content": "Es gibt ein neues Update in einem Build in {{exerciseTitle}}.",
+                "settingsTitle": "Build Update"
+            },
+            "programmingTestCasesChangedNotification": {
+                "title": "Tests geändert",
+                "content": "Tests haben sich in {{exerciseTitle}} geändert.",
+                "settingsTitle": "Tests geändert"
+            },
+            "plagiarismCaseVerdictNotification": {
+                "title": "Plagiat Beurteilung",
+                "content": "Neue Beurteilung zu einem Plagiatsfall in {{exerciseTitle}}.",
+                "settingsTitle": "Plagiat Beurteilung"
+            },
+            "channelDeletedNotification": {
+                "title": "Kanal gelöscht",
+                "content": "{{channelName}} wurde in {{courseTitle}} gelöscht.",
+                "settingsTitle": "Kanal gelöscht"
+            },
+            "addedToChannelNotification": {
+                "title": "Kanal beigetreten",
+                "content": "Du bist {{channelName}} in {{courseTitle}} beigetreten.",
+                "settingsTitle": "Kanal beigetreten"
+            },
+            "removedFromChannelNotification": {
+                "title": "Aus Kanal entfernt",
+                "content": "Du wurdest aus {{channelName}} in {{courseTitle}} entfernt.",
+                "settingsTitle": "Aus Kanal entfernt"
+            },
+            "tutorialGroupAssignedNotification": {
+                "title": "Übungsgruppe zugewiesen",
+                "content": "Du wurdest der Übungsgruppe {{groupTitle}} zugewiesen.",
+                "settingsTitle": "Übungsgruppe zugewiesen"
+            },
+            "tutorialGroupUnassignedNotification": {
+                "title": "Übungsgruppe entfernt",
+                "content": "Deine Zuweisung zur Übungsgruppe {{groupTitle}} wurde aufgehoben.",
+                "settingsTitle": "Übungsgruppe entfernt"
+            },
+            "registeredToTutorialGroupNotification": {
+                "title": "Übungsgruppen-Anmeldung",
+                "content": "Du wurdest zur Übungsgruppe {{groupTitle}} angemeldet.",
+                "settingsTitle": "Übungsgruppen-Anmeldung"
+            },
+            "deregisteredFromTutorialGroupNotification": {
+                "title": "Übungsgruppen-Abmeldung",
+                "content": "Du wurdest von der Übungsgruppe {{groupTitle}} abgemeldet.",
+                "settingsTitle": "Übungsgruppen-Abmeldung"
+            },
+            "tutorialGroupDeletedNotification": {
+                "title": "Übungsgruppe gelöscht",
+                "content": "Die Übungsgruppe {{groupTitle}} wurde gelöscht.",
+                "settingsTitle": "Übungsgruppe gelöscht"
+            },
+            "temporal": {
+                "now": "Jetzt",
+                "oneHourAgo": "Vor 1 Stunde.",
+                "hoursAgo": "Vor {{hours}} Stunden.",
+                "today": "{{hour}}:{{minute}}",
+                "yesterday": "Gestern, {{hour}}:{{minute}}",
+                "thisWeek": "{{day}}, {{hour}}:{{minute}}",
+                "date": "{{date}}"
+            },
+            "weekdays": {
+                "monday": "Montag",
+                "tuesday": "Dienstag",
+                "wednesday": "Mittwoch",
+                "thursday": "Donnerstag",
+                "friday": "Freitag",
+                "saturday": "Samstag",
+                "sunday": "Sonntag"
+            },
+            "overview": {
+                "title": "Benachrichtigungen",
+                "emptyTitle": "Alles erledigt!",
+                "settingsTooltip": "Zu den Einstellungen",
+                "archiveAllTooltip": "Alle entfernen",
+                "emptyMessage": "Momentan gibt es keine Benachrichtigungen in dieser Kategorie."
+            },
+            "category": {
+                "general": "Allgemein",
+                "communication": "Kommunikation"
+            },
+            "setting": {
+                "headline": "Benachrichtigungen"
+            },
+            "channel": {
+                "email": "E-Mail",
+                "webapp": "Webapp",
+                "push": "Push"
+            },
+            "popup": {
+                "collapseToggle": "Einklappen"
+            },
+            "preset": {
+                "dropdown": "Aktiv",
+                "defaultUserCourseNotificationSettingPreset": {
+                    "title": "Standard",
+                    "description": "Erhalte die essenziellen Benachrichtigungen für diesen Kurs."
+                },
+                "ignoreUserCourseNotificationSettingPreset": {
+                    "title": "Ignorieren",
+                    "description": "Erhalte keine Benachrichtigungen für diesen Kurs."
+                },
+                "allActivityUserCourseNotificationSettingPreset": {
+                    "title": "Jede Aktivität",
+                    "description": "Erhalte den Großteil der Benachrichtigungen für diesen Kurs um immer auf dem neuesten Stand zu bleiben."
+                },
+                "customUserCourseNotificationSettingPreset": {
+                    "title": "Angepasst",
+                    "description": "Bestimme selbst welche Benachrichtigungen du erhälst. Du kannst diese Einstellung jederzeit ändern."
+                }
+            }
         }
     }
 }

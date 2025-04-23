@@ -1,15 +1,15 @@
 import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { combineLatest, finalize } from 'rxjs';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
+import { OnlineCourseConfiguration } from 'app/lti/shared/entities/online-course-configuration.model';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { LOGIN_PATTERN } from 'app/shared/constants/input.constants';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { LtiConfigurationService } from 'app/core/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -20,7 +20,7 @@ import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-edit-course-lti-configuration',

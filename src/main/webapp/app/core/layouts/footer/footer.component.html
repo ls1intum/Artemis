@@ -1,0 +1,17 @@
+<footer id="footer">
+    <div class="footer-text justify-content-start gap-3 flex-nowrap d-flex">
+        <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="col-auto"></a>
+        <a [href]="FEEDBACK_URL" id="feedback" jhiTranslate="feedback" class="col-auto" target="_blank"></a>
+        <a [href]="RELEASE_URL" id="releases" jhiTranslate="releases" class="col-auto" target="_blank"></a>
+        <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="artemisApp.legal.privacy" class="col-auto"></a>
+        <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="artemisApp.legal.imprint.title" class="col-auto"></a>
+    </div>
+    @if (!isProduction || isTestServer) {
+        <small class="col-sm-12 d-none d-md-inline-flex d-flex footer-git">
+            <div>{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
+            <div>{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
+            <div>{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
+            <div>{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
+        </small>
+    }
+</footer>

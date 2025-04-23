@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
+import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import dayjs from 'dayjs/esm';
-import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { GraphColors, Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
-import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
+import { yAxisTickFormatting } from 'app/shared/statistics-graph/util/statistics-graph.utils';
 import { BarChartModule, Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';

@@ -57,7 +57,7 @@ public class SAML2Service {
 
     private final AuditEventRepository auditEventRepository;
 
-    @Value("${info.saml2.enable-password:#{null}}")
+    @Value("${info.saml2.enablePassword:#{null}}")
     private Optional<Boolean> saml2EnablePassword;
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);
@@ -175,6 +175,7 @@ public class SAML2Service {
         for (String key : principal.getAttributes().keySet()) {
             final String escapedKey = Pattern.quote(key);
             output = output.replaceAll("\\{" + escapedKey + "\\}", getAttributeValue(principal, key));
+            log.debug("SAML principal key: {}, raw value: {}, after replacements: {}", key, principal.getFirstAttribute(key), output);
         }
         return output.replaceAll("\\{[^\\}]*?\\}", "");
     }

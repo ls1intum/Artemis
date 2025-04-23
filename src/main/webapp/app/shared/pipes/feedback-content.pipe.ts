@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback } from 'app/assessment/shared/entities/feedback.model';
 
 @Pipe({
     name: 'feedbackContent',

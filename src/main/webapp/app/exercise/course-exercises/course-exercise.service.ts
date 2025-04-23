@@ -1,12 +1,12 @@
-import { ParticipationWebsocketService } from 'app/core/course/shared/participation-websocket.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
+import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
@@ -155,5 +155,15 @@ export class CourseExerciseService {
             });
         }
         return res;
+    }
+
+    /**
+     * returns all exercises for the course corresponding to courseId
+     * @param courseId - the unique identifier of the course
+     */
+    findAllExercisesWithDueDatesForCourse(courseId: number): Observable<HttpResponse<Exercise[]>> {
+        return this.http
+            .get<Exercise[]>(`api/core/courses/${courseId}/all-exercises-with-due-dates`, { observe: 'response' })
+            .pipe(map((res: HttpResponse<Exercise[]>) => this.processExercisesHttpResponses(res)));
     }
 }

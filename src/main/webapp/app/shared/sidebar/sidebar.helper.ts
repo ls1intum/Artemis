@@ -1,9 +1,9 @@
 import { DifficultyFilterOption, ExerciseCategoryFilterOption, ExerciseFilterOptions, ExerciseTypeFilterOption, FilterOption, RangeFilter } from 'app/shared/types/exercise-filter';
-import { SidebarCardElement, SidebarData } from 'app/types/sidebar';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { DifficultyLevel, ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
+import { DifficultyLevel, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
 import { roundToNextMultiple } from 'app/shared/util/utils';
+import { SidebarCardElement, SidebarData } from 'app/shared/types/sidebar';
 
 const POINTS_STEP = 1;
 const SCORE_THRESHOLD_TO_INCREASE_STEP = 20;

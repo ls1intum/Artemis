@@ -2,7 +2,7 @@
     "artemisApp": {
         "programmingExercise": {
             "home": {
-                "title": "Programming Exercises",
+                "title": "Programming Exercise",
                 "createLabel": "Create Programming Exercise",
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
@@ -243,7 +243,7 @@
                 "ok": "Test cases ok.",
                 "invalidTestCase": "The test case '{{id}}' could not be found in the test repository.",
                 "repeatedTestCase": "The test case '{{id}}' is repeated.",
-                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behaviour:"
+                "repeatedTestCases": "There are {{number}} repeated test cases in the problem statement. This might cause unexpected behavior:"
             },
             "tasksAnalysis": {
                 "issues": "Task issues.",
@@ -685,16 +685,6 @@
             "customizeBuildPlansWithAeolusTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "customizeBuildPlansTooltip": "Activate this option to customize the docker image and build plan which is executed on Artemis for each submission in a Docker container.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
-            "buildLogStatistics": {
-                "title": "Average build log statistics",
-                "numberOfBuilds": "# Builds",
-                "agentSetupDuration": "Setup build agent",
-                "testDuration": "Test execution",
-                "scaDuration": "Static Code Analysis",
-                "totalJobDuration": "Total Job",
-                "dependenciesDownloadedCount": "Number of downloaded dependencies",
-                "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
-            },
             "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing.",
             "commitInfo": {
                 "title": "Commit Information",

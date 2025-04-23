@@ -39,6 +39,12 @@
         display: inline-block;
         color: var(--bs-body-color);
     }
+
+    .card-header-notification-bubble {
+        position: absolute;
+        top: 0;
+        right: -0.5rem;
+    }
 }
 
 .container {

@@ -2,27 +2,26 @@ import { Component, OnInit, ViewChild, computed, effect, inject, signal, untrack
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExampleSubmissionService } from 'app/exercise/example-submission/example-submission.service';
-import { Result } from 'app/entities/result.model';
-import { TutorParticipationService } from 'app/exercise/dashboards/tutor/tutor-participation.service';
+import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor.component';
-import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
-import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/entities/feedback.model';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
+import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ModelingAssessmentService } from 'app/modeling/manage/assess/modeling-assessment.service';
-import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
+import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingAssessmentComponent } from 'app/modeling/manage/assess/modeling-assessment.component';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { catchError, concatMap, map, tap } from 'rxjs/operators';
-import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/exercise.utils';
+import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
+import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercise/util/exercise.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercise/example-submission/example-submission-assess-command';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
-import { Course } from 'app/entities/course.model';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, faExclamationTriangle, faInfoCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { forkJoin } from 'rxjs';
@@ -30,11 +29,12 @@ import { filterInvalidFeedback } from 'app/modeling/manage/assess/modeling-asses
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { scrollToTopOfPage } from 'app/shared/util/utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CollapsableAssessmentInstructionsComponent } from 'app/assessment/manage/assessment-instructions/collapsable-assessment-instructions/collapsable-assessment-instructions.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',

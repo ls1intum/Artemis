@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { HttpResponse } from '@angular/common/http';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 export const fileUploadExercise = new FileUploadExercise(undefined, undefined);
 fileUploadExercise.id = 2;

@@ -1,0 +1,55 @@
+.course-notification-preset-picker {
+    & .dropdown-menu {
+        padding: 0;
+        max-width: 30rem;
+    }
+
+    & .dropdown-item {
+        text-wrap: auto;
+    }
+}
+
+.course-notification-preset-picker-item {
+    padding: 1.5em;
+    border-bottom: 1px solid var(--gray-300);
+    cursor: pointer;
+    position: relative;
+}
+
+.course-notification-preset-picker-item:last-child {
+    border-bottom: none;
+    border-bottom-left-radius: 0.1rem;
+    border-bottom-right-radius: 0.1rem;
+}
+
+.course-notification-preset-picker-item:first-child {
+    border-top-left-radius: 0.1rem;
+    border-top-right-radius: 0.1rem;
+}
+
+.course-notification-preset-picker-item-description {
+    color: var(--secondary);
+}
+
+.course-notification-preset-picker-item:hover,
+.course-notification-preset-picker-item:active {
+    background-color: transparent;
+    color: var(--bs-body-color);
+}
+
+.course-notification-preset-picker-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--primary);
+    opacity: 0;
+
+    transition: opacity 0.3s ease-in-out;
+}
+
+.course-notification-preset-picker-item:hover::after {
+    opacity: 0.1;
+}

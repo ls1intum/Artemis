@@ -1,5 +1,5 @@
-import { Exam } from 'app/entities/exam/exam.model';
-import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
+import { ExamChecklist } from 'app/exam/shared/entities/exam-checklist.model';
 import { of } from 'rxjs';
 
 export class MockExamChecklistService {

@@ -1,12 +1,12 @@
-import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam/exam.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, instructor } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
 
 // Common primitives
@@ -99,7 +99,8 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
             await examTestRun.openTestRunPage(course, exam);
             await examTestRun.getTestRun(testRun.id!).waitFor({ state: 'visible' });
             await expect(examTestRun.getTestRunIdElement(testRun.id!)).toBeVisible();
-            await examTestRun.deleteTestExamTestRun();
+            await examTestRun.deleteTestRun(testRun.id!);
+            await expect(examTestRun.getTestRun(testRun.id!)).not.toBeVisible();
         });
     });
 

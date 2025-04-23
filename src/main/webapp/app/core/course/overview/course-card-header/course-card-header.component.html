@@ -6,15 +6,18 @@
     [ngStyle]="{ '--background-color-for-hover': color }"
 >
     <div class="d-flex align-items-center justify-content-between gap-1">
-        @if (courseIcon()) {
-            <div class="col-auto">
-                <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="courseIcon()" />
-            </div>
-        } @else {
-            <div class="course-circle d-flex align-items-center justify-content-center">
-                <span class="fs-4">{{ courseTitle() | slice: 0 : 1 }}</span>
-            </div>
-        }
+        <div class="position-relative">
+            <jhi-course-notification-bubble class="card-header-notification-bubble" [totalAmount]="courseNotificationCount()" />
+            @if (courseIcon()) {
+                <div class="col-auto">
+                    <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="courseIcon()" />
+                </div>
+            } @else {
+                <div class="course-circle d-flex align-items-center justify-content-center">
+                    <span class="fs-4">{{ courseTitle() | slice: 0 : 1 }}</span>
+                </div>
+            }
+        </div>
         <div class="text-center px-2">
             <h5 class="card-title" [ngStyle]="{ color: titleColor }">
                 {{ courseTitle() }}

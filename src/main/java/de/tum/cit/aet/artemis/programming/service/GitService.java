@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
@@ -14,7 +15,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -71,7 +71,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -791,8 +790,8 @@ public class GitService extends AbstractGitService {
             else {
                 log.debug("Last valid submission is not present for participation");
                 // Get last commit before due date
-                Date since = Date.from(Instant.EPOCH);
-                Date until = Date.from(filterLateSubmissionsDate.toInstant());
+                Instant since = Instant.EPOCH;
+                Instant until = filterLateSubmissionsDate.toInstant();
                 RevFilter between = CommitTimeRevFilter.between(since, until);
                 Iterable<RevCommit> commits = git.log().setRevFilter(between).call();
                 RevCommit latestCommitBeforeDueDate = commits.iterator().next();
@@ -894,7 +893,7 @@ public class GitService extends AbstractGitService {
                 // Only commit amend if head changed; cherry-picking empty commits does nothing
                 if (!head.equals(studentGit.getRepository().resolve(headName))) {
                     PersonIdent authorIdent = commit.getAuthorIdent();
-                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhen(), authorIdent.getTimeZone());
+                    PersonIdent fakeIdent = new PersonIdent(ANONYMIZED_STUDENT_NAME, ANONYMIZED_STUDENT_EMAIL, authorIdent.getWhenAsInstant(), authorIdent.getZoneId());
                     GitService.commit(studentGit).setAmend(true).setAuthor(fakeIdent).setCommitter(fakeIdent).setMessage(commit.getFullMessage()).call();
                 }
             }
@@ -980,6 +979,7 @@ public class GitService extends AbstractGitService {
      *                          Note: This method requires that LocalVC is actively managing the local version control environment to operate correctly.
      *                          </p>
      */
+    @NotNull
     public Repository getBareRepository(VcsRepositoryUri repositoryUri) {
         var localRepoUri = new LocalVCRepositoryUri(repositoryUri.toString());
         var localPath = localRepoUri.getLocalRepositoryPath(localVCBasePath);
@@ -1015,9 +1015,9 @@ public class GitService extends AbstractGitService {
     }
 
     /**
-     * Returns all files and directories within the given repository in a map, excluding symbolic links.
+     * Returns all files and directories within the working copy of the given repository in a map, excluding symbolic links.
      * This method performs a file scan and filters out symbolic links.
-     * It supports bare and checked-out repositories.
+     * It only supports checked-out repositories (not bare ones)
      * <p>
      * Note: This method does not handle changes to the repository content between invocations. If files change
      * after the initial caching, the cache does not automatically refresh, which may lead to stale data.
@@ -1031,7 +1031,6 @@ public class GitService extends AbstractGitService {
         FileAndDirectoryFilter filter = new FileAndDirectoryFilter();
         Iterator<java.io.File> itr = FileUtils.iterateFilesAndDirs(repo.getLocalPath().toFile(), filter, filter);
         Map<File, FileType> files = new HashMap<>();
-        List<String> binaryExtensions = BinaryFileExtensionConfiguration.getBinaryFileExtensions();
 
         while (itr.hasNext()) {
             File nextFile = new File(itr.next(), repo);
@@ -1042,7 +1041,7 @@ public class GitService extends AbstractGitService {
                 continue;
             }
 
-            if (omitBinaries && nextFile.isFile() && binaryExtensions.stream().anyMatch(nextFile.getName()::endsWith)) {
+            if (omitBinaries && nextFile.isFile() && isBinaryFile(nextFile.getName())) {
                 log.debug("Omitting binary file: {}", nextFile);
                 continue;
             }

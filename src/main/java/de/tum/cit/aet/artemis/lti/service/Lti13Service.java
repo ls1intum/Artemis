@@ -169,7 +169,7 @@ public class Lti13Service {
             handleLaunchRequest(launchRequest, user, null, ltiIdToken, onlineCourseConfiguration);
         }
         else {
-            log.error("No course content to launch at " + targetLinkUrl);
+            log.error("No course content to launch at {}", targetLinkUrl);
             throw new BadRequestAlertException("Content not found", "LTI", "ltiContentNotFound");
         }
     }

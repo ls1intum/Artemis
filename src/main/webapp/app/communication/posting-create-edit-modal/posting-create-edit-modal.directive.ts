@@ -1,6 +1,6 @@
 import { Directive, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
-import { Posting } from 'app/entities/metis/posting.model';
-import { PostingCreateEditDirective } from 'app/communication/posting-create-edit.directive';
+import { Posting } from 'app/communication/shared/entities/posting.model';
+import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> extends PostingCreateEditDirective<T> implements OnInit, OnChanges {

@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.plagiarism.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
@@ -29,8 +27,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @Service
 public class PlagiarismAnswerPostService extends PostingService {
 
@@ -76,9 +75,6 @@ public class PlagiarismAnswerPostService extends PostingService {
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
         parseUserMentions(course, answerPost.getContent());
 
-        // increase answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() + 1);
-
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -89,7 +85,7 @@ public class PlagiarismAnswerPostService extends PostingService {
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
         postRepository.save(post);
 
-        preparePostAndBroadcast(savedAnswerPost, course, null);
+        preparePostAndBroadcast(savedAnswerPost, course);
 
         return savedAnswerPost;
     }
@@ -134,7 +130,7 @@ public class PlagiarismAnswerPostService extends PostingService {
             existingAnswerPost.setUpdatedDate(ZonedDateTime.now());
         }
         updatedAnswerPost = answerPostRepository.save(existingAnswerPost);
-        this.preparePostAndBroadcast(updatedAnswerPost, course, null);
+        this.preparePostAndBroadcast(updatedAnswerPost, course);
         return updatedAnswerPost;
     }
 
@@ -160,9 +156,6 @@ public class PlagiarismAnswerPostService extends PostingService {
 
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         post.removeAnswerPost(answerPost);
-
-        // decrease answerCount of post needed for sorting
-        post.setAnswerCount(post.getAnswerCount() - 1);
 
         // sets the post as resolved if there exists any resolving answer
         post.setResolved(post.getAnswers().stream().anyMatch(AnswerPost::doesResolvePost));
@@ -226,14 +219,5 @@ public class PlagiarismAnswerPostService extends PostingService {
         if (!user.getId().equals(answerPost.getAuthor().getId())) {
             throw new AccessForbiddenException("You are not allowed to edit this post");
         }
-    }
-
-    /**
-     * Sends out a request to the SingleUserNotificationService to inform the instructor about a reply to a post related to a plagiarism case.
-     *
-     * @param post the post that has received a reply
-     */
-    public void informInstructorAboutPostReply(Post post) {
-        singleUserNotificationService.notifyInstructionAboutPlagiarismCaseReply(post.getPlagiarismCase(), post.getAuthor());
     }
 }

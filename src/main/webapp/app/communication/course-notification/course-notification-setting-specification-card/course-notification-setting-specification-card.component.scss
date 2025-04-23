@@ -1,0 +1,21 @@
+.course-notification-setting-specification-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+    padding: 2em;
+    height: 100%;
+    border-radius: 0.3rem;
+
+    & .form-switch .form-check-input {
+        width: 3.5em;
+        height: 2em;
+    }
+}
+
+.course-notification-setting-specification-card-options {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

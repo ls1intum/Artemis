@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 
 /**
  * This class describes a local repository cloned from an origin repository.
- * In the case of using the local VCS with the local CIS instead of, e.g. Gitlab and Jenkins, the local VCS contains the origin repositories,
+ * In the case of using LocalVC with LocalCI, LocalVC contains the origin repositories,
  * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
  */
 public class LocalRepository {

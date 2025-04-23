@@ -78,8 +78,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         conversationUtilService.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        // should increment answer count
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
     }
 
@@ -119,8 +117,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         request.postWithResponseBody("/api/plagiarism/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
         // should not increment answer count
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
-        assertThat(postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
-                .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
         assertThat(newAnswerPostCount).isZero();
     }
 
@@ -317,8 +313,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         request.delete("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(newAnswerPostCount).isEqualTo(-1);
-        // should decrement answerCount
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
@@ -331,8 +325,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         request.delete("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(newAnswerPostCount).isZero();
-        // should not decrement answerCount
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }
 
     @Test
@@ -345,8 +337,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         request.delete("/api/plagiarism/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         var newAnswerPostCount = answerPostRepository.count() - answerPostCount;
         assertThat(newAnswerPostCount).isEqualTo(-1);
-        // should decrement answerCount
-        assertThat(postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
@@ -370,9 +360,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
 
         // should update post resolved status to false
         assertThat(persistedPost.isResolved()).isFalse();
-
-        // should decrement answerCount
-        assertThat(persistedPost.getAnswerCount()).isEqualTo(answerPostToDeleteWhichResolves.getPost().getAnswerCount() - 1);
     }
 
     // HELPER METHODS
@@ -382,7 +369,6 @@ class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndep
         answerPost.setContent("Content Answer Post");
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
-        post.setAnswerCount(post.getAnswerCount() + 1);
         return answerPost;
     }
 

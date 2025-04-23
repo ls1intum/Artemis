@@ -16,9 +16,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
-
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * A DropLocation.
@@ -30,23 +27,18 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Column(name = "pos_x")
-    @JsonView(QuizView.Before.class)
     private Double posX;
 
     @Column(name = "pos_y")
-    @JsonView(QuizView.Before.class)
     private Double posY;
 
     @Column(name = "width")
-    @JsonView(QuizView.Before.class)
     private Double width;
 
     @Column(name = "height")
-    @JsonView(QuizView.Before.class)
     private Double height;
 
     @Column(name = "invalid")
-    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -154,4 +146,5 @@ public class DropLocation extends TempIdObject implements QuizQuestionComponent<
         return "DropLocation{" + "id=" + getId() + ", posX='" + getPosX() + "'" + ", posY='" + getPosY() + "'" + ", width='" + getWidth() + "'" + ", height='" + getHeight() + "'"
                 + ", invalid='" + isInvalid() + "'" + "}";
     }
+
 }

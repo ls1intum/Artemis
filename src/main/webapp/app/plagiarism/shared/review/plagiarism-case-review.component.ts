@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { Subject } from 'rxjs';
 import { NgbNav, NgbNavContent, NgbNavItem, NgbNavItemRole, NgbNavLink, NgbNavLinkBase, NgbNavOutlet } from '@ng-bootstrap/ng-bootstrap';
 import { PlagiarismSplitViewComponent } from 'app/plagiarism/manage/plagiarism-split-view/plagiarism-split-view.component';
