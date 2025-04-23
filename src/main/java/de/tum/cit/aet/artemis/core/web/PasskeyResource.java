@@ -63,9 +63,8 @@ public class PasskeyResource {
     @GetMapping("user")
     @EnforceAtLeastStudent
     public ResponseEntity<List<PasskeyDTO>> getPasskeys() {
-
         User user = userRepository.getUser();
-        log.info("Retrieving passkeys for user with id: {}", user.getId());
+        log.debug("Retrieving passkeys for user with id: {}", user.getId());
 
         List<PasskeyDTO> passkeys = artemisUserCredentialRepository.findPasskeyDtosByUserId(BytesConverter.longToBytes(user.getId()));
 
@@ -81,7 +80,7 @@ public class PasskeyResource {
     @DeleteMapping("{credentialId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> deletePasskey(@PathVariable @Base64Url String credentialId) {
-        log.info("Deleting passkey with id: {}", credentialId);
+        log.debug("Deleting passkey with id: {}", credentialId);
 
         User currentUser = userRepository.getUser();
         Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
