@@ -681,7 +681,7 @@ public class ExamService {
             }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result relevantResult = studentParticipation.getResults().iterator().next();
+                Result relevantResult = studentParticipation.findLatestResult();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
