@@ -5,7 +5,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.time.ZonedDateTime;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to build jobs for use in integration tests.
@@ -27,8 +26,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 public class BuildJobUtilService {
 
     @Autowired
-    @Qualifier("buildJobTestRepository")
-    private BuildJobRepository buildJobRepository;
+    private BuildJobTestRepository buildJobTestRepository;
 
     public BuildJob createAndSaveBuildJob(String buildJobId, String name, ProgrammingExercise programmingExercise, Course course,
             ProgrammingExerciseStudentParticipation participation, Result result, ProgrammingSubmission submission) {
@@ -51,7 +49,7 @@ public class BuildJobUtilService {
         buildJob.setTriggeredByPushTo(RepositoryType.USER);
         buildJob.setBuildStatus(BuildStatus.ERROR);
         buildJob.setDockerImage("default-docker-image");
-        return buildJobRepository.save(buildJob);
+        return buildJobTestRepository.save(buildJob);
     }
 
 }
