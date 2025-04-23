@@ -9,8 +9,8 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { Post } from 'app/entities/metis/post.model';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { Post } from 'app/communication/shared/entities/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
