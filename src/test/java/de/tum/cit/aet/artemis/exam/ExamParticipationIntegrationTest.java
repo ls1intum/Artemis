@@ -1117,9 +1117,12 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsL
 
         Team team1 = teamRepository.findById(team1Id).orElseThrow();
         var result = participationUtilService.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
+        result.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result);
         // Creating a second results for team1 to test handling multiple results.
-        participationUtilService.createSubmissionAndResult((StudentParticipation) result.getSubmission().getParticipation(), 50, true);
-
+        var result2 = participationUtilService.createSubmissionAndResult((StudentParticipation) result.getSubmission().getParticipation(), 50, true);
+        result2.setCompletionDate(ZonedDateTime.now().minusDays(10));
+        resultRepository.save(result2);
         var student2Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
 
         var student3Result = participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student3, 10.0, 10.0, 30, true);
