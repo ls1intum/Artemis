@@ -23,6 +23,11 @@ const InvalidStateError = {
     authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode: 11,
 };
 
+const UserAbortedPasskeyCreationError = {
+    code: 0,
+    name: 'NotAllowedError',
+};
+
 export interface DisplayedPasskey extends PasskeyDTO {
     isEditingLabel?: boolean;
     labelBeforeEdit?: string;
@@ -101,6 +106,10 @@ export class PasskeySettingsComponent implements OnDestroy {
                 },
             });
         } catch (error) {
+            if (error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code) {
+                return; // the user pressed cancel in the passkey creation dialog
+            }
+
             if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
