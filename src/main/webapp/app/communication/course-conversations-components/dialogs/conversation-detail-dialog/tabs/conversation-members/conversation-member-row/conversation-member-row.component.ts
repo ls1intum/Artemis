@@ -25,6 +25,7 @@ import { NgClass } from '@angular/common';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/communication/conversations/conversation-permissions.utils';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -45,6 +46,8 @@ import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevoke
     ],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+
     private ngUnsubscribe = new Subject<void>();
 
     activeConversation = input.required<ConversationDTO>();
