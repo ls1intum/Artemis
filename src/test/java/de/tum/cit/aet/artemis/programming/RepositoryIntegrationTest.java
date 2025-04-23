@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.reset;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -1089,58 +1090,26 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
 
         buildJobRepository.save(buildJob);
 
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(true);
-        mockedFiles.when(() -> Files.readString(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(
-                """
-                        2025-04-22T21:49:04.726065+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Start Build Job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:04.726182+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22 ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:04.973797+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Started container local-ci-submission1-build-job for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:04.973988+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:05.263789+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:05.297295+02:00[Europe/Berlin]	⚙️ executing gradle
-                        2025-04-22T21:49:05.773578+02:00[Europe/Berlin]	Starting a Gradle Daemon (subsequent builds will be faster)
-                        2025-04-22T21:49:11.673992+02:00[Europe/Berlin]	> Task :clean UP-TO-DATE
-                        2025-04-22T21:49:11.872772+02:00[Europe/Berlin]
-                        > Task :compileJava FAILED
-                        2025-04-22T21:49:11.873218+02:00[Europe/Berlin]	/var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected
-                                buildFailure2
-                                             ^
-                        1 error
+        var submission1LogsFromFile = getSubmissionLogs("submission1-build-job");
+        try (MockedStatic<Files> mockedFiles = mockStatic(Files.class)) {
+            mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(true);
+            mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains("submission1-build-job"))))
+                    .thenReturn(new ByteArrayInputStream(submission1LogsFromFile.getBytes(StandardCharsets.UTF_8)));
 
-                        FAILURE: Build failed with an exception.
+            var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
+                    parameters(Map.of("resultId", result1.getId())));
 
-                        * What went wrong:
-                        Execution failed for task ':compileJava'.
-                        > Compilation failed; see the compiler output below.
-                        2025-04-22T21:49:11.873224+02:00[Europe/Berlin]
-                        [Incubating] Problems report is available at: file:///var/tmp/testing-dir/build/reports/problems/problems-report.html
-                        2025-04-22T21:49:11.873228+02:00[Europe/Berlin]	  /var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected
-                                  buildFailure2
-                                               ^
-                          1 error
+            assertThat(receivedLogs1.toString()).isEqualTo(getExpectedBuildLogEntries().toString());
+        }
 
-                        2025-04-22T21:49:11.873230+02:00[Europe/Berlin]	* Try:
-                        2025-04-22T21:49:11.873754+02:00[Europe/Berlin]	> 2025-04-22T21:49:11.873757+02:00[Europe/Berlin]	Check your code and dependencies to fix the compilation error(s)
-                        > Run with --scan to get full insights.
-                        2025-04-22T21:49:11.873758+02:00[Europe/Berlin]
-                        2025-04-22T21:49:11.874524+02:00[Europe/Berlin]	Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+        // MockedStatic<Files> mockedFiles = mockStatic(Files.class);
+        // mockedFiles.when(() -> Files.exists(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(true);
+        // mockedFiles.when(() -> Files.newInputStream(argThat(path -> path.toString().contains("submission1-build-job")))).thenReturn(
+        // new ByteArrayInputStream(submission1LogsFromFile.getBytes(StandardCharsets.UTF_8))
+        // );
+        // var expectedBuildLogEntriesSubmission1 = BuildLogEntryService.parseBuildLogEntries();
 
-                        2025-04-22T21:49:11.874527+02:00[Europe/Berlin]	You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
-
-                        2025-04-22T21:49:11.874689+02:00[Europe/Berlin]	For more on this, please refer to https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
-                        2 actionable tasks: 1 executed, 1 up-to-date
-                        2025-04-22T21:49:11.874692+02:00[Europe/Berlin]
-                        BUILD FAILED in 6s
-                        2025-04-22T21:49:12.266843+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:12.267038+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:12.328894+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Collecting test results from container a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~
-                        2025-04-22T21:49:12.499956+02:00[Europe/Berlin]	Building and testing submission for repository localcoursebuildlogs-artemis_admin and commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job submission1-build-job
-                        """);
         // Specify to use result1
-        var receivedLogs1 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
-                parameters(Map.of("resultId", result1.getId())));
-        assertThat(receivedLogs1).isEqualTo(submission1Logs);
 
         // Specify to use result2
         // var receivedLogs2 = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class,
@@ -1302,4 +1271,179 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         // Check repo
         assertThat(studentFilePath).hasContent("updatedFileContent");
     }
+
+    private String getSubmissionLogs(String buildJobId) {
+        return """
+                2025-04-22T21:49:04.726065+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Start Build Job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:04.726182+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22 ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:04.973797+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Started container local-ci-%s for build job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:04.973988+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:05.263789+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:05.297295+02:00[Europe/Berlin]	⚙️ executing gradle
+                2025-04-22T21:49:05.773578+02:00[Europe/Berlin]	Starting a Gradle Daemon (subsequent builds will be faster)
+                2025-04-22T21:49:11.673992+02:00[Europe/Berlin]	> Task :clean UP-TO-DATE
+                2025-04-22T21:49:11.872772+02:00[Europe/Berlin]
+                > Task :compileJava FAILED
+                2025-04-22T21:49:11.873218+02:00[Europe/Berlin]	/var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected
+                        buildFailure2
+                                     ^
+                1 error
+
+                FAILURE: Build failed with an exception.
+
+                * What went wrong:
+                Execution failed for task ':compileJava'.
+                > Compilation failed; see the compiler output below.
+                2025-04-22T21:49:11.873224+02:00[Europe/Berlin]
+                [Incubating] Problems report is available at: file:///var/tmp/testing-dir/build/reports/problems/problems-report.html
+                2025-04-22T21:49:11.873228+02:00[Europe/Berlin]	  /var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected
+                          buildFailure2
+                                       ^
+                  1 error
+
+                2025-04-22T21:49:11.873230+02:00[Europe/Berlin]	* Try:
+                2025-04-22T21:49:11.873754+02:00[Europe/Berlin]	> 2025-04-22T21:49:11.873757+02:00[Europe/Berlin]	Check your code and dependencies to fix the compilation error(s)
+                > Run with --scan to get full insights.
+                2025-04-22T21:49:11.873758+02:00[Europe/Berlin]
+                2025-04-22T21:49:11.874524+02:00[Europe/Berlin]	Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+                2025-04-22T21:49:11.874527+02:00[Europe/Berlin]	You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+                2025-04-22T21:49:11.874689+02:00[Europe/Berlin]	For more on this, please refer to https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+                2 actionable tasks: 1 executed, 1 up-to-date
+                2025-04-22T21:49:11.874692+02:00[Europe/Berlin]
+                BUILD FAILED in 6s
+                2025-04-22T21:49:12.266843+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:12.267038+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:12.328894+02:00[Europe/Berlin]	~~~~~~~~~~~~~~~~~~~~ Collecting test results from container a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job %s ~~~~~~~~~~~~~~~~~~~~
+                2025-04-22T21:49:12.499956+02:00[Europe/Berlin]	Building and testing submission for repository localcoursebuildlogs-artemis_admin and commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job %s
+                """
+                .formatted(buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId, buildJobId);
+    }
+
+    public static List<BuildLogEntry> getExpectedBuildLogEntries() {
+        List<BuildLogEntry> entries = new ArrayList<>();
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726065Z"), "~~~~~~~~~~~~~~~~~~~~ Start Build Job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726182Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22 ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973797Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Started container local-ci-submission1-build-job for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973988Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.263789Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.297295Z"), "⚙️ executing gradle"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.773578Z"), "Starting a Gradle Daemon (subsequent builds will be faster)"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :clean UP-TO-DATE"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "2025-04-22T21:49:11.872772+02:00[Europe/Berlin]"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :compileJava FAILED"));
+        entries.add(
+                new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "/var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "        buildFailure2"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "                     ^"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "1 error"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "FAILURE: Build failed with an exception."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "* What went wrong:"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "Execution failed for task ':compileJava'."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "> Compilation failed; see the compiler output below."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "2025-04-22T21:49:11.873224+02:00[Europe/Berlin]"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"),
+                "[Incubating] Problems report is available at: file:///var/tmp/testing-dir/build/reports/problems/problems-report.html"));
+        entries.add(
+                new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "  /var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';' expected"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "          buildFailure2"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "                       ^"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "  1 error"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "null"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873230Z"), "* Try:"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"),
+                "> 2025-04-22T21:49:11.873757+02:00[Europe/Berlin]	Check your code and dependencies to fix the compilation error(s)"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "> Run with --scan to get full insights."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "2025-04-22T21:49:11.873758+02:00[Europe/Berlin]"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"),
+                "Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"), "null"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"),
+                "You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"), "null"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"),
+                "For more on this, please refer to https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation."));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2 actionable tasks: 1 executed, 1 up-to-date"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2025-04-22T21:49:11.874692+02:00[Europe/Berlin]"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "BUILD FAILED in 6s"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.266843Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.267038Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.328894Z"),
+                "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+        entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.499956Z"),
+                "Building and testing submission for repository localcoursebuildlogs-artemis_admin and commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job submission1-build-job"));
+        return entries;
+    }
+
+    // public static List<BuildLogEntry> getExpectedBuildLogEntries() {
+    // List<BuildLogEntry> entries = new ArrayList<>();
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726065Z"), "~~~~~~~~~~~~~~~~~~~~ Start Build Job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.726182Z"), "~~~~~~~~~~~~~~~~~~~~ Inspecting docker image ls1tum/artemis-maven-template:java17-22
+    // ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973797Z"), "~~~~~~~~~~~~~~~~~~~~ Started container local-ci-submission1-build-job for build job
+    // submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:04.973988Z"), "~~~~~~~~~~~~~~~~~~~~ Populating build job container with repositories and build script
+    // ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.263789Z"), "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job submission1-build-job
+    // ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.297295Z"), "⚙️ executing gradle"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:05.773578Z"), "Starting a Gradle Daemon (subsequent builds will be faster)"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :clean UP-TO-DATE"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "2025-04-22T21:49:11.872772+02:00[Europe/Berlin]"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.673992Z"), "> Task :compileJava FAILED"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "/var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';'
+    // expected"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), " buildFailure2"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), " ^"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "1 error"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "FAILURE: Build failed with an exception."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "null"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "* What went wrong:"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "Execution failed for task ':compileJava'."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "> Compilation failed; see the compiler output below."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "2025-04-22T21:49:11.873224+02:00[Europe/Berlin]"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873218Z"), "[Incubating] Problems report is available at:
+    // file:///var/tmp/testing-dir/build/reports/problems/problems-report.html"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " /var/tmp/testing-dir/assignment/src/packageName/BubbleSort.java:15: error: ';'
+    // expected"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " buildFailure2"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " ^"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), " 1 error"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873228Z"), "null"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873230Z"), "* Try:"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "> 2025-04-22T21:49:11.873757+02:00[Europe/Berlin] Check your code and dependencies to fix
+    // the compilation error(s)"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "> Run with --scan to get full insights."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.873754Z"), "2025-04-22T21:49:11.873758+02:00[Europe/Berlin]"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"), "Deprecated Gradle features were used in this build, making it incompatible with Gradle
+    // 9.0."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874524Z"), "null"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"), "You can use '--warning-mode all' to show the individual deprecation warnings and determine
+    // if they come from your own scripts or plugins."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874527Z"), "null"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "For more on this, please refer to
+    // https://docs.gradle.org/8.12/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation."));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2 actionable tasks: 1 executed, 1 up-to-date"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "2025-04-22T21:49:11.874692+02:00[Europe/Berlin]"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:11.874689Z"), "BUILD FAILED in 6s"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.266843Z"), "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job submission1-build-job
+    // ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.267038Z"), "~~~~~~~~~~~~~~~~~~~~ Moving test results to specified directory for build job
+    // submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.328894Z"), "~~~~~~~~~~~~~~~~~~~~ Collecting test results from container
+    // a76159ea7f64f571111966700d1b6eaa54ca9c27cf23531a7d47af1b7314e314 for build job submission1-build-job ~~~~~~~~~~~~~~~~~~~~"));
+    // entries.add(new BuildLogEntry(ZonedDateTime.parse("2025-04-22T19:49:12.499956Z"), "Building and testing submission for repository localcoursebuildlogs-artemis_admin and
+    // commit hash a4e6a33fd44caa97cbe32ade8ef22ff88e3ec396 took 7.62sec for build job submission1-build-job"));
+    // return entries;
+    // }
 }
