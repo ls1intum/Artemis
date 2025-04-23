@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faBan, faPlus, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
@@ -15,15 +15,22 @@ import { getOS } from 'app/shared/util/os-detector.util';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { decodeBase64url } from 'app/shared/util/base64.util';
+import { FormsModule } from '@angular/forms';
+import { CommonModule } from '@angular/common';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
     authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode: 11,
 };
 
+export interface DisplayedPasskey extends PasskeyDTO {
+    isEditingLabel?: boolean;
+    labelBeforeEdit?: string;
+}
+
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent],
+    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -34,7 +41,10 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faPlus = faPlus;
     protected readonly faSave = faSave;
     protected readonly faTrash = faTrash;
+    protected readonly faPencil = faPencil;
     protected readonly faBan = faBan;
+    protected readonly faCheck = faCheck;
+    protected readonly faTimes = faTimes;
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
@@ -43,7 +53,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
 
-    registeredPasskeys = signal<PasskeyDTO[]>([]);
+    registeredPasskeys = signal<DisplayedPasskey[]>([]);
 
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -156,6 +166,27 @@ export class PasskeySettingsComponent implements OnDestroy {
         };
 
         return of(summary);
+    }
+
+    protected editPasskeyLabel(passkey: DisplayedPasskey) {
+        passkey.labelBeforeEdit = passkey.label ?? '';
+        passkey.isEditingLabel = true;
+    }
+
+    protected async savePasskeyLabel(passkey: DisplayedPasskey) {
+        passkey.isEditingLabel = false;
+
+        try {
+            passkey = await this.passkeySettingsApiService.updatePasskeyLabel(passkey.credentialId, passkey);
+        } catch (error) {
+            this.alertService.addErrorAlert('Unable to update passkey label');
+            passkey.label = passkey.labelBeforeEdit ?? '';
+        }
+    }
+
+    protected cancelEditPasskeyLabel(passkey: DisplayedPasskey) {
+        passkey.isEditingLabel = false;
+        passkey.label = passkey.labelBeforeEdit ?? '';
     }
 
     async deletePasskey(passkey: PasskeyDTO) {
