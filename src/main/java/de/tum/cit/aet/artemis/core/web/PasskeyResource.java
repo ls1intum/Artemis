@@ -73,6 +73,11 @@ public class PasskeyResource {
         return ResponseEntity.ok(passkeys);
     }
 
+    private ResponseEntity<Void> logAndReturnNotFound(Object... args) {
+        log.warn("Credential with id {} not found in the repository", args);
+        return ResponseEntity.notFound().build();
+    }
+
     /**
      * PUT /passkey/:credentialId : update the label of a passkey for the current user
      *
@@ -89,8 +94,7 @@ public class PasskeyResource {
         Optional<PasskeyCredential> credentialToBeUpdated = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
         if (credentialToBeUpdated.isEmpty()) {
-            log.warn("Credential with id {} not found in the repository", credentialId);
-            return ResponseEntity.notFound().build();
+            return logAndReturnNotFound(credentialId);
         }
 
         PasskeyCredential passkeyCredential = credentialToBeUpdated.get();
@@ -122,8 +126,7 @@ public class PasskeyResource {
         Optional<PasskeyCredential> credentialToBeDeleted = passkeyCredentialsRepository.findByCredentialId(credentialId);
 
         if (credentialToBeDeleted.isEmpty()) {
-            log.warn("Credential with id {} not found in the repository", credentialId);
-            return ResponseEntity.notFound().build();
+            return logAndReturnNotFound(credentialId);
         }
 
         boolean isUserAllowedToDeletePasskey = credentialToBeDeleted.get().getUser().getId().equals(currentUser.getId());
