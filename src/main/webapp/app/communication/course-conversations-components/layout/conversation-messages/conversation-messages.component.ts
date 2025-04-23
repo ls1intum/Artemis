@@ -189,7 +189,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             if (conversation && this._activeConversation?.id === conversation.id) {
                 return;
             }
-
             this._activeConversation = conversation;
             this.onActiveConversationChange();
         });
