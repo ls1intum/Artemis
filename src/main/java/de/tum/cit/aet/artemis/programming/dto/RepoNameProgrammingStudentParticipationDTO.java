@@ -41,8 +41,8 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
     public static RepoNameProgrammingStudentParticipationDTO of(ProgrammingExerciseStudentParticipation participation) {
         return Optional.ofNullable(participation)
                 .map(p -> new RepoNameProgrammingStudentParticipationDTO(p.getId(), p.getIndividualDueDate(),
-                        Optional.ofNullable(p.getSubmissions()).orElse(Set.of()).stream().filter(Objects::nonNull).map(s -> RepoNameSubmissionDTO.of((ProgrammingSubmission) s))
-                                .collect(Collectors.toSet()),
+                        Optional.ofNullable(p.getSubmissions()).orElse(Set.of()).stream().filter(s -> s instanceof ProgrammingSubmission)
+                                .map(s -> RepoNameSubmissionDTO.of((ProgrammingSubmission) s)).collect(Collectors.toSet()),
                         p.getParticipantName(), p.getParticipantIdentifier(), p.getRepositoryUri(), p.getBuildPlanId(), p.getBranch(),
                         RepoNameProgrammingExerciseDTO.of(p.getProgrammingExercise())))
                 .orElse(null);
@@ -143,9 +143,7 @@ public record RepoNameProgrammingStudentParticipationDTO(long id, ZonedDateTime 
          * @return the converted DTO
          */
         public static RepoNameCourseDTO of(Course course) {
-            return Optional.ofNullable(course)
-                    .map(c -> new RepoNameCourseDTO(c.getId(), c.getTitle(), c.getShortName()))
-                    .orElse(null);
+            return Optional.ofNullable(course).map(c -> new RepoNameCourseDTO(c.getId(), c.getTitle(), c.getShortName())).orElse(null);
         }
     }
 
