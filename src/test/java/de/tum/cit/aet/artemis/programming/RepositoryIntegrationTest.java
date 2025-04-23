@@ -55,7 +55,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
-import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -79,16 +78,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.util.BuildJobUtilService;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
@@ -121,10 +117,7 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private ResultService resultService;
-
-    @Autowired
-    private BuildJobRepository buildJobRepository;
+    private BuildJobUtilService buildJobUtilService;
 
     private static final String TEST_PREFIX = "repositoryintegration";
 
@@ -1067,50 +1060,11 @@ class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILoc
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
         var result2 = participationUtilService.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
-        // TODO works differently now, fix / adjust test
         String submission1BuildJobId = "submission1-build-job";
-        BuildJob buildJobSubmission1 = new BuildJob();
-        buildJobSubmission1.setBuildJobId(submission1BuildJobId);
-        buildJobSubmission1.setName("Build Job for Submission 1");
-        buildJobSubmission1.setExerciseId(programmingExercise.getId());
-        buildJobSubmission1.setCourseId(course.getId());
-        buildJobSubmission1.setParticipationId(participation.getId());
-        buildJobSubmission1.setResult(result1);
-        buildJobSubmission1.setBuildAgentAddress("http://build-agent-address");
-        buildJobSubmission1.setBuildSubmissionDate(submission1.getSubmissionDate());
-        buildJobSubmission1.setBuildStartDate(ZonedDateTime.now());
-        buildJobSubmission1.setBuildCompletionDate(ZonedDateTime.now().plusMinutes(5));
-        buildJobSubmission1.setRepositoryType(RepositoryType.USER);
-        buildJobSubmission1.setRepositoryName("student-repo");
-        buildJobSubmission1.setCommitHash(submission1.getCommitHash());
-        buildJobSubmission1.setRetryCount(0);
-        buildJobSubmission1.setPriority(1);
-        buildJobSubmission1.setTriggeredByPushTo(RepositoryType.USER);
-        buildJobSubmission1.setBuildStatus(BuildStatus.ERROR);
-        buildJobSubmission1.setDockerImage("default-docker-image");
-        buildJobRepository.save(buildJobSubmission1);
+        buildJobUtilService.createAndSaveBuildJob(submission1BuildJobId, "Build Job for Submission 1", programmingExercise, course, participation, result1, submission1);
 
         String submission2BuildJobId = "submission2-build-job";
-        BuildJob buildJobSubmission2 = new BuildJob();
-        buildJobSubmission2.setBuildJobId(submission2BuildJobId);
-        buildJobSubmission2.setName("Build Job for Submission 2");
-        buildJobSubmission2.setExerciseId(programmingExercise.getId());
-        buildJobSubmission2.setCourseId(course.getId());
-        buildJobSubmission2.setParticipationId(participation.getId());
-        buildJobSubmission2.setResult(result2);
-        buildJobSubmission2.setBuildAgentAddress("http://build-agent-address");
-        buildJobSubmission2.setBuildSubmissionDate(submission2.getSubmissionDate());
-        buildJobSubmission2.setBuildStartDate(ZonedDateTime.now());
-        buildJobSubmission2.setBuildCompletionDate(ZonedDateTime.now().plusMinutes(5));
-        buildJobSubmission2.setRepositoryType(RepositoryType.USER);
-        buildJobSubmission2.setRepositoryName("student-repo");
-        buildJobSubmission2.setCommitHash(submission2.getCommitHash());
-        buildJobSubmission2.setRetryCount(0);
-        buildJobSubmission2.setPriority(1);
-        buildJobSubmission2.setTriggeredByPushTo(RepositoryType.USER);
-        buildJobSubmission2.setBuildStatus(BuildStatus.ERROR);
-        buildJobSubmission2.setDockerImage("default-docker-image");
-        buildJobRepository.save(buildJobSubmission2);
+        buildJobUtilService.createAndSaveBuildJob(submission2BuildJobId, "Build Job for Submission 2", programmingExercise, course, participation, result2, submission2);
 
         var submission1LogsFromFile = getSubmissionLogs(submission1BuildJobId);
         var submission2LogsFromFile = getSubmissionLogs(submission2BuildJobId);
