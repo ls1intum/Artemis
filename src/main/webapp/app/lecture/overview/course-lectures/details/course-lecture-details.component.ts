@@ -107,6 +107,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             this.lectureId = +params.lectureId;
             if (this.lectureId) {
                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
+                this.loadData();
             }
         });
     }
