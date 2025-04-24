@@ -14,9 +14,7 @@
                 <table class="table table-striped flex">
                     <thead class="thead-dark">
                         <tr>
-                            <th class="col-4" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
-                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></th>
-                            <th class="col-3" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></th>
+                            <th class="col-10" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
                             <th class="col-2" jhiTranslate="entity.actions"></th>
                         </tr>
                     </thead>
@@ -26,16 +24,19 @@
                             <tr>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
-                                        {{ passkey.label }}
+                                        <div>
+                                            <div class="fw-bold text-dark mb-2">{{ passkey.label }}</div>
+                                            <div class="text-muted">
+                                                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
+                                                {{ passkey.created | artemisDate: 'long-date' }}
+                                                |
+                                                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></span>
+                                                {{ passkey.lastUsed | artemisDate }}
+                                            </div>
+                                        </div>
                                     } @else {
-                                        <input type="text" [(ngModel)]="passkey.label" />
+                                        <input type="text" [(ngModel)]="passkey.label" class="form-control w-100" />
                                     }
-                                </td>
-                                <td>
-                                    {{ passkey.created | artemisDate }}
-                                </td>
-                                <td>
-                                    {{ passkey.lastUsed | artemisDate }}
                                 </td>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
