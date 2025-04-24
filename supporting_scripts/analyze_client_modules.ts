@@ -14,7 +14,7 @@
  * debt score evolve with your codebase.
  *
  * ## Component Inventory
- * - Count `@Component`, `@Directive`, and `@Pipe` declarations
+ * - Count `@Component`, `@Directive`, `@Pipe`, `@Injectable` declarations
  * - Track `@Input` / `@Output` and `@ViewChild` / `@ViewChildren` vs. modern usage
  *
  * ## Change Detection
@@ -22,7 +22,7 @@
  * - **Goal:** 100% explicit `OnPush` for consistent, performant rendering -> Phase out ZoneJS
  *
  * ## Signal Readiness
- * - Detect components using Angular signals `signal`, ignore `OnPush`components
+ * - Detect components using Angular signals `signal`, ignore `OnPush` components
  *
  * ## Complexity & Dependencies
  * - Measure lines of code (LOC) and method count per component
@@ -99,6 +99,14 @@ interface ModuleStats {
     total: number;
 }
 
+// Define interface for change detection statistics
+interface ChangeDetectionStats {
+    onPush: number;
+    default: number;
+    implicit: number; // No explicit strategy specified (also Default)
+    total: number;
+}
+
 // Analyze components, directives, and pipes by module
 function analyzeModules(): Record<string, ModuleStats> {
     const stats: Record<string, ModuleStats> = {};
@@ -154,6 +162,68 @@ function analyzeModules(): Record<string, ModuleStats> {
     return stats;
 }
 
+// Analyze change detection strategies by module
+function analyzeChangeDetection(): Record<string, ChangeDetectionStats> {
+    const stats: Record<string, ChangeDetectionStats> = {};
+
+    // Initialize stats for each module
+    modules.forEach(module => {
+        stats[module] = { onPush: 0, default: 0, implicit: 0, total: 0 };
+    });
+
+    // Process each source file
+    const sourceFiles = project.getSourceFiles();
+    sourceFiles.forEach(file => {
+        const filePath = file.getFilePath();
+
+        // Determine which module this file belongs to
+        const moduleName = modules.find(module =>
+            filePath.includes(path.join(basePath, module))
+        );
+
+        if (!moduleName) return;
+
+        // Find all component decorators
+        const classes = file.getClasses();
+        classes.forEach(cls => {
+            const decorators = cls.getDecorators();
+
+            decorators.forEach(decorator => {
+                if (decorator.getName() === 'Component' || decorator.getText().includes('@Component')) {
+                    // Get the decorator arguments
+                    const callExpr = decorator.getCallExpression();
+                    if (!callExpr) return;
+
+                    const args = callExpr.getArguments();
+                    if (args.length === 0) return;
+
+                    // Look for changeDetection property in the component decorator
+                    const arg = args[0];
+                    const text = arg.getText();
+
+                    if (text.includes('ChangeDetectionStrategy.OnPush')) {
+                        stats[moduleName].onPush++;
+                    } else if (text.includes('ChangeDetectionStrategy.Default')) {
+                        stats[moduleName].default++;
+                    } else {
+                        stats[moduleName].implicit++;
+                    }
+                }
+            });
+        });
+    });
+
+    // Calculate totals
+    for (const module in stats) {
+        stats[module].total =
+            stats[module].onPush +
+            stats[module].default +
+            stats[module].implicit;
+    }
+
+    return stats;
+}
+
 // Generate component inventory table as markdown
 function generateComponentInventoryTable(): string {
     const stats = analyzeModules();
@@ -187,11 +257,60 @@ function generateComponentInventoryTable(): string {
     return tableContent;
 }
 
+// Generate change detection strategy table as markdown
+function generateChangeDetectionTable(): string {
+    const stats = analyzeChangeDetection();
+    let tableContent = '## Change Detection Strategy Usage\n\n';
+
+    tableContent += '| Module | OnPush | Explicit Default | Implicit Default | Total |\n';
+    tableContent += '|--------|--------|-----------------|-----------------|-------|\n';
+
+    let totalOnPush = 0;
+    let totalExplicitDefault = 0;
+    let totalImplicitDefault = 0;
+    let grandTotal = 0;
+
+    // Sort modules by total count in descending order
+    const sortedModules = [...modules].sort((a, b) => stats[b].total - stats[a].total);
+
+    sortedModules.forEach(module => {
+        const moduleStats = stats[module];
+
+        // Skip modules with no components
+        if (moduleStats.total === 0) return;
+
+        tableContent += `| ${module} | ${moduleStats.onPush} | ${moduleStats.default} | ${moduleStats.implicit} | ${moduleStats.total} |\n`;
+
+        totalOnPush += moduleStats.onPush;
+        totalExplicitDefault += moduleStats.default;
+        totalImplicitDefault += moduleStats.implicit;
+        grandTotal += moduleStats.total;
+    });
+
+    tableContent += `| **Total** | **${totalOnPush}** | **${totalExplicitDefault}** | **${totalImplicitDefault}** | **${grandTotal}** |\n`;
+
+    // Add percentage row for better visibility of progress
+    if (grandTotal > 0) {
+        const onPushPercent = (totalOnPush / grandTotal * 100).toFixed(1);
+        const explicitDefaultPercent = (totalExplicitDefault / grandTotal * 100).toFixed(1);
+        const implicitDefaultPercent = (totalImplicitDefault / grandTotal * 100).toFixed(1);
+
+        tableContent += `| **Percentage** | **${onPushPercent}%** | **${explicitDefaultPercent}%** | **${implicitDefaultPercent}%** | **100%** |\n`;
+    }
+
+    return tableContent;
+}
 
 function generateReport(outputToFile = false): string {
     let reportContent = '# Angular Technical Debt Analysis Report\n\n';
 
+    // Component inventory section
     reportContent += generateComponentInventoryTable();
+
+    reportContent += '\n\n';
+
+    // Change detection section
+    reportContent += generateChangeDetectionTable();
 
     reportContent += `\n\n_Report generated on ${new Date().toLocaleString()}_\n`;
 
