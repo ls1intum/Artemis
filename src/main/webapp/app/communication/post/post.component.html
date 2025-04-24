@@ -15,7 +15,7 @@
             {{ posting.creationDate | artemisDate: 'time' }}
         </span>
     }
-    @if (!isConsecutive() || posting.originalAnswerId) {
+    @if (!isConsecutive() || posting.originalPostId) {
         <div class="ps-3">
             <jhi-posting-header
                 [previewMode]="previewMode()"
@@ -29,12 +29,12 @@
             />
         </div>
     }
-    @if (posting.originalAnswerId) {
+    @if (posting.originalPostId) {
         <div class="message-container post-content-padding text-muted fs-smaller mt-1">
             <div class="message-content">
                 <span class="flex-wrapper">
                     <span class="replied-text" jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
-                    <a (click)="onTriggerNavigateToPost(originalAnswer!)" class="one-line">
+                    <a (click)="onTriggerNavigateToPost(originalPost!)" class="one-line">
                         {{ newContent }}
                     </a>
                 </span>
@@ -212,13 +212,13 @@
             </button>
         }
         @if (!isThreadSidebar) {
-            @if (!posting.originalAnswerId) {
+            @if (!posting.originalPostId) {
                 <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
                     <fa-icon [icon]="faComments" class="item-icon" />
                     <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
                 </button>
             } @else {
-                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? onTriggerNavigateToPost(originalAnswer!) : reactionsBarComponent()?.openAnswerView()">
+                <button class="dropdown-item d-flex" (click)="isCommunicationPage ? onTriggerNavigateToPost(originalPost!) : reactionsBarComponent()?.openAnswerView()">
                     <fa-icon [icon]="faComments" class="item-icon" />
                     <span jhiTranslate="artemisApp.metis.post.viewThread"></span>
                 </button>

@@ -40,7 +40,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
-import { AnswerPostService } from 'app/communication/service/answer-post.service';
 
 @Component({
     selector: 'jhi-post',
@@ -76,7 +75,6 @@ import { AnswerPostService } from 'app/communication/service/answer-post.service
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     metisService = inject(MetisService);
-    answerPostService = inject(AnswerPostService);
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
@@ -131,7 +129,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     forwardedPosts = input<Post[]>([]);
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     dropdownPosition = { x: 0, y: 0 };
-    originalAnswer?: AnswerPost;
+    originalPost?: Post;
     course: Course;
     newContent?: string;
 
@@ -227,7 +225,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
-        this.loadOriginalAnswerContent();
+        this.loadOriginalPostContent();
         this.fetchForwardedMessages();
     }
 
@@ -394,17 +392,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.changeDetector.detectChanges();
     }
 
-    private loadOriginalAnswerContent(): void {
-        if (this.posting.originalAnswerId) {
-            const courseId = this.course.id;
-            this.answerPostService.getSourceAnswerPostsByIds(courseId!, [this.posting.originalAnswerId]).subscribe({
-                next: (res) => {
-                    this.originalAnswer = res[0];
-                    this.changeDetector.detectChanges();
-                    this.removeMarkdown(this.originalAnswer?.post?.content);
-                },
-                error: () => {
-                    throwError('AnswerPost not found');
+    private loadOriginalPostContent(): void {
+        const postId = this.posting.originalPostId;
+        const conversationId = this.posting.conversation?.id;
+
+        if (postId && conversationId) {
+            this.metisService.getPostByIdInConversation(postId, conversationId).subscribe({
+                next: (post) => {
+                    if (post) {
+                        this.originalPost = post;
+                        this.changeDetector.detectChanges();
+                        this.removeMarkdown(this.originalPost.content);
+                    }
                 },
             });
         }

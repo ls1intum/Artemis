@@ -626,42 +626,20 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onTriggerNavigateToPost(post: Posting) {
-        let conversationId = (post as Post)?.conversation?.id;
+        let id = (post as Post)?.conversation?.id;
         this.focusPostId = post.id;
-
-        if (!post.id) {
+        this.openThreadOnFocus = false;
+        if (post.id === undefined) {
             return;
-        } else if (!(post as Post)?.conversation?.id) {
+        } else if ((post as Post)?.conversation?.id === undefined) {
             this.openThreadOnFocus = true;
-            conversationId = (post as AnswerPost)?.post?.conversation?.id;
+            id = (post as AnswerPost)?.post?.conversation?.id;
             this.focusPostId = (post as AnswerPost)?.post?.id;
-        }
-
-        if (this.activeConversation && this.activeConversation.id === conversationId) {
-            if (this.openThreadOnFocus) {
-                const threadPost = (post as AnswerPost)?.post || post;
-                this.openThread(threadPost as Post);
-            } else {
-                this.scrollToPost(this.focusPostId?.toString()!);
-            }
         } else {
-            this.metisConversationService.setActiveConversation(conversationId);
-            this.changeDetector.detectChanges();
-            setTimeout(() => {
-                if (this.openThreadOnFocus) {
-                    const threadPost = (post as AnswerPost)?.post || post;
-                    this.openThread(threadPost as Post);
-                } else {
-                    this.scrollToPost(this.focusPostId?.toString()!);
-                }
-            }, 0);
+            this.openThread(post as Post);
         }
-    }
 
-    scrollToPost(postId: string): void {
-        const element = document.getElementById(postId);
-        if (element) {
-            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
+        this.metisConversationService.setActiveConversation(id);
+        this.changeDetector.detectChanges();
     }
 }

@@ -52,7 +52,7 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockResizeObserver } from '../../../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('PostComponent', () => {
     let component: PostComponent;

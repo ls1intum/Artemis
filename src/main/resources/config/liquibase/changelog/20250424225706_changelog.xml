@@ -4,16 +4,16 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250227143115" author="aykan">
+    <changeSet id="20250424132000" author="aykan">
         <addColumn tableName="post">
-            <column name="original_answer_id" type="BIGINT"/>
+            <column name="original_post_id" type="BIGINT"/>
         </addColumn>
 
         <addForeignKeyConstraint
                 baseTableName="post"
-                baseColumnNames="original_answer_id"
-                constraintName="fk_post_original_answer"
-                referencedTableName="answer_post"
+                baseColumnNames="original_post_id"
+                constraintName="fk_post_original_post"
+                referencedTableName="post"
                 referencedColumnNames="id"/>
     </changeSet>
 

@@ -949,4 +949,30 @@ export class MetisService implements OnDestroy {
             this.pinnedPosts$.next(updatedPinnedPosts);
         }
     }
+
+    /**
+     * Retrieves a specific post by its ID within a given conversation.
+     *
+     * First checks if the post is already available in the cached posts.
+     * If not found, it fetches all posts for the specified conversation (with paging disabled)
+     * and returns the post that matches the provided postId.
+     *
+     * @param postId - The ID of the post to retrieve.
+     * @param conversationId - The ID of the conversation to search within.
+     * @returns An Observable containing the matched post, or undefined if not found.
+     */
+    public getPostByIdInConversation(postId: number, conversationId: number): Observable<Post | undefined> {
+        const cachedPost = this.cachedPosts.find((post) => post.id === postId);
+        if (cachedPost) {
+            return of(cachedPost);
+        }
+
+        const filter: PostContextFilter = {
+            courseId: this.courseId,
+            conversationIds: [conversationId],
+            pagingEnabled: false,
+        };
+
+        return this.postService.getPosts(this.courseId, filter).pipe(map((res: HttpResponse<Post[]>) => res.body?.find((post) => post.id === postId)));
+    }
 }

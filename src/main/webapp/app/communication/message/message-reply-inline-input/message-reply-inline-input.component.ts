@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { Posting } from 'app/communication/shared/entities/posting.model';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -86,28 +87,27 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
                 if (this.sendAsDirectMessage()) {
                     const newPost = this.mapAnswerPostToPost(createdAnswerPost);
                     this.metisService.createPost(newPost).subscribe({
-                        next: () => this.finalizeCreation(createdAnswerPost),
+                        next: () => this.finalizeCreation(newPost),
                         error: () => (this.isLoading = false),
                     });
-                } else {
-                    this.finalizeCreation(createdAnswerPost);
                 }
+                this.finalizeCreation(createdAnswerPost);
             },
             error: () => (this.isLoading = false),
         });
     }
 
-    private finalizeCreation(answerPost: AnswerPost): void {
+    private finalizeCreation(posting: Posting): void {
         this.resetFormGroup('');
         this.isLoading = false;
-        this.onCreate.emit(answerPost);
+        this.onCreate.emit(posting);
     }
 
     private mapAnswerPostToPost(answerPost: AnswerPost): Post {
         return {
             content: answerPost.content,
             conversation: this.activeConversation(),
-            originalAnswerId: answerPost.id,
+            originalPostId: answerPost.post!.id,
         } as Post;
     }
 

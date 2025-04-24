@@ -92,8 +92,8 @@ public class Post extends Posting {
     @Transient
     private boolean isSaved = false;
 
-    @Column(name = "original_answer_id")
-    private Long originalAnswerId;
+    @Column(name = "original_post_id")
+    private Long originalPostId;
 
     public Post() {
     }
@@ -212,12 +212,12 @@ public class Post extends Posting {
         this.isSaved = isSaved;
     }
 
-    public Long getOriginalAnswerId() {
-        return originalAnswerId;
+    public Long getOriginalPostId() {
+        return originalPostId;
     }
 
-    public void setOriginalAnswerId(Long originalAnswerId) {
-        this.originalAnswerId = originalAnswerId;
+    public void setOriginalPostId(Long originalPostId) {
+        this.originalPostId = originalPostId;
     }
 
     /**

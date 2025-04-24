@@ -39,7 +39,7 @@ public class AnswerPost extends Posting {
     private Set<Reaction> reactions = new HashSet<>();
 
     @ManyToOne
-    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author", "content" })
+    @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author" })
     private Post post;
 
     @Transient

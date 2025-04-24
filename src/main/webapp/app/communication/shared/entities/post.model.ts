@@ -11,7 +11,7 @@ export class Post extends Posting {
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;
     public isConsecutive?: boolean = false;
-    public originalAnswerId?: number;
+    public originalPostId?: number;
     public forwardedPosts?: Post[] = [];
     public forwardedAnswerPosts?: AnswerPost[] = [];
 
