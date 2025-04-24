@@ -95,6 +95,7 @@ describe('PasskeySettingsComponent', () => {
 
     it('should handle errors when saving a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        passkey.labelBeforeEdit = 'Initial Label - before save';
         jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
 
