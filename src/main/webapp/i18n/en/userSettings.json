@@ -96,6 +96,7 @@
                 "yourPasskeys": "Your passkeys",
                 "created": "Created on",
                 "lastUsed": "Last used on",
+                "label": "label",
                 "validation": {
                     "labelLength": "The label must not exceed {{maxLabelLength}} characters."
                 },

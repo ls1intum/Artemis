@@ -96,6 +96,7 @@
                 "yourPasskeys": "Deine Passkeys",
                 "created": "Erstellt am",
                 "lastUsed": "Zuletzt verwendet am",
+                "label": "Bezeichnung",
                 "validation": {
                     "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
                 },
