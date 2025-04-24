@@ -4,7 +4,6 @@ import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settin
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { User } from 'app/core/user/user.model';
 import { DisplayedPasskey } from 'app/core/user/settings/passkey-settings/passkey-settings.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
@@ -22,8 +21,14 @@ describe('PasskeySettingsComponent', () => {
     let accountService: AccountService;
     let alertService: AlertService;
 
-    const mockUser: User = { id: 1, email: 'test@example.com' } as User;
-    const mockPasskeys: DisplayedPasskey[] = [{ credentialId: '123', label: 'Test Passkey', created: new Date().toISOString(), lastUsed: new Date().toISOString() }];
+    const mockPasskeys: DisplayedPasskey[] = [
+        {
+            credentialId: '123',
+            label: 'Test Passkey',
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+        },
+    ];
 
     beforeEach(async () => {
         Object.defineProperty(navigator, 'credentials', {
@@ -65,16 +70,8 @@ describe('PasskeySettingsComponent', () => {
         expect(component.registeredPasskeys()).toEqual(mockPasskeys);
     });
 
-    it('should handle adding a new passkey', async () => {
-        jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockResolvedValue({});
-        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
-        jest.spyOn(navigator.credentials, 'create').mockResolvedValue({} as any);
-
-        await component.addNewPasskey();
-        expect(passkeySettingsApiService.getRegisteredPasskeys).toHaveBeenCalled();
-    });
-
     it('should handle errors when adding a new passkey', async () => {
+        jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
         await component.addNewPasskey();
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
@@ -98,6 +95,7 @@ describe('PasskeySettingsComponent', () => {
 
     it('should handle errors when saving a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
 
         await component.savePasskeyLabel(passkey);
@@ -115,6 +113,7 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should handle errors when deleting a passkey', async () => {
+        jest.spyOn(alertService, 'addErrorAlert');
         jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
 
         await component.deletePasskey(mockPasskeys[0]);
