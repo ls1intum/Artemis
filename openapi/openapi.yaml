@@ -12,8 +12,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}:
     get:
       tags:
-      - tutorial-gro
-      operationId: getOneOfCourse
+      - tutorial-group
+      operationId: TutorialGroupResource-getOneOfCourse
       parameters:
       - name: courseId
         in: path
@@ -36,8 +36,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroup"
     put:
       tags:
-      - tutorial-gro
-      operationId: update
+      - tutorial-group
+      operationId: TutorialGroupResource-update
       parameters:
       - name: courseId
         in: path
@@ -66,8 +66,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroup"
     delete:
       tags:
-      - tutorial-gro
-      operationId: delete
+      - tutorial-group
+      operationId: TutorialGroupResource-delete
       parameters:
       - name: courseId
         in: path
@@ -87,8 +87,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}:
     get:
       tags:
-      - tutorial-group-sessi
-      operationId: getOneOfTutorialGroup
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-getOneOfTutorialGroup
       parameters:
       - name: courseId
         in: path
@@ -117,8 +117,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroupSession"
     put:
       tags:
-      - tutorial-group-sessi
-      operationId: update_1
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-update
       parameters:
       - name: courseId
         in: path
@@ -153,8 +153,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroupSession"
     delete:
       tags:
-      - tutorial-group-sessi
-      operationId: deleteSession
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-deleteSession
       parameters:
       - name: courseId
         in: path
@@ -180,8 +180,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
     put:
       tags:
-      - tutorial-groups-configurati
-      operationId: update_2
+      - tutorial-groups-configuration
+      operationId: TutorialGroupsConfigurationResource-update
       parameters:
       - name: courseId
         in: path
@@ -211,8 +211,8 @@ paths:
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
   : get:
       tags:
-      - tutorial-group-free-peri
-      operationId: getOneOfConfiguration
+      - tutorial-group-free-period
+      operationId: TutorialGroupFreePeriodResource-getOneOfConfiguration
       parameters:
       - name: courseId
         in: path
@@ -241,8 +241,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroupFreePeriod"
     put:
       tags:
-      - tutorial-group-free-peri
-      operationId: update_3
+      - tutorial-group-free-period
+      operationId: TutorialGroupFreePeriodResource-update
       parameters:
       - name: courseId
         in: path
@@ -277,8 +277,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroupFreePeriod"
     delete:
       tags:
-      - tutorial-group-free-peri
-      operationId: delete_1
+      - tutorial-group-free-period
+      operationId: TutorialGroupFreePeriodResource-delete
       parameters:
       - name: courseId
         in: path
@@ -304,8 +304,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups:
     get:
       tags:
-      - tutorial-gro
-      operationId: getAllForCourse
+      - tutorial-group
+      operationId: TutorialGroupResource-getAllForCourse
       parameters:
       - name: courseId
         in: path
@@ -324,8 +324,8 @@ paths:
                   $ref: "#/components/schemas/TutorialGroup"
     post:
       tags:
-      - tutorial-gro
-      operationId: create
+      - tutorial-group
+      operationId: TutorialGroupResource-create
       parameters:
       - name: courseId
         in: path
@@ -349,8 +349,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions:
     post:
       tags:
-      - tutorial-group-sessi
-      operationId: create_1
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-create
       parameters:
       - name: courseId
         in: path
@@ -380,8 +380,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel:
     post:
       tags:
-      - tutorial-group-sessi
-      operationId: cancel
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-cancel
       parameters:
       - name: courseId
         in: path
@@ -417,8 +417,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate:
     post:
       tags:
-      - tutorial-group-sessi
-      operationId: activate
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-activate
       parameters:
       - name: courseId
         in: path
@@ -448,8 +448,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin}:
     post:
       tags:
-      - tutorial-gro
-      operationId: registerStudent
+      - tutorial-group
+      operationId: TutorialGroupResource-registerStudent
       parameters:
       - name: courseId
         in: path
@@ -474,8 +474,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple:
     post:
       tags:
-      - tutorial-gro
-      operationId: registerMultipleStudentsToTutorialGroup
+      - tutorial-group
+      operationId: TutorialGroupResource-registerMultipleStudentsToTutorialGroup
       parameters:
       - name: courseId
         in: path
@@ -511,8 +511,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/import:
     post:
       tags:
-      - tutorial-gro
-      operationId: importRegistrations
+      - tutorial-group
+      operationId: TutorialGroupResource-importRegistrations
       parameters:
       - name: courseId
         in: path
@@ -541,8 +541,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
     get:
       tags:
-      - tutorial-groups-configurati
-      operationId: getOneOfCourse_1
+      - tutorial-groups-configuration
+      operationId: TutorialGroupsConfigurationResource-getOneOfCourse
       parameters:
       - name: courseId
         in: path
@@ -559,8 +559,8 @@ paths:
                 $ref: "#/components/schemas/TutorialGroupsConfiguration"
     post:
       tags:
-      - tutorial-groups-configurati
-      operationId: create_2
+      - tutorial-groups-configuration
+      operationId: TutorialGroupsConfigurationResource-create
       parameters:
       - name: courseId
         in: path
@@ -584,8 +584,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
     post:
       tags:
-      - tutorial-group-free-peri
-      operationId: create_3
+      - tutorial-group-free-period
+      operationId: TutorialGroupFreePeriodResource-create
       parameters:
       - name: courseId
         in: path
@@ -615,8 +615,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count:
     patch:
       tags:
-      - tutorial-group-sessi
-      operationId: updateAttendanceCount
+      - tutorial-group-session
+      operationId: TutorialGroupSessionResource-updateAttendanceCount
       parameters:
       - name: courseId
         in: path
@@ -654,8 +654,8 @@ paths:
   /api/tutorialgroup/tutorial-groups/{tutorialGroupId}/title:
     get:
       tags:
-      - tutorial-gro
-      operationId: getTitle
+      - tutorial-group
+      operationId: TutorialGroupResource-getTitle
       parameters:
       - name: tutorialGroupId
         in: path
@@ -673,8 +673,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/language-values:
     get:
       tags:
-      - tutorial-gro
-      operationId: getUniqueLanguageValues
+      - tutorial-group
+      operationId: TutorialGroupResource-getUniqueLanguageValues
       parameters:
       - name: courseId
         in: path
@@ -695,8 +695,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/json:
     get:
       tags:
-      - tutorial-gro
-      operationId: exportTutorialGroupsToJSON
+      - tutorial-group
+      operationId: TutorialGroupResource-exportTutorialGroupsToJSON
       parameters:
       - name: courseId
         in: path
@@ -721,8 +721,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/export/csv:
     get:
       tags:
-      - tutorial-gro
-      operationId: exportTutorialGroupsToCSV
+      - tutorial-group
+      operationId: TutorialGroupResource-exportTutorialGroupsToCSV
       parameters:
       - name: courseId
         in: path
@@ -748,8 +748,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/campus-values:
     get:
       tags:
-      - tutorial-gro
-      operationId: getUniqueCampusValues
+      - tutorial-group
+      operationId: TutorialGroupResource-getUniqueCampusValues
       parameters:
       - name: courseId
         in: path
@@ -770,8 +770,8 @@ paths:
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin}:
     delete:
       tags:
-      - tutorial-gro
-      operationId: deregisterStudent
+      - tutorial-group
+      operationId: TutorialGroupResource-deregisterStudent
       parameters:
       - name: courseId
         in: path
@@ -2331,9 +2331,9 @@ components:
           type: array
           items:
             type: string
-        multicast:
-          type: boolean
         macaddress:
+          type: boolean
+        multicast:
           type: boolean
     IPAddressCreatorObjectObjectObjectObjectObject:
       type: object
@@ -2346,14 +2346,14 @@ components:
     IPAddressNetworkObjectObjectObjectObjectObject:
       type: object
       properties:
+        addressCreator:
+          $ref: "#/components/schemas/IPAddressCreatorObjectObjectObjectObjectObject"
         loopback:
           type: object
         standardLoopbackStrings:
           type: array
           items:
             type: string
-        addressCreator:
-          $ref: "#/components/schemas/IPAddressCreatorObjectObjectObjectObjectObject"
         ipv4:
           type: boolean
         ipv6:
@@ -2377,6 +2377,10 @@ components:
       properties:
         network:
           $ref: "#/components/schemas/IPAddressNetworkObjectObjectObjectObjectObject"
+        entireAddress:
+          type: boolean
+        countImpl:
+          type: integer
         hostMaskPrefix:
           type: integer
           format: int32
@@ -2385,10 +2389,6 @@ components:
           type: integer
           format: int32
           writeOnly: true
-        countImpl:
-          type: integer
-        entireAddress:
-          type: boolean
         lower:
           $ref: "#/components/schemas/IPAddressSection"
         upper:
@@ -2546,12 +2546,6 @@ components:
           type: integer
         upperValue:
           type: integer
-        valueCount:
-          type: integer
-          format: int32
-        prefixValueCount:
-          type: integer
-          format: int32
         upperSegmentValue:
           type: integer
           format: int32
@@ -2561,6 +2555,12 @@ components:
         divisionValue:
           type: integer
           format: int64
+        valueCount:
+          type: integer
+          format: int32
+        prefixValueCount:
+          type: integer
+          format: int32
         multiple:
           type: boolean
         count:
@@ -2573,12 +2573,12 @@ components:
           type: boolean
         ipv6:
           type: boolean
-        maxValue:
-          type: integer
-          format: int64
         segmentValue:
           type: integer
           format: int32
+        maxValue:
+          type: integer
+          format: int64
         network:
           $ref: "#/components/schemas/IPAddressNetworkObjectObjectObjectObjectObject"
         iterable:
@@ -2620,11 +2620,11 @@ components:
           format: byte
         max:
           type: boolean
+        wildcardString:
+          type: string
         divisionPrefixLength:
           type: integer
           format: int32
-        wildcardString:
-          type: string
         string:
           type: string
         prefixed:

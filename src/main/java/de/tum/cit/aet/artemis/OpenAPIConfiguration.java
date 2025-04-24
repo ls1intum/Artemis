@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -91,7 +92,7 @@ public class OpenAPIConfiguration {
                                     logger.warn("Tag '{}' is shorter than expected and cannot be trimmed.", tag);
                                     return false;
                                 }
-                            }).map(tag -> tag.substring(0, tag.length() - 11)).collect(Collectors.toList()));
+                            }).map(tag -> tag.substring(0, tag.length() - 9)).collect(Collectors.toList()));
                         }
                     });
                 });
@@ -99,6 +100,17 @@ public class OpenAPIConfiguration {
             else {
                 logger.warn("Paths are null in OpenAPI configuration.");
             }
+        };
+    }
+
+    @Bean
+    public OperationCustomizer classNameDashMethodName() {
+        return (operation, handlerMethod) -> {
+            // Build "ClassName-methodName"
+            String className = handlerMethod.getMethod().getDeclaringClass().getSimpleName();
+            String methodName = handlerMethod.getMethod().getName();
+            operation.setOperationId(className + "-" + methodName);
+            return operation;
         };
     }
 
