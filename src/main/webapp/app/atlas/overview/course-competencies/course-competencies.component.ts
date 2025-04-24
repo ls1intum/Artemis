@@ -14,8 +14,8 @@ import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies',
@@ -23,12 +23,13 @@ import { ScienceEventType } from 'app/shared/science/science.model';
     styleUrls: ['../../../core/course/overview/course-overview/course-overview.scss'],
     imports: [CompetencyCardComponent, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
-export class CourseCompetenciesComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
+    private readonly scienceService = inject(ScienceService);
 
     @Input()
     courseId: number;
@@ -48,21 +49,13 @@ export class CourseCompetenciesComponent extends AbstractScienceComponent implem
     private dashboardFeatureToggleActiveSubscription: Subscription;
     dashboardFeatureActive = false;
 
-    constructor() {
-        super(ScienceEventType.COMPETENCY__OPEN_OVERVIEW);
-    }
-
     ngOnInit(): void {
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
                 this.courseId = Number(params.courseId);
 
-                // log event
-                if (this.courseId) {
-                    this.setResourceId(this.courseId);
-                }
-                this.logEvent();
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, this.courseId);
             });
         }
 

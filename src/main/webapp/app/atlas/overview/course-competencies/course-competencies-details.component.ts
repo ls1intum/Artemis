@@ -42,8 +42,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -69,13 +69,14 @@ import { ScienceEventType } from 'app/shared/science/science.model';
         HtmlForMarkdownPipe,
     ],
 })
-export class CourseCompetenciesDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
     private courseCompetencyService = inject(CourseCompetencyService);
     private lectureUnitService = inject(LectureUnitService);
+    private readonly scienceService = inject(ScienceService);
 
     competencyId?: number;
     course?: Course;
@@ -95,10 +96,6 @@ export class CourseCompetenciesDetailsComponent extends AbstractScienceComponent
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
 
-    constructor() {
-        super(ScienceEventType.COMPETENCY__OPEN);
-    }
-
     ngOnInit(): void {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
@@ -116,11 +113,7 @@ export class CourseCompetenciesDetailsComponent extends AbstractScienceComponent
                         this.loadData();
                     }
 
-                    // log event
-                    if (this.competencyId) {
-                        this.setResourceId(this.competencyId);
-                    }
-                    this.logEvent();
+                    this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
                 },
             );
         }

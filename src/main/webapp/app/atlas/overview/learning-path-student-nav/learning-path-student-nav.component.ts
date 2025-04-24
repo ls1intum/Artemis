@@ -7,8 +7,8 @@ import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-pa
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
@@ -17,7 +17,7 @@ import { ScienceEventType } from 'app/shared/science/science.model';
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
-export class LearningPathNavComponent extends AbstractScienceComponent {
+export class LearningPathNavComponent {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faFlag = faFlag;
@@ -26,6 +26,7 @@ export class LearningPathNavComponent extends AbstractScienceComponent {
     protected readonly faChevronRight = faChevronRight;
 
     private learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 
@@ -42,18 +43,14 @@ export class LearningPathNavComponent extends AbstractScienceComponent {
     readonly isDropdownOpen = signal<boolean>(false);
 
     constructor() {
-        super();
         effect(() => {
             const learningPathId = this.learningPathId();
-            this.setResourceId(learningPathId);
             untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
         });
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
-        // log event
-        this.setScienceEventType(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV);
-        this.logEvent();
+        this.scienceService.logEvent(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV, this.learningPathId());
 
         const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
         loadingSpinner.set(true);

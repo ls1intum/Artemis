@@ -10,8 +10,8 @@ import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
@@ -20,13 +20,14 @@ import { ScienceEventType } from 'app/shared/science/science.model';
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })
-export class LearningPathNavOverviewComponent extends AbstractScienceComponent {
+export class LearningPathNavOverviewComponent {
     protected readonly faCheckCircle = faCheckCircle;
 
     private readonly alertService = inject(AlertService);
     private readonly modalService = inject(NgbModal);
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 
@@ -42,13 +43,10 @@ export class LearningPathNavOverviewComponent extends AbstractScienceComponent {
     readonly currentCompetencyOnPath = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
 
     constructor() {
-        super(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION);
         effect(() => {
             const learningPathId = this.learningPathId();
 
-            // log event
-            this.setResourceId(learningPathId);
-            this.logEvent();
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION, learningPathId);
 
             untracked(() => this.loadCompetencies(learningPathId));
         });

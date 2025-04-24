@@ -11,8 +11,8 @@ import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
@@ -21,13 +21,14 @@ import { ScienceEventType } from 'app/shared/science/science.model';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
-export class LearningPathStudentPageComponent extends AbstractScienceComponent {
+export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
     private readonly learningApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
     private readonly alertService = inject(AlertService);
     private readonly activatedRoute = inject(ActivatedRoute);
+    private readonly scienceService = inject(ScienceService);
 
     readonly isLearningPathLoading = signal(false);
     readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
@@ -36,7 +37,6 @@ export class LearningPathStudentPageComponent extends AbstractScienceComponent {
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
-        super(ScienceEventType.LEARNING_PATH__OPEN);
         effect(() => {
             const courseId = this.courseId();
             untracked(() => this.loadLearningPath(courseId));
@@ -49,11 +49,7 @@ export class LearningPathStudentPageComponent extends AbstractScienceComponent {
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
             this.learningPath.set(learningPath);
 
-            // log event
-            if (learningPath) {
-                this.setResourceId(learningPath.id);
-            }
-            this.logEvent();
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN, learningPath.id);
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (error.status != 404) {

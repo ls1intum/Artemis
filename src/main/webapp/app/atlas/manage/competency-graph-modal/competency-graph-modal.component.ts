@@ -7,8 +7,8 @@ import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-competency-graph-modal',
@@ -17,7 +17,8 @@ import { ScienceEventType } from 'app/shared/science/science.model';
     templateUrl: './competency-graph-modal.component.html',
     styleUrl: './competency-graph-modal.component.scss',
 })
-export class CompetencyGraphModalComponent extends AbstractScienceComponent {
+export class CompetencyGraphModalComponent {
+    private scienceService = inject(ScienceService);
     protected readonly closeIcon = faXmark;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
@@ -31,13 +32,10 @@ export class CompetencyGraphModalComponent extends AbstractScienceComponent {
     private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
-        super(ScienceEventType.LEARNING_PATH__OPEN_GRAPH);
         effect(() => {
             const learningPathId = this.learningPathId();
 
-            // log event
-            this.setResourceId(learningPathId);
-            this.logEvent();
+            this.scienceService.logEvent(ScienceEventType.LEARNING_PATH__OPEN_GRAPH, learningPathId);
 
             untracked(() => this.loadCompetencyGraph(learningPathId));
         });
