@@ -40,6 +40,13 @@ describe('PasskeySettingsComponent', () => {
     const mockPasskeys: DisplayedPasskey[] = [{ credentialId: '123', label: 'Test Passkey', created: new Date().toISOString(), lastUsed: new Date().toISOString() }];
 
     beforeEach(async () => {
+        Object.defineProperty(navigator, 'credentials', {
+            value: {
+                create: jest.fn().mockResolvedValue({} as any),
+            },
+            writable: true,
+        });
+
         await TestBed.configureTestingModule({
             imports: [],
             declarations: [],
@@ -80,59 +87,59 @@ describe('PasskeySettingsComponent', () => {
         expect(component.registeredPasskeys()).toEqual(mockPasskeys);
     });
 
-    // it('should handle adding a new passkey', async () => {
-    //     jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockResolvedValue({});
-    //     jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
-    //     jest.spyOn(navigator.credentials, 'create').mockResolvedValue({} as any);
-    //
-    //     await component.addNewPasskey();
-    //     expect(passkeySettingsApiService.getRegisteredPasskeys).toHaveBeenCalled();
-    // });
-    //
-    // it('should handle errors when adding a new passkey', async () => {
-    //     jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
-    //     await component.addNewPasskey();
-    //     expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
-    // });
-    //
-    // it('should edit a passkey label', async () => {
-    //     const passkey = { ...mockPasskeys[0], isEditingLabel: false };
-    //     component.editPasskeyLabel(passkey);
-    //     expect(passkey.isEditingLabel).toBeTrue();
-    //     expect(passkey.labelBeforeEdit).toEqual(passkey.label);
-    // });
-    //
-    // it('should save a passkey label', async () => {
-    //     const passkey = { ...mockPasskeys[0], isEditingLabel: true };
-    //     jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
-    //
-    //     await component.savePasskeyLabel(passkey);
-    //     expect(passkey.isEditingLabel).toBeFalse();
-    //     expect(passkeySettingsApiService.updatePasskeyLabel).toHaveBeenCalledWith(passkey.credentialId, passkey);
-    // });
-    //
-    // it('should handle errors when saving a passkey label', async () => {
-    //     const passkey = { ...mockPasskeys[0], isEditingLabel: true };
-    //     jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
-    //
-    //     await component.savePasskeyLabel(passkey);
-    //     expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to update passkey label');
-    //     expect(passkey.label).toEqual(passkey.labelBeforeEdit);
-    // });
-    //
-    // it('should delete a passkey', async () => {
-    //     jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockResolvedValue(undefined);
-    //     jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
-    //
-    //     await component.deletePasskey(mockPasskeys[0]);
-    //     expect(passkeySettingsApiService.deletePasskey).toHaveBeenCalledWith(mockPasskeys[0].credentialId);
-    //     expect(component.registeredPasskeys()).toEqual([]);
-    // });
-    //
-    // it('should handle errors when deleting a passkey', async () => {
-    //     jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
-    //
-    //     await component.deletePasskey(mockPasskeys[0]);
-    //     expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
-    // });
+    it('should handle adding a new passkey', async () => {
+        jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockResolvedValue({});
+        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue(mockPasskeys);
+        jest.spyOn(navigator.credentials, 'create').mockResolvedValue({} as any);
+
+        await component.addNewPasskey();
+        expect(passkeySettingsApiService.getRegisteredPasskeys).toHaveBeenCalled();
+    });
+
+    it('should handle errors when adding a new passkey', async () => {
+        jest.spyOn(webauthnApiService, 'getRegistrationOptions').mockRejectedValue(new Error('Test Error'));
+        await component.addNewPasskey();
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
+    });
+
+    it('should edit a passkey label', async () => {
+        const passkey = { ...mockPasskeys[0], isEditingLabel: false };
+        component.editPasskeyLabel(passkey);
+        expect(passkey.isEditingLabel).toBeTrue();
+        expect(passkey.labelBeforeEdit).toEqual(passkey.label);
+    });
+
+    it('should save a passkey label', async () => {
+        const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
+
+        await component.savePasskeyLabel(passkey);
+        expect(passkey.isEditingLabel).toBeFalse();
+        expect(passkeySettingsApiService.updatePasskeyLabel).toHaveBeenCalledWith(passkey.credentialId, passkey);
+    });
+
+    it('should handle errors when saving a passkey label', async () => {
+        const passkey = { ...mockPasskeys[0], isEditingLabel: true };
+        jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
+
+        await component.savePasskeyLabel(passkey);
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to update passkey label');
+        expect(passkey.label).toEqual(passkey.labelBeforeEdit);
+    });
+
+    it('should delete a passkey', async () => {
+        jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockResolvedValue(undefined);
+        jest.spyOn(passkeySettingsApiService, 'getRegisteredPasskeys').mockResolvedValue([]);
+
+        await component.deletePasskey(mockPasskeys[0]);
+        expect(passkeySettingsApiService.deletePasskey).toHaveBeenCalledWith(mockPasskeys[0].credentialId);
+        expect(component.registeredPasskeys()).toEqual([]);
+    });
+
+    it('should handle errors when deleting a passkey', async () => {
+        jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
+
+        await component.deletePasskey(mockPasskeys[0]);
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
+    });
 });
