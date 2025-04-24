@@ -17,6 +17,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { decodeBase64url } from 'app/shared/util/base64.util';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator.directive';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -35,7 +36,7 @@ export interface DisplayedPasskey extends PasskeyDTO {
 
 @Component({
     selector: 'jhi-passkey-settings',
-    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule],
+    imports: [TranslateDirective, FaIconComponent, DeleteButtonDirective, ArtemisDatePipe, ButtonComponent, CommonModule, FormsModule, CustomMaxLengthDirective],
     templateUrl: './passkey-settings.component.html',
     styleUrl: './passkey-settings.component.scss',
 })
@@ -50,6 +51,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faTimes = faTimes;
     protected readonly faKey = faKey;
+    protected readonly MAX_LABEL_LENGTH = 64;
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);

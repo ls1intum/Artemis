@@ -38,7 +38,17 @@
                                             </div>
                                         </div>
                                     } @else {
-                                        <input type="text" [(ngModel)]="passkey.label" class="form-control w-100" />
+                                        <input
+                                            type="text"
+                                            required
+                                            [(ngModel)]="passkey.label"
+                                            #labelInput="ngModel"
+                                            class="form-control w-100"
+                                            [customMaxLength]="MAX_LABEL_LENGTH"
+                                        />
+                                        @if (labelInput.invalid) {
+                                            <div class="text-danger">Label cannot exceed 64 characters.</div>
+                                        }
                                     }
                                 </td>
                                 <td>
@@ -62,6 +72,7 @@
                                         </button>
                                     } @else {
                                         <jhi-button
+                                            [disabled]="passkey.label.length > MAX_LABEL_LENGTH"
                                             [btnType]="ButtonType.PRIMARY"
                                             [btnSize]="ButtonSize.SMALL"
                                             [icon]="faSave"
