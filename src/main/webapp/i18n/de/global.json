@@ -75,6 +75,13 @@
                 "shortAnswerMapping": "Kurzantwort-Zuordnung",
                 "programmingExerciseTestCase": "Programmingaufgabentestfall",
                 "exerciseHint": "Aufgabenhinweis",
+                "exerciseTypes": {
+                    "programming": "Programmierung",
+                    "modeling": "Modellierung",
+                    "text": "Text",
+                    "fileUpload": "Datei-Upload",
+                    "quiz": "Quiz"
+                },
                 "metis": {
                     "post": "Beitrag",
                     "answerPost": "Antwort"
@@ -193,6 +200,7 @@
     },
     "entity": {
         "actions": "Aktionen",
+        "quickActions": "Schnellzugriff",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
@@ -273,7 +281,15 @@
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
             "faq": "FAQ",
-            "show": "Anzeigen"
+            "show": "Anzeigen",
+            "addExercise": "Aufgabe hinzufügen",
+            "addLecture": "Vorlesung hinzufügen",
+            "addFaq": "FAQ hinzufügen",
+            "addExam": "Klausur hinzufügen",
+            "addStudent": "Studierenden hinzufügen",
+            "addTutor": "Tutor:in hinzufügen",
+            "addEditor": "Editor:in hinzufügen",
+            "addInstructor": "Lehrenden hinzufügen"
         },
         "detail": {
             "field": "Feld",
