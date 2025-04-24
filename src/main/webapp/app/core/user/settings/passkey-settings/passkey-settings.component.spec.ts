@@ -70,9 +70,8 @@ describe('PasskeySettingsComponent', () => {
     });
 
     it('should load the current user on initialization', () => {
-        // jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(mockUser));
-        // component.ngOnInit();
-        // expect(component.currentUser()).toEqual(mockUser);
+        jest.spyOn(accountService, 'getAuthenticationState');
+        expect(component.currentUser()).toEqual({ id: 99 });
     });
 
     it('should update registered passkeys', async () => {
