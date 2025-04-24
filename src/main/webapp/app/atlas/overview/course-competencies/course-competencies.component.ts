@@ -14,6 +14,8 @@ import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies',
@@ -27,6 +29,7 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
     private courseCompetencyService = inject(CourseCompetencyService);
+    private readonly scienceService = inject(ScienceService);
 
     @Input()
     courseId: number;
@@ -51,6 +54,8 @@ export class CourseCompetenciesComponent implements OnInit, OnDestroy {
         if (courseIdParams$) {
             this.parentParamSubscription = courseIdParams$.subscribe((params) => {
                 this.courseId = Number(params.courseId);
+
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN_OVERVIEW, this.courseId);
             });
         }
 
