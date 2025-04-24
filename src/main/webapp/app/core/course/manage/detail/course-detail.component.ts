@@ -15,12 +15,13 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
+import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 
 export enum DoughnutChartType {
