@@ -4,27 +4,13 @@ import { PasskeySettingsApiService } from 'app/core/user/settings/passkey-settin
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { DisplayedPasskey } from 'app/core/user/settings/passkey-settings/passkey-settings.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
-import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import { CommonModule } from '@angular/common';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
-import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
-import { TranslateStore } from '@ngx-translate/core'; // Import TranslateStore
-import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -51,20 +37,12 @@ describe('PasskeySettingsComponent', () => {
             imports: [],
             declarations: [],
             providers: [
-                // MockJhiTranslateDirective, MockTranslateValuesDirective,
-                WebauthnApiService,
-                // MockProvider(TranslateStore), // Mock TranslateStore
-                // MockAccountService,
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                // works
-                // { provide: PasskeySettingsApiService, useValue: { getRegisteredPasskeys: jest.fn(), deletePasskey: jest.fn(), updatePasskeyLabel: jest.fn() } },
-                // { provide: WebauthnApiService, useValue: { getRegistrationOptions: jest.fn() } },
-                // { provide: AccountService, useValue: { getAuthenticationState: jest.fn(() => of(mockUser)) } }, // Mocking the observable
-                // { provide: AlertService, useValue: { addErrorAlert: jest.fn() } },
+                WebauthnApiService,
             ],
         }).compileComponents();
 
