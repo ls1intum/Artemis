@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -78,14 +77,12 @@ public class TutorialGroupService {
 
     private final ConversationDTOService conversationDTOService;
 
-    private final FeatureToggleService featureToggleService;
-
     private final CourseNotificationService courseNotificationService;
 
     public TutorialGroupService(SingleUserNotificationService singleUserNotificationService, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository, UserRepository userRepository, AuthorizationCheckService authorizationCheckService,
             TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            ConversationDTOService conversationDTOService, FeatureToggleService featureToggleService, CourseNotificationService courseNotificationService) {
+            ConversationDTOService conversationDTOService, CourseNotificationService courseNotificationService) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -94,7 +91,6 @@ public class TutorialGroupService {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.conversationDTOService = conversationDTOService;
-        this.featureToggleService = featureToggleService;
         this.courseNotificationService = courseNotificationService;
     }
 

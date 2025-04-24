@@ -28,7 +28,6 @@ class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.PlagiarismChecks)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.Exports)).isTrue();
-        assertThat(featureToggleService.isFeatureEnabled(Feature.TutorialGroups)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.LearningPaths)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.StandardizedCompetencies)).isTrue();
         assertThat(featureToggleService.isFeatureEnabled(Feature.StudentCourseAnalyticsDashboard)).isTrue();

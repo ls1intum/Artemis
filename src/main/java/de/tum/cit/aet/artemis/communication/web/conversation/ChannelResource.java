@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
@@ -59,8 +58,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupChannelManagementApi;
 
 @Profile(PROFILE_CORE)
@@ -86,19 +83,14 @@ public class ChannelResource extends ConversationManagementResource {
 
     private final Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi;
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final ConversationParticipantRepository conversationParticipantRepository;
-
-    private final FeatureToggleService featureToggleService;
 
     private final CourseNotificationService courseNotificationService;
 
-    public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, SingleUserNotificationService singleUserNotificationService,
-            ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
-            AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
-            ConversationService conversationService, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, FeatureToggleService featureToggleService,
-            CourseNotificationService courseNotificationService) {
+    public ChannelResource(ConversationParticipantRepository conversationParticipantRepository, ChannelService channelService, ChannelRepository channelRepository,
+            ChannelAuthorizationService channelAuthorizationService, AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService,
+            CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService,
+            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, CourseNotificationService courseNotificationService) {
         super(courseRepository);
         this.channelService = channelService;
         this.channelRepository = channelRepository;
@@ -108,9 +100,7 @@ public class ChannelResource extends ConversationManagementResource {
         this.userRepository = userRepository;
         this.conversationService = conversationService;
         this.tutorialGroupChannelManagementApi = tutorialGroupChannelManagementApi;
-        this.singleUserNotificationService = singleUserNotificationService;
         this.conversationParticipantRepository = conversationParticipantRepository;
-        this.featureToggleService = featureToggleService;
         this.courseNotificationService = courseNotificationService;
     }
 
@@ -161,8 +151,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         // Filter channels that are either course-wide or public and, if associated with a lecture/exercise/exam,
         // ensure it's visible to students
-        var filteredChannelSummaries = conversationService.filterVisibleChannelsForStudents(channels)
-                .filter(summary -> summary.getIsCourseWide() || Boolean.TRUE.equals(summary.getIsPublic()));
+        var filteredChannelSummaries = conversationService.filterVisibleChannelsForStudents(channels).filter(summary -> summary.getIsCourseWide() || summary.getIsPublic());
         var channelDTOs = filteredChannelSummaries.map(summary -> new ChannelIdAndNameDTO(summary.getId(), summary.getName()));
 
         return ResponseEntity.ok(channelDTOs.sorted(Comparator.comparing(ChannelIdAndNameDTO::name)).toList());
@@ -249,7 +238,7 @@ public class ChannelResource extends ConversationManagementResource {
 
         var createdChannel = channelService.createChannel(course, channelDTO.toChannel(), Optional.of(userRepository.getUserWithGroupsAndAuthorities()));
 
-        if (createdChannel.getIsCourseWide() && featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)) {
+        if (createdChannel.getIsCourseWide()) {
             var addedToChannelNotification = new AddedToChannelNotification(courseId, course.getTitle(), course.getCourseIcon(), requestingUser.getName(), createdChannel.getName(),
                     createdChannel.getId());
             // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
@@ -553,7 +542,7 @@ public class ChannelResource extends ConversationManagementResource {
 
     /**
      * POST courses/:courseId/channels/:channelId/toggle-privacy
-     *
+     * <p>
      * Toggles the privacy status of a channel: If the channel is public, it becomes private;
      * if it is private, it becomes public.
      *
@@ -574,12 +563,8 @@ public class ChannelResource extends ConversationManagementResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 
         channelAuthorizationService.isAllowedToUpdateChannel(channelFromDatabase, requestingUser);
-
-        boolean isCurrentlyPublic = Boolean.TRUE.equals(channelFromDatabase.getIsPublic());
-        channelFromDatabase.setIsPublic(!isCurrentlyPublic);
-
+        channelFromDatabase.setIsPublic(!channelFromDatabase.getIsPublic());
         var updatedChannel = channelRepository.save(channelFromDatabase);
-
         return ResponseEntity.ok(conversationDTOService.convertChannelToDTO(requestingUser, updatedChannel));
     }
 

@@ -284,7 +284,6 @@
             <jhi-feature-overlay [enabled]="tutorialGroupEnabled">
                 <a
                     [routerLink]="['/course-management', course.id, 'tutorial-groups']"
-                    [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
                     class="btn btn-primary me-1 mb-1 hidden-if-mobile"
                     [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
                     id="course-card-open-tutorial-groups"

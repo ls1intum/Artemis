@@ -58,8 +58,6 @@ public class AnswerMessageService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    private final FeatureToggleService featureToggleService;
-
     private final CourseNotificationService courseNotificationService;
 
     private final PostRepository postRepository;
@@ -79,7 +77,6 @@ public class AnswerMessageService extends PostingService {
         this.channelAuthorizationService = channelAuthorizationService;
         this.singleUserNotificationService = singleUserNotificationService;
         this.postRepository = postRepository;
-        this.featureToggleService = featureToggleService;
         this.courseNotificationService = courseNotificationService;
     }
 

@@ -40,8 +40,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
@@ -56,7 +54,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurati
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Conditional(TutorialGroupEnabled.class)
-@FeatureToggle(Feature.TutorialGroups)
 @RestController
 @RequestMapping("api/tutorialgroup/")
 public class TutorialGroupSessionResource {

@@ -95,10 +95,8 @@ public class LectureTranscriptionResource {
                     .body(null);
         }
 
-        if (lectureUnit.getLectureTranscription() != null) {
-            lectureTranscriptionRepository.deleteById(lectureUnit.getLectureTranscription().getId());
-            lectureUnit.setLectureTranscription(null);
-        }
+        var existingTranscription = lectureTranscriptionRepository.findByLectureUnit_Id(lectureUnitId);
+        existingTranscription.ifPresent(lectureTranscription -> lectureTranscriptionRepository.deleteById(lectureTranscription.getId()));
 
         LectureTranscription lectureTranscription = new LectureTranscription(transcriptionDTO.language(), transcriptionDTO.segments(), lectureUnit);
 
@@ -108,7 +106,7 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId/ingest-transcription
+     * POST lecture/{lectureId}/lecture-unit/{lectureUnitId}/ingest-transcription
      * This endpoint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
      *
      * @param lectureId     The id of the lecture of the transcription

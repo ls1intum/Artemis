@@ -64,12 +64,11 @@ import de.tum.cit.aet.artemis.communication.repository.CourseNotificationReposit
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
-import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -154,8 +153,6 @@ public class CourseService {
 
     private final Optional<ExamMetricsApi> examMetricsApi;
 
-    private final GroupNotificationService groupNotificationService;
-
     private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
@@ -223,15 +220,14 @@ public class CourseService {
     public CourseService(Optional<ExamMetricsApi> examMetricsApi, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             AuditEventRepository auditEventRepository, UserService userService, Optional<ExamDeletionApi> examDeletionApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            GroupNotificationService groupNotificationService, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
-            CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository,
-            StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository,
-            ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository,
-            SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository,
-            ParticipantScoreRepository participantScoreRepository, PresentationPointsCalculationService presentationPointsCalculationService,
-            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, ConversationRepository conversationRepository,
-            Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi, LectureRepository lectureRepository,
-            Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<PrerequisitesApi> prerequisitesApi,
+            Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi, CourseExamExportService courseExamExportService,
+            GradingScaleRepository gradingScaleRepository, StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository,
+            TutorLeaderboardService tutorLeaderboardService, RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository,
+            ResultRepository resultRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository,
+            PresentationPointsCalculationService presentationPointsCalculationService, Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi,
+            ConversationRepository conversationRepository, Optional<LearningPathApi> learningPathApi, Optional<IrisSettingsApi> irisSettingsApi,
+            LectureRepository lectureRepository, Optional<TutorialGroupChannelManagementApi> tutorialGroupChannelManagementApi, Optional<PrerequisitesApi> prerequisitesApi,
             Optional<CompetencyRelationApi> competencyRelationApi, PostRepository postRepository, AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository,
             FaqRepository faqRepository, Optional<LearnerProfileApi> learnerProfileApi, LLMTokenUsageTraceRepository llmTokenUsageTraceRepository,
             CourseNotificationRepository courseNotificationRepository) {
@@ -247,7 +243,6 @@ public class CourseService {
         this.userService = userService;
         this.examDeletionApi = examDeletionApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.groupNotificationService = groupNotificationService;
         this.examRepositoryApi = examRepositoryApi;
         this.courseExamExportService = courseExamExportService;
         this.gradingScaleRepository = gradingScaleRepository;
@@ -432,9 +427,9 @@ public class CourseService {
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
-            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            long numberOfLectures = lectureCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
             course.setNumberOfLectures(numberOfLectures);
-            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCount::count).findFirst().orElse(0L);
+            long numberOfExams = examCounts.stream().filter(count -> count.courseId() == course.getId()).map(CourseContentCountDTO::count).findFirst().orElse(0L);
             course.setNumberOfExams(numberOfExams);
             // we do not send actual lectures or exams to the client, not needed
             course.setLectures(Set.of());

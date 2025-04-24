@@ -38,7 +38,6 @@ import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HeaderCourseComponent } from 'app/core/course/manage/header-course/header-course.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { CourseExamArchiveButtonComponent } from 'app/shared/components/course-exam-archive-button/course-exam-archive-button.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
@@ -55,7 +54,6 @@ import { CourseAccessStorageService } from 'app/core/course/shared/services/cour
         RouterLink,
         FaIconComponent,
         TranslateDirective,
-        FeatureToggleLinkDirective,
         FeatureToggleHideDirective,
         CourseExamArchiveButtonComponent,
         DeleteButtonDirective,

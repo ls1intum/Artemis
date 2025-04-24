@@ -67,7 +67,7 @@
                             </button>
                         }
                         @if (course()!.id) {
-                            <jhi-course-notification-overview [jhiFeatureToggleHide]="FeatureToggle.CourseSpecificNotifications" [courseId]="course()!.id!" />
+                            <jhi-course-notification-overview [courseId]="course()!.id!" />
                         }
                     </jhi-course-title-bar>
 
