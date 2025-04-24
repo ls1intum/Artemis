@@ -58,7 +58,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
             next: (res: HttpResponse<CourseForArchiveDTO[]>) => {
                 if (res.body) {
                     this.courses = res.body || [];
-                    this.courses.map((courseDto: CourseForArchiveDTO) => {
+                    this.courses.forEach((courseDto: CourseForArchiveDTO) => {
                         courseDto.icon = addPublicFilePrefix(courseDto.icon) || courseDto.icon;
                     });
                     this.courses = this.sortCoursesByTitle(this.courses);
