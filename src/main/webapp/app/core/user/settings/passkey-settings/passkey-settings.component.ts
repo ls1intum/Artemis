@@ -83,7 +83,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.authStateSubscription.unsubscribe();
     }
 
-    private async updateRegisteredPasskeys(): Promise<void> {
+    async updateRegisteredPasskeys(): Promise<void> {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
     }
 
@@ -180,12 +180,12 @@ export class PasskeySettingsComponent implements OnDestroy {
         return of(summary);
     }
 
-    protected editPasskeyLabel(passkey: DisplayedPasskey) {
+    editPasskeyLabel(passkey: DisplayedPasskey) {
         passkey.labelBeforeEdit = passkey.label ?? '';
         passkey.isEditingLabel = true;
     }
 
-    protected async savePasskeyLabel(passkey: DisplayedPasskey) {
+    async savePasskeyLabel(passkey: DisplayedPasskey) {
         passkey.isEditingLabel = false;
 
         try {
