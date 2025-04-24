@@ -89,21 +89,21 @@ openApi {
     }
 }
 
-//openApiGenerate {
-//    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
-//    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
-//    outputDir = "$buildDir/generated-sources/openapi"
-//    apiPackage = "de.tum.cit.aet.artemis.client"
-//    modelPackage = "de.tum.cit.aet.artemis.client.model"
-//    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
-//    validateSpec = false
-//    configOptions = [
-//        serviceSuffix: "Service",
-//        supportsES6: "true",
-//        npmName: "@artemis/api-client",
-//        npmVersion: "${project.version}"
-//    ]
-//}
+openApiGenerate {
+    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
+    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
+    outputDir = "$buildDir/generated-sources/openapi"
+    apiPackage = "de.tum.cit.aet.artemis.client"
+    modelPackage = "de.tum.cit.aet.artemis.client.model"
+    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
+    validateSpec = false
+    configOptions = [
+        serviceSuffix: "Service",
+        supportsES6: "true",
+        npmName: "@artemis/api-client",
+        npmVersion: "${project.version}"
+    ]
+}
 
 modernizer {
     failOnViolations = false
