@@ -102,8 +102,6 @@ public abstract class Participation extends DomainObject implements Participatio
      * participationId to all submissions.
      */
     @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY) // TODO Michal Kawka I'm not entirely sure if FetchType.EAGER is a good idea here
-    // TODO jfr I think no, set to LAZY for now because EAGER caused issues e.g. deleting a participation failed due to constraints
-    // for the submission, even when all corresponding submissions got deleted before because they are still in the persistence context
     @JsonIgnoreProperties({ "participation" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
@@ -247,7 +245,6 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     // TODO Michal Kawka we will delete this method, but let's first fix all server tests
-    // just added deprecation for marking it in IDE for now, still delete ofc
     @Deprecated(forRemoval = true)
     @JsonIgnore
     public Set<Result> getResults() {

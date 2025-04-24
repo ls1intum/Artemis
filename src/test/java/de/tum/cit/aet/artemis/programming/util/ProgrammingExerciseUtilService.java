@@ -764,7 +764,6 @@ public class ProgrammingExerciseUtilService {
         return result;
     }
 
-    // TODO jfr rework those helpers once tests are running through
     /**
      * Adds a solution submission with a result to the given programming exercise.
      * The method will make sure that all necessary entities are connected.
@@ -776,7 +775,6 @@ public class ProgrammingExerciseUtilService {
         var templateParticipation = programmingExercise.getSolutionParticipation();
         ProgrammingSubmission submission = new ProgrammingSubmission();
         submission = submissionRepository.save(submission);
-        // TODO check if it needs to be persisted like before
         Result result = new Result();
         templateParticipation.addSubmission(submission);
         submission.setParticipation(templateParticipation);

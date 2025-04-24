@@ -635,14 +635,6 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                // TODO jfr confirm removing this is does not expose info we dont want to expose
-                /*
-                 * if (participation.getResults() != null && !participation.getResults().isEmpty()
-                 * && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
-                 * // TODO jfr setting submissions to null will also not return results consequentially do we want this behavior?
-                 * participation.setSubmissions(null);
-                 * }
-                 */
                 if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {
                     var lastLegalSubmission = participation.getSubmissions().stream().filter(submission -> submission.getType() != SubmissionType.ILLEGAL)
                             .max(Comparator.naturalOrder());
