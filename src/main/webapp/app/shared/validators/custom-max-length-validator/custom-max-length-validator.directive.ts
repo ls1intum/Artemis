@@ -9,7 +9,7 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomMaxLengthDirective, multi: true }],
 })
 export class CustomMaxLengthDirective implements Validator {
-    @Input() customMaxLength: number;
+    @Input({ required: true }) customMaxLength: number;
 
     validate(c: FormControl<string | undefined | null>): { [key: string]: any } | null {
         const value = c.value;
