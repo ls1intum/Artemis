@@ -46,10 +46,11 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     /**
      * Converts build result details into feedback and stores it in the result object
      *
-     * @param result      the result for which the feedback should be added
-     * @param buildResult The build result
+     * @param result              the result for which the feedback should be added
+     * @param buildResult         The build result
+     * @param programmingExercise the programming exercise related to the result
+     *
      */
-    // TODO Michal Kawka update doc
     private void addFeedbackToResult(Result result, BuildResultNotification buildResult, ProgrammingExercise programmingExercise) {
         final var jobs = buildResult.jobs();
 
