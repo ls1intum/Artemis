@@ -27,7 +27,6 @@
             <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed, 'is-not-in-active-conversation': !activeConversation }">
                 <jhi-sidebar
                     (onSelectConversation)="onConversationSelected($event)"
-                    (onUpdateSidebar)="prepareSidebarData()"
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
@@ -53,12 +52,7 @@
                 [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
             >
                 @if (activeConversation) {
-                    <jhi-conversation-header
-                        (collapseSearch)="toggleChannelSearch()"
-                        (onUpdateSidebar)="prepareSidebarData()"
-                        (togglePinnedMessage)="togglePinnedView()"
-                        [pinnedMessageCount]="pinnedCount"
-                    />
+                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (togglePinnedMessage)="togglePinnedView()" [pinnedMessageCount]="pinnedCount" />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
                         (openThread)="openThread($event)"

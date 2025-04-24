@@ -468,6 +468,7 @@ export class MetisConversationService implements OnDestroy {
             }
         }
         this.conversationsOfUser = conversationsCopy;
+        this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
     static getQueryParamsForConversation(conversationId: number): Params {
