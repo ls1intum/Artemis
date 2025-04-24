@@ -1077,5 +1077,40 @@ describe('Metis Service', () => {
             expect(pinnedPostsResult[0].content).toBe('Updated Content');
             expect(pinnedPostsResult[0].tags).toEqual(['newTag']);
         }));
+
+        it('should return the post from cache if it exists', () => {
+            const cachedPost = { id: 999, content: 'cached' } as Post;
+            metisService['cachedPosts'] = [cachedPost];
+
+            let result: Post | undefined;
+            metisService.getPostByIdInConversation(cachedPost.id!, 1).subscribe((res) => {
+                result = res;
+            });
+
+            expect(result).toEqual(cachedPost);
+        });
+
+        it('should fetch the specific post by id in a conversation if not in cache', fakeAsync(() => {
+            const postId = 999;
+            const conversationId = 123;
+            const expectedPost = { id: postId, conversation: { id: conversationId } } as Post;
+            metisService['cachedPosts'] = [];
+
+            jest.spyOn(postService, 'getPosts').mockReturnValue(
+                of(
+                    new HttpResponse({
+                        body: [{ id: 100, conversation: { id: conversationId } } as Post, expectedPost, { id: 101, conversation: { id: conversationId } } as Post],
+                    }),
+                ),
+            );
+
+            let result: Post | undefined;
+            metisService.getPostByIdInConversation(postId, conversationId).subscribe((res) => {
+                result = res;
+            });
+
+            tick();
+            expect(result).toEqual(expectedPost);
+        }));
     });
 });
