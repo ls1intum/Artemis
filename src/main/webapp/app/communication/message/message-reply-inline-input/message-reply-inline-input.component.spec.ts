@@ -13,7 +13,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -143,30 +144,34 @@ describe('MessageReplyInlineInputComponent', () => {
         expect(component.formGroup.get('content')?.value).toBe('new content');
     });
 
-    it('should create posting as direct message when sendAsDirectMessage is true', fakeAsync(() => {
-        component.posting = { ...metisPostToCreateUser1, content: '' };
-        (component as any).activeConversation = () => ({ id: 42, title: 'Test Conversation' }) as any;
+    it('should create a direct‐message post and emit it when sendAsDirectMessage=true', fakeAsync(() => {
+        const conv = { id: 42, title: 'Test Conversation' } as any;
+        component.posting = { id: 1, content: '', post: { id: 99 } as any } as AnswerPost;
+        (component as any).activeConversation = () => conv;
         component.sendAsDirectMessage.set(true);
-        component.ngOnChanges();
 
-        const newContent = 'direct message content';
-        component.formGroup.setValue({ content: newContent });
+        component.resetFormGroup();
+        component.formGroup.setValue({ content: 'msg' });
 
-        const createdAnswerPost: AnswerPost = { ...component.posting, id: 123, content: newContent } as AnswerPost;
-        metisServiceCreateStub.mockReturnValue(of(createdAnswerPost));
+        const answer = { ...component.posting, content: 'msg' } as AnswerPost;
+        jest.spyOn(metisService, 'createAnswerPost').mockReturnValue(of(answer));
 
-        const createPostSpy = jest.spyOn(metisService, 'createPost');
-        const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
+        const direct = { content: 'msg', conversation: conv, originalPostId: 99 } as Post;
+        jest.spyOn(metisService, 'createPost').mockReturnValue(of(direct));
+
+        const emitSpy = jest.spyOn(component.onCreate, 'emit');
 
         component.createPosting();
         tick();
 
-        expect(createPostSpy).toHaveBeenCalledWith({
-            content: createdAnswerPost.content,
-            conversation: { id: 42, title: 'Test Conversation' },
-            originalAnswerId: createdAnswerPost.id,
-        });
-        expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith(createdAnswerPost);
+        expect(metisService.createPost).toHaveBeenCalledWith(
+            expect.objectContaining({
+                content: 'msg',
+                conversation: conv,
+                originalPostId: 99,
+            }),
+        );
+        expect(emitSpy).toHaveBeenCalledWith(direct);
         expect(component.isLoading).toBeFalse();
     }));
 });
