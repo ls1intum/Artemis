@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
-public class PasskeyCredentialTest {
+class PasskeyCredentialTest {
 
     @Test
     void testToDto() {
@@ -28,5 +28,4 @@ public class PasskeyCredentialTest {
         assertThat(dto.lastUsed()).isEqualTo(now);
         assertThat(dto.created()).isEqualTo(now);
     }
-
 }
