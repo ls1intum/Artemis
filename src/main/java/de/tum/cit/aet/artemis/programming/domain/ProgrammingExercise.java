@@ -597,12 +597,13 @@ public class ProgrammingExercise extends Exercise {
     }
 
     /**
-     * Filters results in all submissions of a student participation, removing any that don't meet criteria.
+     * Filters results in all submissions of a student participation, removing any that don't meet the criteria.
+     * <p>
+     * Results are kept only if they:
+     * - have a completed assessment, AND
+     * - are either automatic OR the assessment due date has passed.
      *
-     * @param participation The participation containing submissions to filter
-     *                          Results are kept only if they:
-     *                          - have completed assessment AND
-     *                          - are either automatic OR the assessment due date has passed
+     * @param participation the participation containing submissions to filter
      */
     @Override
     public void filterResultsForStudents(Participation participation) {

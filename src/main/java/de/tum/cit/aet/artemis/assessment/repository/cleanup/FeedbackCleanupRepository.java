@@ -31,6 +31,7 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
      */
     @Modifying
     @Transactional // ok because of delete
+    // Subquery ok
     @Query("""
             DELETE FROM Feedback f
             WHERE f.id IN (

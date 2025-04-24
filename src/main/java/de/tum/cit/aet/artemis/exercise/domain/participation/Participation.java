@@ -244,7 +244,10 @@ public abstract class Participation extends DomainObject implements Participatio
         return findLatestResult(false);
     }
 
-    // TODO Michal Kawka we will delete this method, but let's first fix all server tests
+    /**
+     * @deprecated This method is deprecated and will be removed in the future.
+     *             We will investigate options to delete this method in a follow-up PR.
+     */
     @Deprecated(forRemoval = true)
     @JsonIgnore
     public Set<Result> getResults() {

@@ -494,14 +494,27 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     /**
      * Filters results in all submissions of a student participation based on assessment status and exercise type.
      *
+     * <p>
+     * This method implements the following filtering logic:
+     * </p>
+     * <ul>
+     * <li>If the assessment is still ongoing:
+     * <ul>
+     * <li>For {@code TextExercise} or {@code ModelingExercise}: keeps only results with {@code AUTOMATIC_ATHENA} assessment type.</li>
+     * <li>For other exercise types: removes all results.</li>
+     * </ul>
+     * </li>
+     * <li>If the assessment is over: keeps only results that have a completion date.</li>
+     * </ul>
+     *
+     * <p>
+     * This filtering happens in-place by modifying the results list of each submission.
+     * </p>
+     * <p>
+     * Override this method in subclasses if different filtering behavior is required for specific exercise types.
+     * </p>
+     *
      * @param participation the participation containing submissions to filter
-     *                          This method implements the following filtering logic:
-     *                          - If assessment is still ongoing:
-     *                          - For TextExercise or ModelingExercise: keeps only results with AUTOMATIC_ATHENA assessment type
-     *                          - For other exercise types: removes all results
-     *                          - If assessment is over: keeps only results that have a completion date
-     *                          This filtering happens in-place by modifying the results list of each submission.
-     *                          Override this method in subclasses if different filtering behavior is required for specific exercise types.
      */
     public void filterResultsForStudents(Participation participation) {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());

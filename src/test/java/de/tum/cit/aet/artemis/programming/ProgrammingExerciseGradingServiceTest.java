@@ -880,7 +880,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
         return resultRepository.save(result);
     }
 
-    // TODO check this
     private Participation[] createTestParticipations() {
         var testParticipations = new Participation[5];
 
