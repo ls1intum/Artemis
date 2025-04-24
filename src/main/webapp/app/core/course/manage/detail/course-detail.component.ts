@@ -10,7 +10,7 @@ import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/c
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faChartBar, faClipboard, faEye, faFlag, faListAlt, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -22,6 +22,7 @@ import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
+import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -38,7 +39,7 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent],
+    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     private eventManager = inject(EventManager);
@@ -73,14 +74,17 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
 
     // Icons
-    faTimes = faTimes;
-    faEye = faEye;
-    faWrench = faWrench;
-    faTable = faTable;
-    faFlag = faFlag;
-    faListAlt = faListAlt;
-    faChartBar = faChartBar;
-    faClipboard = faClipboard;
+    protected readonly faTimes = faTimes;
+    protected readonly faEye = faEye;
+    protected readonly faWrench = faWrench;
+    protected readonly faTable = faTable;
+    protected readonly faFlag = faFlag;
+    protected readonly faListAlt = faListAlt;
+    protected readonly faChartBar = faChartBar;
+    protected readonly faClipboard = faClipboard;
+    protected readonly faGraduationCap = faGraduationCap;
+    protected readonly faChalkboardUser = faChalkboardUser;
+    protected readonly faQuestion = faQuestion;
 
     /**
      * On init load the course information and subscribe to listen for changes in courses.
@@ -115,38 +119,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         const generalDetails: Detail[] = [
             { type: DetailType.Text, title: 'artemisApp.course.title', data: { text: this.course.title } },
             { type: DetailType.Text, title: 'artemisApp.course.shortName', data: { text: this.course.shortName } },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.studentGroupName',
-                data: {
-                    text: `${this.course.studentGroupName} (${this.course.numberOfStudents ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'students'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.teachingAssistantGroupName',
-                data: {
-                    text: `${this.course.teachingAssistantGroupName} (${this.course.numberOfTeachingAssistants ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'tutors'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.editorGroupName',
-                data: {
-                    text: `${this.course.editorGroupName} (${this.course.numberOfEditors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'editors'] : undefined,
-                },
-            },
-            {
-                type: DetailType.Link,
-                title: 'artemisApp.course.instructorGroupName',
-                data: {
-                    text: `${this.course.instructorGroupName} (${this.course.numberOfInstructors ?? 0})`,
-                    routerLink: this.course.isAtLeastInstructor ? ['/course-management', this.course.id, 'groups', 'instructors'] : undefined,
-                },
-            },
             { type: DetailType.Date, title: 'artemisApp.course.startDate', data: { date: this.course.startDate } },
             { type: DetailType.Date, title: 'artemisApp.course.endDate', data: { date: this.course.endDate } },
             { type: DetailType.Text, title: 'artemisApp.course.semester', data: { text: this.course.semester } },
