@@ -18,11 +18,11 @@ import { ScienceService } from 'app/shared/science/science.service';
     styleUrl: './competency-graph-modal.component.scss',
 })
 export class CompetencyGraphModalComponent {
-    private scienceService = inject(ScienceService);
     protected readonly closeIcon = faXmark;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
     private readonly alertService = inject(AlertService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly name = input<string>();
     readonly learningPathId = input.required<number>();
