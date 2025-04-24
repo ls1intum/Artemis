@@ -42,7 +42,7 @@ public class PasskeyCredentialUtilService {
         newCredential.setUser(user);
         newCredential.setLabel("Default Passkey Label");
         newCredential.setCredentialType(PasskeyType.PUBLIC_KEY);
-        newCredential.setCredentialId("k4KbTc2mEAI56H0CwVqgn2ckxWI");
+        newCredential.setCredentialId(java.util.UUID.randomUUID().toString());
         newCredential.setPublicKeyCose(new ImmutablePublicKeyCose(getRandomBytes(DEFAULT_CREDENTIAL_PUBLIC_KEY_BYTE_COUNT)));
         newCredential.setSignatureCount(0);
         newCredential.setUvInitialized(true);
