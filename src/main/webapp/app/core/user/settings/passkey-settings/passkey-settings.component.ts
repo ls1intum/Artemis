@@ -196,7 +196,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         }
     }
 
-    protected cancelEditPasskeyLabel(passkey: DisplayedPasskey) {
+    cancelEditPasskeyLabel(passkey: DisplayedPasskey) {
         passkey.isEditingLabel = false;
         passkey.label = passkey.labelBeforeEdit ?? '';
     }
