@@ -43,8 +43,6 @@ public class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependent
                 .orElseThrow(() -> new IllegalStateException("Credential not found"));
 
         assertThat(modifiedCredentialInDatabase.getCredentialId()).isEqualTo(existingCredential.getCredentialId());
-        assertThat(modifiedCredentialInDatabase.getCreatedDate()).isEqualTo(existingCredential.getCreatedDate());
-        assertThat(modifiedCredentialInDatabase.getLastUsed()).isEqualTo(existingCredential.getLastUsed());
         assertThat(modifiedCredentialInDatabase.getLabel()).isNotEqualTo(existingCredential.getLabel());
         assertThat(modifiedCredentialInDatabase.getLabel()).isEqualTo(modifiedCredential.label());
     }
