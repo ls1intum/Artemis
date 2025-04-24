@@ -1,6 +1,6 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
-import { Organization } from 'app/entities/organization.model';
+import { Organization } from 'app/core/shared/entities/organization.model';
 
 export class User extends Account {
     public id?: number;
@@ -10,7 +10,6 @@ export class User extends Account {
     public createdDate?: Date;
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
-    public lastNotificationRead?: dayjs.Dayjs;
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
@@ -31,7 +30,6 @@ export class User extends Account {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
-        lastNotificationRead?: dayjs.Dayjs,
         password?: string,
         imageUrl?: string,
         vcsAccessToken?: string,
@@ -45,7 +43,6 @@ export class User extends Account {
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
-        this.lastNotificationRead = lastNotificationRead;
         this.password = password;
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;

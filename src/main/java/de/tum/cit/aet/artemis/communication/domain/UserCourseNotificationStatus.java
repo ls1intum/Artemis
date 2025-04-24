@@ -38,6 +38,7 @@ public class UserCourseNotificationStatus implements Serializable {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+    // TODO: convert it into a string based enum (real database enum)
     @Enumerated
     @Column(name = "status", nullable = false)
     private UserCourseNotificationStatusType status;

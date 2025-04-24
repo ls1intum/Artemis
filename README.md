@@ -31,7 +31,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
    * **Interactive:** Instructors integrate interactive instructions based on tasks and UML diagrams directly into the dynamic problem statements. They can define hints for difficult exercise parts.
    * **Independent**: Instructors can customize programming exercises to support any programming language. To simplify the setup, Artemis includes sophisticated templates for the most common languages (e.g., Java, Python, C, Haskell, Kotlin, VHDL, Assembler, Swift, Ocaml, ...)
    * **Local and online**: Students can participate locally in their preferred IDE or in the online code editor (without any setup)
-   * **Manual reviews** are possible directly in the online code editor or in [Orion](https://github.com/ls1intum/Orion)
+   * **Manual reviews** are possible directly in the online code editor
    * **Policies**: Instructors can define submission policies (e.g., penalties after 10 attempts) to prevent that students try out all possibilities without thinking.
    * **Grading**: Instructors have many options to configure grading, analyze the results based on tests and static code analysis categories and re-evaluate the results
    * **Secure**: Test cases and student code run in Docker environments on build agents. Test frameworks such as [Ares](https://github.com/ls1intum/Ares) simplify the creation of structural and dynamic tests and prevent that students can cheat.
@@ -71,7 +71,7 @@ Artemis brings interactive learning to life with instant, individual feedback on
 
 1. **[Integrated markdown editor](https://docs.artemis.cit.tum.de/user/markdown-support/)**: Markdown is used to format text content across the platform using an integrated markdown editor.
 2. **[Scalable](https://docs.artemis.cit.tum.de/admin/scaling/)**: Artemis scales to multiple courses with thousands of students simultaneously using it. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-3. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+3. **[High user satisfaction](https://docs.artemis.cit.tum.de/user/user-experience/)**: Artemis is easy to use. Developers focus on usability, user experience, and performance.
 4. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings including user management, 
 5. **[Open-source](https://docs.artemis.cit.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
@@ -191,7 +191,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.2.war
 ```
 
 ## Architecture
@@ -257,7 +257,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  
-  https://artemis.praktomat.cs.kit.edu  
+  https://artemis.cs.kit.edu  
   Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
   
 * **Hochschule München**  

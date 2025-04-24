@@ -2,10 +2,10 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild, inject } fro
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
-import { Course, CourseGroup } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
-import { Team } from 'app/entities/team.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course, CourseGroup } from 'app/core/course/shared/entities/course.model';
+import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { cloneDeep } from 'lodash-es';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';

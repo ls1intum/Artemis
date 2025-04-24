@@ -2,7 +2,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { Authority } from 'app/shared/constants/authority.constants';
-import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseManagementResolve } from 'app/core/course/manage/services/course-management-resolve.service';
 
 export const assessmentLocksRoute: Routes = [
     {

@@ -1,6 +1,6 @@
 import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { admin, studentOne } from '../../support/users';
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
@@ -61,7 +61,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeVisible();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (1)` })).toBeVisible();
+            await expect(courseManagement.getNumberOfStudents().filter({ hasText: '1' })).toBeVisible();
 
             await navigationBar.openCourseManagement();
             await courseManagement.openStudentOverviewOfCourse(course.id!);
@@ -69,7 +69,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await expect(courseManagement.getRegisteredStudents().filter({ hasText: username })).toBeHidden();
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${course.shortName}-students (0)` })).toBeVisible();
+            await expect(courseManagement.getNumberOfStudents().filter({ hasText: '0' })).toBeVisible();
         });
 
         test.afterEach(async ({ courseManagementAPIRequests }) => {
@@ -132,14 +132,13 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(courseBody.instructorGroupName).toBe(`artemis-${courseData.shortName}-instructors`);
             expect(courseBody.teachingAssistantGroupName).toBe(`artemis-${courseData.shortName}-tutors`);
 
-            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
-            await expect(courseManagement.getCourseHeaderDescription().filter({ hasText: courseData.description })).toBeVisible();
+            await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
             await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
-            await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: `artemis-${courseData.shortName}-students (0)` })).toBeVisible();
-            await expect(courseManagement.getCourseTutorGroupName().filter({ hasText: `artemis-${courseData.shortName}-tutors (0)` })).toBeVisible();
-            await expect(courseManagement.getCourseEditorGroupName().filter({ hasText: `artemis-${courseData.shortName}-editors (0)` })).toBeVisible();
-            await expect(courseManagement.getCourseInstructorGroupName().filter({ hasText: `artemis-${courseData.shortName}-instructors (0)` })).toBeVisible();
+            await expect(courseManagement.getNumberOfStudents().filter({ hasText: '0' })).toBeVisible();
+            await expect(courseManagement.getNumberOfTutors().filter({ hasText: '0' })).toBeVisible();
+            await expect(courseManagement.getNumberOfEditors().filter({ hasText: '0' })).toBeVisible();
+            await expect(courseManagement.getNumberOfInstructors().filter({ hasText: '0' })).toBeVisible();
             await expect(courseManagement.getCourseStartDate().filter({ hasText: courseData.startDate.format(dateFormat) })).toBeVisible();
             await expect(courseManagement.getCourseEndDate().filter({ hasText: courseData.endDate.format(dateFormat) })).toBeVisible();
             await expect(courseManagement.getCourseSemester().filter({ hasText: courseData.semester })).toBeVisible();
@@ -175,14 +174,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
                 expect(courseBody.editorGroupName).toBe(courseData.editorGroupName);
                 expect(courseBody.instructorGroupName).toBe(courseData.instructorGroupName);
 
-                await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: courseData.title })).toBeVisible();
+                await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseTitle().filter({ hasText: courseData.title })).toBeVisible();
                 await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
                 await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(courseData.testCourse))).toBeVisible();
-                await expect(courseManagement.getCourseStudentGroupName().filter({ hasText: courseData.studentGroupName })).toBeVisible();
-                await expect(courseManagement.getCourseTutorGroupName().filter({ hasText: courseData.tutorGroupName })).toBeVisible();
-                await expect(courseManagement.getCourseEditorGroupName().filter({ hasText: courseData.editorGroupName })).toBeVisible();
-                await expect(courseManagement.getCourseInstructorGroupName().filter({ hasText: courseData.instructorGroupName })).toBeVisible();
             });
         }
 
@@ -209,7 +204,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
 
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
-            await courseManagement.openCourseEdit();
+            await courseManagement.openCourseSettings();
 
             await courseCreation.setTitle(editedCourseData.title);
             await courseCreation.setTestCourse(editedCourseData.testCourse);
@@ -219,7 +214,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             expect(course.shortName).toBe(courseData.shortName);
             expect(course.testCourse).toBe(editedCourseData.testCourse);
 
-            await expect(courseManagement.getCourseHeaderTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
+            await expect(courseManagement.getCourseSidebarTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseTitle().filter({ hasText: editedCourseData.title })).toBeVisible();
             await expect(courseManagement.getCourseShortName().filter({ hasText: courseData.shortName })).toBeVisible();
             await expect(courseManagement.getCourseTestCourse().locator(convertBooleanToCheckIconClass(editedCourseData.testCourse))).toBeVisible();
@@ -241,6 +236,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
         test('Deletes an existing course', async ({ navigationBar, courseManagement }) => {
             await navigationBar.openCourseManagement();
             await courseManagement.openCourse(course.id!);
+            await courseManagement.openCourseSettings();
             await courseManagement.deleteCourse(course);
             await expect(courseManagement.getCourse(course.id!)).toBeHidden();
         });
@@ -260,10 +256,10 @@ test.describe('Course management', { tag: '@fast' }, () => {
             test('Deletes an existing course icon', async ({ navigationBar, courseManagement }) => {
                 await navigationBar.openCourseManagement();
                 await courseManagement.openCourse(course.id!);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.removeIconFromCourse();
                 await courseManagement.updateCourse(course);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.checkCourseHasNoIcon();
             });
 
@@ -283,7 +279,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             test('Deletes not existing course icon', async ({ navigationBar, courseManagement }) => {
                 await navigationBar.openCourseManagement();
                 await courseManagement.openCourse(course.id!);
-                await courseManagement.clickEditCourse();
+                await courseManagement.openCourseSettings();
                 await courseManagement.checkCourseHasNoIcon();
             });
 

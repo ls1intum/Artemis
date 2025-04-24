@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.communication.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.List;
+
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -52,4 +54,12 @@ public interface UserCourseNotificationSettingPresetRepository extends ArtemisJp
     @Transactional // Deleting Query
     @Override
     void delete(UserCourseNotificationSettingPreset userCourseNotificationSettingPreset);
+
+    /**
+     * Find all course notification setting presets by user id.
+     *
+     * @param userId id to query for
+     * @return list of course notification setting presets for the user
+     */
+    List<UserCourseNotificationSettingPreset> findAllByUserId(long userId);
 }

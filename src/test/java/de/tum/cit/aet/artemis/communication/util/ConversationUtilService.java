@@ -343,7 +343,6 @@ public class ConversationUtilService {
         answerPost.setPost(post);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
-        post.setAnswerCount(post.getAnswerCount() + 1);
         return answerPosts;
     }
 
@@ -363,7 +362,6 @@ public class ConversationUtilService {
         answerPost.setResolvesPost(true);
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
-        post.setAnswerCount(post.getAnswerCount() + 1);
         post.setResolved(true);
         return answerPosts;
     }

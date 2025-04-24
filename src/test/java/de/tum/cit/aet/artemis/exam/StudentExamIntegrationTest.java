@@ -271,7 +271,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         doReturn(new Repository("ab", new VcsRepositoryUri("uri"))).when(gitService).getExistingCheckedOutRepositoryByLocalPath(any(), any(), any());
 
         // TODO: all parts using programmingExerciseTestService should also be provided for LocalVc+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsJobPermissionsService);
     }
 
@@ -2204,17 +2204,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVc
         jenkinsRequestMockProvider.reset();
 
         User student = finalStudentExam.getUser();
-        for (StudentExam studentExam : studentExamRepository.findByExamId(exam1.getId())) {
-            if (student.getLogin().equals(studentExam.getUser().getLogin())) {
-                studentExamRepository.delete(studentExam);
-            }
-        }
-
         final String noParticipationGrade = "NoParticipation";
-
         studentExam1.setSubmitted(false);
         studentExam1.setUser(student);
-        studentExamRepository.save(studentExam1);
+        studentExam1 = studentExamRepository.save(studentExam1);
 
         StudentExam bonusStudentExam = studentExam1;
 

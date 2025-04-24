@@ -353,7 +353,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
                 else if (exerciseWithDetails instanceof ModelingExercise modelingExercise) {
                     assertModelingExercise(modelingExercise, DiagramType.ClassDiagram, null, null);
-                    assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(2);
+                    assertThat(modelingExercise.getStudentParticipations()).as("Number of participations is correct").hasSize(1);
                 }
                 else if (exerciseWithDetails instanceof ProgrammingExercise programmingExerciseExercise) {
                     assertProgrammingExercise(programmingExerciseExercise, true, null, null, null, null, null);
@@ -496,20 +496,20 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
                         ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
             }
-            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
+            exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
             StudentParticipation participation = exercise.getStudentParticipations().iterator().next();
-            Submission submission = participation.getSubmissions().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
+                var submission = participation.getSubmissions().iterator().next();
                 // Programming exercises should only have one automatic result
                 assertThat(participation.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
                 assertThat(participation.getSubmissions()).hasSize(1);
                 assertThat(submission.getResults()).hasSize(1).first().matches(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC);
             }
             else {
-                // All other exercises have no visible result
+                // All other exercises have no visible result, and therefore no submission to transmit the result
+                assertThat(participation.getSubmissions()).isNull();
                 assertThat(participation.getResults()).isEmpty();
-                assertThat(submission.getResults()).isEmpty();
             }
         }
     }
@@ -527,7 +527,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
                 exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
             }
-            exerciseService.filterForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
+            exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
             // All exercises have one result
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).hasSize(1);
             // Programming exercises should now have one manual result
@@ -618,7 +618,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userTestRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
+        Page<User> allUsers = userTestRepository.findAllWithGroupsByDeletedIsFalse(Pageable.unpaged());
         for (User user : allUsers) {
             if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                 tutors.add(user);

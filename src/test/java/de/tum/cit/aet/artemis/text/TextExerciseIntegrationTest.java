@@ -482,7 +482,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         // Create a new course with different id.
         Long oldCourseId = course.getId();
         Long newCourseId = oldCourseId + 1L;
-        Course newCourse = courseUtilService.createCourse(newCourseId);
+        Course newCourse = courseUtilService.createCourse();
 
         // Assign new course to the text exercise.
         existingTextExercise.setCourse(newCourse);
@@ -1243,7 +1243,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     void testReEvaluateAndUpdateTextExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         TextExercise textExerciseToBeConflicted = textExerciseRepository.findByCourseIdWithCategories(course.getId()).getFirst();
         textExerciseToBeConflicted.setId(123456789L);
-        textExerciseRepository.save(textExerciseToBeConflicted);
 
         request.putWithResponseBody("/api/text/text-exercises/" + textExercise.getId() + "/re-evaluate", textExerciseToBeConflicted, TextExercise.class, HttpStatus.CONFLICT);
     }

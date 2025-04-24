@@ -1,7 +1,7 @@
 import { Component, OnChanges, OnInit, input } from '@angular/core';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
-import { getInitialsFromString } from 'app/utils/text.utils';
-import { getBackgroundColorHue } from 'app/utils/color.utils';
+import { getInitialsFromString } from 'app/shared/util/text.utils';
+import { getBackgroundColorHue } from 'app/shared/util/color.utils';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -24,6 +24,7 @@ export class ProfilePictureComponent implements OnInit, OnChanges {
     readonly defaultPictureId = input<string>('');
     readonly isEditable = input<boolean>(false);
     readonly isGray = input<boolean>(false);
+    readonly isBoxShadow = input<boolean>(false);
 
     profilePictureBackgroundColor: string;
     userProfilePictureInitials: string;

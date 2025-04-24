@@ -13,8 +13,10 @@ if [ "$CONFIGURATION" = "mysql" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
     DB="postgres"
   elif [ "$CONFIGURATION" = "mysql-localci" ]; then
+    echo "Running for playwright (single node) with mysql-localci"
     COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
   elif [ "$CONFIGURATION" = "multi-node" ]; then
+    echo "Running for playwright (multi-node)"
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
   else
       echo "Invalid configuration. Please choose among mysql, postgres, mysql-localci or multi-node."
@@ -24,26 +26,15 @@ fi
 echo "Compose file:"
 echo $COMPOSE_FILE
 
-# Create libs folder because the Artemis docker compose file expects the .war file there
-mkdir -p build/libs
-mv ./*.war build/libs/
-
 # pass current host's hostname to the docker container for server.url (see docker compose config file)
-export HOST_HOSTNAME=$(hostname)
+export HOST_HOSTNAME="nginx"
 
 cd docker
-#just pull everything else than artemis-app as we build it later either way
-if [ "$CONFIGURATION" = "multi-node" ]; then
-    echo "Building for playwright (multi-node)"
-    docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
-    docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app-node-1 artemis-app-node-2 artemis-app-node-3
-    docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
-  else
-    echo "Building for playwright"
-    docker compose -f $COMPOSE_FILE pull artemis-playwright $DB nginx
-    docker compose -f $COMPOSE_FILE build --build-arg WAR_FILE_STAGE=external_builder --no-cache --pull artemis-app
-    docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
-fi
+
+# Pull the images to avoid using outdated images
+docker compose -f $COMPOSE_FILE pull --quiet --policy always
+# Run the tests
+docker compose -f $COMPOSE_FILE up --exit-code-from artemis-playwright
 
 exitCode=$?
 cd ..

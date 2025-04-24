@@ -1,19 +1,19 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
-import { ComplaintService } from 'app/assessment/shared/complaint.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
+import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Complaint, ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Course } from 'app/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Observable, combineLatestWith } from 'rxjs';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
-import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
+import { getLinkToSubmissionAssessment } from 'app/shared/util/navigation.utils';
 import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -21,8 +21,8 @@ import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 
 @Component({
     selector: 'jhi-complaint-list',

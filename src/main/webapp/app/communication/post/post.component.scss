@@ -1,10 +1,15 @@
 @import '../metis.component';
 
 .linked-context-information,
-.context-information,
-.post-title {
+.context-information {
     font-weight: 600;
     color: var(--metis-blue);
+}
+
+.post-title {
+    font-weight: 600;
+    display: inline-block;
+    padding-top: 8px;
 }
 
 .announcement-icon {

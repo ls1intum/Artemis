@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.communication.service.notifications.push_notifications;
 
-import de.tum.cit.aet.artemis.communication.dto.CourseNotificationDTO;
+import de.tum.cit.aet.artemis.communication.dto.CourseNotificationSerializedDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 
 /**
@@ -8,9 +8,10 @@ import de.tum.cit.aet.artemis.core.config.Constants;
  * are part of the old notification api. As soon as iOS and Android are able to process the courseNotificationDTO by itself
  * we can remove the initial values in this record.
  */
-public record PushNotificationDataDTO(String[] notificationPlaceholders, String target, String type, String date, int version, CourseNotificationDTO courseNotificationDTO) {
+public record PushNotificationDataDTO(String[] notificationPlaceholders, String target, String type, String date, int version,
+        CourseNotificationSerializedDTO courseNotificationDTO) {
 
-    public PushNotificationDataDTO(CourseNotificationDTO courseNotificationDTO) {
+    public PushNotificationDataDTO(CourseNotificationSerializedDTO courseNotificationDTO) {
         this(null, null, null, null, Constants.PUSH_NOTIFICATION_VERSION, courseNotificationDTO);
     }
 }

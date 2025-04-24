@@ -1,9 +1,9 @@
 import { HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
-import { SystemNotification } from 'app/entities/system-notification.model';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
+import { SystemNotification } from 'app/core/shared/entities/system-notification.model';
 import { filter, map } from 'rxjs/operators';
+import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 @Injectable({ providedIn: 'root' })
 export class SystemNotificationManagementResolve implements Resolve<SystemNotification> {

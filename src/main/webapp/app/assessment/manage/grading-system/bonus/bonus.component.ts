@@ -2,13 +2,13 @@ import { Component, OnInit, inject } from '@angular/core';
 import { ModePickerComponent } from 'app/exercise/mode-picker/mode-picker.component';
 import { BonusService } from 'app/assessment/manage/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/assessment/manage/grading-system/grading-system.service';
-import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
+import { Bonus, BonusExample, BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { GradeEditMode } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
@@ -18,12 +18,12 @@ import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 export enum BonusStrategyOption {
     GRADES,

@@ -10,20 +10,18 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.api.PyrisFaqApi;
 
 @Profile(PROFILE_CORE)
 @Service
 public class FaqService {
 
-    private final Optional<PyrisWebhookService> pyrisWebhookService;
+    private final Optional<PyrisFaqApi> pyrisFaqApi;
 
     private final FaqRepository faqRepository;
 
-    public FaqService(FaqRepository faqRepository, Optional<PyrisWebhookService> pyrisWebhookService, ProfileService profileService) {
-
-        this.pyrisWebhookService = pyrisWebhookService;
+    public FaqService(FaqRepository faqRepository, Optional<PyrisFaqApi> pyrisFaqApi) {
+        this.pyrisFaqApi = pyrisFaqApi;
         this.faqRepository = faqRepository;
 
     }
@@ -38,7 +36,7 @@ public class FaqService {
      * @throws IllegalArgumentException if a specific FAQ is provided but its state is not "ACCEPTED"
      */
     public void ingestFaqsIntoPyris(Long courseId, Optional<Long> faqId) {
-        if (pyrisWebhookService.isEmpty()) {
+        if (pyrisFaqApi.isEmpty()) {
             return;
         }
 
@@ -47,8 +45,8 @@ public class FaqService {
             if (faq.getFaqState() != FaqState.ACCEPTED) {
                 throw new IllegalArgumentException("Faq is not in the state accepted, you cannot ingest this faq");
             }
-            pyrisWebhookService.get().addFaq(faq);
-        }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisWebhookService.get().addFaq(faq)));
+            pyrisFaqApi.get().addFaq(faq);
+        }, () -> faqRepository.findAllByCourseIdAndFaqState(courseId, FaqState.ACCEPTED).forEach(faq -> pyrisFaqApi.get().addFaq(faq)));
     }
 
     /**
@@ -57,11 +55,11 @@ public class FaqService {
      * @param existingFaq the FAQ to be removed from Pyris
      */
     public void deleteFaqInPyris(Faq existingFaq) {
-        if (pyrisWebhookService.isEmpty()) {
+        if (pyrisFaqApi.isEmpty()) {
             return;
         }
 
-        pyrisWebhookService.get().deleteFaq(existingFaq);
+        pyrisFaqApi.get().deleteFaq(existingFaq);
     }
 
     /**
@@ -72,7 +70,7 @@ public class FaqService {
      * @param faq      the FAQ to be ingested or updated in Pyris
      */
     public void autoIngestFaqsIntoPyris(Long courseId, Faq faq) {
-        if (pyrisWebhookService.isEmpty()) {
+        if (pyrisFaqApi.isEmpty()) {
             return;
         }
 
@@ -80,6 +78,6 @@ public class FaqService {
             return;
         }
 
-        pyrisWebhookService.get().autoUpdateFaqInPyris(courseId, faq);
+        pyrisFaqApi.get().autoUpdateFaqInPyris(courseId, faq);
     }
 }

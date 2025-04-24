@@ -2,16 +2,13 @@ package de.tum.cit.aet.artemis.plagiarism;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
-
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -25,13 +22,6 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
     private PlagiarismUtilService plagiarismUtilService;
 
     private final int submissionsAmount = 5;
-
-    private static String modelingSubmission;
-
-    @BeforeAll
-    static void initTestCase() throws IOException {
-        modelingSubmission = TestResourceUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
@@ -59,39 +49,13 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependen
         verifyPlagiarismResult(result);
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCheckPlagiarismResultForModelingExercise() throws Exception {
-        // given
-        var exerciseId = plagiarismUtilService.createModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
-
-        // when
-        var result = createPlagiarismResult("/api/modeling/modeling-exercises/" + exerciseId + "/check-plagiarism");
-
-        // then
-        verifyPlagiarismResult(result);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCheckPlagiarismResultForTeamModelingExercise() throws Exception {
-        // given
-        var exerciseId = plagiarismUtilService.createTeamModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, modelingSubmission, submissionsAmount);
-
-        // when
-        var result = createPlagiarismResult("/api/modeling/modeling-exercises/" + exerciseId + "/check-plagiarism");
-
-        // then
-        verifyPlagiarismResult(result);
-    }
-
     /***
      * Create the plagiarism result response based on the provided path.
      *
      * @param path The provided path to the rest endpoint
      * @return plagiarism result DTO
      */
-    private PlagiarismResultDTO createPlagiarismResult(String path) throws Exception {
+    private PlagiarismResultDTO<TextPlagiarismResult> createPlagiarismResult(String path) throws Exception {
         var plagiarismOptions = plagiarismUtilService.getDefaultPlagiarismOptions();
         return request.get(path, HttpStatus.OK, PlagiarismResultDTO.class, plagiarismOptions);
     }

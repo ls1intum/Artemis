@@ -1,0 +1,134 @@
+$overlay-width: 24rem;
+$overlay-container-height: 30rem;
+$padding: 1.4rem;
+$overlay-offset-top: 2.8rem;
+
+.course-notification-overview-bubble {
+    position: absolute;
+    top: 0;
+    right: 0.3rem;
+}
+
+.course-notification-overview-overlay {
+    position: absolute;
+    top: $overlay-offset-top;
+    right: 0;
+    display: none;
+    background-color: var(--module-bg);
+    border: var(--bs-border-width) var(--bs-border-style) var(--bs-border-color);
+    border-radius: 0.3rem;
+    width: $overlay-width;
+    padding: $padding;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.course-notification-overview-overlay.is-shown {
+    display: block;
+}
+
+.course-notification-overview-notification-container {
+    max-height: $overlay-container-height;
+    width: 100%;
+    overflow-y: auto;
+    overflow-x: visible;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar {
+    background-color: transparent;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+.course-notification-overview-notification-container::-webkit-scrollbar-thumb {
+    background-color: lightgray;
+    border-radius: 5rem;
+    border: 0.25rem solid transparent;
+    background-clip: content-box;
+}
+
+.course-notification-overview-triangle {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid var(--bs-border-color);
+    position: absolute;
+    top: -0.5rem;
+    right: 1.4rem;
+}
+
+.course-notification-overview-overlay-headline {
+    font-weight: 700;
+}
+
+.course-notification-overview-category-wrap {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.course-notification-overview-category {
+    margin-right: 1rem;
+    border-bottom: 0.3rem solid var(--module-bg);
+    cursor: pointer;
+    position: relative;
+
+    transition: border-color ease-in-out 0.2s;
+}
+
+.course-notification-overview-category:hover,
+.course-notification-overview-category.is-selected {
+    border-color: var(--primary);
+}
+
+.course-notification-overview-category-wrap:hover .course-notification-overview-category.is-selected:not(:hover) {
+    border-color: var(--secondary);
+}
+
+.course-notification-overview-notification-wrap {
+    margin: 0.5rem 0;
+}
+
+.course-notification-overview-notification-wrap:first-child {
+    margin-top: 1rem;
+}
+
+.course-notification-overview-notification-wrap:last-child {
+    margin-bottom: 0;
+}
+
+.course-notification-overview-notification-empty-prompt {
+    padding: 3rem 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.course-notification-overview-notification-empty-prompt-icon {
+    font-size: 3rem;
+    color: var(--secondary);
+}
+
+.course-notification-overview-notification-loading {
+    padding: 3rem 0;
+    font-size: 3rem;
+    text-align: center;
+    color: var(--secondary);
+}
+
+.course-notification-overview-category-notice {
+    border-radius: 50%;
+    height: 0.5rem;
+    width: 0.5rem;
+    display: inline-block;
+    background-color: var(--primary);
+}
+
+.course-notification-overview-headline-button-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}

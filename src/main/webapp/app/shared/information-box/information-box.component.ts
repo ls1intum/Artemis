@@ -1,8 +1,8 @@
 import { Component, Input } from '@angular/core';
 
-import { DifficultyLevel, Exercise } from 'app/entities/exercise.model';
+import { DifficultyLevel, Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { DateType } from '../pipes/artemis-date.pipe';
-import { StudentExam } from 'app/entities/student-exam.model';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';

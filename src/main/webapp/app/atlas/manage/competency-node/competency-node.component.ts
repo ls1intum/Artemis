@@ -3,7 +3,7 @@ import { AfterViewInit, ChangeDetectionStrategy, Component, ElementRef, computed
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbAccordionModule, NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NodeDimension } from '@swimlane/ngx-graph';
-import { CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/entities/competency/learning-path.model';
+import { CompetencyGraphNodeDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 
 export interface SizeUpdate {
     id: string;

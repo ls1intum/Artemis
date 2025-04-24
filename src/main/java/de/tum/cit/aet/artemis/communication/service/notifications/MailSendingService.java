@@ -38,7 +38,7 @@ public class MailSendingService {
     }
 
     /**
-     * Sends an e-mail to the specified sender
+     * Sends an e-mail to the specified sender asynchronously
      *
      * @param recipient   who should be contacted.
      * @param subject     The mail subject
@@ -48,6 +48,32 @@ public class MailSendingService {
      */
     @Async
     public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        executeSend(recipient, subject, content, isMultipart, isHtml);
+    }
+
+    /**
+     * Sends an e-mail to the specified sender synchronously
+     *
+     * @param recipient   who should be contacted.
+     * @param subject     The mail subject
+     * @param content     The content of the mail. Can be enriched with HTML tags
+     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
+     * @param isHtml      Whether the mail should support HTML tags
+     */
+    public void sendEmailSync(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+        executeSend(recipient, subject, content, isMultipart, isHtml);
+    }
+
+    /**
+     * Executes sending an e-mail to the specified sender
+     *
+     * @param recipient   who should be contacted.
+     * @param subject     The mail subject
+     * @param content     The content of the mail. Can be enriched with HTML tags
+     * @param isMultipart Whether to create a multipart that supports alternative texts, inline elements
+     * @param isHtml      Whether the mail should support HTML tags
+     */
+    private void executeSend(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper

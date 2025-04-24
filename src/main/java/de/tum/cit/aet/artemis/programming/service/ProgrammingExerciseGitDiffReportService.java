@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseGitDiffReport;
@@ -62,13 +61,10 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final GitDiffReportParserService gitDiffReportParserService;
 
-    private final ProfileService profileService;
-
     public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
             ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, GitDiffReportParserService gitDiffReportParserService,
-            ProfileService profileService) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, GitDiffReportParserService gitDiffReportParserService) {
         this.gitService = gitService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -76,7 +72,6 @@ public class ProgrammingExerciseGitDiffReportService {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.gitDiffReportParserService = gitDiffReportParserService;
-        this.profileService = profileService;
     }
 
     /**
@@ -181,19 +176,17 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If an error occurs while accessing the git repository
      * @throws IOException     If an error occurs while accessing the file system
      */
-    public ProgrammingExerciseGitDiffReport createReportForSubmissionWithTemplate(ProgrammingExercise exercise, ProgrammingSubmission submission)
+    public ProgrammingExerciseGitDiffReport createDiffReportForSubmissionWithTemplate(ProgrammingExercise exercise, ProgrammingSubmission submission)
             throws GitAPIException, IOException {
         var templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElseThrow();
         var vcsRepositoryUri = ((ProgrammingExerciseParticipation) submission.getParticipation()).getVcsRepositoryUri();
 
-        // TODO: for LocalVC, we should do that without checking out the repository
-        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
         Repository templateRepo = prepareRepository(templateParticipation.getVcsRepositoryUri());
         Repository submissionRepository = gitService.checkoutRepositoryAtCommit(vcsRepositoryUri, submission.getCommitHash(), false);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(submissionRepository);
-        var report = createReport(templateRepo, oldTreeParser, newTreeParser);
+        var report = createDiffReport(templateRepo, oldTreeParser, newTreeParser);
         gitService.switchBackToDefaultBranchHead(submissionRepository);
         return report;
     }
@@ -236,17 +229,13 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     private ProgrammingExerciseGitDiffReport createReportForTemplateWithSolution(VcsRepositoryUri templateVcsRepositoryUri, VcsRepositoryUri solutionVcsRepositoryUri)
             throws GitAPIException, IOException {
-        Repository templateRepo;
-        Repository solutionRepo;
-        // TODO: for LocalVC, we should do that without checking out the repository
-        // TODO: find a way to make report creation work with gitService.getBareRepository(vcsRepositoryUri);
-        templateRepo = prepareRepository(templateVcsRepositoryUri);
-        solutionRepo = prepareRepository(solutionVcsRepositoryUri);
+        Repository templateRepo = prepareRepository(templateVcsRepositoryUri);
+        Repository solutionRepo = prepareRepository(solutionVcsRepositoryUri);
 
         var oldTreeParser = new FileTreeIterator(templateRepo);
         var newTreeParser = new FileTreeIterator(solutionRepo);
 
-        return createReport(templateRepo, oldTreeParser, newTreeParser);
+        return createDiffReport(templateRepo, oldTreeParser, newTreeParser);
     }
 
     /**
@@ -257,6 +246,8 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
     private Repository prepareRepository(VcsRepositoryUri vcsRepositoryUri) throws GitAPIException {
+        // TODO: in the future, we want to avoid this and rather return the file content based on the bare LocalVC repository (much faster) and let the client monaco editor
+        // compute and visualize the diff
         Repository templateRepo = gitService.getOrCheckoutRepository(vcsRepositoryUri, true);
         gitService.resetToOriginHead(templateRepo);
         gitService.pullIgnoreConflicts(templateRepo);
@@ -269,10 +260,9 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param submission1 The first submission (older)
      * @param submission2 The second submission (newer)
      * @return The report with the changes between the two submissions
-     * @throws GitAPIException If an error occurs while accessing the git repository
-     * @throws IOException     If an error occurs while accessing the file system
+     * @throws IOException If an error occurs while accessing the file system
      */
-    public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws GitAPIException, IOException {
+    public ProgrammingExerciseGitDiffReport generateReportForSubmissions(ProgrammingSubmission submission1, ProgrammingSubmission submission2) throws IOException {
         var repositoryUri = ((ProgrammingExerciseParticipation) submission1.getParticipation()).getVcsRepositoryUri();
         return generateReportForCommits(repositoryUri, submission1.getCommitHash(), submission2.getCommitHash());
     }
@@ -291,7 +281,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws GitAPIException If an error occurs while accessing the git repository
      */
     @NotNull
-    private ProgrammingExerciseGitDiffReport createReport(Repository firstRepo, FileTreeIterator firstRepoTreeParser, FileTreeIterator secondRepoTreeParser)
+    private ProgrammingExerciseGitDiffReport createDiffReport(Repository firstRepo, FileTreeIterator firstRepoTreeParser, FileTreeIterator secondRepoTreeParser)
             throws IOException, GitAPIException {
         try (ByteArrayOutputStream diffOutputStream = new ByteArrayOutputStream(); Git git = Git.wrap(firstRepo)) {
             git.diff().setOldTree(firstRepoTreeParser).setNewTree(secondRepoTreeParser).setOutputStream(diffOutputStream).call();
@@ -317,29 +307,20 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param commitHash1   The first commit hash
      * @param commitHash2   The second commit hash
      * @return The report with the changes between the two commits
-     * @throws GitAPIException If an error occurs while accessing the git repository
-     * @throws IOException     If an error occurs while accessing the file system
+     * @throws IOException If an error occurs while accessing the file system
      */
-    public ProgrammingExerciseGitDiffReport generateReportForCommits(VcsRepositoryUri repositoryUri, String commitHash1, String commitHash2) throws GitAPIException, IOException {
-        Repository repository;
-        if (profileService.isLocalVcsActive()) {
-            log.debug("Using local VCS generateReportForCommits on repo {}", repositoryUri);
-            repository = gitService.getBareRepository(repositoryUri);
-        }
-        else {
-            log.debug("Checking out repo {} for generateReportForCommits", repositoryUri);
-            repository = gitService.getOrCheckoutRepository(repositoryUri, true);
-        }
+    public ProgrammingExerciseGitDiffReport generateReportForCommits(VcsRepositoryUri repositoryUri, String commitHash1, String commitHash2) throws IOException {
+        try (Repository repository = gitService.getBareRepository(repositoryUri)) {
+            RevCommit commitOld = repository.parseCommit(repository.resolve(commitHash1));
+            RevCommit commitNew = repository.parseCommit(repository.resolve(commitHash2));
 
-        RevCommit commitOld = repository.parseCommit(repository.resolve(commitHash1));
-        RevCommit commitNew = repository.parseCommit(repository.resolve(commitHash2));
+            if (commitOld == null || commitNew == null) {
+                log.error("Could not find the commits with the provided commit hashes in the repository: {} and {}", commitHash1, commitHash2);
+                return null;
+            }
 
-        if (commitOld == null || commitNew == null) {
-            log.error("Could not find the commits with the provided commit hashes in the repository: {} and {}", commitHash1, commitHash2);
-            return null;
+            return createDiffReport(repository, commitOld, commitNew);
         }
-
-        return createReport(repository, commitOld, commitNew);
     }
 
     /**
@@ -353,7 +334,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @throws IOException If an error occurs while accessing the file system
      */
     @NotNull
-    private ProgrammingExerciseGitDiffReport createReport(Repository repository, RevCommit commitOld, RevCommit commitNew) throws IOException {
+    private ProgrammingExerciseGitDiffReport createDiffReport(Repository repository, RevCommit commitOld, RevCommit commitNew) throws IOException {
         StringBuilder diffs = new StringBuilder();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try (DiffFormatter formatter = new DiffFormatter(out)) {

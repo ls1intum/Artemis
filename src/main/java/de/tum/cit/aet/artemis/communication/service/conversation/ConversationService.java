@@ -17,6 +17,7 @@ import jakarta.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -140,7 +141,13 @@ public class ConversationService {
                     : authorizationCheckService.isAtLeastTeachingAssistantInCourse(channel.getCourse(), user));
             conversationParticipant.setIsModerator(canBecomeModerator);
             lastReadDate.ifPresent(conversationParticipant::setLastRead);
-            conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            try {
+                conversationParticipantRepository.saveAndFlush(conversationParticipant);
+            }
+            catch (DataIntegrityViolationException e) {
+                log.info("User {} is already a participant in conversation {}", user.getId(), conversationId);
+            }
+
         }
         else {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
@@ -226,13 +233,14 @@ public class ConversationService {
     }
 
     /**
-     * Updates a conversation
+     * Updates a conversation last message date in the given object and asynchronously in the database
      *
      * @param conversation the conversation to be updated
-     * @return the updated conversation
      */
-    public Conversation updateConversation(Conversation conversation) {
-        return conversationRepository.save(conversation);
+    public void updateLastMessageDate(Conversation conversation) {
+        var now = ZonedDateTime.now();
+        conversation.setLastMessageDate(now);
+        conversationRepository.updateLastMessageDateAsync(conversation.getId(), now);
     }
 
     /**
@@ -479,14 +487,14 @@ public class ConversationService {
     public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
         }
         if (findAllTutors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getEditorGroupName()));
         }
         if (findAllInstructors) {
-            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+            users.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
         }
         return users;
     }

@@ -59,7 +59,15 @@ public class ExerciseSpecificationService {
             Join<ExerciseGroup, Exam> joinExam = joinExerciseGroup.join(ExerciseGroup_.EXAM, JoinType.LEFT);
             Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
-            Predicate idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID).as(String.class), searchTerm);
+            Predicate idMatchesSearch;
+            if (searchTerm.matches("\\d+")) {
+                // Ensure the search term is numeric to avoid SQL issues
+                idMatchesSearch = criteriaBuilder.equal(root.get(Exercise_.ID), Long.valueOf(searchTerm));
+            }
+            else {
+                // Avoid incorrect type comparison which could lead to an exception "Data Conversion Error (CHARACTER VARYING to DECFLOAT)"
+                idMatchesSearch = criteriaBuilder.disjunction();
+            }
             Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(Exercise_.TITLE), "%" + searchTerm + "%");
             Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
             Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");

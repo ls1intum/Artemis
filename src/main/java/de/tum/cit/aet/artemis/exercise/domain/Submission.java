@@ -36,7 +36,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -44,7 +43,6 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
@@ -72,12 +70,10 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 public abstract class Submission extends DomainObject implements Comparable<Submission> {
 
     @Column(name = "submitted")
-    @JsonView(QuizView.Before.class)
     private Boolean submitted;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
-    @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
     @Column(name = "example_submission")
@@ -104,7 +100,6 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     @Column(name = "submission_date")
     private ZonedDateTime submissionDate;
 
-    @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDate;
     }

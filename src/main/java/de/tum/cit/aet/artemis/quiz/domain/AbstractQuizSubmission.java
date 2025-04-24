@@ -15,22 +15,18 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity
 public abstract class AbstractQuizSubmission extends Submission {
 
     @Column(name = "score_in_points")
-    @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
     @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     @Valid
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
@@ -145,4 +141,5 @@ public abstract class AbstractQuizSubmission extends Submission {
     public boolean isEmpty() {
         return submittedAnswers == null || submittedAnswers.isEmpty();
     }
+
 }

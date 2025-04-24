@@ -1,0 +1,40 @@
+<div class="course-notification-preset-picker" ngbDropdown>
+    <button class="btn btn-outline-secondary" type="button" ngbDropdownToggle>
+        <fa-icon [icon]="farEye" class="me-1" />
+        <span jhiTranslate="artemisApp.courseNotification.preset.dropdown"></span>:
+        <span [jhiTranslate]="selectedPresetLangKey"></span>
+    </button>
+    <div ngbDropdownMenu>
+        @for (preset of availableCourseSettingPresets(); track preset) {
+            <div class="course-notification-preset-picker-item" ngbDropdownItem (click)="presetSelected(preset.typeId)">
+                <div>
+                    @if (selectedCourseSettingPreset() && selectedCourseSettingPreset()!.identifier === preset.identifier) {
+                        <fa-icon [icon]="faCheck" class="me-1" />
+                    }
+                    <strong [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.title'"></strong>
+                </div>
+                <div>
+                    <span
+                        class="course-notification-preset-picker-item-description"
+                        [jhiTranslate]="'artemisApp.courseNotification.preset.' + preset.identifier + '.description'"
+                    ></span>
+                </div>
+            </div>
+        }
+
+        <div class="course-notification-preset-picker-item" ngbDropdownItem (click)="presetSelected(0)">
+            <div>
+                @if (selectedCourseSettingPreset() === null) {
+                    <fa-icon [icon]="faCheck" class="me-1" />
+                }
+                <strong [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.title'"></strong>
+            </div>
+            <div>
+                <span
+                    class="course-notification-preset-picker-item-description"
+                    [jhiTranslate]="'artemisApp.courseNotification.preset.customUserCourseNotificationSettingPreset.description'"
+                ></span>
+            </div>
+        </div>
+    </div>
+</div>

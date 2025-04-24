@@ -277,7 +277,12 @@ public class SharedQueueManagementService {
     }
 
     /**
-     * Estimates how long the job will be queued for on the participation ID.
+     * Estimates the start time of a queued build job for a given participation ID.
+     * <p>
+     * The estimation is based on the number of jobs queued before the given job, the availability of build agents,
+     * and the remaining duration of currently running jobs. If the queue is empty or there is available capacity,
+     * the estimated start time is the current time. Otherwise, the method calculates when the job is expected to
+     * start by considering the completion times of preceding jobs and the processing capacity of build agents.
      *
      * @param participationId the ID of the participation for which the queue release date is estimated
      * @return the estimated queue release date as a {@link ZonedDateTime}

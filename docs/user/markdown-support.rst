@@ -30,7 +30,7 @@ The user can switch to a preview of the formatted content by clicking on the Pre
 Markdown Extensions For Communication
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Markdown is also supported in the context of :ref:`communicating<communication>` with other users. Here, the Markdown syntax is extended to allow users to reference other messages, lectures, or exercises.
+Markdown is also supported in the context of :ref:`communicating<communication>` with other users. Here, the Markdown syntax is extended to allow users to reference other messages, lectures, exercises or FAQs.
 
 |markdown-post-extensions|
 

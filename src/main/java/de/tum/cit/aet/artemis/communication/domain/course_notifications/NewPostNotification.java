@@ -34,9 +34,9 @@ public class NewPostNotification extends CourseNotification {
     /**
      * Default constructor used when creating a new post notification.
      */
-    public NewPostNotification(Long notificationId, Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId,
-            String channelName, String channelType, String authorName, String authorImageUrl, Long authorId) {
-        super(notificationId, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
+    public NewPostNotification(Long courseId, String courseTitle, String courseImageUrl, Long postId, String postMarkdownContent, Long channelId, String channelName,
+            String channelType, String authorName, String authorImageUrl, Long authorId) {
+        super(null, courseId, courseTitle, courseImageUrl, ZonedDateTime.now());
         this.postId = postId;
         this.postMarkdownContent = postMarkdownContent;
         this.channelName = channelName;
@@ -67,5 +67,10 @@ public class NewPostNotification extends CourseNotification {
     @Override
     public List<NotificationChannelOption> getSupportedChannels() {
         return List.of(NotificationChannelOption.WEBAPP, NotificationChannelOption.PUSH);
+    }
+
+    @Override
+    public String getRelativeWebAppUrl() {
+        return "/courses/" + courseId + "/communication?conversationId=" + channelId + "&focusPostId=" + postId;
     }
 }

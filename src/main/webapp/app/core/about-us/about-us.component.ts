@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
@@ -73,16 +73,15 @@ export class AboutUsComponent implements OnInit {
             this.data?.contributors?.sort((a, b) => a.getSortIndex().localeCompare(b.getSortIndex()));
         });
 
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.contact = profileInfo.contact;
-            if (profileInfo.git) {
-                this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                this.gitBranchName = profileInfo.git.branch;
-            }
-            this.operatorName = profileInfo.operatorName;
-            this.operatorAdminName = profileInfo.operatorAdminName;
-            this.operatorContactEmail = profileInfo.contact;
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.contact = profileInfo.contact;
+        if (profileInfo.git) {
+            this.gitCommitId = profileInfo.git.commit.id.abbrev;
+            this.gitBranchName = profileInfo.git.branch;
+        }
+        this.operatorName = profileInfo.operatorName;
+        this.operatorAdminName = profileInfo.operatorAdminName;
+        this.operatorContactEmail = profileInfo.contact;
     }
     /**
      * Create the mail reference for the contact

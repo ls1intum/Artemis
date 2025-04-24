@@ -125,7 +125,6 @@
         }
         @if (state.ui === UIStates.ASSESSMENT) {
             <jhi-text-assessment-area
-                class="guided-tour-assessment-editor guided-tour-complete-assessment-editor"
                 [allowManualBlockSelection]="!this.toComplete"
                 [submission]="submission!"
                 [(textBlockRefs)]="textBlockRefs"
@@ -172,7 +171,7 @@
 @if (toComplete) {
     <div class="col-12 text-end pt-2">
         <button
-            class="btn btn-primary col-3 guided-tour-check-assessment"
+            class="btn btn-primary col-3"
             (click)="checkAssessment()"
             [disabled]="!assessmentsAreValid"
             id="checkAssessment"
@@ -182,7 +181,7 @@
 }
 @if (readOnly) {
     <div class="col-12 text-end pt-2">
-        <button (click)="readAndUnderstood()" class="btn btn-success col-3 guided-tour-read">
+        <button (click)="readAndUnderstood()" class="btn btn-success col-3">
             <fa-icon [icon]="faSave" />
             {{ 'artemisApp.exampleSubmission.readAndUnderstood' | artemisTranslate }}
         </button>

@@ -20,16 +20,29 @@
                             <span jhiTranslate="artemisApp.learningPath.navigation.previousButton"></span>
                         </button>
                     </div>
-                    <span class="col ps-3 text-truncate text-secondary">{{ predecessorLearningObject.name }}</span>
+                    <span class="col ps-3 text-truncate text-secondary">
+                        {{
+                            (predecessorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
+                                predecessorLearningObject.name
+                        }}
+                    </span>
                 }
             </div>
         </div>
         <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
             <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
                 @if (currentLearningObject()) {
-                    <span class="col-md-auto fw-bold">
-                        {{ currentLearningObject()?.name }}
-                    </span>
+                    @if (currentLearningObject()?.repeatedTest) {
+                        <span
+                            class="col-md-auto fw-bold"
+                            jhiTranslate="artemisApp.learningPath.navigation.repeatedTest"
+                            [translateValues]="{ name: currentLearningObject()?.name }"
+                        ></span>
+                    } @else {
+                        <span class="col-md-auto fw-bold">
+                            {{ currentLearningObject()?.name }}
+                        </span>
+                    }
                 } @else {
                     <span class="col-md-auto fw-bold" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
                 }
@@ -44,7 +57,12 @@
         <div class="col-4">
             <div class="row justify-content-end align-items-center">
                 @if (successorLearningObject(); as successorLearningObject) {
-                    <span class="col text-end pe-3 text-truncate text-secondary">{{ successorLearningObject.name }}</span>
+                    <span class="col text-end pe-3 text-truncate text-secondary">
+                        {{
+                            (successorLearningObject.repeatedTest ? ('artemisApp.learningPath.navigation.repeatedTest' | artemisTranslate) + ' ' : '') +
+                                successorLearningObject.name
+                        }}
+                    </span>
                     <div class="col-md-auto">
                         <button id="next-button" (click)="selectLearningObject(successorLearningObject, true)" type="button" class="btn btn-primary d-flex justify-content-center">
                             <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>

@@ -104,8 +104,7 @@ can only be accessed via your own IDE.
 Manual Assessment
 -----------------
 
-There are two ways to manually assess programming exercises: with the Orion plugin, you can assess the student's code directly in your JetBrains IDE. Refer to the :ref:`Orion plugin documentation <orion>` for more information.
-Alternatively, you can use the online editor within Artemis to assess the students' submissions directly in the browser.
+You can use the online editor within Artemis to assess the students' submissions directly in the browser.
 
 .. figure:: programming/online-editor-assessment.png
    :alt: Manual assessment in the online editor

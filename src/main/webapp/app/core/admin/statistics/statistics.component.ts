@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
+import { Graphs, SpanType, StatisticsView } from 'app/exercise/shared/entities/statistics.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StatisticsGraphComponent } from 'app/shared/statistics-graph/statistics-graph.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

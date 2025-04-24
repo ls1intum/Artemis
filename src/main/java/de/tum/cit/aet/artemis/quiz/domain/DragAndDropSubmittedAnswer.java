@@ -15,9 +15,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.compare.DnDMapping;
 
 /**
@@ -32,11 +30,14 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(name = "submitted_answer_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
+    }
+
+    public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
+        this.mappings = dragAndDropMappings;
     }
 
     public DragAndDropSubmittedAnswer addMappings(DragAndDropMapping dragAndDropMapping) {
@@ -49,10 +50,6 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
         this.mappings.remove(dragAndDropMapping);
         dragAndDropMapping.setSubmittedAnswer(null);
         return this;
-    }
-
-    public void setMappings(Set<DragAndDropMapping> dragAndDropMappings) {
-        this.mappings = dragAndDropMappings;
     }
 
     /**
@@ -119,4 +116,5 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer {
     public Set<DnDMapping> toDnDMapping() {
         return getMappings().stream().map(mapping -> new DnDMapping(mapping.getDragItem().getId(), mapping.getDropLocation().getId())).collect(Collectors.toSet());
     }
+
 }

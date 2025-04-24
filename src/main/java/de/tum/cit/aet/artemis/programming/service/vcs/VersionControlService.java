@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.programming.service.vcs;
 
-import java.time.ZonedDateTime;
-
 import jakarta.annotation.Nullable;
 
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 public interface VersionControlService {
@@ -42,16 +38,6 @@ public interface VersionControlService {
      * @return whether the repository is valid
      */
     Boolean repositoryUriIsValid(@Nullable VcsRepositoryUri repositoryUri);
-
-    /**
-     * Retrieves the date at which the push event was received by the VCS instance.
-     *
-     * @param participation The participation we need the date for
-     * @param commitHash    The commit hash we want to find the event for
-     * @param eventObject   The object provided by the VCS on a push event. null if not available
-     * @return The build queue date
-     */
-    ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject);
 
     /**
      * Creates a project on the VCS.
@@ -93,41 +79,4 @@ public interface VersionControlService {
      */
     VcsRepositoryUri copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName,
             Integer attempt) throws VersionControlException;
-
-    /**
-     * Get the default branch of the repository
-     *
-     * @param repositoryUri The repository uri to get the default branch for.
-     * @return the name of the default branch, e.g. 'main'
-     */
-    String getDefaultBranchOfRepository(VcsRepositoryUri repositoryUri) throws VersionControlException;
-
-    /**
-     * Checks if the underlying VCS server is up and running and gives some additional information about the running
-     * services if available
-     *
-     * @return The health of the VCS service containing if it is up and running and any additional data, or the throwing exception otherwise
-     */
-    ConnectorHealth health();
-
-    /**
-     * Get the default branch used in the participation or retrieves it from the VCS if not present in the database
-     *
-     * @param participation The participation to get the default branch from
-     * @return The default branch used by this participation
-     */
-    String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation);
-
-    /**
-     * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
-     *
-     * @param programmingExercise The participation to get the default branch from
-     * @return The default branch used by this programmingExercise
-     */
-    String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise);
-
-    /***
-     * @return The default branch used by Artemis
-     */
-    String getDefaultBranchOfArtemis();
 }

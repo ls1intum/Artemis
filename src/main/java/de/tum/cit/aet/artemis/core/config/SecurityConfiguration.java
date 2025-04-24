@@ -2,14 +2,22 @@ package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.List;
 import java.util.Optional;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -20,8 +28,9 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
+import org.springframework.security.config.annotation.web.configurers.WebAuthnConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,15 +38,22 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
+import org.springframework.security.web.webauthn.authentication.PublicKeyCredentialRequestOptionsRepository;
+import org.springframework.security.web.webauthn.management.PublicKeyCredentialUserEntityRepository;
+import org.springframework.security.web.webauthn.management.UserCredentialRepository;
+import org.springframework.security.web.webauthn.registration.PublicKeyCredentialCreationOptionsRepository;
 import org.springframework.web.filter.CorsFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.security.passkey.ArtemisWebAuthnConfigurer;
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
@@ -48,26 +64,89 @@ import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 @Profile(PROFILE_CORE)
 public class SecurityConfiguration {
 
-    private final TokenProvider tokenProvider;
+    private final CorsFilter corsFilter;
+
+    private final HttpMessageConverter<Object> converter;
+
+    private final Optional<CustomLti13Configurer> customLti13Configurer;
+
+    private final JWTCookieService jwtCookieService;
 
     private final PasswordService passwordService;
 
-    private final CorsFilter corsFilter;
-
     private final ProfileService profileService;
 
-    private final Optional<CustomLti13Configurer> customLti13Configurer;
+    private final PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository;
+
+    private final TokenProvider tokenProvider;
+
+    private final UserCredentialRepository userCredentialRepository;
+
+    private final UserRepository userRepository;
+
+    private final PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository;
+
+    private final PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository;
 
     @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
-    public SecurityConfiguration(TokenProvider tokenProvider, PasswordService passwordService, CorsFilter corsFilter, ProfileService profileService,
-            Optional<CustomLti13Configurer> customLti13Configurer) {
-        this.tokenProvider = tokenProvider;
-        this.passwordService = passwordService;
+    @Value("${" + Constants.PASSKEY_ENABLED_PROPERTY_NAME + ":false}")
+    private boolean passkeyEnabled;
+
+    /**
+     * We expect the server URL to equal the client URL
+     */
+    @Value("${server.url}")
+    private String serverUrl;
+
+    @Value("${client.port:${server.port}}")
+    private String port;
+
+    private URL clientUrlToRegisterPasskey;
+
+    private URL clientUrlToAuthenticateWithPasskey;
+
+    /**
+     * Validates the configuration for allowed origins when passkey authentication is enabled.
+     * <p>
+     * This method ensures that the server URL and port are correctly configured for WebAuthn
+     * when passkey authentication is enabled. If the configuration is invalid, an exception is thrown.
+     * </p>
+     *
+     * @throws IllegalStateException if the server URL configuration is invalid
+     */
+    @PostConstruct
+    public void validatePasskeyAllowedOriginConfiguration() {
+        if (passkeyEnabled) {
+            try {
+                clientUrlToRegisterPasskey = new URI(serverUrl).toURL();
+                clientUrlToAuthenticateWithPasskey = new URI(serverUrl + ":" + port).toURL();
+            }
+            catch (URISyntaxException | MalformedURLException e) {
+                throw new IllegalStateException("Invalid server URL configuration for WebAuthn: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    public SecurityConfiguration(CorsFilter corsFilter, MappingJackson2HttpMessageConverter converter, Optional<CustomLti13Configurer> customLti13Configurer,
+            JWTCookieService jwtCookieService, PasswordService passwordService, ProfileService profileService,
+            PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
+            PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository,
+            PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, TokenProvider tokenProvider, UserCredentialRepository userCredentialRepository,
+            UserRepository userRepository) {
+        this.converter = converter;
         this.corsFilter = corsFilter;
-        this.profileService = profileService;
         this.customLti13Configurer = customLti13Configurer;
+        this.jwtCookieService = jwtCookieService;
+        this.passwordService = passwordService;
+        this.profileService = profileService;
+        this.publicKeyCredentialCreationOptionsRepository = publicKeyCredentialCreationOptionsRepository;
+        this.publicKeyCredentialRequestOptionsRepository = publicKeyCredentialRequestOptionsRepository;
+        this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;
+        this.tokenProvider = tokenProvider;
+        this.userCredentialRepository = userCredentialRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -78,7 +157,6 @@ public class SecurityConfiguration {
      * @param userDetailsService               The {@link UserDetailsService} to use for internal authentication. See {@link DomainUserDetailsService} for the current
      *                                             implementation.
      * @param remoteUserAuthenticationProvider An optional {@link AuthenticationProvider} for external authentication (e.g., LDAP).
-     *
      * @return The {@link AuthenticationManager} to use for authenticating users.
      */
     @Bean
@@ -92,7 +170,6 @@ public class SecurityConfiguration {
         remoteUserAuthenticationProvider.ifPresent(builder::authenticationProvider);
         // Spring Security processes authentication providers in the order they're added. If an external provider is configured,
         // it will be tried first. The internal database-backed provider serves as a fallback if external authentication is not available or fails.
-
         return builder.build();
     }
 
@@ -169,7 +246,7 @@ public class SecurityConfiguration {
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
-            .csrf(AbstractHttpConfigurer::disable)
+            .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
@@ -193,6 +270,7 @@ public class SecurityConfiguration {
             // Configures authorization for various URL patterns. The patterns are considered in order.
             .authorizeHttpRequests(requests -> {
                 requests
+                    // NOTE: Always have a look at {@link de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter} to see which URLs are forwarded to the SPA
                     // Client related URLs and publicly accessible information (allowed for everyone).
                     .requestMatchers("/", "/index.html", "/public/**").permitAll()
                     .requestMatchers("/*.js", "/*.css", "/*.map", "/*.json").permitAll()
@@ -204,6 +282,7 @@ public class SecurityConfiguration {
                     .requestMatchers("/api/*/admin/**").hasAuthority(Role.ADMIN.getAuthority())
                     // Publicly accessible API endpoints (allowed for everyone).
                     .requestMatchers("/api/*/public/**").permitAll()
+                    .requestMatchers("/login/webauthn").permitAll()
                     // Websocket and other specific endpoints allowed without authentication.
                     .requestMatchers("/websocket/**").permitAll()
                     .requestMatchers("/.well-known/jwks.json").permitAll()
@@ -218,7 +297,7 @@ public class SecurityConfiguration {
                     }
 
                     // All other requests must be authenticated. Additional authorization happens on the endpoints themselves.
-                   requests.requestMatchers("/**").authenticated();
+                    requests.requestMatchers("/**").authenticated();
                 }
             )
             // Applies additional configurations defined in a custom security configurer adapter.
@@ -226,6 +305,24 @@ public class SecurityConfiguration {
             // FIXME: Enable HTTP Basic authentication so that people can authenticate using username and password against the server's REST API
             //  PROBLEM: This currently would break LocalVC cloning via http based on the LocalVCServletService
             //.httpBasic(Customizer.withDefaults());
+
+        if (passkeyEnabled) {
+            WebAuthnConfigurer<HttpSecurity> webAuthnConfigurer = new ArtemisWebAuthnConfigurer<>(
+                converter,
+                jwtCookieService,
+                userRepository,
+                publicKeyCredentialUserEntityRepository,
+                userCredentialRepository,
+                publicKeyCredentialCreationOptionsRepository,
+                publicKeyCredentialRequestOptionsRepository
+            );
+            http.with(webAuthnConfigurer, configurer -> {
+                configurer
+                    .allowedOrigins(clientUrlToRegisterPasskey.toString(), clientUrlToAuthenticateWithPasskey.toString())
+                    .rpId(clientUrlToRegisterPasskey.getHost())
+                    .rpName("Artemis");
+            });
+        }
         // @formatter:on
 
         // Conditionally adds configuration for LTI if it is active.

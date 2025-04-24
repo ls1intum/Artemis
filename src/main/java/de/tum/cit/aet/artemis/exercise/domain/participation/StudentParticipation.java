@@ -10,12 +10,10 @@ import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity
 @DiscriminatorValue(value = "SP")
@@ -26,11 +24,9 @@ public class StudentParticipation extends Participation {
     private Double presentationScore;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private User student;
 
     @ManyToOne
-    @JsonView(QuizView.Before.class)
     private Team team;
 
     public Double getPresentationScore() {

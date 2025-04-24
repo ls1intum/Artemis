@@ -11,6 +11,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PreReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
@@ -20,6 +22,8 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
  * successful).
  */
 public class LocalVCPrePushHook implements PreReceiveHook {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCPrePushHook.class);
 
     private final LocalVCServletService localVCServletService;
 
@@ -58,9 +62,13 @@ public class LocalVCPrePushHook implements PreReceiveHook {
 
         String defaultBranchName;
         try {
-            defaultBranchName = LocalVCService.getDefaultBranch(repository.getDirectory().toPath().toString());
+            defaultBranchName = repository.getBranch();
+            if (defaultBranchName == null) {
+                throw new LocalVCInternalException("HEAD is not a symbolic reference in repository " + repository.getDirectory().toPath());
+            }
         }
-        catch (LocalVCInternalException e) {
+        catch (LocalVCInternalException | IOException e) {
+            log.warn("An error occurred while checking the default branch: {}", e.getMessage());
             command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "An error occurred while checking the branch.");
             return;
         }

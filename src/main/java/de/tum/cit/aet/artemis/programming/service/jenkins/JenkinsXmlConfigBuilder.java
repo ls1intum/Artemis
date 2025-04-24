@@ -1,11 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
-import java.util.Optional;
-
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 public interface JenkinsXmlConfigBuilder {
@@ -28,12 +25,10 @@ public interface JenkinsXmlConfigBuilder {
      * execute supported static code analysis tools.
      *
      * @param programmingLanguage       The programming language for which the config should be generated
-     * @param projectType               The optional project type of the exercise.
      * @param internalVcsRepositoryURLs The URLs of the source code repositories that are required to set up the build plan.
      * @param isSolutionPlan            True, if this is the build plan config for the solution repository.
      * @param buildPlanUrl              The URL to the build plan for this exercise.
      * @return The parsed XML document containing the Jenkins build config
      */
-    Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean isSolutionPlan, String buildPlanUrl);
+    Document buildBasicConfig(ProgrammingLanguage programmingLanguage, InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean isSolutionPlan, String buildPlanUrl);
 }

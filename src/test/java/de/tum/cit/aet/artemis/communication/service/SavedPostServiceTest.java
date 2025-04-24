@@ -57,7 +57,7 @@ class SavedPostServiceTest {
 
     @Test
     void shouldSavePostSuccessfullyWhenPostIsNotSavedYet() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(null);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of());
 
         savedPostService.savePostForCurrentUser(testPost);
 
@@ -66,7 +66,7 @@ class SavedPostServiceTest {
 
     @Test
     void shouldNotSavePostWhenPostIsSavedAlready() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(testSavedPost);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of(testSavedPost));
 
         savedPostService.savePostForCurrentUser(testPost);
 
@@ -75,7 +75,7 @@ class SavedPostServiceTest {
 
     @Test
     void shouldRemoveSavedPostWhenPostIsBookmarked() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(testSavedPost);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of(testSavedPost));
 
         savedPostService.removeSavedPostForCurrentUser(testPost);
 
@@ -84,7 +84,7 @@ class SavedPostServiceTest {
 
     @Test
     void shouldNotRemoveSavedPostWhenPostIsNotBookmarked() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(null);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of());
 
         savedPostService.removeSavedPostForCurrentUser(testPost);
 
@@ -93,7 +93,7 @@ class SavedPostServiceTest {
 
     @Test
     void shouldUpdateStatusAndCompletedAtOfSavedPostWhenPostIsInProgress() {
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(testSavedPost);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of(testSavedPost));
 
         savedPostService.updateStatusOfSavedPostForCurrentUser(testPost, SavedPostStatus.COMPLETED);
 
@@ -105,7 +105,7 @@ class SavedPostServiceTest {
     @Test
     void shouldUpdateStatusAndResetCompletedAtOfSavedPostWhenPostIsSetToInProgress() {
         testSavedPost.setCompletedAt(ZonedDateTime.now());
-        when(savedPostRepository.findSavedPostByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(testSavedPost);
+        when(savedPostRepository.findSavedPostsByUserIdAndPostIdAndPostType(testUser.getId(), testPost.getId(), PostingType.POST)).thenReturn(List.of(testSavedPost));
 
         savedPostService.updateStatusOfSavedPostForCurrentUser(testPost, SavedPostStatus.IN_PROGRESS);
 

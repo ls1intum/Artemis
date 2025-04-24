@@ -94,7 +94,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void initTestCase() throws Exception {
         int numberOfTutors = 2;
-        userUtilService.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 2, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
         var lecture = this.course1.getLectures().stream().findFirst().orElseThrow();
@@ -267,13 +267,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(filteredLecture.getLectureUnits()).contains(attachmentUnitWithSlides);
         AttachmentUnit attachmentUnit = (AttachmentUnit) filteredLecture.getLectureUnits().getFirst();
         assertThat(attachmentUnit.getSlides()).hasSize(numberOfSlides);
-
-        Lecture lectureWithDetails = request.get("/api/lecture/lectures/" + lectureWithSlides.getId() + "/details-with-slides", HttpStatus.OK, Lecture.class);
-
-        assertThat(lectureWithDetails.getLectureUnits()).hasSize(1); // we only have one lecture unit which is attachmentUnitWithSlides
-        assertThat(lectureWithDetails.getLectureUnits()).contains(attachmentUnitWithSlides);
-        AttachmentUnit attachmentUnitDetails = (AttachmentUnit) lectureWithDetails.getLectureUnits().getFirst();
-        assertThat(attachmentUnitDetails.getSlides()).hasSize(numberOfSlides);
     }
 
     @Test

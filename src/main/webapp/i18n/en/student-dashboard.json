@@ -112,7 +112,8 @@
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
                 "gradingSystem": "Grading System",
-                "faq": "FAQ"
+                "faq": "FAQ",
+                "settings": "Settings"
             },
             "exerciseFilter": {
                 "filter": "Filter",

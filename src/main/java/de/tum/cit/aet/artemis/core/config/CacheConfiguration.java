@@ -188,6 +188,8 @@ public class CacheConfiguration {
             testConfig.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
             testConfig.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
+            testConfig.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
+
             NetworkConfig networkConfig = testConfig.getNetworkConfig();
             // Set network configuration to prevent joining other nodes
             networkConfig.getJoin().getMulticastConfig().setEnabled(false);

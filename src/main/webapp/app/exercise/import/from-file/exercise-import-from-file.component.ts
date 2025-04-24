@@ -1,14 +1,14 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faUpload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise, copyBuildConfigFromExerciseJson } from 'app/programming/shared/entities/programming-exercise.model';
 import JSZip from 'jszip';
-import { ButtonComponent } from 'app/shared/components/button.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-exercise-import-from-file',

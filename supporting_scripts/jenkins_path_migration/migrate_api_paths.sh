@@ -21,7 +21,7 @@ TOTAL_UNCHANGED_FILES=0
 TOTAL_FILES_SCANNED=0
 
 REPLACEMENTS=(
-  "/api/public/programming-exercises/new-result|/api/assessment/public/programming-exercises/new-result"
+  "/api/public/programming-exercises/new-result|/api/programming/public/programming-exercises/new-result"
   "/api/public/athena/programming-exercises/|/api/athena/public/programming-exercises/"
   "/api/public/programming-exercises/([0-9]+)/build-plan|/api/programming/public/programming-exercises/\1/build-plan"
 )

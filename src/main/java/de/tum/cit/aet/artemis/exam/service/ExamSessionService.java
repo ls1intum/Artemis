@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashSet;
@@ -14,12 +12,13 @@ import jakarta.annotation.Nullable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousExamSessions;
@@ -37,7 +36,7 @@ import inet.ipaddr.IPAddressString;
 /**
  * Service Implementation for managing ExamSession.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamSessionService {
 
@@ -406,16 +405,20 @@ public class ExamSessionService {
         for (var suspiciousExamSession : suspiciousExamSessions) {
             Set<ExamSessionDTO> examSessionDTOs = new HashSet<>();
             for (var examSession : suspiciousExamSession.examSessions()) {
-                var userDTO = new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin());
-                var courseDTO = new CourseWithIdDTO(examSession.getStudentExam().getExam().getCourse().getId());
-                var examDTO = new ExamWithIdAndCourseDTO(examSession.getStudentExam().getExam().getId(), courseDTO);
-                var studentExamDTO = new StudentExamWithIdAndExamAndUserDTO(examSession.getStudentExam().getId(), examDTO, userDTO);
+                final var studentExamDTO = getStudentExamWithIdAndExamAndUserDTO(examSession);
                 examSessionDTOs.add(new ExamSessionDTO(examSession.getId(), examSession.getBrowserFingerprintHash(), examSession.getIpAddress(), examSession.getSuspiciousReasons(),
                         examSession.getCreatedDate(), studentExamDTO));
             }
             suspiciousExamSessionsDTO.add(new SuspiciousExamSessionsDTO(examSessionDTOs));
         }
         return suspiciousExamSessionsDTO;
+    }
+
+    private static StudentExamWithIdAndExamAndUserDTO getStudentExamWithIdAndExamAndUserDTO(ExamSession examSession) {
+        var userDTO = new UserWithIdAndLoginDTO(examSession.getStudentExam().getUser().getId(), examSession.getStudentExam().getUser().getLogin());
+        var courseDTO = new CourseWithIdDTO(examSession.getStudentExam().getExam().getCourse().getId());
+        var examDTO = new ExamWithIdAndCourseDTO(examSession.getStudentExam().getExam().getId(), courseDTO);
+        return new StudentExamWithIdAndExamAndUserDTO(examSession.getStudentExam().getId(), examDTO, userDTO);
     }
 
     /**
@@ -430,16 +433,7 @@ public class ExamSessionService {
      */
     private static ExamSession addSuspiciousReasons(ExamSession session, Set<ExamSession> relatedExamSessions, boolean analyzeDifferentStudentExamsSameIp,
             boolean analyzeDifferentStudentExamsSameBrowserFingerprint) {
-        ExamSession sessionCopy = new ExamSession();
-        sessionCopy.setId(session.getId());
-        sessionCopy.setSuspiciousReasons(new HashSet<>());
-        sessionCopy.setBrowserFingerprintHash(session.getBrowserFingerprintHash());
-        sessionCopy.setIpAddress(session.getIpAddress());
-        sessionCopy.setUserAgent(session.getUserAgent());
-        sessionCopy.setStudentExam(session.getStudentExam());
-        sessionCopy.setCreatedDate(session.getCreatedDate());
-        sessionCopy.setInstanceId(session.getInstanceId());
-        sessionCopy.setSessionToken(session.getSessionToken());
+        final var sessionCopy = copyExamSession(session);
 
         for (var relatedExamSession : relatedExamSessions) {
             relatedExamSession.setSuspiciousReasons(new HashSet<>());
@@ -454,6 +448,20 @@ public class ExamSessionService {
             }
 
         }
+        return sessionCopy;
+    }
+
+    private static ExamSession copyExamSession(ExamSession session) {
+        ExamSession sessionCopy = new ExamSession();
+        sessionCopy.setId(session.getId());
+        sessionCopy.setSuspiciousReasons(new HashSet<>());
+        sessionCopy.setBrowserFingerprintHash(session.getBrowserFingerprintHash());
+        sessionCopy.setIpAddress(session.getIpAddress());
+        sessionCopy.setUserAgent(session.getUserAgent());
+        sessionCopy.setStudentExam(session.getStudentExam());
+        sessionCopy.setCreatedDate(session.getCreatedDate());
+        sessionCopy.setInstanceId(session.getInstanceId());
+        sessionCopy.setSessionToken(session.getSessionToken());
         return sessionCopy;
     }
 

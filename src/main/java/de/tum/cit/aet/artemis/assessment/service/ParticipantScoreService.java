@@ -113,9 +113,9 @@ public class ParticipantScoreService {
 
         // we want the score for everybody who can perform exercises in the course (students, tutors and instructors)
         Set<User> usersOfCourse = new HashSet<>();
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
-        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getStudentGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()));
+        usersOfCourse.addAll(userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(course.getInstructorGroupName()));
 
         // we only consider released exercises that are not optional
         Set<Exercise> exercisesToConsider = course.getExercises().stream().filter(Exercise::isCourseExercise)

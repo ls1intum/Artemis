@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LtiPlatformConfiguration } from 'app/core/admin/lti-configuration/lti-configuration.model';
+import { LtiPlatformConfiguration } from 'app/lti/shared/entities/lti-configuration.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 
 @Injectable({ providedIn: 'root' })

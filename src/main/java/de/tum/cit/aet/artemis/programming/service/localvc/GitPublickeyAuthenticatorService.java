@@ -38,7 +38,7 @@ public class GitPublickeyAuthenticatorService implements PublickeyAuthenticator 
 
     private final UserSshPublicKeyRepository userSshPublicKeyRepository;
 
-    private final int AUTHENTICATION_FAILED_CODE = 10;
+    private static final int AUTHENTICATION_FAILED_CODE = 10;
 
     @Value("${server.url}")
     private String artemisServerUrl;

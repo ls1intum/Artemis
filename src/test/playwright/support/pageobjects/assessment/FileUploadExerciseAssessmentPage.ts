@@ -9,6 +9,10 @@ export class FileUploadExerciseAssessmentPage extends AbstractExerciseAssessment
         return this.page.locator('#instructions-card');
     }
 
+    async downloadSubmissionFile() {
+        await this.page.locator('#e2e-download-file').click();
+    }
+
     async submitFeedback() {
         await this.page.locator('#submit').click();
     }

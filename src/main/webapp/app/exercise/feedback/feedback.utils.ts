@@ -1,12 +1,12 @@
-import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
-import { Result } from 'app/entities/result.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ResultTemplateStatus } from 'app/exercise/result/result.utils';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { hasExerciseDueDatePassed } from 'app/exercise/exercise.utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { hasExerciseDueDatePassed } from 'app/exercise/util/exercise.utils';
 import dayjs from 'dayjs/esm';
-import { ExerciseCacheService } from 'app/exercise/exercise-cache.service';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 export type FeedbackComponentPreparedParams = {
     exercise: Exercise | undefined;

@@ -1,21 +1,21 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { PlagiarismCaseReviewComponent } from 'app/plagiarism/shared/review/plagiarism-case-review.component';
 import { PlagiarismCaseVerdictComponent } from 'app/plagiarism/shared/verdict/plagiarism-case-verdict.component';
-import { PlagiarismCase } from 'app/plagiarism/shared/types/PlagiarismCase';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
-import { PlagiarismVerdict } from 'app/plagiarism/shared/types/PlagiarismVerdict';
-import { MetisService } from 'app/communication/metis.service';
+import { getCourseFromExercise, getExerciseUrlSegment, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { MetisService } from 'app/communication/service/metis.service';
 import { PageType } from 'app/communication/metis.util';
-import { Post } from 'app/entities/metis/post.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { abbreviateString } from 'app/utils/text.utils';
+import { abbreviateString } from 'app/shared/util/text.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
@@ -36,11 +36,11 @@ import {
 } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
-import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-autofocus-button/confirm-autofocus-button.component';
 import { FormsModule } from '@angular/forms';
-import { MetisConversationService } from 'app/communication/metis-conversation.service';
-import { LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
-import { LinkifyService } from 'app/shared/link-preview/services/linkify.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
+import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',

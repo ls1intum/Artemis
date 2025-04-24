@@ -1,7 +1,7 @@
 import { Page, expect } from '@playwright/test';
-import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { GroupChat } from 'app/entities/metis/conversation/group-chat.model';
-import { Post } from 'app/entities/metis/post.model';
+import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
+import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { Post } from 'app/communication/shared/entities/post.model';
 
 /**
  * A class which encapsulates UI selectors and actions for the Course Messages page.
@@ -274,6 +274,13 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         await postLocator.locator('#save').click();
         await responsePromise;
+
+        await this.page.waitForTimeout(10000);
+
+        await this.page.waitForSelector(`#item-${messageId} .markdown-preview:has-text("${message}")`, {
+            state: 'visible',
+            timeout: 60000,
+        });
     }
 
     /**

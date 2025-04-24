@@ -27,6 +27,8 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
 
     private static final String WEBSOCKET_TOPIC_PREFIX = "/topic/communication/notification/";
 
+    private static final String WEBSOCKET_BROADCAST_TOPIC_PREFIX = "/topic/communication/notification/all";
+
     private final WebsocketMessagingService websocketMessagingService;
 
     public CourseNotificationWebappService(WebsocketMessagingService websocketMessagingService) {
@@ -50,6 +52,7 @@ public class CourseNotificationWebappService extends CourseNotificationBroadcast
     protected void sendCourseNotification(CourseNotificationDTO courseNotification, List<User> recipients) {
         recipients.forEach(user -> {
             websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_TOPIC_PREFIX + courseNotification.courseId(), courseNotification);
+            websocketMessagingService.sendMessageToUser(user.getLogin(), WEBSOCKET_BROADCAST_TOPIC_PREFIX, courseNotification);
         });
     }
 }

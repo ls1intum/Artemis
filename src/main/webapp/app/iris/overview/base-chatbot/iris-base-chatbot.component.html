@@ -1,12 +1,7 @@
 <!-- client -->
 <div class="chat-header">
     <div class="header-start">
-        @if (!isChatGptWrapper) {
-            <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
-        } @else {
-            <!-- TODO TW: This "feature" is only temporary for a paper. -->
-            <img src="public/images/chatgpt-temp/ChatGPT_logo.svg" alt="Iris Logo" style="height: 27px" class="iris-logo" />
-        }
+        <jhi-iris-logo [size]="IrisLogoSize.FLUID" />
 
         <div class="word-iris">{{ isChatGptWrapper ? 'ChatGPT' : 'Iris' }}</div>
         @if (!isChatGptWrapper) {
@@ -137,12 +132,7 @@
     }
     @if (!messages?.length) {
         <div class="empty-chat-message">
-            @if (!isChatGptWrapper) {
-                <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
-            } @else {
-                <!-- TODO TW: This "feature" is only temporary for a paper. -->
-                <img src="public/images/chatgpt-temp/ChatGPT_logo.svg" alt="Iris Logo" style="height: 35px" class="iris-logo" />
-            }
+            <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
             <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
         </div>
     }

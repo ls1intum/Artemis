@@ -1,0 +1,291 @@
+<div class="row justify-content-center">
+    <div class="col">
+        <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="handleSubmit()">
+            @if (!exam.id) {
+                <div class="d-flex align-items-center">
+                    @if (!isImport) {
+                        <h4 jhiTranslate="artemisApp.examManagement.createExam"></h4>
+                    } @else {
+                        <h4 jhiTranslate="artemisApp.examManagement.importExam"></h4>
+                    }
+                    <jhi-documentation-button [type]="documentationType" />
+                </div>
+            } @else {
+                <h4 jhiTranslate="artemisApp.examManagement.editExam"></h4>
+            }
+            <!-- Section exam configuration -->
+            <div>
+                <hr />
+                <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.configuration"></h5>
+                <label class="form-check-label" jhiTranslate="artemisApp.examManagement.examTitle"></label>
+                <jhi-title-channel-name
+                    [(title)]="exam.title"
+                    [(channelName)]="exam.channelName"
+                    channelNamePrefix="exam-"
+                    [hideTitleLabel]="true"
+                    [hideChannelName]="hideChannelNameInput"
+                    [initChannelName]="isImport || exam.id === undefined"
+                />
+            </div>
+            <div class="form-group">
+                <div>
+                    <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode"></label>
+                    <jhi-help-icon text="artemisApp.examManagement.testExam.examModeTooltip" />
+                </div>
+                <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined" (examModeChanged)="onExamModeChange()" />
+            </div>
+            @if (!exam.testExam) {
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="examWithAttendanceCheck" name="examWithAttendanceCheck" [(ngModel)]="exam.examWithAttendanceCheck" />
+                    <label class="form-check-label" for="examWithAttendanceCheck" jhiTranslate="artemisApp.examManagement.examWithAttendanceCheck"
+                        >Exam with attendance check
+                    </label>
+                </div>
+            }
+            <div class="row mb-3">
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="examiner" jhiTranslate="artemisApp.examManagement.examiner"></label>
+                    <input class="form-control" type="text" name="examiner" id="examiner" [(ngModel)]="exam.examiner" />
+                </div>
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="moduleNumber" jhiTranslate="artemisApp.examManagement.moduleNumber"></label>
+                    <input class="form-control" type="text" name="moduleNumber" id="moduleNumber" [(ngModel)]="exam.moduleNumber" />
+                </div>
+                <div class="col-sm-4 form-group">
+                    <label class="form-check-label" for="courseName" jhiTranslate="artemisApp.examManagement.courseName"></label>
+                    <input class="form-control" type="text" name="courseName" id="courseName" [(ngModel)]="exam.courseName" />
+                </div>
+            </div>
+            <hr />
+            <!-- Section exam conduction (release dates and working time) -->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.conduction"></h5>
+            @if (isOngoingExam) {
+                <div class="mb-3">
+                    <span class="d-inline-flex" ngbTooltip="{{ 'artemisApp.examManagement.dateChange.message' | artemisTranslate }}">
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" />
+                        <span class="fw-bold mx-1" jhiTranslate="artemisApp.examManagement.dateChange.label"></span>
+                    </span>
+                </div>
+            }
+            <ng-template #workingTimeConfirmationContent>
+                <div class="bg-light rounded-2 p-3">
+                    @if (oldWorkingTime && newWorkingTime) {
+                        <jhi-working-time-change [oldWorkingTime]="oldWorkingTime" [newWorkingTime]="newWorkingTime" />
+                    }
+                </div>
+            </ng-template>
+            <div class="row mb-3 position-relative">
+                <div class="col-sm-4">
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement.visibleDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.visibleDateTooltip' | artemisTranslate }}"
+                        [(ngModel)]="exam.visibleDate"
+                        [error]="!isVisibleDateSet"
+                        [warning]="checkExamVisibilityTime"
+                        [startAt]="exam.visibleDate"
+                        [requiredField]="true"
+                        name="visibleDate"
+                        id="visibleDate"
+                    />
+                </div>
+                <div class="col-sm-4">
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.startDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.startDateTooltip' | artemisTranslate }}"
+                        [(ngModel)]="exam.startDate"
+                        (valueChange)="updateExamWorkingTime()"
+                        [error]="!isStartDateSet || !isValidStartDate"
+                        [startAt]="exam.startDate || exam.visibleDate"
+                        [requiredField]="true"
+                        name="startDate"
+                        id="startDate"
+                    />
+                    @if (isStartDateSet && isValidStartDateValue && !isValidStartDate) {
+                        <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
+                    }
+                </div>
+                <div class="col-sm-4">
+                    <jhi-date-time-picker
+                        labelName="{{ 'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.endDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.endDateTooltip' | artemisTranslate }}"
+                        [(ngModel)]="exam.endDate"
+                        (valueChange)="updateExamWorkingTime()"
+                        [error]="!isEndDateSet || !isValidEndDate"
+                        [startAt]="exam.endDate || exam.startDate"
+                        [requiredField]="true"
+                        name="endDate"
+                        id="endDate"
+                    />
+                    @if (isEndDateSet && isValidEndDateValue && !isValidEndDate) {
+                        <span class="invalid-feedback" jhiTranslate="entity.endDateError"></span>
+                    }
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="workingTimeInMinutes" jhiTranslate="artemisApp.examManagement.workingTime"></label>
+                    <jhi-help-icon [text]="'artemisApp.examManagement' + (exam.testExam ? '.testExam' : '') + '.workingTimeTooltip'" />
+                    @if (!exam.testExam) {
+                        <input readonly disabled type="text" class="form-control" [value]="workingTimeInMinutesRounded" />
+                    }
+                    @if (exam.testExam) {
+                        <input
+                            id="workingTimeInMinutes"
+                            name="workingTimeInMinutes"
+                            class="form-control"
+                            type="number"
+                            [customMin]="1"
+                            [customMax]="maxWorkingTimeInMinutes"
+                            [(ngModel)]="workingTimeInMinutes"
+                            (focusin)="roundWorkingTime()"
+                            (focusout)="roundWorkingTime()"
+                        />
+                    }
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="gracePeriod" jhiTranslate="artemisApp.examManagement.gracePeriod"></label>
+                    <jhi-help-icon text="artemisApp.examManagement.gracePeriodTooltip" />
+                    <input id="gracePeriod" name="gracePeriod" class="form-control" type="number" min="0" [(ngModel)]="exam.gracePeriod" />
+                </div>
+            </div>
+            <hr />
+            <!-- Section settings for exam exercises -->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises"></h5>
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title"></label>
+                    <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}" />
+                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
+                        >Number of Exercises in Exam</label
+                    >
+                    <input id="numberOfExercisesInExam" name="numberOfExercisesInExam" class="form-control" type="number" min="0" [(ngModel)]="exam.numberOfExercisesInExam" />
+                </div>
+            </div>
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
+                <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"></label>
+            </div>
+            <!-- Subsection Exercise Selection for Exam Import -->
+            @if (isImport && exam.exerciseGroups) {
+                <div class="mb-3">
+                    <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title"></h5>
+                    <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation"></p>
+                    <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse" />
+                </div>
+            }
+            <!-- Section exam assessment and student review
+        Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
+            @if (!exam.testExam) {
+                <div>
+                    <hr />
+                    <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment"></h5>
+                    <h6 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessmentEmptyDates"></h6>
+                    @if (!exam.testExam) {
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <label
+                                    class="form-check-label"
+                                    for="numberOfCorrectionRoundsInExam"
+                                    jhiTranslate="artemisApp.examManagement.numberOfCorrectionRoundsInExam"
+                                ></label>
+                                <input
+                                    id="numberOfCorrectionRoundsInExam"
+                                    name="numberOfCorrectionRoundsInExam"
+                                    class="form-control"
+                                    type="number"
+                                    min="1"
+                                    max="2"
+                                    [(ngModel)]="exam.numberOfCorrectionRoundsInExam"
+                                />
+                            </div>
+                            <div class="col-sm-6">
+                                <jhi-date-time-picker
+                                    labelName="{{ 'artemisApp.examManagement.publishResultsDate' | artemisTranslate }}"
+                                    [(ngModel)]="exam.publishResultsDate"
+                                    [error]="!isValidPublishResultsDate"
+                                    name="publishResultsDate"
+                                    id="publishResultsDate"
+                                />
+                            </div>
+                        </div>
+                    }
+                    <div class="row mb-3">
+                        <div class="col-sm-6">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.examManagement.examStudentReviewStart' | artemisTranslate }}"
+                                [(ngModel)]="exam.examStudentReviewStart"
+                                [error]="!isValidExamStudentReviewStart"
+                                name="examStudentReviewStart"
+                                id="examStudentReviewStart"
+                            />
+                        </div>
+                        <div class="col-sm-6">
+                            <jhi-date-time-picker
+                                labelName="{{ 'artemisApp.examManagement.examStudentReviewEnd' | artemisTranslate }}"
+                                [(ngModel)]="exam.examStudentReviewEnd"
+                                [error]="!isValidExamStudentReviewEnd"
+                                name="examStudentReviewEnd"
+                                id="examStudentReviewEnd"
+                            />
+                            @if (!isValidExamStudentReviewEnd) {
+                                <span class="invalid-feedback" jhiTranslate="artemisApp.examManagement.reviewDatesInvalidWarning"></span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+            <hr />
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.examSolutions"></h5>
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <jhi-date-time-picker
+                        class="form-element"
+                        name="exampleSolutionPublicationDate"
+                        labelName="{{ 'artemisApp.exam.exampleSolutionPublicationDate' | artemisTranslate }}"
+                        labelTooltip="{{ 'artemisApp.examManagement.exampleSolutionPublicationDateTooltip' | artemisTranslate }}"
+                        [(ngModel)]="exam.exampleSolutionPublicationDate"
+                        [error]="!isValidExampleSolutionPublicationDate"
+                    />
+                </div>
+            </div>
+            <hr />
+            <!-- Section Texts-->
+            <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text"></h5>
+            <div class="form-group">
+                <label for="startText" jhiTranslate="artemisApp.examManagement.startText"></label>
+                <jhi-markdown-editor-monaco id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
+            </div>
+            <div class="form-group">
+                <label for="startText" jhiTranslate="artemisApp.examManagement.endText"></label>
+                <jhi-markdown-editor-monaco id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
+            </div>
+            <div class="form-group">
+                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
+                <jhi-markdown-editor-monaco id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
+            </div>
+            <div class="form-group">
+                <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
+                <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">
+                    <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                </button>
+                <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="faSave" />&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
+                </button>
+                <ng-template #renderedWarning>
+                    <div jhiTranslate="artemisApp.examManagement.reviewDatesInvalidExplanation"></div>
+                </ng-template>
+                @if (!isValidExamStudentReviewEnd) {
+                    <span class="badge bg-warning" [ngbTooltip]="renderedWarning" placement="right auto">
+                        <span jhiTranslate="artemisApp.quizExercise.edit.warning"></span>
+                    </span>
+                }
+            </div>
+        </form>
+    </div>
+</div>

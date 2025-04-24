@@ -9,5 +9,4 @@ import com.fasterxml.jackson.annotation.JsonAnySetter;
  * strings can include placeholders, which can be used to construct a message in combination with an arbitrary number of additional string arguments.
  */
 public record MessageStrings(@JsonAnySetter Map<String, MultiformatMessageString> additionalProperties) {
-
 }

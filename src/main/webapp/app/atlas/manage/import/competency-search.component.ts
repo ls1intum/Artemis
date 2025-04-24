@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
-import { ButtonType } from 'app/shared/components/button.component';
-import { getSemesters } from 'app/utils/semester-utils';
+import { ButtonType } from 'app/shared/components/button/button.component';
+import { getSemesters } from 'app/shared/util/semester-utils';
 import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { ButtonComponent } from 'app/shared/components/button.component';
+import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

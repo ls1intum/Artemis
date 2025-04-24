@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration.isBinaryFile;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.FileNotFoundException;
@@ -14,12 +15,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.FileMode;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.revwalk.RevTree;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.treewalk.TreeWalk;
 import org.slf4j.Logger;
@@ -32,6 +35,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.cit.aet.artemis.core.config.BinaryFileExtensionConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -125,8 +129,9 @@ public class RepositoryService {
             log.debug("Using local VCS for getting files at commit {} for participation {}", commitId, participation.getId());
             // If local VCS is active, operate directly on the bare repository
             var repoUri = repositoryType == RepositoryType.TESTS ? programmingExercise.getVcsTestRepositoryUri() : participation.getVcsRepositoryUri();
-            Repository repository = gitService.getBareRepository(repoUri);
-            return getFilesContentFromBareRepository(repository, commitId);
+            try (Repository repository = gitService.getBareRepository(repoUri)) {
+                return getFilesContentFromBareRepository(repository, commitId);
+            }
         }
         else {
             log.debug("Checking out repo to get files at commit {} for participation {}", commitId, participation.getId());
@@ -183,35 +188,93 @@ public class RepositoryService {
      * binary data does not convert cleanly into UTF-8 strings.
      *
      * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
-     * @param commitId   The commit identifier from which to extract file contents.
+     * @param commitHash The commit identifier from which to extract file contents.
      * @return A {@link Map} where each key is a file path and each value is the content of the file as a {@link String}.
      *         The content is encoded in UTF-8 and may not represent binary data accurately.
      * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
      *                         opening and reading the file stream.
      */
-    // TODO: can we offer this method without commitId as well?
-    public Map<String, String> getFilesContentFromBareRepository(Repository repository, String commitId) throws IOException {
+    public Map<String, String> getFilesContentFromBareRepository(Repository repository, @NotNull String commitHash) throws IOException {
+        ObjectId commitId = repository.resolve(commitHash);
+        if (commitId == null) {
+            log.warn("Cannot resolve {} in the repository {}", commitHash, repository.getRemoteRepositoryUri());
+            return Map.of();
+        }
+        return getFileContentFromBareRepositoryForCommitId(repository, commitId);
+    }
+
+    /**
+     * Retrieves the contents of text-based files from the latest commit in a bare repository.
+     * Binary files, as defined by {@link BinaryFileExtensionConfiguration}, are excluded.
+     *
+     * @param repository the JGit {@link Repository} instance representing the bare repository.
+     * @return a {@link Map} where keys are file paths and values are file contents as UTF-8 strings.
+     * @throws IOException if an error occurs while accessing the repository.
+     */
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(Repository repository) throws IOException {
+        ObjectId headCommitId = repository.resolve("HEAD"); // Resolve HEAD if no commit ID is provided
+        if (headCommitId == null) {
+            log.warn("Cannot resolve HEAD. The repository might be empty.");
+            return Map.of();
+        }
+
+        return getFileContentFromBareRepositoryForCommitId(repository, headCommitId);
+    }
+
+    public Map<String, String> getFilesContentFromBareRepositoryForLastCommit(VcsRepositoryUri repositoryUri) throws IOException {
+        try (var bareRepository = gitService.getBareRepository(repositoryUri)) {
+            return getFilesContentFromBareRepositoryForLastCommit(bareRepository);
+        }
+    }
+
+    /**
+     * Retrieves a mapping of file paths to their content for a specific commit in a bare Git repository for non binary files
+     * This method extracts file content by traversing the repository's tree from the specified commit.
+     * It is primarily designed to read text files, converting the binary content to a UTF-8 string.
+     * Usage of this method with binary files may lead to data corruption or misrepresentation as
+     * binary data does not convert cleanly into UTF-8 strings.
+     *
+     * @param repository The repository from which file contents are to be retrieved. Must be a bare repository.
+     * @param commitId   The commit id from which to extract file contents.
+     * @return A {@link Map} where each key is a file path and each value is the content of the file as a {@link String}.
+     *         The content is encoded in UTF-8 and may not represent binary data accurately.
+     * @throws IOException If an I/O error occurs during the file content retrieval process, including issues with
+     *                         opening and reading the file stream.
+     */
+    private Map<String, String> getFileContentFromBareRepositoryForCommitId(Repository repository, @NotNull ObjectId commitId) throws IOException {
         RevWalk revWalk = new RevWalk(repository);
-        RevCommit commit = revWalk.parseCommit(repository.resolve(commitId));
-        RevTree tree = commit.getTree();
+        RevCommit commit = revWalk.parseCommit(commitId);
+
         // Initialize your map to store file paths and their contents
         Map<String, String> filesWithContent = new HashMap<>();
 
-        TreeWalk treeWalk = new TreeWalk(repository);
-        treeWalk.addTree(tree);
-        treeWalk.setRecursive(true);
-        while (treeWalk.next()) {
-            String path = treeWalk.getPathString();
-            ObjectId objectId = treeWalk.getObjectId(0);
+        try (TreeWalk treeWalk = new TreeWalk(repository)) {
+            treeWalk.addTree(commit.getTree());
+            treeWalk.setRecursive(true);
 
-            // TODO: In the future, it may make sense to exclude binary files here.
-            // Open the object stream to read the file content
-            try (InputStream inputStream = repository.open(objectId).openStream()) {
-                byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
-                String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+            while (treeWalk.next()) {
+                String path = treeWalk.getPathString();
 
-                // Put the path and corresponding file content into the map
-                filesWithContent.put(path, content);
+                // Skip binary files
+                if (isBinaryFile(path)) {
+                    continue;
+                }
+
+                // Skip symbolic links (CHECK FILE MODE)
+                if (treeWalk.getFileMode(0) == FileMode.SYMLINK) {
+                    continue;
+                }
+
+                ObjectId objectId = treeWalk.getObjectId(0);
+
+                // Open the object stream to read the file content
+                try (InputStream inputStream = repository.open(objectId).openStream()) {
+                    byte[] bytes = inputStream.readAllBytes(); // Read all bytes at once
+                    String content = new String(bytes, StandardCharsets.UTF_8); // Convert bytes to string with UTF-8 encoding
+
+                    // Put the path and corresponding file content into the map
+                    filesWithContent.put(path, content);
+                }
             }
         }
         revWalk.close();

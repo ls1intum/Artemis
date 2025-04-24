@@ -1,17 +1,17 @@
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
-import { MetisService } from 'app/communication/metis.service';
+import { MetisService } from 'app/communication/service/metis.service';
 import { firstValueFrom } from 'rxjs';
-import { LectureService } from 'app/lecture/manage/lecture.service';
+import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ReferenceType } from 'app/communication/metis.util';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { Attachment } from 'app/entities/attachment.model';
-import { Slide } from 'app/entities/lecture-unit/slide.model';
-import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
+import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
+import { Attachment } from 'app/lecture/shared/entities/attachment.model';
+import { Slide } from 'app/lecture/shared/entities/lecture-unit/slide.model';
+import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { sanitizeStringForMarkdownEditor } from 'app/shared/util/markdown.util';
-import { FileService } from 'app/shared/http/file.service';
 import { cloneDeep } from 'lodash-es';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { FileService } from 'app/shared/service/file.service';
 
 interface LectureWithDetails {
     id: number;
@@ -26,6 +26,7 @@ interface LectureAttachmentReferenceActionArgs {
     attachmentUnit?: AttachmentUnit;
     slide?: Slide;
     attachment?: Attachment;
+    slideIndex?: number;
 }
 
 /**
@@ -107,8 +108,8 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
                 }
                 break;
             case ReferenceType.SLIDE:
-                if (args.attachmentUnit && args.slide) {
-                    this.insertSlideReference(editor, args.attachmentUnit, args.slide);
+                if (args.attachmentUnit && args.slide && args.slideIndex) {
+                    this.insertSlideReference(editor, args.attachmentUnit, args.slide, args.slideIndex);
                 } else {
                     throw new Error(`[${this.id}] No attachment unit or slide provided to reference.`);
                 }
@@ -136,18 +137,14 @@ export class LectureAttachmentReferenceAction extends TextEditorAction {
         this.replaceTextAtCurrentSelection(editor, `[attachment]${sanitizeStringForMarkdownEditor(attachment.name)}(${shortLink})[/attachment]`);
     }
 
-    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide): void {
-        const shortLink = slide.slideImagePath?.split('attachments/')[1];
-        // Remove the trailing slash and the file name.
-        const shortLinkWithoutFileName = shortLink?.replace(new RegExp(`[^/]*${'.png'}`), '').replace(/\/$/, '');
-        this.replaceTextAtCurrentSelection(
-            editor,
-            `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slide.slideNumber}(${shortLinkWithoutFileName})[/slide]`,
-        );
+    insertSlideReference(editor: TextEditor, attachmentUnit: AttachmentUnit, slide: Slide, slideIndex: number): void {
+        // Using the new pattern that directly references the slide by ID with # prefix
+        this.replaceTextAtCurrentSelection(editor, `[slide]${sanitizeStringForMarkdownEditor(attachmentUnit.name)} Slide ${slideIndex}(#${slide.id})[/slide]`);
     }
 
     insertAttachmentUnitReference(editor: TextEditor, attachmentUnit: AttachmentUnit): void {
-        const shortLink = attachmentUnit.attachment?.link!.split('attachments/')[1];
+        const link = attachmentUnit.attachment!.studentVersion || this.fileService.createStudentLink(attachmentUnit.attachment!.link!);
+        const shortLink = link.split('attachments/')[1];
         this.replaceTextAtCurrentSelection(editor, `[lecture-unit]${sanitizeStringForMarkdownEditor(attachmentUnit.name)}(${shortLink})[/lecture-unit]`);
     }
 }

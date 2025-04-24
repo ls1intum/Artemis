@@ -2720,7 +2720,7 @@ General
                                                                                                 <td>⬆️</td>
                                                                                             </tr>
                                                                                             <tr>
-                                                                                                <td><a href="https://app.codecov.io/gh/ls1intum/Artemis/pull/6618?src=pr&amp;el=tree&amp;utm_medium=referral&amp;utm_source=github&amp;utm_content=comment&amp;utm_campaign=pr+comments&amp;utm_term=ls1intum#diff-c3JjL21haW4vd2ViYXBwL2FwcC9jb3Vyc2UvbWFuYWdlL2NvdXJzZS1tYW5hZ2VtZW50LnNlcnZpY2UudHM=" rel="nofollow">...app/app/course/manage/course-management.service.ts</a></td>
+                                                                                                <td><a href="https://app.codecov.io/gh/ls1intum/Artemis/pull/6618?src=pr&amp;el=tree&amp;utm_medium=referral&amp;utm_source=github&amp;utm_content=comment&amp;utm_campaign=pr+comments&amp;utm_term=ls1intum#diff-c3JjL21haW4vd2ViYXBwL2FwcC9jb3Vyc2UvbWFuYWdlL2NvdXJzZS1tYW5hZ2VtZW50LnNlcnZpY2UudHM=" rel="nofollow">...app/app/core/course/manage/course-management.service.ts</a></td>
                                                                                                 <td><code class="notranslate">77.23% &lt;100.00%&gt; (ø)</code></td>
                                                                                                 <td></td>
                                                                                             </tr>

@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -52,22 +51,17 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.ResponseUtil;
-import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionExportService;
+import de.tum.cit.aet.artemis.lecture.service.SlideService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
-import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 
 /**
  * REST controller for managing ModelingExercise.
@@ -102,8 +96,6 @@ public class ModelingExerciseResource {
 
     private final ExerciseDeletionService exerciseDeletionService;
 
-    private final PlagiarismResultRepository plagiarismResultRepository;
-
     private final ModelingExerciseImportService modelingExerciseImportService;
 
     private final SubmissionExportService modelingSubmissionExportService;
@@ -112,26 +104,24 @@ public class ModelingExerciseResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final PlagiarismDetectionService plagiarismDetectionService;
-
     private final ChannelService channelService;
 
     private final ChannelRepository channelRepository;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
+    private final SlideService slideService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
-            ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
-            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
-            GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            PlagiarismDetectionService plagiarismDetectionService, ChannelService channelService, ChannelRepository channelRepository,
-            Optional<CompetencyProgressApi> competencyProgressApi) {
+            ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
+            SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
+            GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
+            Optional<CompetencyProgressApi> competencyProgressApi, SlideService slideService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
-        this.plagiarismResultRepository = plagiarismResultRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingSubmissionExportService = modelingSubmissionExportService;
         this.userRepository = userRepository;
@@ -141,10 +131,10 @@ public class ModelingExerciseResource {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
-        this.plagiarismDetectionService = plagiarismDetectionService;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.competencyProgressApi = competencyProgressApi;
+        this.slideService = slideService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -180,7 +170,6 @@ public class ModelingExerciseResource {
         ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
-        modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
         competencyProgressApi.ifPresent(api -> api.updateProgressByLearningObjectAsync(result));
 
@@ -248,10 +237,10 @@ public class ModelingExerciseResource {
         exerciseService.updatePointsInRelatedParticipantScores(modelingExerciseBeforeUpdate, updatedModelingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedModelingExercise, modelingExerciseBeforeUpdate.getDueDate());
-        modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
         exerciseService.notifyAboutExerciseChanges(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
+        slideService.handleDueDateChange(modelingExerciseBeforeUpdate, updatedModelingExercise);
 
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(modelingExerciseBeforeUpdate, Optional.of(modelingExercise)));
 
@@ -279,27 +268,17 @@ public class ModelingExerciseResource {
         return ResponseEntity.ok().body(exercises);
     }
 
-    private ModelingExercise findModelingExercise(Long exerciseId, boolean includePlagiarismDetectionConfig) {
-        if (includePlagiarismDetectionConfig) {
-            var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesAndPlagiarismDetectionConfigByIdElseThrow(exerciseId);
-            PlagiarismDetectionConfigHelper.createAndSaveDefaultIfNullAndCourseExercise(modelingExercise, modelingExerciseRepository);
-            return modelingExercise;
-        }
-        return modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
-    }
-
     /**
      * GET modeling-exercises/:exerciseId : get the "id" modelingExercise.
      *
-     * @param exerciseId                    the id of the modelingExercise to retrieve
-     * @param withPlagiarismDetectionConfig boolean flag whether to include the plagiarism detection config of the exercise
+     * @param exerciseId the id of the modelingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the modelingExercise, or with status 404 (Not Found)
      */
     @GetMapping("modeling-exercises/{exerciseId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean withPlagiarismDetectionConfig) {
+    public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = findModelingExercise(exerciseId, withPlagiarismDetectionConfig);
+        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
@@ -328,13 +307,11 @@ public class ModelingExerciseResource {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
-        modelingExerciseService.cancelScheduledOperations(exerciseId);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, user);
         // note: we use the exercise service here, because this one makes sure to clean up all lazy references correctly.
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseDeletionService.delete(exerciseId, false, false);
+        exerciseDeletionService.delete(exerciseId, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
     }
 
@@ -360,15 +337,14 @@ public class ModelingExerciseResource {
         }
         importedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(sourceExerciseId);
+        final var originalModelingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsAndResultsElseThrow(sourceExerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalModelingExercise, user);
         // validates general settings: points, dates
         importedExercise.validateGeneralSettings();
 
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
-        ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
-        modelingExerciseService.scheduleOperations(result.getId());
+        modelingExerciseRepository.save(newModelingExercise);
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 
@@ -394,54 +370,6 @@ public class ModelingExerciseResource {
 
         Path zipFilePath = modelingSubmissionExportService.exportStudentSubmissionsElseThrow(exerciseId, submissionExportOptions);
         return ResponseUtil.ok(zipFilePath);
-    }
-
-    /**
-     * GET modeling-exercises/{exerciseId}/plagiarism-result
-     * <p>
-     * Return the latest plagiarism result or null, if no plagiarism was detected for this exercise yet.
-     *
-     * @param exerciseId ID of the modeling exercise for which the plagiarism result should be returned
-     * @return The ResponseEntity with status 200 (Ok) or with status 400 (Bad Request) if the
-     *         parameters are invalid
-     */
-    @GetMapping("modeling-exercises/{exerciseId}/plagiarism-result")
-    @EnforceAtLeastEditor
-    public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> getPlagiarismResult(@PathVariable long exerciseId) {
-        log.debug("REST request to get the latest plagiarism result for the modeling exercise with id: {}", exerciseId);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
-        var plagiarismResult = (ModelingPlagiarismResult) plagiarismResultRepository
-                .findFirstWithComparisonsByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
-        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
-        return buildPlagiarismResultResponse(plagiarismResult);
-    }
-
-    /**
-     * GET modeling-exercises/{exerciseId}/check-plagiarism
-     * <p>
-     * Start the automated plagiarism detection for the given exercise and return its result.
-     *
-     * @param exerciseId          for which all submission should be checked
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
-     * @param minimumScore        consider only submissions whose score is greater or equal to this value
-     * @param minimumSize         consider only submissions whose size is greater or equal to this value
-     * @return the ResponseEntity with status 200 (OK) and the list of at most 500 pair-wise submissions with a similarity above the given threshold (e.g. 50%).
-     */
-    @GetMapping("modeling-exercises/{exerciseId}/check-plagiarism")
-    @FeatureToggle(Feature.PlagiarismChecks)
-    @EnforceAtLeastInstructor
-    public ResponseEntity<PlagiarismResultDTO<ModelingPlagiarismResult>> checkPlagiarism(@PathVariable long exerciseId, @RequestParam int similarityThreshold,
-            @RequestParam int minimumScore, @RequestParam int minimumSize) {
-        var modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
-        long start = System.nanoTime();
-        log.info("Started manual plagiarism checks for modeling exercise: exerciseId={}.", exerciseId);
-        PlagiarismDetectionConfigHelper.updateWithTemporaryParameters(modelingExercise, similarityThreshold, minimumScore, minimumSize);
-        var plagiarismResult = plagiarismDetectionService.checkModelingExercise(modelingExercise);
-        log.info("Finished manual plagiarism checks for modeling exercise: exerciseId={}, elapsed={}.", exerciseId, TimeLogUtil.formatDurationFrom(start));
-
-        return buildPlagiarismResultResponse(plagiarismResult);
     }
 
     /**

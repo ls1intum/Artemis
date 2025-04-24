@@ -9,9 +9,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
@@ -23,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 
 @Service
 @Profile(SPRING_PROFILE_TEST)
+@Conditional(AtlasEnabled.class)
 public class StandardizedCompetencyUtilService {
 
     public static final long ID_NOT_EXISTS = -1000L;

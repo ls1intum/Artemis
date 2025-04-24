@@ -170,7 +170,6 @@ public class Complaint extends DomainObject {
             throw new Error("Unknown participant type");
         }
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
      * Removes the participant from the complaint, can be invoked to make sure that sensitive information is not sent to the client. E.g. tutors should not see information about
