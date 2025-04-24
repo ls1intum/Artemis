@@ -101,7 +101,7 @@ public abstract class Participation extends DomainObject implements Participatio
      * have to use the save function and not the saveAndFlush function because otherwise an exception is thrown. We can think about adding orphanRemoval=true here, after adding the
      * participationId to all submissions.
      */
-    @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY) // TODO Michal Kawka I'm not entirely sure if FetchType.EAGER is a good idea here
+    @OneToMany(mappedBy = "participation", fetch = FetchType.LAZY)
     @JsonIgnoreProperties({ "participation" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
