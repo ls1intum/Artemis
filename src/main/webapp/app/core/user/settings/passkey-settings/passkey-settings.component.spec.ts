@@ -84,6 +84,20 @@ describe('PasskeySettingsComponent', () => {
         expect(passkey.labelBeforeEdit).toEqual(passkey.label);
     });
 
+    it('should cancel editing a passkey label', () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'New Label',
+            labelBeforeEdit: 'Original Label',
+            isEditingLabel: true,
+        };
+
+        component.cancelEditPasskeyLabel(passkey);
+
+        expect(passkey.isEditingLabel).toBeFalse();
+        expect(passkey.label).toBe('Original Label');
+    });
+
     it('should save a passkey label', async () => {
         const passkey = { ...mockPasskeys[0], isEditingLabel: true };
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockResolvedValue(passkey);
@@ -119,5 +133,29 @@ describe('PasskeySettingsComponent', () => {
 
         await component.deletePasskey(mockPasskeys[0]);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
+    });
+
+    it('should return a valid EntitySummary for a given passkey', () => {
+        const passkey: PasskeyDTO = {
+            credentialId: '123',
+            label: 'Test Passkey',
+            created: '2023-10-01T12:00:00Z',
+            lastUsed: '2023-10-02T12:00:00Z',
+        };
+
+        const result = component.getDeleteSummary(passkey);
+
+        result?.subscribe((summary) => {
+            expect(summary).toEqual({
+                'artemisApp.userSettings.passkeySettingsPage.label': 'Test Passkey',
+                'artemisApp.userSettings.passkeySettingsPage.created': '2023-10-01T12:00:00Z',
+                'artemisApp.userSettings.passkeySettingsPage.lastUsed': '2023-10-02T12:00:00Z',
+            });
+        });
+    });
+
+    it('should return undefined when no passkey is provided', () => {
+        const result = component.getDeleteSummary(undefined);
+        expect(result).toBeUndefined();
     });
 });
