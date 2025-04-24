@@ -16,6 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { addPublicFilePrefix } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-archive',
@@ -57,6 +58,9 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
             next: (res: HttpResponse<CourseForArchiveDTO[]>) => {
                 if (res.body) {
                     this.courses = res.body || [];
+                    this.courses.map((courseDto: CourseForArchiveDTO) => {
+                        courseDto.icon = addPublicFilePrefix(courseDto.icon) || courseDto.icon;
+                    });
                     this.courses = this.sortCoursesByTitle(this.courses);
                     this.semesters = this.getUniqueSemesterNamesSorted(this.courses);
                     this.mapCoursesIntoSemesters();
