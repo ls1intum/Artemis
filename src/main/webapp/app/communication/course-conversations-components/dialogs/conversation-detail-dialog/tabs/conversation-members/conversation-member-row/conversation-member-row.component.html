@@ -8,7 +8,7 @@
                 defaultPictureId="user-default-profile-picture"
                 [authorId]="userId"
                 [authorName]="userName"
-                [imageUrl]="userImageUrl"
+                [imageUrl]="addPublicFilePrefix(userImageUrl)"
             />
             @if (isChannel(activeConversation()!) && conversationMember()?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
