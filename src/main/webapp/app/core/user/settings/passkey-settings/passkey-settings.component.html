@@ -26,7 +26,7 @@
                                     @if (!passkey.isEditingLabel) {
                                         <div>
                                             <div class="fw-bold text-dark fs-6">
-                                                <fa-icon [icon]="faKey" class="me-2" />
+                                                <fa-icon [icon]="faKey" class="me-1" />
                                                 {{ passkey.label }}
                                             </div>
                                             <div class="text-muted">
@@ -43,9 +43,13 @@
                                 </td>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
-                                        <button (click)="editPasskeyLabel(passkey)">
-                                            <fa-icon [icon]="faPencil" />
-                                        </button>
+                                        <jhi-button
+                                            [btnType]="ButtonType.PRIMARY"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faPencil"
+                                            [title]="'entity.action.edit'"
+                                            (onClick)="editPasskeyLabel(passkey)"
+                                        />
                                         <button
                                             jhiDeleteButton
                                             (delete)="deletePasskey(passkey)"
@@ -57,12 +61,20 @@
                                             <fa-icon [icon]="faTrash" />
                                         </button>
                                     } @else {
-                                        <button (click)="savePasskeyLabel(passkey)">
-                                            <fa-icon [icon]="faCheck" />
-                                        </button>
-                                        <button (click)="cancelEditPasskeyLabel(passkey)">
-                                            <fa-icon [icon]="faTimes" />
-                                        </button>
+                                        <jhi-button
+                                            [btnType]="ButtonType.PRIMARY"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faSave"
+                                            [title]="'entity.action.save'"
+                                            (onClick)="savePasskeyLabel(passkey)"
+                                        />
+                                        <jhi-button
+                                            [btnType]="ButtonType.ERROR_OUTLINE"
+                                            [btnSize]="ButtonSize.SMALL"
+                                            [icon]="faTimes"
+                                            [title]="'entity.action.cancel'"
+                                            (onClick)="cancelEditPasskeyLabel(passkey)"
+                                        />
                                     }
                                 </td>
                             </tr>
