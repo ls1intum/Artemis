@@ -7,6 +7,8 @@ import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyGraphDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-competency-graph-modal',
@@ -15,7 +17,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './competency-graph-modal.component.html',
     styleUrl: './competency-graph-modal.component.scss',
 })
-export class CompetencyGraphModalComponent {
+export class CompetencyGraphModalComponent extends AbstractScienceComponent {
     protected readonly closeIcon = faXmark;
 
     private readonly learningPathApiService = inject(LearningPathApiService);
@@ -29,8 +31,14 @@ export class CompetencyGraphModalComponent {
     private readonly activeModal: NgbActiveModal = inject(NgbActiveModal);
 
     constructor() {
+        super(ScienceEventType.LEARNING_PATH__OPEN_GRAPH);
         effect(() => {
             const learningPathId = this.learningPathId();
+
+            // log event
+            this.setResourceId(learningPathId);
+            this.logEvent();
+
             untracked(() => this.loadCompetencyGraph(learningPathId));
         });
     }

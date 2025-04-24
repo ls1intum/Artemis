@@ -7,15 +7,21 @@ export abstract class AbstractScienceComponent {
     scienceService = inject(ScienceService);
 
     protected constructor(
-        private type: ScienceEventType,
+        private type?: ScienceEventType,
         private resourceId?: number,
     ) {}
+
+    protected setScienceEventType(type: ScienceEventType) {
+        this.type = type;
+    }
 
     protected setResourceId(resourceId: number) {
         this.resourceId = resourceId;
     }
 
     protected logEvent() {
-        this.scienceService.logEvent(this.type, this.resourceId);
+        if (this.type) {
+            this.scienceService.logEvent(this.type, this.resourceId);
+        }
     }
 }

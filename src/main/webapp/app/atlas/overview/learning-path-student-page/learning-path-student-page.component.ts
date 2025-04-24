@@ -11,6 +11,8 @@ import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-learning-path-student-page',
@@ -19,7 +21,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LearningPathNavComponent, LearningPathLectureUnitComponent, LearningPathExerciseComponent, TranslateDirective],
 })
-export class LearningPathStudentPageComponent {
+export class LearningPathStudentPageComponent extends AbstractScienceComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
     private readonly learningApiService = inject(LearningPathApiService);
@@ -34,6 +36,7 @@ export class LearningPathStudentPageComponent {
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
+        super(ScienceEventType.LEARNING_PATH__OPEN);
         effect(() => {
             const courseId = this.courseId();
             untracked(() => this.loadLearningPath(courseId));
@@ -45,6 +48,12 @@ export class LearningPathStudentPageComponent {
             this.isLearningPathLoading.set(true);
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
             this.learningPath.set(learningPath);
+
+            // log event
+            if (learningPath) {
+                this.setResourceId(learningPath.id);
+            }
+            this.logEvent();
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (error.status != 404) {

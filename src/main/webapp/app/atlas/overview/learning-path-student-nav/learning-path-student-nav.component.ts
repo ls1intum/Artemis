@@ -7,6 +7,8 @@ import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-pa
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
@@ -15,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './learning-path-student-nav.component.html',
     styleUrl: './learning-path-student-nav.component.scss',
 })
-export class LearningPathNavComponent {
+export class LearningPathNavComponent extends AbstractScienceComponent {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faCheckCircle = faCheckCircle;
     protected readonly faFlag = faFlag;
@@ -40,13 +42,19 @@ export class LearningPathNavComponent {
     readonly isDropdownOpen = signal<boolean>(false);
 
     constructor() {
+        super();
         effect(() => {
             const learningPathId = this.learningPathId();
+            this.setResourceId(learningPathId);
             untracked(() => this.learningPathNavigationService.loadLearningPathNavigation(learningPathId));
         });
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
+        // log event
+        this.setScienceEventType(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV);
+        this.logEvent();
+
         const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
         loadingSpinner.set(true);
         await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);

@@ -42,6 +42,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -67,7 +69,7 @@ import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.compo
         HtmlForMarkdownPipe,
     ],
 })
-export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
+export class CourseCompetenciesDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
     private featureToggleService = inject(FeatureToggleService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
@@ -93,6 +95,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     getIcon = getIcon;
 
+    constructor() {
+        super(ScienceEventType.COMPETENCY__OPEN);
+    }
+
     ngOnInit(): void {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
@@ -109,6 +115,12 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     if (this.competencyId && this.courseId) {
                         this.loadData();
                     }
+
+                    // log event
+                    if (this.competencyId) {
+                        this.setResourceId(this.competencyId);
+                    }
+                    this.logEvent();
                 },
             );
         }

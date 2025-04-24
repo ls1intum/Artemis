@@ -10,6 +10,8 @@ import { CompetencyGraphModalComponent } from 'app/atlas/manage/competency-graph
 import { LearningPathNavOverviewLearningObjectsComponent } from 'app/atlas/overview/learning-path-nav-overview-learning-objects/learning-path-nav-overview-learning-objects.component';
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AbstractScienceComponent } from 'app/shared/science/science.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-learning-path-nav-overview',
@@ -18,7 +20,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './learning-path-nav-overview.component.html',
     styleUrl: './learning-path-nav-overview.component.scss',
 })
-export class LearningPathNavOverviewComponent {
+export class LearningPathNavOverviewComponent extends AbstractScienceComponent {
     protected readonly faCheckCircle = faCheckCircle;
 
     private readonly alertService = inject(AlertService);
@@ -40,8 +42,14 @@ export class LearningPathNavOverviewComponent {
     readonly currentCompetencyOnPath = computed(() => this.competencies()?.find((competency) => competency.masteryProgress < 1));
 
     constructor() {
+        super(ScienceEventType.LEARNING_PATH__OPEN_NAVIGATION);
         effect(() => {
             const learningPathId = this.learningPathId();
+
+            // log event
+            this.setResourceId(learningPathId);
+            this.logEvent();
+
             untracked(() => this.loadCompetencies(learningPathId));
         });
     }
