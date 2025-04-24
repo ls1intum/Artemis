@@ -17,7 +17,7 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { decodeBase64url } from 'app/shared/util/base64.util';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator.directive';
+import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
