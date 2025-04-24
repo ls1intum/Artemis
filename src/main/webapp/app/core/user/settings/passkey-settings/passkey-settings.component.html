@@ -44,7 +44,11 @@
                                             [customMaxLength]="MAX_LABEL_LENGTH"
                                         />
                                         @if (labelInput.invalid) {
-                                            <div class="text-danger">Label cannot exceed 64 characters.</div>
+                                            <span
+                                                class="text-danger"
+                                                jhiTranslate="artemisApp.userSettings.passkeySettingsPage.validation.labelLength"
+                                                [translateValues]="{ maxLabelLength: MAX_LABEL_LENGTH }"
+                                            ></span>
                                         }
                                     }
                                 </td>

@@ -96,6 +96,9 @@
                 "yourPasskeys": "Your passkeys",
                 "created": "Created on",
                 "lastUsed": "Last used on",
+                "validation": {
+                    "labelLength": "The label must not exceed {{maxLabelLength}} characters."
+                },
                 "error": {
                     "login": "Login with Passkey failed. Please check you registered a passkey with Artemis.",
                     "passkeyAlreadyRegistered": "You have already registered a passkey with the selected authenticator, choose a different authenticator if you want to register another passkey.",
