@@ -24,18 +24,15 @@
                             <tr>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
-                                        <div>
-                                            <div class="fw-bold text-dark fs-6">
-                                                <fa-icon [icon]="faKey" class="me-1" />
-                                                {{ passkey.label }}
-                                            </div>
-                                            <div class="text-muted">
-                                                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
-                                                {{ passkey.created | artemisDate: 'long-date' }}
-                                                |
-                                                <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></span>
-                                                {{ passkey.lastUsed | artemisDate }}
-                                            </div>
+                                        <fa-icon [icon]="faKey" class="me-1 fw-bold text-dark fs-6" />
+                                        <span class="fw-bold text-dark fs-6">{{ passkey.label }}</span>
+                                        <br />
+                                        <div class="text-muted">
+                                            <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
+                                            {{ passkey.created | artemisDate: 'long-date' }}
+                                            |
+                                            <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.lastUsed"></span>
+                                            {{ passkey.lastUsed | artemisDate }}
                                         </div>
                                     } @else {
                                         <input
