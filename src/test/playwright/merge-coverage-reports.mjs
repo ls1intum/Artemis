@@ -30,20 +30,50 @@ const lcovDir = path.join(coverageDir, 'lcov-report');
 
 console.log(`Merging coverage reports`);
 
-const coverageParallel = JSON.parse(fs.readFileSync(path.join(coverageParallelDir, '/coverage/coverage-final.json'), 'utf8'));
-const coverageSequential = JSON.parse(fs.readFileSync(path.join(coverageSequentialDir, '/coverage/coverage-final.json'), 'utf8'));
+// Create a new combined coverage map
+let combinedMap = coverage.createCoverageMap({});
 
-// Apply filters to coverage data before merging
-const filteredCoverageParallel = filterCoverageData(coverageParallel, coverageFilters);
-const filteredCoverageSequential = filterCoverageData(coverageSequential, coverageFilters);
+// Check and load parallel coverage if it exists
+const parallelCoveragePath = path.join(coverageParallelDir, '/coverage/coverage-final.json');
+if (fs.existsSync(parallelCoveragePath)) {
+    try {
+        const coverageParallel = JSON.parse(fs.readFileSync(parallelCoveragePath, 'utf8'));
+        const filteredCoverageParallel = filterCoverageData(coverageParallel, coverageFilters);
+        const mapA = coverage.createCoverageMap(filteredCoverageParallel);
+        combinedMap.merge(mapA);
+        console.log('Loaded parallel coverage report');
+    } catch (err) {
+        console.error('Error loading parallel coverage report:', err.message);
+    }
+} else {
+    console.log('Parallel coverage report does not exist, skipping');
+}
 
-const mapA = coverage.createCoverageMap(filteredCoverageParallel);
-const mapB = coverage.createCoverageMap(filteredCoverageSequential);
-mapA.merge(mapB);
+// Check and load sequential coverage if it exists
+const sequentialCoveragePath = path.join(coverageSequentialDir, '/coverage/coverage-final.json');
+if (fs.existsSync(sequentialCoveragePath)) {
+    try {
+        const coverageSequential = JSON.parse(fs.readFileSync(sequentialCoveragePath, 'utf8'));
+        const filteredCoverageSequential = filterCoverageData(coverageSequential, coverageFilters);
+        const mapB = coverage.createCoverageMap(filteredCoverageSequential);
+        combinedMap.merge(mapB);
+        console.log('Loaded sequential coverage report');
+    } catch (err) {
+        console.error('Error loading sequential coverage report:', err.message);
+    }
+} else {
+    console.log('Sequential coverage report does not exist, skipping');
+}
 
+// Ensure coverage directory exists
+if (!fs.existsSync(coverageDir)) {
+    fs.mkdirSync(coverageDir, { recursive: true });
+}
+
+// Create and generate reports
 const context = libReport.createContext({
     dir: lcovDir,
-    coverageMap: mapA,
+    coverageMap: combinedMap,
 });
 
 const htmlReport = reports.create('html');
@@ -54,8 +84,14 @@ lcovReport.execute(context);
 
 console.log(`Merged coverage reports successfully`);
 
-await fsAsync.rm(coverageParallelDir, { recursive: true, force: true });
-await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
+// Clean up directories only if they exist
+if (fs.existsSync(coverageParallelDir)) {
+    await fsAsync.rm(coverageParallelDir, { recursive: true, force: true });
+}
+
+if (fs.existsSync(coverageSequentialDir)) {
+    await fsAsync.rm(coverageSequentialDir, { recursive: true, force: true });
+}
 
 // Bamboo can upload only files as an artifact, not directories
 // That's why we archive the lcov coverage directory on CI to prepare it as an artifact
