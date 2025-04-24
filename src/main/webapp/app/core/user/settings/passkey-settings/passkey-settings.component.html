@@ -14,8 +14,8 @@
                 <table class="table table-striped flex">
                     <thead class="thead-dark">
                         <tr>
-                            <th class="col-10" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.label"></th>
-                            <th class="col-2" jhiTranslate="entity.actions"></th>
+                            <th class="col-9" jhiTranslate="artemisApp.userSettings.passkeySettingsPage.yourPasskeys"></th>
+                            <th class="col-3"></th>
                         </tr>
                     </thead>
 
@@ -25,7 +25,10 @@
                                 <td>
                                     @if (!passkey.isEditingLabel) {
                                         <div>
-                                            <div class="fw-bold text-dark mb-2">{{ passkey.label }}</div>
+                                            <div class="fw-bold text-dark fs-6">
+                                                <fa-icon [icon]="faKey" class="me-2" />
+                                                {{ passkey.label }}
+                                            </div>
                                             <div class="text-muted">
                                                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
                                                 {{ passkey.created | artemisDate: 'long-date' }}

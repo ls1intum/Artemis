@@ -3,7 +3,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faBan, faCheck, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheck, faKey, faPencil, faPlus, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { Observable, Subject, Subscription, of, tap } from 'rxjs';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
@@ -50,6 +50,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
+    protected readonly faKey = faKey;
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);

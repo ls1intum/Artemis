@@ -90,11 +90,10 @@
                 "onlyOnePerAuthenticator": "Du kannst nur einen Passkey pro Authentifikator für diese Seite registrieren (z. B. einen in Apple Keychain und einen anderen im Google Password Manager, etc.). Das Erstellen eines zweiten Passkeys mit dem gleichen Authentifikator wird den ersten registrierten Passkey überschreiben, den du manuell in Artemis entfernen musst.",
                 "learnMore": "Erfahre mehr über Passkeys.",
                 "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
-                "actions": "Aktionen",
                 "deletePasskeyQuestion": "Möchtest du deinen Passkey für passwortlose Authentifikation mit Artemis wirklich löschen?",
                 "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
                 "addNewPasskey": "Neuen Passkey hinzufügen",
-                "label": "Bezeichnung",
+                "yourPasskeys": "Deine Passkeys",
                 "created": "Erstellt am",
                 "lastUsed": "Zuletzt verwendet am",
                 "error": {
