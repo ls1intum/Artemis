@@ -290,6 +290,7 @@ public class SecurityConfiguration {
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     .requestMatchers(("/api-docs")).permitAll()
+                    .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll();
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVcsActive()) {

@@ -75,36 +75,35 @@ springBoot {
 }
 
 openApi {
-    apiDocsUrl.set("http://localhost:8080/api-docs")
+    apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
     outputDir.set(file("$rootDir/openapi"))
     outputFileName.set("openapi.yaml")
-    // How long to wait (in seconds) for the server to start
     waitTimeInSeconds.set(180)
     customBootRun {
-        jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti,dev"]
+        jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
+                       "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"]
 
         args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
-                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake",
-        "-- springdoc.packages-to-scan: de.tum.cit.aet.artemis.core.web.admin"])
+                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
 
     }
 }
 
-openApiGenerate {
-    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
-    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
-    outputDir = "$buildDir/generated-sources/openapi"
-    apiPackage = "de.tum.cit.aet.artemis.client"
-    modelPackage = "de.tum.cit.aet.artemis.client.model"
-    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
-    validateSpec = false
-    configOptions = [
-        serviceSuffix: "Service",
-        supportsES6: "true",
-        npmName: "@artemis/api-client",
-        npmVersion: "${project.version}"
-    ]
-}
+//openApiGenerate {
+//    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
+//    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
+//    outputDir = "$buildDir/generated-sources/openapi"
+//    apiPackage = "de.tum.cit.aet.artemis.client"
+//    modelPackage = "de.tum.cit.aet.artemis.client.model"
+//    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
+//    validateSpec = false
+//    configOptions = [
+//        serviceSuffix: "Service",
+//        supportsES6: "true",
+//        npmName: "@artemis/api-client",
+//        npmVersion: "${project.version}"
+//    ]
+//}
 
 modernizer {
     failOnViolations = false
@@ -464,9 +463,9 @@ dependencies {
     testImplementation "com.tngtech.archunit:archunit:1.4.0"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
 
-    testImplementation "com.h2database:h2:2.3.232"
+    //testImplementation "com.h2database:h2:2.3.232"
     // TODO do we need runtime only?
-    //runtimeOnly "com.h2database:h2:2.2.224"
+    runtimeOnly "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20250107"
@@ -559,3 +558,4 @@ tasks.named("dependencyUpdates").configure {
 // 11) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 12) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
 // 13) Find unused dependencies                     ./gradlew lintGradle -x webapp
+// 14) Generate OpenAPI documentation:              ./gradlew generateApiDocs -x webapp
