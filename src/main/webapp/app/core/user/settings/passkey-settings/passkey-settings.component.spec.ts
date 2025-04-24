@@ -135,7 +135,7 @@ describe('PasskeySettingsComponent', () => {
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
     });
 
-    it('should return a valid EntitySummary for a given passkey', () => {
+    it('should return a valid EntitySummary for a given passkey', async () => {
         const passkey: PasskeyDTO = {
             credentialId: '123',
             label: 'Test Passkey',
@@ -145,13 +145,14 @@ describe('PasskeySettingsComponent', () => {
 
         const result = component.getDeleteSummary(passkey);
 
-        result?.subscribe((summary) => {
+        if (result) {
+            const summary = await result.toPromise();
             expect(summary).toEqual({
                 'artemisApp.userSettings.passkeySettingsPage.label': 'Test Passkey',
                 'artemisApp.userSettings.passkeySettingsPage.created': '2023-10-01T12:00:00Z',
                 'artemisApp.userSettings.passkeySettingsPage.lastUsed': '2023-10-02T12:00:00Z',
             });
-        });
+        }
     });
 
     it('should return undefined when no passkey is provided', () => {
