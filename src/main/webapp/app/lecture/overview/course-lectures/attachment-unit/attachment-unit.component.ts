@@ -22,6 +22,8 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FileService } from 'app/shared/service/file.service';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-attachment-unit',
@@ -32,6 +34,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     protected readonly faDownload = faDownload;
 
     private readonly fileService = inject(FileService);
+    private readonly scienceService = inject(ScienceService);
 
     /**
      * Returns the name of the attachment file (including its file extension)
@@ -50,7 +53,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
      * If it is not the student view, it always downloads the original version
      */
     handleDownload() {
-        this.logEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         // Determine the link based on the availability of a student version
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
@@ -62,7 +65,7 @@ export class AttachmentUnitComponent extends LectureUnitDirective<AttachmentUnit
     }
 
     handleOriginalVersion() {
-        this.logEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
 
