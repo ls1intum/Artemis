@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -26,18 +26,21 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
     let courseManagementService: CourseManagementService;
     let eventManager: EventManager;
+    let irisSettingsService: IrisSettingsService;
+    let profileService: ProfileService;
 
     const course: Course = {
         id: 123,
         title: 'Course Title',
         description: 'Cras mattis iudicium purus sit amet fermentum. Gallia est omnis divisa in partes tres, quarum.',
-        isAtLeastInstructor: true,
         endDate: dayjs().subtract(5, 'minutes'),
         courseArchivePath: 'some-path',
     };
@@ -66,6 +69,11 @@ describe('Course Management Detail Component', () => {
         // LLM
         currentTotalLlmCostInEur: 82.3,
     };
+    const courseDataSubject = new BehaviorSubject<Data>({ course: { ...course } });
+    const mockActivatedRoute = {
+        data: courseDataSubject.asObservable(),
+        params: of({ courseId: course.id }),
+    } as unknown as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -85,15 +93,7 @@ describe('Course Management Detail Component', () => {
             providers: [
                 {
                     provide: ActivatedRoute,
-                    useValue: {
-                        data: {
-                            subscribe: (fn: (value: Data) => void) =>
-                                fn({
-                                    course,
-                                }),
-                        },
-                        params: of({ courseId: course.id }),
-                    },
+                    useValue: mockActivatedRoute,
                 },
                 MockProvider(CourseManagementService),
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -108,6 +108,8 @@ describe('Course Management Detail Component', () => {
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
         courseManagementService = TestBed.inject(CourseManagementService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        profileService = TestBed.inject(ProfileService);
         eventManager = TestBed.inject(EventManager);
     });
 
@@ -118,6 +120,22 @@ describe('Course Management Detail Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should make iris settings call when instructor', async () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
+        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
+        const irisSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings');
+        await component.ngOnInit();
+        expect(irisSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not make iris settings call when not instructor', async () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: ['iris'] } as ProfileInfo);
+        courseDataSubject.next({ course: { ...course, isAtLeastEditor: true } });
+        const irisSpy = jest.spyOn(irisSettingsService, 'getGlobalSettings');
+        await component.ngOnInit();
+        expect(irisSpy).not.toHaveBeenCalled();
     });
 
     it('should call registerChangeInCourses on init', async () => {
