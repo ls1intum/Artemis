@@ -33,7 +33,7 @@ public record StudentQuizParticipationWithSolutionsDTO(@JsonUnwrapped StudentQui
         }
         submissions = submissions.stream().filter(submission -> submission instanceof QuizSubmission).collect(Collectors.toSet());
 
-        Set<QuizSubmissionAfterEvaluationDTO> submissionsAfterEvaluation = studentParticipation.getSubmissions().stream().map(submission -> (QuizSubmission) submission)
+        Set<QuizSubmissionAfterEvaluationDTO> submissionsAfterEvaluation = submissions.stream().map(submission -> (QuizSubmission) submission)
                 .map(QuizSubmissionAfterEvaluationDTO::of).collect(Collectors.toSet());
 
         return new StudentQuizParticipationWithSolutionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithSolutionDTO.of(quizExercise),
