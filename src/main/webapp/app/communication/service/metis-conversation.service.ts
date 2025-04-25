@@ -149,6 +149,7 @@ export class MetisConversationService implements OnDestroy {
         if (indexOfCachedConversation !== -1) {
             this.conversationsOfUser[indexOfCachedConversation].lastMessageDate = dayjs();
             this.conversationsOfUser[indexOfCachedConversation].unreadMessagesCount = 0;
+            this._conversationsOfUser$.next(this.conversationsOfUser);
         }
         this.hasUnreadMessagesCheck();
     }
@@ -159,6 +160,13 @@ export class MetisConversationService implements OnDestroy {
             this.activeConversation.lastReadDate = dayjs();
             this.activeConversation.unreadMessagesCount = 0;
             this.activeConversation.hasUnreadMessage = false;
+            const indexOfConversationToUpdate = this.conversationsOfUser.findIndex((conversation) => conversation.id === this.activeConversation!.id);
+            if (indexOfConversationToUpdate !== -1) {
+                this.conversationsOfUser[indexOfConversationToUpdate].lastReadDate = dayjs();
+                this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = 0;
+                this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = false;
+                this._conversationsOfUser$.next(this.conversationsOfUser);
+            }
         }
     }
 
@@ -346,6 +354,7 @@ export class MetisConversationService implements OnDestroy {
 
     private updateUnread() {
         this.conversationsOfUser.forEach((conversation) => (conversation.hasUnreadMessage = !!conversation.unreadMessagesCount && conversation.unreadMessagesCount > 0));
+        this._conversationsOfUser$.next(this.conversationsOfUser);
     }
 
     private setIsLoading(value: boolean) {
@@ -485,6 +494,14 @@ export class MetisConversationService implements OnDestroy {
         if (!course?.id) {
             return of();
         }
+
+        this.conversationsOfUser = this.conversationsOfUser.map((conversation) => {
+            conversation.hasUnreadMessage = false;
+            conversation.unreadMessagesCount = 0;
+            return conversation;
+        });
+
+        this._conversationsOfUser$.next(this.conversationsOfUser);
 
         return this.conversationService.markAllChannelsAsRead(course.id).pipe(
             catchError((errorResponse: HttpErrorResponse) => {

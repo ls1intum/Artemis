@@ -27,6 +27,7 @@
             <div class="communication-content-sidebar" [ngClass]="{ 'sidebar-collapsed': isCollapsed, 'is-not-in-active-conversation': !activeConversation }">
                 <jhi-sidebar
                     (onSelectConversation)="onConversationSelected($event)"
+                    (onUpdateSidebar)="prepareSidebarData()"
                     [itemSelected]="conversationSelected"
                     [courseId]="course.id"
                     [sidebarData]="sidebarData"
