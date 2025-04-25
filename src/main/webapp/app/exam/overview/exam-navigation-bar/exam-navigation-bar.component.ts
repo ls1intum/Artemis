@@ -142,11 +142,11 @@ export class ExamNavigationBarComponent implements OnInit, AfterViewInit {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex.update(() => exerciseIndex);
+            this.exerciseIndex.set(exerciseIndex);
             this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises()[this.exerciseIndex()], forceSave: !!forceSave, submission: submission });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex.update(() => -1);
+            this.exerciseIndex.set(-1);
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }

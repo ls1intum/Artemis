@@ -141,7 +141,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
                 return;
             }
             // set index and emit event
-            this.exerciseIndex.update(() => exerciseIndex);
+            this.exerciseIndex.set(exerciseIndex);
             this.onPageChanged.emit({
                 overViewChange: false,
                 exercise: this.exercises()[this.exerciseIndex()],
@@ -150,7 +150,7 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
             });
         } else if (overviewPage) {
             // set index and emit event
-            this.exerciseIndex.update(() => this.EXERCISE_OVERVIEW_INDEX);
+            this.exerciseIndex.set(this.EXERCISE_OVERVIEW_INDEX);
             // save current exercise
             this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
         }
