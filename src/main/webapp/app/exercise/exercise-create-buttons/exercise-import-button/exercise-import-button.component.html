@@ -1,0 +1,10 @@
+<button
+    [id]="'import-' + exerciseType() + '-exercise'"
+    class="btn btn-primary text-truncate mb-1 me-1"
+    (click)="openImportModal()"
+    [jhiFeatureToggleLink]="featureToggle() ? featureToggle()! : undefined"
+>
+    <fa-icon [icon]="faFileImport" />
+    <span [jhiTranslate]="translationLabel"></span>
+    <fa-icon [icon]="icon" />
+</button>
