@@ -9,6 +9,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { PasskeyDTO } from 'app/core/user/settings/passkey-settings/dto/passkey.dto';
 
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -124,5 +125,25 @@ describe('PasskeySettingsComponent', () => {
     it('should return undefined when no passkey is provided', () => {
         const result = component.getDeleteSummary(undefined);
         expect(result).toBeUndefined();
+    });
+
+    it('should return a valid EntitySummary for a given passkey', async () => {
+        const passkey: PasskeyDTO = {
+            credentialId: '123',
+            label: 'Test Passkey',
+            created: '2023-10-01T12:00:00Z',
+            lastUsed: '2023-10-02T12:00:00Z',
+        };
+
+        const result = component.getDeleteSummary(passkey);
+
+        if (result) {
+            const summary = await result.toPromise();
+            expect(summary).toEqual({
+                'artemisApp.userSettings.passkeySettingsPage.label': 'Test Passkey',
+                'artemisApp.userSettings.passkeySettingsPage.created': '2023-10-01T12:00:00Z',
+                'artemisApp.userSettings.passkeySettingsPage.lastUsed': '2023-10-02T12:00:00Z',
+            });
+        }
     });
 });
