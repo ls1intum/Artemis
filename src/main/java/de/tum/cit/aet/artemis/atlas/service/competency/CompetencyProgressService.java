@@ -273,6 +273,7 @@ public class CompetencyProgressService {
         double weightedLectureProgress = ((double) lectureUnitInfos.size()) / numberOfLearningObjects * lectureProgress;
 
         double progress = weightedExerciseProgress + weightedLectureProgress;
+        // Bonus points can lead to a progress > 100%
         progress = Math.clamp(Math.round(progress), 0, 100);
         competencyProgress.setProgress(progress);
     }
