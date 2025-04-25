@@ -94,22 +94,21 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
 
-        this.route.data.subscribe(async ({ course }) => {
+        this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
                 this.messagingEnabled = !!this.course.courseInformationSharingConfiguration?.includes('MESSAGING');
                 this.communicationEnabled = !!this.course.courseInformationSharingConfiguration?.includes('COMMUNICATION');
                 this.fetchOrganizations(course.id);
-
-                if (this.irisEnabled && course.isAtLeastInstructor) {
-                    const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
-                    // TODO: Outdated, as we now have a bunch more sub settings
-                    this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
-                }
             }
             this.isAdmin = this.accountService.isAdmin();
             this.getCourseDetailSections();
         });
+        if (this.irisEnabled && this.course.isAtLeastInstructor) {
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
+            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
+        }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
             this.fetchCourseStatistics(courseId);
