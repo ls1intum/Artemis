@@ -2,7 +2,7 @@
     <h2 class="card-header course-quick-actions-title mb-3" jhiTranslate="entity.quickActions"></h2>
     <div class="card-body">
         <div class="d-flex flex-wrap align-items-center mb-3">
-            <div class="d-flex flex-nowrap">
+            <div class="d-flex flex-wrap">
                 <ng-container
                     *ngTemplateOutlet="
                         courseStatItem;
@@ -49,9 +49,9 @@
         </div>
         <div class="d-flex flex-wrap gap-2">
             @if (course()?.isAtLeastEditor) {
-                <button id="add-exercise-button" class="jhi-btn btn btn-primary text-truncate mb-1 me-1" (mouseenter)="openAddExerciseModal()">
+                <button id="add-exercise-button" class="jhi-btn btn btn-primary text-truncate mb-1" (mouseenter)="openAddExerciseModal()">
                     <fa-icon [icon]="faListAlt" />
-                    <span class="hidden-sm-down" jhiTranslate="entity.action.addExercise"></span>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.addExercise"></span>
                 </button>
 
                 <jhi-button
@@ -59,6 +59,7 @@
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addLecture'"
                     [icon]="faChalkboardUser"
+                    [shouldToggle]="true"
                     (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
                 />
             }
@@ -68,6 +69,7 @@
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addFaq'"
                     [icon]="faQuestion"
+                    [shouldToggle]="true"
                     (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
                 />
             }
@@ -75,8 +77,10 @@
                 <jhi-button
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
+                    class="text-truncate"
                     [title]="'entity.action.addExam'"
                     [icon]="faGraduationCap"
+                    [shouldToggle]="true"
                     (onClick)="navigateToCourseManagementSection(CourseManagementSection.EXAM)"
                 />
             }
@@ -85,7 +89,7 @@
 </div>
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
-    <div class="text-center me-4">
+    <div class="text-center me-3">
         <div class="small text-muted" jhiTranslate="artemisApp.course.{{ userGroup }}"></div>
         @if (course()?.isAtLeastInstructor) {
             <a [routerLink]="['/course-management', course()?.id, 'groups', userGroup]" class="fw-bold" id="number-of-{{ userGroup }}">{{ count || 0 }}</a>
