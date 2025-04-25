@@ -200,7 +200,6 @@ describe('ExamParticipationCoverComponent', () => {
     it('should update displayed times if exam suddenly started', () => {
         component.testRun = true;
         component.exam().startDate = dayjs();
-        // component.onExamStarted = new EventEmitter<StudentExam>();
         const eventSpy = jest.spyOn(component.onExamStarted, 'emit');
 
         component.updateDisplayedTimes(studentExam);
