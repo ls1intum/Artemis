@@ -40,6 +40,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { captureException } from '@sentry/angular';
 
 @Component({
     selector: 'jhi-post',
@@ -404,6 +405,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
                         this.changeDetector.detectChanges();
                         this.removeMarkdown(this.originalPost.content);
                     }
+                },
+                error: (error) => {
+                    captureException('Failed to load original post:', error);
                 },
             });
         }

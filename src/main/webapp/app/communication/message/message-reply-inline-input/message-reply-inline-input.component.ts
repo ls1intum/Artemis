@@ -104,6 +104,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     }
 
     private mapAnswerPostToPost(answerPost: AnswerPost): Post {
+        if (!answerPost.post) {
+            throw new Error('Answer post does not have a reference to its parent post');
+        }
         return {
             content: answerPost.content,
             conversation: this.activeConversation(),
