@@ -11,6 +11,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { CompetencyGraphDTO, CompetencyGraphEdgeDTO, CompetencyGraphNodeDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { By } from '@angular/platform-browser';
+import { ScienceService } from 'app/shared/science/science.service';
 
 describe('CompetencyGraphModalComponent', () => {
     let component: CompetencyGraphModalComponent;
@@ -55,6 +56,7 @@ describe('CompetencyGraphModalComponent', () => {
                     useClass: MockAlertService,
                 },
                 MockProvider(NgbActiveModal),
+                MockProvider(ScienceService),
             ],
         }).compileComponents();
 
