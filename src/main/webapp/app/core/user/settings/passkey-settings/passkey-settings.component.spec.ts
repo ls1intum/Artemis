@@ -146,4 +146,20 @@ describe('PasskeySettingsComponent', () => {
             });
         }
     });
+
+    it('should cancel editing a passkey label', () => {
+        const passkey: DisplayedPasskey = {
+            credentialId: '123',
+            label: 'New Label',
+            labelBeforeEdit: 'Original Label',
+            isEditingLabel: true,
+            created: new Date().toISOString(),
+            lastUsed: new Date().toISOString(),
+        };
+
+        component.cancelEditPasskeyLabel(passkey);
+
+        expect(passkey.isEditingLabel).toBeFalse();
+        expect(passkey.label).toBe('Original Label');
+    });
 });
