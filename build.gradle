@@ -90,12 +90,12 @@ openApi {
 }
 
 openApiGenerate {
-    generatorName = "typescript-angular" // Generator for Angular TypeScript clients
-    inputSpec = "${rootDir}/openapi/openapi.yaml" // Path to your OpenAPI spec file
-    outputDir = "$buildDir/generated-sources/openapi"
-    apiPackage = "de.tum.cit.aet.artemis.client"
-    modelPackage = "de.tum.cit.aet.artemis.client.model"
-    invokerPackage = "de.tum.cit.aet.artemis.client.invoker"
+    generatorName = "typescript-angular"
+    inputSpec = "${rootDir}/openapi/openapi.yaml"
+    outputDir = "${rootDir}/src/main/webapp/app/generated"
+    apiPackage = "api"
+    modelPackage = "model"
+    invokerPackage = "invoker"
     validateSpec = false
     configOptions = [
         serviceSuffix: "Service",
