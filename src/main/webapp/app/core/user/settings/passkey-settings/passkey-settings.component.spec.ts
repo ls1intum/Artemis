@@ -59,6 +59,10 @@ describe('PasskeySettingsComponent', () => {
         alertService = TestBed.inject(AlertService);
     });
 
+    afterEach(() => {
+        fixture.destroy(); // Clean up resources to prevent memory leaks
+    });
+
     it('should load the current user on initialization', () => {
         jest.spyOn(accountService, 'getAuthenticationState');
         expect(component.currentUser()).toEqual({ id: 99 });
