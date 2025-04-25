@@ -73,8 +73,8 @@ public class PasskeyResource {
         return ResponseEntity.ok(passkeys);
     }
 
-    private <T> ResponseEntity<T> logAndReturnNotFound(Object... args) {
-        log.warn("Credential with id {} not found in the repository", args);
+    private <T> ResponseEntity<T> logAndReturnNotFound(String credentialId) {
+        log.warn("Credential with id {} not found in the repository", credentialId);
         return ResponseEntity.notFound().build();
     }
 

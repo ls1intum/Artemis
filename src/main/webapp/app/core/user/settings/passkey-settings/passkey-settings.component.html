@@ -41,13 +41,13 @@
                                             [(ngModel)]="passkey.label"
                                             #labelInput="ngModel"
                                             class="form-control w-100"
-                                            [customMaxLength]="MAX_LABEL_LENGTH"
+                                            [customMaxLength]="MAX_PASSKEY_LABEL_LENGTH"
                                         />
                                         @if (labelInput.invalid) {
                                             <span
                                                 class="text-danger"
                                                 jhiTranslate="artemisApp.userSettings.passkeySettingsPage.validation.labelLength"
-                                                [translateValues]="{ maxLabelLength: MAX_LABEL_LENGTH }"
+                                                [translateValues]="{ maxLabelLength: MAX_PASSKEY_LABEL_LENGTH }"
                                             ></span>
                                         }
                                     }
@@ -73,7 +73,7 @@
                                         </button>
                                     } @else {
                                         <jhi-button
-                                            [disabled]="passkey.label.length > MAX_LABEL_LENGTH"
+                                            [disabled]="passkey.label.length > MAX_PASSKEY_LABEL_LENGTH"
                                             [btnType]="ButtonType.PRIMARY"
                                             [btnSize]="ButtonSize.SMALL"
                                             [icon]="faSave"

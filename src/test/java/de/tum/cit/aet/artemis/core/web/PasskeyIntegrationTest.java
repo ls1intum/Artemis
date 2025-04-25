@@ -20,10 +20,10 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "passkeyintegration";
 
     @Autowired
-    PasskeyCredentialsRepository passkeyCredentialsRepository;
+    private PasskeyCredentialsRepository passkeyCredentialsRepository;
 
     @Autowired
-    PasskeyCredentialUtilService passkeyCredentialUtilService;
+    private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     @BeforeEach
     void initTestCase() {

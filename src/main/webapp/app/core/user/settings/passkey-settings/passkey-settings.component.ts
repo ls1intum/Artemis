@@ -51,7 +51,7 @@ export class PasskeySettingsComponent implements OnDestroy {
     protected readonly faBan = faBan;
     protected readonly faTimes = faTimes;
     protected readonly faKey = faKey;
-    protected readonly MAX_LABEL_LENGTH = 64;
+    protected readonly MAX_PASSKEY_LABEL_LENGTH = 64;
 
     private accountService = inject(AccountService);
     private alertService = inject(AlertService);
@@ -191,7 +191,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         try {
             passkey = await this.passkeySettingsApiService.updatePasskeyLabel(passkey.credentialId, passkey);
         } catch (error) {
-            this.alertService.addErrorAlert('Unable to update passkey label');
+            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.save');
             passkey.label = passkey.labelBeforeEdit ?? '';
         }
     }
@@ -207,7 +207,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             await this.passkeySettingsApiService.deletePasskey(passkey.credentialId);
             await this.updateRegisteredPasskeys();
         } catch (error) {
-            this.alertService.addErrorAlert('Unable to delete passkey');
+            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.delete');
         }
         this.isDeletingPasskey = false;
         this.dialogErrorSource.next('');

@@ -29,7 +29,7 @@ public class PasskeyCredentialUtilService {
     private static final int DEFAULT_CREDENTIAL_ID_BYTE_COUNT = 32;
 
     @Autowired
-    PasskeyCredentialsRepository passkeyCredentialTestRepository;
+    private PasskeyCredentialsRepository passkeyCredentialTestRepository;
 
     private byte[] getRandomBytes(int length) {
         byte[] bytes = new byte[length];
