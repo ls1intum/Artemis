@@ -101,7 +101,7 @@ describe('PasskeySettingsComponent', () => {
         jest.spyOn(passkeySettingsApiService, 'updatePasskeyLabel').mockRejectedValue(new Error('Test Error'));
 
         await component.savePasskeyLabel(passkey);
-        expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to update passkey label');
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.save');
         expect(passkey.label).toEqual(passkey.labelBeforeEdit);
     });
 
@@ -119,7 +119,7 @@ describe('PasskeySettingsComponent', () => {
         jest.spyOn(passkeySettingsApiService, 'deletePasskey').mockRejectedValue(new Error('Test Error'));
 
         await component.deletePasskey(mockPasskeys[0]);
-        expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
+        expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.delete');
     });
 
     it('should return undefined when no passkey is provided', () => {
