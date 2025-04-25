@@ -111,6 +111,7 @@ describe('Course Management Detail Component', () => {
         irisSettingsService = TestBed.inject(IrisSettingsService);
         profileService = TestBed.inject(ProfileService);
         eventManager = TestBed.inject(EventManager);
+        courseDataSubject.next({ course });
     });
 
     beforeEach(fakeAsync(() => {
