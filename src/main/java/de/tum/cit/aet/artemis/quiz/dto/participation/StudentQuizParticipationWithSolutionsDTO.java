@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -25,18 +26,18 @@ public record StudentQuizParticipationWithSolutionsDTO(@JsonUnwrapped StudentQui
      */
     public static StudentQuizParticipationWithSolutionsDTO of(final StudentParticipation studentParticipation) {
         Exercise participationExercise = studentParticipation.getExercise();
+        Set<Submission> submissions = studentParticipation.getSubmissions();
         if (!(participationExercise instanceof QuizExercise quizExercise)) {
-            // TODO: Figure out error handling here
+            // Return null if the exercise is not a QuizExercise
             return null;
         }
-        if (!studentParticipation.getSubmissions().stream().allMatch(submission -> submission instanceof QuizSubmission)) {
-            // TODO: Handle error if one or more submissions are not QuizSubmissions
-            return null;
-        }
-        Set<QuizSubmissionAfterEvaluationDTO> submissions = studentParticipation.getSubmissions().stream().map(submission -> (QuizSubmission) submission)
+        submissions = submissions.stream().filter(submission -> submission instanceof QuizSubmission).collect(Collectors.toSet());
+
+        Set<QuizSubmissionAfterEvaluationDTO> submissionsAfterEvaluation = studentParticipation.getSubmissions().stream().map(submission -> (QuizSubmission) submission)
                 .map(QuizSubmissionAfterEvaluationDTO::of).collect(Collectors.toSet());
-        // ToDo: Results is deprecated, will be removed after QuizView is removed
-        return new StudentQuizParticipationWithSolutionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithSolutionDTO.of(quizExercise), submissions);
+
+        return new StudentQuizParticipationWithSolutionsDTO(StudentQuizParticipationBaseDTO.of(studentParticipation), QuizExerciseWithSolutionDTO.of(quizExercise),
+                submissionsAfterEvaluation);
     }
 
 }
