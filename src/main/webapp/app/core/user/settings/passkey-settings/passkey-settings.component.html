@@ -2,7 +2,7 @@
 @if (currentUser()) {
     <div class="list-group d-block">
         <div class="list-group-item">
-            <dt>
+            <dt class="text-muted">
                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.infoText"></span>
                 <br />
                 <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.onlyOnePerAuthenticator"></span>
@@ -24,8 +24,8 @@
                             <tr>
                                 <td>
                                     @if (!passkey.isEditingLabel) {
-                                        <fa-icon [icon]="faKey" class="me-1 fw-bold text-dark fs-6" />
-                                        <span class="fw-bold text-dark fs-6">{{ passkey.label }}</span>
+                                        <fa-icon [icon]="faKey" class="me-1 fw-bold fs-6" />
+                                        <span class="fw-bold fs-6">{{ passkey.label }}</span>
                                         <br />
                                         <div class="text-muted">
                                             <span jhiTranslate="artemisApp.userSettings.passkeySettingsPage.created"></span>
