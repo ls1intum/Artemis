@@ -21,8 +21,8 @@ export class LtiCourseCardComponent {
 
     constructor() {
         effect(() => {
-            // const courseValue = this.course();
-            this.courseColor = this.ARTEMIS_DEFAULT_COLOR;
+            const courseValue = this.course();
+            this.courseColor = courseValue?.color || this.ARTEMIS_DEFAULT_COLOR;
             this.contentColor = getContrastingTextColor(this.courseColor);
         });
     }
