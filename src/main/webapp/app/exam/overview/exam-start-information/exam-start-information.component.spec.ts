@@ -54,6 +54,10 @@ describe('ExamStartInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamStartInformationComponent);
                 component = fixture.componentInstance;
+                TestBed.runInInjectionContext(() => {
+                    component.exam = input(exam);
+                    component.studentExam = input(studentExam);
+                });
             });
     });
 
@@ -62,99 +66,59 @@ describe('ExamStartInformationComponent', () => {
     });
 
     it('should initialize with the correct start date', () => {
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.startDate).toEqual(exam.startDate);
     });
 
     it('should return undefined if the exam is not set', () => {
         exam.startDate = undefined;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.startDate).toBeUndefined();
     });
 
     it('should initialize total points of the exam correctly', () => {
         exam.examMaxPoints = 120;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.totalPoints).toBe(120);
     });
 
     it('should give total working time in minutes', () => {
         exam.workingTime = 60 * 60 * 2;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.totalWorkingTimeInMinutes).toBe(120);
     });
 
     it('should initialize module number of the exam correctly', () => {
         exam.moduleNumber = 'IN18000';
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.moduleNumber).toBe('IN18000');
     });
 
     it('should initialize course name of the exam correctly', () => {
         exam.courseName = 'Software Engineering';
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.courseName).toBe('Software Engineering');
     });
 
     it('should initialize examiner of the exam correctly', () => {
         exam.examiner = 'Prof. Dr. Stephan Krusche';
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.examiner).toBe('Prof. Dr. Stephan Krusche');
     });
 
     it('should initialize number of exercises of the exam correctly', () => {
         exam.numberOfExercisesInExam = 10;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.numberOfExercisesInExam).toBe(10);
     });
 
     it('should initialize examined student of the exam correctly', () => {
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.examinedStudent).toBe('Test User');
     });
 
     it('should initialize start date of the exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
@@ -162,10 +126,6 @@ describe('ExamStartInformationComponent', () => {
     it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
         exam.testExam = true;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.startDate).toStrictEqual(examStartDate);
     });
@@ -173,10 +133,6 @@ describe('ExamStartInformationComponent', () => {
     it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
         exam.testExam = true;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         expect(component.endDate).toStrictEqual(examEndDate);
     });
