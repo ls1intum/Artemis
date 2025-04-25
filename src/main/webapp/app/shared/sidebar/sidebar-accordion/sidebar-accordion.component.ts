@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject, input } from '@angular/core';
 import { faChevronRight, faFile } from '@fortawesome/free-solid-svg-icons';
 import { Params } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -8,6 +8,8 @@ import { SidebarCardDirective } from '../directive/sidebar-card.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarItemShowAlways, SidebarTypes } from 'app/shared/types/sidebar';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
     selector: 'jhi-sidebar-accordion',
@@ -15,8 +17,10 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
     styleUrls: ['./sidebar-accordion.component.scss'],
     imports: [FaIconComponent, NgbCollapse, NgClass, SidebarCardDirective, TitleCasePipe, ArtemisTranslatePipe, SearchFilterPipe],
 })
-export class SidebarAccordionComponent implements OnChanges, OnInit {
+export class SidebarAccordionComponent implements OnChanges, OnInit, OnDestroy {
     protected readonly Object = Object;
+    private metisConversationService: MetisConversationService = inject(MetisConversationService);
+    private ngUnsubscribe = new Subject<void>();
 
     @Output() onUpdateSidebar = new EventEmitter<void>();
     @Input() searchValue: string;
@@ -39,6 +43,16 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
     ngOnInit() {
         this.expandGroupWithSelectedItem();
         this.setStoredCollapseState();
+        this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((c) => {
+            setTimeout(() => {
+                this.calculateUnreadMessagesOfGroup();
+            }, 0);
+        });
+        this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            setTimeout(() => {
+                this.calculateUnreadMessagesOfGroup();
+            }, 0);
+        });
     }
 
     ngOnChanges() {
@@ -47,7 +61,11 @@ export class SidebarAccordionComponent implements OnChanges, OnInit {
         } else {
             this.setStoredCollapseState();
         }
-        this.calculateUnreadMessagesOfGroup();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
     }
 
     setStoredCollapseState() {
