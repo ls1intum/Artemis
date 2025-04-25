@@ -34,7 +34,7 @@
             <div class="message-content">
                 <span class="flex-wrapper">
                     <span class="replied-text" jhiTranslate="artemisApp.metis.post.repliedToThread"></span>
-                    <a (click)="onTriggerNavigateToPost(originalPost!)" class="one-line">
+                    <a (click)="originalPost && onTriggerNavigateToPost(originalPost)" class="one-line">
                         {{ newContent }}
                     </a>
                 </span>
