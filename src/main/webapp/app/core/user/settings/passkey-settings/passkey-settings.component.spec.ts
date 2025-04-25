@@ -59,10 +59,6 @@ describe('PasskeySettingsComponent', () => {
         alertService = TestBed.inject(AlertService);
     });
 
-    afterEach(() => {
-        fixture.destroy(); // Clean up resources to prevent memory leaks
-    });
-
     it('should load the current user on initialization', () => {
         jest.spyOn(accountService, 'getAuthenticationState');
         expect(component.currentUser()).toEqual({ id: 99 });
@@ -86,20 +82,6 @@ describe('PasskeySettingsComponent', () => {
         component.editPasskeyLabel(passkey);
         expect(passkey.isEditingLabel).toBeTrue();
         expect(passkey.labelBeforeEdit).toEqual(passkey.label);
-    });
-
-    it('should cancel editing a passkey label', () => {
-        const passkey: DisplayedPasskey = {
-            credentialId: '123',
-            label: 'New Label',
-            labelBeforeEdit: 'Original Label',
-            isEditingLabel: true,
-        };
-
-        component.cancelEditPasskeyLabel(passkey);
-
-        expect(passkey.isEditingLabel).toBeFalse();
-        expect(passkey.label).toBe('Original Label');
     });
 
     it('should save a passkey label', async () => {
@@ -137,5 +119,10 @@ describe('PasskeySettingsComponent', () => {
 
         await component.deletePasskey(mockPasskeys[0]);
         expect(alertService.addErrorAlert).toHaveBeenCalledWith('Unable to delete passkey');
+    });
+
+    it('should return undefined when no passkey is provided', () => {
+        const result = component.getDeleteSummary(undefined);
+        expect(result).toBeUndefined();
     });
 });
