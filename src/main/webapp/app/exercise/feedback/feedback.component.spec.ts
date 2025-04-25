@@ -293,18 +293,6 @@ describe('FeedbackComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
-    // TODO this test case is no longer valid
-    // it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
-    //     comp.exerciseType = ExerciseType.PROGRAMMING;
-    //
-    //     comp.ngOnInit();
-    //
-    //     expect(buildlogsStub).toHaveBeenCalledOnce();
-    //     expect(buildlogsStub).toHaveBeenCalledWith(comp.result.submission!.participation!.id, comp.result.id);
-    //     expect(comp.buildLogs).toBeArrayOfSize(0);
-    //     expect(comp.isLoading).toBeFalse();
-    // });
-
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.submission = { ...comp.result.submission, buildFailed: true } as ProgrammingSubmission;

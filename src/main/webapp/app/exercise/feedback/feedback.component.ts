@@ -183,7 +183,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
      * Sets up the information related to the exercise.
      */
     private initializeExerciseInformation() {
-        this.exercise ??= this.result.submission?.participation?.exercise;
+        this.exercise = this.result.submission?.participation?.exercise;
         if (this.exercise) {
             this.course = getCourseFromExercise(this.exercise);
         }
@@ -230,8 +230,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
                         }
                     }
 
-                    // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
-                    //TODO I think we can only rely on buildFailed anymore as without a submission, we cannot get a participation
+                    // If the submission is marked with buildFailed, fetch the build logs.
                     if (
                         this.result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA &&
                         this.exerciseType === ExerciseType.PROGRAMMING &&

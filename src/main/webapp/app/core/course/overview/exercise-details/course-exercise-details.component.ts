@@ -407,9 +407,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             .sort(this.resultSortFunction);
         if (ratedResults) {
             const latestResult = ratedResults.last();
-            if (latestResult) {
-                // TODO do we need to set the submission here?
-            }
             this.latestRatedResult = latestResult;
         }
     }

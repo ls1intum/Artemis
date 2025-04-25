@@ -89,7 +89,6 @@ describe('ResultComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
-    // TODO do we need this anymore?
     it('should set results for programming exercise', () => {
         const submission1: Submission = { id: 1, participation: programmingParticipation };
         const result1: Result = { id: 1, submission: submission1, score: 1 };

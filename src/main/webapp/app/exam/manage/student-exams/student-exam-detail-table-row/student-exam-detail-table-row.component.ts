@@ -49,9 +49,9 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
             }
-            if (getAllResultsOfAllSubmissions(this.studentParticipation.submissions).length > 0) {
-                // TODO do we still need this?
-                //this.result = this.studentParticipation.results![0];
+            const allResults = getAllResultsOfAllSubmissions(this.studentParticipation.submissions);
+            if (allResults.length > 0) {
+                this.result = allResults[0];
             }
         }
         if (this.course() && this.course().id) {

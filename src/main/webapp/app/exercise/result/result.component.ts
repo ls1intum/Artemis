@@ -290,10 +290,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         if (this.exercise?.type === ExerciseType.TEXT || this.exercise?.type === ExerciseType.MODELING) {
             const courseId = getCourseFromExercise(this.exercise)?.id;
             const submissionId = result.submission?.id;
-            // In case of undefined result submission try the latest submission as this can happen before reloading the component
-            if (!submissionId) {
-                // TODO this must not happen. We can no longer reconnect the information
-            }
 
             const exerciseTypePath = this.exercise?.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
 

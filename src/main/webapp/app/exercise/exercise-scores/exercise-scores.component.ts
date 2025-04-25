@@ -207,7 +207,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
               ];
     }
 
-    // TODO understand and refactor this method
     private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
         this.participations = participationsResponse.body ?? [];
         this.participations.forEach((participation) => {

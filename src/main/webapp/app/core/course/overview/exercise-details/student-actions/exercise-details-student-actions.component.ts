@@ -210,8 +210,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 next: (resumedParticipation: StudentParticipation) => {
                     if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        // TODO do we have to set submission then?
-                        //resumedParticipation.results = participation ? participation.results : [];
                         const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
                         this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
                         this.updateParticipations();
