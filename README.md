@@ -292,6 +292,8 @@ The following universities are actively using Artemis or are currently evaluatin
    Main contact person: [Daniel Merkle](https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=451188465)
 * **Universität Ulm**  
    Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Technischen Hochschule Mittelhessen**  
+   Main contact person: [Christian Prause](https://www.thm.de/iem/christian-prause)
 * **Imperial College London**  
    Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
 * **University of South Australia**  
