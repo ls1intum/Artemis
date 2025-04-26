@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { GradingSystemComponent } from 'app/assessment/manage/grading-system/grading-system.component';
 import { BaseGradingSystemComponent } from 'app/assessment/manage/grading-system/base-grading-system/base-grading-system.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('Grading System Component', () => {

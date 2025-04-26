@@ -22,4 +22,4 @@ This feature is disabled by default. We can enable it by modifying the configura
 .. code:: yaml
 
    info:
-      text-assessment-analytics-enabled: true
+      textAssessmentAnalyticsEnabled: true

@@ -10,7 +10,7 @@ import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/at
 import { VideoUnitComponent } from 'app/lecture/overview/course-lectures/video-unit/video-unit.component';
 import { TextUnitComponent } from 'app/lecture/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
@@ -27,7 +27,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/manage/lecture-units/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -39,15 +39,13 @@ import { IrisCourseSettings } from 'app/iris/shared/entities/settings/iris-setti
 import { IrisLectureIngestionSubSettings } from 'app/iris/shared/entities/settings/iris-sub-settings.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
-    @Input()
-    courseId: number;
-    @Input()
-    competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input()
-    navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
+    @Input() courseId: number;
+    @Input() competencyLinks: CompetencyLectureUnitLink[] = [];
+    @Input() navigateTo: 'competencyManagement' | 'courseStatistics' = 'courseStatistics';
 }
 
 describe('LectureUnitManagementComponent', () => {
@@ -72,8 +70,8 @@ describe('LectureUnitManagementComponent', () => {
     let lecture: Lecture;
     let course: Course;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [MockDirective(NgbTooltip)],
             declarations: [
                 LectureUnitManagementComponent,
@@ -96,14 +94,15 @@ describe('LectureUnitManagementComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(ProfileService),
                 MockProvider(IrisSettingsService),
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
                             params: {
-                                subscribe: (fn: (value: Params) => void) =>
-                                    fn({
+                                subscribe: (fn_1: (value: Params) => void) =>
+                                    fn_1({
                                         lectureId: 1,
                                     }),
                             },
@@ -112,53 +111,45 @@ describe('LectureUnitManagementComponent', () => {
                     },
                 },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
-                lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
-                lectureService = TestBed.inject(LectureService);
-                lectureUnitService = TestBed.inject(LectureUnitService);
-                profileService = TestBed.inject(ProfileService);
-                irisSettingsService = TestBed.inject(IrisSettingsService);
-
-                findLectureSpy = jest.spyOn(lectureService, 'find');
-                findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
-                deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
-                updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
-                getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
-                getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
-
-                textUnit = new TextUnit();
-                textUnit.id = 0;
-                videoUnit = new VideoUnit();
-                videoUnit.id = 1;
-                exerciseUnit = new ExerciseUnit();
-                exerciseUnit.id = 2;
-                attachmentUnit = new AttachmentUnit();
-                attachmentUnit.id = 3;
-                course = new Course();
-                course.id = 99;
-
-                lecture = new Lecture();
-                lecture.id = 0;
-                lecture.course = course;
-                lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
-
-                const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
-                findLectureSpy.mockReturnValue(returnValue);
-                findLectureWithDetailsSpy.mockReturnValue(returnValue);
-                updateOrderSpy.mockReturnValue(returnValue);
-                deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
-                const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
-                getProfileInfo.mockReturnValue(of(profileInfo));
-                const irisCourseSettings = new IrisCourseSettings();
-                irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-                irisCourseSettings.irisLectureIngestionSettings.enabled = true;
-                getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
-
-                lectureUnitManagementComponentFixture.detectChanges();
-            });
+        }).compileComponents();
+        lectureUnitManagementComponentFixture = TestBed.createComponent(LectureUnitManagementComponent);
+        lectureUnitManagementComponent = lectureUnitManagementComponentFixture.componentInstance;
+        lectureService = TestBed.inject(LectureService);
+        lectureUnitService = TestBed.inject(LectureUnitService);
+        profileService = TestBed.inject(ProfileService);
+        irisSettingsService = TestBed.inject(IrisSettingsService);
+        findLectureSpy = jest.spyOn(lectureService, 'find');
+        findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
+        deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
+        updateOrderSpy = jest.spyOn(lectureUnitService, 'updateOrder');
+        getProfileInfo = jest.spyOn(profileService, 'getProfileInfo');
+        getCombinedCourseSettings = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings');
+        textUnit = new TextUnit();
+        textUnit.id = 0;
+        videoUnit = new VideoUnit();
+        videoUnit.id = 1;
+        exerciseUnit = new ExerciseUnit();
+        exerciseUnit.id = 2;
+        attachmentUnit = new AttachmentUnit();
+        attachmentUnit.id = 3;
+        course = new Course();
+        course.id = 99;
+        lecture = new Lecture();
+        lecture.id = 0;
+        lecture.course = course;
+        lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
+        const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
+        findLectureSpy.mockReturnValue(returnValue);
+        findLectureWithDetailsSpy.mockReturnValue(returnValue);
+        updateOrderSpy.mockReturnValue(returnValue);
+        deleteLectureUnitSpy.mockReturnValue(of(new HttpResponse({ body: videoUnit, status: 200 })));
+        const profileInfo = { activeProfiles: [PROFILE_IRIS] } as ProfileInfo;
+        getProfileInfo.mockReturnValue(profileInfo);
+        const irisCourseSettings = new IrisCourseSettings();
+        irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
+        irisCourseSettings.irisLectureIngestionSettings.enabled = true;
+        getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
+        lectureUnitManagementComponentFixture.detectChanges();
     });
 
     it('should reorder', () => {

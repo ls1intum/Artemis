@@ -69,7 +69,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     isCollapsed = false;
@@ -77,10 +76,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     numberOfSavedExercises: number = 0;
 
     ngOnInit(): void {
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo?.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
 
         if (!this.examTimeLineView) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
@@ -119,7 +116,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 

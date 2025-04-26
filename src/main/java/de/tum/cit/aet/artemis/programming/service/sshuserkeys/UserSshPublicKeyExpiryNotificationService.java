@@ -43,7 +43,6 @@ public class UserSshPublicKeyExpiryNotificationService {
     @Scheduled(cron = "0 0 7 * * *")
     public void sendKeyExpirationNotifications() {
         notifyUserOnExpiredKey();
-        notifyUserOnUpcomingKeyExpiry();
     }
 
     /**
@@ -51,13 +50,6 @@ public class UserSshPublicKeyExpiryNotificationService {
      */
     public void notifyUserOnExpiredKey() {
         notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), singleUserNotificationService::notifyUserAboutExpiredSshKey);
-    }
-
-    /**
-     * Notifies the user one week in advance about the upcoming expiry
-     */
-    public void notifyUserOnUpcomingKeyExpiry() {
-        notifyUsersForKeyExpiryWindow(now().plusDays(6), now().plusDays(7), singleUserNotificationService::notifyUserAboutSoonExpiringSshKey);
     }
 
     /**

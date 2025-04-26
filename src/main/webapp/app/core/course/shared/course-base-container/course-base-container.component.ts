@@ -11,13 +11,14 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    effect,
     inject,
     signal,
 } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { filter, takeUntil } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 
 import { BarControlConfiguration } from 'app/shared/tab-bar/tab-bar';
@@ -34,6 +35,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { CourseAccessStorageService } from '../services/course-access-storage.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { Course, isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 /**
  * Base class that contains common functionality for course container components.
@@ -58,7 +60,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected closeSidebarEventSubscription: Subscription;
     protected openSidebarEventSubscription: Subscription;
     protected subscription?: Subscription;
-    protected profileSubscription?: Subscription;
     protected ltiSubscription: Subscription;
     protected loadCourseSubscription?: Subscription;
     dashboardSubscription: Subscription;
@@ -69,18 +70,25 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     refreshingCourse = signal<boolean>(false);
     hasUnreadMessages = signal<boolean>(false);
     communicationRouteLoaded = signal<boolean>(false);
-    atlasEnabled = signal<boolean>(false);
-    irisEnabled = signal<boolean>(false);
-    ltiEnabled = signal<boolean>(false);
-    localCIActive = signal<boolean>(false);
-    isProduction = signal<boolean>(true);
-    isTestServer = signal<boolean>(false);
+
+    atlasEnabled: boolean = false;
+    irisEnabled: boolean = false;
+    ltiEnabled: boolean = false;
+    localCIActive: boolean = false;
+    isProduction: boolean = true;
+    isTestServer: boolean = false;
+
     pageTitle = signal<string>('');
     isNavbarCollapsed = signal<boolean>(false);
     isSidebarCollapsed = signal<boolean>(false);
     isExamStarted = signal<boolean>(false);
     isShownViaLti = signal<boolean>(false);
     hasSidebar = signal<boolean>(false);
+
+    private navigationEnd$ = this.router.events.pipe(filter((event) => event instanceof NavigationEnd));
+
+    // Create a signal from the observable
+    readonly navigationEnd = toSignal(this.navigationEnd$);
 
     sidebarItems = signal<SidebarItem[]>([]);
     readonly MIN_DISPLAYED_COURSES: number = 6;
@@ -100,6 +108,18 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly CachingStrategy = CachingStrategy;
 
+    constructor() {
+        // Use effect to react to navigation changes
+        effect(() => {
+            // This effect will run whenever navigationEnd signal changes
+            const navEvent = this.navigationEnd();
+
+            if (navEvent) {
+                this.handleNavigationEndActions();
+            }
+        });
+    }
+
     async ngOnInit() {
         this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
             this.isSidebarCollapsed.set(true);
@@ -109,16 +129,12 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
             this.isSidebarCollapsed.set(false);
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.isProduction.set(profileInfo?.inProduction);
-                this.isTestServer.set(profileInfo.testServer ?? false);
-                this.atlasEnabled.set(profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_ATLAS));
-                this.irisEnabled.set(profileInfo.activeProfiles.includes(PROFILE_IRIS));
-                this.ltiEnabled.set(profileInfo.activeProfiles.includes(PROFILE_LTI));
-                this.localCIActive.set(profileInfo?.activeProfiles.includes(PROFILE_LOCALCI));
-            }
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
+        this.atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
+        this.localCIActive = this.profileService.isProfileActive(PROFILE_LOCALCI);
 
         this.getCollapseStateFromStorage();
         const storedCourse = this.courseStorageService.getCourse(this.courseId());
@@ -149,6 +165,8 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
 
     abstract handleCourseIdChange(courseId: number): void;
 
+    protected abstract handleNavigationEndActions(): void;
+
     protected abstract getSidebarItems(): SidebarItem[];
 
     protected abstract getHasSidebar(): boolean;
@@ -172,7 +190,6 @@ export abstract class BaseCourseContainerComponent implements OnInit, OnDestroy,
         this.controlsSubscription?.unsubscribe();
         this.vcSubscription?.unsubscribe();
         this.subscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
         this.closeSidebarEventSubscription?.unsubscribe();
         this.openSidebarEventSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();

@@ -52,17 +52,14 @@ export class RegisterComponent implements OnInit, AfterViewInit {
     }
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
-                this.allowedEmailPattern = profileInfo.allowedEmailPattern;
-                this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
-                if (this.allowedEmailPattern) {
-                    const jsRegexPattern = this.allowedEmailPattern;
-                    this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(jsRegexPattern)]);
-                }
-            }
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        this.isRegistrationEnabled = profileInfo.registrationEnabled || false;
+        this.allowedEmailPattern = profileInfo.allowedEmailPattern;
+        this.allowedEmailPatternReadable = profileInfo.allowedEmailPatternReadable;
+        if (this.allowedEmailPattern) {
+            const jsRegexPattern = this.allowedEmailPattern;
+            this.registerForm.get('email')!.setValidators([Validators.required, Validators.minLength(4), Validators.maxLength(100), Validators.pattern(jsRegexPattern)]);
+        }
         this.initializeForm();
     }
 

@@ -20,10 +20,10 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
 
 describe('Exam Import Component', () => {
@@ -73,8 +73,8 @@ describe('Exam Import Component', () => {
                 fixture = TestBed.createComponent(ExamImportComponent);
                 component = fixture.componentInstance;
                 activeModal = TestBed.inject(NgbActiveModal);
-                examManagementService = fixture.debugElement.injector.get(ExamManagementService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                examManagementService = TestBed.inject(ExamManagementService);
+                alertService = TestBed.inject(AlertService);
 
                 profileService = TestBed.inject(ProfileService);
 

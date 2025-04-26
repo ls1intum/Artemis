@@ -1,0 +1,35 @@
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title">
+            <span jhiTranslate="entity.action.addExercise"></span>
+        </h5>
+        <button type="button" class="btn-close" aria-label="Close" (click)="cancel()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="d-flex flex-column gap-2">
+            @for (exercise of exerciseTypes; track exercise.type) {
+                <div class="row align-items-center g-0">
+                    <div class="col-4 pe-0">
+                        <strong jhiTranslate="{{ exercise.translationKey }}"></strong>
+                    </div>
+                    <div class="col-4">
+                        <jhi-exercise-create-button
+                            [course]="course"
+                            [translationKey]="'global.generic.create'"
+                            [exerciseType]="exercise.type"
+                            [featureToggle]="exercise.featureToggle"
+                        />
+                    </div>
+                    <div class="col-4">
+                        <jhi-exercise-import-button
+                            [course]="course"
+                            [translationKey]="'entity.action.to-import'"
+                            [exerciseType]="exercise.type"
+                            [featureToggle]="exercise.featureToggle"
+                        />
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

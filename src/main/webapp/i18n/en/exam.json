@@ -655,7 +655,7 @@
                     "exportResults": "Export the exam results",
                     "editWorkingTime": "Edit the exam duration",
                     "createAnnouncement": "Create an announcement",
-                    "suspiciousBehavior": "Check for suspicious behaviour"
+                    "suspiciousBehavior": "Check for suspicious behavior"
                 },
                 "descriptionItem": {
                     "register": "You can register students for the exam in three different ways: via a CSV file, manually, or by importing all students registered in the course.",
@@ -672,7 +672,7 @@
                     "exportResults": "Exports the exam results as a CSV file.",
                     "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
-                    "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."
+                    "suspiciousBehavior": "Check for suspicious behavior and plagiarism in the suspicious behavior dashboard."
                 },
                 "textitems": {
                     "noDeactivatedExerciseTypes": {

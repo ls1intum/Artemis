@@ -9,6 +9,7 @@ import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { AnswerPostComponent } from '../answer-post/answer-post.component';
 import { ArtemisTranslatePipe } from '../../shared/pipes/artemis-translate.pipe';
+import { NgClass } from '@angular/common';
 
 interface PostGroup {
     author: User | undefined;
@@ -18,7 +19,7 @@ interface PostGroup {
 @Component({
     selector: 'jhi-posting-footer',
     templateUrl: './posting-footer.component.html',
-    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe],
+    imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
 export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
     lastReadDate = input<dayjs.Dayjs | undefined>();

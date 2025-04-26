@@ -11,6 +11,17 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/test.yml'
+    - '.husky/**'
+    - 'docker/**'
+    - '.coderabbit.yaml'
+    - '.editorconfig'
+    - '.gitattributes'
+    - 'artemis-server-cli'
+    - 'check_client_override_version_updates.sh'
+    - 'check_modules.sh'
+    - 'CITATION.cff'
+    - 'proxy.conf.mjs'
+    - 'update_version.sh'
   push:
     branches:
     - develop
@@ -26,6 +37,17 @@ on:
     - 'docs/**'
     - '.github/**'
     - '!.github/workflows/test.yml'
+    - '.husky/**'
+    - 'docker/**'
+    - '.coderabbit.yaml'
+    - '.editorconfig'
+    - '.gitattributes'
+    - 'artemis-server-cli'
+    - 'check_client_override_version_updates.sh'
+    - 'check_modules.sh'
+    - 'CITATION.cff'
+    - 'proxy.conf.mjs'
+    - 'update_version.sh'
   release:
     types:
     - created

@@ -1,16 +1,14 @@
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { generateExampleGroupChatDTO } from '../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleGroupChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { TranslateService } from '@ngx-translate/core';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { provideHttpClient } from '@angular/common/http';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('GroupChatService', () => {
     let service: GroupChatService;
@@ -24,7 +22,6 @@ describe('GroupChatService', () => {
                 provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: NotificationService, useClass: MockNotificationService },
             ],
         });
         service = TestBed.inject(GroupChatService);

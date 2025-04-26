@@ -8,12 +8,12 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExerciseResetOptions, ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockProvider } from 'ng-mocks';
 
 describe('ProgrammingExerciseResetDialogComponent', () => {
@@ -43,7 +43,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
         console.error = () => false;
         fixture = TestBed.createComponent(ProgrammingExerciseResetDialogComponent);
         comp = fixture.componentInstance;
-        programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         // stubs
         jest.spyOn(programmingExerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<ProgrammingExercise>));
@@ -56,7 +56,7 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
     });
 
     it('should close the modal dialog', () => {
-        const activeModal = fixture.debugElement.injector.get(NgbActiveModal);
+        const activeModal = TestBed.inject(NgbActiveModal);
         jest.spyOn(activeModal, 'dismiss').mockImplementation();
 
         comp.clear();
@@ -84,8 +84,8 @@ describe('ProgrammingExerciseResetDialogComponent', () => {
 
     describe('handleResetResponse', () => {
         it('should show the correct success message and dismiss the active modal', () => {
-            const activeModal = fixture.debugElement.injector.get(NgbActiveModal);
-            const alertService = fixture.debugElement.injector.get(AlertService);
+            const activeModal = TestBed.inject(NgbActiveModal);
+            const alertService = TestBed.inject(AlertService);
             jest.spyOn(activeModal, 'dismiss').mockImplementation();
             jest.spyOn(alertService, 'success').mockImplementation();
 

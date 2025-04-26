@@ -3,7 +3,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { ButtonComponent } from '../button/button.component';
+import { ButtonComponent, ButtonType } from '../button/button.component';
 
 @Component({
     selector: 'jhi-confirm-button',
@@ -18,6 +18,7 @@ export class ConfirmAutofocusButtonComponent {
     @Input() tooltip: string;
     @Input() disabled = false;
     @Input() isLoading = false;
+    @Input() btnType = ButtonType.PRIMARY;
 
     @Input() confirmationTitle: string;
     @Input() confirmationTitleTranslationParams?: Record<string, string>;

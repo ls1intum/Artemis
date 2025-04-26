@@ -8,7 +8,7 @@ import { TeamsImportButtonComponent } from 'app/exercise/team/teams-import-dialo
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { mockExercise, mockSourceTeams, mockTeams } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-team.service';
+import { mockExercise, mockSourceTeams, mockTeams } from 'test/helpers/mocks/service/mock-team.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 describe('TeamsImportButtonComponent', () => {
     let comp: TeamsImportButtonComponent;

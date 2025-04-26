@@ -5,13 +5,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { FileUploadExamSubmissionComponent } from 'app/exam/overview/exercises/file-upload/file-upload-exam-submission.component';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { stringifyCircular } from 'app/shared/util/utils';
-import { createFileUploadSubmission } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-submission.service';
+import { createFileUploadSubmission } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { AlertService } from 'app/shared/service/alert.service';
 import { FileUploadSubmissionService } from 'app/fileupload/overview/file-upload-submission.service';
@@ -21,7 +21,7 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/overview/exerci
 import { TranslateDirective } from '../../../../shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 describe('FileUploadExamSubmissionComponent', () => {
@@ -70,7 +70,7 @@ describe('FileUploadExamSubmissionComponent', () => {
                 fixture = TestBed.createComponent(FileUploadExamSubmissionComponent);
                 comp = fixture.componentInstance;
                 alertService = TestBed.inject(AlertService);
-                fileUploadSubmissionService = fixture.debugElement.injector.get(FileUploadSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
             });
     });
 

@@ -61,7 +61,6 @@ describe('CourseSidebarComponent', () => {
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
-            guidedTour: true,
             hidden: false,
         },
         {

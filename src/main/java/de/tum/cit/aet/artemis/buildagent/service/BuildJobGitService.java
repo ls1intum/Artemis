@@ -45,7 +45,24 @@ public class BuildJobGitService extends AbstractGitService {
     @Value("${artemis.version-control.build-agent-git-password}")
     private String buildAgentGitPassword;
 
+    @Value("${artemis.version-control.build-agent-use-ssh:false}")
+    private boolean useSshForBuildAgent;
+
     private CredentialsProvider credentialsProvider;
+
+    /**
+     * Determines whether to use SSH.
+     * <p>
+     * This method overrides the default behavior of {@code AbstractGitService} and returns the configuration flag
+     * {@code useSshForBuildAgent} to indicate if SSH should be used.
+     * </p>
+     *
+     * @return {@code true} if SSH should be used; {@code false} otherwise.
+     */
+    @Override
+    protected boolean useSsh() {
+        return useSshForBuildAgent;
+    }
 
     /**
      * initialize the BuildJobGitService, in particular which authentication mechanism should be used
@@ -57,7 +74,13 @@ public class BuildJobGitService extends AbstractGitService {
     @PostConstruct
     public void init() {
         if (useSsh()) {
-            log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories");
+            log.info("BuildJobGitService will use ssh keys as authentication method to interact with remote git repositories.");
+            if (sshUrlTemplate.isEmpty()) {
+                throw new RuntimeException("No SSH url template was set but should use SSH for build agent authentication.");
+            }
+            if (gitSshPrivateKeyPath.isEmpty()) {
+                throw new RuntimeException("No SSH private key folder was set but should use SSH for build agent authentication.");
+            }
             configureSsh();
         }
     }

@@ -1,20 +1,21 @@
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementComponent } from 'app/core/course/manage/course-management/course-management.component';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseManagementOverviewStatisticsDto } from 'app/core/course/manage/overview/course-management-overview-statistics-dto.model';
 import { CourseManagementOverviewExerciseStatisticsDTO } from 'app/core/course/manage/overview/course-management-overview-exercise-statistics-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
@@ -24,7 +25,6 @@ describe('CourseManagementComponent', () => {
     let fixture: ComponentFixture<CourseManagementComponent>;
     let component: CourseManagementComponent;
     let service: CourseManagementService;
-    let guidedTourService: GuidedTourService;
     let courseAccessStorageService: CourseAccessStorageService;
 
     const pastExercise = {
@@ -89,6 +89,7 @@ describe('CourseManagementComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(EventManager),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -99,7 +100,6 @@ describe('CourseManagementComponent', () => {
                 fixture = TestBed.createComponent(CourseManagementComponent);
                 component = fixture.componentInstance;
                 service = TestBed.inject(CourseManagementService);
-                guidedTourService = TestBed.inject(GuidedTourService);
                 courseAccessStorageService = TestBed.inject(CourseAccessStorageService);
             });
     });
@@ -113,7 +113,6 @@ describe('CourseManagementComponent', () => {
         jest.spyOn(service, 'getExercisesForManagementOverview').mockReturnValue(of(new HttpResponse({ body: [courseWithExercises187, courseWithExercises188] })));
         jest.spyOn(service, 'getStatsForManagementOverview').mockReturnValue(of(new HttpResponse({ body: [] })));
         jest.spyOn(service, 'getWithUserStats').mockReturnValue(of(new HttpResponse({ body: [course187, course188] })));
-        jest.spyOn(guidedTourService, 'enableTourForCourseOverview').mockReturnValue(course187);
 
         fixture.detectChanges();
         expect(component).not.toBeNull();

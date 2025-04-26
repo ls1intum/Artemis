@@ -485,7 +485,13 @@ public class FileResource {
                 .toList();
 
         lectureUnitService.setCompletedForAllLectureUnits(lectureAttachments, user, true);
-        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> FilePathService.actualPathForPublicPathOrThrow(URI.create(unit.getAttachment().getLink()))).toList();
+
+        // Modified to use studentVersion if available
+        List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
+            Attachment attachment = unit.getAttachment();
+            String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
+            return FilePathService.actualPathForPublicPathOrThrow(URI.create(filePath));
+        }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, lectureRepository.getLectureTitle(lectureId));
         if (file.isEmpty()) {
@@ -504,9 +510,9 @@ public class FileResource {
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/*")
-    @EnforceAtLeastStudent
+    @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId) {
-        log.debug("REST request to get the file for attachment unit {} for students", attachmentUnitId);
+        log.debug("REST request to get the file for attachment unit {} for tutors", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
@@ -576,6 +582,11 @@ public class FileResource {
         checkAttachmentAuthorizationOrThrow(course, attachment);
 
         Slide slide = slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, Integer.parseInt(slideNumber));
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
         String directoryPath = slide.getSlideImagePath();
 
         // Use regular expression to match and extract the file name with ".png" format
@@ -583,14 +594,68 @@ public class FileResource {
         Matcher matcher = pattern.matcher(directoryPath);
 
         if (matcher.matches()) {
-            String fileName = matcher.group(1);
-            return buildFileResponse(
-                    FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", String.valueOf(slide.getSlideNumber()))), fileName,
-                    true);
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
         }
         else {
             throw new EntityNotFoundException("Slide", slideNumber);
         }
+    }
+
+    /**
+     * GET files/slides/{slideId} : Get the lecture unit attachment slide by slide id
+     *
+     * @param slideId the id of the slide that wanted to be retrieved
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/slides/{slideId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getSlideById(@PathVariable Long slideId) {
+        log.debug("REST request to get the slide : {}", slideId);
+
+        Slide slide = slideRepository.findByIdElseThrow(slideId);
+
+        if (slide.getHidden() != null) {
+            throw new AccessForbiddenException("Slide is hidden");
+        }
+
+        String directoryPath = slide.getSlideImagePath();
+
+        // Use regular expression to match and extract the file name with ".png" format
+        Pattern pattern = Pattern.compile(".*/([^/]+\\.png)$");
+        Matcher matcher = pattern.matcher(directoryPath);
+
+        if (matcher.matches()) {
+            return buildFileResponse(getActualPathFromPublicPathString(slide.getSlideImagePath()), false);
+        }
+        else {
+            throw new EntityNotFoundException("Slide", slideId);
+        }
+    }
+
+    /**
+     * GET files/attachments/attachment-unit/{attachmentUnitId}/student/* : Get the student version of attachment unit by attachment unit id
+     *
+     * @param attachmentUnitId ID of the attachment unit, the student version belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/student/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getAttachmentUnitStudentVersion(@PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get the student version of attachment Unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+        checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        // check if hidden link is available in the attachment
+        String studentVersion = attachment.getStudentVersion();
+        if (studentVersion == null) {
+            return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+        }
+
+        String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
+
+        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**

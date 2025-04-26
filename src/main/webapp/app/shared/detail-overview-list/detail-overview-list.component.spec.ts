@@ -2,17 +2,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { UMLModel } from '@ls1intum/apollon';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Router } from '@angular/router';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -46,8 +46,8 @@ describe('DetailOverviewList', () => {
         })
             .compileComponents()
             .then(() => {
-                modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
-                alertService = fixture.debugElement.injector.get(AlertService);
+                modelingService = TestBed.inject(ModelingExerciseService);
+                alertService = TestBed.inject(AlertService);
             });
 
         fixture = TestBed.createComponent(DetailOverviewListComponent);
@@ -60,9 +60,6 @@ describe('DetailOverviewList', () => {
         expect(component.headlines).toStrictEqual([{ id: 'headline-1', translationKey: 'headline.1' }]);
         expect(component.headlinesRecord).toStrictEqual({ 'headline.1': 'headline-1' });
         expect(DetailOverviewListComponent).not.toBeNull();
-
-        component.ngOnDestroy();
-        expect(component.profileSubscription?.closed).toBeTruthy();
     });
 
     it('should escape all falsy values', () => {

@@ -6,7 +6,7 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { TextAssessmentEvent } from 'app/text/shared/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { Course } from 'app/core/course/shared/entities/course.model';

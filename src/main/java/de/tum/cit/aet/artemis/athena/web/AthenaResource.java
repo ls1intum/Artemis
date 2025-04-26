@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.athena.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
 import java.io.IOException;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -61,9 +63,6 @@ public class AthenaResource {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaResource.class);
 
-    @Value("${artemis.athena.secret}")
-    private String athenaSecret;
-
     private final CourseRepository courseRepository;
 
     private final Optional<TextRepositoryApi> textRepositoryApi;
@@ -86,14 +85,16 @@ public class AthenaResource {
 
     private final AthenaModuleService athenaModuleService;
 
+    private final byte[] athenaSecretHash;
+
     /**
      * The AthenaResource provides an endpoint for the client to fetch feedback suggestions from Athena.
      */
     public AthenaResource(CourseRepository courseRepository, Optional<TextRepositoryApi> textRepositoryApi, Optional<TextSubmissionApi> textSubmissionApi,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             ModelingExerciseRepository modelingExerciseRepository, ModelingSubmissionRepository modelingSubmissionRepository, AuthorizationCheckService authCheckService,
-            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService,
-            AthenaModuleService athenaModuleService) {
+            AthenaFeedbackSuggestionsService athenaFeedbackSuggestionsService, AthenaRepositoryExportService athenaRepositoryExportService, AthenaModuleService athenaModuleService,
+            @Value("${artemis.athena.secret}") String athenaSecret) {
         this.courseRepository = courseRepository;
         this.textRepositoryApi = textRepositoryApi;
         this.textSubmissionApi = textSubmissionApi;
@@ -105,6 +106,7 @@ public class AthenaResource {
         this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
         this.athenaRepositoryExportService = athenaRepositoryExportService;
         this.athenaModuleService = athenaModuleService;
+        this.athenaSecretHash = hashSha256(athenaSecret);
     }
 
     @FunctionalInterface
@@ -239,10 +241,10 @@ public class AthenaResource {
     /**
      * Check if the given auth header is valid for Athena, otherwise throw an exception.
      *
-     * @param auth the auth header value to check
+     * @param incomingSecret the auth header value to check
      */
-    private void checkAthenaSecret(String auth) {
-        if (!auth.equals(athenaSecret)) {
+    private void checkAthenaSecret(String incomingSecret) {
+        if (!MessageDigest.isEqual(athenaSecretHash, hashSha256(incomingSecret))) {
             log.error("Athena secret does not match");
             throw new AccessForbiddenException("Athena secret does not match");
         }

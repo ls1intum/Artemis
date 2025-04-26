@@ -769,6 +769,8 @@ MacOS setup
 #. Make sure to enable "Allow the default Docker socket to be used (requires password)" in the Docker Desktop settings.
    This can be found under Settings > Advanced in Docker Desktop.
 
+#. Define the operator name ``INFO_OPERATORNAME='Some Artemis Dev'`` in the file ``docker/artemis/config/node1.env``.
+
 #. Start the docker containers by running the following command:
 
     .. code:: bash

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ExternalCloningService } from 'app/programming/shared/services/external-cloning.service';
@@ -10,12 +10,11 @@ import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/ent
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
-import { Subscription } from 'rxjs';
 import { faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
-import { MODULE_FEATURE_TEXT, PROFILE_ATHENA, PROFILE_LOCALVC } from 'app/app.constants';
+import { MODULE_FEATURE_TEXT, PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ButtonType } from 'app/shared/components/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
@@ -30,6 +29,7 @@ import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exerc
 import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     imports: [
@@ -49,18 +49,22 @@ import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
     templateUrl: './exercise-details-student-actions.component.html',
     styleUrls: ['../../course-overview/course-overview.scss'],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges, OnDestroy {
+export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faUsers = faUsers;
+    protected readonly faEye = faEye;
+    protected readonly faPlayCircle = faPlayCircle;
+    protected readonly faRedo = faRedo;
+
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
+
     private alertService = inject(AlertService);
     private courseExerciseService = inject(CourseExerciseService);
     private participationService = inject(ParticipationService);
     private profileService = inject(ProfileService);
-
-    private profileSubscription: Subscription | null;
-
-    readonly FeatureToggle = FeatureToggle;
-    readonly ExerciseType = ExerciseType;
-    readonly InitializationState = InitializationState;
-    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -83,39 +87,24 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     textExerciseEnabled = false;
-    localVCEnabled = true;
     athenaEnabled = false;
     routerLink: string;
 
-    // Icons
-    readonly faFolderOpen = faFolderOpen;
-    readonly faUsers = faUsers;
-    readonly faEye = faEye;
-    readonly faPlayCircle = faPlayCircle;
-    readonly faRedo = faRedo;
-
     ngOnInit(): void {
+        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+        this.textExerciseEnabled = this.profileService.isProfileActive(MODULE_FEATURE_TEXT);
+        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
+
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.programmingExercise = this.exercise as ProgrammingExercise;
-            this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
-                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-                this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
-            });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-            });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }
@@ -129,10 +118,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     ngOnChanges() {
         this.updateParticipations();
         this.isTeamAvailable = !!(this.exercise.teamMode && this.exercise.studentAssignedTeamIdComputed && this.exercise.studentAssignedTeamId);
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
     }
 
     receiveNewParticipation(newParticipation: StudentParticipation) {
@@ -198,8 +183,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                         }
                     }
                 },
-                error: () => {
-                    this.alertService.error('artemisApp.exercise.startError');
+                error: (err: HttpErrorResponse) => {
+                    const responseCodesWithErrorKeySentByServer = [403];
+                    if (!responseCodesWithErrorKeySentByServer.includes(err.status)) {
+                        this.alertService.error('artemisApp.exercise.startError');
+                    }
                 },
             });
     }

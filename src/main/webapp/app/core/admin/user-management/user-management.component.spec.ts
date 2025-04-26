@@ -9,29 +9,29 @@ import {
     UserStorageKey,
 } from 'app/core/admin/user-management/user-management.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
-describe('UserManagementComponent', () => {
+describe('User Management Component', () => {
     let comp: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
     let userService: AdminUserService;
@@ -114,7 +114,9 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ ldap: 'false' } as any));
+        jest.spyOn(profileService, 'isProfileActive').mockImplementation((profile: string) => {
+            return profile === 'ldap';
+        });
 
         comp.ngOnInit();
         // 1 sec of pause, because of the debounce time
@@ -142,7 +144,7 @@ describe('UserManagementComponent', () => {
                     ),
                 );
 
-                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
                 comp.ngOnInit();
 
@@ -171,13 +173,13 @@ describe('UserManagementComponent', () => {
             ),
         );
 
-        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
         comp.ngOnInit();
         tick(1000);
 
         expect(identitySpy).toHaveBeenCalledOnce();
-        expect(profileSpy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledTimes(2);
         expect(comp.currentAccount).toEqual({ id: 99, login: 'admin' });
 
         expect(comp.page).toBe(1);
@@ -239,13 +241,13 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
-        const spy = jest.spyOn(comp, 'initFilters');
-        const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+        const initFiltersSpy = jest.spyOn(comp, 'initFilters');
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(new ProfileInfo());
 
         comp.ngOnInit();
 
-        expect(spy).toHaveBeenCalledOnce();
-        expect(initSpy).toHaveBeenCalledOnce();
+        expect(initFiltersSpy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledTimes(2);
         expect(userService.query).toHaveBeenCalledTimes(0);
     });
 

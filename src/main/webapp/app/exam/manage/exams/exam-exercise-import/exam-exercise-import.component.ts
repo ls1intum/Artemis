@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { faCheckDouble, faFont } from '@fortawesome/free-solid-svg-icons';
@@ -12,7 +12,6 @@ import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { MODULE_FEATURE_TEXT } from 'app/app.constants';
-import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -20,9 +19,8 @@ import { Subscription } from 'rxjs';
     styleUrls: ['./exam-exercise-import.component.scss'],
     imports: [TranslateDirective, HelpIconComponent, FormsModule, NgClass, FaIconComponent, DifficultyBadgeComponent],
 })
-export class ExamExerciseImportComponent implements OnInit, OnDestroy {
+export class ExamExerciseImportComponent implements OnInit {
     private profileService = inject(ProfileService);
-    private profileSubscription: Subscription | null;
 
     exam = input.required<Exam>();
     importInSameCourse = input(false);
@@ -57,19 +55,13 @@ export class ExamExerciseImportComponent implements OnInit, OnDestroy {
     getExerciseIcon = getIcon;
 
     ngOnInit(): void {
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.textExerciseEnabled = profileInfo.activeModuleFeatures.includes(MODULE_FEATURE_TEXT);
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
 
-            this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
-            // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
-            if (this.importInSameCourse()) {
-                this.initializeTitleAndShortNameMap();
-            }
-        });
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
+        this.initializeSelectedExercisesAndContainsProgrammingExercisesMaps();
+        // If the exam is imported into the same course, the title + shortName of Programming Exercises must be changed
+        if (this.importInSameCourse()) {
+            this.initializeTitleAndShortNameMap();
+        }
     }
 
     /**
@@ -340,9 +332,6 @@ export class ExamExerciseImportComponent implements OnInit, OnDestroy {
     }
 
     protected isExerciseTypeEnabled(type: ExerciseType | undefined): boolean {
-        if (type === ExerciseType.TEXT && !this.textExerciseEnabled) {
-            return false;
-        }
-        return true;
+        return !(type === ExerciseType.TEXT && !this.textExerciseEnabled);
     }
 }

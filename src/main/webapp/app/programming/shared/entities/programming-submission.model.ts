@@ -32,5 +32,4 @@ export class CommitInfo {
     author?: string;
     authorEmail?: string;
     result?: Result;
-    commitUrl?: string;
 }

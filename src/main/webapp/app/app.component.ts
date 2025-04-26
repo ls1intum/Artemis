@@ -12,9 +12,7 @@ import { AlertOverlayComponent } from 'app/core/alert/alert-overlay.component';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { CourseNotificationPopupOverlayComponent } from 'app/communication/course-notification/course-notification-popup-overlay/course-notification-popup-overlay.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
@@ -22,20 +20,11 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
     selector: 'jhi-app',
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.scss'],
-    imports: [
-        AlertOverlayComponent,
-        CdkScrollable,
-        NgClass,
-        NgStyle,
-        PageRibbonComponent,
-        RouterOutlet,
-        NotificationPopupComponent,
-        FooterComponent,
-        CourseNotificationPopupOverlayComponent,
-        FeatureToggleHideDirective,
-    ],
+    imports: [AlertOverlayComponent, CdkScrollable, NgClass, NgStyle, PageRibbonComponent, RouterOutlet, FooterComponent, CourseNotificationPopupOverlayComponent],
 })
 export class AppComponent implements OnInit, OnDestroy {
+    protected readonly FeatureToggle = FeatureToggle;
+
     private jhiLanguageHelper = inject(JhiLanguageHelper);
     private router = inject(Router);
     private profileService = inject(ProfileService);
@@ -47,7 +36,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
 
-    private profileSubscription: Subscription;
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
     private testRunSubscription: Subscription;
@@ -70,10 +58,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     private async setupErrorHandling() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            // sentry is only activated if it was specified in the application.yml file
-            this.sentryErrorHandler.initSentry(profileInfo);
-        });
+        const profileInfo = this.profileService.getProfileInfo();
+        // sentry is only activated if it was specified in the application.yml file
+        this.sentryErrorHandler.initSentry(profileInfo);
     }
 
     private getPageTitle(routeSnapshot: ActivatedRouteSnapshot): string {
@@ -116,10 +103,8 @@ export class AppComponent implements OnInit, OnDestroy {
             }
         });
 
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isTestServer = profileInfo.testServer ?? false;
-            this.isProduction = profileInfo.inProduction;
-        });
+        this.isTestServer = this.profileService.isTestServer();
+        this.isProduction = this.profileService.isProduction();
 
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
@@ -151,12 +136,9 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.courseOverviewSubscription?.unsubscribe();
         this.ltiSubscription?.unsubscribe();
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }

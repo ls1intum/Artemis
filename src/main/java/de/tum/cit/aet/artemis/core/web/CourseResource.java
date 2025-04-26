@@ -837,6 +837,26 @@ public class CourseResource {
     }
 
     /**
+     * GET /courses/{courseId}/all-exercises-with-due-dates : Returns all exercises in a course with their titles,
+     * due dates and categories
+     *
+     * @param courseId the id of the course
+     * @return Set of exercises with status 200 (OK)
+     */
+    @GetMapping("courses/{courseId}/all-exercises-with-due-dates")
+    @EnforceAtLeastTutor
+    public ResponseEntity<Set<Exercise>> getAllExercisesWithDueDatesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all exercises with due dates and categories in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Set<Exercise> exercises = exerciseRepository.findByCourseIdWithFutureDueDatesAndCategories(courseId);
+        return ResponseEntity.ok(exercises);
+    }
+
+    /**
      * GET /courses/exercises-for-management-overview
      * <p>
      * gets the courses with exercises for the user

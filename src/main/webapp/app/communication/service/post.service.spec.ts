@@ -4,7 +4,7 @@ import { take } from 'rxjs/operators';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostService } from 'app/communication/service/post.service';
 import { DisplayPriority } from 'app/communication/metis.util';
-import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisCourse, metisCoursePosts, metisPostExerciseUser1, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Post Service', () => {

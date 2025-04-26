@@ -14,7 +14,7 @@ import { TextAssessmentService } from 'app/text/manage/assess/service/text-asses
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ManageAssessmentButtonsComponent', () => {
     let fixture: ComponentFixture<ManageAssessmentButtonsComponent>;

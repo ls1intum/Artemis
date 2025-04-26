@@ -4,7 +4,7 @@ import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import { SimpleChange } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockThemeService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('ProgressBarComponent', () => {
     let fixture: ComponentFixture<ProgressBarComponent>;
