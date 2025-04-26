@@ -46,12 +46,7 @@
                 [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'is-answer-thread-open': !!postInThread }"
             >
                 @if (activeConversation) {
-                    <jhi-conversation-header
-                        (onSearchClick)="triggerSearchInConversation()"
-                        (onUpdateSidebar)="prepareSidebarData()"
-                        (togglePinnedMessage)="togglePinnedView()"
-                        [pinnedMessageCount]="pinnedCount"
-                    />
+                    <jhi-conversation-header (onSearchClick)="triggerSearchInConversation()" (togglePinnedMessage)="togglePinnedView()" [pinnedMessageCount]="pinnedCount" />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
                         (openThread)="openThread($event)"
