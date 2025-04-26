@@ -42,6 +42,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { FireworksComponent } from 'app/atlas/overview/fireworks/fireworks.component';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-course-competencies-details',
@@ -74,6 +76,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private activatedRoute = inject(ActivatedRoute);
     private courseCompetencyService = inject(CourseCompetencyService);
     private lectureUnitService = inject(LectureUnitService);
+    private readonly scienceService = inject(ScienceService);
 
     competencyId?: number;
     course?: Course;
@@ -109,6 +112,8 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
                     if (this.competencyId && this.courseId) {
                         this.loadData();
                     }
+
+                    this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
                 },
             );
         }
