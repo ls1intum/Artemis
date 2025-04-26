@@ -315,4 +315,63 @@ describe('ForwardedMessageComponent', () => {
         tick();
         expect(spy).toHaveBeenCalled();
     }));
+
+    it('should not emit when originalPostDetails() is undefined', () => {
+        const emitSpy = jest.spyOn(component.onNavigateToPost, 'emit');
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>();
+        });
+
+        component.onTriggerNavigateToPost();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+    });
+
+    it('should emit a POST with referencePostId, PostingType.POST and unchanged conversation', () => {
+        const plainPost: Post = {
+            id: 10,
+            conversation: { type: 'channel', name: 'general' } as any,
+            creationDate: dayjs(),
+        } as Post;
+
+        let emitted!: Posting;
+        jest.spyOn(component.onNavigateToPost, 'emit').mockImplementation((p) => (emitted = p));
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(plainPost as Posting);
+        });
+
+        component.onTriggerNavigateToPost();
+
+        expect(emitted.referencePostId).toBe(10);
+        expect(emitted.postingType).toBe(PostingType.POST);
+        expect(emitted.conversation).toBe(plainPost.conversation);
+    });
+
+    it('should emit an ANSWER with referencePostId=id, PostingType.ANSWER and conversation from inner post', () => {
+        const inner: Post = {
+            id: 20,
+            conversation: { type: 'oneToOneChat' } as any,
+            creationDate: dayjs(),
+        } as Post;
+
+        const answer: AnswerPost = {
+            id: 99,
+            post: inner,
+            creationDate: dayjs(),
+        } as AnswerPost;
+
+        let emitted!: Posting;
+        jest.spyOn(component.onNavigateToPost, 'emit').mockImplementation((p) => (emitted = p));
+
+        runInInjectionContext(fixture.debugElement.injector, () => {
+            component.originalPostDetails = input<Posting>(answer as Posting);
+        });
+
+        component.onTriggerNavigateToPost();
+
+        expect(emitted.referencePostId).toBe(99);
+        expect(emitted.postingType).toBe(PostingType.ANSWER);
+        expect(emitted.conversation).toBe(inner.conversation);
+    });
 });

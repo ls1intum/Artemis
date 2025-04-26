@@ -49,6 +49,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
 
     private metisService = inject(MetisService);
     private changeDetector = inject(ChangeDetectorRef);
+    highlightedAnswerId = input<number>();
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;

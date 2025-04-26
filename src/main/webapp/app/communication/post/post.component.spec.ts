@@ -568,4 +568,14 @@ describe('PostComponent', () => {
             expect(component.showSearchResultInAnswersHint).toBeFalse();
         });
     });
+
+    it('should return "highlighted" when highlight signal is true', () => {
+        (component as any).highlight = () => true;
+        expect(component.highlightState).toBe('highlighted');
+    });
+
+    it('should return empty string when highlight signal is false', () => {
+        (component as any).highlight = () => false;
+        expect(component.highlightState).toBe('');
+    });
 });

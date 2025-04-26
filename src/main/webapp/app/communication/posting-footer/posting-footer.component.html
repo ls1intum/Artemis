@@ -26,6 +26,7 @@
                     (userReferenceClicked)="userReferenceClicked.emit($event)"
                     (channelReferenceClicked)="channelReferenceClicked.emit($event)"
                     [hasChannelModerationRights]="hasChannelModerationRights()"
+                    [highlight]="answerPost.id === highlightedAnswerId()"
                 />
             }
         }

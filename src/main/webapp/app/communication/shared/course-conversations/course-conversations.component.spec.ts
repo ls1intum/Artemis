@@ -1,6 +1,6 @@
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { Conversation, ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
+import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { MockComponent, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
@@ -45,6 +45,7 @@ import {
     ChannelAction,
     ChannelsOverviewDialogComponent,
 } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 
 const examples: (ConversationDTO | undefined)[] = [
     undefined,
@@ -577,24 +578,32 @@ examples.forEach((activeConversation) => {
         });
 
         describe('navigate to post functionality', () => {
-            it('should handle answer post navigation correctly', () => {
-                const answerPost: Posting = {
-                    referencePostId: 123,
+            it('should handle answer post navigation correctly', fakeAsync(() => {
+                jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of({ id: 456 } as any));
+                const setSpy = jest.spyOn(component.metisConversationService, 'setActiveConversation');
+
+                const answerPost: AnswerPost = {
+                    id: 1,
                     postingType: PostingType.ANSWER,
-                    conversation: {
-                        id: 456,
-                    },
+                    referencePostId: 123,
+                    post: { id: 123 } as any,
+                    conversation: { id: 456 } as any,
                 };
 
                 component.onNavigateToPost(answerPost);
+                tick();
 
                 expect(component['focusPostId']).toBe(123);
                 expect(component['openThreadOnFocus']).toBeTrue();
-                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
-            });
+                expect(setSpy).toHaveBeenCalledWith(456);
+            }));
 
-            it('should handle question post navigation correctly', () => {
+            it('should handle question post navigation correctly', fakeAsync(() => {
+                jest.spyOn(component.metisConversationService, 'activeConversation$', 'get').mockReturnValue(of({ id: 456 } as any));
+                const setSpy = jest.spyOn(component.metisConversationService, 'setActiveConversation');
+
                 const questionPost: Posting = {
+                    id: 123,
                     referencePostId: 123,
                     postingType: PostingType.POST,
                     conversation: {
@@ -603,11 +612,12 @@ examples.forEach((activeConversation) => {
                 };
 
                 component.onNavigateToPost(questionPost);
+                tick();
 
                 expect(component['focusPostId']).toBe(123);
                 expect(component['openThreadOnFocus']).toBeFalse();
-                expect(setActiveConversationSpy).toHaveBeenCalledWith(456);
-            });
+                expect(setSpy).toHaveBeenCalledWith(456);
+            }));
 
             it('should not process navigation when referencePostId is undefined', () => {
                 const invalidPost: Posting = {
@@ -700,7 +710,7 @@ examples.forEach((activeConversation) => {
             });
         });
 
-        describe('CourseConversationsComponent onTriggerNavigateToPost Tests', () => {
+        describe('CourseConversationsComponent onNavigateToPost Tests', () => {
             let component: CourseConversationsComponent;
 
             beforeEach(() => {
@@ -711,7 +721,7 @@ examples.forEach((activeConversation) => {
             it('should do nothing if post.id is undefined', () => {
                 const post = {} as Posting;
 
-                component.onTriggerNavigateToPost(post);
+                component.onNavigateToPost(post);
 
                 expect(component.focusPostId).toBeUndefined();
                 expect(component.openThreadOnFocus).toBeFalsy();
@@ -723,9 +733,11 @@ examples.forEach((activeConversation) => {
                     id: 1,
                     postingType: PostingType.ANSWER,
                     post: { id: 2 } as Post,
-                } as Posting;
+                    referencePostId: 2,
+                    conversation: { id: 12 },
+                } as unknown as Posting;
 
-                component.onTriggerNavigateToPost(post);
+                component.onNavigateToPost(post);
                 expect(component.openThreadOnFocus).toBeTrue();
             });
 
@@ -733,8 +745,9 @@ examples.forEach((activeConversation) => {
                 const post = {
                     id: 1,
                     postingType: PostingType.POST,
-                    conversation: { id: 1 } as Conversation,
-                } as Posting;
+                    referencePostId: 1,
+                    conversation: { id: 12 },
+                } as unknown as Posting;
 
                 component.onTriggerNavigateToPost(post);
                 expect(component.openThreadOnFocus).toBeFalse();
@@ -743,17 +756,20 @@ examples.forEach((activeConversation) => {
             it('should call setActiveConversation if conversation.id is defined', () => {
                 const post = {
                     id: 1,
-                    conversation: { id: 999 },
-                } as Posting;
+                    postingType: PostingType.ANSWER,
+                    post: { id: 2 } as Post,
+                    referencePostId: 2,
+                    conversation: { id: 12 },
+                } as unknown as Posting;
 
                 component.onTriggerNavigateToPost(post);
 
-                expect(setActiveConversationSpy).toHaveBeenCalledWith(999);
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
             });
 
-            it('should NOT call setActiveConversation if post.id is undefined', () => {
+            it('should NOT call setActiveConversation if reference post id is undefined', () => {
                 const post = {
-                    id: undefined,
+                    referencePostId: undefined,
                     conversation: {},
                 } as Posting;
 
@@ -764,19 +780,35 @@ examples.forEach((activeConversation) => {
 
             it('should combine logic: set focusPostId and only set conversation if ID is present', () => {
                 const post = {
-                    id: 10,
-                    referencePostId: 888,
+                    id: 1,
                     postingType: PostingType.ANSWER,
-                    conversation: {
-                        id: 444,
-                    },
-                } as Posting;
+                    post: { id: 2 } as Post,
+                    referencePostId: 2,
+                    conversation: { id: 12 },
+                } as unknown as Posting;
 
                 component.onTriggerNavigateToPost(post);
 
-                expect(component.focusPostId).toBe(10);
+                expect(component.focusPostId).toBe(1);
                 expect(component.openThreadOnFocus).toBeFalse();
-                expect(setActiveConversationSpy).toHaveBeenCalledWith(444);
+                expect(setActiveConversationSpy).toHaveBeenCalledWith(12);
+            });
+
+            it('should set answerId and call changeDetector.detectChanges when a number is passed', () => {
+                const detectSpy = jest.spyOn((component as any).changeDetector, 'detectChanges');
+
+                component.onHighlightAnswerIdChanged(321);
+                expect(component.answerId).toBe(321);
+                expect(detectSpy).toHaveBeenCalled();
+            });
+
+            it('should clear answerId and call changeDetector.detectChanges when undefined is passed', () => {
+                component.answerId = 999;
+                const detectSpy = jest.spyOn((component as any).changeDetector, 'detectChanges');
+
+                component.onHighlightAnswerIdChanged(undefined);
+                expect(component.answerId).toBeUndefined();
+                expect(detectSpy).toHaveBeenCalled();
             });
         });
     });

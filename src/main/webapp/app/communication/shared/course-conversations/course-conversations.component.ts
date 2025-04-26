@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewEncapsulation, inject, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -46,7 +46,7 @@ import { PageType, SortDirection } from 'app/communication/metis.util';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { EMPTY, Observable, Subject, Subscription, from, take, takeUntil } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
 import { ConversationHeaderComponent } from 'app/communication/course-conversations-components/layout/conversation-header/conversation-header.component';
 import { ConversationMessagesComponent } from 'app/communication/course-conversations-components/layout/conversation-messages/conversation-messages.component';
@@ -141,7 +141,7 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
-    private metisConversationService = inject(MetisConversationService);
+    metisConversationService = inject(MetisConversationService);
     private metisService = inject(MetisService);
     private courseOverviewService = inject(CourseOverviewService);
     private modalService = inject(NgbModal);
@@ -185,6 +185,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     courseWideSearch = viewChild<CourseWideSearchComponent>(CourseWideSearchComponent);
     searchElement = viewChild<ElementRef>('courseWideSearchInput');
+    highlightAnswerId = output<number>();
+    answerId?: number;
 
     courseWideSearchConfig: CourseWideSearchConfig;
     courseWideSearchTerm = '';
@@ -222,6 +224,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (this.pinnedCount == 0 && this.showOnlyPinned) {
             this.showOnlyPinned = false;
         }
+        this.changeDetector.detectChanges();
+    }
+
+    onHighlightAnswerIdChanged(answerId: number | undefined): void {
+        this.answerId = answerId;
         this.changeDetector.detectChanges();
     }
 
@@ -348,11 +355,27 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         if (post.referencePostId === undefined || post.conversation?.id === undefined) {
             return;
         }
-
-        this.focusPostId = post.referencePostId;
         this.openThreadOnFocus = (post.postingType as PostingType) === PostingType.ANSWER;
         this.metisConversationService.setActiveConversation(post.conversation!.id!);
-        this.changeDetector.detectChanges();
+
+        this.metisConversationService.activeConversation$
+            .pipe(
+                filter((conv) => conv?.id === post.conversation!.id!),
+                take(1),
+            )
+            .subscribe(() => {
+                if (post.isSaved) {
+                    this.focusPostId = post.referencePostId;
+                } else if ((post.postingType as PostingType) === PostingType.POST) {
+                    this.focusPostId = post.referencePostId;
+                } else {
+                    this.focusPostId = (post as AnswerPost).post!.id;
+                }
+                setTimeout(() => {
+                    this.focusPostId = undefined;
+                    this.changeDetector.detectChanges();
+                }, 1000);
+            });
     }
 
     updateQueryParameters() {

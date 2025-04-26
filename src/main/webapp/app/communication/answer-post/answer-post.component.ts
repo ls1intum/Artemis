@@ -43,6 +43,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
+        trigger('highlightFade', [transition('* => highlighted', [style({ backgroundColor: '#ffc107' }), animate('2s ease-out', style({ backgroundColor: '*' }))])]),
     ],
     imports: [
         NgClass,
@@ -73,6 +74,7 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     openPostingCreateEditModal = output<void>();
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
+    highlight = input<boolean>(false);
 
     containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
     reactionsBarComponent = viewChild<PostingReactionsBarComponent<AnswerPost>>(PostingReactionsBarComponent);
@@ -204,5 +206,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         if (this.posting && !(this.posting instanceof AnswerPost)) {
             this.posting = Object.assign(new AnswerPost(), this.posting);
         }
+    }
+
+    get highlightState() {
+        return this.highlight() ? 'highlighted' : '';
     }
 }

@@ -527,5 +527,44 @@ examples.forEach((activeConversation) => {
             expect(component.pinnedPosts).toEqual(pinnedPostsStub);
             expect(pinnedCountSpy).toHaveBeenCalledWith(pinnedPostsStub.length);
         }));
+
+        it('should highlight a POST and then clear it after timeout', fakeAsync(() => {
+            const post: any = {
+                postingType: PostingType.POST,
+                referencePostId: 42,
+            };
+            const onNavigateSpy = jest.spyOn(component.onNavigateToPost, 'emit');
+            const answerEmitSpy = jest.spyOn(component.highlightedAnswerId, 'emit');
+
+            component.onTriggerNavigateToPost(post as any);
+
+            expect(component.highlightedPostId).toBe(42);
+            expect(onNavigateSpy).toHaveBeenCalledWith(post);
+            expect(answerEmitSpy).not.toHaveBeenCalled();
+
+            tick(1000);
+
+            expect(component.highlightedPostId).toBeUndefined();
+            expect(answerEmitSpy).toHaveBeenCalledWith(undefined);
+        }));
+
+        it('should emit highlightedAnswerId for ANSWER and then clear it after timeout', fakeAsync(() => {
+            const answerPost: any = {
+                postingType: PostingType.ANSWER,
+                referencePostId: 84,
+            };
+            const onNavigateSpy = jest.spyOn(component.onNavigateToPost, 'emit');
+            const answerEmitSpy = jest.spyOn(component.highlightedAnswerId, 'emit');
+
+            component.onTriggerNavigateToPost(answerPost as any);
+
+            expect(answerEmitSpy).toHaveBeenCalledWith(84);
+            expect(component.highlightedPostId).toBeUndefined();
+            expect(onNavigateSpy).toHaveBeenCalledWith(answerPost);
+
+            tick(1000);
+
+            expect(answerEmitSpy).toHaveBeenCalledWith(undefined);
+        }));
     });
 });

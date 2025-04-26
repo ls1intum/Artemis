@@ -26,6 +26,7 @@ export class PostingThreadComponent {
     forwardedPosts = input<Post[]>([]);
     forwardedAnswerPosts = input<AnswerPost[]>([]);
     readonly onNavigateToPost = output<Posting>();
+    highlightedPostId = input<number>();
 
     elementRef = inject(ElementRef);
 

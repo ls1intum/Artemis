@@ -1,6 +1,12 @@
 <div
     class="post hover-container"
-    [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+    [@highlightFade]="highlightState"
+    [ngClass]="{
+        'mx-0': !isThreadSidebar,
+        'pinned-message': isPinned(),
+        'is-saved': !isConsecutive() && posting.isSaved,
+        'non-consecutive': !isConsecutive(),
+    }"
 >
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
@@ -172,6 +178,7 @@
     (userReferenceClicked)="onUserReferenceClicked($event)"
     (channelReferenceClicked)="onChannelReferenceClicked($event)"
     [hasChannelModerationRights]="hasChannelModerationRights"
+    [highlightedAnswerId]="highlightedAnswerId()"
 />
 
 <!-- Right-Click Dropdown -->

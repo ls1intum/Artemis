@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, effect, inject
 import { faShare } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
-import { Posting } from 'app/communication/shared/entities/posting.model';
+import { Posting, PostingType } from 'app/communication/shared/entities/posting.model';
 import dayjs from 'dayjs/esm';
 import { Conversation } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
@@ -104,7 +104,17 @@ export class ForwardedMessageComponent implements AfterViewInit {
         if (this.originalPostDetails() === undefined) {
             return;
         }
-        this.onNavigateToPost.emit(this.originalPostDetails()!);
+        const post = this.originalPostDetails();
+        if (post) {
+            post.referencePostId = post.id;
+            if ((post as AnswerPost).post) {
+                post.postingType = PostingType.ANSWER;
+                post.conversation = (post as AnswerPost).post!.conversation;
+            } else {
+                post.postingType = PostingType.POST;
+            }
+            this.onNavigateToPost.emit(post);
+        }
     }
 
     updateSourceName() {

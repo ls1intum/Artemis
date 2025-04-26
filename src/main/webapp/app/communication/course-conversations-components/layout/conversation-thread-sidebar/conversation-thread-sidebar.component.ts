@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, input, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -39,6 +39,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
 
     @Output()
     closePostThread = new EventEmitter<void>();
+    highlightedAnswerId = input<number>();
 
     post?: Post;
     createdAnswerPost: AnswerPost;

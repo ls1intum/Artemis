@@ -59,11 +59,12 @@
                         (openThread)="openThread($event)"
                         [course]="course"
                         [searchbarCollapsed]="channelSearchCollapsed"
-                        (onNavigateToPost)="onTriggerNavigateToPost($event)"
+                        (onNavigateToPost)="onNavigateToPost($event)"
                         [focusPostId]="focusPostId"
                         [openThreadOnFocus]="openThreadOnFocus"
                         [showOnlyPinned]="showOnlyPinned"
                         (pinnedCount)="onPinnedCountChanged($event)"
+                        (highlightedAnswerId)="onHighlightAnswerIdChanged($event)"
                     />
                 } @else {
                     @if (selectedSavedPostStatus === undefined) {
@@ -84,6 +85,7 @@
                         [readOnlyMode]="!!getAsChannel(postInThread.conversation)?.isArchived"
                         [activePost]="postInThread"
                         (closePostThread)="postInThread = undefined"
+                        [highlightedAnswerId]="answerId"
                     />
                 }
             </div>

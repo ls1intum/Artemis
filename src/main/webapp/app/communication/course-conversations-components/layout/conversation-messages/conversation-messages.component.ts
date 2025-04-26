@@ -98,8 +98,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     pinnedCount = output<number>();
     pinnedPosts: Post[] = [];
 
-    readonly focusPostId = input<number | undefined>(undefined);
-    readonly openThreadOnFocus = input<boolean>(false);
+    focusPostId = input<number | undefined>(undefined);
+    openThreadOnFocus = input<boolean>(false);
+    highlightedPostId?: number;
+    highlightedAnswerId = output<number | undefined>();
 
     getAsChannel = getAsChannelDTO;
 
@@ -139,6 +141,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         effect(() => {
             this.focusOnPostId = this.focusPostId();
             this.isOpenThreadOnFocus = this.openThreadOnFocus();
+            const id = this.focusPostId();
+            if (id) {
+                this.scrollToStoredId();
+            }
         });
     }
 
@@ -564,6 +570,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     onTriggerNavigateToPost(post: Posting) {
+        if (post.postingType === PostingType.POST) {
+            this.highlightedPostId = post.referencePostId;
+        } else {
+            this.highlightedAnswerId.emit(post.referencePostId!);
+        }
+        this.cdr.detectChanges();
         this.onNavigateToPost.emit(post);
+
+        setTimeout(() => {
+            this.highlightedPostId = undefined;
+            this.highlightedAnswerId.emit(undefined);
+            this.cdr.detectChanges();
+        }, 1000);
     }
 }

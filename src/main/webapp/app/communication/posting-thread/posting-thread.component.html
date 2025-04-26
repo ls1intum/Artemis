@@ -13,6 +13,7 @@
         [hasChannelModerationRights]="hasChannelModerationRights"
         (openThread)="openThread.emit(post)"
         (onNavigateToPost)="onTriggerNavigateToPost($event)"
+        [highlight]="post.id === highlightedPostId()"
     />
 </div>
 @if (!isCommunicationPage) {

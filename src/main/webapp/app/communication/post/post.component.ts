@@ -51,6 +51,7 @@ import { ForwardedMessageComponent } from 'app/communication/forwarded-message/f
             transition(':enter', [style({ opacity: 0 }), animate('300ms ease-in', style({ opacity: 1 }))]),
             transition(':leave', [animate('300ms ease-out', style({ opacity: 0 }))]),
         ]),
+        trigger('highlightFade', [transition('* => highlighted', [style({ backgroundColor: '#ffc107' }), animate('2s ease-out', style({ backgroundColor: '*' }))])]),
     ],
     imports: [
         NgClass,
@@ -82,11 +83,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     lastReadDate = input<dayjs.Dayjs | undefined>(undefined);
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
+    highlight = input<boolean>(false);
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
     modalRef = input<NgbModalRef | undefined>(undefined);
     searchQuery = input<string>('');
     showAnswers = model<boolean>(false);
+    highlightedAnswerId = input<number>();
 
     openThread = output<void>();
 
@@ -353,5 +356,9 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
 
     protected onTriggerNavigateToPost(post: Posting) {
         this.onNavigateToPost.emit(post);
+    }
+
+    get highlightState() {
+        return this.highlight() ? 'highlighted' : '';
     }
 }

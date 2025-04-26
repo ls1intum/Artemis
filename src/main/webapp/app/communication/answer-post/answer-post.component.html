@@ -1,6 +1,7 @@
 <div
     [id]="'item-' + posting.id"
     class="answer-post hover-container"
+    [@highlightFade]="highlightState"
     [ngClass]="{ 'module-bg rounded-2': isCommunicationPage, 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
 >
     @if (posting.isSaved) {
