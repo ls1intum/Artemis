@@ -38,6 +38,10 @@ describe('ExamGeneralInformationComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExamGeneralInformationComponent);
                 component = fixture.componentInstance;
+                TestBed.runInInjectionContext(() => {
+                    component.exam = input(exam);
+                    component.studentExam = input(studentExam);
+                });
             });
     });
 
@@ -47,7 +51,6 @@ describe('ExamGeneralInformationComponent', () => {
 
     it('should initialize', () => {
         TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
             component.studentExam = input({} as StudentExam);
         });
         fixture.detectChanges();
@@ -57,10 +60,6 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should return the start date plus the working time as the student exam end date', () => {
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -70,7 +69,6 @@ describe('ExamGeneralInformationComponent', () => {
     it('should detect if the end date is on another day', () => {
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
         TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
             component.studentExam = input({} as StudentExam);
         });
         fixture.detectChanges();
@@ -81,10 +79,6 @@ describe('ExamGeneralInformationComponent', () => {
 
     it('should detect if the working time extends to another day', () => {
         studentExam.workingTime = 24 * 60 * 60;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -92,10 +86,6 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should return false for exams that only last one day', () => {
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         component.ngOnChanges();
         expect(fixture).toBeDefined();
@@ -109,10 +99,6 @@ describe('ExamGeneralInformationComponent', () => {
 
     it('should detect an TestExam and set the currentDate correctly', () => {
         exam.testExam = true;
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         const minimumNowRange = dayjs();
         fixture.detectChanges();
         component.ngOnChanges();
@@ -124,10 +110,6 @@ describe('ExamGeneralInformationComponent', () => {
     });
 
     it('should detect an RealExam and not set the currentDate', () => {
-        TestBed.runInInjectionContext(() => {
-            component.exam = input(exam);
-            component.studentExam = input(studentExam);
-        });
         fixture.detectChanges();
         component.ngOnChanges();
         expect(component.isTestExam).toBeFalse();
