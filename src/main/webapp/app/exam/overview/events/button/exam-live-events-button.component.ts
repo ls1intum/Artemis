@@ -32,7 +32,7 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
     private liveEventsSubscription?: Subscription;
     private allEventsSubscription?: Subscription;
     eventCount = 0;
-    examStartDate = input<dayjs.Dayjs>();
+    examStartDate = input.required<dayjs.Dayjs>();
 
     // Icons
     faBullhorn = faBullhorn;
@@ -44,15 +44,12 @@ export class ExamLiveEventsButtonComponent implements OnInit, OnDestroy {
             this.eventCount = filteredEvents.length;
         });
 
-        const examStartDate = this.examStartDate();
-        if (examStartDate) {
-            this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, examStartDate).subscribe(() => {
-                // If any unacknowledged event comes in, open the dialog to display it
-                if (!this.modalRef) {
-                    this.openDialog();
-                }
-            });
-        }
+        this.liveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate()).subscribe(() => {
+            // If any unacknowledged event comes in, open the dialog to display it
+            if (!this.modalRef) {
+                this.openDialog();
+            }
+        });
     }
 
     ngOnDestroy(): void {
