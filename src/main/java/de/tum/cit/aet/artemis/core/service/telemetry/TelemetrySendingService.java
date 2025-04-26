@@ -67,7 +67,7 @@ public class TelemetrySendingService {
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
 
-    @Value("${info.test-server:false}")
+    @Value("${info.testServer:false}")
     private boolean isTestServer;
 
     /**

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,7 +9,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,7 +30,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exam.service.ExamSubmissionService;
+import de.tum.cit.aet.artemis.exam.api.ExamSubmissionApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismApi;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
 /**
  * REST controller for managing TextSubmission.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @RestController
 @RequestMapping("api/text/")
 public class TextSubmissionResource extends AbstractSubmissionResource {
@@ -78,7 +78,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
-    private final ExamSubmissionService examSubmissionService;
+    private final Optional<ExamSubmissionApi> examSubmissionApi;
 
     private final Optional<PlagiarismApi> plagiarismApi;
 
@@ -87,7 +87,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     public TextSubmissionResource(SubmissionRepository submissionRepository, TextSubmissionRepository textSubmissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseRepository textExerciseRepository, AuthorizationCheckService authCheckService, TextSubmissionService textSubmissionService, UserRepository userRepository,
             StudentParticipationRepository studentParticipationRepository, GradingCriterionRepository gradingCriterionRepository, TextAssessmentService textAssessmentService,
-            ExamSubmissionService examSubmissionService, Optional<PlagiarismApi> plagiarismApi, ExerciseDateService exerciseDateService) {
+            Optional<ExamSubmissionApi> examSubmissionApi, Optional<PlagiarismApi> plagiarismApi, ExerciseDateService exerciseDateService) {
         super(submissionRepository, authCheckService, userRepository, exerciseRepository, textSubmissionService, studentParticipationRepository);
         this.textSubmissionRepository = textSubmissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -97,7 +97,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         this.userRepository = userRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.textAssessmentService = textAssessmentService;
-        this.examSubmissionService = examSubmissionService;
+        this.examSubmissionApi = examSubmissionApi;
         this.plagiarismApi = plagiarismApi;
         this.exerciseDateService = exerciseDateService;
     }
@@ -145,11 +145,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
-        // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
+        if (exercise.isExamExercise()) {
+            ExamSubmissionApi api = examSubmissionApi.orElseThrow(() -> new ExamApiNotPresentException(ExamSubmissionApi.class));
 
-        // Prevent multiple submissions (currently only for exam submissions)
-        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(exercise, textSubmission, user);
+            // Apply further checks if it is an exam submission
+            api.checkSubmissionAllowanceElseThrow(exercise, user);
+
+            // Prevent multiple submissions (currently only for exam submissions)
+            textSubmission = (TextSubmission) api.preventMultipleSubmissions(exercise, textSubmission, user);
+        }
+
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 

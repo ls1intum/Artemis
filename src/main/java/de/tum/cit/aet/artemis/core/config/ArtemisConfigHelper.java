@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ATLAS_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_ENABLED_PROPERTY_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSKEY_ENABLED_PROPERTY_NAME;
 
 import org.springframework.core.env.Environment;
 
@@ -12,6 +14,16 @@ import org.springframework.core.env.Environment;
 public class ArtemisConfigHelper {
 
     /**
+     * Check if the Passkey feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Passkey feature is enabled, false otherwise
+     */
+    public boolean isPasskeyEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(PASSKEY_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
      * Check if the Atlas module is enabled.
      *
      * @param environment the Spring environment
@@ -19,6 +31,46 @@ public class ArtemisConfigHelper {
      */
     public boolean isAtlasEnabled(Environment environment) {
         return getPropertyOrExitArtemis(ATLAS_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the exam module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the exam module is enabled, false otherwise
+     */
+    public boolean isExamEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(EXAM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the Plagiarism module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the Plagiarism module is enabled, false otherwise
+     */
+    public boolean isPlagiarismEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.PLAGIARISM_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the text module is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the text module is enabled, false otherwise
+     */
+    public boolean isTextExerciseEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TEXT_ENABLED_PROPERTY_NAME, environment);
+    }
+
+    /**
+     * Check if the tutorial group feature is enabled.
+     *
+     * @param environment the Spring environment
+     * @return true if the tutorial group feature is enabled, false otherwise
+     */
+    public boolean isTutorialGroupEnabled(Environment environment) {
+        return getPropertyOrExitArtemis(Constants.TUTORIAL_GROUP_ENABLED_PROPERTY_NAME, environment);
     }
 
     private boolean getPropertyOrExitArtemis(String key, Environment environment) {

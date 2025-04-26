@@ -146,7 +146,6 @@ public class AccountResource {
 
         userRepository.updateUserVcsAccessToken(user.getId(), LocalVCPersonalAccessTokenManagementService.generateSecureVCSAccessToken(), expiryDate);
         log.debug("Successfully created a VCS access token for user {}", user.getLogin());
-        singleUserNotificationService.notifyUserAboutNewlyAddedVcsAccessToken(user);
         user = userRepository.getUser();
         UserDTO userDTO = new UserDTO();
         userDTO.setLogin(user.getLogin());

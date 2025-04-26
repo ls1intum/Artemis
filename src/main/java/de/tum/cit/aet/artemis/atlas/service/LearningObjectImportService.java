@@ -62,6 +62,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.api.TextExerciseImportApi;
+import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -203,7 +204,7 @@ public class LearningObjectImportService {
             case ModelingExercise modelingExercise -> importOrLoadExercise(modelingExercise, course, modelingExerciseRepository::findUniqueWithCompetenciesByTitleAndCourseId,
                     modelingExerciseRepository::findByIdWithExampleSubmissionsAndResultsElseThrow, modelingExerciseImportService::importModelingExercise);
             case TextExercise textExercise -> {
-                var api = textExerciseImportApi.orElseThrow(() -> new ApiProfileNotPresentException(TextExerciseImportApi.class, PROFILE_CORE));
+                var api = textExerciseImportApi.orElseThrow(() -> new TextApiNotPresentException(TextExerciseImportApi.class));
                 yield importOrLoadExercise(textExercise, course, api::findUniqueWithCompetenciesByTitleAndCourseId,
                         api::findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow, api::importTextExercise);
             }

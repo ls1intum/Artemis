@@ -1,4 +1,4 @@
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import multipleChoiceQuizTemplate from '../../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../../fixtures/exercise/quiz/short_answer/template.json';

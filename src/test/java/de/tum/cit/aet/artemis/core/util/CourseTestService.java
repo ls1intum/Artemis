@@ -567,7 +567,7 @@ public class CourseTestService {
 
         for (Course course : courses) {
             if (!course.getExercises().isEmpty()) {
-                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
+                groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next());
             }
             request.delete("/api/core/admin/courses/" + course.getId(), HttpStatus.OK);
         }

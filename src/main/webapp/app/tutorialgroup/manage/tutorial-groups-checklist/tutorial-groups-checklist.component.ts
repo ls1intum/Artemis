@@ -1,18 +1,18 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
-import { Course } from 'app/core/shared/entities/course.model';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { faPlus, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faCog, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { takeUntil } from 'rxjs/operators';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
 
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
@@ -32,8 +32,8 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     isTimeZoneConfigured = false;
     isTutorialGroupConfigurationCreated = false;
 
-    faWrench = faWrench;
-    faPlus = faPlus;
+    protected readonly faCog = faCog;
+    protected readonly faPlus = faPlus;
 
     ngUnsubscribe = new Subject<void>();
 

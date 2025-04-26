@@ -1,35 +1,37 @@
 package de.tum.cit.aet.artemis.exam.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 /**
  * Service implementation to check exam access.
  */
-@Profile(PROFILE_CORE)
+@Conditional(ExamEnabled.class)
 @Service
 public class ExamAccessService {
 
@@ -49,8 +51,11 @@ public class ExamAccessService {
 
     private final StudentExamService studentExamService;
 
+    private final ExamDateService examDateService;
+
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService,
+            ExamDateService examDateService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -58,6 +63,45 @@ public class ExamAccessService {
         this.courseRepository = courseRepository;
         this.examRegistrationService = examRegistrationService;
         this.studentExamService = studentExamService;
+        this.examDateService = examDateService;
+    }
+
+    /**
+     * Checks if the user is allowed to see the exam result if:
+     * - the current user is at least teaching assistant in the course
+     * - OR if the examExercise is not part of an exam
+     * - OR if the exam is a test exam
+     * - OR if the exam has not ended (including individual working time extensions)
+     * - OR if the exam has already ended and the results were published
+     * Otherwise, throws a {@link AccessForbiddenException}.
+     *
+     * @param examExercise         - Exercise that the result is requested for
+     * @param studentParticipation - used to retrieve the individual exam working time
+     * @param user                 - User that requests the result
+     * @throws ConflictException if examExercise does not belong to an exam
+     */
+    public void checkIfAllowedToGetExamResult(Exercise examExercise, StudentParticipation studentParticipation, User user) {
+        if (!examExercise.isExamExercise()) {
+            throw new ConflictException("Given examExercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+
+        if (authorizationCheckService.isAtLeastTeachingAssistantInCourse(examExercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
+            return;
+        }
+        Exam exam = examExercise.getExam();
+
+        if (!examDateService.isExerciseWorkingPeriodOver(examExercise, studentParticipation)) {
+            // students can always see their results during the exam.
+            return;
+        }
+        if (exam.isTestExam()) {
+            // results for test exams are always visible
+            return;
+        }
+        if (exam.resultsPublished()) {
+            return;
+        }
+        throw new AccessForbiddenException();
     }
 
     /**
@@ -87,6 +131,10 @@ public class ExamAccessService {
         StudentExam studentExam;
         if (exam.isTestExam()) {
             studentExam = getOrCreateTestExam(exam, course, currentUser);
+        }
+        else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Instructors or administrators cannot participate in exams.", ENTITY_NAME,
+                    "cannotParticipateInExams", true);
         }
         else {
             studentExam = getOrCreateNormalExam(exam, currentUser);

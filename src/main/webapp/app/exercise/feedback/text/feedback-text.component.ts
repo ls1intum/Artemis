@@ -1,6 +1,6 @@
 import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeedbackItem } from 'app/exercise/feedback/item/feedback-item';
-import { LongFeedbackTextService } from 'app/exercise/feedback/long-feedback-text.service';
+import { LongFeedbackTextService } from 'app/exercise/feedback/services/long-feedback-text.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({

@@ -6,7 +6,7 @@ import { map } from 'rxjs/operators';
 import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
-import { ExerciseService } from 'app/exercise/exercise.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/exercise/shared/entities/participation/solution-programming-exercise-participation.model';

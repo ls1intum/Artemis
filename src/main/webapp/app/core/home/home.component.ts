@@ -7,25 +7,33 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { FEATURE_PASSKEY, PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
+import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
-    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent],
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ButtonComponent],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faKey = faKey;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+
     private router = inject(Router);
     private activatedRoute = inject(ActivatedRoute);
     private accountService = inject(AccountService);
@@ -36,6 +44,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private profileService = inject(ProfileService);
     private alertService = inject(AlertService);
     private translateService = inject(TranslateService);
+    private webauthnService = inject(WebauthnService);
+    private webauthnApiService = inject(WebauthnApiService);
+
+    protected usernameTouched = false;
+    protected passwordTouched = false;
 
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
@@ -53,6 +66,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     credentials: Credentials;
     isRegistrationEnabled = false;
     isPasswordLoginDisabled = false;
+    isPasskeyEnabled = false;
     loading = true;
     mainElementFocused = false;
 
@@ -63,24 +77,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
-    externalUserManagementActive = true;
-
     isFormValid = false;
     isSubmittingLogin = false;
 
-    profileInfo: ProfileInfo | undefined = undefined;
-
-    // Icons
-    faCircleNotch = faCircleNotch;
-    usernameTouched = false;
-    passwordTouched = false;
+    profileInfo: ProfileInfo;
 
     ngOnInit() {
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo) {
-                this.initializeWithProfileInfo(profileInfo);
-            }
-        });
+        this.initializeWithProfileInfo();
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
@@ -97,17 +100,32 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
     }
 
+    async loginWithPasskey() {
+        try {
+            const credential = await this.webauthnService.getCredential();
+
+            if (!credential || credential.type != 'public-key') {
+                alert("Credential is undefined or type is not 'public-key'");
+                return;
+            }
+
+            await this.webauthnApiService.loginWithPasskey(credential);
+            this.handleLoginSuccess();
+        } catch (error) {
+            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+        }
+    }
+
     /**
      * Initializes the component with the required information received from the server.
-     * @param profileInfo The information from the server how logins should be handled.
      */
-    private initializeWithProfileInfo(profileInfo: ProfileInfo) {
-        this.profileInfo = profileInfo;
-        this.externalUserManagementActive = false;
+    private initializeWithProfileInfo() {
+        this.profileInfo = this.profileService.getProfileInfo();
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
 
-        this.accountName = profileInfo.accountName;
-        if (profileInfo.allowedLdapUsernamePattern) {
-            this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
+        this.accountName = this.profileInfo.accountName;
+        if (this.profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern = new RegExp(this.profileInfo.allowedLdapUsernamePattern);
         }
         if (this.accountName === 'TUM') {
             this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
@@ -121,8 +139,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         });
 
-        this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
-        this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;
+        this.isRegistrationEnabled = !!this.profileInfo.registrationEnabled;
+        this.needsToAcceptTerms = !!this.profileInfo.needsToAcceptTerms;
         this.activatedRoute.queryParams.subscribe((params) => {
             const loginFormOverride = params.hasOwnProperty('showLoginForm');
             this.isPasswordLoginDisabled = !!this.profileInfo?.saml2 && this.profileInfo.saml2.passwordLoginDisabled && !loginFormOverride;

@@ -16,7 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -47,21 +47,11 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             SELECT lecture
             FROM Lecture lecture
                 LEFT JOIN FETCH lecture.attachments
-                LEFT JOIN FETCH lecture.lectureUnits
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lu.attachment
             WHERE lecture.course.id = :courseId
             """)
     Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnits(@Param("courseId") Long courseId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.attachments attachment
-                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
-                LEFT JOIN FETCH lectureUnit.attachment luAttachment
-                LEFT JOIN FETCH lectureUnit.slides slides
-            WHERE lecture.course.id = :courseId
-            """)
-    Set<Lecture> findAllByCourseIdWithAttachmentsAndLectureUnitsAndSlides(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT lecture
@@ -108,17 +98,6 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndAttachments(@Param("lectureId") Long lectureId);
-
-    @Query("""
-            SELECT lecture
-            FROM Lecture lecture
-                LEFT JOIN FETCH lecture.lectureUnits lectureUnit
-                LEFT JOIN FETCH lectureUnit.attachment luAttachment
-                LEFT JOIN FETCH lectureUnit.slides slides
-                LEFT JOIN FETCH lecture.attachments
-            WHERE lecture.id = :lectureId
-            """)
-    Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
 
     @Query("""
             SELECT lecture
@@ -200,13 +179,8 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
         return getValueElseThrow(findByIdWithLectureUnitsAndAttachments(lectureId), lectureId);
     }
 
-    @NotNull
-    default Lecture findByIdWithLectureUnitsAndSlidesAndAttachmentsElseThrow(long lectureId) {
-        return getValueElseThrow(findByIdWithLectureUnitsAndSlidesAndAttachments(lectureId), lectureId);
-    }
-
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCountDTO(
                 COUNT(l.id),
                 l.course.id
             )
@@ -215,7 +189,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
                 AND (l.visibleDate IS NULL OR l.visibleDate <= :now)
             GROUP BY l.course.id
             """)
-    Set<CourseContentCount> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
+    Set<CourseContentCountDTO> countVisibleLectures(@Param("courseIds") Set<Long> courseIds, @Param("now") ZonedDateTime now);
 
     long countByCourse_Id(long courseId);
 }

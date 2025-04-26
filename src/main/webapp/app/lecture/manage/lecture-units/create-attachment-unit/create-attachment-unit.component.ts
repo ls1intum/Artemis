@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/attachmentUnit.service';
+import { AttachmentUnitService } from 'app/lecture/manage/lecture-units/services/attachmentUnit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/manage/lecture-units/attachment-unit-form/attachment-unit-form.component';

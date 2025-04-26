@@ -6,7 +6,7 @@ import { sum } from 'lodash-es';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { download, generateCsv, mkConfig } from 'export-to-csv';
 import { Exercise, ExerciseType, IncludedInOverallScore, exerciseTypes } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
@@ -18,14 +18,14 @@ import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-
 import { catchError } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
 import { faClipboard, faDownload, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { CsvExportRowBuilder } from 'app/shared/export/csv-export-row-builder';
+import { CsvExportRowBuilder } from 'app/shared/export/row-builder/csv-export-row-builder';
 import { mean, median, standardDeviation } from 'simple-statistics';
-import { CsvExportOptions } from 'app/shared/export/export-modal.component';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { CsvExportOptions } from 'app/shared/export/modal/export-modal.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import * as XLSX from 'xlsx';
-import { VERSION } from 'app/app.constants';
-import { ExcelExportRowBuilder } from 'app/shared/export/excel-export-row-builder';
-import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builder';
+import { MODULE_FEATURE_PLAGIARISM, VERSION } from 'app/app.constants';
+import { ExcelExportRowBuilder } from 'app/shared/export/row-builder/excel-export-row-builder';
+import { ExportRow, ExportRowBuilder } from 'app/shared/export/row-builder/export-row-builder';
 import {
     BONUS_KEY,
     COURSE_OVERALL_POINTS_KEY,
@@ -40,7 +40,7 @@ import {
     SCORE_KEY,
     USERNAME_KEY,
 } from 'app/shared/export/export-constants';
-import { PlagiarismCasesService } from 'app/plagiarism/shared/plagiarism-cases.service';
+import { PlagiarismCasesService } from 'app/plagiarism/shared/services/plagiarism-cases.service';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
 import { PlagiarismCase } from 'app/plagiarism/shared/entities/PlagiarismCase';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
@@ -49,13 +49,14 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgClass } from '@angular/common';
-import { ExportButtonComponent } from 'app/shared/export/export-button.component';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { ExportButtonComponent } from 'app/shared/export/button/export-button.component';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseScoresStudentStatistics } from 'app/core/course/manage/course-scores/course-scores-student-statistics';
 import { ExerciseTypeStatisticsMap } from 'app/core/course/manage/course-scores/exercise-type-statistics-map';
-import { CourseManagementService } from 'app/core/course/manage/course-management.service';
+import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export enum HighlightType {
     AVERAGE = 'average',
@@ -91,9 +92,11 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
     private participantScoresService = inject(ParticipantScoresService);
     private gradingSystemService = inject(GradingSystemService);
     private plagiarismCasesService = inject(PlagiarismCasesService);
+    private profileService = inject(ProfileService);
 
     private paramSub: Subscription;
     private languageChangeSubscription?: Subscription;
+    plagiarismEnabled = false;
 
     course: Course;
     allParticipationsOfCourse: StudentParticipation[] = [];
@@ -172,6 +175,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      */
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
+            this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
             this.courseService.findWithExercises(params['courseId']).subscribe((findWithExercisesResult) => {
                 this.initializeWithCourse(findWithExercisesResult.body!);
             });
@@ -187,12 +191,8 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * On destroy unsubscribe.
      */
     ngOnDestroy() {
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
-        if (this.languageChangeSubscription) {
-            this.languageChangeSubscription.unsubscribe();
-        }
+        this.paramSub?.unsubscribe();
+        this.languageChangeSubscription?.unsubscribe();
     }
 
     sortRows() {
@@ -266,12 +266,19 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * Fetch all participations with results from the server for the specified course and calculate the corresponding course statistics
      * @param courseId Id of the course
      */
-    private calculateCourseStatistics(courseId: number) {
+    private async calculateCourseStatistics(courseId: number) {
         const findParticipationsObservable = this.courseService.findAllParticipationsWithResults(courseId);
         // alternative course scores calculation using participant scores table
         // find grading scale if it exists for course
         const gradingScaleObservable = this.gradingSystemService.findGradingScaleForCourse(courseId).pipe(catchError(() => of(new HttpResponse<GradingScale>())));
-        const plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
+
+        let plagiarismCasesObservable;
+        if (this.plagiarismEnabled) {
+            plagiarismCasesObservable = this.plagiarismCasesService.getCoursePlagiarismCasesForInstructor(courseId);
+        } else {
+            plagiarismCasesObservable = of(new HttpResponse<PlagiarismCase[]>());
+        }
+
         forkJoin([findParticipationsObservable, gradingScaleObservable, plagiarismCasesObservable]).subscribe(([participationsOfCourse, gradingScaleResponse, plagiarismCases]) => {
             this.allParticipationsOfCourse = participationsOfCourse;
             if (gradingScaleResponse.body) {

@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { DateDetail } from 'app/shared/detail-overview-list/detail.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 

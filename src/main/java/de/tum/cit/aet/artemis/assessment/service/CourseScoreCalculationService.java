@@ -34,8 +34,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -71,17 +69,14 @@ public class CourseScoreCalculationService {
 
     private final UserCourseNotificationStatusRepository userCourseNotificationStatusRepository;
 
-    private final FeatureToggleService featureToggleService;
-
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
             Optional<PlagiarismCaseApi> plagiarismCaseApi, PresentationPointsCalculationService presentationPointsCalculationService,
-            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository, FeatureToggleService featureToggleService) {
+            UserCourseNotificationStatusRepository userCourseNotificationStatusRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.presentationPointsCalculationService = presentationPointsCalculationService;
         this.userCourseNotificationStatusRepository = userCourseNotificationStatusRepository;
-        this.featureToggleService = featureToggleService;
     }
 
     /**
@@ -277,10 +272,7 @@ public class CourseScoreCalculationService {
 
         return new CourseForDashboardDTO(course, totalScores, scoresPerExerciseType.get(ExerciseType.TEXT), scoresPerExerciseType.get(ExerciseType.PROGRAMMING),
                 scoresPerExerciseType.get(ExerciseType.MODELING), scoresPerExerciseType.get(ExerciseType.FILE_UPLOAD), scoresPerExerciseType.get(ExerciseType.QUIZ),
-                participationResults,
-                featureToggleService.isFeatureEnabled(Feature.CourseSpecificNotifications)
-                        ? userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId())
-                        : 0);
+                participationResults, userCourseNotificationStatusRepository.countUnseenCourseNotificationsForUserInCourse(userId, course.getId()));
     }
 
     /**

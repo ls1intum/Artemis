@@ -4,7 +4,7 @@ import { ITeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Team, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';
 import { StudentWithTeam } from 'app/exercise/shared/entities/team/team.model';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { TeamSearchUser } from 'app/exercise/shared/entities/team/team-search-user.model';
 import { User } from 'app/core/user/user.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';

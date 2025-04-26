@@ -1,13 +1,13 @@
 import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
+import { SidebarEventService } from 'app/shared/sidebar/service/sidebar-event.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ExamSession } from 'app/exam/shared/entities/exam-session.model';
 import { Exercise, ExerciseType, getIconTooltip } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { FileUploadSubmission } from 'app/fileupload/shared/entities/file-upload-submission.model';
-import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
-import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/exam-participation.service';
+import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
+import { ButtonTooltipType, ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { map } from 'rxjs/operators';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -17,8 +17,8 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
+import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { CommitState, DomainChange, DomainType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { SidebarData } from 'app/shared/types/sidebar';
 import { facSaveSuccess, facSaveWarning } from 'app/shared/icons/icons';
@@ -69,7 +69,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     readonly faFileLines = faFileLines;
     readonly faChevronRight = faChevronRight;
 
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
     isCollapsed = false;
@@ -77,10 +76,8 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     numberOfSavedExercises: number = 0;
 
     ngOnInit(): void {
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo?.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
 
         if (!this.examTimeLineView) {
             this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdForNavigation.subscribe((exerciseIdToNavigateTo) => {
@@ -119,7 +116,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     }
 
     ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
         this.sidebarEventService.emitResetValue();
     }
 

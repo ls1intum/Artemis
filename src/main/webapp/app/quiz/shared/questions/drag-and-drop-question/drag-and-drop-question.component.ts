@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewEncapsulation, inject } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { DragAndDropQuestionUtil } from 'app/quiz/shared/drag-and-drop-question-util.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
+import { DragAndDropQuestionUtil } from 'app/quiz/shared/service/drag-and-drop-question-util.service';
 import { polyfill } from 'mobile-drag-drop';
 import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
@@ -16,12 +16,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from '../quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
-import { DragItemComponent } from './drag-item.component';
+import { DragItemComponent } from './drag-item/drag-item.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 
 // options are optional ;)
 polyfill({
-    // use this to make use of the scroll behaviour
+    // use this to make use of the scroll behavior
     dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
 });
 
@@ -41,7 +41,7 @@ enum MappingResult {
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html',
     providers: [DragAndDropQuestionUtil],
-    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/quiz-participation.scss'],
+    styleUrls: ['./drag-and-drop-question.component.scss', '../../../overview/participation/quiz-participation.scss'],
     encapsulation: ViewEncapsulation.None,
     imports: [
         NgClass,

@@ -1,12 +1,12 @@
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { TextExerciseResolver } from 'app/text/manage/text-exercise/text-exercise-resolver.service';
+import { TextExerciseResolver } from 'app/text/manage/text-exercise/service/text-exercise-resolver.service';
 
 export const textExerciseRoute: Routes = [
     {
         path: 'text-exercises/new',
-        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('./update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -22,7 +22,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/edit',
-        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('./update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },
@@ -34,7 +34,7 @@ export const textExerciseRoute: Routes = [
     },
     {
         path: 'text-exercises/:exerciseId/import',
-        loadComponent: () => import('./text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
+        loadComponent: () => import('./update/text-exercise-update.component').then((m) => m.TextExerciseUpdateComponent),
         resolve: {
             textExercise: TextExerciseResolver,
         },

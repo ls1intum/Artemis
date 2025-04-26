@@ -1541,7 +1541,7 @@ public class ProgrammingExerciseTestService {
     // Test
 
     /**
-     * Test that the export of the instructor material works as expected with a build plan included (relevant for Gitlab/Jenkins setups).
+     * Test that the export of the instructor material works as expected with a build plan included (relevant for Jenkins setups).
      *
      * @throws Exception if the export fails
      */

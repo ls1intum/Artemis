@@ -6,7 +6,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NoDataComponent } from 'app/shared/no-data-component';
+import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
-import { LearningPathApiService } from 'app/atlas/shared/learning-path-api.service';
+import { LearningPathApiService } from 'app/atlas/shared/services/learning-path-api.service';
 import { CompetencyGraphDTO, CompetencyGraphNodeValueType } from 'app/atlas/shared/entities/learning-path.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CompetencyGraphComponent } from 'app/atlas/manage/competency-graph/competency-graph.component';

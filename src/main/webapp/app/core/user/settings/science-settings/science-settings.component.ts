@@ -7,7 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { UserSettingsDirective } from 'app/core/user/settings/user-settings.directive';
+import { UserSettingsDirective } from 'app/core/user/settings/directive/user-settings.directive';
 import { ScienceSettingsService } from 'app/core/user/settings/science-settings/science-settings.service';
 import { UserSettingsStructure } from 'app/core/user/settings/user-settings.model';
 import { ScienceSetting } from 'app/core/user/settings/science-settings/science-settings-structure';

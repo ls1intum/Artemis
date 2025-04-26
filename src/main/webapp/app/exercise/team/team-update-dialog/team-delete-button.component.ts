@@ -1,12 +1,12 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { Team } from 'app/exercise/shared/entities/team/team.model';
 import { Subject } from 'rxjs';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { TeamService } from 'app/exercise/team/team.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({

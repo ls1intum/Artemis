@@ -16,7 +16,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { titleRegex } from 'app/tutorialgroup/manage/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 
 /**
  * Each row is a object with the structure

@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
@@ -9,7 +7,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
@@ -35,7 +34,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 /**
  * REST controller for managing TextAssessmentEventResource.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @RestController
 @RequestMapping("api/text/")
 public class TextAssessmentEventResource {
@@ -52,7 +51,7 @@ public class TextAssessmentEventResource {
 
     private final TextSubmissionRepository textSubmissionRepository;
 
-    @Value("${info.text-assessment-analytics-enabled}")
+    @Value("${info.textAssessmentAnalyticsEnabled}")
     private Optional<Boolean> textAssessmentAnalyticsEnabled;
 
     public TextAssessmentEventResource(TextAssessmentEventRepository textAssessmentEventRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
@@ -65,7 +64,7 @@ public class TextAssessmentEventResource {
     }
 
     /**
-     * The text assessment analytics are enabled when the configuration info.text-assessment-analytics-enabled is set to true.
+     * The text assessment analytics are enabled when the configuration info.textAssessmentAnalyticsEnabled is set to true.
      * A non-existing entry or false mean that the text assessment analytics is not enabled
      *
      * @return whether the text assessment analytics are enabled or not

@@ -41,7 +41,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -63,7 +64,7 @@ public class SubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(SubmissionService.class);
 
-    private final ExamDateService examDateService;
+    private final Optional<ExamDateApi> examDateApi;
 
     private final ExerciseDateService exerciseDateService;
 
@@ -93,7 +94,7 @@ public class SubmissionService {
 
     public SubmissionService(SubmissionRepository submissionRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ParticipationService participationService,
-            FeedbackRepository feedbackRepository, ExamDateService examDateService, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
+            FeedbackRepository feedbackRepository, Optional<ExamDateApi> examDateApi, ExerciseDateService exerciseDateService, CourseRepository courseRepository,
             ParticipationRepository participationRepository, ComplaintRepository complaintRepository, FeedbackService feedbackService, Optional<AthenaApi> athenaApi) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
@@ -102,7 +103,7 @@ public class SubmissionService {
         this.studentParticipationRepository = studentParticipationRepository;
         this.participationService = participationService;
         this.feedbackRepository = feedbackRepository;
-        this.examDateService = examDateService;
+        this.examDateApi = examDateApi;
         this.exerciseDateService = exerciseDateService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
@@ -688,7 +689,8 @@ public class SubmissionService {
         final boolean isExamMode = exercise.isExamExercise();
         // Tutors cannot start assessing submissions if the exercise due date hasn't been reached yet
         if (isExamMode) {
-            ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
+            ExamDateApi api = examDateApi.orElseThrow(() -> new ExamApiNotPresentException(ExamDateApi.class));
+            ZonedDateTime latestIndividualExamEndDate = api.getLatestIndividualExamEndDate(exercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate != null && latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");

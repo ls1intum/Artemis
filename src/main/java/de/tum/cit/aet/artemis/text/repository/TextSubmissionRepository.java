@@ -1,23 +1,23 @@
 package de.tum.cit.aet.artemis.text.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Spring Data JPA repository for the TextSubmission entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @Repository
 public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmission, Long> {
 

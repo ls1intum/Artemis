@@ -20,14 +20,14 @@ import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.d
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../../programming-exercise-form.scss'],
+    styleUrls: ['../../../../shared/programming-exercise-form.scss'],
     imports: [
         TranslateDirective,
         IncludedInOverallScorePickerComponent,

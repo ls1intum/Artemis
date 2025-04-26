@@ -8,7 +8,7 @@ import { CourseCompetencyFormData } from 'app/atlas/manage/forms/course-competen
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { merge } from 'rxjs';
 import { DateTimePickerType, FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TaxonomySelectComponent } from 'app/atlas/manage/taxonomy-select/taxonomy-select.component';

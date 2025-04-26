@@ -2,11 +2,11 @@ import { Component, EventEmitter, Input, InputSignal, OnInit, Output, inject, in
 import { faCheck, faExclamation, faExclamationTriangle, faQuestionCircle, faTrash, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { StructuredGradingCriterionService } from 'app/exercise/structured-grading-criterion/structured-grading-criterion.service';
-import { ButtonSize } from 'app/shared/components/button.component';
+import { ButtonSize } from 'app/shared/components/button/button.component';
 import { Subject } from 'rxjs';
-import { FeedbackService } from 'app/exercise/feedback/feedback.service';
+import { FeedbackService } from 'app/exercise/feedback/services/feedback.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';

@@ -22,8 +22,9 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
+import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
@@ -56,7 +57,7 @@ public class ExerciseDeletionService {
 
     private final ExampleSubmissionService exampleSubmissionService;
 
-    private final StudentExamRepository studentExamRepository;
+    private final Optional<StudentExamApi> studentExamApi;
 
     private final ExerciseUnitRepository exerciseUnitRepository;
 
@@ -80,7 +81,7 @@ public class ExerciseDeletionService {
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository, LectureUnitService lectureUnitService,
+            ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi, LectureUnitService lectureUnitService,
             Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
             Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
@@ -89,7 +90,7 @@ public class ExerciseDeletionService {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
-        this.studentExamRepository = studentExamRepository;
+        this.studentExamApi = studentExamApi;
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultApi = plagiarismResultApi;
@@ -180,12 +181,13 @@ public class ExerciseDeletionService {
         tutorParticipationRepository.deleteAllByAssessedExerciseId(exercise.getId());
 
         if (exercise.isExamExercise()) {
-            Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
+            StudentExamApi api = studentExamApi.orElseThrow(() -> new ExamApiNotPresentException(StudentExamApi.class));
+            Set<StudentExam> studentExams = api.findAllWithExercisesByExamId(exercise.getExerciseGroup().getExam().getId());
             for (StudentExam studentExam : studentExams) {
                 if (studentExam.getExercises().contains(exercise)) {
                     // remove exercise reference from student exam
                     studentExam.removeExercise(exercise);
-                    studentExamRepository.save(studentExam);
+                    api.save(studentExam);
                 }
             }
         }

@@ -838,7 +838,7 @@ $config = array(
      * telling SimpleSAMLphp to verify URLs.
      *
      * Set to an empty array to disallow ALL redirections or links pointing to
-     * an external URL other than your own domain. This is the default behaviour.
+     * an external URL other than your own domain. This is the default behavior.
      *
      * Set to NULL to disable checking of URLs. DO NOT DO THIS UNLESS YOU KNOW
      * WHAT YOU ARE DOING!

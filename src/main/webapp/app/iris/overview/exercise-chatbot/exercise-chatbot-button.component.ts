@@ -6,7 +6,7 @@ import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/w
 import { EMPTY, Subscription, filter, of, switchMap } from 'rxjs';
 import { faAngleDoubleDown, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { NgClass } from '@angular/common';

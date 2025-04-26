@@ -8,7 +8,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DomSanitizer } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
 

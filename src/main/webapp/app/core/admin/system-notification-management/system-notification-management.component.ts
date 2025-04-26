@@ -14,9 +14,9 @@ import { ParseLinks } from 'app/core/admin/system-notification-management/parse-
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { SortDirective } from 'app/shared/sort/sort.directive';
-import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';

@@ -5,7 +5,7 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 import { User } from 'app/core/user/user.model';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ContextInformation, PageType, PostContextFilter, RouteComponents } from 'app/communication/metis.util';
-import { Course } from 'app/core/shared/entities/course.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { Params } from '@angular/router';
 import { metisCourse, metisCoursePosts, metisTags, metisUser1 } from '../../sample/metis-sample-data';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.text.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.hibernate.Hibernate.isInitialized;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.Optional;
 
 import jakarta.annotation.Nullable;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -22,15 +21,16 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamDateService;
+import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
+import de.tum.cit.aet.artemis.text.config.TextEnabled;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
-@Profile(PROFILE_CORE)
+@Conditional(TextEnabled.class)
 @Service
 public class TextAssessmentService extends AssessmentService {
 
@@ -38,10 +38,10 @@ public class TextAssessmentService extends AssessmentService {
 
     public TextAssessmentService(UserRepository userRepository, ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository,
             FeedbackRepository feedbackRepository, ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService,
-            SubmissionRepository submissionRepository, TextBlockService textBlockService, ExamDateService examDateService, SubmissionService submissionService,
+            SubmissionRepository submissionRepository, TextBlockService textBlockService, Optional<ExamDateApi> examDateApi, SubmissionService submissionService,
             Optional<LtiApi> ltiApi, SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
-                submissionRepository, examDateService, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
+                submissionRepository, examDateApi, userRepository, ltiApi, singleUserNotificationService, resultWebsocketService);
         this.textBlockService = textBlockService;
     }
 

@@ -3,25 +3,36 @@
 Database Setup
 --------------
 
-The required Artemis schema will be created / updated automatically at startup time of the server application.
 Artemis supports MySQL and PostgreSQL databases.
-
+The required Artemis schema is created or updated automatically when the server application starts.
 
 MySQL Setup
 ^^^^^^^^^^^
 
-`Download <https://dev.mysql.com/downloads/mysql>`_ and install the MySQL Community Server (8.0.x).
+You can set up a MySQL database for Artemis using one of the following methods:
 
-You have to run a database on your local machine to be able to start Artemis.
+1. **Using Docker (Recommended)**
+   The easiest way to set up a MySQL database for development is by using Docker.
+   Run the following command to start a MySQL database using the provided Docker Compose file:
 
-We recommend starting the database in a docker container. You can run the MySQL Database Server
-using e.g. ``docker compose -f docker/mysql.yml up``.
+   .. code:: sh
 
-If you run your own MySQL server, make sure to specify the default ``character-set``
-as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
-You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
+       docker compose -f docker/mysql.yml up
 
-.. code::
+   This method simplifies setup and management, making it ideal for development environments.
+
+2. **Using a Local MySQL Installation**
+   If you prefer to install MySQL locally, download and install
+   the `MySQL Community Server (9.2.x) <https://dev.mysql.com/downloads/mysql>`__ from the official MySQL website.
+
+   When running a local MySQL server, ensure the following settings for character encoding and collation:
+
+   - **character-set:** `utf8mb4`
+   - **collation:** `utf8mb4_unicode_ci`
+
+   These settings can be configured using a ``my.cnf`` file located in ``/etc``:
+
+   .. code:: ini
 
     [client]
     default-character-set = utf8mb4
@@ -33,8 +44,9 @@ You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
     character-set-server = utf8mb4
     collation-server = utf8mb4_unicode_ci
 
-Make sure the configuration file is used by MySQL when you start the server.
-You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
+   Ensure that MySQL loads this configuration file when starting the server.
+   For more details, refer to the official MySQL documentation:
+   `<https://dev.mysql.com/doc/refman/9.2/en/option-files.html>`__.
 
 Users for MySQL
 """""""""""""""
