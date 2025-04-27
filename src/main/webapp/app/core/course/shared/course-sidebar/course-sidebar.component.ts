@@ -75,7 +75,7 @@ export class CourseSidebarComponent implements OnChanges {
     @ViewChild('itemsDrop') itemsDrop!: NgbDropdown;
 
     // Constants for threshold calculation
-    readonly WINDOW_OFFSET: number = 300;
+    readonly WINDOW_OFFSET: number = 225;
     readonly ITEM_HEIGHT: number = 38;
 
     // Icons
@@ -112,7 +112,7 @@ export class CourseSidebarComponent implements OnChanges {
         const newHiddenItems: SidebarItem[] = [];
         let newAnyItemHidden = false;
         if (this.sidebarItems()) {
-            const reversedSidebarItems = [...this.sidebarItems()].reverse();
+            const reversedSidebarItems = [...this.sidebarItems()].filter((item) => !item.bottom).reverse();
 
             reversedSidebarItems.forEach((item, index) => {
                 const currentThreshold = threshold - index * this.ITEM_HEIGHT;
