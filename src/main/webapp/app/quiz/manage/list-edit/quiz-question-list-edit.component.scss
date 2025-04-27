@@ -164,10 +164,10 @@
 }
 
 .edit-quiz-footer {
-    height: 100px;
     position: sticky;
-    bottom: 0;
     left: 0;
+    //top: -10rem!important;
+    bottom: -10rem !important;
     right: 0;
     z-index: 10;
     border-top: 1px solid var(--border-color);
@@ -179,6 +179,9 @@
 
         .edit-quiz-footer-content {
             flex-wrap: wrap;
+            .form-group {
+                margin-bottom: -0.5rem;
+            }
         }
     }
 }
