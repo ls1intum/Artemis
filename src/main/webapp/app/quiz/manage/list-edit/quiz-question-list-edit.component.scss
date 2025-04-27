@@ -166,12 +166,12 @@
 .edit-quiz-footer {
     position: sticky;
     left: 0;
-    bottom: -10rem !important;
     right: 0;
     z-index: 10;
     border-top: 1px solid var(--border-color);
     background: var(--edit-quiz-footer-background);
     padding-top: 10px;
+    // offset the padding above the footer
     margin-top: -3rem;
 
     .container {
