@@ -27,7 +27,7 @@
         [hidden]="shouldHideExerciseCard('programming')"
         [course]="course"
     >
-        <jhi-programming-exercise-create-buttons exerciseCreateButtons [course]="course" />
+        <jhi-exercise-create-buttons exerciseCreateButtons [course]="course" [exerciseType]="ExerciseType.PROGRAMMING" [featureToggle]="FeatureToggle.ProgrammingExercises" />
         <jhi-programming-exercise
             exercises
             [embedded]="true"
