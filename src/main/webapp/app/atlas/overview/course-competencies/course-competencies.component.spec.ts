@@ -19,6 +19,7 @@ import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ScienceService } from 'app/shared/science/science.service';
 
 class MockActivatedRoute {
     parent: any;
@@ -68,6 +69,7 @@ describe('CourseCompetencies', () => {
                     },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ScienceService),
             ],
             schemas: [],
         })

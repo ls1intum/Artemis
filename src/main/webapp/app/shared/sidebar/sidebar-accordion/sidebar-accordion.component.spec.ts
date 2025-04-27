@@ -13,6 +13,8 @@ import { ActivatedRoute, RouterModule } from '@angular/router';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -32,7 +34,10 @@ describe('SidebarAccordionComponent', () => {
                 MockComponent(SearchFilterComponent),
                 MockPipe(ArtemisDatePipe),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute() }],
+            providers: [
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
+            ],
         }).compileComponents();
     });
 
