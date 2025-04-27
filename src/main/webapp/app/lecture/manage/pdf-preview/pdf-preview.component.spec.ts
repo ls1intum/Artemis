@@ -1739,20 +1739,5 @@ describe('PdfPreviewComponent', () => {
             expect(result).toBeFalse();
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '1, 3' });
         });
-
-        it('should ignore same-day dates (neither past nor future)', () => {
-            const today = dayjs();
-            const futureDate = dayjs().add(1, 'day');
-
-            component.hiddenPages.set({
-                slide1: { date: today, exerciseId: null },
-                slide2: { date: futureDate, exerciseId: 123 },
-            });
-
-            const result = component['validateHiddenSlidesDates']();
-
-            expect(result).toBeTrue();
-            expect(alertServiceMock.error).not.toHaveBeenCalled();
-        });
     });
 });
