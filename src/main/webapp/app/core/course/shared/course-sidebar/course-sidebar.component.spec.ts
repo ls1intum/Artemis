@@ -19,10 +19,15 @@ import { SimpleChange } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
+import { LayoutService } from 'app/shared/breakpoints/layout.service';
+import { CustomBreakpointNames } from 'app/shared/breakpoints/breakpoints.service';
+import { BehaviorSubject } from 'rxjs';
 
 describe('CourseSidebarComponent', () => {
     let component: CourseSidebarComponent;
     let fixture: ComponentFixture<CourseSidebarComponent>;
+    let layoutService: LayoutService;
+    let breakpointsSubject: BehaviorSubject<string[]>;
 
     const course1: Course = {
         id: 1,
@@ -115,7 +120,9 @@ describe('CourseSidebarComponent', () => {
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseSidebarComponent);
+        layoutService = TestBed.inject(LayoutService);
         component = fixture.componentInstance;
+        breakpointsSubject = new BehaviorSubject<string[]>([]);
 
         // Set up initial inputs
         fixture.componentRef.setInput('course', course1);
@@ -123,6 +130,25 @@ describe('CourseSidebarComponent', () => {
         fixture.componentRef.setInput('sidebarItems', mockSidebarItems);
         fixture.componentRef.setInput('courseActionItems', mockActionItems);
         fixture.detectChanges();
+    });
+
+    it('should initialize signals in constructor and update canExpand when activeBreakpoints changes', () => {
+        layoutService.isBreakpointActive = jest.fn().mockReturnValue(true);
+        layoutService.subscribeToLayoutChanges = jest.fn().mockReturnValue(breakpointsSubject.asObservable());
+        expect(component.activeBreakpoints()).toEqual([]);
+        expect(component.canExpand()).toBeFalse();
+
+        breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable, CustomBreakpointNames.large]);
+        fixture.detectChanges();
+
+        expect(layoutService.isBreakpointActive).toHaveBeenCalledWith(CustomBreakpointNames.sidebarExpandable);
+        expect(component.canExpand()).toBeTrue();
+
+        breakpointsSubject.next([CustomBreakpointNames.small]);
+        fixture.detectChanges();
+
+        expect(layoutService.isBreakpointActive).toHaveBeenCalledWith(CustomBreakpointNames.small);
+        expect(component.canExpand()).toBeFalse();
     });
 
     it('should initialize visible/hidden items on  sidebar update', () => {

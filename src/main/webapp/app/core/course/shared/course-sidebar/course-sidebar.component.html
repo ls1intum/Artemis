@@ -116,7 +116,7 @@
                                 }
                             </div>
                         </a>
-                        @if (isLast) {
+                        @if (isLast && !isNavbarCollapsed() && canExpand()) {
                             <div
                                 class="double-arrow px-2"
                                 [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
@@ -135,7 +135,7 @@
                 </li>
             }
 
-            @if (isNavbarCollapsed() || !sidebarItemsBottom().length) {
+            @if ((isNavbarCollapsed() || !sidebarItemsBottom().length) && canExpand()) {
                 <div
                     class="double-arrow mb-2"
                     [ngClass]="{ 'menu-closed': isNavbarCollapsed() }"
