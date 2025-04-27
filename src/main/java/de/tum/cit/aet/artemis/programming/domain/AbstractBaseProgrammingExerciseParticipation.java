@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -14,6 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 public abstract class AbstractBaseProgrammingExerciseParticipation extends Participation implements ProgrammingExerciseParticipation {
 
     @Column(name = "repository_url")
+    @Convert(converter = RepositoryUrlConverter.class)
     private String repositoryUri;
 
     @Column(name = "build_plan_id")
