@@ -47,13 +47,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
-    @Query("""
-            SELECT AVG(p.lastScore)
-            FROM ParticipantScore p
-            WHERE p.exercise IN :exercises
-            """)
-    Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
-
     /**
      * Gets average rated score for a set of exercise
      *
@@ -65,7 +58,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             """)
-    Double findAvgRatedScore(@Param("exercises") Set<Exercise> exercises);
+    Double findAvgScore(@Param("exercises") Set<Exercise> exercises);
 
     /**
      * Gets average score for each exercise

@@ -220,7 +220,7 @@ public class StatisticsService {
 
         // average score & max points
         Double maxPoints = exercise.getMaxPoints();
-        Double averageScore = participantScoreRepository.findAvgRatedScore(Set.of(exercise));
+        Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
         List<ScoreDistributionDTO> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
