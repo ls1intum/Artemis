@@ -136,7 +136,7 @@ public class LectureTranscriptionResource {
             }
 
             // Save transcription immediately
-            LectureTranscription savedTranscription = createLectureTranscription(transcriptionDTO, lectureId, lectureUnitId).getBody();
+            LectureTranscription savedTranscription = lectureTranscriptionService.saveTranscription(lectureId, lectureUnitId, transcriptionDTO);
 
             log.info("Transcription successfully saved for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
 
