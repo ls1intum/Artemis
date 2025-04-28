@@ -22,4 +22,13 @@
             </div>
         </div>
     </div>
+    <div class="card-body text-center">
+        <p class="mb-1"><strong>ID:</strong> {{ course().id }}</p>
+        <p class="mb-1"><strong>Students:</strong> {{ course().numberOfStudents ?? 0 }}</p>
+        @if (course().description) {
+            <p class="mt-3 text-muted" style="font-size: 0.95rem">
+                {{ course().description }}
+            </p>
+        }
+    </div>
 </div>
