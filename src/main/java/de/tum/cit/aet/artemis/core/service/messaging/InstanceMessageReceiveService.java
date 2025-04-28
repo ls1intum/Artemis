@@ -55,7 +55,7 @@ public class InstanceMessageReceiveService {
 
     private final UserRepository userRepository;
 
-    private final SlideUnhideScheduleService slideUnhideScheduleService;
+    private final Optional<SlideUnhideScheduleService> slideUnhideScheduleService;
 
     private final HazelcastInstance hazelcastInstance;
 
@@ -64,7 +64,8 @@ public class InstanceMessageReceiveService {
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
-            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService) {
+            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService,
+            Optional<SlideUnhideScheduleService> slideUnhideScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -206,11 +207,11 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleSlideUnhide(Long slideId) {
         log.info("Received schedule update for slide unhiding {}", slideId);
-        slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
+        slideUnhideScheduleService.ifPresent(service -> service.scheduleSlideUnhiding(slideId));
     }
 
     public void processCancelSlideUnhide(Long slideId) {
         log.info("Received schedule cancel for slide unhiding {}", slideId);
-        slideUnhideScheduleService.cancelScheduledUnhiding(slideId);
+        slideUnhideScheduleService.ifPresent(service -> service.cancelScheduledUnhiding(slideId));
     }
 }
