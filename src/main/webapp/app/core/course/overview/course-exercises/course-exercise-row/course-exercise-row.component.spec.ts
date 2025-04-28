@@ -1,21 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { Component } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockCourseExerciseService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-exercise.service';
-import { MockParticipationWebsocketService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockCourseExerciseService } from 'test/helpers/mocks/service/mock-course-exercise.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import dayjs from 'dayjs/esm';
-import { MockCourseService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course.service';
+import { MockCourseService } from 'test/helpers/mocks/service/mock-course.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/not-released-tag.component';
@@ -42,7 +42,6 @@ class DummyComponent {}
 describe('CourseExerciseRowComponent', () => {
     let comp: CourseExerciseRowComponent;
     let fixture: ComponentFixture<CourseExerciseRowComponent>;
-    let debugElement: DebugElement;
     let getAllParticipationsStub: jest.SpyInstance;
     let participationWebsocketService: ParticipationWebsocketService;
 
@@ -85,8 +84,7 @@ describe('CourseExerciseRowComponent', () => {
                 fixture = TestBed.createComponent(CourseExerciseRowComponent);
                 comp = fixture.componentInstance;
                 comp.course = { id: 123, isAtLeastInstructor: true } as Course;
-                debugElement = fixture.debugElement;
-                participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 getAllParticipationsStub = jest.spyOn(participationWebsocketService, 'getParticipationsForExercise');
             });
     });

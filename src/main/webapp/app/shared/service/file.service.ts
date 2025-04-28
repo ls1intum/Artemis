@@ -133,4 +133,14 @@ export class FileService {
     replaceAttachmentPrefixAndUnderscores(link: string): string {
         return link.replace(/AttachmentUnit_\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}_/, '').replace(/_/g, ' ');
     }
+
+    /**
+     * Returns the student version of the given link.
+     *
+     * @param link the file link
+     */
+    createStudentLink(link: string): string {
+        const lastSlashIndex = link.lastIndexOf('/');
+        return `${link.substring(0, lastSlashIndex)}/student${link.substring(lastSlashIndex)}`;
+    }
 }

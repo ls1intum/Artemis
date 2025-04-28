@@ -10,7 +10,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { MockProvider } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('External Submission Dialog', () => {

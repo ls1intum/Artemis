@@ -39,8 +39,23 @@ public class ModuleFeatureInfoContributor implements InfoContributor {
         if (artemisConfigHelper.isAtlasEnabled(environment)) {
             enabledArtemisFeatures.add(MODULE_FEATURE_ATLAS);
         }
+        if (artemisConfigHelper.isExamEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_EXAM);
+        }
         if (artemisConfigHelper.isLectureEnabled(environment)) {
             enabledArtemisFeatures.add(Constants.MODULE_FEATURE_LECTURE);
+        }
+        if (artemisConfigHelper.isPlagiarismEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_PLAGIARISM);
+        }
+        if (artemisConfigHelper.isTextExerciseEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TEXT);
+        }
+        if (artemisConfigHelper.isTutorialGroupEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.MODULE_FEATURE_TUTORIALGROUP);
+        }
+        if (artemisConfigHelper.isPasskeyEnabled(environment)) {
+            enabledArtemisFeatures.add(Constants.FEATURE_PASSKEY);
         }
         builder.withDetail(ACTIVE_MODULE_FEATURES, enabledArtemisFeatures);
     }

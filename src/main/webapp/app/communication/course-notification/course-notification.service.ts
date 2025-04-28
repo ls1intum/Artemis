@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { faComments, faRectangleList } from '@fortawesome/free-solid-svg-icons';
+import { faComments, faPersonChalkboard, faRectangleList, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { HttpClient, HttpResponse } from '@angular/common/http';
@@ -32,6 +32,20 @@ export class CourseNotificationService {
         quizExerciseStartedNotification: faRectangleList,
         attachmentChangedNotification: faRectangleList,
         newManualFeedbackRequestNotification: faRectangleList,
+        channelDeletedNotification: faComments,
+        addedToChannelNotification: faComments,
+        removedFromChannelNotification: faComments,
+        duplicateTestCaseNotification: faTriangleExclamation,
+        newCpcPlagiarismCaseNotification: faRectangleList,
+        newPlagiarismCaseNotification: faRectangleList,
+        programmingBuildRunUpdateNotification: faRectangleList,
+        programmingTestCasesChangedNotification: faRectangleList,
+        plagiarismCaseVerdictNotification: faRectangleList,
+        tutorialGroupAssignedNotification: faPersonChalkboard,
+        tutorialGroupUnassignedNotification: faPersonChalkboard,
+        registeredToTutorialGroupNotification: faPersonChalkboard,
+        deregisteredFromTutorialGroupNotification: faPersonChalkboard,
+        tutorialGroupDeletedNotification: faPersonChalkboard,
     };
 
     public static readonly DISABLE_NOTIFICATION_CHANNEL_TYPES: Record<string, Array<CourseNotificationChannel>> = {
@@ -46,6 +60,20 @@ export class CourseNotificationService {
         quizExerciseStartedNotification: [CourseNotificationChannel.EMAIL],
         attachmentChangedNotification: [CourseNotificationChannel.EMAIL],
         newManualFeedbackRequestNotification: [CourseNotificationChannel.EMAIL],
+        channelDeletedNotification: [CourseNotificationChannel.EMAIL],
+        addedToChannelNotification: [CourseNotificationChannel.EMAIL],
+        removedFromChannelNotification: [CourseNotificationChannel.EMAIL],
+        duplicateTestCaseNotification: [],
+        newCpcPlagiarismCaseNotification: [],
+        newPlagiarismCaseNotification: [],
+        programmingBuildRunUpdateNotification: [CourseNotificationChannel.EMAIL],
+        programmingTestCasesChangedNotification: [CourseNotificationChannel.EMAIL],
+        plagiarismCaseVerdictNotification: [],
+        tutorialGroupAssignedNotification: [],
+        tutorialGroupUnassignedNotification: [],
+        registeredToTutorialGroupNotification: [],
+        deregisteredFromTutorialGroupNotification: [],
+        tutorialGroupDeletedNotification: [],
     };
 
     // Parameter keys that should be rendered as markdown

@@ -1,22 +1,22 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { SessionStorageService } from 'ngx-webstorage';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { MockHasAnyAuthorityDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-has-any-authority.directive';
+import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { CourseExercisesComponent } from 'app/core/course/overview/course-exercises/course-exercises.component';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
-import { MockTranslateValuesDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-translate-values.directive';
+import { MockTranslateValuesDirective } from 'test/helpers/mocks/directive/mock-translate-values.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -27,23 +27,30 @@ import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { By } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
     let component: CourseExercisesComponent;
     let courseStorageService: CourseStorageService;
+    let exerciseService: ExerciseService;
 
     let course: Course;
     let exercise: Exercise;
     let courseStorageStub: jest.SpyInstance;
+    let exerciseServiceStub: jest.SpyInstance;
 
     const parentRoute = { params: of({ courseId: 123 }) } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
+    const queryParamsSubject = new BehaviorSubject({ exercises: '', isMultiLaunch: 'false' });
+    const route = {
+        parent: parentRoute,
+        queryParams: queryParamsSubject,
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -78,6 +85,7 @@ describe('CourseExercisesComponent', () => {
                 fixture = TestBed.createComponent(CourseExercisesComponent);
                 component = fixture.componentInstance;
                 courseStorageService = TestBed.inject(CourseStorageService);
+                exerciseService = TestBed.inject(ExerciseService);
 
                 component.sidebarData = { groupByCategory: true, sidebarType: 'exercise', storageId: 'exercise' };
                 course = new Course();
@@ -88,6 +96,13 @@ describe('CourseExercisesComponent', () => {
                 course.exercises = [exercise];
                 jest.spyOn(courseStorageService, 'subscribeToCourseUpdates').mockReturnValue(of(course));
                 courseStorageStub = jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course);
+                exerciseServiceStub = jest.spyOn(exerciseService, 'find').mockReturnValue(
+                    of(
+                        new HttpResponse({
+                            body: exercise,
+                        }),
+                    ),
+                );
 
                 fixture.detectChanges();
             });
@@ -106,8 +121,6 @@ describe('CourseExercisesComponent', () => {
 
     it('should display sidebar when course is provided', () => {
         fixture.detectChanges();
-        // Wait for any async operations to complete here if necessary
-        fixture.detectChanges(); // Trigger change detection again if async operations might change the state
         expect(fixture.nativeElement.querySelector('jhi-sidebar')).not.toBeNull();
     });
 
@@ -141,5 +154,16 @@ describe('CourseExercisesComponent', () => {
         component.exerciseSelected = true;
         fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('router-outlet')).not.toBeNull();
+    });
+
+    it('should call exerciseService if multiLaunchExercises are present', () => {
+        component.isMultiLaunch = true;
+        component.multiLaunchExerciseIDs = [1, 2];
+
+        component.prepareSidebarData();
+
+        expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
+        expect(exerciseServiceStub).toHaveBeenCalledWith(1);
+        expect(exerciseServiceStub).toHaveBeenCalledWith(2);
     });
 });

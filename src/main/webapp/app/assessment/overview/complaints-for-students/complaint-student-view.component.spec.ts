@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -17,13 +17,13 @@ import { ComplaintRequestComponent } from 'app/assessment/overview/complaint-req
 import { ComplaintResponseComponent } from 'app/assessment/manage/complaint-response/complaint-response.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ArtemisServerDateService } from 'app/shared/service/server-date.service';
 import dayjs from 'dayjs/esm';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ElementRef } from '@angular/core';
 import { ComplaintType } from 'app/assessment/shared/entities/complaint.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';

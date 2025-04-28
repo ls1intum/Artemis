@@ -24,8 +24,8 @@ describe('TextExercise Row Buttons Component', () => {
 
         fixture = TestBed.createComponent(TextExerciseRowButtonsComponent);
         comp = fixture.componentInstance;
-        textExerciseService = fixture.debugElement.injector.get(TextExerciseService);
-        eventManagerService = fixture.debugElement.injector.get(EventManager);
+        textExerciseService = TestBed.inject(TextExerciseService);
+        eventManagerService = TestBed.inject(EventManager);
     });
 
     afterEach(() => {

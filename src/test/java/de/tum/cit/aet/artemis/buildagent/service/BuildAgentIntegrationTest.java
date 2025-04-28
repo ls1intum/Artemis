@@ -340,4 +340,28 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
                     && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
         });
     }
+
+    @Test
+    void testBuildAgentPullImageWithRandomNetworkFailure() {
+        var inspectImageCmd = mock(InspectImageCmd.class);
+        var inspectImageResponse = new InspectImageResponse().withArch("amd64");
+
+        when(dockerClient.inspectImageCmd(anyString())).thenReturn(inspectImageCmd);
+        AtomicInteger fails = new AtomicInteger(0);
+        doAnswer(invocation -> {
+            if (fails.incrementAndGet() <= 2) {
+                throw new NotFoundException("Simulated network failure");
+            }
+            return inspectImageResponse;
+        }).when(inspectImageCmd).exec();
+
+        var queueItem = createBaseBuildJobQueueItemForTrigger();
+        buildJobQueue.add(queueItem);
+
+        await().until(() -> {
+            var resultQueueItem = resultQueue.poll();
+            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id())
+                    && resultQueueItem.buildJobQueueItem().status() == BuildStatus.SUCCESSFUL;
+        });
+    }
 }

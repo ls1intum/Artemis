@@ -2,20 +2,20 @@ import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick
 import { BuildPlanEditorComponent } from 'app/programming/manage/build-plan-editor/build-plan-editor.component';
 import { BuildPlanService } from 'app/programming/manage/services/build-plan.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockProgrammingExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { BuildPlan } from 'app/programming/shared/entities/build-plan.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { MockBuildPlanService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-build-plan.service';
+import { MockBuildPlanService } from 'test/helpers/mocks/service/mock-build-plan.service';
 import { CodeEditorHeaderComponent } from 'app/programming/manage/code-editor/header/code-editor-header.component';
 import { MockComponent } from 'ng-mocks';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -52,10 +52,10 @@ describe('Build Plan Editor', () => {
                 fixture = TestBed.createComponent(BuildPlanEditorComponent);
                 comp = fixture.componentInstance;
 
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-                alertService = fixture.debugElement.injector.get(AlertService) as MockAlertService;
-                buildPlanService = fixture.debugElement.injector.get(BuildPlanService);
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
+                activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                alertService = TestBed.inject(AlertService) as MockAlertService;
+                buildPlanService = TestBed.inject(BuildPlanService);
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
                 putBuildPlanStub = jest.spyOn(buildPlanService, 'putBuildPlan');
             });

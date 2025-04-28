@@ -4,7 +4,7 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { faArrowRight, faBookmark, faCheck, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBookmark, faCheck, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -94,6 +94,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly faCheck = faCheck;
     readonly faPencilAlt = faPencilAlt;
     readonly faArrowRight = faArrowRight;
+    readonly faInfoCircle = faInfoCircle;
     readonly faTrash = faTrashAlt;
     readonly faShare = faShare;
 
@@ -125,6 +126,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
     showAnswers = input<boolean>();
+    showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
     isCommunicationPage = input<boolean>();
     lastReadDate = input<dayjs.Dayjs>();

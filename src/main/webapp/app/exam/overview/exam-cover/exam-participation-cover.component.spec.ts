@@ -19,16 +19,16 @@ import { ArtemisServerDateService } from 'app/shared/service/server-date.service
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { MockCourseManagementService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockExamParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exam-participation.service';
-import { MockArtemisServerDateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-server-date.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockExamParticipationService } from 'test/helpers/mocks/service/mock-exam-participation.service';
+import { MockArtemisServerDateService } from 'test/helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/overview/events/button/exam-live-events-button.component';
 
 describe('ExamParticipationCoverComponent', () => {

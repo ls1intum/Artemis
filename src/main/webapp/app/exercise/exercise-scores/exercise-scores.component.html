@@ -308,21 +308,14 @@
                                     @if (exercise.type === ExerciseType.PROGRAMMING) {
                                         <div class="mb-2">
                                             @if (getRepositoryLink(value)) {
-                                                @if (!localVCEnabled) {
-                                                    <a class="btn btn-primary btn-sm me-1" href="{{ getRepositoryLink(value) }}">
-                                                        <fa-icon [icon]="faCodeBranch" class="me-1" />
-                                                        Repository
-                                                    </a>
-                                                } @else {
-                                                    <jhi-code-button
-                                                        class="me-1"
-                                                        [smallButtons]="true"
-                                                        [repositoryUri]="getRepositoryLink(value) || ''"
-                                                        [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
-                                                    />
-                                                }
+                                                <jhi-code-button
+                                                    class="me-1"
+                                                    [smallButtons]="true"
+                                                    [repositoryUri]="getRepositoryLink(value) || ''"
+                                                    [routerLinkForRepositoryView]="['..', 'repository', RepositoryType.USER, value.id]"
+                                                />
                                             }
-                                            @if (buildPlanId(value) && !localVCEnabled) {
+                                            @if (buildPlanId(value) && !localCIEnabled) {
                                                 <a target="_blank" rel="noreferrer" href="{{ value.buildPlanUrl }}" class="btn btn-primary btn-sm me-1">
                                                     <fa-icon class="me-1" [icon]="farFileCode" />
                                                     Build plan

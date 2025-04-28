@@ -1061,4 +1061,60 @@ class ProgrammingAssessmentIntegrationTest extends AbstractProgrammingIntegratio
         assertThat(submission.getResults().get(2)).isEqualTo(firstSemiAutomaticResult);
         assertThat(submission.getResults().get(3)).isEqualTo(submission.getLatestResult()).isEqualTo(lastResult);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TUTOR")
+    void deleteAssessmentOfOtherTutorAsTutor() throws Exception {
+        deleteAssessmentAsForbiddenUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TUTOR")
+    void deleteAssessmentAsTutor() throws Exception {
+        deleteAssessmentAsForbiddenUser();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void deleteOwnAssessmentAsStudent() throws Exception {
+        deleteAssessmentAsForbiddenUser();
+    }
+
+    private void deleteAssessmentAsForbiddenUser() throws Exception {
+        ProgrammingSubmission submission = programmingExerciseUtilService.createProgrammingSubmission(null, false);
+        submission = programmingExerciseUtilService.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+                AssessmentType.AUTOMATIC, true);
+        assertThat(submission.getResults()).hasSize(1);
+
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
+                + submission.getFirstResult().getId(), HttpStatus.FORBIDDEN);
+
+        assertThat(submission.getResults()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteAssessmentAsInstructor() throws Exception {
+        Course course = exerciseUtilService.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "programming", 1, Optional.empty());
+        Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
+
+        exerciseUtilService.addAutomaticAssessmentToExercise(exercise);
+        exerciseUtilService.addAutomaticAssessmentToExercise(exercise);
+        exerciseUtilService.addAssessmentToExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
+
+        var submissions = participationUtilService.getAllSubmissionsOfExercise(exercise);
+        Submission submission = submissions.getFirst();
+        Result resultToDelete = submission.getResults().get(0);
+        Result secondResult = submission.getResults().get(1);
+        Result thirdResult = submission.getResults().get(2);
+        assertThat(submission.getResults()).hasSize(3);
+
+        request.delete("/api/programming/participations/" + submission.getParticipation().getId() + "/programming-submissions/" + submission.getId() + "/results/"
+                + resultToDelete.getId(), HttpStatus.OK);
+
+        submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
+        assertThat(submission.getResults()).hasSize(2);
+        assertThat(submission.getResults().get(0)).isEqualTo(secondResult);
+        assertThat(submission.getResults().get(1)).isEqualTo(thirdResult);
+    }
 }

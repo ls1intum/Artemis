@@ -49,3 +49,19 @@
         background: var(--reaction-button-reacted-color);
     }
 }
+
+.search-result-in-answers-info {
+    color: var(--artemis-alert-info-color);
+    background: var(--artemis-alert-info-background);
+    border-radius: 1rem;
+    align-items: center;
+    height: 1.2rem;
+    display: inline-flex;
+
+    .ng-fa-icon {
+        color: var(--artemis-alert-info-border);
+        justify-content: center;
+        display: inline-flex;
+        padding-left: 0.3rem;
+    }
+}

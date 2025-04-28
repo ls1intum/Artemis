@@ -262,7 +262,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             final String message = ("The student %s illegally submitted code after the allowed individual due date (including the grace period) in the participation %d for the "
                     + "programming exercise \"%s\"").formatted(user.getLogin(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
-            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);
             return;
         }
@@ -272,7 +271,6 @@ public class ProgrammingSubmissionService extends SubmissionService {
             final String message = "The student %s illegally submitted code after the submission policy lock limit %d in the participation %d for the programming exercise \"%s\""
                     .formatted(user.getLogin(), submissionPolicy.getSubmissionLimit(), programmingExerciseParticipation.getId(), programmingExercise.getTitle());
             programmingSubmission.setType(SubmissionType.ILLEGAL);
-            programmingMessagingService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(programmingExercise, message);
             log.warn(message);
         }
     }

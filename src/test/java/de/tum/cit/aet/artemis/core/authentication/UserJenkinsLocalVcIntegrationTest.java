@@ -295,12 +295,6 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
-        userTestService.updateUserNotificationDate_asStudent_isSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserProfilePicture_asStudent_isSuccessful();
     }
@@ -309,18 +303,6 @@ class UserJenkinsLocalVcIntegrationTest extends AbstractSpringIntegrationJenkins
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteUserProfilePicture_asStudent_isSuccessful() throws Exception {
         userTestService.updateAndDeleteUserProfilePicture_asStudent_isSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
-        userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
-        userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
 
     @Test

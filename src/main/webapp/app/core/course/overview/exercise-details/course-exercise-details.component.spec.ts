@@ -19,7 +19,6 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { TeamService } from 'app/exercise/team/team.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExerciseDetailsStudentActionsComponent } from 'app/core/course/overview/exercise-details/student-actions/exercise-details-student-actions.component';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
@@ -34,22 +33,22 @@ import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import { BehaviorSubject, of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockParticipationWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintService, EntityResponseType } from 'app/assessment/shared/services/complaint.service';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { MockRouterLinkDirective } from '../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { MockCourseManagementService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-course-management.service';
+import { MockCourseManagementService } from 'test/helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -65,7 +64,7 @@ import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-heade
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisSettings } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockScienceService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-science-service';
+import { MockScienceService } from 'test/helpers/mocks/service/mock-science-service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -77,17 +76,15 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
     let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
-    let profileService: ProfileService;
     let exerciseService: ExerciseService;
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
     let complaintService: ComplaintService;
-    let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
-    let participationWebsockerBehaviourSubject: BehaviorSubject<Participation | undefined>;
+    let participationWebsocketBehaviorSubject: BehaviorSubject<Participation | undefined>;
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
@@ -180,7 +177,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 { provide: ScienceService, useClass: MockScienceService },
                 MockProvider(ExerciseService),
                 MockProvider(ParticipationService),
-                MockProvider(GuidedTourService),
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
@@ -198,20 +194,13 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 comp.studentParticipations = [];
 
-                // mock profileService
-                profileService = fixture.debugElement.injector.get(ProfileService);
-                getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-                const profileInfo = { inProduction: false } as ProfileInfo;
-                const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-                getProfileInfoMock.mockReturnValue(profileInfoSubject);
-
                 // mock exerciseService
-                exerciseService = fixture.debugElement.injector.get(ExerciseService);
+                exerciseService = TestBed.inject(ExerciseService);
                 getExerciseDetailsMock = jest.spyOn(exerciseService, 'getExerciseDetails');
                 getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: exercise } }));
 
                 // mock teamService, needed for team assignment
-                teamService = fixture.debugElement.injector.get(TeamService);
+                teamService = TestBed.inject(TeamService);
                 const teamAssignmentPayload = {
                     exerciseId: 2,
                     teamId: 2,
@@ -220,12 +209,12 @@ describe('CourseExerciseDetailsComponent', () => {
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
-                participationWebsockerBehaviourSubject = new BehaviorSubject<Participation | undefined>(undefined);
-                participationWebsocketService = fixture.debugElement.injector.get(ParticipationWebsocketService);
+                participationWebsocketBehaviorSubject = new BehaviorSubject<Participation | undefined>(undefined);
+                participationWebsocketService = TestBed.inject(ParticipationWebsocketService);
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
-                subscribeForParticipationChangesMock.mockReturnValue(participationWebsockerBehaviourSubject);
+                subscribeForParticipationChangesMock.mockReturnValue(participationWebsocketBehaviorSubject);
 
-                complaintService = fixture.debugElement.injector.get(ComplaintService);
+                complaintService = TestBed.inject(ComplaintService);
 
                 scienceService = TestBed.inject(ScienceService);
                 logEventStub = jest.spyOn(scienceService, 'logEvent');
@@ -302,7 +291,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const exampleSolutionInfo = {} as ExampleSolutionInfo;
         const exerciseServiceSpy = jest.spyOn(ExerciseService, 'extractExampleSolutionInfo').mockReturnValue(exampleSolutionInfo);
 
-        const artemisMarkdown = fixture.debugElement.injector.get(ArtemisMarkdownService);
+        const artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
 
         expect(comp.exampleSolutionInfo).toBeUndefined();
         const newExercise = { ...textExercise };
@@ -382,10 +371,10 @@ describe('CourseExerciseDetailsComponent', () => {
     });
 
     it('should handle error when getting latest rated result', fakeAsync(() => {
-        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'error');
         const error = { message: 'Error msg' };
-        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(error));
+        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => error));
 
         const submissionId = 55;
         comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
@@ -419,7 +408,7 @@ describe('CourseExerciseDetailsComponent', () => {
 
         mergeStudentParticipationMock.mockReturnValue([newParticipation]);
 
-        participationWebsockerBehaviourSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
+        participationWebsocketBehaviorSubject.next({ ...newParticipation, exercise: programmingExercise, results: [] });
     }));
 
     it.each<[string[]]>([[[]], [[PROFILE_IRIS]]])(
@@ -440,7 +429,7 @@ describe('CourseExerciseDetailsComponent', () => {
             getExerciseDetailsMock.mockReturnValue(of({ body: { exercise: programmingExercise, irisSettings: fakeSettings } }));
 
             const profileService = TestBed.inject(ProfileService);
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles } as any as ProfileInfo));
+            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles } as any as ProfileInfo);
 
             // Act
             comp.ngOnInit();

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<th:block th:fragment="head">
+    <head>
+        <title th:text="#{email.courseNotification.duplicateTestCaseNotification.title}">Duplicate Test Case</title>
+        <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+        <th:block th:replace="~{mail/notification/fragments :: css}"/>
+    </head>
+</th:block>
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}"/>
+<!-- Message Body Start -->
+<div id="message-body">
+    <th:block>
+        <span th:text="#{email.greetings}">Dear </span>
+        <span class="bold-text" th:text="${recipient.getName()}">fullName</span>
+        <br>
+    </th:block>
+    <div class="notification-content">
+        <span th:text="#{email.courseNotification.duplicateTestCaseNotification.text(
+            ${parameters['exerciseTitle']},
+            ${parameters['courseTitle']}
+            )}">There is a duplicate test case that needs to be fixed.
+        </span>
+
+        <p class="bold-text" th:text="#{email.courseNotification.duplicateTestCaseNotification.overview}">Information about this exercise:</p>
+
+        <ul>
+            <th:block th:if="${parameters['releaseDate']}">
+                <li>
+                    <span th:utext="#{email.courseNotification.duplicateTestCaseNotification.releaseDate} "/>: <span th:utext="${parameters['releaseDate']}"/>
+                </li>
+            </th:block>
+
+            <th:block th:if="${parameters['dueDate']}">
+                <li>
+                    <span th:utext="#{email.courseNotification.duplicateTestCaseNotification.dueDate} "/>: <span th:utext="${parameters['dueDate']}"/>
+                </li>
+            </th:block>
+        </ul>
+
+        <th:block th:replace="~{mail/notification/fragments :: openInArtemisButton}"/>
+    </div>
+    <th:block th:replace="~{mail/notification/fragments :: farewell}"/>
+</div>
+<!-- Message Body End -->
+<th:block>
+    <footer>
+        <span th:text="#{email.notification.aux.footer}"/>
+        <a th:href="@{|${serverUrl}/courses/${courseId}/settings|}">
+            <span th:text="#{email.notification.aux.footer.link}"/>
+        </a>
+    </footer>
+</th:block>
+</body>
+</html>

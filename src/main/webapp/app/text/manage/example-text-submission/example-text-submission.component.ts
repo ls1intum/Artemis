@@ -4,8 +4,6 @@ import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { TextAssessmentService } from 'app/text/manage/assess/service/text-assessment.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/assessment/shared/entities/example-submission.model';
 import { Feedback, FeedbackCorrectionError, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -60,7 +58,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private router = inject(Router);
     private exampleSubmissionService = inject(ExampleSubmissionService);
     private tutorParticipationService = inject(TutorParticipationService);
-    private guidedTourService = inject(GuidedTourService);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private exerciseService = inject(ExerciseService);
 
@@ -133,7 +130,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     private loadAll(): void {
         this.exerciseService.find(this.exerciseId).subscribe((exerciseResponse: HttpResponse<TextExercise>) => {
             this.exercise = exerciseResponse.body!;
-            this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
         });
 
         if (this.isNewSubmission) {
@@ -153,8 +149,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             } else if (this.result?.id) {
                 this.state = State.forExistingAssessmentWithContext(this);
             }
-            // do this here to make sure everything is loaded before the guided tour step is loaded
-            this.guidedTourService.componentPageLoaded();
             if (this.exampleSubmission.usedForTutorial) {
                 this.selectedMode = ExampleSubmissionMode.ASSESS_CORRECTLY;
             } else {
@@ -403,10 +397,6 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     validateFeedback(): void {
         this.assessmentsAreValid = this.assessments.length > 0;
         this.totalScore = this.computeTotalScore(this.assessments);
-
-        if (this.guidedTourService.currentTour && this.toComplete) {
-            this.guidedTourService.updateAssessmentResult(this.assessments.length, this.totalScore);
-        }
     }
 
     /**

@@ -2,15 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { StarRatingComponent } from 'app/assessment/manage/rating/star-rating/star-rating.component';
 import { RatingService } from 'app/assessment/shared/services/rating.service';
-import { MockRatingService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-rating.service';
+import { MockRatingService } from 'test/helpers/mocks/service/mock-rating.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { MockComponent } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('RatingComponent', () => {

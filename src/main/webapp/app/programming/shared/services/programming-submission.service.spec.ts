@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { BehaviorSubject, Subject, lastValueFrom, of } from 'rxjs';
 import { range as _range } from 'lodash-es';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import {
     BuildTimingInfo,
     ExerciseSubmissionState,
@@ -14,15 +14,15 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
-import { MockProgrammingExerciseParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
 import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfileService } from '../../../core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { SubmissionProcessingDTO } from 'app/programming/shared/entities/submission-processing-dto';
 
 describe('ProgrammingSubmissionService', () => {
@@ -148,7 +148,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation', () => {
         httpGetStub.mockReturnValue(of(currentSubmission));
         let submission;
-        submissionService.setLocalCIProfile(false);
+        submissionService.isLocalCIEnabled = false;
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
         expect(submission).toEqual({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -167,7 +167,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should query httpService endpoint and setup the websocket subscriptions if no subject is cached for the provided participation with localCI profile', () => {
         httpGetStub.mockReturnValue(of(currentSubmission));
         let submission;
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true).subscribe((sub) => (submission = sub));
         expect(submission).toEqual({
             submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION,
@@ -444,7 +444,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should only unsubscribe if no other participations use the topic with localci', () => {
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         httpGetStub.mockReturnValue(of(currentSubmission));
         submissionService.getLatestPendingSubmissionByParticipationId(participationId, 10, true);
         submissionService.getLatestPendingSubmissionByParticipationId(2, 10, true);
@@ -459,7 +459,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should emit the newest submission when it was received through the websocket connection with localci', () => {
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         // No latest pending submission found.
         httpGetStub.mockReturnValue(of(undefined));
@@ -490,7 +490,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should handle when submission processing event before submission event', () => {
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         // No latest pending submission found.
         httpGetStub.mockReturnValue(of(undefined));
@@ -516,7 +516,7 @@ describe('ProgrammingSubmissionService', () => {
     });
 
     it('should not update to building if old submission', () => {
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         // No latest pending submission found.
         httpGetStub.mockReturnValue(of(undefined));
@@ -555,7 +555,7 @@ describe('ProgrammingSubmissionService', () => {
     it('should change to building when queue timer ends', fakeAsync(() => {
         // @ts-ignore
         submissionService.currentExpectedQueueEstimate = 1000;
-        submissionService.setLocalCIProfile(true);
+        submissionService.isLocalCIEnabled = true;
         const returnedSubmissions: Array<ProgrammingSubmissionStateObj | undefined> = [];
         // No latest pending submission found.
         httpGetStub.mockReturnValue(of(undefined));

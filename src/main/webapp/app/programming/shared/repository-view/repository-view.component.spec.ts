@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockProgrammingExerciseParticipationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise-participation.service';
-import { MockProgrammingExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockProgrammingExerciseParticipationService } from 'test/helpers/mocks/service/mock-programming-exercise-participation.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { DomainService } from 'app/programming/shared/code-editor/services/code-editor-domain.service';
 import { RepositoryViewComponent } from 'app/programming/shared/repository-view/repository-view.component';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,7 +15,7 @@ import { HttpResponse } from '@angular/common/http';
 import { DueDateStat } from 'app/assessment/shared/assessment-dashboard/due-date-stat.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AuxiliaryRepository } from 'app/programming/shared/entities/programming-exercise-auxiliary-repository-model';
 
@@ -48,9 +48,9 @@ describe('RepositoryViewComponent', () => {
                 component = fixture.componentInstance;
                 fixture.detectChanges();
 
-                activatedRoute = fixture.debugElement.injector.get(ActivatedRoute) as MockActivatedRoute;
-                programmingExerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
-                programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+                activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+                programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
             });
     });
 

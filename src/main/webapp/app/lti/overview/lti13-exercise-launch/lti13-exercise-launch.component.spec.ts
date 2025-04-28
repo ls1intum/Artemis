@@ -7,12 +7,12 @@ import { User } from 'app/core/user/user.model';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;
@@ -187,4 +187,36 @@ describe('Lti13ExerciseLaunchComponent', () => {
             })),
         );
     }
+
+    it('should navigate directly if URL is "/lti/select-course"', () => {
+        const setShownViaLtiSpy = jest.spyOn(comp['ltiService'], 'setShownViaLti');
+        const applyThemeSpy = jest.spyOn(comp['themeService'], 'applyThemePreference');
+
+        comp.replaceWindowLocationWrapper('/lti/select-course');
+
+        expect(setShownViaLtiSpy).toHaveBeenCalledWith(true);
+        expect(applyThemeSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith(['/lti/select-course'], {
+            queryParams: {},
+            replaceUrl: true,
+        });
+    });
+
+    it('should parse URL, detect isMultiLaunch, and navigate with query params', () => {
+        const setShownViaLtiSpy = jest.spyOn(comp['ltiService'], 'setShownViaLti');
+        const setMultiLaunchSpy = jest.spyOn(comp['ltiService'], 'setMultiLaunch');
+        const applyThemeSpy = jest.spyOn(comp['themeService'], 'applyThemePreference');
+
+        const testUrl = `https://example.com/some/path?isMultiLaunch=true&foo=bar`;
+
+        comp.replaceWindowLocationWrapper(testUrl);
+
+        expect(setShownViaLtiSpy).toHaveBeenCalledWith(true);
+        expect(setMultiLaunchSpy).toHaveBeenCalledWith(true);
+        expect(applyThemeSpy).toHaveBeenCalled();
+        expect(navigateSpy).toHaveBeenCalledWith(['/some/path'], {
+            queryParams: { isMultiLaunch: 'true', foo: 'bar' },
+            replaceUrl: true,
+        });
+    });
 });

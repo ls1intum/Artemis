@@ -64,12 +64,8 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {
             // Checks if the current environment includes "apollon" profile
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                if (profileInfo && profileInfo.activeProfiles.includes('apollon')) {
-                    this.isApollonProfileActive = true;
-                }
-                this.load(params['exerciseId']);
-            });
+            this.isApollonProfileActive = this.profileService.isProfileActive('apollon');
+            this.load(params['exerciseId']);
         });
         this.registerChangeInModelingExercises();
     }

@@ -112,7 +112,7 @@ public final class SecurityUtils {
      * This methods manually sets a dummy Authentication object that is always authenticated. When a request using a JpaRepository is made and the query associated with the method
      * is not automatically generated but manually specified, the Spring Data JPA expects the user performing the request to be authenticated. If the request to the JpaRepository
      * is made because of a REST-call from a server that is not authenticated within Spring, an InvalidDataAccessApiUsageException is raised. This method is a workaround for this
-     * behaviour.
+     * behavior.
      */
     public static void setAuthorizationObject() {
         SecurityContext context = SecurityContextHolder.getContext();

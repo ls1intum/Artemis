@@ -10,10 +10,10 @@ import { StudentParticipation } from 'app/exercise/shared/entities/participation
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { CommitState } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExamExerciseUpdateService } from 'app/exam/manage/services/exam-exercise-update.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -42,7 +42,7 @@ describe('Exam Navigation Bar Component', () => {
 
         fixture = TestBed.createComponent(ExamNavigationBarComponent);
         comp = fixture.componentInstance;
-        repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
+        repositoryService = TestBed.inject(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
 
         comp.endDate = dayjs();

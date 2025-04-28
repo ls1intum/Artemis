@@ -30,7 +30,6 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     tutorialGroup?: TutorialGroup;
     course?: Course;
     private paramsSubscription: Subscription;
-    profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
 
@@ -67,14 +66,11 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
                     },
                 });
         }
-        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
-            this.isProduction = profileInfo?.inProduction;
-            this.isTestServer = profileInfo.testServer ?? false;
-        });
+        this.isProduction = this.profileService.isProduction();
+        this.isTestServer = this.profileService.isTestServer();
     }
 
     ngOnDestroy(): void {
         this.paramsSubscription?.unsubscribe();
-        this.profileSubscription?.unsubscribe();
     }
 }

@@ -102,4 +102,30 @@ class IdePreferencesIntegrationTest extends AbstractProgrammingIntegrationIndepe
         assertThat(userIdeMappingRepository.findAllByUserId(student1.getId())).as("ide preference got deleted").isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetIdePreferenceForUnsupportedLanguage() throws Exception {
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", "UNSUPPORTED_LANGUAGE");
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(IntelliJ), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSetPreferenceWithNonExistentIde() throws Exception {
+        Ide nonExistentIde = new Ide("NonExistent", "nonexistent://url");
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("programmingLanguage", ProgrammingLanguage.JAVA.toString());
+        request.putWithResponseBodyAndParams("/api/programming/ide-settings", new IdeDTO(nonExistentIde), IdeMappingDTO.class, HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetPredefinedIdes() throws Exception {
+        List<IdeDTO> predefinedIdes = request.getList("/api/programming/ide-settings/predefined", HttpStatus.OK, IdeDTO.class);
+        assertThat(predefinedIdes).isNotEmpty();
+        assertThat(predefinedIdes).extracting("name").contains("VS Code", "IntelliJ");
+        assertThat(predefinedIdes).allMatch(ideDTO -> ideDTO.deepLink() != null && !ideDTO.deepLink().isEmpty() && ideDTO.deepLink().contains("{cloneUrl}"));
+    }
+
 }

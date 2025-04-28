@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_JENKINS;
+import static de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils.hashSha256;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Optional;
 
@@ -68,7 +68,7 @@ public class PublicProgrammingExerciseResultResource {
         if (artemisAuthenticationTokenValue == null || artemisAuthenticationTokenValue.length() < 12) {
             throw new IllegalArgumentException("The artemisAuthenticationTokenValue is not set or too short. Please check the configuration.");
         }
-        this.artemisAuthenticationTokenHash = hash(artemisAuthenticationTokenValue);
+        this.artemisAuthenticationTokenHash = hashSha256(artemisAuthenticationTokenValue);
     }
 
     /**
@@ -137,18 +137,8 @@ public class PublicProgrammingExerciseResultResource {
         return ResponseEntity.ok().build();
     }
 
-    private byte[] hash(String token) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return digest.digest(token.getBytes(StandardCharsets.UTF_8));
-        }
-        catch (Exception e) {
-            throw new IllegalStateException("Failed to hash CI token", e);
-        }
-    }
-
     private boolean matches(String incomingToken) {
-        return MessageDigest.isEqual(artemisAuthenticationTokenHash, hash(incomingToken));
+        return MessageDigest.isEqual(artemisAuthenticationTokenHash, hashSha256(incomingToken));
     }
 
     /**

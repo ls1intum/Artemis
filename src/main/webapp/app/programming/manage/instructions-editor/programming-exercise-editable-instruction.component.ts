@@ -45,7 +45,6 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import RewritingVariant from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-variant';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ConsistencyCheckAction } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check.action';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
@@ -86,9 +85,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     courseId: number;
     exerciseId: number;
-    irisEnabled = toSignal(this.profileService.getProfileInfo().pipe(map((profileInfo) => profileInfo.activeProfiles.includes(PROFILE_IRIS))), { initialValue: false });
+    irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
     artemisIntelligenceActions = computed(() =>
-        this.irisEnabled()
+        this.irisEnabled
             ? [
                   new RewriteAction(this.artemisIntelligenceService, RewritingVariant.PROBLEM_STATEMENT, this.courseId),
                   ...(this.exerciseId ? [new ConsistencyCheckAction(this.artemisIntelligenceService, this.exerciseId, this.renderedConsistencyCheckResultMarkdown)] : []),

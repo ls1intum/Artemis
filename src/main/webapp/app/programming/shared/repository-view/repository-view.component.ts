@@ -14,8 +14,6 @@ import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { Feedback } from 'app/assessment/shared/entities/feedback.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -46,7 +44,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     domainService = inject(DomainService);
     private route = inject(ActivatedRoute);
-    private profileService = inject(ProfileService);
     private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private programmingExerciseService = inject(ProgrammingExerciseService);
     private router = inject(Router);
@@ -77,7 +74,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
-    localVcEnabled = true;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -118,9 +114,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
-        });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVcEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 

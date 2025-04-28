@@ -8,7 +8,6 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
 import { CourseManagementExercisesSearchComponent } from '../exercises-search/course-management-exercises-search.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseCardComponent } from '../course-exercise-card/course-exercise-card.component';
-import { ProgrammingExerciseCreateButtonsComponent } from 'app/programming/manage/create-buttons/programming-exercise-create-buttons.component';
 import { ProgrammingExerciseComponent } from 'app/programming/manage/exercise/programming-exercise.component';
 import { QuizExerciseCreateButtonsComponent } from 'app/quiz/manage/create-buttons/quiz-exercise-create-buttons.component';
 import { QuizExerciseComponent } from 'app/quiz/manage/exercise/quiz-exercise.component';
@@ -17,6 +16,9 @@ import { ModelingExerciseComponent } from 'app/modeling/manage/modeling-exercise
 import { TextExerciseComponent } from 'app/text/manage/text-exercise/exercise/text-exercise.component';
 import { FileUploadExerciseComponent } from 'app/fileupload/manage/file-upload-exercise/file-upload-exercise.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_TEXT } from 'app/app.constants';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -26,7 +28,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
         CourseManagementExercisesSearchComponent,
         TranslateDirective,
         CourseExerciseCardComponent,
-        ProgrammingExerciseCreateButtonsComponent,
         ProgrammingExerciseComponent,
         QuizExerciseCreateButtonsComponent,
         QuizExerciseComponent,
@@ -38,8 +39,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     ],
 })
 export class CourseManagementExercisesComponent implements OnInit {
-    readonly ExerciseType = ExerciseType;
-    readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly ExerciseType = ExerciseType;
+    protected readonly documentationType: DocumentationType = 'Exercise';
+    protected readonly FeatureToggle = FeatureToggle;
 
     course: Course;
     showSearch = false;
@@ -55,7 +57,10 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
 
+    textExerciseEnabled = false;
+
     private readonly route = inject(ActivatedRoute);
+    private readonly profileService = inject(ProfileService);
 
     /**
      * initializes course
@@ -67,19 +72,8 @@ export class CourseManagementExercisesComponent implements OnInit {
             }
         });
 
+        this.textExerciseEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TEXT);
         this.exerciseFilter = new ExerciseFilter('');
-    }
-
-    /**
-     * Sets the (filtered) programming exercise count. Required to pass a callback to the
-     * overrideProgrammingExerciseCard extension since extensions don't support @Output
-     * @param count to set the programmingExerciseCount to
-     */
-    setProgrammingExerciseCount(count: number) {
-        this.programmingExercisesCount = count;
-    }
-    setFilteredProgrammingExerciseCount(count: number) {
-        this.filteredProgrammingExercisesCount = count;
     }
 
     /**

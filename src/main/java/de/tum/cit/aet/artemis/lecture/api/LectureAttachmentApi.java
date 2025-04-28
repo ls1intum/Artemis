@@ -9,10 +9,8 @@ import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
  * API for managing lecture attachments.
@@ -25,12 +23,9 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
-    private final SlideRepository slideRepository;
-
-    public LectureAttachmentApi(AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository, SlideRepository slideRepository) {
+    public LectureAttachmentApi(AttachmentRepository attachmentRepository, AttachmentUnitRepository attachmentUnitRepository) {
         this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
-        this.slideRepository = slideRepository;
     }
 
     public AttachmentUnit findAttachmentUnitByIdElseThrow(long id) {
@@ -39,10 +34,6 @@ public class LectureAttachmentApi extends AbstractLectureApi {
 
     public Attachment findAttachmentByIdElseThrow(long id) {
         return attachmentRepository.findByIdElseThrow(id);
-    }
-
-    public Slide findSlideByAttachmentUnitIdAndSlideNumber(Long attachmentUnitId, Integer slideNumber) {
-        return slideRepository.findSlideByAttachmentUnitIdAndSlideNumber(attachmentUnitId, slideNumber);
     }
 
     public List<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(long lectureId, AttachmentType type) {

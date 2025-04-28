@@ -12,7 +12,7 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { Subject, of } from 'rxjs';
-import { DummyPagingService } from '../../../../../test/javascript/spec/helpers/mocks/service/dummy-paging-service';
+import { DummyPagingService } from 'test/helpers/mocks/service/dummy-paging-service';
 
 @Component({ template: '' })
 class DummyImportComponent extends ImportComponent<BaseEntity> {

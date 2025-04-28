@@ -7,20 +7,20 @@ import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise
 import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { MockComponent } from 'ng-mocks';
 import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise/exercise-detail-common-actions/non-programming-exercise-detail-common-actions.component';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/service/statistics.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockAlertService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 describe('ModelingExercise Management Detail Component', () => {
     let comp: ModelingExerciseDetailComponent;
@@ -65,9 +65,9 @@ describe('ModelingExercise Management Detail Component', () => {
             .compileComponents();
         fixture = TestBed.createComponent(ModelingExerciseDetailComponent);
         comp = fixture.componentInstance;
-        modelingExerciseService = fixture.debugElement.injector.get(ModelingExerciseService);
-        statisticsService = fixture.debugElement.injector.get(StatisticsService);
-        eventManager = fixture.debugElement.injector.get(EventManager);
+        modelingExerciseService = TestBed.inject(ModelingExerciseService);
+        statisticsService = TestBed.inject(StatisticsService);
+        eventManager = TestBed.inject(EventManager);
         fixture.detectChanges();
     });
 

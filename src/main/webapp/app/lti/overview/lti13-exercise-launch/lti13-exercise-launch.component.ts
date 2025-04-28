@@ -151,12 +151,24 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setShownViaLti(true);
         this.themeService.applyThemePreference(Theme.LIGHT);
+
         let path;
+        const queryParams: { [key: string]: string } = {};
+
         if (url === '/lti/select-course') {
             path = url;
         } else {
-            path = new URL(url).pathname;
+            const urlObj = new URL(url);
+            if (urlObj.searchParams.get('isMultiLaunch') === 'true') {
+                this.ltiService.setMultiLaunch(true);
+            }
+
+            path = urlObj.pathname;
+            urlObj.searchParams.forEach((value, key) => {
+                queryParams[key] = value;
+            });
         }
-        this.router.navigate([path], { replaceUrl: true });
+
+        this.router.navigate([path], { queryParams: queryParams, replaceUrl: true });
     }
 }

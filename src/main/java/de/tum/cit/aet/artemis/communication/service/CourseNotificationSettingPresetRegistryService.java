@@ -80,10 +80,8 @@ public class CourseNotificationSettingPresetRegistryService {
     public List<UserCourseNotificationSettingPresetDTO> getSettingPresetDTOs() {
         List<UserCourseNotificationSettingPresetDTO> presetDTOList = new ArrayList<>();
 
-        presets.forEach((key, value) -> {
-            presetDTOList.add(new UserCourseNotificationSettingPresetDTO(value.getReadablePresetIdentifier(), getPresetId(value.getClass()).shortValue(),
-                    value.getPresetMapWithStringKeys()));
-        });
+        presets.forEach((key, value) -> presetDTOList.add(
+                new UserCourseNotificationSettingPresetDTO(value.getReadablePresetIdentifier(), getPresetId(value.getClass()).shortValue(), value.getPresetMapWithStringKeys())));
 
         return presetDTOList;
     }

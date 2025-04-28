@@ -1,25 +1,17 @@
 import dayjs from 'dayjs/esm';
-import { Notification, NotificationType } from 'app/core/shared/entities/notification.model';
-import { Post } from 'app/communication/shared/entities/post.model';
+import { User } from 'app/core/user/user.model';
 
 export const enum SystemNotificationType {
     WARNING = 'WARNING',
     INFO = 'INFO',
 }
 
-export class SystemNotification extends Notification {
+export class SystemNotification {
+    public id?: number;
+    public title?: string;
+    public text?: string;
+    public notificationDate?: dayjs.Dayjs;
+    public author?: User;
     public expireDate?: dayjs.Dayjs;
     public type?: SystemNotificationType;
-
-    constructor() {
-        super(NotificationType.SYSTEM);
-    }
-}
-
-export class ConversationNotification extends Notification {
-    public message: Post;
-
-    constructor() {
-        super(NotificationType.CONVERSATION);
-    }
 }

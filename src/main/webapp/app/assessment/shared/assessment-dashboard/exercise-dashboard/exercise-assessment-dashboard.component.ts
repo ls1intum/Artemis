@@ -32,8 +32,6 @@ import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-e
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { tutorAssessmentTour } from 'app/core/guided-tour/tours/tutor-assessment-tour';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TutorParticipation, TutorParticipationStatus } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -51,14 +49,12 @@ import { LegendPosition, PieChartModule } from '@swimlane/ngx-charts';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
-import { PROFILE_LOCALVC } from 'app/app.constants';
 import { isManualResult } from 'app/exercise/result/result.utils';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { SecondCorrectionEnableButtonComponent } from './second-correction-button/second-correction-enable-button.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/manage/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -74,9 +70,7 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 import { AssessmentDashboardInformationEntry } from 'app/assessment/shared/assessment-dashboard/assessment-dashboard-information.component';
 import { HeaderExercisePageWithDetailsComponent } from 'app/exercise/exercise-headers/with-details/header-exercise-page-with-details.component';
 import { InfoPanelComponent } from 'app/assessment/shared/info-panel/info-panel.component';
-import { SecureLinkDirective } from 'app/assessment/manage/secure-link.directive';
 import { ResultComponent } from 'app/exercise/result/result.component';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 
 export interface ExampleSubmissionQueryParams {
@@ -101,8 +95,6 @@ export interface ExampleSubmissionQueryParams {
         InfoPanelComponent,
         ProgrammingExerciseInstructionComponent,
         ModelingEditorComponent,
-        SecureLinkDirective,
-        ButtonComponent,
         CodeButtonComponent,
         StructuredGradingInstructionsAssessmentLayoutComponent,
         NgbTooltip,
@@ -134,9 +126,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     private artemisMarkdown = inject(ArtemisMarkdownService);
     private router = inject(Router);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private guidedTourService = inject(GuidedTourService);
     private sortService = inject(SortService);
-    private profileService = inject(ProfileService);
 
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
@@ -151,8 +141,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     isExamMode = false;
     isTestRun = false;
     isLoading = false;
-
-    localVCEnabled = true;
 
     statsForDashboard = new StatsForDashboard();
 
@@ -218,8 +206,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     tutor?: User;
     togglingSecondCorrectionButton = false;
 
-    exerciseForGuidedTour?: Exercise;
-
     complaintsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
     moreFeedbackRequestsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
@@ -257,13 +243,12 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         }
 
+        this.tutor = this.accountService.userIdentity;
+
         this.loadAll();
-        this.accountService.identity().then((user: User) => (this.tutor = user));
+
         this.translateService.onLangChange.subscribe(() => {
             this.setupGraph();
-        });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 
@@ -352,7 +337,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         break;
                 }
 
-                this.exerciseForGuidedTour = this.guidedTourService.enableTourForExercise(this.exercise, tutorAssessmentTour, false);
                 this.tutorParticipation = this.exercise.tutorParticipations![0];
                 this.tutorParticipationStatus = this.tutorParticipation.status!;
                 if (this.exercise.exampleSubmissions && this.exercise.exampleSubmissions.length > 0) {
@@ -386,9 +370,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 if ((this.exercise.allowFeedbackRequests || isAfterDueDate) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }
-
-                // load the guided tour step only after everything else on the page is loaded
-                this.guidedTourService.componentPageLoaded();
 
                 this.setupLinks();
             },
