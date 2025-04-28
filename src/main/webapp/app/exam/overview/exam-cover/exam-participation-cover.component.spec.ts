@@ -214,14 +214,12 @@ describe('ExamParticipationCoverComponent', () => {
     });
 
     it('should submit exam', () => {
-        // component.onExamEnded = new EventEmitter<StudentExam>();
         const saveStudentExamSpy = jest.spyOn(component.onExamEnded, 'emit');
         component.submitExam();
         expect(saveStudentExamSpy).toHaveBeenCalledOnce();
     });
 
     it('should continue after handing in early', () => {
-        // component.onExamContinueAfterHandInEarly = new EventEmitter<void>();
         const saveStudentExamSpy = jest.spyOn(component.onExamContinueAfterHandInEarly, 'emit');
         component.continueAfterHandInEarly();
         expect(saveStudentExamSpy).toHaveBeenCalledOnce();
