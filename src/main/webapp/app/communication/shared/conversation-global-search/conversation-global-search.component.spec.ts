@@ -161,6 +161,51 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(focusSpy).toHaveBeenCalled();
     }));
 
+    it('should remove selected author and emit selection change', fakeAsync(() => {
+        const selectionChangeSpy = jest.spyOn(component.onSelectionChange, 'emit');
+        const focusSpy = jest.spyOn(component, 'focusInput');
+
+        component.selectedAuthors = mockUsers;
+        fixture.detectChanges();
+
+        component.removeSelectedAuthor(component.selectedAuthors[0]);
+        tick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthors).toHaveLength(1);
+        expect(component.selectedAuthors[0].id).toBe(2);
+
+        expect(focusSpy).toHaveBeenCalled();
+
+        expect(selectionChangeSpy).toHaveBeenCalledWith({
+            searchTerm: component.fullSearchTerm,
+            selectedConversations: component.selectedConversations,
+            selectedAuthors: component.selectedAuthors,
+        });
+    }));
+
+    it('should clear search term, selected conversations, and selected authors, and emit selection change when clearing search', fakeAsync(() => {
+        const selectionChangeSpy = jest.spyOn(component.onSelectionChange, 'emit');
+
+        component.fullSearchTerm = 'in:general';
+        component.selectedConversations = [mockConversations[0]];
+        component.selectedAuthors = [mockUsers[0]];
+
+        component.clearSearch();
+        tick();
+        fixture.detectChanges();
+
+        expect(component.fullSearchTerm).toBe('');
+        expect(component.selectedConversations).toHaveLength(0);
+        expect(component.selectedAuthors).toHaveLength(0);
+
+        expect(selectionChangeSpy).toHaveBeenCalledWith({
+            searchTerm: '',
+            selectedConversations: [],
+            selectedAuthors: [],
+        });
+    }));
+
     it('should navigate dropdown with keyboard and select with enter', fakeAsync(() => {
         const selectOptionSpy = jest.spyOn(component, 'selectOption');
         component.fullSearchTerm = 'in:general';
@@ -184,5 +229,35 @@ describe('ConversationGlobalSearchComponent', () => {
 
         expect(component.selectedConversations).toEqual([mockConversations[0]]);
         expect(focusSpy).toHaveBeenCalled();
+    }));
+
+    it('should select a user from the dropdown and emit selection change', fakeAsync(() => {
+        const selectionChangeSpy = jest.spyOn(component.onSelectionChange, 'emit');
+        const focusSpy = jest.spyOn(component, 'focusInput');
+
+        component.filteredUsers = [mockUsers[0]];
+        component.filteredOptions = [
+            {
+                id: mockUsers[0].id!,
+                name: mockUsers[0].name!,
+                type: 'user',
+                img: mockUsers[0].imageUrl,
+            },
+        ];
+        fixture.detectChanges();
+
+        component.selectOption(component.filteredOptions[0]);
+        tick();
+        fixture.detectChanges();
+
+        expect(component.selectedAuthors).toEqual([mockUsers[0]]);
+        expect(component.showDropdown).toBeFalse();
+        expect(component.fullSearchTerm).toBe('');
+        expect(focusSpy).toHaveBeenCalled();
+        expect(selectionChangeSpy).toHaveBeenCalledWith({
+            searchTerm: '',
+            selectedConversations: [],
+            selectedAuthors: [mockUsers[0]],
+        });
     }));
 });
