@@ -2,6 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- differentiate between mysql dialect and postgres as they have different regex match syntax -->
     <changeSet id="20250427142300-mysql" author="janthoXO">
         <preConditions onFail="MARK_RAN">
             <dbms type="mysql,h2"/>
