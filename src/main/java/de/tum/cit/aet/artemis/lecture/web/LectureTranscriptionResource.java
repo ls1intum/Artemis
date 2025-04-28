@@ -124,6 +124,7 @@ public class LectureTranscriptionResource {
      */
 
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
+    @EnforceAtLeastInstructor
     public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody NebulaTranscriptionRequestDTO request) {
         try {
             // Call Nebula and get the transcription
