@@ -130,7 +130,7 @@ public class LectureTranscriptionResource {
             LectureTranscriptionDTO transcriptionDTO = nebulaRestClient.post().uri(nebulaBaseUrl + "/start-transcribe").header("Content-Type", "application/json").body(request)
                     .retrieve().body(LectureTranscriptionDTO.class);
 
-            if (transcriptionDTO == null || transcriptionDTO.segments().isEmpty()) {
+            if (transcriptionDTO.segments().isEmpty()) {
                 log.error("Nebula returned empty transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
                 return ResponseEntity.status(500).body("Empty transcription result from Nebula.");
             }
