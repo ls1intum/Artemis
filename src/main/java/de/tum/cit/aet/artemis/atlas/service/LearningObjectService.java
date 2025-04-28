@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lecture.service;
+package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 
 /**
  * Service implementation for interactions with learning objects.
@@ -36,14 +36,14 @@ public class LearningObjectService {
 
     private final ParticipantScoreService participantScoreService;
 
-    private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
+    private final Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi;
 
     private final SubmissionRepository submissionRepository;
 
-    public LearningObjectService(ParticipantScoreService participantScoreService, LectureUnitCompletionRepository lectureUnitCompletionRepository,
+    public LearningObjectService(ParticipantScoreService participantScoreService, Optional<LectureUnitRepositoryApi> lectureUnitRepositoryApi,
             SubmissionRepository submissionRepository) {
         this.participantScoreService = participantScoreService;
-        this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.lectureUnitRepositoryApi = lectureUnitRepositoryApi;
         this.submissionRepository = submissionRepository;
     }
 
@@ -87,7 +87,11 @@ public class LearningObjectService {
      * @param user         the user for which to set the completions
      */
     public void setLectureUnitCompletions(Set<LectureUnit> lectureUnits, User user) {
-        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitCompletionRepository.findByLectureUnitsAndUserId(lectureUnits, user.getId());
+        if (lectureUnitRepositoryApi.isEmpty()) {
+            return;
+        }
+
+        Set<LectureUnitCompletion> lectureUnitCompletions = lectureUnitRepositoryApi.get().findByLectureUnitsAndUserId(lectureUnits, user.getId());
         lectureUnits.forEach(lectureUnit -> {
             Optional<LectureUnitCompletion> completion = lectureUnitCompletions.stream().filter(lectureUnitCompletion -> lectureUnitCompletion.getLectureUnit().equals(lectureUnit))
                     .findFirst();
