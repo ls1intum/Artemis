@@ -1740,4 +1740,172 @@ describe('PdfPreviewComponent', () => {
             expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.dateBox.dateErrorWithPages', { param: '1, 3' });
         });
     });
+
+    describe('Student Version Updates', () => {
+        beforeEach(() => {
+            routerNavigateSpy = jest.spyOn(TestBed.inject(Router), 'navigate').mockImplementation(() => Promise.resolve(true));
+        });
+
+        it('should successfully update the student version of an attachment unit', fakeAsync(() => {
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+
+            const studentPdfFile = new File(['test-student-file'], 'test_student.pdf', { type: 'application/pdf' });
+
+            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(of({}));
+
+            const finishSavingSpy = jest.spyOn(component as any, 'finishSaving');
+            const appendSpy = jest.spyOn(FormData.prototype, 'append');
+
+            component['updateStudentVersion'](studentPdfFile).then(() => {
+                expect(attachmentUnitServiceMock.updateStudentVersion).toHaveBeenCalledWith(3, 2, expect.any(FormData));
+                expect(appendSpy).toHaveBeenCalledWith('studentVersion', studentPdfFile);
+                expect(finishSavingSpy).toHaveBeenCalled();
+                appendSpy.mockRestore();
+            });
+
+            tick();
+        }));
+
+        it('should handle errors when updating the student version fails', fakeAsync(() => {
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+
+            const studentPdfFile = new File(['test-student-file'], 'test_student.pdf', { type: 'application/pdf' });
+            const mockError = new Error('Student version update failed');
+            attachmentUnitServiceMock.updateStudentVersion = jest.fn().mockReturnValue(throwError(() => mockError));
+            const errorSpy = jest.spyOn(alertServiceMock, 'error');
+            const promise = component['updateStudentVersion'](studentPdfFile);
+
+            // The promise should reject
+            promise.catch((error) => {
+                expect(error).toBe(mockError);
+            });
+
+            tick();
+
+            expect(component.isSaving()).toBeFalse();
+            expect(errorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.studentVersionUpdateError', { error: 'Student version update failed' });
+
+            expect(routerNavigateSpy).not.toHaveBeenCalled();
+        }));
+
+        it('should update student version when updateAttachmentWithFile is called with hidden pages', async () => {
+            const mockDate = dayjs('2024-05-15');
+
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+
+            component.hiddenPages.set({
+                slide1: { date: mockDate, exerciseId: null },
+            });
+
+            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
+
+            const mockInstructorPdf = {
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            };
+
+            const mockStudentPdf = {
+                save: jest.fn().mockResolvedValue(new Uint8Array([4, 5, 6])),
+            };
+
+            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+                instructorPdf: mockInstructorPdf as any,
+                studentPdf: mockStudentPdf as any,
+            });
+
+            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+
+            const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion').mockResolvedValue(undefined);
+
+            jest.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
+            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+
+            await component.updateAttachmentWithFile();
+
+            expect(updateStudentVersionSpy).toHaveBeenCalled();
+            const fileArg = updateStudentVersionSpy.mock.calls[0][0] as File;
+            expect(fileArg instanceof File).toBeTrue();
+            expect(fileArg.name).toContain('_student.pdf');
+        });
+
+        it('should not update student version when no hidden pages exist', async () => {
+            component.attachment.set(undefined);
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'Chapter 1',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+
+            component.hiddenPages.set({});
+
+            jest.spyOn(component as any, 'validateHiddenSlidesDates').mockReturnValue(true);
+
+            const mockInstructorPdf = {
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            };
+
+            jest.spyOn(component, 'applyOperations').mockResolvedValue({
+                instructorPdf: mockInstructorPdf as any,
+                studentPdf: null,
+            });
+
+            jest.spyOn(component as any, 'updateAttachmentUnit').mockResolvedValue(undefined);
+
+            const updateStudentVersionSpy = jest.spyOn(component as any, 'updateStudentVersion');
+
+            jest.spyOn(component, 'navigateToCourseManagement').mockImplementation(() => {});
+            jest.spyOn(component, 'getFinalPageOrder').mockResolvedValue([]);
+
+            await component.updateAttachmentWithFile();
+
+            expect(updateStudentVersionSpy).not.toHaveBeenCalled();
+        });
+
+        it('should create a student version file with the correct name', async () => {
+            component.attachmentUnit.set({
+                id: 2,
+                name: 'TestUnit',
+                lecture: { id: 3 },
+                attachment: { id: 4, name: 'Unit PDF' },
+            });
+
+            const mockPdf = {
+                save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+            };
+
+            const originalFile = global.File;
+            const capturedArgs: any[] = [];
+
+            global.File = jest.fn().mockImplementation((...args) => {
+                capturedArgs.length = 0; // Clear array
+                capturedArgs.push(...args); // Add elements
+                return new originalFile(args[0], args[1], args[2]);
+            }) as any;
+
+            const result = await component['createPdfFile'](mockPdf as any, 'TestUnit', true);
+
+            expect(result.name).toBe('TestUnit_student.pdf');
+            expect(result.type).toBe('application/pdf');
+            expect(capturedArgs[1]).toBe('TestUnit_student.pdf');
+            expect(capturedArgs[2]).toEqual(expect.objectContaining({ type: 'application/pdf' }));
+
+            global.File = originalFile;
+        });
+    });
 });
