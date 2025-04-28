@@ -47,12 +47,4 @@ export class ProfileService {
     public isTestServer(): boolean {
         return this.profileInfo.testServer ?? false;
     }
-
-    /**
-     * Check if the given module feature is active.
-     * @param moduleFeatureName The module feature to check.
-     */
-    public isFeatureActive(moduleFeatureName: string): boolean {
-        return this.profileInfo?.value?.activeModuleFeatures?.includes(moduleFeatureName) ?? false;
-    }
 }
