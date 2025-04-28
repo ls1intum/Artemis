@@ -5,17 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +22,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.web.client.RestClient;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -43,6 +38,7 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.dto.LectureTranscriptionDTO;
+import de.tum.cit.aet.artemis.lecture.dto.NebulaTranscriptionRequestDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -67,19 +63,26 @@ public class LectureTranscriptionResource {
 
     private final LectureRepository lectureRepository;
 
+    private final RestClient nebulaRestClient;
+
+    @Value("${application.nebula.base-url}")
+    private String nebulaBaseUrl;
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
     private final LectureService lectureService;
 
     public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
-            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService) {
+            AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService,
+            @Qualifier("nebulaRestClient") RestClient nebulaRestClient) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
+        this.nebulaRestClient = nebulaRestClient;
     }
 
     /**
@@ -178,43 +181,42 @@ public class LectureTranscriptionResource {
     }
 
     /**
-     * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber : Create a transcription from Nebula.
+     * POST /lecture/{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber :
+     * Start and complete the transcription process for a lecture video using Nebula.
+     * This method sends the video URL to Nebula, waits for the transcription result,
+     * and saves the transcription immediately into the system.
      *
      * @param lectureId     the ID of the lecture
      * @param lectureUnitId the ID of the lecture unit
-     * @param requestBody   the request containing the video URL
-     * @return the created transcription
-     * @throws Exception if the Nebula call fails
+     * @param request       the request containing the video URL and any additional options
+     * @return the ResponseEntity with status 200 (OK) and the saved transcription,
+     *         or 500 (Internal Server Error) if an error occurs
      */
+
     @PostMapping("{lectureId}/lecture-unit/{lectureUnitId}/nebula-transcriber")
-    public ResponseEntity<LectureTranscription> createFromNebula(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody Map<String, String> requestBody)
-            throws Exception {
+    public ResponseEntity<?> startNebulaTranscriptionAndSave(@PathVariable Long lectureId, @PathVariable Long lectureUnitId, @RequestBody NebulaTranscriptionRequestDTO request) {
+        try {
+            // Call Nebula and get the transcription
+            LectureTranscriptionDTO transcriptionDTO = nebulaRestClient.post().uri(nebulaBaseUrl + "/start-transcribe").header("Content-Type", "application/json").body(request)
+                    .retrieve().body(LectureTranscriptionDTO.class);
 
-        // Step 1: Get video URL
-        String videoUrl = requestBody.get("videoUrl");
+            if (transcriptionDTO == null || transcriptionDTO.segments().isEmpty()) {
+                log.error("Nebula returned empty transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
+                return ResponseEntity.status(500).body("Empty transcription result from Nebula.");
+            }
 
-        // Step 2: Prepare request to Nebula
-        HttpClient httpClient = HttpClient.newHttpClient();
-        ObjectMapper objectMapper = new ObjectMapper();
+            // Save transcription immediately
+            LectureTranscription savedTranscription = createLectureTranscription(transcriptionDTO, lectureId, lectureUnitId).getBody();
 
-        Map<String, Object> nebulaRequest = new HashMap<>();
-        nebulaRequest.put("video_url", videoUrl);
-        nebulaRequest.put("lecture_id", lectureId);
+            log.info("Transcription successfully saved for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
 
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create("http://localhost:5000/transcribe")).header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(nebulaRequest))).build();
+            return ResponseEntity.ok(savedTranscription);
 
-        // Step 3: Send request to Nebula and parse response
-        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("Nebula call failed: " + response.body());
         }
-
-        // Step 4: Deserialize into LectureTranscriptionDTO
-        LectureTranscriptionDTO transcriptionDTO = objectMapper.readValue(response.body(), LectureTranscriptionDTO.class);
-
-        // Step 5: Reuse the existing method to save the transcription
-        return createLectureTranscription(transcriptionDTO, lectureId, lectureUnitId);
+        catch (Exception e) {
+            log.error("Error during Nebula transcription for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId, e);
+            return ResponseEntity.internalServerError().body("An error occurred during transcription.");
+        }
     }
 
 }
