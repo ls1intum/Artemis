@@ -4,7 +4,7 @@ artemis:
     exam:
         enabled: true
     lecture:
-      enabled: true
+        enabled: true
     plagiarism:
         enabled: true
     text:
