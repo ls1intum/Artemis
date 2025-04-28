@@ -22,6 +22,7 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialType;
 import de.tum.cit.aet.artemis.core.domain.converter.AuthenticatorTransportConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.BytesConverter;
 import de.tum.cit.aet.artemis.core.domain.converter.PublicKeyCoseConverter;
+import de.tum.cit.aet.artemis.core.dto.PasskeyDTO;
 
 @Entity
 @Table(name = "passkey_credential")
@@ -212,5 +213,18 @@ public class PasskeyCredential extends AbstractAuditingEntity {
             .created(getCreatedDate())
             .build();
         // @formatter:on
+    }
+
+    /**
+     * Converts the current {@link PasskeyCredential} entity into a {@link PasskeyDTO} object.
+     * <p>
+     * This method maps the fields of the {@link PasskeyCredential} entity to a {@link PasskeyDTO},
+     * which is used for transferring passkey data in a simplified format.
+     * </p>
+     *
+     * @return A {@link PasskeyDTO} object.
+     */
+    public PasskeyDTO toDto() {
+        return new PasskeyDTO(credentialId, label, getCreatedDate(), lastUsed);
     }
 }

@@ -260,6 +260,7 @@ public class CompetencyProgressService {
         if (numberOfLearningObjects == 0) {
             // If nothing is linked to the competency, the competency is considered completed
             competencyProgress.setProgress(100.0);
+            return;
         }
 
         double achievedPoints = exerciseInfos.stream().mapToDouble(info -> info.lastPoints() != null ? info.lastPoints() : 0).sum();
@@ -267,10 +268,10 @@ public class CompetencyProgressService {
         double exerciseProgress = maxPoints > 0 ? achievedPoints / maxPoints * 100 : 0;
 
         long numberOfCompletedLectureUnits = lectureUnitInfos.stream().filter(CompetencyLectureUnitMasteryCalculationDTO::completed).count();
-        double lectureProgress = 100.0 * numberOfCompletedLectureUnits / lectureUnitInfos.size();
+        double lectureProgress = !lectureUnitInfos.isEmpty() ? 100.0 * numberOfCompletedLectureUnits / lectureUnitInfos.size() : 0.0;
 
-        double weightedExerciseProgress = exerciseInfos.size() / numberOfLearningObjects * exerciseProgress;
-        double weightedLectureProgress = lectureUnitInfos.size() / numberOfLearningObjects * lectureProgress;
+        double weightedExerciseProgress = ((double) exerciseInfos.size()) / numberOfLearningObjects * exerciseProgress;
+        double weightedLectureProgress = ((double) lectureUnitInfos.size()) / numberOfLearningObjects * lectureProgress;
 
         double progress = weightedExerciseProgress + weightedLectureProgress;
         // Bonus points can lead to a progress > 100%

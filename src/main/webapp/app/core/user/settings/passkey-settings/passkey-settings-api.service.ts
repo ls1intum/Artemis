@@ -10,6 +10,10 @@ export class PasskeySettingsApiService extends BaseApiHttpService {
         return await this.get<PasskeyDTO[]>(`${this.basePath}/user`);
     }
 
+    async updatePasskeyLabel(credentialId: string, updatedPasskey: PasskeyDTO): Promise<PasskeyDTO> {
+        return await this.put(`${this.basePath}/${credentialId}`, updatedPasskey);
+    }
+
     async deletePasskey(credentialId: string): Promise<void> {
         return await this.delete(`${this.basePath}/${credentialId}`);
     }
