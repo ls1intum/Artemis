@@ -24,7 +24,7 @@ describe('ConversationGlobalSearchComponent', () => {
 
     const mockConversations: ConversationDTO[] = [
         { id: 1, name: 'General Channel', type: ConversationType.CHANNEL } as ChannelDTO,
-        { id: 1, name: 'Exercise Channel', type: ConversationType.CHANNEL } as ChannelDTO,
+        { id: 2, name: 'Exercise Channel', type: ConversationType.CHANNEL } as ChannelDTO,
         { id: 3, name: 'One-to-One Chat', type: ConversationType.ONE_TO_ONE } as OneToOneChat,
     ];
 
