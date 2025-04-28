@@ -50,6 +50,8 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { ForwardedMessageService } from 'app/communication/service/forwarded-message.service';
 import { MockForwardedMessageService } from 'test/helpers/mocks/service/mock-forwarded-message.service';
 import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-message.model';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('Metis Service', () => {
     let metisService: MetisService;
@@ -83,6 +85,7 @@ describe('Metis Service', () => {
                 MockProvider(SessionStorageService),
                 MockProvider(ConversationService),
                 { provide: MetisService, useClass: MetisService },
+                { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: ReactionService, useClass: MockReactionService },
                 { provide: PostService, useClass: MockPostService },
                 { provide: ForwardedMessageService, useClass: MockForwardedMessageService },
@@ -677,7 +680,7 @@ describe('Metis Service', () => {
 
         it('should update plagiarism posts received over WebSocket', () => {
             // Setup
-            const post = { ...plagiarismPost, conversation: { id: 22 } };
+            const post = { ...plagiarismPost };
 
             const mockPostDTO = {
                 post: post,
@@ -695,7 +698,7 @@ describe('Metis Service', () => {
 
             // Emulate receiving a message
             mockReceiveObservable.next(mockPostDTO);
-            expect(metisService['cachedPosts']).toContain(post);
+            expect(metisService['cachedPosts'].findIndex((post) => post.id === mockPostDTO.post.id)).toBeTruthy();
         });
 
         it('should update displayed conversation messages if new message does not match search text', fakeAsync(() => {

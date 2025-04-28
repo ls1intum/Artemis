@@ -7,6 +7,8 @@ import { LearningPathNavOverviewComponent } from 'app/atlas/overview/learning-pa
 import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-navigation.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ScienceEventType } from 'app/shared/science/science.model';
+import { ScienceService } from 'app/shared/science/science.service';
 
 @Component({
     selector: 'jhi-learning-path-student-nav',
@@ -24,6 +26,7 @@ export class LearningPathNavComponent {
     protected readonly faChevronRight = faChevronRight;
 
     private learningPathNavigationService = inject(LearningPathNavigationService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly learningPathId = input.required<number>();
 
@@ -47,6 +50,8 @@ export class LearningPathNavComponent {
     }
 
     async selectLearningObject(selectedLearningObject: LearningPathNavigationObjectDTO, isSuccessor: boolean): Promise<void> {
+        this.scienceService.logEvent(isSuccessor ? ScienceEventType.LEARNING_PATH__NAV_NEXT : ScienceEventType.LEARNING_PATH__NAV_PREV, this.learningPathId());
+
         const loadingSpinner = isSuccessor ? this.isLoadingSuccessor : this.isLoadingPredecessor;
         loadingSpinner.set(true);
         await this.learningPathNavigationService.loadRelativeLearningPathNavigation(this.learningPathId(), selectedLearningObject);
