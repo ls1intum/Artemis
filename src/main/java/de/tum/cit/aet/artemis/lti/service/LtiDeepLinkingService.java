@@ -23,8 +23,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.LineItem;
 import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
@@ -48,15 +49,15 @@ public class LtiDeepLinkingService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final Lti13TokenRetriever tokenRetriever;
 
-    public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+    public LtiDeepLinkingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi,
             Lti13TokenRetriever tokenRetriever) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.tokenRetriever = tokenRetriever;
     }
 
@@ -211,8 +212,9 @@ public class LtiDeepLinkingService {
      * Create a content item for a specific lecture.
      */
     private LtiContentItem setLectureContentItem(String courseId, String lectureId) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
         String launchUrl = buildContentUrl(courseId, "lectures", lectureId);
-        return lectureRepository.findById(Long.valueOf(lectureId)).map(lecture -> createLectureContentItem(lecture, launchUrl))
+        return api.findById(Long.valueOf(lectureId)).map(lecture -> createLectureContentItem(lecture, launchUrl))
                 .orElseThrow(() -> new BadRequestAlertException("Lecture not found.", "LTI", "lectureNotFound"));
     }
 
@@ -221,7 +223,7 @@ public class LtiDeepLinkingService {
      */
     private LtiContentItem setGroupedLectureContentItem(String courseId, Set<Long> lectureIds) {
 
-        List<Lecture> lectures = lectureRepository.findAllById(lectureIds);
+        List<Lecture> lectures = lectureRepositoryApi.map(api -> api.findAllById(lectureIds)).orElse(List.of());
 
         if (lectures.isEmpty()) {
             throw new BadRequestAlertException("No lectures found.", "LTI", "lecturesNotFound");
