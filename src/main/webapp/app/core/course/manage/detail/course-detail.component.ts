@@ -93,11 +93,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.ltiEnabled = this.profileService.isProfileActive(PROFILE_LTI);
         this.isAthenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
         this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
-        if (this.irisEnabled) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
-            // TODO: Outdated, as we now have a bunch more sub settings
-            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
-        }
+
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course = course;
@@ -108,6 +104,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.isAdmin = this.accountService.isAdmin();
             this.getCourseDetailSections();
         });
+        if (this.irisEnabled && this.course.isAtLeastInstructor) {
+            const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
+            // TODO: Outdated, as we now have a bunch more sub settings
+            this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
+        }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
             this.fetchCourseStatistics(courseId);

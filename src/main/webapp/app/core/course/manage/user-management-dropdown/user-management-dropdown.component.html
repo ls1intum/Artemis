@@ -1,7 +1,7 @@
 <div ngbDropdown class="d-inline">
     <button id="user-management-dropdown" class="btn btn-secondary" ngbDropdownToggle>
         <fa-icon [icon]="faUser" />
-        <span class="d-none d-md-inline"> {{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
+        <span class="d-none d-sm-inline"> {{ 'global.menu.admin.userManagement' | artemisTranslate }}</span>
     </button>
     <div ngbDropdownMenu aria-labelledby="instructor-actions-dropdown">
         @for (userAddAction of userAddActions; track userAddAction) {

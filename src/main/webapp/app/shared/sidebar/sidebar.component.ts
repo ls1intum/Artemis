@@ -137,7 +137,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                 this.storeLastSelectedItem(itemId);
                 if (this.sidebarData.sidebarType == 'conversation') {
                     this.onSelectConversation.emit(itemId);
-                    this.onUpdateSidebar.emit();
                 }
             }
         });
