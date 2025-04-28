@@ -15,7 +15,6 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
-import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { Subscription } from 'rxjs';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -37,6 +36,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { FileService } from 'app/shared/service/file.service';
+import { ScienceService } from 'app/shared/science/science.service';
 
 export interface LectureUnitCompletionEvent {
     lectureUnit: LectureUnit;
@@ -65,7 +65,7 @@ export interface LectureUnitCompletionEvent {
         IrisExerciseChatbotButtonComponent,
     ],
 })
-export class CourseLectureDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private lectureService = inject(LectureService);
     private lectureUnitService = inject(LectureUnitService);
@@ -74,6 +74,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     private router = inject(Router);
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private readonly scienceService = inject(ScienceService);
 
     lectureId?: number;
     courseId?: number;
@@ -97,10 +98,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     // Icons
     faSpinner = faSpinner;
 
-    constructor() {
-        super(ScienceEventType.LECTURE__OPEN);
-    }
-
     ngOnInit(): void {
         this.isProduction = this.profileService.isProduction();
         this.isTestServer = this.profileService.isTestServer();
@@ -109,9 +106,7 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
         this.paramsSubscription = this.activatedRoute.params.subscribe((params) => {
             this.lectureId = +params.lectureId;
             if (this.lectureId) {
-                // science logging
-                this.setResourceId(this.lectureId);
-                this.logEvent();
+                this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
             }
         });
