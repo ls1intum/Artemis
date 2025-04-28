@@ -39,9 +39,9 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationLifecycleService;
+import de.tum.cit.aet.artemis.lecture.api.SlideLifecycleServiceApi;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
-import de.tum.cit.aet.artemis.lecture.service.SlideLifecycleService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -56,7 +56,7 @@ public class ScheduleService {
 
     private final ParticipationLifecycleService participationLifecycleService;
 
-    private final SlideLifecycleService slideLifecycleService;
+    private final SlideLifecycleServiceApi slideLifecycleService;
 
     private interface LifecycleKey {
 
@@ -108,7 +108,7 @@ public class ScheduleService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy - HH:mm:ss");
 
     public ScheduleService(ExerciseLifecycleService exerciseLifecycleService, ParticipationLifecycleService participationLifecycleService,
-            SlideLifecycleService slideLifecycleService) {
+            SlideLifecycleServiceApi slideLifecycleService) {
         this.exerciseLifecycleService = exerciseLifecycleService;
         this.participationLifecycleService = participationLifecycleService;
         this.slideLifecycleService = slideLifecycleService;
