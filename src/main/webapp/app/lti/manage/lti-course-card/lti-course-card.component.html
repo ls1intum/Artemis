@@ -3,9 +3,9 @@
         id="course-{{ course().id }}-header"
         class="card-header text-white"
         [routerLink]="['/lti/exercises', course().id]"
-        [style.background-color]="courseColor"
-        [style.color]="contentColor"
+        [ngStyle]="{ 'background-color': courseColor, color: contentColor }"
     >
+        >
         <a class="stretched-link" [routerLink]="['/lti/exercises', course().id]"></a>
         <div class="container">
             <div class="row d-flex">
