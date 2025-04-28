@@ -207,11 +207,13 @@ public class InstanceMessageReceiveService {
 
     public void processScheduleSlideUnhide(Long slideId) {
         log.info("Received schedule update for slide unhiding {}", slideId);
-        slideUnhideScheduleService.ifPresent(service -> service.scheduleSlideUnhiding(slideId));
+        slideUnhideScheduleService.ifPresentOrElse(service -> service.scheduleSlideUnhiding(slideId),
+                () -> log.warn("Slide unhide schedule service is not available when lecture.enabled=false, unable to schedule slide unhiding for slide {}", slideId));
     }
 
     public void processCancelSlideUnhide(Long slideId) {
         log.info("Received schedule cancel for slide unhiding {}", slideId);
-        slideUnhideScheduleService.ifPresent(service -> service.cancelScheduledUnhiding(slideId));
+        slideUnhideScheduleService.ifPresentOrElse(service -> service.cancelScheduledUnhiding(slideId),
+                () -> log.warn("Slide unhide schedule service is not available when lecture.enabled=false, unable to cancel slide unhiding for slide {}", slideId));
     }
 }
