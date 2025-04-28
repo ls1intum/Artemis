@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureService;
+import de.tum.cit.aet.artemis.lecture.service.LectureTranscriptionService;
 
 @Profile(PROFILE_CORE)
 @RestController
@@ -65,6 +66,8 @@ public class LectureTranscriptionResource {
 
     private final RestClient nebulaRestClient;
 
+    private final LectureTranscriptionService lectureTranscriptionService;
+
     @Value("${application.nebula.base-url}")
     private String nebulaBaseUrl;
 
@@ -75,7 +78,7 @@ public class LectureTranscriptionResource {
 
     public LectureTranscriptionResource(LectureTranscriptionRepository transcriptionRepository, LectureUnitRepository lectureUnitRepository,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureRepository lectureRepository, LectureService lectureService,
-            @Qualifier("nebulaRestClient") RestClient nebulaRestClient) {
+            @Qualifier("nebulaRestClient") RestClient nebulaRestClient, LectureTranscriptionService lectureTranscriptionService) {
         this.lectureTranscriptionRepository = transcriptionRepository;
         this.lectureUnitRepository = lectureUnitRepository;
         this.authCheckService = authCheckService;
@@ -83,6 +86,7 @@ public class LectureTranscriptionResource {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.nebulaRestClient = nebulaRestClient;
+        this.lectureTranscriptionService = lectureTranscriptionService;
     }
 
     /**
@@ -206,7 +210,7 @@ public class LectureTranscriptionResource {
             }
 
             // Save transcription immediately
-            LectureTranscription savedTranscription = createLectureTranscription(transcriptionDTO, lectureId, lectureUnitId).getBody();
+            LectureTranscription savedTranscription = lectureTranscriptionService.saveTranscription(lectureId, lectureUnitId, transcriptionDTO);
 
             log.info("Transcription successfully saved for Lecture ID: {}, Lecture Unit ID: {}", lectureId, lectureUnitId);
 
