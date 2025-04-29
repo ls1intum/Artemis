@@ -50,6 +50,7 @@ export class AccountService implements IAccountService {
 
     public isAuthenticatedSignal = signal<boolean>(false);
 
+    // TODO get and set userIdentity should be converted to a signal instead
     get userIdentity() {
         return this.userIdentityValue;
     }

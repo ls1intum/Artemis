@@ -77,9 +77,15 @@ export class AppComponent implements OnInit, OnDestroy {
         }
 
         const isUserOnLoginScreen = !this.accountService.isAuthenticatedSignal();
-        if (!isUserOnLoginScreen) {
-            this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+        if (isUserOnLoginScreen) {
+            return;
         }
+
+        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredPasskeys) {
+            return;
+        }
+
+        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
     }
 
     constructor() {
