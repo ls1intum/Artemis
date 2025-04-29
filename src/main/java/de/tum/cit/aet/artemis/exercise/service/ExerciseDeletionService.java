@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -28,9 +27,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.api.IrisSettingsApi;
-import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
-import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.api.LectureUnitApi;
 import de.tum.cit.aet.artemis.plagiarism.api.PlagiarismResultApi;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -59,13 +56,11 @@ public class ExerciseDeletionService {
 
     private final Optional<StudentExamApi> studentExamApi;
 
-    private final ExerciseUnitRepository exerciseUnitRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final TutorParticipationRepository tutorParticipationRepository;
 
-    private final LectureUnitService lectureUnitService;
+    private final Optional<LectureUnitApi> lectureUnitApi;
 
     private final Optional<PlagiarismResultApi> plagiarismResultApi;
 
@@ -79,11 +74,10 @@ public class ExerciseDeletionService {
 
     private final Optional<IrisSettingsApi> irisSettingsApi;
 
-    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
-            ProgrammingExerciseService programmingExerciseService, QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository,
-            ExampleSubmissionService exampleSubmissionService, Optional<StudentExamApi> studentExamApi, LectureUnitService lectureUnitService,
-            Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
+    public ExerciseDeletionService(ExerciseRepository exerciseRepository, ParticipationService participationService, ProgrammingExerciseService programmingExerciseService,
+            QuizExerciseService quizExerciseService, TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService,
+            Optional<StudentExamApi> studentExamApi, Optional<LectureUnitApi> lectureUnitApi, Optional<PlagiarismResultApi> plagiarismResultApi, Optional<TextApi> textApi,
+            ChannelRepository channelRepository, ChannelService channelService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<IrisSettingsApi> irisSettingsApi) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -91,8 +85,7 @@ public class ExerciseDeletionService {
         this.exampleSubmissionService = exampleSubmissionService;
         this.quizExerciseService = quizExerciseService;
         this.studentExamApi = studentExamApi;
-        this.exerciseUnitRepository = exerciseUnitRepository;
-        this.lectureUnitService = lectureUnitService;
+        this.lectureUnitApi = lectureUnitApi;
         this.plagiarismResultApi = plagiarismResultApi;
         this.textApi = textApi;
         this.channelRepository = channelRepository;
@@ -157,10 +150,7 @@ public class ExerciseDeletionService {
         }
 
         // delete all exercise units linking to the exercise
-        List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithCompetenciesBidirectional(exerciseId);
-        for (ExerciseUnit exerciseUnit : exerciseUnits) {
-            lectureUnitService.removeLectureUnit(exerciseUnit);
-        }
+        lectureUnitApi.ifPresent(api -> api.removeLectureUnitFromExercise(exerciseId));
 
         if (irisSettingsApi.isPresent()) {
             irisSettingsApi.get().deleteSettingsFor(exercise);
