@@ -85,7 +85,7 @@
                 "actions": "Actions"
             },
             "passkeySettingsPage": {
-                "infoText": "Passkeys are webauthn credentials that validate your identity using touch, facial recognition, a device password, or a PIN. Passkeys can be used as a password replacement.",
+                "infoText": "Passkeys offer a modern, secure, and convenient alternative to passwords. They protect your account from phishing, credential theft, and password reuse.",
                 "learnMore": "Learn more about passkeys.",
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
@@ -109,7 +109,6 @@
             "setupPasskeyModal": {
                 "title": "Stay Secure with Passkeys",
                 "description": {
-                    "introduction": "Passkeys offer a modern, secure, and convenient alternative to passwords. They protect your account from phishing, credential theft, and password reuse.",
                     "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
                     "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
                 },
