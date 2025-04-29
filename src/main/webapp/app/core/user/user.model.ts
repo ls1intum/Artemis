@@ -18,7 +18,7 @@ export class User extends Account {
     /**
      * true if at least one passkey is registered for this user
      */
-    public hasRegisteredPasskeys?: boolean;
+    public hasRegisteredAPasskey?: boolean;
 
     constructor(
         id?: number,
@@ -52,7 +52,7 @@ export class User extends Account {
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
-        this.hasRegisteredPasskeys = hasRegisteredPasskeys;
+        this.hasRegisteredAPasskey = hasRegisteredPasskeys;
     }
 }
 /**
