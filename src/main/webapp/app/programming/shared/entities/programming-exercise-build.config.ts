@@ -13,9 +13,11 @@ export class ProgrammingExerciseBuildConfig {
     public windfile?: WindFile;
     public theiaImage?: string;
     public allowBranching?: boolean;
+    public branchRegex?: string;
 
     constructor() {
         this.checkoutSolutionRepository = false; // default value
         this.allowBranching = false; // default value
+        this.branchRegex = '.*'; // default value
     }
 }

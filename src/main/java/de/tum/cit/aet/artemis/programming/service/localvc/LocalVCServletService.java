@@ -15,8 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -454,9 +454,15 @@ public class LocalVCServletService {
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
 
         if (exercise.getBuildConfig().isAllowBranching()) {
-            Pattern pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
-            Matcher matcher = pattern.matcher(branchName);
-            return matcher.matches();
+            Pattern pattern;
+            try {
+                pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+            }
+            catch (PatternSyntaxException e) {
+                return false;
+            }
+
+            return pattern.matcher(branchName).matches();
         }
         else {
             return false;

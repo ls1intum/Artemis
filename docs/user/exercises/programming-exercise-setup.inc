@@ -122,6 +122,10 @@ Generate programming exercise
       in the Artemis UI are out of scope and will not be implemented in the future.
       Please only activate this option if it is absolutely necessary!
 
+    - **Regular Expression for the branch name** The custom branch name is matched against this java regular expression and pushing is only allowed, if it matches.
+
+src/main/webapp/i18n/en/programmingExercise.json
+
     |
 
     .. figure:: programming/programming-options-score.png

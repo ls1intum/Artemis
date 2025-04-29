@@ -164,6 +164,10 @@
                 "title": "Eigene Branches erlauben",
                 "description": "Erlaubt Studierenden, andere Branches als den default Branch zu pushen. Achtung! Diese Branches werden nicht in der Benutzeroberfläche angezeigt, und diese stellt auch keinen Merge-Support bereit. Studierende müssen ihre Branches lokal verwalten. Nur aktivieren, falls zusätzliche Branches wirklich benötigt werden."
             },
+            "branchRegex": {
+                "title": "Regex für den Branchnamen",
+                "description": "Namens für andere Branches als der default Branch müssen im Namen dem Regex entsprechen."
+            },
             "showTestNamesToStudents": "Zeige die Testnamen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
