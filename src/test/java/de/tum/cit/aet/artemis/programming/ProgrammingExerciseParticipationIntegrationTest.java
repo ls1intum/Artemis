@@ -694,6 +694,15 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractProgrammin
         request.put("/api/programming/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void checkResetRepository_okRequest() throws Exception {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        doNothing().when(programmingExerciseParticipationService).resetRepository(any(), any());
+
+        request.put("/api/programming/programming-exercise-participations/" + participation.getId() + "/reset-repository", null, HttpStatus.OK);
+    }
+
     /**
      * TODO move the following test into a different test file, as they do not use the programming-exercise-participations/.. endpoint, but programming-exercise/..
      * move the endpoint itself too
