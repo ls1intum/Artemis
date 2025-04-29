@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
-import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -60,7 +59,9 @@ public class OpenAPIConfiguration {
                 paths.forEach((path, pathItem) -> {
                     logger.info("Processing path: {}", path);
                     pathItem.readOperations().forEach(operation -> {
-                        // Remove DTO suffix from response schemas
+                        String id = operation.getOperationId();
+                        // strip any trailing "_<digit>" suffix
+                        operation.setOperationId(id.replaceAll("_\\d+$", ""));                        // Remove DTO suffix from response schemas
                         var responses = operation.getResponses();
                         if (responses != null) {
                             responses.forEach((responseCode, response) -> {
@@ -108,16 +109,16 @@ public class OpenAPIConfiguration {
         };
     }
 
-    @Bean
-    public OperationCustomizer classNameDashMethodName() {
-        return (operation, handlerMethod) -> {
-            // Build "ClassName-methodName"
-            String className = handlerMethod.getMethod().getDeclaringClass().getSimpleName();
-            String methodName = handlerMethod.getMethod().getName();
-            operation.setOperationId(className + "-" + methodName);
-            return operation;
-        };
-    }
+    // @Bean
+    // public OperationCustomizer classNameDashMethodName() {
+    // return (operation, handlerMethod) -> {
+    // // Build "ClassName-methodName";
+    // String className = handlerMethod.getMethod().getDeclaringClass().getSimpleName();
+    // String methodName = handlerMethod.getMethod().getName();
+    // operation.setOperationId(methodName);
+    // return operation;
+    // };
+    // }
 
     private void removeDTOSuffixesFromSchemaRecursively(Schema<?> schema) {
         if (schema == null) {

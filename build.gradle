@@ -94,22 +94,18 @@ openApi {
 
 openApiGenerate {
     generatorName = "typescript-angular"
-    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
-    outputDir = "${rootDir}/src/main/webapp/app/generated"
+    inputSpec = "${project.rootDir}/openapi/openapi-normalized.yaml"
+    outputDir = "${rootDir}/src/main/webapp/app/tutorialgroup/generated"
     apiPackage = "api"
     modelPackage = "model"
-    invokerPackage = "invoker"
-    validateSpec = false
+    skipValidateSpec = true
     configOptions = [
-        serviceSuffix: "Service",
+        serviceSuffix: "ApiService",
         supportsES6: "true",
-        npmName: "@artemis/api-client",
+        serviceFileSuffix: "Api.service"
     ]
 }
-import org.yaml.snakeyaml.Yaml
-
 tasks.register('pruneOpenApiSpec') {
-    group       = 'documentation'
     description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
 
     doLast {
@@ -178,27 +174,66 @@ tasks.register('pruneOpenApiSpec') {
     }
 }
 
+tasks.register('normalizeOperationIds') {
+    group       = 'documentation'
+    description = 'Strip prefixes from operationId (e.g. User-update → update)'
 
-// Make sure generation reads the pruned spec
+    doLast {
+        def root       = project.rootDir
+        def inputFile  = file("$root/openapi/openapi-pruned.yaml")
+        def outputFile = file("$root/openapi/openapi-normalized.yaml")
+        def yaml       = new Yaml()
+        def spec       = yaml.load(inputFile.text) as Map<String, Object>
+
+        // Walk all paths and operations
+        spec.paths?.each { path, opsMap ->
+            opsMap.each { method, op ->
+                if (op.operationId instanceof String) {
+                    def parts = op.operationId.split('_', 2)
+                    op.operationId = parts[0]
+                }
+            }
+        }
+
+        outputFile.text = yaml.dump(spec)
+        println "✔ Normalized operationIds written to $outputFile"
+    }
+}
+
+tasks.register('stripSuffix') {
+    description = 'Remove leading underscores and numeric suffixes from generated TS methods'
+
+    doLast {
+        def genDir = file("$project.rootDir/src/main/webapp/app/tutorialgroup/generated")
+        // fileTree API to locate all .ts files
+        fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
+            // replaceAll handles both patterns in one go
+            def updated = tsFile.text.replaceAll(
+                /(public\s+)_+([A-Za-z_][A-Za-z0-9_]*)/,
+                '$1$2'
+            ).replaceAll(
+                /(public\s+[A-Za-z_][A-Za-z0-9_]*)_[0-9]+(\s*\()/,
+                '$1$2'
+            )
+            tsFile.text = updated
+        }
+        println "✔ Stripped leading underscores and numeric suffixes via Gradle"
+    }
+}
+
+
+//tasks.named('pruneOpenApiSpec') {
+//    dependsOn tasks.named('generateOpenApiDocs')
+//}
+tasks.named('normalizeOperationIds') {
+    dependsOn 'pruneOpenApiSpec'
+}
 tasks.named('openApiGenerate') {
-    dependsOn pruneOpenApiSpec
+    dependsOn 'normalizeOperationIds'
 }
-openApiGenerate {
-    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
-}
-
-
-// 2) Ensure code-gen reads the pruned file and runs after pruning
-tasks.named('openApiGenerate') {
-    dependsOn pruneOpenApiSpec
-}
-openApiGenerate {
-    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
-}
-
 
 tasks.named('openApiGenerate') {
-    dependsOn ('pruneOpenApiSpec')
+    finalizedBy 'stripSuffix'
 }
 
 modernizer {
