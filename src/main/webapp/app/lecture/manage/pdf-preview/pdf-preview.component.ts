@@ -960,10 +960,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const invalidPageOrders: number[] = [];
 
         for (const [slideId, pageData] of Object.entries(hiddenPagesMap)) {
-            if (pageData.date.isSame(this.FOREVER, 'day')) {
-                continue;
-            }
-
             // Check if the date is in the past
             if (pageData.date.isBefore(now)) {
                 const pageOrder = slideIdToOrderMap.get(slideId);

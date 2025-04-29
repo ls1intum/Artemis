@@ -395,11 +395,6 @@ public class AttachmentUnitResource {
                 String dateStr = (String) page.get("date");
                 ZonedDateTime date = ZonedDateTime.parse(dateStr);
 
-                // Skip "forever" dates
-                if (date.getYear() >= 9000) {
-                    continue;
-                }
-
                 if (date.isBefore(now)) {
                     return false;
                 }
