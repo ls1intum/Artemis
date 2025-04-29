@@ -81,7 +81,7 @@ export class AppComponent implements OnInit, OnDestroy {
             return;
         }
 
-        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredPasskeys) {
+        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredAPasskey) {
             return;
         }
 
