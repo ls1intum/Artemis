@@ -7,7 +7,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -25,6 +24,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -32,6 +33,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,6 +46,7 @@ import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
 // This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
@@ -72,6 +76,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     private LocalRepository assignmentRepository;
 
     private Competency competency;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private ProgrammingExerciseTestService programmingExerciseTestService;
 
     @BeforeAll
     void setupAll() {
@@ -124,14 +131,18 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.verifyRepositoryFoldersExist(programmingExercise, localVCBasePath);
 
         competency = competencyUtilService.createCompetency(course);
+
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
+        programmingExerciseTestService.setup(this, versionControlService, localVCGitBranchService);
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         templateRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
         assignmentRepository.resetLocalRepo();
+        programmingExerciseTestService.tearDown();
     }
 
     @Disabled
@@ -283,6 +294,61 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
         localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
         verify(competencyProgressApi).updateProgressByLearningObjectAsync(eq(importedExercise));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_missingExerciseDetailsJson_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingExerciseDetailsJson_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_fileNoZip_badRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_fileNoZip_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_tutor_forbidden() throws Exception {
+        programmingExerciseTestService.importFromFile_tutor_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_missingRepository_BadRequest() throws Exception {
+        programmingExerciseTestService.importFromFile_missingRepository_BadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_exception_DirectoryDeleted() throws Exception {
+        programmingExerciseTestService.importFromFile_exception_DirectoryDeleted();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_failToCreateProjectInCi();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_invalidExercise_dates(dates);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExerciseForExam_DatesSet() throws Exception {
+        programmingExerciseTestService.createProgrammingExerciseForExam_DatesSet();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+        programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
     }
 
     @Nested
