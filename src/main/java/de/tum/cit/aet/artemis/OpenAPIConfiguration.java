@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,13 +18,16 @@ import io.swagger.v3.oas.models.media.Schema;
 @Configuration
 public class OpenAPIConfiguration {
 
-    Logger logger = LoggerFactory.getLogger(OpenAPIConfiguration.class);
+    private final Logger logger = LoggerFactory.getLogger(OpenAPIConfiguration.class);
+
+    @Value("${artemis.version}")
+    private String version;
 
     @Bean
     public OpenApiCustomizer schemaCustomizer() {
         return openApi -> {
             var components = openApi.getComponents();
-            openApi.info(new Info().title("Artemis Application Server API").version("8.0.0").contact(new Contact().email("krusche@tum.de").name("Stephan Krusche")));
+            openApi.info(new Info().title("Artemis Application Server API").version(version).contact(new Contact().email("krusche@tum.de").name("Stephan Krusche")));
 
             if (components != null && components.getSchemas() != null) {
                 // Only include schemas with DTO suffix and remove the suffix

@@ -1,3 +1,5 @@
+import org.yaml.snakeyaml.Yaml
+
 buildscript {
     dependencies {
         classpath "com.diffplug.spotless:spotless-plugin-gradle:${spotless_plugin_version}"
@@ -92,7 +94,7 @@ openApi {
 
 openApiGenerate {
     generatorName = "typescript-angular"
-    inputSpec = "${rootDir}/openapi/openapi.yaml"
+    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
     outputDir = "${rootDir}/src/main/webapp/app/generated"
     apiPackage = "api"
     modelPackage = "model"
@@ -102,8 +104,101 @@ openApiGenerate {
         serviceSuffix: "Service",
         supportsES6: "true",
         npmName: "@artemis/api-client",
-        npmVersion: "${project.version}"
     ]
+}
+import org.yaml.snakeyaml.Yaml
+
+tasks.register('pruneOpenApiSpec') {
+    group       = 'documentation'
+    description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
+
+    doLast {
+        def root       = project.rootDir
+        def inputFile  = file("$root/openapi/openapi.yaml")
+        def outputFile = file("$root/openapi/openapi-pruned.yaml")
+        def yaml       = new Yaml()
+        def spec       = yaml.load(inputFile.text) as Map<String, Object>
+        def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
+
+        // 1) Prune invalid $ref nodes
+        Closure pruneRec
+        pruneRec = { obj ->
+            if (obj instanceof Map && obj.size() == 1 && obj.containsKey('$ref')) {
+                def ref     = obj['$ref'] as String
+                def matcher = (ref =~ /^#\/components\/([^\/]+)\/(.+)$/)
+                if (matcher.matches() && !components[matcher[0][1]]?.containsKey(matcher[0][2])) {
+                    return null
+                }
+                return obj
+            }
+            if (obj instanceof Map) {
+                obj.collectEntries { key, val ->
+                    def prunedVal = pruneRec(val)
+                    prunedVal != null ? [(key): prunedVal] : [:]
+                }
+            } else if (obj instanceof List) {
+                obj.collect { pruneRec(it) }.findAll { it != null }
+            } else {
+                obj
+            }
+        }
+        def prunedSpec = pruneRec(spec) as Map<String, Object>
+
+        // 2) Drop invalid operations
+        prunedSpec.paths?.with { pathsMap ->
+            pathsMap.each { pathName, ops ->
+                // collect operation names to remove
+                def toRemoveOps = ops.keySet().findAll { opName ->
+                    def op = ops[opName] as Map
+                    // invalid if requestBody has a content type with null schema
+                    def badReq  = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
+                    // or any response media type has null schema
+                    def badResp = op.responses?.values()?.any { resp ->
+                        resp.content?.values()?.any { mt -> mt.schema == null }
+                    }
+                    badReq || badResp
+                }
+                // remove them
+                toRemoveOps.each { badOpName ->
+                    ops.remove(badOpName)
+                }
+            }
+            // 3) Drop any path now left with no operations
+            def emptyPaths = pathsMap.keySet().findAll { pn ->
+                (pathsMap[pn] as Map).isEmpty()
+            }
+            emptyPaths.each { ep ->
+                pathsMap.remove(ep)
+            }
+        }
+
+        // 4) Write out the cleaned spec
+        outputFile.text = yaml.dump(prunedSpec)
+        println "✔ Pruned spec written to $outputFile"
+    }
+}
+
+
+// Make sure generation reads the pruned spec
+tasks.named('openApiGenerate') {
+    dependsOn pruneOpenApiSpec
+}
+openApiGenerate {
+    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
+}
+
+
+// 2) Ensure code-gen reads the pruned file and runs after pruning
+tasks.named('openApiGenerate') {
+    dependsOn pruneOpenApiSpec
+}
+openApiGenerate {
+    inputSpec = "${project.rootDir}/openapi/openapi-pruned.yaml"
+}
+
+
+tasks.named('openApiGenerate') {
+    dependsOn ('pruneOpenApiSpec')
 }
 
 modernizer {
