@@ -89,7 +89,7 @@ export class CourseManagementExercisesPage {
     }
 
     async createQuizExercise() {
-        await this.page.locator('#create-quiz-button').click();
+        await this.page.locator('#create-quiz-exercise').click();
     }
 
     async createFileUploadExercise() {
