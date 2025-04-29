@@ -107,6 +107,16 @@
                     "delete": "The passkey could not be deleted. Please try again."
                 }
             },
+            "setupPasskeyModal": {
+                "title": "Stay Secure with Passkeys",
+                "description": {
+                    "introduction": "Passkeys offer a modern, secure, and convenient alternative to passwords. They protect your account from phishing, credential theft, and password reuse.",
+                    "howItWorks": "Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe — without the need to remember a password.",
+                    "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
+                },
+                "setupLater": "Set Up Later",
+                "setupPasskey": "Set Up Passkey"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
