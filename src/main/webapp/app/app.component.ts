@@ -60,6 +60,17 @@ export class AppComponent implements OnInit, OnDestroy {
     isShownViaLti = false;
     isPasskeyEnabled = false;
 
+    /**
+     * <p>
+     * We want users to use passkey authentication over password authentication.
+     * </p>
+     * <p>
+     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
+     * </p>
+     * <p>
+     * This modal is only shown if the user is not on the login screen.
+     * </p>
+     */
     private openSetupPasskeyModal(): void {
         if (!this.isPasskeyEnabled) {
             return;
