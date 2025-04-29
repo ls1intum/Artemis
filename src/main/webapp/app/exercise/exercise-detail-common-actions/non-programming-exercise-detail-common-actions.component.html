@@ -67,9 +67,11 @@
         }
         <!-- Plagiarism -->
         @if (exercise.type === ExerciseType.TEXT && exercise.isAtLeastEditor) {
-            <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
-                <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
-            </a>
+            <jhi-feature-overlay [enabled]="plagiarismEnabled">
+                <a class="btn btn-info btn-sm" id="check-plagiarism-download" routerLink="plagiarism">
+                    <span jhiTranslate="artemisApp.textExercise.checkPlagiarism"></span>
+                </a>
+            </jhi-feature-overlay>
         }
         <!-- Delete exercise -->
         @if (exercise.isAtLeastInstructor) {

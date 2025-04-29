@@ -12,6 +12,8 @@ import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-p
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { onError } from 'app/shared/util/global.utils';
 
+let mockWorkerSrc = '';
+
 jest.mock('pdfjs-dist', () => {
     return {
         getDocument: jest.fn(() => ({
@@ -27,6 +29,14 @@ jest.mock('pdfjs-dist', () => {
                 ),
             }),
         })),
+        GlobalWorkerOptions: {
+            get workerSrc() {
+                return mockWorkerSrc;
+            },
+            set workerSrc(value: string) {
+                mockWorkerSrc = value;
+            },
+        },
     };
 });
 

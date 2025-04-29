@@ -25,6 +25,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { ExerciseUpdatePlagiarismComponent } from 'app/plagiarism/manage/exercise-update-plagiarism/exercise-update-plagiarism.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -40,6 +42,7 @@ describe('TextExercise Management Update Component', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

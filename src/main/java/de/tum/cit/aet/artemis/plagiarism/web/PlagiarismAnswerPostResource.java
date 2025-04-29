@@ -1,13 +1,11 @@
 package de.tum.cit.aet.artemis.plagiarism.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,12 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 
 /**
  * REST controller for managing AnswerPost.
  */
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @RestController
 @RequestMapping("api/plagiarism/")
 public class PlagiarismAnswerPostResource {
@@ -54,7 +53,6 @@ public class PlagiarismAnswerPostResource {
         long start = System.nanoTime();
         AnswerPost createdAnswerPost = plagiarismAnswerPostService.createAnswerPost(courseId, answerPost);
         log.info("createAnswerPost took {}", TimeLogUtil.formatDurationFrom(start));
-        plagiarismAnswerPostService.informInstructorAboutPostReply(createdAnswerPost.getPost());
         return ResponseEntity.created(new URI("/api/plagiarism/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
 

@@ -17,13 +17,11 @@ import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.se
 import { Post } from 'app/communication/shared/entities/post.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { User } from 'app/core/user/user.model';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -53,7 +51,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ProfileService, useClass: MockProfileService },

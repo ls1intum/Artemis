@@ -10,7 +10,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, forkJoin, of } from 'rxjs';
 import { ConversationDTO } from '../shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
@@ -21,10 +21,8 @@ import { ConversationWebsocketDTO } from 'app/communication/shared/entities/conv
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MetisPostAction } from 'app/communication/metis.util';
 import dayjs from 'dayjs/esm';
-import { MockNotificationService } from 'test/helpers/mocks/service/mock-notification.service';
 import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.model';
 import { Post } from 'app/communication/shared/entities/post.model';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;
@@ -35,8 +33,6 @@ describe('MetisConversationService', () => {
     let websocketService: WebsocketService;
     let courseManagementService: CourseManagementService;
     let alertService: AlertService;
-    let notificationService: NotificationService;
-    let newOrUpdatedMessageSubject: Subject<MetisPostDTO>;
 
     const course = { id: 1 } as Course;
     let groupChat: GroupChatDTO;
@@ -55,18 +51,12 @@ describe('MetisConversationService', () => {
                 MockProvider(ConversationService),
                 MockProvider(WebsocketService),
                 MockProvider(AlertService),
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: AccountService, useClass: MockAccountService },
             ],
         });
         groupChat = generateExampleGroupChatDTO({ id: 1 });
         oneToOneChat = generateOneToOneChatDTO({ id: 2 });
         channel = generateExampleChannelDTO({ id: 3 } as ChannelDTO);
-
-        notificationService = TestBed.inject(NotificationService);
-        newOrUpdatedMessageSubject = new Subject<MetisPostDTO>();
-        jest.spyOn(notificationService, 'newOrUpdatedMessage', 'get').mockReturnValue(newOrUpdatedMessageSubject);
-
         metisConversationService = TestBed.inject(MetisConversationService);
         groupChatService = TestBed.inject(GroupChatService);
         oneToOneChatService = TestBed.inject(OneToOneChatService);
@@ -420,11 +410,9 @@ describe('MetisConversationService', () => {
         const postDTO: MetisPostDTO = {
             post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
             action: MetisPostAction.CREATE,
-            notification: { title: 'title' },
         };
         metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
-
-        newOrUpdatedMessageSubject.next(postDTO);
+        metisConversationService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
         expect(metisConversationService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
     }));
 
@@ -438,5 +426,118 @@ describe('MetisConversationService', () => {
         const markAllChannelAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
         metisConversationService.markAllChannelsAsRead(course);
         expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('updateLastReadDateAndNumberOfUnreadMessages', () => {
+        it('should update last read date and unread messages count for active conversation', () => {
+            (metisConversationService as any).activeConversation = groupChat;
+            (metisConversationService as any).conversationsOfUser = [groupChat];
+            groupChat.unreadMessagesCount = 5;
+            groupChat.hasUnreadMessage = true;
+
+            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+
+            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages();
+
+            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).activeConversation.lastReadDate).toBeDefined();
+
+            expect((metisConversationService as any).conversationsOfUser[0].unreadMessagesCount).toBe(0);
+            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
+
+            expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
+        });
+
+        it('should not update anything if there is no active conversation', () => {
+            (metisConversationService as any).activeConversation = undefined;
+
+            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+
+            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages();
+
+            expect(nextSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not update conversationsOfUser if active conversation is not found in the array', () => {
+            const nonExistentConversation = { ...groupChat, id: 999 };
+            (metisConversationService as any).activeConversation = nonExistentConversation;
+
+            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+
+            (metisConversationService as any).updateLastReadDateAndNumberOfUnreadMessages();
+
+            expect(nextSpy).not.toHaveBeenCalled();
+
+            expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
+        });
+    });
+
+    it('should return correct params object with conversationId', () => {
+        const conversationId = 42;
+        const result = MetisConversationService.getQueryParamsForConversation(conversationId);
+        expect(result).toEqual({ conversationId: 42 });
+    });
+
+    it('should return correct route components for given courseId', () => {
+        const courseId = 123;
+        const result = MetisConversationService.getLinkForConversation(courseId);
+        expect(result).toEqual(['/courses', 123, 'communication']);
+    });
+
+    describe('markAllChannelsAsRead', () => {
+        it('should update all conversations and call service', () => {
+            (metisConversationService as any).conversationsOfUser = [
+                { ...groupChat, unreadMessagesCount: 3, hasUnreadMessage: true },
+                { ...oneToOneChat, unreadMessagesCount: 2, hasUnreadMessage: true },
+                { ...channel, unreadMessagesCount: 1, hasUnreadMessage: true },
+            ];
+
+            // @ts-ignore
+            const markAllChannelsAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of({}));
+
+            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+
+            metisConversationService.markAllChannelsAsRead(course);
+
+            // @ts-ignore
+            (metisConversationService as any).conversationsOfUser.forEach((conversation) => {
+                expect(conversation.unreadMessagesCount).toBe(0);
+                expect(conversation.hasUnreadMessage).toBeFalse();
+            });
+
+            expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
+
+            expect(markAllChannelsAsReadSpy).toHaveBeenCalledWith(course.id);
+        });
+
+        it('should return Observable without calling service when course has no id', () => {
+            const courseWithoutId = {} as Course;
+
+            const markAllChannelsAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead');
+
+            const result = metisConversationService.markAllChannelsAsRead(courseWithoutId);
+
+            result.subscribe({
+                complete: () => {
+                    expect(markAllChannelsAsReadSpy).not.toHaveBeenCalled();
+                },
+            });
+        });
+
+        it('should handle error when service call fails', () => {
+            const errorResponse = new HttpErrorResponse({ status: 500 });
+
+            // @ts-ignore
+            jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of(errorResponse));
+
+            const errorSpy = jest.spyOn(alertService, 'error');
+
+            metisConversationService.markAllChannelsAsRead(course);
+
+            expect(errorSpy).not.toHaveBeenCalled();
+        });
     });
 });

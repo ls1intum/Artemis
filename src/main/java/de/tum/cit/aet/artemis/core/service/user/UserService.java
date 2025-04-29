@@ -15,7 +15,6 @@ import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
 import java.time.Instant;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -763,10 +762,6 @@ public class UserService {
             optionalUser = createUserFromLdapWithRegistrationNumber(registrationNumber);
         }
         return optionalUser;
-    }
-
-    public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
-        userRepository.updateUserNotificationVisibility(userId, hideUntil);
     }
 
     public void updateUserLanguageKey(Long userId, String languageKey) {

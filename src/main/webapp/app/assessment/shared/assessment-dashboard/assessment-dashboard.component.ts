@@ -21,7 +21,7 @@ import { DocumentationButtonComponent, DocumentationType } from 'app/shared/comp
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
@@ -35,6 +35,9 @@ import { ExamAssessmentButtonsComponent } from 'app/assessment/shared/assessment
 import { TutorIssue, TutorIssueComplaintsChecker, TutorIssueRatingChecker, TutorIssueScoreChecker } from 'app/assessment/shared/assessment-dashboard/tutor-issue';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/second-correction-button/second-correction-enable-button.component';
+import { MODULE_FEATURE_PLAGIARISM } from 'app/app.constants';
+import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
@@ -58,6 +61,7 @@ import { SecondCorrectionEnableButtonComponent } from 'app/assessment/shared/ass
         ArtemisDatePipe,
         SortDirective,
         SortByDirective,
+        FeatureOverlayComponent,
     ],
 })
 export class AssessmentDashboardComponent implements OnInit {
@@ -68,9 +72,12 @@ export class AssessmentDashboardComponent implements OnInit {
     private accountService = inject(AccountService);
     private route = inject(ActivatedRoute);
     private sortService = inject(SortService);
+    private profileService = inject(ProfileService);
 
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
+
+    plagiarismEnabled = false;
 
     course: Course;
     exam: Exam;
@@ -130,6 +137,7 @@ export class AssessmentDashboardComponent implements OnInit {
         }
         this.loadAll();
         this.accountService.identity().then((user) => (this.tutor = user!));
+        this.plagiarismEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_PLAGIARISM);
     }
 
     /**

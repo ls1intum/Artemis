@@ -57,7 +57,7 @@ public class SAML2Service {
 
     private final AuditEventRepository auditEventRepository;
 
-    @Value("${info.saml2.enable-password:#{null}}")
+    @Value("${info.saml2.enablePassword:#{null}}")
     private Optional<Boolean> saml2EnablePassword;
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Service.class);

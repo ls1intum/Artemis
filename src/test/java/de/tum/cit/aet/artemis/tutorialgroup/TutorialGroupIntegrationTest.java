@@ -7,7 +7,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -19,6 +18,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import jakarta.validation.constraints.NotNull;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,13 +36,10 @@ import com.google.common.collect.ImmutableSet;
 import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -71,19 +69,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     Long exampleTwoTutorialGroupId;
 
     @Autowired
-    private FeatureToggleService featureToggleService;
-
-    @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
-
-    @Autowired
-    private CourseNotificationService courseNotificationService;
 
     @BeforeEach
     @Override
     void setupTestScenario() {
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
-
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 4, 2, 1, 1);
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
@@ -448,13 +438,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
         assertTutorialGroupChannelDoesNotExist(persistedTutorialGroup);
-        persistedTutorialGroup.getRegistrations().forEach(registration -> {
-            verify(websocketMessagingService, timeout(2000).times(1)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
-                    (Object) any());
-        });
-        verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + persistedTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
-
+        persistedTutorialGroup.getRegistrations().forEach(registration -> verify(websocketMessagingService, timeout(2000).times(1))
+                .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), (Object) any()));
     }
 
     @Test
@@ -495,13 +480,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new TutorialGroupResource.TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
         assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
         asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
-
-        existingTutorialGroup.getRegistrations().forEach(registration -> {
-            verify(websocketMessagingService, timeout(2000).times(2)).sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"),
-                    (Object) any());
-        });
-        verify(websocketMessagingService, timeout(2000).times(1))
-                .sendMessage(eq("/topic/user/" + existingTutorialGroup.getTeachingAssistant().getId() + "/notifications/tutorial-groups"), (Object) any());
     }
 
     @Test
@@ -532,7 +510,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void registerStudent_asTutorOfGroup_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest(TEST_PREFIX + "tutor1", false);
+        this.registerStudentAllowedTest();
     }
 
     @Test
@@ -556,7 +534,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerStudent_asInstructor_shouldAllowRegistration() throws Exception {
-        this.registerStudentAllowedTest(TEST_PREFIX + "instructor1", true);
+        this.registerStudentAllowedTest();
     }
 
     @Test
@@ -582,13 +560,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deregisterStudent_asTutorOfGroup_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest(TEST_PREFIX + "tutor1", false);
+        this.deregisterStudentAllowedTest();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_asInstructor_shouldAllowDeregistration() throws Exception {
-        this.deregisterStudentAllowedTest(TEST_PREFIX + "instructor1", true);
+        this.deregisterStudentAllowedTest();
     }
 
     @Test
@@ -647,7 +625,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
-        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, instructor1);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
         // remove registration of student 6 again
@@ -885,7 +862,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(importResult.getFirst().importSuccessful()).isTrue();
         assertThat(importResult.getFirst().error()).isNull();
 
-        assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), INSTRUCTOR_REGISTRATION, true, "Some info", 30, "Main Campus", "German", instructor1);
+        assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), true, "Some info", 30, "Main Campus", "German", instructor1);
     }
 
     private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
@@ -912,11 +889,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     private void assertImportedTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, User requestingUser) {
-        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, INSTRUCTOR_REGISTRATION, false, null, 1, "Campus", Language.GERMAN.name(), requestingUser);
+        assertTutorialGroupWithTitleInDB(expectedTitle, expectedRegisteredStudents, false, null, 1, "Campus", Language.GERMAN.name(), requestingUser);
     }
 
-    private void assertTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, TutorialGroupRegistrationType expectedRegistrationType,
-            Boolean isOnline, String additionalInformation, Integer capacity, String campus, String language, User teachingAssistant) {
+    private void assertTutorialGroupWithTitleInDB(String expectedTitle, Set<User> expectedRegisteredStudents, Boolean isOnline, String additionalInformation, Integer capacity,
+            String campus, String language, User teachingAssistant) {
         var tutorialGroupOptional = tutorialGroupTestRepository.findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(expectedTitle, exampleCourseId);
         assertThat(tutorialGroupOptional).isPresent();
         var tutorialGroup = tutorialGroupOptional.get();
@@ -928,7 +905,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(teachingAssistant);
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).containsExactlyInAnyOrderElementsOf(expectedRegisteredStudents);
         // assert that all registrations are instructor registrations (always the case for import)
-        assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getType)).allMatch(regType -> regType.equals(expectedRegistrationType));
+        assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getType))
+                .allMatch(regType -> regType.equals(TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION));
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
     }
 
@@ -979,19 +957,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
     }
 
-    private void registerStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
-        var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
+    private void registerStudentAllowedTest() throws Exception {
         request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
-        verify(singleUserNotificationService).notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
-        if (expectTutorNotification) {
-            verify(singleUserNotificationService).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
-        }
-        else {
-            verify(singleUserNotificationService, never()).notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, student3, responsibleUser);
-        }
 
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
@@ -1006,18 +976,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 new LinkedMultiValueMap<>());
     }
 
-    private void deregisterStudentAllowedTest(String loginOfResponsibleUser, boolean expectTutorNotification) throws Exception {
-        var responsibleUser = userUtilService.getUserByLogin(loginOfResponsibleUser);
+    private void deregisterStudentAllowedTest() throws Exception {
         request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
-        verify(singleUserNotificationService).notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
-        if (expectTutorNotification) {
-            verify(singleUserNotificationService).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
-        }
-        else {
-            verify(singleUserNotificationService, never()).notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, student1, responsibleUser);
-        }
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
 
         // reset registration
@@ -1071,11 +1033,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCSVContentWithSampleData() throws Exception {
         // given
-        List<TutorialGroup> tutorialGroups = new ArrayList<>();
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
 
         // when
         var params = new LinkedMultiValueMap<String, String>();
@@ -1130,11 +1089,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testJSONContentWithSampleData() throws Exception {
         // given
-        List<TutorialGroup> tutorialGroups = new ArrayList<>();
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
 
         // when
         var params = new LinkedMultiValueMap<String, String>();
@@ -1191,11 +1147,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testJSONContentWithSampleDataIncludingOptionalFields() throws Exception {
         // given
-        List<TutorialGroup> tutorialGroups = new ArrayList<>();
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1)));
-        tutorialGroups
-                .add(tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2)));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
+        tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
 
         // when
         var params = new LinkedMultiValueMap<String, String>();
@@ -1230,20 +1183,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendTutorialGroupAssignedNotificationWhenTutorIsAssignedAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         User tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
         TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
                 Language.ENGLISH.name(), tutor2, Set.of());
 
-        TutorialGroup updatedTutorialGroup = new TutorialGroup();
-        updatedTutorialGroup.setId(tutorialGroup.getId());
-        updatedTutorialGroup.setTitle(tutorialGroup.getTitle());
-        updatedTutorialGroup.setTeachingAssistant(tutor1);
-        updatedTutorialGroup.setCapacity(tutorialGroup.getCapacity());
-        updatedTutorialGroup.setCampus(tutorialGroup.getCampus());
-        updatedTutorialGroup.setIsOnline(tutorialGroup.getIsOnline());
-        updatedTutorialGroup.setLanguage(tutorialGroup.getLanguage());
+        final var updatedTutorialGroup = copyTutorialGroup(tutorialGroup, tutor1);
 
         TutorialGroupResource.TutorialGroupUpdateDTO updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
 
@@ -1257,26 +1201,27 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasTutorialGroupAssignedNotification).isTrue();
         });
+    }
 
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
+    private @NotNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
+        TutorialGroup updatedTutorialGroup = new TutorialGroup();
+        updatedTutorialGroup.setId(tutorialGroup.getId());
+        updatedTutorialGroup.setTitle(tutorialGroup.getTitle());
+        updatedTutorialGroup.setTeachingAssistant(tutor1);
+        updatedTutorialGroup.setCapacity(tutorialGroup.getCapacity());
+        updatedTutorialGroup.setCampus(tutorialGroup.getCampus());
+        updatedTutorialGroup.setIsOnline(tutorialGroup.getIsOnline());
+        updatedTutorialGroup.setLanguage(tutorialGroup.getLanguage());
+        return updatedTutorialGroup;
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendTutorialGroupUnassignedNotificationWhenTutorIsUnassignedAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
                 Language.ENGLISH.name(), tutor1, Set.of());
 
-        TutorialGroup updatedTutorialGroup = new TutorialGroup();
-        updatedTutorialGroup.setId(tutorialGroup.getId());
-        updatedTutorialGroup.setTitle(tutorialGroup.getTitle());
-        updatedTutorialGroup.setTeachingAssistant(null); // Unassign tutor
-        updatedTutorialGroup.setCapacity(tutorialGroup.getCapacity());
-        updatedTutorialGroup.setCampus(tutorialGroup.getCampus());
-        updatedTutorialGroup.setIsOnline(tutorialGroup.getIsOnline());
-        updatedTutorialGroup.setLanguage(tutorialGroup.getLanguage());
+        final var updatedTutorialGroup = copyTutorialGroup(tutorialGroup, null);
 
         TutorialGroupResource.TutorialGroupUpdateDTO updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
 
@@ -1290,15 +1235,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasTutorialGroupUnassignedNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendRegisteredToTutorialGroupNotificationWhenStudentIsRegisteredAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
                 Language.ENGLISH.name(), tutor1, Set.of());
 
@@ -1313,15 +1254,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasRegisteredToTutorialGroupNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldSendTutorialGroupDeletedNotificationWhenTutorialGroupIsDeletedAndFeatureEnabled() throws Exception {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
                 Language.ENGLISH.name(), tutor1, Set.of(student1, student2));
 
@@ -1335,7 +1272,5 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(hasTutorialGroupDeletedNotification).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 }

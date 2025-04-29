@@ -40,6 +40,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
 import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({
     template: '',
@@ -119,6 +121,7 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
             schemas: [],
         })

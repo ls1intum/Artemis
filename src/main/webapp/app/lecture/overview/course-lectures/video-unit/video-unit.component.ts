@@ -1,10 +1,12 @@
-import { Component, computed } from '@angular/core';
+import { Component, computed, inject } from '@angular/core';
 import { VideoUnit } from 'app/lecture/shared/entities/lecture-unit/videoUnit.model';
 import urlParser from 'js-video-url-parser';
 import { faVideo } from '@fortawesome/free-solid-svg-icons';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-video-unit',
@@ -31,11 +33,12 @@ export class VideoUnitComponent extends LectureUnitDirective<VideoUnit> {
         return undefined;
     });
 
+    private readonly scienceService = inject(ScienceService);
+
     toggleCollapse(isCollapsed: boolean) {
         super.toggleCollapse(isCollapsed);
         if (!isCollapsed) {
-            // log event
-            this.logEvent();
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
             // Mark the unit as completed when the user has it open for at least 5 minutes
             this.completionTimeout = setTimeout(

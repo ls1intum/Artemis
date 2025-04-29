@@ -24,13 +24,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.lecture.PyrisLectureChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -44,7 +44,7 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
 
     private final IrisMessageService irisMessageService;
 
-    private final LectureRepository lectureRepository;
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
 
     private final PyrisPipelineService pyrisPipelineService;
 
@@ -55,13 +55,13 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     private final AuthorizationCheckService authCheckService;
 
     public IrisLectureChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisMessageService irisMessageService, LectureRepository lectureRepository, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
+            IrisMessageService irisMessageService, Optional<LectureRepositoryApi> lectureRepositoryApi, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.irisRateLimitService = rateLimitService;
         this.irisMessageService = irisMessageService;
-        this.lectureRepository = lectureRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
         this.pyrisPipelineService = pyrisPipelineService;
         this.pyrisJobService = pyrisJobService;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -76,8 +76,10 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
     // This is the message from the user sent to Iris
     @Override
     public void requestAndHandleResponse(IrisLectureChatSession lectureChatSession) {
+        LectureRepositoryApi api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+
         var session = (IrisLectureChatSession) irisSessionRepository.findByIdWithMessagesAndContents(lectureChatSession.getId());
-        var lecture = lectureRepository.findByIdElseThrow(session.getLecture().getId());
+        var lecture = api.findByIdElseThrow(session.getLecture().getId());
         var course = lecture.getCourse();
 
         if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.LECTURE_CHAT, course)) {
@@ -87,7 +89,8 @@ public class IrisLectureChatSessionService implements IrisChatBasedFeatureInterf
         var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
         pyrisPipelineService.executePipeline("lecture-chat", "default", Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new LectureChatJob(token, course.getId(), lecture.getId(), session.getId())),
-                dto -> new PyrisLectureChatPipelineExecutionDTO(new PyrisCourseDTO(course), conversation, new PyrisUserDTO(session.getUser()), dto.settings(), dto.initialStages()),
+                dto -> new PyrisLectureChatPipelineExecutionDTO(course.getId(), lecture.getId(), conversation, new PyrisUserDTO(session.getUser()), dto.settings(),
+                        dto.initialStages()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages));
     }
 

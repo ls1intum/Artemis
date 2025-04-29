@@ -6,6 +6,7 @@
                 "fullscreen": "Fullscreen"
             },
             "fileUpload": "Attach files by dragging & dropping or selecting them.",
+            "fileUploadShort": "Attach files here",
             "guide": "Styling with Markdown is possible",
             "color": "Color",
             "preview": {

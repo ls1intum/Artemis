@@ -1,6 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -10,7 +12,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { UserSettingsContainerComponent } from 'app/core/user/settings/user-settings-container/user-settings-container.component';
 
-describe('User Settings Container Component', () => {
+describe('UserSettingsContainerComponent', () => {
     let fixture: ComponentFixture<UserSettingsContainerComponent>;
     let comp: UserSettingsContainerComponent;
 
@@ -28,6 +30,7 @@ describe('User Settings Container Component', () => {
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
                 { provide: AccountService, useClass: MockAccountService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(UserSettingsContainerComponent);

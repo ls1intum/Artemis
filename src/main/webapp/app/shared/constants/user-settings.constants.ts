@@ -1,5 +1,4 @@
 export enum UserSettingsCategory {
-    NOTIFICATION_SETTINGS = 'NOTIFICATION_SETTINGS',
     SCIENCE_SETTINGS = 'SCIENCE_SETTINGS',
 }
 

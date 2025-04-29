@@ -1,0 +1,34 @@
+{
+  "runs": [
+    {
+      "results": [
+        {
+          "level": "warning",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/var/tmp/testing-dir/assignment/src/main.cpp"
+                },
+                "region": {
+                  "startColumn": 16,
+                  "startLine": 5
+                }
+              }
+            }
+          ],
+          "message": {
+            "text": "Dereference of null pointer (loaded from variable 'p')"
+          },
+          "ruleId": "clang-analyzer-core.NullDereference"
+        }
+      ],
+      "tool": {
+        "driver": {
+          "name": "clang-tidy"
+        }
+      }
+    }
+  ],
+  "version": "2.1.0"
+}

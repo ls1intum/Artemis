@@ -75,6 +75,13 @@
                 "shortAnswerMapping": "Kurzantwort-Zuordnung",
                 "programmingExerciseTestCase": "Programmingaufgabentestfall",
                 "exerciseHint": "Aufgabenhinweis",
+                "exerciseTypes": {
+                    "programming": "Programmierung",
+                    "modeling": "Modellierung",
+                    "text": "Text",
+                    "fileUpload": "Datei-Upload",
+                    "quiz": "Quiz"
+                },
                 "metis": {
                     "post": "Beitrag",
                     "answerPost": "Antwort"
@@ -91,6 +98,7 @@
                 "password": "Passwort",
                 "sessions": "Sitzungen",
                 "login": "Anmelden",
+                "loginWithPasskey": "Mit einem Passkey anmelden",
                 "logout": "Abmelden",
                 "register": "Registrierung"
             },
@@ -191,6 +199,8 @@
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
+        "actions": "Aktionen",
+        "quickActions": "Schnellzugriff",
         "action": {
             "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
@@ -198,6 +208,7 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "deleteQuestion": "Bist du sicher dass du das Löschen ausführen willst?",
             "noButtonTextDelete": "",
             "unlink": "Trennen",
             "confirm": "Bestätigen",
@@ -245,7 +256,7 @@
             "lecture": "Vorlesung",
             "attachments": "Anhänge",
             "saveAttachment": "Anhang speichern",
-            "addAttachment": "Anhang hinzufügen",
+            "addAttachment": "Anhang als Vorlesungseinheit hinzufügen",
             "assessmentDashboard": "Bewertung",
             "instructorDashboard": "Dashboard für Lehrende",
             "exerciseDashboard": "Aufgaben-Dashboard",
@@ -270,7 +281,15 @@
             "select": "Auswählen",
             "sendToIris": "An Iris schicken",
             "faq": "FAQ",
-            "show": "Anzeigen"
+            "show": "Anzeigen",
+            "addExercise": "Aufgabe hinzufügen",
+            "addLecture": "Vorlesung hinzufügen",
+            "addFaq": "FAQ hinzufügen",
+            "addExam": "Klausur hinzufügen",
+            "addStudent": "Studierenden hinzufügen",
+            "addTutor": "Tutor:in hinzufügen",
+            "addEditor": "Editor:in hinzufügen",
+            "addInstructor": "Lehrenden hinzufügen"
         },
         "detail": {
             "field": "Feld",

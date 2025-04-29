@@ -23,6 +23,7 @@ import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 @Component({
     selector: 'jhi-discussion-section',
@@ -44,6 +45,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 })
 export class DiscussionSectionComponent extends CourseDiscussionDirective implements AfterViewInit, OnDestroy {
     private channelService = inject(ChannelService);
+    private courseStorageService = inject(CourseStorageService);
     private activatedRoute = inject(ActivatedRoute);
     private router = inject(Router);
     private formBuilder = inject(FormBuilder);
@@ -92,7 +94,10 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
             queryParams: this.activatedRoute.queryParams,
         }).subscribe((routeParams: { params: Params; queryParams: Params }) => {
             this.currentPostId = +routeParams.queryParams.postId;
-            this.course = exercise?.course ?? lecture?.course;
+            const courseId = exercise?.course?.id ?? lecture?.course?.id;
+            if (courseId) {
+                this.course = this.courseStorageService.getCourse(courseId);
+            }
             this.metisService.setCourse(this.course);
             this.metisService.setPageType(this.PAGE_TYPE);
             if (routeParams.params.courseId) {
