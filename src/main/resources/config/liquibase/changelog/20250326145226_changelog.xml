@@ -19,13 +19,14 @@
                                  constraintName="FK_IRIS_SESSION_ON_POST"
                                  referencedColumnNames="id"
                                  referencedTableName="post"
-                                 onDelete="SET NULL"
+                                 onDelete="CASCADE"
         />
         <addForeignKeyConstraint baseColumnNames="iris_tutor_suggestion_settings_id"
                                  baseTableName="iris_settings"
                                  constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"
                                  referencedColumnNames="id"
                                  referencedTableName="iris_sub_settings"
+                                 onDelete="CASCADE"
         />
     </changeSet>
 </databaseChangeLog>
