@@ -1,7 +1,7 @@
 <form name="exerciseFilterForm" (ngSubmit)="navigateToSetupPasskey()">
     <div class="modal-header">
         <h4 class="modal-title">
-            <fa-icon [icon]="faCog" />
+            <fa-icon [icon]="faShieldHalved" />
             <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.title"></span>
         </h4>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
@@ -20,7 +20,10 @@
                 jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"
                 aria-label="Set Up Later"
             ></button>
-            <button type="button" class="btn btn-primary" (click)="navigateToSetupPasskey()" jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></button>
+            <button type="button" class="btn btn-primary" (click)="navigateToSetupPasskey()">
+                <fa-icon [icon]="faKey" />
+                <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
+            </button>
         </div>
     </div>
 </form>
