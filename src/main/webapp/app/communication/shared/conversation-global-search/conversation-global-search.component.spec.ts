@@ -206,6 +206,17 @@ describe('ConversationGlobalSearchComponent', () => {
         });
     }));
 
+    it('should set search mode to NORMAL and close dropdown for invalid prefix', fakeAsync(() => {
+        const inputEl = fixture.debugElement.query(By.css('input#search')).nativeElement;
+        inputEl.value = 'invalidPrefix';
+        inputEl.dispatchEvent(new Event('input'));
+        tick();
+        fixture.detectChanges();
+
+        expect(component.searchMode).toBe(component.SearchMode.NORMAL);
+        expect(component.showDropdown).toBeFalse();
+    }));
+
     it('should navigate dropdown with keyboard and select with enter', fakeAsync(() => {
         const selectOptionSpy = jest.spyOn(component, 'selectOption');
         component.fullSearchTerm = 'in:general';
