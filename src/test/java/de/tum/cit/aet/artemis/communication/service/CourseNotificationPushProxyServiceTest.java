@@ -91,7 +91,7 @@ class CourseNotificationPushProxyServiceTest {
         parameters.put("postId", "456");
         parameters.put("channelId", "789");
 
-        return new CourseNotificationDTO("newMessageNotification", 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters, "/");
+        return new CourseNotificationDTO("newPostNotification", 1L, 1L, creationDate, CourseNotificationCategory.COMMUNICATION, parameters, "/");
     }
 
     /**
