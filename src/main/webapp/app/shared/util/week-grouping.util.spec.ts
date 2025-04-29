@@ -114,28 +114,34 @@ describe('WeekGroupingUtil', () => {
     });
 
     it('handles mixed dates within each group key', () => {
+        const baseDate = dayjs('2025-01-01');
+
         const items: SidebarCardElement[] = [
-            { title: 'Week 1', id: 'c1', size: 'M', startDate: dayjs() },
-            { title: 'Week 2', id: 'c2', size: 'M', startDate: dayjs() },
-            { title: 'Week 3', id: 'c3', size: 'M', startDate: dayjs() },
-            { title: 'Week 4', id: 'c4', size: 'M', startDate: dayjs() },
-            { title: 'Week 5', id: 'c5', size: 'M', startDate: dayjs() },
-            { title: 'Week 6', id: 'c6', size: 'M', startDate: dayjs() },
+            { title: 'Week 1', id: 'c1', size: 'M', startDate: baseDate.add(0, 'day') },
+            { title: 'Week 2', id: 'c2', size: 'M', startDate: baseDate.add(1, 'day') },
+            { title: 'Week 3', id: 'c3', size: 'M', startDate: baseDate.add(2, 'day') },
+            { title: 'Week 4', id: 'c4', size: 'M', startDate: baseDate.add(3, 'day') },
+            { title: 'Week 5', id: 'c5', size: 'M', startDate: baseDate.add(4, 'day') },
+            { title: 'Week 6', id: 'c6', size: 'M', startDate: baseDate.add(5, 'day') },
             { title: 'Week 7', id: 'c7', size: 'M' },
             { title: 'Week 8', id: 'c8', size: 'M' },
             { title: 'Week 9', id: 'c9', size: 'M' },
         ];
 
         const currentGroups = WeekGroupingUtil.getGroupedByWeek(items, 'future');
-        expect(currentGroups).toHaveLength(2);
+        expect(currentGroups).toHaveLength(3);
 
         expect(currentGroups[0].showDateHeader).toBeTruthy();
         expect(currentGroups[0].isNoDate).toBeFalsy();
-        expect(currentGroups[0].items[0].title).toBe('Week 1');
+        expect(currentGroups[0].items[0].title).toBe('Week 6');
 
         expect(currentGroups[1].showDateHeader).toBeTruthy();
-        expect(currentGroups[1].isNoDate).toBeTruthy();
-        expect(currentGroups[1].items[0].title).toBe('Week 7');
+        expect(currentGroups[1].isNoDate).toBeFalsy();
+        expect(currentGroups[1].items[0].title).toBe('Week 4');
+
+        expect(currentGroups[2].showDateHeader).toBeTruthy();
+        expect(currentGroups[2].isNoDate).toBeTruthy();
+        expect(currentGroups[2].items[0].title).toBe('Week 7');
     });
 
     it('sorts groups correctly within the same year', () => {
