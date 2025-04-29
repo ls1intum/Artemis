@@ -81,7 +81,7 @@ public class CourseNotificationPushProxyService {
         NotificationTarget notificationTarget;
 
         switch (courseNotificationDTO.notificationType()) {
-            case "newMessageNotification":
+            case "newPostNotification":
                 notificationPlaceholders = new String[] { parameters.get("courseTitle"), parameters.get("postMarkdownContent"), courseNotificationDTO.creationDate().toString(),
                         parameters.get("channelName"), parameters.get("authorName"), parameters.get("channelType"), parameters.get("authorImageUrl"), parameters.get("authorId"),
                         parameters.get("postId"), };
