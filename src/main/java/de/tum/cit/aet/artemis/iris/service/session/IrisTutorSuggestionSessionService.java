@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -23,9 +24,15 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service for managing Iris tutor suggestion sessions.
@@ -51,9 +58,14 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final IrisSettingsService irisSettingsService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final PyrisDTOService pyrisDTOService;
+
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService) {
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
+            ProgrammingExerciseRepository programmingExerciseRepository, PyrisDTOService pyrisDTOService) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -61,6 +73,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.pyrisPipelineService = pyrisPipelineService;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.pyrisDTOService = pyrisDTOService;
     }
 
     @Override
@@ -89,7 +103,42 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
         var variant = "default";
 
-        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event);
+        var post = chatSession.getPost();
+
+        var course = post.getCoursePostingBelongsTo();
+        if (course == null) {
+            throw new IllegalStateException("Course not found for session " + chatSession.getId());
+        }
+
+        var conversation = post.getConversation();
+        if (conversation == null) {
+            throw new IllegalStateException("Conversation not found for session " + chatSession.getId());
+        }
+
+        if (conversation instanceof Channel channel) {
+            Optional<Long> lectureIdOptional = Optional.empty();
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
+            Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
+
+            var lecture = channel.getLecture();
+            if (lecture != null) {
+                lectureIdOptional = Optional.of(lecture.getId());
+            }
+            var exercise = channel.getExercise();
+            if (exercise != null) {
+                switch (exercise.getExerciseType()) {
+                    case PROGRAMMING -> {
+                        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExerciseDTOOptional = Optional.of(pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise));
+                    }
+                    case TEXT -> {
+                        TextExercise textExercise = (TextExercise) exercise;
+                        textExerciseDTOOptional = Optional.of(PyrisTextExerciseDTO.ofWithExampleSolution(textExercise));
+                    }
+                }
+            }
+            pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, lectureIdOptional, textExerciseDTOOptional, programmingExerciseDTOOptional);
+        }
     }
 
     @Override

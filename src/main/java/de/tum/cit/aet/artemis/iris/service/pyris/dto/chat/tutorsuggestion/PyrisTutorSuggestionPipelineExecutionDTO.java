@@ -26,10 +26,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param textExerciseDTO        optional text exercise DTO
  * @param programmingExerciseDTO optional programming exercise DTO
  * @param lectureId              optional lecture ID
- * @param lectureUnitIds         optional list of lecture unit IDs
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTutorSuggestionPipelineExecutionDTO(PyrisCourseDTO course, PyrisPostDTO post, List<PyrisMessageDTO> chatHistory, PyrisUserDTO user,
         PyrisPipelineExecutionSettingsDTO settings, List<PyrisStageDTO> initialStages, Optional<PyrisTextExerciseDTO> textExerciseDTO,
-        Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Optional<Long> lectureId, Optional<List<Long>> lectureUnitIds) {
+        Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTO, Optional<Long> lectureId) {
 }

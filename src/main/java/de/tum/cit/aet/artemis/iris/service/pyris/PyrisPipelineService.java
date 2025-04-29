@@ -23,11 +23,9 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
@@ -51,7 +49,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service responsible for executing the various Pyris pipelines in a type-safe manner.
@@ -232,51 +229,11 @@ public class PyrisPipelineService {
      * @param session      the chat session
      * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
      */
-    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant) {
+    public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional) {
         var post = session.getPost();
         var course = post.getCoursePostingBelongsTo();
-        if (course == null) {
-            throw new IllegalStateException("Course is null for post " + post.getId());
-        }
-        var conversation = post.getConversation();
-        Exercise exercise;
-        Optional<List<Long>> lectureUnitIdsOptional;
-        Optional<Long> lectureIdOptional;
-        if (conversation instanceof Channel channel) {
-            exercise = channel.getExercise();
-            var lecture = channel.getLecture();
-            if (lecture != null) {
-                lectureIdOptional = Optional.of(lecture.getId());
-                // Throws a org.hybernate.LazyInitializationException if the lecture units are not loaded will be fixed
-                // with the lecture channel PR
-                // lectureUnitIdsOptional = Optional.of(lecture.getLectureUnits().stream().map(DomainObject::getId).toList());
-                lectureUnitIdsOptional = Optional.empty();
-            }
-            else {
-                lectureIdOptional = Optional.empty();
-                lectureUnitIdsOptional = Optional.empty();
-            }
-        }
-        else {
-            lectureUnitIdsOptional = Optional.empty();
-            exercise = null;
-            lectureIdOptional = Optional.empty();
-        }
-        Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
-        Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
-        if (exercise != null && exercise.getExerciseType() == ExerciseType.PROGRAMMING) {
-            ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
-            var programmingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
-            programmingExerciseDTOOptional = Optional.of(programmingExerciseDTO);
-        }
-        else if (exercise != null && exercise.getExerciseType() == ExerciseType.TEXT) {
-            TextExercise textExercise = (TextExercise) exercise;
-            var textExerciseDTO = PyrisTextExerciseDTO.ofWithExampleSolution(textExercise);
-            textExerciseDTOOptional = Optional.of(textExerciseDTO);
-        }
         // @formatter:off
-        Optional<PyrisTextExerciseDTO> finalTextExerciseDTOOptional = textExerciseDTOOptional;
-        Optional<PyrisProgrammingExerciseDTO> finalProgrammingExerciseDTOOptional = programmingExerciseDTOOptional;
         executePipeline(
             "tutor-suggestion",
             variant,
@@ -289,10 +246,9 @@ public class PyrisPipelineService {
                 new PyrisUserDTO(session.getUser()),
                 executionDto.settings(),
                 executionDto.initialStages(),
-                finalTextExerciseDTOOptional,
-                finalProgrammingExerciseDTOOptional,
-                lectureIdOptional,
-                lectureUnitIdsOptional
+                textExerciseDTOOptional,
+                programmingExerciseDTOOptional,
+                lectureIdOptional
             ),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)
         );
