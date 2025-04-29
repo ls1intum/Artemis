@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -434,8 +436,31 @@ public class LocalVCServletService {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
-        return exercise.isAllowBranching();
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+        return exercise.getBuildConfig().isAllowBranching();
+    }
+
+    /**
+     * Checks if branching is allowed for the exercise to which the given repository belongs.
+     *
+     * @param repository The repository for which we check if branching is allowed.
+     * @param branchName The branch name for which to check if it matches the regex.
+     * @return True if branching is allowed, false otherwise.
+     */
+    public boolean isBranchNameAllowedForRepository(Repository repository, String branchName) {
+        LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
+        String projectKey = localVCRepositoryUri.getProjectKey();
+
+        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
+
+        if (exercise.getBuildConfig().isAllowBranching()) {
+            Pattern pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
+            Matcher matcher = pattern.matcher(branchName);
+            return matcher.matches();
+        }
+        else {
+            return false;
+        }
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
@@ -447,13 +472,17 @@ public class LocalVCServletService {
         return new LocalVCRepositoryUri(repositoryPath, localVCBaseUrl);
     }
 
-    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey, boolean withBuildConfig) {
         try {
-            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true);
+            return programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, true, withBuildConfig);
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey, e);
         }
+    }
+
+    private ProgrammingExercise getProgrammingExerciseOrThrow(String projectKey) {
+        return getProgrammingExerciseOrThrow(projectKey, false);
     }
 
     /**

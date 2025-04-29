@@ -58,7 +58,6 @@ export class ProgrammingExercise extends Exercise {
      * Max penalty from SCA in percentage
      */
     public maxStaticCodeAnalysisPenalty?: number;
-    public allowBranching?: boolean;
     public allowOfflineIde?: boolean;
     public allowOnlineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
@@ -90,7 +89,6 @@ export class ProgrammingExercise extends Exercise {
         this.allowOnlineEditor = false; // default value
         this.allowOnlineIde = false; // default value
         this.staticCodeAnalysisEnabled = false; // default value
-        this.allowBranching = false; // default value
         this.allowOfflineIde = true; // default value
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value

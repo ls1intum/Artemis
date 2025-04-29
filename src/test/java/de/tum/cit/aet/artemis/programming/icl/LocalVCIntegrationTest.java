@@ -334,7 +334,7 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserCreatesNewBranchBranchingAllowed() throws Exception {
-        programmingExercise.setAllowBranching(true);
+        programmingExercise.getBuildConfig().setAllowBranching(true);
         programmingExerciseRepository.save(programmingExercise);
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);

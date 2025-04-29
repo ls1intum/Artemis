@@ -71,8 +71,11 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     @Column(name = "theia_image")
     private String theiaImage;
 
-    @Column(name = "branch_regex")
-    private String branchRegex;
+    @Column(name = "allow_branching", columnDefinition = "boolean default false", nullable = false)
+    private boolean allowBranching = false; // default value
+
+    @Column(name = "branch_regex", columnDefinition = "varchar(255) default '.*'", nullable = false)
+    private String branchRegex = ".*"; // default value
 
     @Size(max = 36)
     @Nullable
@@ -94,6 +97,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.setBuildScript(originalBuildConfig.getBuildScript());
         this.setTimeoutSeconds(originalBuildConfig.getTimeoutSeconds());
         this.setTheiaImage(originalBuildConfig.getTheiaImage());
+        this.setAllowBranching(originalBuildConfig.isAllowBranching());
         this.setBranchRegex(originalBuildConfig.getBranchRegex());
         this.setProgrammingExercise(null);
         this.buildPlanAccessSecret = null;
@@ -205,6 +209,14 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         this.branchRegex = branchRegex;
     }
 
+    public boolean isAllowBranching() {
+        return allowBranching;
+    }
+
+    public void setAllowBranching(boolean allowBranching) {
+        this.allowBranching = allowBranching;
+    }
+
     /**
      * We store the build plan configuration as a JSON string in the database, as it is easier to handle than a complex object structure.
      * This method parses the JSON string and returns a {@link Windfile} object.
@@ -270,7 +282,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     public String toString() {
         return "BuildJobConfig{" + "id=" + getId() + ", sequentialTestRuns=" + sequentialTestRuns + ", branch='" + branch + '\'' + ", buildPlanConfiguration='"
                 + buildPlanConfiguration + '\'' + ", buildScript='" + buildScript + '\'' + ", checkoutSolutionRepository=" + checkoutSolutionRepository + ", checkoutPath='"
-                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\'' + ", branchRegex='"
-                + branchRegex + '\'' + '}';
+                + testCheckoutPath + '\'' + ", timeoutSeconds=" + timeoutSeconds + ", dockerFlags='" + dockerFlags + '\'' + ", theiaImage='" + theiaImage + '\''
+                + ", allowBranching=" + allowBranching + ", branchRegex='" + branchRegex + '\'' + '}';
     }
 }
