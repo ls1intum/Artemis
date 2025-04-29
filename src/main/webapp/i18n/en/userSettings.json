@@ -86,7 +86,6 @@
             },
             "passkeySettingsPage": {
                 "infoText": "Passkeys are webauthn credentials that validate your identity using touch, facial recognition, a device password, or a PIN. Passkeys can be used as a password replacement.",
-                "onlyOnePerAuthenticator": "You can only register one passkey for this site per authenticator (e.g. one in Apple Keychain and another one in Google Password Manager, etc.). Creating a second passkey with the same authenticator will overwrite the first registered passkey, which you will need to remove manually from Artemis.",
                 "learnMore": "Learn more about passkeys.",
                 "noneRegistered": "You have not registered any passkeys with Artemis yet.",
                 "deletePasskeyQuestion": "Do you really want to delete your passkey for passwordless authentication with Artemis?",
