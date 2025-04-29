@@ -48,7 +48,7 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
-    public authenticatedSignal = signal<boolean>(false);
+    public isAuthenticatedSignal = signal<boolean>(false);
 
     get userIdentity() {
         return this.userIdentityValue;
@@ -59,7 +59,7 @@ export class AccountService implements IAccountService {
 
         const updatedIsAuthenticatedValue: boolean = !!user;
         this.authenticated = updatedIsAuthenticatedValue;
-        this.authenticatedSignal.set(updatedIsAuthenticatedValue);
+        this.isAuthenticatedSignal.set(updatedIsAuthenticatedValue);
 
         // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
         this.authenticationState.next(user);

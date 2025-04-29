@@ -60,13 +60,22 @@ export class AppComponent implements OnInit, OnDestroy {
     isShownViaLti = false;
     isPasskeyEnabled = false;
 
+    private openSetupPasskeyModal(): void {
+        if (!this.isPasskeyEnabled) {
+            return;
+        }
+
+        const isUserOnLoginScreen = !this.accountService.isAuthenticatedSignal();
+        if (!isUserOnLoginScreen) {
+            this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+        }
+    }
+
     constructor() {
         this.setupErrorHandling().then(undefined);
 
         effect(() => {
-            if (this.isPasskeyEnabled && this.accountService.authenticatedSignal()) {
-                this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
-            }
+            this.openSetupPasskeyModal();
         });
     }
 
