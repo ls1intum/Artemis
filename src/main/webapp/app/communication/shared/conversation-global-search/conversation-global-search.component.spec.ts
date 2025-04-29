@@ -271,4 +271,35 @@ describe('ConversationGlobalSearchComponent', () => {
             selectedAuthors: [mockUsers[0]],
         });
     }));
+
+    it('should emit onSearch event with correct data when onTriggerSearch is called', () => {
+        const onSearchSpy = jest.spyOn(component.onSearch, 'emit');
+
+        component.fullSearchTerm = 'test search';
+        component.selectedConversations = [mockConversations[0]];
+        component.selectedAuthors = [mockUsers[0]];
+
+        component.onTriggerSearch();
+
+        expect(onSearchSpy).toHaveBeenCalledWith({
+            searchTerm: 'test search',
+            selectedConversations: [mockConversations[0]],
+            selectedAuthors: [mockUsers[0]],
+        });
+    });
+
+    it('should focus the input when Ctrl+K or Cmd+K is pressed', () => {
+        const focusInputSpy = jest.spyOn(component, 'focusInput');
+        const mockEvent = {
+            metaKey: true, // Simulate Cmd key on macOS
+            ctrlKey: false,
+            key: 'k',
+            preventDefault: jest.fn(),
+        } as unknown as KeyboardEvent;
+
+        component.handleSearchShortcut(mockEvent);
+
+        expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(focusInputSpy).toHaveBeenCalled();
+    });
 });
