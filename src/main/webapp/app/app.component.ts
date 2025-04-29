@@ -15,6 +15,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-app',
@@ -35,6 +37,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer = inject(Renderer2);
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
+    private modalService = inject(NgbModal);
 
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
@@ -123,6 +126,8 @@ export class AppComponent implements OnInit, OnDestroy {
         });
 
         this.themeService.initialize();
+
+        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
     }
 
     /**
