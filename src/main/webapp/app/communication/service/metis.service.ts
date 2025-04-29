@@ -737,6 +737,14 @@ export class MetisService implements OnDestroy {
                         if (cachedAnswer) {
                             answer.authorRole = cachedAnswer.authorRole;
                         }
+
+                        // The updates only set the post.id property of answers, so we set the author and conversation properties manually
+                        // to ensure the same answer.post structure as from the get-messages call.
+                        answer.post = {
+                            id: postDTO.post.id,
+                            author: postDTO.post.author,
+                            conversation: postDTO.post.conversation,
+                        };
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }
