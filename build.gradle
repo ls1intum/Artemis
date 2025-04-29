@@ -81,6 +81,7 @@ openApi {
     waitTimeInSeconds.set(180)
     customBootRun {
         jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
+
                        "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"]
 
         args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
