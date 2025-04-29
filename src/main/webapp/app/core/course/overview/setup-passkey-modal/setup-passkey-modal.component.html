@@ -2,8 +2,21 @@
     <div class="modal-header">
         <h4 class="modal-title">
             <fa-icon [icon]="faCog" />
-            <span jhiTranslate="todo"></span>
+            <span jhiTranslate="Stay Secure with Passkeys"></span>
         </h4>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <p>
+            Passkeys offer a modern, secure, and convenient alternative to passwords. Backed by public-key cryptography, they protect your account from phishing, credential theft,
+            and password reuse. Your passkey is stored on your device and secured with biometrics or a PIN, making login fast and safe—without the need to remember a password. We
+            recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience.
+        </p>
+    </div>
+    <div class="modal-footer">
+        <div class="ms-auto">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="Not Now" aria-label="Not Now"></button>
+            <button type="button" class="btn btn-primary" (click)="navigateToSetupPasskey()" jhiTranslate="Set Up Passkey"></button>
+        </div>
     </div>
 </form>
