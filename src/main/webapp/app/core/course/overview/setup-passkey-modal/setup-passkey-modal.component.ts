@@ -10,7 +10,6 @@ import { Router } from '@angular/router';
     selector: 'jhi-setup-passkey-modal',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FontAwesomeModule],
     templateUrl: './setup-passkey-modal.component.html',
-    styleUrl: './setup-passkey-modal.component.scss',
 })
 export class SetupPasskeyModalComponent {
     protected readonly faKey = faKey;
