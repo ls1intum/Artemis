@@ -288,6 +288,21 @@ describe('ConversationGlobalSearchComponent', () => {
         });
     });
 
+    it('should close the dropdown when clicking outside the search input', fakeAsync(() => {
+        component.showDropdown = true;
+        fixture.detectChanges();
+
+        const mockEvent = {
+            target: document.createElement('div'),
+        } as unknown as Event;
+
+        component.onClickOutside(mockEvent);
+        tick();
+        fixture.detectChanges();
+
+        expect(component.showDropdown).toBeFalse();
+    }));
+
     it('should focus the input when Ctrl+K or Cmd+K is pressed', () => {
         const focusInputSpy = jest.spyOn(component, 'focusInput');
         const mockEvent = {
@@ -300,6 +315,19 @@ describe('ConversationGlobalSearchComponent', () => {
         component.handleSearchShortcut(mockEvent);
 
         expect(mockEvent.preventDefault).toHaveBeenCalled();
+        expect(focusInputSpy).toHaveBeenCalled();
+
+        // Test for Ctrl+K (non-macOS)
+        const mockEventCtrl = {
+            metaKey: false,
+            ctrlKey: true, // Simulate Ctrl key on non-macOS
+            key: 'k',
+            preventDefault: jest.fn(),
+        } as unknown as KeyboardEvent;
+
+        component.handleSearchShortcut(mockEventCtrl);
+
+        expect(mockEventCtrl.preventDefault).toHaveBeenCalled();
         expect(focusInputSpy).toHaveBeenCalled();
     });
 });
