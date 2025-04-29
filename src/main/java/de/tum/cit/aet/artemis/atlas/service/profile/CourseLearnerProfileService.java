@@ -21,9 +21,13 @@ public class CourseLearnerProfileService {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository) {
+    private final LearnerProfileService learnerProfileService;
+
+    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository,
+            LearnerProfileService learnerProfileService) {
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.learnerProfileRepository = learnerProfileRepository;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -33,6 +37,11 @@ public class CourseLearnerProfileService {
      * @param user   the user for which the profile is created
      */
     public void createCourseLearnerProfile(Course course, User user) {
+
+        if (user.getLearnerProfile() == null) {
+            learnerProfileService.createProfile(user);
+        }
+
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
 
@@ -49,10 +58,13 @@ public class CourseLearnerProfileService {
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
+
+        users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
+
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(user.getLearnerProfile());
+            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
 
             return courseProfile;
         }).collect(Collectors.toSet());
