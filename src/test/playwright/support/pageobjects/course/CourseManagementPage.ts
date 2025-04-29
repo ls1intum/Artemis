@@ -79,7 +79,8 @@ export class CourseManagementPage {
      * */
     async addStudentToCourse(credentials: UserCredentials) {
         const responsePromise = this.page.waitForResponse(`api/core/courses/*/students/${credentials.username}`);
-        await this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName').locator('a').click();
+        await this.page.locator('#user-management-dropdown').click();
+        await this.page.locator('#add-student').click();
         await this.confirmUserIntoGroup(credentials);
         await responsePromise;
     }
@@ -184,6 +185,9 @@ export class CourseManagementPage {
     getCourseStudentGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.studentGroupName');
     }
+    getNumberOfStudents() {
+        return this.page.locator('#number-of-students');
+    }
 
     /**
      * Retrieves the locator for the course tutor group name.
@@ -191,6 +195,10 @@ export class CourseManagementPage {
      */
     getCourseTutorGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.teachingAssistantGroupName');
+    }
+
+    getNumberOfTutors() {
+        return this.page.locator('#number-of-tutors');
     }
 
     /**
@@ -201,12 +209,20 @@ export class CourseManagementPage {
         return this.page.locator('#detail-value-artemisApp\\.course\\.editorGroupName');
     }
 
+    getNumberOfEditors() {
+        return this.page.locator('#number-of-editors');
+    }
+
     /**
      * Retrieves the locator for the course instructor group.
      * @returns The locator for the course instructor group name.
      */
     getCourseInstructorGroupName() {
         return this.page.locator('#detail-value-artemisApp\\.course\\.instructorGroupName');
+    }
+
+    getNumberOfInstructors() {
+        return this.page.locator('#number-of-instructors');
     }
 
     /**

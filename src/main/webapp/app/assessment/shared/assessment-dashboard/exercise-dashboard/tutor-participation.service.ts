@@ -2,9 +2,6 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
-import { AccountService } from 'app/core/auth/account.service';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorParticipation } from 'app/exercise/shared/entities/participation/tutor-participation.model';
 
 export type EntityResponseType = HttpResponse<TutorParticipation>;
@@ -13,8 +10,6 @@ export type EntityArrayResponseType = HttpResponse<TutorParticipation[]>;
 @Injectable({ providedIn: 'root' })
 export class TutorParticipationService {
     private http = inject(HttpClient);
-    private accountService = inject(AccountService);
-
     public resourceUrl = 'api/assessment/exercises';
 
     /**
@@ -43,17 +38,5 @@ export class TutorParticipationService {
      */
     assessExampleSubmission(exampleSubmission: ExampleSubmission, exerciseId: number): Observable<HttpResponse<TutorParticipation>> {
         return this.http.post<TutorParticipation>(`${this.resourceUrl}/${exerciseId}/assess-example-submission`, exampleSubmission, { observe: 'response' });
-    }
-
-    /**
-     * Deletes the tutor participation of the current user for the guided tour
-     * @param course the course of the exercise
-     * @param exercise  exercise with tutor participation
-     */
-    deleteTutorParticipationForGuidedTour(course: Course, exercise: Exercise): Observable<void> {
-        if (course && this.accountService.isAtLeastTutorInCourse(course)) {
-            return this.http.delete<void>(`api/exercise/guided-tour/exercises/${exercise.id}/example-submission`);
-        }
-        return new Observable();
     }
 }

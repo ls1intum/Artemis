@@ -410,3 +410,123 @@ The Playwright Docker image we use always has browsers with specific versions in
 Therefore, the
 `docker-compose file <https://github.com/ls1intum/Artemis/blob/develop/docker/playwright.yml>`__
 should be updated every month to make sure that the latest Playwright image is used.
+
+Functionalities Covered
+-----------------------
+.. list-table::
+   :header-rows: 1
+
+   * - **Category**
+     - **Subcategory**
+     - **Description**
+   * - **Courses**
+     - Course Management
+     - Creating, editing, deleting courses; adding/removing students from a course
+   * -
+     - Course Exercise
+     - Tests filtering exercises based on their title.
+   * -
+     - Course Communication
+     - Messaging within courses, including channel creation, student participation, and message interactions.
+   * - **Exams**
+     - Exam Management
+     - Manage exam students and exercise groups
+   * -
+     - Exam Creation & Deletion
+     - Creating, editing, and deleting exams.
+   * -
+     - Exam Participation
+     - Early & normal hand-in, exam exercise participation for text, modeling, quiz, programming (Git SSH/HTTPS) exercises, exam announcements
+   * -
+     - Exam Assessment
+     - Assessing modeling, text, quiz and programming exercise submissions in exams, including complaint handling.
+   * -
+     - Exam Checklists
+     - Exam setup checks, including student registration, exercise groups, and exam publication.
+   * -
+     - Exam Date Verification
+     - Exams appear/disappear based on visibility dates.
+   * -
+     - Exam Results
+     - Exam result overviews for text, quiz, modeling, and programming exercises.
+   * -
+     - Exam Test Runs
+     - Creating, managing, and deleting exam test runs.
+   * -
+     - Exam Statistics
+     - Exam statistics is displayed correctly.
+   * - **Exercises**
+     - Exercise Import
+     - Importing text, quiz, modeling & programming exercises.
+   * - **File Upload Exercises**
+     - Management
+     - Creating and deleting file upload exercises.
+   * -
+     - Participation
+     - Students can participate in a file upload exercise.
+   * -
+     - Assessment & Feedback
+     - Assessing submissions, student feedback visibility, and complaint handling.
+   * - **Modeling Exercises**
+     - Management
+     - Creating, editing, and deleting modeling exercises.
+   * -
+     - Visibility Controls
+     - Students can access released/unreleased exercises.
+   * -
+     - Participation
+     - Students can start and submit models.
+   * -
+     - Assessment & Complaints
+     - Instructor and tutor assessments, student feedback, and complaint resolution.
+   * - **Programming Exercises**
+     - Management
+     - Creating and deleting programming exercises.
+   * -
+     - Team Management
+     - Forming and managing exercise teams.
+   * -
+     - Assessment
+     - Assessing programming exercise submissions.
+   * -
+     - Participation
+     - Submitting code through the code editor and Git (HTTPS & SSH), submissions for Java, C, and Python, team participation.
+   * -
+     - Static Code Analysis
+     - Configuring SCA grading and handling submissions with SCA errors.
+   * - **Quiz Exercises**
+     - Management
+     - Covers creating quizzes with multiple-choice, short-answer, and drag-and-drop questions.
+   * -
+     - Deletion & Export
+     - Ensures quizzes can be deleted and exported.
+   * -
+     - Participation
+     - Tests student participation in hidden, scheduled, and batch-based quizzes.
+   * -
+     - Assessment
+     - Verifies automatic assessment for multiple-choice and short-answer quizzes.
+   * -
+     - Drag-and-Drop Mechanics
+     - Ensures correct placement of draggable quiz elements.
+   * - **Text Exercises**
+     - Management
+     - Covers creating and deleting text exercises.
+   * -
+     - Participation
+     - Ensures students can submit text exercises.
+   * -
+     - Assessment & Complaints
+     - Tests instructor assessments, feedback visibility, and complaint handling.
+   * - **Lectures**
+     - Lecture Management
+     - Creating and deleting lectures, managing existing lectures
+   * - **Authentication**
+     - Logging in
+     - Logging in via UI and programmatically, login failures
+   * -
+     - Logging out
+     - Logging out successfully and canceling logout
+   * - **System Status**
+     - System status indicators
+     - Continuous integration & VC server health; Database, Hazelcast, and WebSocket health; Readiness and ping checks

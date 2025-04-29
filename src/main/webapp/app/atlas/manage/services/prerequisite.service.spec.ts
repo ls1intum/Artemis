@@ -17,14 +17,14 @@ import {
     CourseCompetencyProgress,
 } from 'app/atlas/shared/entities/competency.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { CompetencyPageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import * as dateUtils from 'app/shared/util/date.utils';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import dayjs from 'dayjs/esm';
 import { Dayjs } from 'dayjs/esm/index';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 

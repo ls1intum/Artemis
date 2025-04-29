@@ -1,23 +1,22 @@
 package de.tum.cit.aet.artemis.plagiarism.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.
  */
-@Profile(PROFILE_CORE)
+@Conditional(PlagiarismEnabled.class)
 @Repository
 public interface PlagiarismCaseRepository extends ArtemisJpaRepository<PlagiarismCase, Long> {
 

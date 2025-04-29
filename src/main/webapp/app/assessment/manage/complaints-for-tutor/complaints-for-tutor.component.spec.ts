@@ -19,11 +19,11 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('ComplaintsForTutorComponent', () => {
     let complaintsForTutorComponent: ComplaintsForTutorComponent;
-    let complaintForTutorComponentFixture: ComponentFixture<ComplaintsForTutorComponent>;
+    let fixture: ComponentFixture<ComplaintsForTutorComponent>;
     let injectedComplaintResponseService: ComplaintResponseService;
 
     let course: Course;
@@ -38,17 +38,14 @@ describe('ComplaintsForTutorComponent', () => {
                 MockProvider(ComplaintResponseService),
                 MockProvider(ComplaintService),
                 MockProvider(AlertService),
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         })
             .compileComponents()
             .then(() => {
-                complaintForTutorComponentFixture = TestBed.createComponent(ComplaintsForTutorComponent);
-                complaintsForTutorComponent = complaintForTutorComponentFixture.componentInstance;
-                injectedComplaintResponseService = complaintForTutorComponentFixture.debugElement.injector.get(ComplaintResponseService);
+                fixture = TestBed.createComponent(ComplaintsForTutorComponent);
+                complaintsForTutorComponent = fixture.componentInstance;
+                injectedComplaintResponseService = TestBed.inject(ComplaintResponseService);
 
                 course = new Course();
                 course.maxComplaintResponseTextLimit = 26;
@@ -63,7 +60,7 @@ describe('ComplaintsForTutorComponent', () => {
     });
 
     it('should instantiate', () => {
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         expect(complaintsForTutorComponent).not.toBeNull();
     });
 
@@ -78,12 +75,12 @@ describe('ComplaintsForTutorComponent', () => {
         handledComplaint.complaintType = ComplaintType.COMPLAINT;
         complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = handledComplaint;
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
-        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
-        const complainTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#complaintTextArea')).nativeElement;
+        const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        const complainTextArea = fixture.debugElement.query(By.css('#complaintTextArea')).nativeElement;
         expect(responseTextArea.value).toEqual(handledComplaint.complaintResponse.responseText);
         expect(responseTextArea.disabled).toBeTrue();
         expect(responseTextArea.readOnly).toBeTrue();
@@ -115,15 +112,15 @@ describe('ComplaintsForTutorComponent', () => {
 
         complaintsForTutorComponent.complaint = unhandledComplaint;
         complaintsForTutorComponent.isAssessor = false;
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
         expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
-        const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
-        const lockDuration = complaintForTutorComponentFixture.debugElement.query(By.css('#lockDuration')).nativeElement;
+        const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
+        const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
         expect(lockButton).not.toBeNull();
         expect(lockDuration).not.toBeNull();
@@ -161,15 +158,15 @@ describe('ComplaintsForTutorComponent', () => {
 
         complaintsForTutorComponent.isAssessor = false;
         complaintsForTutorComponent.complaint = unhandledComplaint;
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         // We need the tick as `ngModel` writes data asynchronously into the DOM!
         tick();
 
         expect(createLockStub).toHaveBeenCalledOnce();
         expect(complaintsForTutorComponent.complaint).toEqual(freshlyCreatedComplaintResponse.complaint);
         expect(complaintsForTutorComponent.complaintResponse).toEqual(freshlyCreatedComplaintResponse);
-        const lockButton = complaintForTutorComponentFixture.debugElement.query(By.css('#lockButton')).nativeElement;
-        const lockDuration = complaintForTutorComponentFixture.debugElement.query(By.css('#lockDuration')).nativeElement;
+        const lockButton = fixture.debugElement.query(By.css('#lockButton')).nativeElement;
+        const lockDuration = fixture.debugElement.query(By.css('#lockDuration')).nativeElement;
 
         expect(lockButton).not.toBeNull();
         expect(lockDuration).not.toBeNull();
@@ -181,7 +178,7 @@ describe('ComplaintsForTutorComponent', () => {
     }));
 
     it('should send event when accepting a complaint', () => {
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
 
         const unhandledComplaint = new Complaint();
@@ -198,9 +195,9 @@ describe('ComplaintsForTutorComponent', () => {
 
         const emitSpy = jest.spyOn(complaintsForTutorComponent.updateAssessmentAfterComplaint, 'emit');
 
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
+        const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         acceptComplaintButton.click();
         expect(emitSpy).toHaveBeenCalledOnce();
         const event = emitSpy.mock.calls[0][0];
@@ -208,7 +205,7 @@ describe('ComplaintsForTutorComponent', () => {
     });
 
     it('should directly resolve when rejecting a complaint', () => {
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         complaintsForTutorComponent.isLockedForLoggedInUser = false;
 
         const unhandledComplaint = new Complaint();
@@ -237,9 +234,9 @@ describe('ComplaintsForTutorComponent', () => {
             ),
         );
 
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
 
-        const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
+        const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         rejectComplaintButton.click();
 
         expect(resolveStub).toHaveBeenCalledOnce();
@@ -272,16 +269,16 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.complaint = unhandledComplaint;
 
         // Update fixture
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick();
 
-        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
         expect(responseTextArea.value).toHaveLength(26);
         expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(26);
 
-        const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
-        const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
+        const rejectComplaintButton = fixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
+        const acceptComplaintButton = fixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
         expect(rejectComplaintButton.disabled).toBeFalse();
         expect(acceptComplaintButton.disabled).toBeFalse();
 
@@ -289,7 +286,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick();
 
         expect(rejectComplaintButton.disabled).toBeTrue();
@@ -323,10 +320,10 @@ describe('ComplaintsForTutorComponent', () => {
         complaintsForTutorComponent.complaint = unhandledComplaint;
 
         // Update fixture
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
         tick();
 
-        const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
+        const responseTextArea = fixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         expect(responseTextArea.maxLength).toBe(26);
     }));
 
@@ -334,7 +331,7 @@ describe('ComplaintsForTutorComponent', () => {
         exercise.course = undefined;
         exercise.exerciseGroup = { exam: { course: course } } as ExerciseGroup;
 
-        complaintForTutorComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         // use the default value if the course would define a lower maximum for exam exercises
         expect(complaintsForTutorComponent.maxComplaintResponseTextLimit).toBe(2000);

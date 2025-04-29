@@ -4,7 +4,7 @@ import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submis
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingSubmission Service', () => {

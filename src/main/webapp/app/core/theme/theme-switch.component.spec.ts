@@ -1,11 +1,11 @@
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective } from 'ng-mocks';
-import { MockThemeService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('ThemeSwitchComponent', () => {
     let component: ThemeSwitchComponent;

@@ -114,17 +114,17 @@ export class UserManagementUpdateComponent implements OnInit {
             this.allGroups = [];
             if (groups.body) {
                 groups.body.forEach((group) => {
-                    this.allGroups.push(group);
+                    if (group != undefined) {
+                        this.allGroups.push(group);
+                    }
                 });
             }
             this.filteredGroups = this.groupCtrl.valueChanges.pipe(
-                startWith(null),
+                startWith(undefined),
                 map((value) => (value ? this.filter(value) : this.allGroups.slice())),
             );
         });
-        this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isJenkins = profileInfo.activeProfiles.includes('jenkins');
-        });
+        this.isJenkins = this.profileService.isProfileActive('jenkins');
         this.authorities = [];
         this.userService.authorities().subscribe((authorities) => {
             this.authorities = authorities;
@@ -157,6 +157,12 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        // temporarily store the user groups and organizations in variables, because they are not part of the edit form
+        const userGroups = this.user.groups;
+        const userOrganizations = this.user.organizations;
+        this.user = this.editForm.getRawValue();
+        this.user.groups = userGroups;
+        this.user.organizations = userOrganizations;
         if (this.user.id) {
             this.userService.update(this.user).subscribe({
                 next: () => {
@@ -248,24 +254,25 @@ export class UserManagementUpdateComponent implements OnInit {
             return;
         }
         this.editForm = this.fb.group({
-            idInput: ['', []],
-            loginInput: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            firstNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            lastNameInput: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
-            passwordInput: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
-            emailInput: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
-            registrationNumberInput: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
-            activatedInput: [{ value: this.user.activated }],
-            langKeyInput: ['', []],
-            authorityInput: ['', []],
-            internalInput: [{ value: this.user.internal, disabled: true }], // initially disabled, will be enabled if user.id is undefined
+            id: ['', []],
+            login: ['', [Validators.required, Validators.minLength(USERNAME_MIN_LENGTH), Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            firstName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            lastName: ['', [Validators.required, Validators.maxLength(USERNAME_MAX_LENGTH)]],
+            password: ['', [Validators.minLength(PASSWORD_MIN_LENGTH), Validators.maxLength(PASSWORD_MAX_LENGTH)]],
+            email: ['', [Validators.required, Validators.minLength(this.EMAIL_MIN_LENGTH), Validators.maxLength(this.EMAIL_MAX_LENGTH)]],
+            visibleRegistrationNumber: ['', [Validators.maxLength(this.REGISTRATION_NUMBER_MAX_LENGTH)]],
+            activated: [''],
+            langKey: [''],
+            authorities: [''],
+            internal: [{ disabled: true }], // initially disabled, will be enabled if user.id is undefined
         });
-        // Conditionally enable or disable 'internalInput' based on user.id
+        // Conditionally enable or disable 'internal' input based on user.id
         if (this.user.id !== undefined) {
-            this.editForm.get('internalInput')?.disable(); // Artemis does not support to edit the internal flag for existing users
+            this.editForm.get('internal')?.disable(); // Artemis does not support to edit the internal flag for existing users
         } else {
-            this.editForm.get('internalInput')?.enable(); // New users can either be internal or external
+            this.editForm.get('internal')?.enable(); // New users can either be internal or external
         }
+        this.editForm.patchValue(this.user);
     }
 
     /**
@@ -289,7 +296,7 @@ export class UserManagementUpdateComponent implements OnInit {
      */
     private filter(value: string): string[] {
         const filterValue = value.toLowerCase();
-        return this.allGroups.filter((group) => group.toLowerCase().includes(filterValue));
+        return this.allGroups.filter((group) => group != undefined && group.toLowerCase().includes(filterValue));
     }
 
     /**

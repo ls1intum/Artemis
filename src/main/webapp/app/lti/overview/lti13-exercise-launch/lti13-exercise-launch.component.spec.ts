@@ -7,12 +7,12 @@ import { User } from 'app/core/user/user.model';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/overview/lti13-exercise-launch/lti13-exercise-launch.component';
 import { SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockThemeService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 
 describe('Lti13ExerciseLaunchComponent', () => {
     let fixture: ComponentFixture<Lti13ExerciseLaunchComponent>;

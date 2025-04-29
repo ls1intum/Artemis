@@ -3,10 +3,10 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseLanguageComponent } from 'app/programming/manage/update/update-components/language/programming-exercise-language.component';
-import { programmingExerciseCreationConfigMock } from '../../../../../../../../test/javascript/spec/helpers/mocks/programming-exercise-creation-config-mock';
+import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { provideHttpClient } from '@angular/common/http';
 import { TheiaService } from 'app/programming/shared/services/theia.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseLanguageComponent', () => {

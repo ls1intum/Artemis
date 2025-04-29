@@ -3,8 +3,8 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { DebugElement, Injector, input, runInInjectionContext } from '@angular/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { getElement } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
-import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
+import { getElement } from 'test/helpers/utils/general-test.utils';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -12,18 +12,18 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { metisPostExerciseUser1, metisPostLectureUser1, metisResolvingAnswerPostUser1, metisUser1 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisPostExerciseUser1, metisPostLectureUser1, metisResolvingAnswerPostUser1, metisUser1 } from 'test/helpers/sample/metis-sample-data';
 import { UserRole } from 'app/communication/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import dayjs from 'dayjs/esm';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('PostingHeaderComponent', () => {

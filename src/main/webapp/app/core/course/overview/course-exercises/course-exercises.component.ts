@@ -2,8 +2,6 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
-import { courseExerciseOverviewTour } from 'app/core/guided-tour/tours/course-exercise-overview-tour';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
@@ -49,7 +47,6 @@ const DEFAULT_SHOW_ALWAYS: SidebarItemShowAlways = {
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private courseStorageService = inject(CourseStorageService);
     private route = inject(ActivatedRoute);
-    private guidedTourService = inject(GuidedTourService);
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private router = inject(Router);
     private courseOverviewService = inject(CourseOverviewService);
@@ -65,7 +62,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     course?: Course;
     courseId: number;
     sortedExercises?: Exercise[];
-    exerciseForGuidedTour?: Exercise;
 
     exerciseSelected = true;
     accordionExerciseGroups: AccordionGroups = DEFAULT_UNIT_GROUPS;
@@ -100,8 +96,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
             this.prepareSidebarData();
             this.onCourseLoad();
         });
-
-        this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
 
         this.ltiSubscription = this.ltiService.isShownViaLti$.subscribe((isShownViaLti) => {
             this.isShownViaLti = isShownViaLti;

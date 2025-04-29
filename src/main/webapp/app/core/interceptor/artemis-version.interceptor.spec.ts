@@ -5,7 +5,7 @@ import { TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/te
 import { HttpHeaders, HttpRequest, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ARTEMIS_VERSION_HEADER, VERSION } from 'app/app.constants';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SwUpdate } from '@angular/service-worker';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ApplicationRef } from '@angular/core';

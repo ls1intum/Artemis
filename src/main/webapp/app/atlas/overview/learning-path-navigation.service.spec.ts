@@ -4,7 +4,7 @@ import { LearningPathNavigationService } from 'app/atlas/overview/learning-path-
 import { AlertService } from 'app/shared/service/alert.service';
 import { LearningObjectType, LearningPathNavigationDTO } from 'app/atlas/shared/entities/learning-path.model';
 import { provideHttpClient } from '@angular/common/http';
-import { MockAlertService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-alert.service';
+import { MockAlertService } from 'test/helpers/mocks/service/mock-alert.service';
 
 describe('LearningPathNavigationService', () => {
     let learningPathNavigationService: LearningPathNavigationService;

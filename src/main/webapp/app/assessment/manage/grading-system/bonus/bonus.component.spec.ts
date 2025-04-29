@@ -19,7 +19,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('BonusComponent', () => {
@@ -277,8 +277,8 @@ describe('BonusComponent', () => {
     beforeEach(() => {
         fixture = TestBed.createComponent(BonusComponent);
         component = fixture.componentInstance;
-        bonusService = fixture.debugElement.injector.get(BonusService);
-        gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+        bonusService = TestBed.inject(BonusService);
+        gradingSystemService = TestBed.inject(GradingSystemService);
 
         findBonusForExamSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
         findWithBonusSpy = jest

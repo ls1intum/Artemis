@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize } from 'app/shared/components/button/button.component';
@@ -7,8 +7,7 @@ import { ModelingExerciseService } from 'app/modeling/manage/services/modeling-e
 import { AlertService } from 'app/shared/service/alert.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { UMLModel } from '@ls1intum/apollon';
-import { Subscription } from 'rxjs';
-import { PROFILE_LOCALVC, addPublicFilePrefix } from 'app/app.constants';
+import { addPublicFilePrefix } from 'app/app.constants';
 import { DetailOverviewNavigationBarComponent } from '../detail-overview-navigation-bar/detail-overview-navigation-bar.component';
 import { HelpIconComponent } from '../components/help-icon/help-icon.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/programming/shared/instructions-render/programming-exercise-instruction.component';
@@ -23,7 +22,6 @@ import { ExerciseDetailDirective } from './exercise-detail.directive';
 import { NoDataComponent } from '../components/no-data/no-data-component';
 import { ArtemisTranslatePipe } from '../pipes/artemis-translate.pipe';
 import { ProgrammingExerciseParticipationType } from 'app/programming/shared/entities/programming-exercise-participation.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 export interface DetailOverviewSection {
     headline: string;
@@ -72,7 +70,7 @@ export enum DetailType {
         ArtemisTranslatePipe,
     ],
 })
-export class DetailOverviewListComponent implements OnInit, OnDestroy {
+export class DetailOverviewListComponent implements OnInit {
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -82,7 +80,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
 
     private readonly modelingExerciseService = inject(ModelingExerciseService);
     private readonly alertService = inject(AlertService);
-    private readonly profileService = inject(ProfileService);
 
     sections = input.required<DetailOverviewSection[]>();
 
@@ -91,18 +88,12 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
     // headline record to avoid function call in html
     headlinesRecord: Record<string, string>;
 
-    profileSubscription: Subscription;
-    isLocalVC = false;
-
     ngOnInit() {
         this.headlines = this.sections().map((section) => {
             return {
                 id: section.headline.replaceAll('.', '-'),
                 translationKey: section.headline,
             };
-        });
-        this.profileSubscription = this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.isLocalVC = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
         this.headlinesRecord = this.headlines.reduce((previousValue, currentValue) => {
             return { ...previousValue, [currentValue.translationKey]: currentValue.id };
@@ -117,10 +108,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
                 },
             });
         }
-    }
-
-    ngOnDestroy() {
-        this.profileSubscription?.unsubscribe();
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

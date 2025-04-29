@@ -25,12 +25,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.CourseNotification;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.dto.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.communication.dto.FeedbackChannelRequestDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.test_repository.CourseNotificationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -78,6 +80,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private CourseNotificationTestRepository courseNotificationRepository;
 
     @BeforeEach
     @Override
@@ -1004,12 +1009,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         User instructor1 = userTestRepository.getUser();
         request.postWithoutLocation("/api/communication/courses/" + exampleCourseId + "/channels/mark-as-read", null, HttpStatus.OK, null);
         List<Channel> updatedChannels = channelRepository.findChannelsByCourseId(exampleCourseId);
-        updatedChannels.forEach(channel -> {
-            await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
-                var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
-                assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
-            });
-        });
+        updatedChannels.forEach(channel -> await().atMost(2, TimeUnit.SECONDS).untilAsserted(() -> {
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), instructor1.getId());
+            assertThat(participant).isPresent().get().extracting(ConversationParticipant::getUnreadMessagesCount).isEqualTo(0L);
+        }));
 
     }
 
@@ -1032,6 +1035,67 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // cleanup
         conversationRepository.deleteById(initialChannel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSendNotificationWhenUserIsRegisteredAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+
+        userUtilService.changeUser(testPrefix + "instructor1");
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasAddedToChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 19);
+
+            assertThat(hasAddedToChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSendNotificationWhenUserIsRemovedAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+        addUsersToConversation(channel.getId(), "student1", "student2");
+
+        userUtilService.changeUser(testPrefix + "instructor1");
+        request.postWithoutResponseBody("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister",
+                List.of(testPrefix + "student1", testPrefix + "student2"), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasRemovedFromChannelNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 20);
+
+            assertThat(hasRemovedFromChannelNotification).isTrue();
+        });
+
+        conversationRepository.deleteById(channel.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSentNotificationWhenChannelIsAndFeatureEnabled() throws Exception {
+        var channel = createChannel(true, TEST_PREFIX + "notification");
+        addUsersToConversation(channel.getId(), "student1", "student2");
+
+        request.delete("/api/communication/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
+
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+            List<CourseNotification> notifications = courseNotificationRepository.findAll();
+
+            boolean hasChannelDeletedNotification = notifications.stream().filter(notification -> notification.getCourse().getId().equals(exampleCourseId))
+                    .anyMatch(notification -> notification.getType() == 18);
+
+            assertThat(hasChannelDeletedNotification).isTrue();
+        });
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

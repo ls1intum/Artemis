@@ -2,7 +2,7 @@ import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/programming/shared/lifecycle/test-schedule-date-picker/programming-exercise-test-schedule-date-picker.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {

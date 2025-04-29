@@ -3,15 +3,15 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { DebugElement, input, runInInjectionContext } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/communication/post/post.component';
-import { getElement } from '../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { getElement } from 'test/helpers/utils/general-test.utils';
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { PostingHeaderComponent } from 'app/communication/posting-header/posting-header.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
-import { MockMetisService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DisplayPriority, PageType } from 'app/communication/metis.util';
-import { MockTranslateService, TranslatePipeMock } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService, TranslatePipeMock } from 'test/helpers/mocks/service/mock-translate.service';
 import { OverlayModule } from '@angular/cdk/overlay';
 import {
     metisChannel,
@@ -22,8 +22,8 @@ import {
     post,
     sortedAnswerArray,
     unsortedAnswerArray,
-} from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
-import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+} from 'test/helpers/sample/metis-sample-data';
+import { MockQueryParamsDirective, MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
@@ -31,7 +31,7 @@ import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
-import { MockRouter } from '../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { DOCUMENT } from '@angular/common';
@@ -44,13 +44,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockLocalStorageService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
-import { MockConversationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-conversation.service';
-import { MockMetisConversationService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
+import { MockConversationService } from 'test/helpers/mocks/service/mock-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 
 describe('PostComponent', () => {
     let component: PostComponent;

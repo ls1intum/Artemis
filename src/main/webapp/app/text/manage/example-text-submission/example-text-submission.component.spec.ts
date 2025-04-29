@@ -23,7 +23,7 @@ import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.co
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercise/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -33,8 +33,8 @@ import { ConfirmAutofocusButtonComponent } from 'app/shared/components/confirm-a
 import { TranslateDirective } from '../../../shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorParticipationService } from 'app/assessment/shared/assessment-dashboard/exercise-dashboard/tutor-participation.service';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 
@@ -97,11 +97,11 @@ describe('ExampleTextSubmissionComponent', () => {
         fixture = TestBed.createComponent(ExampleTextSubmissionComponent);
         comp = fixture.componentInstance;
         debugElement = fixture.debugElement;
-        activatedRouteSnapshot = debugElement.injector.get(ActivatedRoute).snapshot;
-        exerciseService = debugElement.injector.get(ExerciseService);
-        exampleSubmissionService = debugElement.injector.get(ExampleSubmissionService);
-        assessmentsService = debugElement.injector.get(TextAssessmentService);
-        alertService = debugElement.injector.get(AlertService);
+        activatedRouteSnapshot = TestBed.inject(ActivatedRoute).snapshot;
+        exerciseService = TestBed.inject(ExerciseService);
+        exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
+        assessmentsService = TestBed.inject(TextAssessmentService);
+        alertService = TestBed.inject(AlertService);
         exercise = new TextExercise(undefined, undefined);
         exercise.id = EXERCISE_ID;
         exercise.title = 'Test case exercise';
@@ -359,7 +359,7 @@ describe('ExampleTextSubmissionComponent', () => {
         comp.textBlockRefs[0].initFeedback();
         comp.textBlockRefs[0].feedback!.credits = 2;
         comp.validateFeedback();
-        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
         jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(httpResponse(null));
 
         // WHEN
@@ -399,7 +399,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(feedbackA.correctionStatus).toBeUndefined();
         expect(feedbackB.correctionStatus).toBeUndefined();
 
-        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
         const feedbackError = {
             reference: feedbackA.reference,
             type: FeedbackCorrectionErrorType.INCORRECT_SCORE,
@@ -452,11 +452,11 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should read and understood', () => {
         // GIVEN
-        const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
+        const tutorParticipationService = TestBed.inject(TutorParticipationService);
         jest.spyOn(tutorParticipationService, 'assessExampleSubmission').mockReturnValue(of(new HttpResponse({ body: {} })));
         const alertSpy = jest.spyOn(alertService, 'success');
 
-        const router = debugElement.injector.get(Router);
+        const router = TestBed.inject(Router);
         const routerSpy = jest.spyOn(router, 'navigate');
         comp.exercise = exercise;
         comp.exampleSubmission = exampleSubmission;
@@ -473,7 +473,7 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should go back with exam', async () => {
         // GIVEN
-        const router = debugElement.injector.get(Router);
+        const router = TestBed.inject(Router);
         const routerSpy = jest.spyOn(router, 'navigate');
         const examExercise = {
             id: EXERCISE_ID,

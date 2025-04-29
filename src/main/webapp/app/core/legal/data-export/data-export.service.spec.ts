@@ -4,7 +4,7 @@ import { DataExportService } from 'app/core/legal/data-export/data-export.servic
 import { DataExport } from 'app/core/shared/entities/data-export.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 

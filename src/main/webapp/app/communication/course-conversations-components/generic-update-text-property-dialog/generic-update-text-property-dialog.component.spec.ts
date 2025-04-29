@@ -4,7 +4,7 @@ import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/cour
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { initializeDialog } from '../../../../../../test/javascript/spec/helpers/dialog-test-helpers';
+import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('GenericUpdateTextPropertyDialog', () => {

@@ -21,6 +21,10 @@ import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service
     imports: [FaIconComponent, TranslateDirective, DeleteButtonDirective, ArtemisDatePipe],
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
+    protected readonly faWrench = faWrench;
+    protected readonly faUsers = faUsers;
+    protected readonly faTrash = faTrash;
+
     private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private modalService = inject(NgbModal);
 
@@ -34,10 +38,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngUnsubscribe = new Subject<void>();
-
-    faWrench = faWrench;
-    faUsers = faUsers;
-    faTrash = faTrash;
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService

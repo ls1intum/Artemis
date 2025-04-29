@@ -3,15 +3,15 @@ import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { of } from 'rxjs';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { triggerChanges } from '../../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { triggerChanges } from 'test/helpers/utils/general-test.utils';
 import { CodeEditorBuildOutputComponent } from 'app/programming/manage/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { BuildLogEntryArray } from 'app/buildagent/shared/entities/build-log.model';
 import { CodeEditorBuildLogService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { ResultService } from 'app/exercise/result/result.service';
-import { MockResultService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-result.service';
-import { MockCodeEditorBuildLogService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockParticipationWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockResultService } from 'test/helpers/mocks/service/mock-result.service';
+import { MockCodeEditorBuildLogService } from 'test/helpers/mocks/service/mock-code-editor-build-log.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StaticCodeAnalysisIssue } from 'app/programming/shared/entities/static-code-analysis-issue.model';
@@ -21,7 +21,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/programming/shared/code-editor/services/code-editor-submission.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CodeEditorBuildOutputComponent', () => {

@@ -15,7 +15,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MockProfileService } from '../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
-import { NotificationPopupComponent } from 'app/core/notification/notification-popup/notification-popup.component';
 
 // Mock the initialize method
 class MockThemeService {
@@ -31,7 +30,7 @@ describe('JhiMainComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([])],
-            declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent), MockComponent(NotificationPopupComponent)],
+            declarations: [AppComponent, MockComponent(AlertOverlayComponent), MockComponent(PageRibbonComponent)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

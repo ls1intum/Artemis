@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -24,6 +24,7 @@ export enum ButtonType {
 
     PRIMARY_OUTLINE = 'btn-outline-primary',
     SUCCESS_OUTLINE = 'btn-outline-success',
+    ERROR_OUTLINE = 'btn-outline-danger',
 }
 
 /**
@@ -55,8 +56,13 @@ export enum TooltipPlacement {
     imports: [NgClass, NgbTooltip, FeatureToggleDirective, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ButtonComponent {
+    protected readonly faCircleNotch = faCircleNotch;
+
     @Input() btnType = ButtonType.PRIMARY;
     @Input() btnSize = ButtonSize.MEDIUM;
+
+    /** You might need to set d-flex as well when using the button */
+    fullWidth = input<boolean>(false);
     // Fa-icon name.
     @Input() icon: IconProp;
     // Translation placeholders, will be translated in the component.
@@ -72,7 +78,4 @@ export class ButtonComponent {
     @Input() shouldToggle = false;
 
     @Output() onClick = new EventEmitter<MouseEvent>();
-
-    // Icons
-    readonly faCircleNotch = faCircleNotch;
 }

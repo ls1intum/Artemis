@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { runOnPushChangeDetection } from '../../../../../../test/javascript/spec/helpers/on-push-change-detection.helper';
+import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { VerticalProgressBarComponent } from 'app/tutorialgroup/shared/vertical-progress-bar/vertical-progress-bar.component';
 
 describe('VerticalProgressBarComponent', () => {

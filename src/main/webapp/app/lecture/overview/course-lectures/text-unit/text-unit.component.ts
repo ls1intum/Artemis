@@ -5,6 +5,8 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import { faScroll } from '@fortawesome/free-solid-svg-icons';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
+import { ScienceService } from 'app/shared/science/science.service';
+import { ScienceEventType } from 'app/shared/science/science.model';
 
 @Component({
     selector: 'jhi-text-unit',
@@ -15,6 +17,7 @@ export class TextUnitComponent extends LectureUnitDirective<TextUnit> {
     protected readonly faScroll = faScroll;
 
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
+    private readonly scienceService = inject(ScienceService);
 
     readonly formattedContent = computed(() => {
         if (this.lectureUnit().content) {
@@ -24,8 +27,7 @@ export class TextUnitComponent extends LectureUnitDirective<TextUnit> {
     });
 
     handleIsolatedView() {
-        // log event
-        this.logEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const win = window.open('about:blank', '_blank')!;
         win.document.write(`<html><head><title>${this.lectureUnit().name}</title>`);

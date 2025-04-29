@@ -38,6 +38,7 @@ export default tseslint.config(
             'jest.config.js',
             'prebuild.mjs',
             'rules/**/*.js',
+            'src/main/webapp/content/scripts/pdf.worker.min.mjs',
         ],
     },
     eslint.configs.recommended,

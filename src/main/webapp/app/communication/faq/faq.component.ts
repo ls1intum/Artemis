@@ -106,14 +106,12 @@ export class FaqComponent implements OnInit, OnDestroy {
                 this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
         });
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
-            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
-            if (this.irisEnabled) {
-                this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
-                    this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
-                });
-            }
-        });
+        this.irisEnabled = this.profileService.isProfileActive(PROFILE_IRIS);
+        if (this.irisEnabled) {
+            this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
+                this.faqIngestionEnabled = settings?.irisFaqIngestionSettings?.enabled || false;
+            });
+        }
     }
 
     ngOnDestroy(): void {

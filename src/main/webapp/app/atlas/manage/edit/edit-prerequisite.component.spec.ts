@@ -10,13 +10,13 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { CompetencyLectureUnitLink, CourseCompetencyProgress } from 'app/atlas/shared/entities/competency.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { EditPrerequisiteComponent } from 'app/atlas/manage/edit/edit-prerequisite.component';
 import { PrerequisiteService } from 'app/atlas/manage/services/prerequisite.service';
 import { PrerequisiteFormComponent } from 'app/atlas/manage/forms/prerequisite/prerequisite-form.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockResizeObserver } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 
 describe('EditPrerequisiteComponent', () => {
     let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;

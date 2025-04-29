@@ -1,6 +1,4 @@
-<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings">
-    <!--VCS access token Settings-->
-</h1>
+<h1 jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"></h1>
 @if (currentUser) {
     <div class="list-group d-block">
         <div class="list-group-item">
@@ -83,8 +81,7 @@
                     </dt>
                 </div>
             }
-        }
-        @if (edit) {
+        } @else {
             <div class="list-group-item">
                 <dt>
                     <h4 jhiTranslate="artemisApp.userSettings.vcsAccessTokensSettingsPage.addTokenTitle"></h4>

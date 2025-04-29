@@ -53,14 +53,14 @@ import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Subject, of, throwError } from 'rxjs';
-import { MockExamParticipationLiveEventsService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exam-participation-live-events.service';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
-import { MockWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockExamParticipationLiveEventsService } from 'test/helpers/mocks/service/mock-exam-participation-live-events.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 
 describe('ExamParticipationComponent', () => {

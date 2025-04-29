@@ -3,21 +3,21 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockRouterLinkDirective } from '../../../../../../test/javascript/spec/helpers/mocks/directive/mock-router-link.directive';
+import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { SortService } from 'app/shared/service/sort.service';
-import { generateExampleTutorialGroup } from '../../../../../../test/javascript/spec/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { Component, Input, QueryList, SimpleChange, ViewChild, ViewChildren } from '@angular/core';
-import { TutorialGroupRowStubComponent } from '../../../../../../test/javascript/spec/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
+import { TutorialGroupRowStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-groups-table-stub.component';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { runOnPushChangeDetection } from '../../../../../../test/javascript/spec/helpers/on-push-change-detection.helper';
+import { runOnPushChangeDetection } from 'test/helpers/on-push-change-detection.helper';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorialGroupsTableComponent } from 'app/tutorialgroup/shared/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroupUtilizationIndicatorComponent } from 'app/tutorialgroup/shared/tutorial-group-utilization-indicator/tutorial-group-utilization-indicator.component';
@@ -39,17 +39,11 @@ class MockExtraColumnComponent {
     imports: [TutorialGroupsTableComponent, MockExtraColumnComponent],
 })
 class MockWrapperComponent {
-    @Input()
-    tutorialGroups: TutorialGroup[];
+    @Input() tutorialGroups: TutorialGroup[];
+    @Input() course: Course;
 
-    @Input()
-    course: Course;
-
-    @ViewChild(TutorialGroupsTableComponent)
-    tutorialGroupTableInstance: TutorialGroupsTableComponent;
-
-    @ViewChildren(MockExtraColumnComponent)
-    mockExtraColumns: QueryList<MockExtraColumnComponent>;
+    @ViewChild(TutorialGroupsTableComponent) tutorialGroupTableInstance: TutorialGroupsTableComponent;
+    @ViewChildren(MockExtraColumnComponent) mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
@@ -208,7 +202,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'id';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
 
         component.sortRows();
@@ -220,7 +214,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'dayAndTime';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();
@@ -232,7 +226,7 @@ describe('TutorialGroupsTableComponent', () => {
         component.sortingPredicate = 'capacityAndRegistrations';
         component.ascending = false;
 
-        const sortService = TestBed.inject(SortService);
+        const sortService = fixture.debugElement.injector.get(SortService);
         const sortServiceSpy = jest.spyOn(sortService, 'sortByMultipleProperties');
 
         component.sortRows();

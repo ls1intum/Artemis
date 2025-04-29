@@ -27,7 +27,7 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AlertService } from 'app/shared/service/alert.service';
 import { SubmissionService } from 'app/exercise/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ExampleSubmissionService } from 'app/assessment/shared/services/example-submission.service';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
@@ -38,16 +38,16 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AssessmentAfterComplaint } from 'app/assessment/manage/complaints-for-tutor/complaints-for-tutor.component';
 import { TextAssessmentBaseComponent } from 'app/text/manage/assess/assessment-base/text-assessment-base.component';
 import { AthenaService } from 'app/assessment/shared/services/athena.service';
-import { MockAthenaService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-athena-service';
+import { MockAthenaService } from 'test/helpers/mocks/service/mock-athena-service';
 import { TextBlockRef } from 'app/text/shared/entities/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('TextSubmissionAssessmentComponent', () => {
     let component: TextSubmissionAssessmentComponent;

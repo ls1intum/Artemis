@@ -166,7 +166,7 @@ class RepositoryUriTest {
 
     @Test
     void testConstructorWithValidUriString() throws URISyntaxException {
-        String uriSpecString = "https://artemistest2gitlab.ase.in.tum.de/FTCSCAGRADING1/ftcscagrading1-username";
+        String uriSpecString = "https://artemistest2.aet.cit.tum.de/FTCSCAGRADING1/ftcscagrading1-username";
         VcsRepositoryUri uri = new VcsRepositoryUri(uriSpecString);
         assertThat(uri.getURI().toString()).isEqualTo(uriSpecString);
     }

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.UserScheduleService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.service.SlideUnhideScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseScheduleService;
@@ -54,6 +55,8 @@ public class InstanceMessageReceiveService {
 
     private final UserRepository userRepository;
 
+    private final SlideUnhideScheduleService slideUnhideScheduleService;
+
     private final HazelcastInstance hazelcastInstance;
 
     private final QuizScheduleService quizScheduleService;
@@ -61,7 +64,7 @@ public class InstanceMessageReceiveService {
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ExerciseRepository exerciseRepository, Optional<AthenaApi> athenaApi, @Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance,
             UserRepository userRepository, UserScheduleService userScheduleService, NotificationScheduleService notificationScheduleService,
-            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService) {
+            ParticipantScoreScheduleService participantScoreScheduleService, QuizScheduleService quizScheduleService, SlideUnhideScheduleService slideUnhideScheduleService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseScheduleService = programmingExerciseScheduleService;
         this.athenaApi = athenaApi;
@@ -72,6 +75,7 @@ public class InstanceMessageReceiveService {
         this.participantScoreScheduleService = participantScoreScheduleService;
         this.hazelcastInstance = hazelcastInstance;
         this.quizScheduleService = quizScheduleService;
+        this.slideUnhideScheduleService = slideUnhideScheduleService;
     }
 
     /**
@@ -124,6 +128,16 @@ public class InstanceMessageReceiveService {
         hazelcastInstance.<Long>getTopic(MessageTopic.QUIZ_EXERCISE_START_CANCEL.toString()).addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
             processCancelQuizStart(message.getMessageObject());
+        });
+
+        // Add listeners for slide unhide messages
+        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processScheduleSlideUnhide(message.getMessageObject());
+        });
+        hazelcastInstance.<Long>getTopic(MessageTopic.SLIDE_UNHIDE_SCHEDULE_CANCEL.toString()).addMessageListener(message -> {
+            SecurityUtils.setAuthorizationObject();
+            processCancelSlideUnhide(message.getMessageObject());
         });
     }
 
@@ -188,5 +202,15 @@ public class InstanceMessageReceiveService {
     public void processCancelQuizStart(Long exerciseId) {
         log.info("Received cancel quiz start for quiz exercise {}", exerciseId);
         quizScheduleService.cancelScheduledQuizStart(exerciseId);
+    }
+
+    public void processScheduleSlideUnhide(Long slideId) {
+        log.info("Received schedule update for slide unhiding {}", slideId);
+        slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
+    }
+
+    public void processCancelSlideUnhide(Long slideId) {
+        log.info("Received schedule cancel for slide unhiding {}", slideId);
+        slideUnhideScheduleService.cancelScheduledUnhiding(slideId);
     }
 }
