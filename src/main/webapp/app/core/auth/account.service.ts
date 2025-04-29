@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { SessionStorageService } from 'ngx-webstorage';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, lastValueFrom, of } from 'rxjs';
@@ -48,13 +48,19 @@ export class AccountService implements IAccountService {
     private authenticationState = new BehaviorSubject<User | undefined>(undefined);
     private prefilledUsernameValue?: string;
 
+    public authenticatedSignal = signal<boolean>(false);
+
     get userIdentity() {
         return this.userIdentityValue;
     }
 
     set userIdentity(user: User | undefined) {
         this.userIdentityValue = user;
-        this.authenticated = !!user;
+
+        const updatedIsAuthenticatedValue: boolean = !!user;
+        this.authenticated = updatedIsAuthenticatedValue;
+        this.authenticatedSignal.set(updatedIsAuthenticatedValue);
+
         // Alert subscribers about user updates, that is when the user logs in or logs out (undefined).
         this.authenticationState.next(user);
 

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, effect, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -17,6 +17,8 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { FEATURE_PASSKEY } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-app',
@@ -38,6 +40,7 @@ export class AppComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
     private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
 
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
@@ -55,9 +58,16 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestRunExam = false;
     isCourseOverview = false;
     isShownViaLti = false;
+    isPasskeyEnabled = false;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
+
+        effect(() => {
+            if (this.isPasskeyEnabled && this.accountService.authenticatedSignal()) {
+                this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+            }
+        });
     }
 
     private async setupErrorHandling() {
@@ -75,6 +85,8 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
+
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 /*
@@ -126,8 +138,6 @@ export class AppComponent implements OnInit, OnDestroy {
         });
 
         this.themeService.initialize();
-
-        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
     }
 
     /**
