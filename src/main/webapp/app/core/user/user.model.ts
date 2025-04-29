@@ -39,7 +39,7 @@ export class User extends Account {
         vcsAccessToken?: string,
         vcsAccessTokenExpiryDate?: string,
         externalLLMUsageAccepted?: dayjs.Dayjs,
-        hasRegisteredPasskeys?: boolean,
+        hasRegisteredAPasskey?: boolean,
     ) {
         super(activated, authorities, email, firstName, langKey, lastName, login, imageUrl);
         this.id = id;
@@ -52,7 +52,7 @@ export class User extends Account {
         this.vcsAccessToken = vcsAccessToken;
         this.vcsAccessTokenExpiryDate = vcsAccessTokenExpiryDate;
         this.externalLLMUsageAccepted = externalLLMUsageAccepted;
-        this.hasRegisteredAPasskey = hasRegisteredPasskeys;
+        this.hasRegisteredAPasskey = hasRegisteredAPasskey;
     }
 }
 /**
