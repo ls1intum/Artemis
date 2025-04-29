@@ -4,6 +4,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faCog } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-setup-passkey-modal',
@@ -15,9 +16,11 @@ export class SetupPasskeyModalComponent {
     protected readonly faCog = faCog;
 
     private activeModal = inject(NgbActiveModal);
+    private router = inject(Router);
 
     navigateToSetupPasskey() {
-        // TODO
+        this.closeModal();
+        this.router.navigateByUrl('/user-settings/passkeys');
     }
 
     closeModal(): void {
