@@ -7,14 +7,12 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.webauthn.api.Bytes;
 import org.springframework.security.web.webauthn.api.CredentialRecord;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.config.PasskeyEnabled;
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
 import de.tum.cit.aet.artemis.core.domain.PasskeyType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -39,7 +37,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * @see PasskeyCredentialsRepository
  * @see UserRepository
  */
-@Conditional(PasskeyEnabled.class)
 @Profile(PROFILE_CORE)
 @Repository
 public class ArtemisUserCredentialRepository implements UserCredentialRepository {
