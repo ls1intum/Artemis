@@ -20,11 +20,13 @@
                 </label>
             </div>
         </div>
-        <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.branchRegex.title" for="field_branchRegex"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.branchRegex.description" />
-            <input class="form-control" type="text" name="branchRegex" id="field_branchRegex" [(ngModel)]="programmingExercise().buildConfig!.branchRegex" />
-        </div>
+        @if (programmingExercise().buildConfig!.allowBranching) {
+            <div class="form-group">
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.branchRegex.title" for="field_branchRegex"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.branchRegex.description" />
+                <input class="form-control" type="text" name="branchRegex" id="field_branchRegex" [(ngModel)]="programmingExercise().buildConfig!.branchRegex" />
+            </div>
+        }
         <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.versionControlDocumentationLink"></p>
     }
 </section>
