@@ -90,17 +90,22 @@
                 "onlyOnePerAuthenticator": "Du kannst nur einen Passkey pro Authentifikator für diese Seite registrieren (z. B. einen in Apple Keychain und einen anderen im Google Password Manager, etc.). Das Erstellen eines zweiten Passkeys mit dem gleichen Authentifikator wird den ersten registrierten Passkey überschreiben, den du manuell in Artemis entfernen musst.",
                 "learnMore": "Erfahre mehr über Passkeys.",
                 "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
-                "actions": "Aktionen",
                 "deletePasskeyQuestion": "Möchtest du deinen Passkey für passwortlose Authentifikation mit Artemis wirklich löschen?",
                 "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
                 "addNewPasskey": "Neuen Passkey hinzufügen",
+                "yourPasskeys": "Deine Passkeys",
+                "created": "Erstellt am",
+                "lastUsed": "Zuletzt verwendet am",
                 "label": "Bezeichnung",
-                "created": "Erstellt",
-                "lastUsed": "Zuletzt verwendet",
+                "validation": {
+                    "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
+                },
                 "error": {
                     "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
                     "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
-                    "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut."
+                    "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
+                    "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
+                    "delete": "Der Passkey konnte nicht gelöscht werden. Bitte versuche es erneut."
                 }
             },
             "accountInformationPage": {

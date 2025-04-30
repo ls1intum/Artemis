@@ -24,6 +24,7 @@ export enum ButtonType {
 
     PRIMARY_OUTLINE = 'btn-outline-primary',
     SUCCESS_OUTLINE = 'btn-outline-success',
+    ERROR_OUTLINE = 'btn-outline-danger',
 }
 
 /**

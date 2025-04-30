@@ -191,7 +191,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.0.war
+./artemis-server-cli deploy username@artemis-test0.artemis.in.tum.de -w build/libs/Artemis-8.0.5.war
 ```
 
 ## Architecture
@@ -292,6 +292,8 @@ The following universities are actively using Artemis or are currently evaluatin
    Main contact person: [Daniel Merkle](https://ekvv.uni-bielefeld.de/pers_publ/publ/PersonDetail.jsp?personId=451188465)
 * **Universität Ulm**  
    Main contact person: [Matthias Tichy](https://www.uni-ulm.de/in/sp/team/tichy)
+* **Technischen Hochschule Mittelhessen**  
+   Main contact person: [Christian Prause](https://www.thm.de/iem/christian-prause)
 * **Imperial College London**  
    Main contact person: [Robert Chatley](https://www.doc.ic.ac.uk/~rbc)
 * **University of South Australia**  
