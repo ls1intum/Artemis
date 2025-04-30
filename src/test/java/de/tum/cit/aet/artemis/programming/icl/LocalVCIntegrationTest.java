@@ -331,11 +331,11 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("You cannot push to a branch other than the default branch.");
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserCreatesNewBranchBranchingAllowed() throws Exception {
-        programmingExercise.getBuildConfig().setAllowBranching(true);
+    void customBranchTestHelper(boolean allowBranching, String regex, boolean shouldSucceed) throws Exception {
+        programmingExercise.getBuildConfig().setAllowBranching(allowBranching);
+        programmingExercise.getBuildConfig().setBranchRegex(regex);
         programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
@@ -346,7 +346,31 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         PushResult pushResult = assignmentRepository.localGit.push().setRemote(repositoryUri).setRefSpecs(new RefSpec("refs/heads/new-branch:refs/heads/new-branch")).call()
                 .iterator().next();
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
-        assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+
+        if (shouldSucceed) {
+            assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.OK);
+        }
+        else {
+            assertThat(remoteRefUpdate.getStatus()).isNotEqualTo(RemoteRefUpdate.Status.OK);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchAllowedMatchesRegex() throws Exception {
+        customBranchTestHelper(true, "^new-branch$", true);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedDoesntMatchRegex() throws Exception {
+        customBranchTestHelper(true, "^old-branch$", false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserCreatesCustomBranchDisallowedBranchingDisabled() throws Exception {
+        customBranchTestHelper(false, ".*", false);
     }
 
     @Test
