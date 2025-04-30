@@ -115,6 +115,20 @@ Students complete this unit once they download the file.
 
 |create-attachment-unit|
 
+Attachment Unit Management
+""""""""""""""""""""""""""
+Instructors can preview the Attachment Unit by clicking the |view-attachment-unit-btn| button.
+
+|view-attachment-unit|
+
+In the preview, instructors can enlarge pages, delete them, reorder them, merge new files, or hide pages. This feature enables instructors to easily edit lecture materials within the platform, without relying on external tools.
+
+The following video shows how to use all of the mentioned features effectively.
+
+Pages can be hidden indefinitely, until a specific date, or until an exercise's due date. Hidden pages are invisible to students and cannot be referenced in the Communication section.
+
+The following video shows how to observe the effects of hidden pages on the Student Version and slide references.
+
 Exercise Unit
 ^^^^^^^^^^^^^
 An exercise can be added as a unit to a lecture.
@@ -184,6 +198,10 @@ See :ref:`Adaptive Learning <adaptive-learning>` for more information.
 .. |create-video-unit| image:: lectures/create-video-unit.png
     :width: 1000
 .. |create-attachment-unit| image:: lectures/create-attachment-unit.png
+    :width: 1000
+.. |view-attachment-unit-btn| image:: lectures/view-attachment-unit-btn.png
+    :width: 80
+.. |view-attachment-unit| image:: lectures/view-attachment-unit.png
     :width: 1000
 .. |create-exercise-unit| image:: lectures/create-exercise-unit.png
     :width: 1000
