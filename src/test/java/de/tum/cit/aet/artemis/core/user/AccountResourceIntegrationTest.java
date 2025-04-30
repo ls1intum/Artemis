@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.util.ConfigUtil;
+import de.tum.cit.aet.artemis.core.util.PasskeyCredentialUtilService;
 import de.tum.cit.aet.artemis.core.web.AccountResource;
 import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -45,6 +46,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private PasskeyCredentialUtilService passkeyCredentialUtilService;
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {
         ConfigUtil.testWithChangedConfig(accountService, "registrationEnabled", Optional.of(Boolean.FALSE), test);
@@ -226,6 +230,19 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
+        assertThat(account.getHasRegisteredAPasskey()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = AUTHENTICATEDUSER)
+    void getAccountWithRegisteredPasskey() throws Exception {
+        User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
+        passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
+
+        UserDTO account = request.get("/api/core/public/account", HttpStatus.OK, UserDTO.class);
+
+        assertThat(account).isNotNull();
+        assertThat(account.getHasRegisteredAPasskey()).isTrue();
     }
 
     @Test
