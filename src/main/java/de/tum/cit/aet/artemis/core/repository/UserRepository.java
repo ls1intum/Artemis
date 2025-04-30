@@ -14,6 +14,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -1019,7 +1020,12 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return all users in the course
      */
     default Set<User> getUsersInCourse(Course course) {
-        Set<String> groupNames = Set.of(course.getStudentGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName(), course.getInstructorGroupName());
+        // NOTE: we cannot use Set.of(), because the group names might be identical and then the ImmutableCollections$SetN would throw an exception
+        Set<String> groupNames = new HashSet<>();
+        groupNames.add(course.getStudentGroupName());
+        groupNames.add(course.getTeachingAssistantGroupName());
+        groupNames.add(course.getEditorGroupName());
+        groupNames.add(course.getInstructorGroupName());
         return findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndGroupsContains(groupNames);
     }
 

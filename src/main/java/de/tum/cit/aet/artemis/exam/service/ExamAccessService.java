@@ -9,10 +9,12 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -129,6 +131,10 @@ public class ExamAccessService {
         StudentExam studentExam;
         if (exam.isTestExam()) {
             studentExam = getOrCreateTestExam(exam, course, currentUser);
+        }
+        else if (this.authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
+            throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "Instructors or administrators cannot participate in exams.", ENTITY_NAME,
+                    "cannotParticipateInExams", true);
         }
         else {
             studentExam = getOrCreateNormalExam(exam, currentUser);

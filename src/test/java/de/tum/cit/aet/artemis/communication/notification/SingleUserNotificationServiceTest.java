@@ -28,8 +28,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -57,9 +55,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -179,14 +174,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         DataExport dataExport = new DataExport();
         dataExport.setUser(user);
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateNewCpcPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         exercise.setTitle("CPC Plagiarism Test Exercise");
         plagiarismCase.setExercise(exercise);
         plagiarismCase.setPost(post);
@@ -206,14 +197,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(newCpcPlagiarismCaseNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newCpcPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreateNewPlagiarismCaseNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         exercise.setTitle("Plagiarism Test Exercise");
         plagiarismCase.setPost(post);
         plagiarismCase.setExercise(exercise);
@@ -234,14 +221,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(newPlagiarismCaseNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismCaseNotification.get().getId(), user.getId())).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 
     @Test
     void shouldCreatePlagiarismCaseVerdictNotificationWhenCourseSpecificNotificationsEnabled() {
-        featureToggleService.enableFeature(Feature.CourseSpecificNotifications);
-
         exercise.setTitle("Plagiarism Test Exercise");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
         plagiarismCase.setPost(post);
@@ -262,7 +245,5 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
             assertThat(newPlagiarismVerdictNotification).isPresent();
             assertThat(userCourseNotificationStatusTestRepository.wasNotificationSentOnlyToUser(newPlagiarismVerdictNotification.get().getId(), user.getId())).isTrue();
         });
-
-        featureToggleService.disableFeature(Feature.CourseSpecificNotifications);
     }
 }

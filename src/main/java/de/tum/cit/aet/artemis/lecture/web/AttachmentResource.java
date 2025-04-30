@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.FilePathService.actualPathForPublicPath;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -75,29 +73,6 @@ public class AttachmentResource {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.fileService = fileService;
-    }
-
-    /**
-     * POST /attachments : Create a new attachment.
-     *
-     * @param attachment the attachment object to create
-     * @param file       the file to save
-     * @return the ResponseEntity with status 201 (Created) and with body the new attachment, or with status 400 (Bad Request) if the attachment has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(value = "attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAtLeastEditor
-    public ResponseEntity<Attachment> createAttachment(@RequestPart Attachment attachment, @RequestPart MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to save Attachment : {}", attachment);
-        attachment.setId(null);
-
-        Path basePath = FilePathService.getLectureAttachmentFilePath().resolve(attachment.getLecture().getId().toString());
-        Path savePath = fileService.saveFile(file, basePath, true);
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, attachment.getLecture().getId()).toString());
-
-        Attachment result = attachmentRepository.save(attachment);
-
-        return ResponseEntity.created(new URI("/api/lecture/attachments/" + result.getId())).body(result);
     }
 
     /**

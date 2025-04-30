@@ -99,6 +99,11 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="checkbox-container">
+                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.header"></span>
+                        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.groupedContent.groupedLectures.selector" />
+                        <input class="form-check-input" type="checkbox" (change)="activateLectureGrouping()" [ngModel]="isLectureGroupingActive" />
+                    </div>
                 </div>
             </div>
         </div>

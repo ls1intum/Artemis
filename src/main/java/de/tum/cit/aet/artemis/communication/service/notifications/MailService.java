@@ -17,7 +17,6 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.TimeService;
 
 /**
  * Service for preparing and sending emails.
@@ -47,18 +46,11 @@ public class MailService {
 
     private final SpringTemplateEngine templateEngine;
 
-    private final TimeService timeService;
-
     private final MailSendingService mailSendingService;
 
-    private static final String TIME_SERVICE = "timeService";
-
-    private static final String WEEKLY_SUMMARY_NEW_EXERCISES = "weeklySummaryNewExercises";
-
-    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, TimeService timeService, MailSendingService mailSendingService) {
+    public MailService(MessageSource messageSource, SpringTemplateEngine templateEngine, MailSendingService mailSendingService) {
         this.messageSource = messageSource;
         this.templateEngine = templateEngine;
-        this.timeService = timeService;
         this.mailSendingService = mailSendingService;
     }
 

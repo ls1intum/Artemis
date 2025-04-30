@@ -118,10 +118,11 @@ export class RedirectToIrisButtonComponent implements OnInit, OnDestroy {
                 break;
             }
             case ChannelSubType.LECTURE: {
-                if (channelDTO.subTypeReferenceId) {
+                const course = this.course();
+                if (course?.id) {
                     this.updateIrisStatus<IrisCourseSettings>(
                         this.irisCombinedCourseSettings,
-                        () => this.irisSettingsService.getCombinedCourseSettings(channelDTO.subTypeReferenceId!),
+                        () => this.irisSettingsService.getCombinedCourseSettings(course.id!),
                         (settings) => settings.irisLectureChatSettings?.enabled,
                         channelDTO,
                         (settings) => (this.irisCombinedCourseSettings = settings),

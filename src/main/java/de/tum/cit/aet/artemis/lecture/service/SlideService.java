@@ -22,12 +22,11 @@ public class SlideService {
 
     private final SlideRepository slideRepository;
 
-    // TODO: currently disabled because of a misconfiguration
-    // private final SlideUnhideService slideUnhideService;
+    private final SlideUnhideService slideUnhideService;
 
-    public SlideService(SlideRepository slideRepository/* , SlideUnhideService slideUnhideService */) {
+    public SlideService(SlideRepository slideRepository, SlideUnhideService slideUnhideService) {
         this.slideRepository = slideRepository;
-        // this.slideUnhideService = slideUnhideService;
+        this.slideUnhideService = slideUnhideService;
     }
 
     /**
@@ -71,8 +70,6 @@ public class SlideService {
 
         relatedSlides.forEach(slide -> slide.setHidden(newHiddenDate));
         slideRepository.saveAll(relatedSlides);
-        // Schedule the slide to be unhidden at the new date
-        // TODO: currently disabled because of a misconfiguration
-        // relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
+        relatedSlides.forEach(slideUnhideService::handleSlideHiddenUpdate);
     }
 }

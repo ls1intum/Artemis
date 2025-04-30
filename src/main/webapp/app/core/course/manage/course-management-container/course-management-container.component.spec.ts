@@ -34,7 +34,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -254,6 +254,7 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                component.courseBody = { nativeElement: { scrollTop: 123 } } as ElementRef<HTMLElement>;
             });
     }));
 
@@ -290,12 +291,12 @@ describe('CourseManagementContainerComponent', () => {
     it('should subscribe to profileService and set values correctly', async () => {
         await component.ngOnInit();
 
-        expect(component.isProduction()).toBeTrue();
-        expect(component.isTestServer()).toBeFalse();
-        expect(component.atlasEnabled()).toBeTrue();
-        expect(component.irisEnabled()).toBeTrue();
-        expect(component.ltiEnabled()).toBeTrue();
-        expect(component.localCIActive()).toBeFalse();
+        expect(component.isProduction).toBeTrue();
+        expect(component.isTestServer).toBeFalse();
+        expect(component.atlasEnabled).toBeTrue();
+        expect(component.irisEnabled).toBeTrue();
+        expect(component.ltiEnabled).toBeTrue();
+        expect(component.localCIActive).toBeFalse();
     });
 
     it('should handle courseId change correctly', () => {
@@ -472,6 +473,7 @@ describe('CourseManagementContainerComponent', () => {
         component.onSubRouteActivate(stubSubComponent.componentInstance);
         fixture.detectChanges();
         stubSubComponent.detectChanges();
+        expect(component.courseBody.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
@@ -717,15 +719,85 @@ describe('CourseManagementContainerComponent', () => {
         expect(component.isSidebarCollapsed()).toBeFalse();
     });
 
-    it('should set isOverviewPage to false when not on overview page', async () => {
+    it('should set isSettingsPage to false when not on settings page', async () => {
         jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/exercises');
         await component.ngOnInit();
-        expect(component.isOverviewPage()).toBeFalse();
+        expect(component.isSettingsPage()).toBeFalse();
     });
-    it('should set isOverviewPage to true when on overview page', async () => {
-        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1');
-        jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1', '')));
+    it('should set isSettingsPage to true when on settings page', async () => {
+        jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/1/settings');
+        jest.spyOn(router, 'events', 'get').mockReturnValue(of(new NavigationEnd(0, '/course-management/1/settings', '')));
         await component.ngOnInit();
-        expect(component.isOverviewPage()).toBeTrue();
+        expect(component.isSettingsPage()).toBeTrue();
+    });
+    describe('determineStudentViewLink', () => {
+        beforeEach(() => {
+            component.courseId.set(123);
+        });
+        it('should set exams link when URL includes "exams"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exams/1/edit');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exams']);
+        });
+
+        it('should set exercises link when URL includes "exercises"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
+        });
+
+        it('should set lectures link when URL includes "lectures"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/lectures/1/details');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'lectures']);
+        });
+
+        it('should set communication link when URL includes "communication"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/communication?conversationId=123');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'communication']);
+        });
+
+        it('should set learning-path link when URL includes "learning-path-management"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/learning-path-management');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'learning-path']);
+        });
+
+        it('should set competencies link when URL includes "competency-management"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/competency-management');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'competencies']);
+        });
+
+        it('should set faq link when URL includes "faqs"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/faqs/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'faq']);
+        });
+
+        it('should set tutorial-groups link when URL includes "tutorial-groups"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups/configuration/new');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
+        });
+
+        it('should set tutorial-groups link when URL includes "tutorial-groups-checklist"', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/tutorial-groups-checklist');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'tutorial-groups']);
+        });
+
+        it('should set statistics link when URL includes course-statistics', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/course-statistics');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'statistics']);
+        });
+
+        it('should default to exercises link when URL does not match any condition', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('courses/123/iris-settings');
+            component.determineStudentViewLink();
+            expect(component.studentViewLink()).toEqual(['/courses', '123', 'exercises']);
+        });
     });
 });
