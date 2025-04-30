@@ -31,6 +31,7 @@ import { CourseTutorialGroupsComponent } from 'app/tutorialgroup/shared/course-t
 import { CourseConversationsComponent } from 'app/communication/shared/course-conversations/course-conversations.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseUnenrollmentModalComponent } from 'app/core/course/overview/course-unenrollment-modal/course-unenrollment-modal.component';
+import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -237,7 +238,7 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
         const defaultItems = this.sidebarItemService.getStudentDefaultItems(currentCourse?.studentCourseAnalyticsDashboardEnabled);
         sidebarItems.push(...defaultItems);
 
-        if (currentCourse?.lectures) {
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE) && currentCourse?.lectures) {
             const lecturesItem = this.sidebarItemService.getLecturesItem();
             sidebarItems.splice(-1, 0, lecturesItem);
         }
