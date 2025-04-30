@@ -45,9 +45,15 @@ export class WeekGroupingUtil {
      * @returns Negative if a < b, positive if a > b, 0 if equal
      */
     static compareDates(a?: dayjs.Dayjs, b?: dayjs.Dayjs): number {
-        if (!a && !b) return 0;
-        if (!a) return 1;
-        if (!b) return -1;
+        if (!a && !b) {
+            return 0;
+        }
+        if (!a) {
+            return 1;
+        }
+        if (!b) {
+            return -1;
+        }
         return b.valueOf() - a.valueOf();
     }
 
@@ -111,8 +117,12 @@ export class WeekGroupingUtil {
 
         // Sort groups: dated groups first (by year and date), then no-date groups
         return groups.sort((a, b) => {
-            if (a.isNoDate) return 1;
-            if (b.isNoDate) return -1;
+            if (a.isNoDate) {
+                return 1;
+            }
+            if (b.isNoDate) {
+                return -1;
+            }
             if (a.start!.year() !== b.start!.year()) {
                 return b.start!.year() - a.start!.year();
             }
