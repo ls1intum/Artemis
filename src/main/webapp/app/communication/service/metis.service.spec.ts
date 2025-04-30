@@ -1081,4 +1081,50 @@ describe('Metis Service', () => {
             expect(pinnedPostsResult[0].tags).toEqual(['newTag']);
         }));
     });
+
+    it('should properly set answer.post properties when receiving a post update via WebSocket', fakeAsync(() => {
+        // Set up test data
+        metisService.setCourse(course);
+
+        // Create a post with answers in the cached posts
+        const originalPost: Post = {
+            id: 456,
+            content: 'Original content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Answer 1' } as AnswerPost, { id: 101, content: 'Answer 2' } as AnswerPost],
+        } as Post;
+
+        metisService['cachedPosts'] = [originalPost];
+        metisService['currentPostContextFilter'] = { conversationIds: [123] } as PostContextFilter;
+
+        // Create an updated post DTO (as would be received from WebSocket)
+        const updatedPost: Post = {
+            id: 456,
+            content: 'Updated content',
+            author: { id: 789, login: 'author' },
+            conversation: { id: 123 },
+            answers: [{ id: 100, content: 'Updated Answer 1', post: { id: 456 } } as AnswerPost, { id: 101, content: 'Updated Answer 2', post: { id: 456 } } as AnswerPost],
+        } as Post;
+
+        const updateDTO: MetisPostDTO = {
+            action: MetisPostAction.UPDATE,
+            post: updatedPost,
+        };
+
+        // Call the method that handles WebSocket updates
+        metisService['handleNewOrUpdatedMessage'](updateDTO);
+        tick();
+
+        // Verify that the answer.post properties are set correctly for all answers
+        const updatedCachedPost = metisService['cachedPosts'][0];
+        expect(updatedCachedPost.answers?.length).toBe(2);
+
+        updatedCachedPost.answers?.forEach((answer) => {
+            expect(answer.post).toBeDefined();
+            expect(answer.post?.id).toBe(456);
+            expect(answer.post?.author).toEqual({ id: 789, login: 'author' });
+            expect(answer.post?.conversation).toEqual({ id: 123 });
+        });
+    }));
 });
