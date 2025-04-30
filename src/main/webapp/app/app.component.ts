@@ -71,7 +71,7 @@ export class AppComponent implements OnInit, OnDestroy {
      * This modal is only shown if the user is not on the login screen.
      * </p>
      */
-    private openSetupPasskeyModal(): void {
+    openSetupPasskeyModal(): void {
         if (!this.isPasskeyEnabled) {
             return;
         }
