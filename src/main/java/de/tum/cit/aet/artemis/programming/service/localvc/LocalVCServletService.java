@@ -445,28 +445,27 @@ public class LocalVCServletService {
      *
      * @param repository The repository for which we check if branching is allowed.
      * @param branchName The branch name for which to check if it matches the regex.
-     * @return True if branching is allowed, false otherwise.
+     * @return -2 if branching is disallowed, -1 if branching is allowed but name does not match the vertex, 0 if allowed.
      */
-    public boolean isBranchNameAllowedForRepository(Repository repository, String branchName) {
+    public int isBranchNameAllowedForRepository(Repository repository, String branchName) {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
 
-        if (exercise.getBuildConfig().isAllowBranching()) {
-            Pattern pattern;
-            try {
-                pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
-            }
-            catch (PatternSyntaxException e) {
-                return false;
-            }
+        if (!exercise.getBuildConfig().isAllowBranching()) {
+            return -2;
+        }
 
-            return pattern.matcher(branchName).matches();
+        Pattern pattern;
+        try {
+            pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
         }
-        else {
-            return false;
+        catch (PatternSyntaxException e) {
+            return -1;
         }
+
+        return pattern.matcher(branchName).matches() ? 0 : -1;
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {
