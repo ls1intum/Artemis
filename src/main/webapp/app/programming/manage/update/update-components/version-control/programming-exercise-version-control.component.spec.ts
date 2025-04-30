@@ -34,21 +34,21 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
     it('should create', () => {
         expect(comp).toBeDefined();
         expect(comp.programmingExercise()).toEqual(programmingExercise);
-        expect(comp.programmingExercise().allowBranching).toBeFalse();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeFalse();
     });
 
     it('should update allowBranching attribute when checking the option', () => {
         const checkbox = fixture.debugElement.query(By.css('#field_allowBranching'));
         checkbox.triggerEventHandler('change', { target: { checked: true } });
         fixture.detectChanges();
-        expect(comp.programmingExercise().allowBranching).toBeTrue();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeTrue();
     });
 
     it('should update allowBranching attribute when unchecking the option', () => {
-        comp.programmingExercise().allowBranching = true;
+        comp.programmingExercise().buildConfig!.allowBranching = true;
         const checkbox = fixture.debugElement.query(By.css('#field_allowBranching'));
         checkbox.triggerEventHandler('change', { target: { checked: false } });
         fixture.detectChanges();
-        expect(comp.programmingExercise().allowBranching).toBeFalse();
+        expect(comp.programmingExercise().buildConfig!.allowBranching).toBeFalse();
     });
 });
