@@ -23,8 +23,8 @@ export class PostingThreadComponent {
     @Output() openThread = new EventEmitter<Post>();
     @Input() isConsecutive: boolean | undefined = false;
     searchQuery = input<string>('');
-    forwardedPosts = input<Post[]>([]);
-    forwardedAnswerPosts = input<AnswerPost[]>([]);
+    forwardedPosts = input<(Post | undefined)[]>([]);
+    forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
     readonly onNavigateToPost = output<Posting>();
 
     elementRef = inject(ElementRef);
