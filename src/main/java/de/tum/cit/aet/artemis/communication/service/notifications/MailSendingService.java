@@ -2,19 +2,28 @@ package de.tum.cit.aet.artemis.communication.service.notifications;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Map;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.NoSuchMessageException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.exceptions.TemplateProcessingException;
+import org.thymeleaf.spring6.SpringTemplateEngine;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import tech.jhipster.config.JHipsterProperties;
@@ -32,9 +41,18 @@ public class MailSendingService {
 
     private final JavaMailSender javaMailSender;
 
-    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender) {
+    @Value("${server.url}")
+    private URL artemisServerUrl;
+
+    private final MessageSource messageSource;
+
+    private final SpringTemplateEngine templateEngine;
+
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender, MessageSource messageSource, SpringTemplateEngine templateEngine) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
+        this.messageSource = messageSource;
+        this.templateEngine = templateEngine;
     }
 
     /**
@@ -62,6 +80,66 @@ public class MailSendingService {
      */
     public void sendEmailSync(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         executeSend(recipient, subject, content, isMultipart, isHtml);
+    }
+
+    /**
+     * Builds and sends an e-mail to the specified sender synchronously
+     *
+     * @param recipient                  who should be contacted.
+     * @param subjectKey                 The locale key of the subject
+     * @param contentTemplate            The thymeleaf .html file path to render
+     * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     */
+    public boolean buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        return buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    }
+
+    /**
+     * Builds and sends an e-mail to the specified sender synchronously
+     *
+     * @param recipient                  who should be contacted.
+     * @param subjectKey                 The locale key of the subject
+     * @param contentTemplate            The thymeleaf .html file path to render
+     * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     */
+    @Async
+    public void buildAndSendAsync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
+    }
+
+    /**
+     * Builds and sends an e-mail to the specified sender
+     *
+     * @param recipient                  who should be contacted.
+     * @param subjectKey                 The locale key of the subject
+     * @param contentTemplate            The thymeleaf .html file path to render
+     * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     */
+    private boolean buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
+        String localeKey = recipient.getLangKey();
+        if (localeKey == null) {
+            localeKey = "en";
+        }
+        Locale locale = Locale.forLanguageTag(localeKey);
+        Context context = new Context(locale);
+        context.setVariable("user", recipient);
+        context.setVariable("baseUrl", artemisServerUrl);
+
+        additionalContextVariables.forEach(context::setVariable);
+
+        String subject;
+        String content;
+        try {
+            subject = messageSource.getMessage(subjectKey, null, context.getLocale());
+            content = templateEngine.process(contentTemplate, context);
+        }
+        catch (NoSuchMessageException | TemplateProcessingException ex) {
+            return false;
+        }
+
+        executeSend(recipient, subject, content, false, true);
+
+        return true;
     }
 
     /**

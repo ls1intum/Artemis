@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHE
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.function.Consumer;
 
 import org.slf4j.Logger;
@@ -12,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
@@ -22,13 +23,13 @@ public class UserTokenExpiryNotificationService {
 
     private static final Logger log = LoggerFactory.getLogger(UserTokenExpiryNotificationService.class);
 
-    private final SingleUserNotificationService singleUserNotificationService;
-
     private final UserRepository userRepository;
 
-    public UserTokenExpiryNotificationService(SingleUserNotificationService singleUserNotificationService, UserRepository userRepository) {
-        this.singleUserNotificationService = singleUserNotificationService;
+    private final MailSendingService mailSendingService;
+
+    public UserTokenExpiryNotificationService(UserRepository userRepository, MailSendingService mailSendingService) {
         this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -44,7 +45,7 @@ public class UserTokenExpiryNotificationService {
      * Notifies the users at the day of VCS access token expiry
      */
     public void notifyOnExpiredToken() {
-        notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), singleUserNotificationService::notifyUserAboutExpiredVcsAccessToken);
+        notifyUsersForKeyExpiryWindow(now().minusDays(1), now(), this::notifyUserAboutExpiredVcsAccessToken);
     }
 
     /**
@@ -57,5 +58,14 @@ public class UserTokenExpiryNotificationService {
      */
     private void notifyUsersForKeyExpiryWindow(ZonedDateTime fromDate, ZonedDateTime toDate, Consumer<User> notifyFunction) {
         userRepository.findByVcsAccessTokenExpiryDateBetween(fromDate, toDate).forEach(notifyFunction);
+    }
+
+    /**
+     * Notify user about the expiration of the VCS access token
+     *
+     * @param recipient the user to whose account the VCS access token was added
+     */
+    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
+        mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
     }
 }

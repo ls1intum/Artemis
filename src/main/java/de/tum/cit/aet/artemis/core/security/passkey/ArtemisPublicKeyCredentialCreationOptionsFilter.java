@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.security.passkey;
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.function.Supplier;
 
 import jakarta.servlet.FilterChain;
@@ -34,6 +35,9 @@ import org.springframework.security.web.webauthn.registration.PublicKeyCredentia
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+
 /**
  * <p>
  * A {@link jakarta.servlet.Filter} that renders the {@link PublicKeyCredentialCreationOptions} for <a href=
@@ -60,6 +64,10 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
 
     private final WebAuthnRelyingPartyOperations rpOperations;
 
+    private final MailSendingService mailSendingService;
+
+    private final UserRepository userRepository;
+
     private final HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
             Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module()).build());
 
@@ -68,9 +76,11 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
      *
      * @param rpOperations the {@link WebAuthnRelyingPartyOperations} to use. Cannot be null.
      */
-    public ArtemisPublicKeyCredentialCreationOptionsFilter(WebAuthnRelyingPartyOperations rpOperations) {
+    public ArtemisPublicKeyCredentialCreationOptionsFilter(WebAuthnRelyingPartyOperations rpOperations, MailSendingService mailSendingService, UserRepository userRepository) {
         Assert.notNull(rpOperations, "rpOperations cannot be null");
         this.rpOperations = rpOperations;
+        this.mailSendingService = mailSendingService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -103,6 +113,9 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
         response.setStatus(HttpServletResponse.SC_OK);
         response.setHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE);
         this.converter.write(options, MediaType.APPLICATION_JSON, new ServletServerHttpResponse(response));
+
+        var recipient = userRepository.getUser();
+        this.mailSendingService.buildAndSendAsync(recipient, "email.notification.newPasskey.title", "mail/notification/newPasskeyEmail", new HashMap<>());
     }
 
 }

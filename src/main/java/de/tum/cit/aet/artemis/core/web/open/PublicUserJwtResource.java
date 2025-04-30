@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -31,8 +32,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -56,10 +59,17 @@ public class PublicUserJwtResource {
 
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
+    private final UserRepository userRepository;
+
+    private final MailSendingService mailSendingService;
+
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service, UserRepository userRepository,
+            MailSendingService mailSendingService) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
+        this.userRepository = userRepository;
+        this.mailSendingService = mailSendingService;
     }
 
     /**
@@ -90,6 +100,12 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+            userRepository.findOneByLogin(username).ifPresent(user -> {
+                if (!user.isInternal()) {
+                    mailSendingService.buildAndSendAsync(user, "email.notification.login.title", "mail/notification/newLoginEmail", new HashMap<>());
+                }
+            });
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
