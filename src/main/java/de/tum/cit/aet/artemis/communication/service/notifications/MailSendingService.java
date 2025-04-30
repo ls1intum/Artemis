@@ -89,6 +89,8 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     *
+     * @return true if mail was sent, false if not
      */
     public boolean buildAndSendSync(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         return buildAndSend(recipient, subjectKey, contentTemplate, additionalContextVariables);
@@ -114,6 +116,8 @@ public class MailSendingService {
      * @param subjectKey                 The locale key of the subject
      * @param contentTemplate            The thymeleaf .html file path to render
      * @param additionalContextVariables The context variables for the template aside from the baseUrl and user
+     *
+     * @return true if mail was sent, false if not
      */
     private boolean buildAndSend(User recipient, String subjectKey, String contentTemplate, Map<String, Object> additionalContextVariables) {
         String localeKey = recipient.getLangKey();
