@@ -136,7 +136,7 @@ public class AttachmentUnitResource {
         checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
-        if (hiddenPages != null && !hiddenPages.isEmpty() && !validateHiddenSlidesDates(hiddenPages)) {
+        if (!validateHiddenSlidesDates(hiddenPages)) {
             throw new BadRequestAlertException("Hidden slide dates cannot be in the past", ENTITY_NAME, "invalidHiddenDates");
         }
 
