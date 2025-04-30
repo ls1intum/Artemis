@@ -51,4 +51,18 @@ describe('ProgrammingExerciseVersionControlComponent', () => {
         fixture.detectChanges();
         expect(comp.programmingExercise().buildConfig!.allowBranching).toBeFalse();
     });
+
+    it('should show regex input field when checking the allowBranching option', () => {
+        comp.programmingExercise().buildConfig!.allowBranching = true;
+        fixture.detectChanges();
+        const textInput = fixture.debugElement.query(By.css('#field_branchRegex'));
+        expect(textInput).not.toBeNull();
+    });
+
+    it('should hide regex input field when unchecking the allowBranching option', () => {
+        comp.programmingExercise().buildConfig!.allowBranching = false;
+        fixture.detectChanges();
+        const textInput = fixture.debugElement.query(By.css('#field_branchRegex'));
+        expect(textInput).toBeNull();
+    });
 });
