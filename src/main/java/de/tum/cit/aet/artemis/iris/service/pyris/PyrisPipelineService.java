@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStude
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -230,7 +231,7 @@ public class PyrisPipelineService {
      * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
-            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional) {
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO) {
         var post = session.getPost();
         var course = post.getCoursePostingBelongsTo();
         // @formatter:off
@@ -247,7 +248,8 @@ public class PyrisPipelineService {
                 executionDto.settings(),
                 executionDto.initialStages(),
                 textExerciseDTOOptional,
-                programmingExerciseDTOOptional,
+                submissionDTO,
+                exerciseDTO,
                 lectureIdOptional
             ),
             stages -> irisChatWebsocketService.sendStatusUpdate(session, stages)

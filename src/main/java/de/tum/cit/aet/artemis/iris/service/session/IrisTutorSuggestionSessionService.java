@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -27,11 +29,16 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisProgrammingExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -60,12 +67,17 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
+
     private final PyrisDTOService pyrisDTOService;
 
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
             PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService,
-            ProgrammingExerciseRepository programmingExerciseRepository, PyrisDTOService pyrisDTOService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, PyrisDTOService pyrisDTOService) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -74,6 +86,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.pyrisDTOService = pyrisDTOService;
     }
 
@@ -118,6 +132,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         if (conversation instanceof Channel channel) {
             Optional<Long> lectureIdOptional = Optional.empty();
             Optional<PyrisTextExerciseDTO> textExerciseDTOOptional = Optional.empty();
+            Optional<PyrisSubmissionDTO> submissionDTOOptional = Optional.empty();
             Optional<PyrisProgrammingExerciseDTO> programmingExerciseDTOOptional = Optional.empty();
 
             var lecture = channel.getLecture();
@@ -129,7 +144,13 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                 switch (exercise.getExerciseType()) {
                     case PROGRAMMING -> {
                         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        programmingExerciseDTOOptional = Optional.of(pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise));
+                        var latestSubmission = getLatestSubmissionIfExists(programmingExercise, chatSession.getUser());
+                        PyrisSubmissionDTO pyrisSubmissionDTO = latestSubmission.map(pyrisDTOService::toPyrisSubmissionDTO).orElse(null);
+                        PyrisProgrammingExerciseDTO pyrisProgrammingExerciseDTO = pyrisDTOService.toPyrisProgrammingExerciseDTO(programmingExercise);
+                        if (pyrisSubmissionDTO != null) {
+                            submissionDTOOptional = Optional.of(pyrisSubmissionDTO);
+                        }
+                        programmingExerciseDTOOptional = Optional.of(pyrisProgrammingExerciseDTO);
                     }
                     case TEXT -> {
                         TextExercise textExercise = (TextExercise) exercise;
@@ -137,7 +158,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
                     }
                 }
             }
-            pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, lectureIdOptional, textExerciseDTOOptional, programmingExerciseDTOOptional);
+            pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, lectureIdOptional, textExerciseDTOOptional, submissionDTOOptional,
+                    programmingExerciseDTOOptional);
         }
     }
 
@@ -157,5 +179,21 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
     @Override
     public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, irisSession.getPost().getCoursePostingBelongsTo());
+    }
+
+    private Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {
+        List<ProgrammingExerciseStudentParticipation> participations;
+        if (exercise.isTeamMode()) {
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionByExerciseIdAndStudentLoginInTeam(exercise.getId(), user.getLogin());
+        }
+        else {
+            participations = programmingExerciseStudentParticipationRepository.findAllWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        }
+
+        if (participations.isEmpty()) {
+            return Optional.empty();
+        }
+        return participations.getLast().getSubmissions().stream().max(Submission::compareTo)
+                .flatMap(sub -> programmingSubmissionRepository.findWithEagerResultsAndFeedbacksAndBuildLogsById(sub.getId()));
     }
 }
