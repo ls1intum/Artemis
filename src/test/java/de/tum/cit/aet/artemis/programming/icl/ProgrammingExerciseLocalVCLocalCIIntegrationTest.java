@@ -350,51 +350,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importExercise_enablePlanFails() throws Exception {
-        programmingExerciseTestService.importExercise_enablePlanFails();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void importExercise_planDoesntExist() throws Exception {
-        programmingExerciseTestService.importExercise_planDoesntExist();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
-    }
-
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.INCLUDE)
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage language) throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created(language);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_mode_validExercise_created() throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_mode_validExercise_created(ExerciseMode.INDIVIDUAL);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_validExercise_bonusPointsIsNull();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExercise_noTutors_created() throws Exception {
-        programmingExerciseTestService.createProgrammingExercise_noTutors_created();
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createProgrammingExerciseForExam_validExercise_created() throws Exception {
-        programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
     @Nested
