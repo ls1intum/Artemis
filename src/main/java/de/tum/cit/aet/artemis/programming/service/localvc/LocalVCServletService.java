@@ -440,21 +440,25 @@ public class LocalVCServletService {
         return exercise.getBuildConfig().isAllowBranching();
     }
 
+    public static enum BranchingStatus {
+        BRANCHING_DISABLED, NAME_DOES_NOT_MATCH_REGEX, BRANCH_ALLOWED
+    }
+
     /**
      * Checks if branching is allowed for the exercise to which the given repository belongs.
      *
      * @param repository The repository for which we check if branching is allowed.
      * @param branchName The branch name for which to check if it matches the regex.
-     * @return -2 if branching is disallowed, -1 if branching is allowed but name does not match the vertex, 0 if allowed.
+     * @return Whether branching is allowed or why it is not.
      */
-    public int isBranchNameAllowedForRepository(Repository repository, String branchName) {
+    public BranchingStatus isBranchNameAllowedForRepository(Repository repository, String branchName) {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(repository.getDirectory().toPath());
         String projectKey = localVCRepositoryUri.getProjectKey();
 
         ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey, true);
 
         if (!exercise.getBuildConfig().isAllowBranching()) {
-            return -2;
+            return BranchingStatus.BRANCHING_DISABLED;
         }
 
         Pattern pattern;
@@ -462,10 +466,10 @@ public class LocalVCServletService {
             pattern = Pattern.compile(exercise.getBuildConfig().getBranchRegex());
         }
         catch (PatternSyntaxException e) {
-            return -1;
+            return BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
         }
 
-        return pattern.matcher(branchName).matches() ? 0 : -1;
+        return pattern.matcher(branchName).matches() ? BranchingStatus.BRANCH_ALLOWED : BranchingStatus.NAME_DOES_NOT_MATCH_REGEX;
     }
 
     public LocalVCRepositoryUri parseRepositoryUri(HttpServletRequest request) {

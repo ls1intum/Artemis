@@ -76,15 +76,21 @@ public class LocalVCPrePushHook implements PreReceiveHook {
         // If branching is allowed, reject pushes to anything other than branch names that match the branch regex
         // If branching is not allowed, reject pushes to anything other than the default branch
         String branchPath = command.getRefName();
-        String branchName = branchPath.substring("refs/heads/".length());
-        int branchingAllowed = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
-        if (!branchPath.equals("refs/heads/" + defaultBranchName) && branchingAllowed != 0) {
-            if (branchingAllowed == -2) {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
-            }
-            else {
-                command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
-                        "You cannot push to a branch other than the default branch that does not match the regex for branch names in this repository.");
+        if (!branchPath.equals("refs/heads/" + defaultBranchName)) {
+            String branchName = branchPath.substring("refs/heads/".length());
+            LocalVCServletService.BranchingStatus branchingStatus = localVCServletService.isBranchNameAllowedForRepository(repository, branchName);
+            switch (branchingStatus) {
+                case BRANCHING_DISABLED -> {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "You cannot push to a branch other than the default branch.");
+                    return;
+                }
+                case NAME_DOES_NOT_MATCH_REGEX -> {
+                    command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON,
+                            "You cannot push to a branch other than the default branch that does not match the regex for branch names in this repository.");
+                    return;
+                }
+                default -> {
+                }
             }
         }
 
