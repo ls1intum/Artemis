@@ -447,18 +447,20 @@ Deep Linking for edX
 Manual Link Creation
 ^^^^^^^^^^^^^^^^^^^^
 
-The following process guides instructors on linking exercises, assuming they have already completed the tool-platform registration.
+The following process guides instructors on linking exercises and lectures, assuming they have already completed the tool-platform registration.
 The process involves two primary steps:
 
-#. Retrieving the LTI 1.3 Launch URL for the desired Artemis exercise.
-#. Linking this URL to the platform course. We will separately explain how to link exercise links to Moodle and edX.
+#. Retrieving the LTI 1.3 Launch URL for the desired Artemis exercise or lecture.
+#. Linking this URL to the platform course. We will separately explain how to link exercise and lecture links to Moodle and edX.
 
 Retrieve LTI 1.3 Launch URL from Artemis
 """""""""""""""""""""""""""""""""""""""""""""
 
 #. As an instructor, navigate to the |course-management| to view all your courses.
-#. Select the one online course containing the exercise you would like to link to the platform from the list of available courses.
+#. Select the one online course containing the exercise or lecture you would like to link to the platform from the list of available courses.
 #. Once inside the course settings, select the *LTI Configuration* tab.
+
+For exercises:
 #. Inside the LTI Configuration, locate and click on the Exercises tab. This tab lists all the exercises available for the course.
 #. For each exercise listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the exercise. Find the exercise you wish to link and copy its LTI 1.3 Launch URL.
 
@@ -467,12 +469,21 @@ Retrieve LTI 1.3 Launch URL from Artemis
     :width: 700
     :alt: LTI Exercise List
 
-Link exercise to Moodle
+For lectures:
+#. Inside the LTI Configuration, locate and click on the Lectures tab. This tab lists all the lectures available for the course.
+#. For each lecture listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the lecture. Find the lecture you wish to link and copy its LTI 1.3 Launch URL.
+
+.. figure:: lti/lti_lectures_list.png
+    :align: center
+    :width: 700
+    :alt: LTI Lecture List
+
+Link exercise or lectures to Moodle
 """""""""""""""""""""""
 
-With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
+With the LTI 1.3 Launch URL copied, you can now link the exercise or lecture in Moodle:
 
-#. As a Moodle instructor, navigate to the course where you want to link the Artemis exercise.
+#. As a Moodle instructor, navigate to the course where you want to link the Artemis exercise or lecture.
 #. Once inside the course, turn on the Edit Mode. This mode allows you to make changes and add resources to the course.
 
     .. figure:: lti/moodle_editmode.png
@@ -489,7 +500,7 @@ With the LTI 1.3 Launch URL copied, you can now link the exercise in Moodle:
 
 #. In the settings for the external tool, add an *Activity Name*.
 #. Then you will find a field labeled *Tool URL*. Paste the previously copied LTI 1.3 Launch URL from Artemis into this field.
-#. After entering the URL, click the *Save and Return to Course* button to finalize the addition. The linked Artemis exercise should now be accessible directly from the Moodle course.
+#. After entering the URL, click the *Save and Return to Course* button to finalize the addition. The linked Artemis exercise or lecture should now be accessible directly from the Moodle course.
 
 .. figure:: lti/moodle_add_external_tool_page.png
     :align: center
@@ -506,7 +517,7 @@ This video describes how to use manually link exercises from an Artemis course i
         </iframe>
     </div>
 
-Link exercise to edX
+Link exercise or lectures to edX
 """"""""""""""""""""
 
 #. As an edX course instructor, navigate to Studio for the course.
