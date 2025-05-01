@@ -405,14 +405,14 @@ Deep Linking for Moodle
 
     .. figure:: lti/moodle_select_content_link.png
         :align: center
-        :width: 700
+        :width: 400
         :alt: Moodle Deep Link Content
 
 #. (Optional) Select multiple exercises or lectures and select the "Activate exercise grouping" to create a custom content group. This allows students to navigate between the exercises or lectures of the group using a sidebar.
 
     .. figure:: lti/moodle_select_content_link_grouped.png
             :align: center
-            :width: 700
+            :width: 400
             :alt: Moodle Deep Linking Select Grouped Content
 
 
