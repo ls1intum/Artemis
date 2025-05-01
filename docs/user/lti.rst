@@ -20,7 +20,7 @@ This package provides a more comprehensive integration, allowing smoother commun
 In the context of LTI Advantage, the term *Tool* refers to any external service or application that adds functionality to the learning environment, such as a tool for submitting exercises. On the other hand, *Platform* refers to the learning management system itself, which wants to incorporate these external tools.
 In addition to supporting the core functionalities of LTI 1.3, Artemis integrates specific services under the LTI Advantage framework, including the Score Service from the LTI Advantage Assignment and Grade Services and the Deep Linking Service.
 
-This content is a comprehensive guide for instructors and administrators on setting up LTI integration between Artemis and their preferred LMS platforms.
+This is a comprehensive guide for instructors and administrators on setting up LTI integration between Artemis and their preferred LMS platforms.
 We provide a general overview of the steps required to configure Artemis and specific guidance for popular platforms like Moodle and edX.
 Additionally, we outline the capabilities available to different user roles within Artemis about LTI:
 
@@ -69,6 +69,32 @@ Additionally, we outline the capabilities available to different user roles with
      - ✔
      - ✔
      - ✔
+
+The following types of content can be linked to the LMS via LTI:
+.. list-table::
+   :widths: 40 60
+   :align: center
+   :header-rows: 1
+
+   * - Content Type
+     - Description
+   * - Exercises
+     - Standard exercise types (e.g., programming, quizzes) can be linked.
+   * - Lectures
+     - Single lecture units are linkable.
+   * - Iris Dashboard
+     - Provides contextual AI assistance for students.
+   * - Competencies
+     - Tracks student progress and mastery of learning goals with visual stats.
+   * - Learning Paths
+     - Personalized content recommendations based on student performance.
+   * - Exercise groups
+     - Custom exercise groups created by instructor during the content linking process.
+   * - Lecture Groups
+     - Custom lecture groups created by instructor during the content linking process.
+
+.. note::
+    To link the Iris dashboard to the LMS, instructors must first activate the course dashboard for their Artemis course.
 
 This guide is structured as follows:
 
