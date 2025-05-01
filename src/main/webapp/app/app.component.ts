@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, Renderer2, effect, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router, RouterOutlet } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -15,10 +15,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { PageRibbonComponent } from 'app/core/layouts/profiles/page-ribbon.component';
 import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AccountService } from 'app/core/auth/account.service';
-import { FEATURE_PASSKEY } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-app',
@@ -39,8 +35,6 @@ export class AppComponent implements OnInit, OnDestroy {
     private renderer = inject(Renderer2);
     private courseService = inject(CourseManagementService);
     private ltiService = inject(LtiService);
-    private modalService = inject(NgbModal);
-    private accountService = inject(AccountService);
 
     private examStartedSubscription: Subscription;
     private courseOverviewSubscription: Subscription;
@@ -58,42 +52,9 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestRunExam = false;
     isCourseOverview = false;
     isShownViaLti = false;
-    isPasskeyEnabled = false;
-
-    /**
-     * <p>
-     * We want users to use passkey authentication over password authentication.
-     * </p>
-     * <p>
-     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
-     * </p>
-     * <p>
-     * This modal is only shown if the user is not on the login screen.
-     * </p>
-     */
-    openSetupPasskeyModal(): void {
-        if (!this.isPasskeyEnabled) {
-            return;
-        }
-
-        const isUserOnLoginScreen = !this.accountService.isAuthenticatedSignal();
-        if (isUserOnLoginScreen) {
-            return;
-        }
-
-        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredAPasskey) {
-            return;
-        }
-
-        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
-    }
 
     constructor() {
         this.setupErrorHandling().then(undefined);
-
-        effect(() => {
-            this.openSetupPasskeyModal();
-        });
     }
 
     private async setupErrorHandling() {
@@ -111,16 +72,14 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.isPasskeyEnabled = this.profileService.isModuleFeatureActive(FEATURE_PASSKEY);
-
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
                 /*
                 In the case where we do not want to show the skeleton, we also want to set the background to transparent
                 such that the mobile native applications can display their background in the web view.
 
-                However, as the default background attribute is defined in the body html tag it is outside of Angular's reach.
-                We set the background ourselves by adding the transparent-background css class on the body element, thus
+                However, as the default background attribute is defined in the body HTML tag, it is outside Angular's reach.
+                We set the background ourselves by adding the transparent-background CSS class on the body element, thus
                 overwriting the default background. We cannot do this in any other way, as Angular cannot modify the body
                 itself.
                  */
@@ -129,7 +88,7 @@ export class AppComponent implements OnInit, OnDestroy {
                     // If we already show the skeleton but do not want to show the skeleton anymore, we need to remove the background
                     this.renderer.addClass(this.document.body, 'transparent-background');
                 } else if (shouldShowSkeletonNow && !this.showSkeleton) {
-                    // If we want to show the skeleton but weren't showing it previously we need to remove the class to show the skeleton again
+                    // If we want to show the skeleton but weren't showing it previously, we need to remove the class to show the skeleton again
                     this.renderer.removeClass(this.document.body, 'transparent-background');
                 }
                 // Do now show skeleton when the url links to a problem statement which is displayed on the native clients
