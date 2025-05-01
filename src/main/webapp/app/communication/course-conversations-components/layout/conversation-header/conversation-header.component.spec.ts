@@ -8,11 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import {
-    generateExampleChannelDTO,
-    generateExampleGroupChatDTO,
-    generateOneToOneChatDTO,
-} from '../../../../../../../test/javascript/spec/helpers/sample/conversationExampleModels';
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { BehaviorSubject, EMPTY, Subject, of } from 'rxjs';
 import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
@@ -20,16 +16,16 @@ import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectu
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/detail/exam-detail.component';
 import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { SimpleChanges, input, runInInjectionContext } from '@angular/core';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { HttpResponse } from '@angular/common/http';
-import { MockMetisConversationService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
+import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import {

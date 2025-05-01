@@ -190,8 +190,9 @@ public class ParticipationService {
             }
         }
 
-        if (exercise instanceof ProgrammingExercise programmingExercise) {
-            // fetch again to get additional objects
+        if (exercise instanceof ProgrammingExercise) {
+            // we need to fetch the programming exercise again to get the template participation because we need the repository uri for the copy operation
+            var programmingExercise = programmingExerciseRepository.findByIdWithTemplateParticipationElseThrow(exercise.getId());
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
         }
         // for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise

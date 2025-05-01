@@ -1,24 +1,20 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
-import {
-    MockFileUploadSubmissionService,
-    createFileUploadSubmission,
-    fileUploadParticipation,
-} from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-submission.service';
+import { MockFileUploadSubmissionService, createFileUploadSubmission, fileUploadParticipation } from 'test/helpers/mocks/service/mock-file-upload-submission.service';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
-import { fileUploadExercise } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-file-upload-exercise.service';
+import { fileUploadExercise } from 'test/helpers/mocks/service/mock-file-upload-exercise.service';
 import { MAX_SUBMISSION_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
@@ -40,7 +36,7 @@ import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complain
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
 import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
@@ -91,7 +87,7 @@ describe('FileUploadSubmissionComponent', () => {
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
                 alertService = TestBed.inject(AlertService);
-                fileUploadSubmissionService = debugElement.injector.get(FileUploadSubmissionService);
+                fileUploadSubmissionService = TestBed.inject(FileUploadSubmissionService);
             });
     });
 

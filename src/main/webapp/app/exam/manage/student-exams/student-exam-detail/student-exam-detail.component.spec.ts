@@ -19,10 +19,10 @@ import { ParticipationType } from 'app/exercise/shared/entities/participation/pa
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { GradeType } from 'app/assessment/shared/entities/grading-scale.model';
 import { StudentExamWithGradeDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { AlertService } from 'app/shared/service/alert.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('StudentExamDetailComponent', () => {
@@ -45,7 +45,6 @@ describe('StudentExamDetailComponent', () => {
 
         student = {
             internal: true,
-            guidedTourSettings: [],
             name: 'name',
             login: 'login',
             email: 'email',

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { take } from 'rxjs/operators';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { ReactionService } from 'app/communication/service/reaction.service';
-import { metisReactionToCreate, metisReactionUser2 } from '../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+import { metisReactionToCreate, metisReactionUser2 } from 'test/helpers/sample/metis-sample-data';
 import { provideHttpClient } from '@angular/common/http';
 
 describe('Reaction Service', () => {

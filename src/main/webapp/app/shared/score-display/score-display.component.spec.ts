@@ -3,7 +3,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ScoreDisplayComponent', () => {

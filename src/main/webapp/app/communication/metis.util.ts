@@ -19,8 +19,6 @@ export enum PageType {
     PLAGIARISM_CASE_STUDENT = 'PLAGIARISM_CASE_STUDENT',
 }
 
-export const VOTE_EMOJI_ID = 'heavy_plus_sign';
-
 export enum SortDirection {
     ASCENDING = 'ASCENDING',
     DESCENDING = 'DESCENDING',
@@ -39,10 +37,11 @@ export enum MetisPostAction {
 
 export interface PostContextFilter {
     courseId?: number;
-    courseWideChannelIds?: number[];
     plagiarismCaseId?: number;
     searchText?: string;
-    conversationId?: number;
+    conversationIds?: number[];
+    authorIds?: number[];
+    filterToCourseWide?: boolean;
     filterToUnresolved?: boolean;
     filterToOwn?: boolean;
     filterToAnsweredOrReacted?: boolean;

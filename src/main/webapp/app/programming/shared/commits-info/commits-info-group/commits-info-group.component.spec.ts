@@ -8,7 +8,7 @@ import { CommitsInfoRowComponent } from 'app/programming/shared/commits-info/com
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TruncatePipe } from 'app/shared/pipes/truncate.pipe';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('CommitsInfoGroupComponent', () => {

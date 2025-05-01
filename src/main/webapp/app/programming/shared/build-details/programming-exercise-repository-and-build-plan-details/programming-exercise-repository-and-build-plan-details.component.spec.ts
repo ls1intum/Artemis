@@ -1,4 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { PROFILE_LOCALCI } from 'app/app.constants';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { CheckoutDirectoriesDto } from 'app/programming/shared/entities/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
@@ -10,15 +13,17 @@ import { AuxiliaryRepository } from 'app/programming/shared/entities/programming
 import { SimpleChanges } from '@angular/core';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/programming/shared/build-details/programming-exercise-build-plan-checkout-directories/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/programming/shared/build-details/programming-exercise-repository-and-build-plan-details/programming-exercise-repository-and-build-plan-details.component';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockProgrammingExerciseService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-programming-exercise.service';
+import { MockProgrammingExerciseService } from 'test/helpers/mocks/service/mock-programming-exercise.service';
 
 describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     let component: ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent;
     let fixture: ComponentFixture<ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent>;
     let programmingExerciseService: ProgrammingExerciseService;
+    let profileService: ProfileService;
 
     const CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN = '#checkout-directory-preview-submission-build-plan';
     const CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN = '#checkout-directory-preview-solution-build-plan';
@@ -63,6 +68,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
             providers: [
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
@@ -70,10 +76,11 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent);
                 component = fixture.componentInstance;
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
+                profileService = TestBed.inject(ProfileService);
 
                 component.programmingLanguage = ProgrammingLanguage.C;
                 component.programmingExercise = { id: 1, shortName: 'shortName', buildConfig: new ProgrammingExerciseBuildConfig() } as ProgrammingExercise;
-                component.isLocal = true;
+                component.isLocalCIEnabled = true;
 
                 jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation(
                     (programmingLanguage: ProgrammingLanguage, checkoutSolution: boolean) => {
@@ -92,6 +99,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should display checkout directories when they exist', () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         fixture.detectChanges();
 
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
@@ -106,6 +114,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should send request if localCI is used', () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
         fixture.detectChanges();
@@ -114,7 +123,8 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should NOT send request if localCI is NOT used', () => {
-        component.isLocal = false;
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [] } as unknown as ProfileInfo);
+        component.isLocalCIEnabled = false;
         const spy = jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
         fixture.detectChanges();
@@ -123,6 +133,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should display checkoutDirectory preview if localCI is used', () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         fixture.detectChanges();
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
@@ -131,7 +142,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should NOT display checkoutDirectory preview if localCI is NOT used', () => {
-        component.isLocal = false;
+        component.isLocalCIEnabled = false;
         fixture.detectChanges();
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         const solutionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SOLUTION_BUILD_PLAN);
@@ -140,6 +151,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should update auxiliary checkout repository directories', () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/sut' } as AuxiliaryRepository];
 
         fixture.detectChanges();
@@ -254,6 +266,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should update auxiliary repository directories on changes', () => {
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeProfiles: [PROFILE_LOCALCI] } as ProfileInfo);
         fixture.detectChanges();
 
         component.programmingExercise!.auxiliaryRepositories = [{ checkoutDirectory: 'assignment/src' } as AuxiliaryRepository];

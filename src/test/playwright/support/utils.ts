@@ -185,6 +185,7 @@ export async function drag(page: Page, draggable: Locator, droppable: Locator) {
     await draggable.hover();
 
     await page.mouse.down();
+    await droppable.scrollIntoViewIfNeeded();
     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, {
         steps: 5,
     });

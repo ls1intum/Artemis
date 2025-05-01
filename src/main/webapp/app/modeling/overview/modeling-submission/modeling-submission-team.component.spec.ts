@@ -3,15 +3,15 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
 import { ModelingSubmissionService } from 'app/modeling/overview/modeling-submission/modeling-submission.service';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { MockSyncStorage } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
-import { MockParticipationWebsocketService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-participation-websocket.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
+import { MockParticipationWebsocketService } from 'test/helpers/mocks/service/mock-participation-websocket.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/core/course/shared/services/participation-websocket.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockComplaintService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-complaint.service';
+import { MockComplaintService } from 'test/helpers/mocks/service/mock-complaint.service';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
@@ -25,7 +25,7 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { UMLDiagramType, UMLElement, UMLModel } from '@ls1intum/apollon';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HeaderParticipationPageComponent } from 'app/exercise/exercise-headers/participation-page/header-participation-page.component';
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
@@ -43,7 +43,7 @@ import { ExerciseMode } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submission-patch.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 
 describe('ModelingSubmissionComponent', () => {
@@ -104,8 +104,8 @@ describe('ModelingSubmissionComponent', () => {
                 fixture = TestBed.createComponent(ModelingSubmissionComponent);
                 comp = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                service = debugElement.injector.get(ModelingSubmissionService);
-                alertService = debugElement.injector.get(AlertService);
+                service = TestBed.inject(ModelingSubmissionService);
+                alertService = TestBed.inject(AlertService);
                 comp.modelingEditor = TestBed.createComponent(MockComponent(ModelingEditorComponent)).componentInstance;
             });
         console.error = jest.fn();
@@ -304,7 +304,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should set result when new result comes in from websocket', () => {
         submission.model = '{"elements": [{"id": 1}]}';
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const participationWebSocketService = debugElement.injector.get(ParticipationWebsocketService);
+        const participationWebSocketService = TestBed.inject(ParticipationWebsocketService);
 
         const unreferencedFeedback = new Feedback();
         unreferencedFeedback.id = 1;
@@ -330,7 +330,7 @@ describe('ModelingSubmissionComponent', () => {
     it('should update submission when new submission comes in from websocket', () => {
         submission.submitted = false;
         jest.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
-        const websocketService = debugElement.injector.get(WebsocketService);
+        const websocketService = TestBed.inject(WebsocketService);
         jest.spyOn(websocketService, 'subscribe');
         const modelSubmission = <ModelingSubmission>(<unknown>{
             id: 1,

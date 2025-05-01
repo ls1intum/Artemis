@@ -4,8 +4,8 @@ import { Posting } from 'app/communication/shared/entities/posting.model';
 export class AnswerPost extends Posting {
     public resolvesPost?: boolean;
     public post?: Post;
-    public forwardedPosts?: Post[] = [];
-    public forwardedAnswerPosts?: AnswerPost[] = [];
+    public forwardedPosts?: (Post | undefined)[] = [];
+    public forwardedAnswerPosts?: (AnswerPost | undefined)[] = [];
 
     constructor() {
         super();

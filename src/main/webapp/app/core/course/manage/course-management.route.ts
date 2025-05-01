@@ -30,7 +30,7 @@ export const courseManagementState: Routes = [
     },
     {
         path: '',
-        loadComponent: () => import('app/core/course/manage/course-management-tab-bar/course-management-tab-bar.component').then((m) => m.CourseManagementTabBarComponent),
+        loadComponent: () => import('app/core/course/manage/course-management-container/course-management-container.component').then((m) => m.CourseManagementContainerComponent),
         children: [
             {
                 path: ':courseId',
@@ -40,7 +40,7 @@ export const courseManagementState: Routes = [
                 },
                 data: {
                     authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'artemisApp.course.home.title',
+                    pageTitle: 'artemisApp.course.overview',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -185,6 +185,15 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
+                        path: 'communication',
+                        loadComponent: () => import('app/communication/shared/course-conversations/course-conversations.component').then((m) => m.CourseConversationsComponent),
+                        data: {
+                            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                            pageTitle: 'overview.communication',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
                         path: 'course-statistics',
                         loadComponent: () => import('./statistics/course-management-statistics.component').then((m) => m.CourseManagementStatisticsComponent),
                         data: {
@@ -195,11 +204,11 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                     {
-                        path: 'edit',
+                        path: 'settings',
                         loadComponent: () => import('./update/course-update.component').then((m) => m.CourseUpdateComponent),
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.course.home.editLabel',
+                            pageTitle: 'overview.settings',
                         },
                         canActivate: [UserRouteAccessService],
                     },

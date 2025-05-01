@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -95,7 +94,6 @@ public class UserResource {
         page.forEach(user -> {
             // remove some values which are not needed in the client
             user.setLangKey(null);
-            user.setLastNotificationRead(null);
             user.setLastModifiedBy(null);
             user.setLastModifiedDate(null);
             user.setCreatedBy(null);
@@ -104,32 +102,6 @@ public class UserResource {
         });
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    @PutMapping("users/notification-date")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateUserNotificationDate() {
-        log.debug("REST request to update notification date for logged-in user");
-        User user = userRepository.getUser();
-        userRepository.updateUserNotificationReadDate(user.getId());
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * Updates the HideNotificationsUntil property that indicates which notifications to show (based on their creation date)
-     *
-     * @param showAllNotifications is true if all notifications should be displayed in the sidebar else depending on the HideNotificationsUntil property
-     * @return the ResponseEntity with status 200 (OK) that the update was successful
-     */
-    @PutMapping("users/notification-visibility")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> updateUserNotificationVisibility(@RequestBody boolean showAllNotifications) {
-        log.debug("REST request to update notification visibility for logged-in user");
-        User user = userRepository.getUser();
-        // if all notifications (regardless of their creation date) should be shown hideUntil should be null
-        ZonedDateTime hideUntil = showAllNotifications ? null : ZonedDateTime.now();
-        userService.updateUserNotificationVisibility(user.getId(), hideUntil);
-        return ResponseEntity.ok().build();
     }
 
     /**

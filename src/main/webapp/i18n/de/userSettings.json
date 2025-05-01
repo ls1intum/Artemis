@@ -7,7 +7,9 @@
             "userSettings": "Benutzereinstellungen",
             "sshSettings": "SSH",
             "vcsAccessTokenSettings": "VCS Token",
+            "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
+            "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
@@ -84,6 +86,29 @@
                 "expiryDate": "Ablaufdatum",
                 "actions": "Aktionen"
             },
+            "passkeySettingsPage": {
+                "infoText": "Passkeys sind Webauthn-Anmeldeinformationen, die deine Identität mithilfe von Berührung, Gesichtserkennung, einem Gerätepasswort oder einer PIN überprüfen. Passkeys können als Passwortersatz verwendet werden.",
+                "onlyOnePerAuthenticator": "Du kannst nur einen Passkey pro Authentifikator für diese Seite registrieren (z. B. einen in Apple Keychain und einen anderen im Google Password Manager, etc.). Das Erstellen eines zweiten Passkeys mit dem gleichen Authentifikator wird den ersten registrierten Passkey überschreiben, den du manuell in Artemis entfernen musst.",
+                "learnMore": "Erfahre mehr über Passkeys.",
+                "noneRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
+                "deletePasskeyQuestion": "Möchtest du deinen Passkey für passwortlose Authentifikation mit Artemis wirklich löschen?",
+                "noPasskeyRegistered": "Du hast bisher keine Passkeys bei Artemis registriert.",
+                "addNewPasskey": "Neuen Passkey hinzufügen",
+                "yourPasskeys": "Deine Passkeys",
+                "created": "Erstellt am",
+                "lastUsed": "Zuletzt verwendet am",
+                "label": "Bezeichnung",
+                "validation": {
+                    "labelLength": "Die Passkey-Bezeichnung darf maximal {{maxLabelLength}} Zeichen lang sein."
+                },
+                "error": {
+                    "login": "Login mit Passkey fehlgeschlagen. Bitte überprüfe, ob du einen Passkey bei Artemis registriert hast.",
+                    "passkeyAlreadyRegistered": "Du hast bereits einen Passkey mit dem ausgewählten Authentifikator registriert. Wähle einen anderen Authentifikator, wenn du einen weiteren Passkey registrieren möchtest.",
+                    "registration": "Der Passkey konnte nicht registriert werden. Bitte versuche es erneut.",
+                    "save": "Der Passkey konnte nicht gespeichert werden. Bitte versuche es erneut.",
+                    "delete": "Der Passkey konnte nicht gelöscht werden. Bitte versuche es erneut."
+                }
+            },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
@@ -99,6 +124,7 @@
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
                 "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
+                "PASSKEYS": "Passkey-Einstellungen",
                 "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {

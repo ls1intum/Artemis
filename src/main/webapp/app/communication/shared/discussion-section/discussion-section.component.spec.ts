@@ -1,27 +1,29 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { MetisService } from 'app/communication/service/metis.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { MockExerciseService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-exercise.service';
+import { MockExerciseService } from 'test/helpers/mocks/service/mock-exercise.service';
 import { AnswerPostService } from 'app/communication/service/answer-post.service';
-import { MockAnswerPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-answer-post.service';
+import { MockAnswerPostService } from 'test/helpers/mocks/service/mock-answer-post.service';
 import { PostService } from 'app/communication/service/post.service';
-import { MockPostService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-post.service';
+import { MockPostService } from 'test/helpers/mocks/service/mock-post.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { MockActivatedRoute } from '../../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route';
+import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockLocalStorageService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { getElement, getElements } from '../../../../../../test/javascript/spec/helpers/utils/general.utils';
+import { getElement, getElements } from 'test/helpers/utils/general-test.utils';
 import {
     messagesBetweenUser1User2,
     metisCourse,
@@ -31,7 +33,7 @@ import {
     metisLecture,
     metisLectureChannelDTO,
     metisPostTechSupport,
-} from '../../../../../../test/javascript/spec/helpers/sample/metis-sample-data';
+} from 'test/helpers/sample/metis-sample-data';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
 import { PostContextFilter, SortDirection } from 'app/communication/metis.util';
@@ -41,13 +43,12 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
-import { MockNotificationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-notification.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
-import { NotificationService } from 'app/core/notification/shared/notification.service';
+import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 
 @Directive({
     selector: '[infinite-scroll]',
@@ -65,6 +66,7 @@ describe('DiscussionSectionComponent', () => {
     let channelService: ChannelService;
     let getChannelOfLectureSpy: jest.SpyInstance;
     let getChannelOfExerciseSpy: jest.SpyInstance;
+    let courseStorageService: CourseStorageService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -78,7 +80,6 @@ describe('DiscussionSectionComponent', () => {
                 { provide: LinkifyService, useClass: LinkifyService },
                 { provide: LinkPreviewService, useClass: LinkPreviewService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: NotificationService, useClass: MockNotificationService },
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: AnswerPostService, useClass: MockAnswerPostService },
                 { provide: PostService, useClass: MockPostService },
@@ -87,6 +88,8 @@ describe('DiscussionSectionComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
+                { provide: ProfileService, useClass: MockProfileService },
+                { provide: CourseStorageService, useClass: CourseStorageService },
                 {
                     provide: ActivatedRoute,
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
@@ -122,6 +125,9 @@ describe('DiscussionSectionComponent', () => {
             ),
         );
         metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
+
+        courseStorageService = TestBed.inject(CourseStorageService);
+        courseStorageService.setCourses([metisCourse]);
     });
 
     afterEach(() => {
@@ -264,7 +270,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisExerciseChannelDTO.id } as PostContextFilter,
+            { ...component.currentPostContextFilter, conversationIds: [metisExerciseChannelDTO.id] } as PostContextFilter,
             true,
             metisExerciseChannelDTO,
         );
@@ -279,7 +285,7 @@ describe('DiscussionSectionComponent', () => {
         component.setChannel(1);
 
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(
-            { ...component.currentPostContextFilter, conversationId: metisLectureChannelDTO.id },
+            { ...component.currentPostContextFilter, conversationIds: [metisLectureChannelDTO.id] },
             true,
             metisLectureChannelDTO,
         );

@@ -9,16 +9,12 @@
         }
     </th>
     <td class="p-2">
-        @if (localVC) {
-            @if (isRepositoryView) {
-                <a [routerLink]="['./', commit.hash]" ngbTooltip="{{ commit.hash }}"> {{ commit.hash ?? '' | truncate: 7 }} </a>
-            } @else {
-                <span ngbTooltip="{{ commit.hash }}">
-                    {{ commit.hash ?? '' | truncate: 7 }}
-                </span>
-            }
+        @if (isRepositoryView) {
+            <a [routerLink]="['./', commit.hash]" ngbTooltip="{{ commit.hash }}"> {{ commit.hash ?? '' | truncate: 7 }} </a>
         } @else {
-            <a [href]="commit.commitUrl" ngbTooltip="{{ commit.hash }}"> {{ commit.hash ?? '' | truncate: 7 }} </a>
+            <span ngbTooltip="{{ commit.hash }}">
+                {{ commit.hash ?? '' | truncate: 7 }}
+            </span>
         }
     </td>
     <td class="p-2">

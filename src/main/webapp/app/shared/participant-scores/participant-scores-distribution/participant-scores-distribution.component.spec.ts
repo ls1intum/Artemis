@@ -5,7 +5,7 @@ import { GradingSystemService } from 'app/assessment/manage/grading-system/gradi
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { GradeStep } from 'app/assessment/shared/entities/grade-step.model';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('ParticipantScoresDistributionComponent', () => {

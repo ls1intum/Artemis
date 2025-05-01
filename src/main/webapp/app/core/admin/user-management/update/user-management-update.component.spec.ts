@@ -7,21 +7,22 @@ import { UserManagementUpdateComponent } from 'app/core/admin/user-management/up
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/shared/language.helper';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { MockSyncStorage } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { MockNgbModalService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-ngb-modal.service';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { TranslateService } from '@ngx-translate/core';
-import { MockRouter } from '../../../../../../../test/javascript/spec/helpers/mocks/mock-router';
+import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import * as Sentry from '@sentry/angular';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 // Preliminary mock before import to prevent errors
@@ -61,6 +62,7 @@ describe('UserManagementUpdateComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -94,7 +96,7 @@ describe('UserManagementUpdateComponent', () => {
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
                 // WHEN
                 comp.ngOnInit();
@@ -113,7 +115,7 @@ describe('UserManagementUpdateComponent', () => {
                 // GIVEN
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll');
                 const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
-                profileInfoStub.mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+                profileInfoStub.mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
                 // WHEN
                 comp.ngOnInit();
@@ -215,13 +217,13 @@ describe('UserManagementUpdateComponent', () => {
 
         it('foo', fakeAsync(() => {
             // GIVEN
-            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ activeProfiles: ['jenkins'] } as ProfileInfo));
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue({ activeProfiles: ['jenkins'] } as ProfileInfo);
 
             // WHEN
             comp.ngOnInit();
 
             // THEN
-            expect(comp.editForm.controls['idInput']).toBeDefined();
+            expect(comp.editForm.controls['id']).toBeDefined();
         }));
     });
 
@@ -240,6 +242,8 @@ describe('UserManagementUpdateComponent', () => {
                 );
                 comp.user = entity;
                 comp.user.login = 'test_user';
+                // @ts-ignore
+                comp.initializeForm();
                 // WHEN
                 comp.save();
                 tick(); // simulate async
@@ -257,6 +261,8 @@ describe('UserManagementUpdateComponent', () => {
                 const entity = new User();
                 jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
                 comp.user = entity;
+                // @ts-ignore
+                comp.initializeForm();
                 // WHEN
                 comp.save();
                 tick(); // simulate async

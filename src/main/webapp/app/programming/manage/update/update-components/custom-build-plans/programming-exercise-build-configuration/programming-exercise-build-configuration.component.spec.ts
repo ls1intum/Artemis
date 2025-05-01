@@ -1,38 +1,39 @@
 import { TestBed } from '@angular/core/testing';
+import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from '@angular/forms';
-import { of } from 'rxjs';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { ProgrammingExerciseBuildConfig } from 'app/programming/shared/entities/programming-exercise-build.config';
-import { MockTranslateService } from '../../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('ProgrammingExercise Docker Image', () => {
     let comp: ProgrammingExerciseBuildConfigurationComponent;
-    let profileServiceMock: { getProfileInfo: jest.Mock };
     const course = { id: 123 } as Course;
     const programmingExercise = new ProgrammingExercise(course, undefined);
     programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+    let profileService: ProfileService;
 
     beforeEach(() => {
-        profileServiceMock = {
-            getProfileInfo: jest.fn(),
-        };
-
         TestBed.configureTestingModule({
             imports: [FormsModule],
             providers: [
-                { provide: ProfileService, useValue: profileServiceMock },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        })
-            .compileComponents()
-            .then();
+        });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
         comp = fixture.componentInstance;
+
+        profileService = TestBed.inject(ProfileService);
 
         fixture.componentRef.setInput('dockerImage', 'testImage');
         fixture.componentRef.setInput('timeout', 10);
@@ -54,16 +55,14 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should set profile values', () => {
-        profileServiceMock.getProfileInfo.mockReturnValue(
-            of({
-                buildTimeoutMin: undefined,
-                buildTimeoutMax: undefined,
-                buildTimeoutDefault: undefined,
-                defaultContainerCpuCount: undefined,
-                defaultContainerMemoryLimitInMB: undefined,
-                defaultContainerMemorySwapLimitInMB: undefined,
-            }),
-        );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            buildTimeoutMin: undefined,
+            buildTimeoutMax: undefined,
+            buildTimeoutDefault: undefined,
+            defaultContainerCpuCount: undefined,
+            defaultContainerMemoryLimitInMB: undefined,
+            defaultContainerMemorySwapLimitInMB: undefined,
+        } as unknown as ProfileInfo);
 
         comp.ngOnInit();
         expect(comp.timeoutMinValue).toBe(10);
@@ -73,16 +72,14 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.memory).toBeUndefined();
         expect(comp.memorySwap).toBeUndefined();
 
-        profileServiceMock.getProfileInfo.mockReturnValue(
-            of({
-                buildTimeoutMin: 0,
-                buildTimeoutMax: 360,
-                buildTimeoutDefault: 60,
-                defaultContainerCpuCount: 1,
-                defaultContainerMemoryLimitInMB: 1024,
-                defaultContainerMemorySwapLimitInMB: 2048,
-            }),
-        );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            buildTimeoutMin: 0,
+            buildTimeoutMax: 360,
+            buildTimeoutDefault: 60,
+            defaultContainerCpuCount: 1,
+            defaultContainerMemoryLimitInMB: 1024,
+            defaultContainerMemorySwapLimitInMB: 2048,
+        } as unknown as ProfileInfo);
         comp.ngOnInit();
         expect(comp.timeoutMinValue).toBe(0);
         expect(comp.timeoutMaxValue).toBe(360);
@@ -91,13 +88,11 @@ describe('ProgrammingExercise Docker Image', () => {
         expect(comp.memory).toBe(1024);
         expect(comp.memorySwap).toBe(2048);
 
-        profileServiceMock.getProfileInfo.mockReturnValue(
-            of({
-                buildTimeoutMin: 100,
-                buildTimeoutMax: 20,
-                buildTimeoutDefault: 10,
-            }),
-        );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            buildTimeoutMin: 100,
+            buildTimeoutMax: 20,
+            buildTimeoutDefault: 10,
+        } as unknown as ProfileInfo);
 
         comp.ngOnInit();
         expect(comp.timeoutMinValue).toBe(100);
@@ -139,13 +134,11 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should parse existing docker flags', () => {
-        profileServiceMock.getProfileInfo.mockReturnValue(
-            of({
-                buildTimeoutMin: undefined,
-                buildTimeoutMax: undefined,
-                buildTimeoutDefault: undefined,
-            }),
-        );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
+            buildTimeoutMin: undefined,
+            buildTimeoutMax: undefined,
+            buildTimeoutDefault: undefined,
+        } as unknown as ProfileInfo);
 
         programmingExercise.buildConfig!.dockerFlags = '{"network":"none","env":{"key":"value"}}';
         comp.ngOnInit();

@@ -41,11 +41,9 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -61,8 +59,6 @@ public class LectureUnitService {
 
     private final FileService fileService;
 
-    private final SlideRepository slideRepository;
-
     private final Optional<IrisLectureApi> irisLectureApi;
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
@@ -72,13 +68,12 @@ public class LectureUnitService {
     private final Optional<CompetencyRelationApi> competencyRelationApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
-            FileService fileService, SlideRepository slideRepository, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
+            FileService fileService, Optional<IrisLectureApi> irisLectureApi, Optional<CompetencyProgressApi> competencyProgressApi,
             Optional<CourseCompetencyApi> courseCompetencyApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
         this.fileService = fileService;
-        this.slideRepository = slideRepository;
         this.irisLectureApi = irisLectureApi;
         this.courseCompetencyApi = courseCompetencyApi;
         this.competencyProgressApi = competencyProgressApi;
@@ -166,14 +161,6 @@ public class LectureUnitService {
 
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
-            if (attachmentUnit.getSlides() != null && !attachmentUnit.getSlides().isEmpty()) {
-                List<Slide> slides = attachmentUnit.getSlides();
-                for (Slide slide : slides) {
-                    fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(slide.getSlideImagePath())), 5);
-                }
-                irisLectureApi.ifPresent(api -> api.deleteLectureFromPyrisDB(List.of(attachmentUnit)));
-                slideRepository.deleteAll(slides);
-            }
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureUnitToDelete.getLecture().getId());
@@ -200,17 +187,6 @@ public class LectureUnitService {
         lectureUnitLinks.forEach(link -> link.setCompetency(competency));
         competency.setLectureUnitLinks(lectureUnitLinks);
         courseCompetencyApi.get().save(competency);
-    }
-
-    /**
-     * Removes competency from all lecture units.
-     *
-     * @param lectureUnitLinks set of lecture unit links
-     * @param competency       competency to remove
-     */
-    public void removeCompetency(Set<CompetencyLectureUnitLink> lectureUnitLinks, CourseCompetency competency) {
-        competencyRelationApi.ifPresent(api -> api.deleteAllLectureUnitLinks(lectureUnitLinks));
-        competency.getLectureUnitLinks().removeAll(lectureUnitLinks);
     }
 
     /**

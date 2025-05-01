@@ -1,5 +1,6 @@
+import { inject } from '@angular/core';
 import { Component, computed, input, output, signal } from '@angular/core';
-import { IconDefinition, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faDownload, faExternalLinkAlt, faSquare, faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -8,6 +9,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
     selector: 'jhi-lecture-unit-card',
@@ -16,6 +18,9 @@ import { CommonModule } from '@angular/common';
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent {
+    private router = inject(Router);
+
+    protected faDownload = faDownload;
     protected faSquareCheck = faSquareCheck;
     protected faSquare = faSquare;
 
@@ -27,6 +32,9 @@ export class LectureUnitComponent {
     viewIsolatedButtonIcon = input<IconDefinition>(faExternalLinkAlt);
     isPresentationMode = input.required<boolean>();
 
+    readonly showOriginalVersionButton = input<boolean>(false);
+    readonly onShowOriginalVersion = output<void>();
+
     readonly onShowIsolated = output<void>();
     readonly onCollapse = output<boolean>();
     readonly onCompletion = output<boolean>();
@@ -34,6 +42,7 @@ export class LectureUnitComponent {
     readonly isCollapsed = signal<boolean>(true);
 
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
+    readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
     toggleCompletion(event: Event) {
         event.stopPropagation();
@@ -48,5 +57,10 @@ export class LectureUnitComponent {
     handleIsolatedView(event: Event) {
         event.stopPropagation();
         this.onShowIsolated.emit();
+    }
+
+    handleOriginalVersionView(event: Event) {
+        event.stopPropagation();
+        this.onShowOriginalVersion.emit();
     }
 }

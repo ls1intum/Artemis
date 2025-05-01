@@ -47,17 +47,20 @@ export class PostService extends PostingService<Post> {
         if (postContextFilter.sortingOrder) {
             params = params.set('sortingOrder', postContextFilter.sortingOrder.toString());
         }
-        if (postContextFilter.courseWideChannelIds) {
-            params = params.set('courseWideChannelIds', postContextFilter.courseWideChannelIds.toString());
-        }
         if (postContextFilter.plagiarismCaseId) {
             params = params.set('plagiarismCaseId', postContextFilter.plagiarismCaseId.toString());
         }
         if (postContextFilter.searchText) {
             params = params.set('searchText', postContextFilter.searchText.toString());
         }
-        if (postContextFilter.conversationId) {
-            params = params.set('conversationId', postContextFilter.conversationId.toString());
+        if (postContextFilter.conversationIds) {
+            params = params.set('conversationIds', postContextFilter.conversationIds.toString());
+        }
+        if (postContextFilter.authorIds) {
+            params = params.set('authorIds', postContextFilter.authorIds.toString());
+        }
+        if (postContextFilter.filterToCourseWide) {
+            params = params.set('filterToCourseWide', postContextFilter.filterToCourseWide);
         }
         if (postContextFilter.filterToUnresolved) {
             params = params.set('filterToUnresolved', postContextFilter.filterToUnresolved);
@@ -158,7 +161,7 @@ export class PostService extends PostingService<Post> {
      * @return '/messages' or '/posts'
      */
     private getResourceEndpoint(courseId: number, postContextFilter?: PostContextFilter, post?: Post): string {
-        if (post?.conversation || postContextFilter?.conversationId || postContextFilter?.courseWideChannelIds) {
+        if (post?.conversation || postContextFilter?.conversationIds) {
             return `api/communication/courses/${courseId}/messages`;
         } else {
             return `api/plagiarism/courses/${courseId}/posts`;

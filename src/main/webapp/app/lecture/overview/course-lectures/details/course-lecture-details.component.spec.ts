@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockInstance, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { CourseLectureDetailsComponent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/lecture/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { ExerciseUnitComponent } from 'app/lecture/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -24,7 +24,7 @@ import { AttachmentUnit } from 'app/lecture/shared/entities/lecture-unit/attachm
 import { Attachment, AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { TextUnit } from 'app/lecture/shared/entities/lecture-unit/textUnit.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
@@ -33,19 +33,18 @@ import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag/
 import { DifficultyBadgeComponent } from 'app/exercise/exercise-headers/difficulty-badge/difficulty-badge.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
-import { MockFileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-file.service';
+import { MockFileService } from 'test/helpers/mocks/service/mock-file.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lectureUnit.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import * as DownloadUtils from 'app/shared/util/download.util';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { OnlineUnitComponent } from 'app/lecture/overview/course-lectures/online-unit/online-unit.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { FileService } from 'app/shared/service/file.service';
-import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 
 describe('CourseLectureDetailsComponent', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -56,10 +55,7 @@ describe('CourseLectureDetailsComponent', () => {
     let lectureUnit2: AttachmentUnit;
     let lectureUnit3: TextUnit;
     let debugElement: DebugElement;
-    let profileService: ProfileService;
     let lectureService: LectureService;
-
-    let getProfileInfoMock: jest.SpyInstance;
 
     MockInstance(DiscussionSectionComponent, 'content', signal(new ElementRef(document.createElement('div'))));
     MockInstance(DiscussionSectionComponent, 'messages', signal([new ElementRef(document.createElement('div'))]));
@@ -155,13 +151,6 @@ describe('CourseLectureDetailsComponent', () => {
         fixture = TestBed.createComponent(CourseLectureDetailsComponent);
         courseLecturesDetailsComponent = fixture.componentInstance;
         debugElement = fixture.debugElement;
-
-        // mock profileService
-        profileService = fixture.debugElement.injector.get(ProfileService);
-        getProfileInfoMock = jest.spyOn(profileService, 'getProfileInfo');
-        const profileInfo = { inProduction: false } as ProfileInfo;
-        const profileInfoSubject = new BehaviorSubject<ProfileInfo | null>(profileInfo);
-        getProfileInfoMock.mockReturnValue(profileInfoSubject);
     });
 
     afterEach(() => {

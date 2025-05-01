@@ -25,21 +25,23 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { MockAccountService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { WebsocketService } from 'app/shared/service/websocket.service';
-import { MockWebsocketService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-websocket.service';
+import { MockWebsocketService } from 'test/helpers/mocks/service/mock-websocket.service';
 import { ExamEditWorkingTimeComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-edit-workingtime-dialog/exam-edit-working-time.component';
 import { ExamLiveAnnouncementCreateButtonComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-announcement-dialog/exam-live-announcement-create-button.component';
 import { DetailOverviewListComponent } from 'app/shared/detail-overview-list/detail-overview-list.component';
-import { MockTranslateService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockLocalStorageService } from '../../../../../../../test/javascript/spec/helpers/mocks/service/mock-local-storage.service';
+import { MockLocalStorageService } from 'test/helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import * as Utils from 'app/shared/util/utils';
 import { ExerciseDetailDirective } from 'app/shared/detail-overview-list/exercise-detail.directive';
 import { NoDataComponent } from 'app/shared/components/no-data/no-data-component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 
 @Component({
     template: '',
@@ -119,6 +121,7 @@ describe('ExamDetailComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 MockProvider(ArtemisDurationFromSecondsPipe),
+                { provide: ProfileService, useClass: MockProfileService },
             ],
             schemas: [],
         })
@@ -158,7 +161,7 @@ describe('ExamDetailComponent', () => {
     });
 
     it('should correctly route to edit subpage', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
@@ -169,7 +172,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to student exams subpage', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
@@ -180,7 +183,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to dashboard', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
@@ -191,7 +194,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to exercise groups', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
@@ -202,7 +205,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to scores', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
@@ -213,7 +216,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to students', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
@@ -224,7 +227,7 @@ describe('ExamDetailComponent', () => {
     }));
 
     it('should correctly route to test runs', fakeAsync(() => {
-        const location = examDetailComponentFixture.debugElement.injector.get(Location);
+        const location = TestBed.inject(Location);
         examDetailComponentFixture.detectChanges();
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();

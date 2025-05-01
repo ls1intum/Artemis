@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
-import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
+import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { GuidedTourService } from 'app/core/guided-tour/guided-tour.service';
 import { isFullScreen } from 'app/shared/util/fullscreen.util';
 import { faCheck, faCircleNotch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
@@ -13,7 +12,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass, NgStyle } from '@angular/common';
 import { ModelingExplanationEditorComponent } from '../modeling-explanation-editor/modeling-explanation-editor.component';
 import { captureException } from '@sentry/angular';
-import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guided-tour-task.model';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -24,7 +22,6 @@ import { associationUML, personUML, studentUML } from 'app/core/guided-tour/guid
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
     private modalService = inject(NgbModal);
-    private guidedTourService = inject(GuidedTourService);
     private sanitizer = inject(DomSanitizer);
 
     @Input() showHelpButton = true;
@@ -58,7 +55,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     /**
      * Initializes the Apollon editor.
-     * If this is a guided tour, then calls assessModelForGuidedTour.
      * If resizeOptions is set to true, resizes the editor according to interactions.
      */
     async ngAfterViewInit(): Promise<void> {
@@ -73,11 +69,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             // Destroy the Apollon editor after exporting the SVG, to avoid SVG <marker> id collisions
             this.destroyApollonEditor();
         } else {
-            this.guidedTourService.checkModelingComponent().subscribe((key) => {
-                if (key) {
-                    this.assessModelForGuidedTour(key, this.getCurrentModel());
-                }
-            });
             this.setupInteract();
             this.setupSafariScrollFix();
         }
@@ -230,48 +221,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             this.destroyApollonEditor();
         } catch (err) {
             captureException(err);
-        }
-    }
-
-    /**
-     * Assess the model for the modeling guided tutorial
-     * @param umlName  the identifier of the UML element that has to be assessed
-     * @param umlModel  the current UML model in the editor
-     */
-    assessModelForGuidedTour(umlName: string, umlModel: UMLModel): void {
-        // Find the required UML classes
-        const personClass = this.elementWithClass(personUML.name, umlModel);
-        const studentClass = this.elementWithClass(studentUML.name, umlModel);
-        let personStudentAssociation: UMLRelationship | undefined;
-
-        switch (umlName) {
-            // Check if the Person class is correct
-            case personUML.name: {
-                const nameAttribute = this.elementWithAttribute(personUML.attribute, umlModel);
-                const personClassCorrect = personClass && nameAttribute ? nameAttribute.owner === personClass.id : false;
-                this.guidedTourService.updateModelingResult(umlName, personClassCorrect);
-                break;
-            }
-            // Check if the Student class is correct
-            case studentUML.name: {
-                const majorAttribute = this.elementWithAttribute(studentUML.attribute, umlModel);
-                const visitLectureMethod = this.elementWithMethod(studentUML.method, umlModel);
-                const studentClassCorrect =
-                    studentClass && majorAttribute && visitLectureMethod ? majorAttribute.owner === studentClass.id && visitLectureMethod.owner === studentClass.id : false;
-                this.guidedTourService.updateModelingResult(umlName, studentClassCorrect);
-                break;
-            }
-            // Check if the Inheritance association is correct
-            case associationUML.name: {
-                personStudentAssociation = Object.values(umlModel.relationships).find(
-                    (relationship) =>
-                        relationship.source.element === studentClass!.id &&
-                        relationship.target.element === personClass!.id &&
-                        relationship.type === UMLRelationshipType.ClassInheritance,
-                );
-                this.guidedTourService.updateModelingResult(umlName, !!personStudentAssociation);
-                break;
-            }
         }
     }
 

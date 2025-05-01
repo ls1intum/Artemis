@@ -4,7 +4,7 @@ import { ExerciseUpdateNotificationComponent } from 'app/exercise/exercise-updat
 import { ButtonComponent } from 'app/shared/components/button/button.component';
 import { InputSignal, WritableSignal, signal } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockTranslateService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
 import { FormFooterComponent } from 'app/shared/form/form-footer/form-footer.component';

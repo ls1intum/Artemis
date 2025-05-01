@@ -1,14 +1,16 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
-import { MockSyncStorage } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-sync-storage.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockSyncStorage } from 'test/helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { Mutable } from '../../../../../test/javascript/spec/helpers/mutable';
-import { mockedActivatedRouteSnapshot } from '../../../../../test/javascript/spec/helpers/mocks/activated-route/mock-activated-route-snapshot';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { Mutable } from 'test/helpers/mutable';
+import { mockedActivatedRouteSnapshot } from 'test/helpers/mocks/activated-route/mock-activated-route-snapshot';
 import { CourseExerciseDetailsComponent } from 'app/core/course/overview/exercise-details/course-exercise-details.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
@@ -20,7 +22,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 describe('UserRouteAccessService', () => {
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
     const route = 'courses/:courseId/exercises/:exerciseId';
-    let fixture: ComponentFixture<CourseExerciseDetailsComponent>;
     let service: UserRouteAccessService;
 
     let accountService: AccountService;
@@ -50,6 +51,7 @@ describe('UserRouteAccessService', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 MockProvider(StateStorageService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -59,7 +61,7 @@ describe('UserRouteAccessService', () => {
             .compileComponents()
             .then(() => {
                 service = TestBed.inject(UserRouteAccessService);
-                fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
+                TestBed.createComponent(CourseExerciseDetailsComponent);
                 accountService = TestBed.inject(AccountService);
                 storageService = TestBed.inject(StateStorageService);
                 router = TestBed.inject(Router);
@@ -74,7 +76,7 @@ describe('UserRouteAccessService', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
         accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
 
-        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
+        const snapshot = TestBed.inject(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
         snapshot.queryParams = { ['ltiSuccessLoginRequired']: 'username' };
@@ -90,7 +92,7 @@ describe('UserRouteAccessService', () => {
         alertServiceStub = jest.spyOn(alertService, 'success');
         accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
 
-        const snapshot = fixture.debugElement.injector.get(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
+        const snapshot = TestBed.inject(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
         routeConfig.path = route;
         snapshot.queryParams = {};

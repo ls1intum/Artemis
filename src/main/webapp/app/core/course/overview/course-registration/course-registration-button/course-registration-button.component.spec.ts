@@ -39,7 +39,7 @@ describe('CourseRegistrationButtonComponent', () => {
                 identityStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve({ login: 'ga12tes' } as User));
                 getProfileInfoStub = jest
                     .spyOn(profileService, 'getProfileInfo')
-                    .mockReturnValue(of({ allowedCourseRegistrationUsernamePattern: '^([a-z]{2}\\d{2}[a-z]{3})' } as ProfileInfo));
+                    .mockReturnValue({ allowedCourseRegistrationUsernamePattern: '^([a-z]{2}\\d{2}[a-z]{3})' } as ProfileInfo);
             });
     });
 

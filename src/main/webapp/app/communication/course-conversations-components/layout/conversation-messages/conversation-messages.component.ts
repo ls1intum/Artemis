@@ -185,9 +185,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
-            if (this._activeConversation && getAsChannelDTO(conversation)?.isArchived !== getAsChannelDTO(this._activeConversation)?.isArchived) {
-                this._activeConversation = conversation;
-            }
             // This statement avoids a bug that reloads the messages when the conversation is already displayed
             if (conversation && this._activeConversation?.id === conversation.id) {
                 return;
@@ -287,7 +284,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
             courseId: this.course?.id,
-            conversationId: this._activeConversation?.id,
+            conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
             sortingOrder: SortDirection.DESCENDING,
@@ -395,14 +392,32 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                                 }
                             });
 
+                            const fetchedPostIds = new Set(fetchedPosts.map((post) => post.id));
+                            const fetchedAnswerPostIds = new Set(fetchedAnswerPosts.map((answerPost) => answerPost.id));
+
                             this.posts = this.posts.map((post) => {
                                 const forwardedMessages = map.get(post.id!) || [];
-                                post.forwardedPosts = fetchedPosts.filter((fetchedPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedPost.id && message.sourceType?.toString() === 'POST'),
-                                );
-                                post.forwardedAnswerPosts = fetchedAnswerPosts.filter((fetchedAnswerPost) =>
-                                    forwardedMessages.some((message) => message.sourceId === fetchedAnswerPost.id && message.sourceType?.toString() === 'ANSWER'),
-                                );
+                                post.forwardedPosts = forwardedMessages
+                                    .filter((message) => message.sourceType?.toString() === 'POST')
+                                    .map((message) => {
+                                        if (message.sourceId && !fetchedPostIds.has(message.sourceId)) {
+                                            // A source post has not been found so it was most likely deleted.
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
+                                        }
+                                        return fetchedPosts.find((fetchedPost) => fetchedPost.id === message.sourceId);
+                                    });
+
+                                post.forwardedAnswerPosts = forwardedMessages
+                                    .filter((message) => message.sourceType?.toString() === 'ANSWER')
+                                    .map((message) => {
+                                        if (message.sourceId && !fetchedAnswerPostIds.has(message.sourceId)) {
+                                            // A source post has not been found so it was most likely deleted.
+                                            // We return undefined to indicate a missing post and handle it later (see forwarded-message.component)
+                                            return undefined;
+                                        }
+                                        return fetchedAnswerPosts.find((fetchedAnswerPost) => fetchedAnswerPost.id === message.sourceId);
+                                    });
                                 return post;
                             });
 

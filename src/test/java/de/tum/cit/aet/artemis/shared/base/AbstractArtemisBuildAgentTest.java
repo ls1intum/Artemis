@@ -59,7 +59,6 @@ import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
 // NOTE: Do not use SPRING_PROFILE_TEST as it will cause the test to fail due to missing beans. This is because SPRING_PROFILE_TEST will cause some
 // test services, which dependencies are not provided since we are not running the full application context, to be created.
 @ActiveProfiles({ PROFILE_TEST_BUILDAGENT, PROFILE_BUILDAGENT })
-
 @TestPropertySource(properties = { "artemis.continuous-integration.specify-concurrent-builds=true", "artemis.continuous-integration.concurrent-build-size=2",
         "artemis.continuous-integration.pause-grace-period-seconds=2" })
 public abstract class AbstractArtemisBuildAgentTest {

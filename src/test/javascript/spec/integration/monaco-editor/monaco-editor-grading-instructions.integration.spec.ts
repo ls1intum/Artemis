@@ -1,5 +1,5 @@
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
+import { MockResizeObserver } from 'test/helpers/mocks/service/mock-resize-observer';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
 import { GradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
@@ -8,9 +8,9 @@ import { GradingDescriptionAction } from 'app/shared/monaco-editor/model/actions
 import { GradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
 import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
-import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
+import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 describe('MonacoEditorActionGradingInstructionsIntegration', () => {

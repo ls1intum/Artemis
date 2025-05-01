@@ -75,6 +75,7 @@ import { AccountManagementAPIRequests } from './requests/AccountManagementAPIReq
 export type ArtemisCommands = {
     login: (credentials: UserCredentials, url?: string) => Promise<void>;
     waitForExerciseBuildToFinish: (exerciseId: number, interval?: number, timeout?: number) => Promise<void>;
+    toggleSidebar: () => Promise<void>;
 };
 
 export type ArtemisPageObjects = {
@@ -160,6 +161,11 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     login: async ({ page }, use) => {
         await use(async (credentials: UserCredentials, url?: string) => {
             await Commands.login(page, credentials, url);
+        });
+    },
+    toggleSidebar: async ({ page }, use) => {
+        await use(async () => {
+            await Commands.toggleSidebar(page);
         });
     },
     waitForExerciseBuildToFinish: async ({ page, exerciseAPIRequests }, use) => {

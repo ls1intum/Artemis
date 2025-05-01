@@ -5,7 +5,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { SimpleChange, SimpleChanges } from '@angular/core';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/manage/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
-import { mockVariants } from '../../../../../../../../test/javascript/spec/helpers/mocks/iris/mock-settings';
+import { mockVariants } from 'test/helpers/mocks/iris/mock-settings';
 import { IrisSettingsType } from 'app/iris/shared/entities/settings/iris-settings.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -13,12 +13,12 @@ import { of } from 'rxjs';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { MockJhiTranslateDirective } from '../../../../../../../../test/javascript/spec/helpers/mocks/directive/mock-jhi-translate-directive.directive';
+import { MockJhiTranslateDirective } from 'test/helpers/mocks/directive/mock-jhi-translate-directive.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/shared/service/alert.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { MockAccountService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-account.service';
-import { MockTranslateService } from '../../../../../../../../test/javascript/spec/helpers/mocks/service/mock-translate.service';
+import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
 function baseSettings() {
