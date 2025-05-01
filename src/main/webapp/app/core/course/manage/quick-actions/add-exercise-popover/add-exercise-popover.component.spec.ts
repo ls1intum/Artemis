@@ -7,7 +7,7 @@ import { MockComponent } from 'ng-mocks';
 import { ExerciseCreateButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-create-button/exercise-create-button.component';
 import { ExerciseImportButtonComponent } from 'app/exercise/exercise-create-buttons/exercise-import-button/exercise-import-button.component';
 
-describe('AddExerciseModalComponent', () => {
+describe('AddExercisePopoverComponent', () => {
     let component: AddExercisePopoverComponent;
     let fixture: ComponentFixture<AddExercisePopoverComponent>;
 
