@@ -89,7 +89,6 @@ export class CourseSidebarComponent implements OnChanges {
 
     constructor() {
         this.activeBreakpoints = toSignal(this.layoutService.subscribeToLayoutChanges(), { initialValue: [] as string[] });
-
         this.canExpand = computed(() => {
             this.activeBreakpoints();
             return this.layoutService.isBreakpointActive(CustomBreakpointNames.sidebarExpandable);
@@ -148,6 +147,4 @@ export class CourseSidebarComponent implements OnChanges {
         }
         return this.sidebarItems().length * this.ITEM_HEIGHT + this.WINDOW_OFFSET;
     }
-
-    protected readonly FeatureToggle = FeatureToggle;
 }

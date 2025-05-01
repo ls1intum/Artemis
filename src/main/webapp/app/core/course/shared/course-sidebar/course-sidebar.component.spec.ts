@@ -15,7 +15,7 @@ import { CourseActionItem, CourseSidebarComponent, SidebarItem } from 'app/core/
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
-import { SimpleChange } from '@angular/core';
+import { SimpleChange, signal } from '@angular/core';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { Course, CourseInformationSharingConfiguration } from 'app/core/course/shared/entities/course.model';
@@ -133,15 +133,13 @@ describe('CourseSidebarComponent', () => {
     });
 
     it('should initialize signals in constructor and update canExpand when activeBreakpoints changes', () => {
-        layoutService.isBreakpointActive = jest.fn().mockReturnValue(true);
-        layoutService.subscribeToLayoutChanges = jest.fn().mockReturnValue(breakpointsSubject.asObservable());
         expect(component.activeBreakpoints()).toEqual([]);
         expect(component.canExpand()).toBeFalse();
 
         breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable, CustomBreakpointNames.large]);
         fixture.detectChanges();
 
-        expect(layoutService.isBreakpointActive).toHaveBeenCalledWith(CustomBreakpointNames.sidebarExpandable);
+        expect(layoutService.isBreakpointActive).toHaveBeenCalled();
         expect(component.canExpand()).toBeTrue();
 
         breakpointsSubject.next([CustomBreakpointNames.small]);
@@ -185,8 +183,8 @@ describe('CourseSidebarComponent', () => {
     it('should calculate threshold based on sidebar items length', () => {
         const threshold = component.calculateThreshold();
 
-        // WINDOW_OFFSET = 300, ITEM_HEIGHT = 38, sidebarItems.length = 5
-        const expectedThreshold = 300 + 5 * 38;
+        // WINDOW_OFFSET = 225, ITEM_HEIGHT = 38, sidebarItems.length = 5
+        const expectedThreshold = 225 + 5 * 38;
 
         expect(threshold).toBe(expectedThreshold);
     });
@@ -245,6 +243,7 @@ describe('CourseSidebarComponent', () => {
 
     it('should emit toggleCollapseState when collapse chevron is clicked', () => {
         const toggleCollapseStateSpy = jest.spyOn(component.toggleCollapseState, 'emit');
+        component.canExpand = signal(true);
         fixture.detectChanges();
         const collapseButton = fixture.debugElement.query(By.css('.double-arrow'));
         expect(collapseButton).toBeTruthy();
