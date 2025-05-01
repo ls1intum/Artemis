@@ -96,7 +96,7 @@ describe('HomeComponent', () => {
 
     it('should handle successful login', async () => {
         const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
-        const handleLoginSuccessSpy = jest.spyOn(component, 'handleLoginSuccess');
+        const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
 
         component.username = 'testUser';
         component.password = 'password123';
