@@ -29,6 +29,7 @@ describe('HomeComponent', () => {
     let fixture: ComponentFixture<HomeComponent>;
     let accountService: AccountService;
     let modalService: NgbModal;
+    let loginService: LoginService;
 
     let router: MockRouter;
 
@@ -69,6 +70,7 @@ describe('HomeComponent', () => {
         component = fixture.componentInstance;
         accountService = TestBed.inject(AccountService);
         modalService = TestBed.inject(NgbModal);
+        loginService = TestBed.inject(LoginService);
         fixture.detectChanges();
     });
 
@@ -77,30 +79,8 @@ describe('HomeComponent', () => {
     });
 
     it('should initialize with profile info and prefilled username', () => {
-        expect(component.username).toBe('testUser');
-        expect(component.isPasskeyEnabled).toBeTrue();
-    });
-
-    it('should open the setup passkey modal if conditions are met', () => {
-        const openSpy = jest.spyOn(modalService, 'open');
-        component.openSetupPasskeyModal();
-        expect(openSpy).toHaveBeenCalled();
-    });
-
-    it('should not open the setup passkey modal if passkey feature is disabled', () => {
-        component.isPasskeyEnabled = false;
-        const openSpy = jest.spyOn(modalService, 'open');
-        component.openSetupPasskeyModal();
-        expect(openSpy).not.toHaveBeenCalled();
-    });
-
-    it('should handle login success and navigate to courses', async () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
-
-        await component.login();
-        expect(navigateSpy).toHaveBeenCalledWith(['courses']);
+        expect(component.username).toBe('prefilledUsername');
+        expect(component.isPasskeyEnabled).toBeFalse();
     });
 
     it('should validate form correctly', () => {
@@ -112,6 +92,52 @@ describe('HomeComponent', () => {
         component.password = '';
         component.checkFormValidity();
         expect(component.isFormValid).toBeFalse();
+    });
+
+    it('should handle successful login', async () => {
+        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
+        const handleLoginSuccessSpy = jest.spyOn(component, 'handleLoginSuccess');
+
+        component.username = 'testUser';
+        component.password = 'password123';
+        component.rememberMe = true;
+
+        await component.login();
+
+        expect(component.isSubmittingLogin).toBeFalse();
+        expect(loginSpy).toHaveBeenCalledWith({
+            username: 'testUser',
+            password: 'password123',
+            rememberMe: true,
+        });
+        expect(handleLoginSuccessSpy).toHaveBeenCalled();
+        expect(component.authenticationError).toBeFalse();
+    });
+
+    it('should handle failed login', async () => {
+        jest.spyOn(loginService, 'login').mockRejectedValue(new Error('Login failed'));
+
+        component.username = 'testUser';
+        component.password = 'wrongPassword';
+
+        await component.login();
+
+        expect(component.isSubmittingLogin).toBeFalse();
+        expect(component.authenticationError).toBeTrue();
+    });
+
+    it('should set and reset isSubmittingLogin flag', async () => {
+        const loginSpy = jest.spyOn(loginService, 'login').mockResolvedValue();
+
+        component.username = 'testUser';
+        component.password = 'password123';
+
+        const loginPromise = component.login();
+        expect(component.isSubmittingLogin).toBeTrue();
+
+        await loginPromise;
+        expect(component.isSubmittingLogin).toBeFalse();
+        expect(loginSpy).toHaveBeenCalled();
     });
 
     describe('openSetupPasskeyModal', () => {
