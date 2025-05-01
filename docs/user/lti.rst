@@ -89,7 +89,7 @@ The following types of content can be linked to the LMS via LTI:
      - Tracks student progress and mastery of learning goals with visual stats.
    * - Learning Paths
      - Personalized content recommendations based on student performance.
-   * - Exercise groups
+   * - Exercise Groups
      - Custom exercise groups created by instructor during the content linking process.
    * - Lecture Groups
      - Custom lecture groups created by instructor during the content linking process.
