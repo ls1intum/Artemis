@@ -401,7 +401,7 @@ Deep Linking for Moodle
         :width: 700
         :alt: Moodle Deep Linking Select Content
 
-#. Select an item form the table, then click on *Link*.
+#. Select an item from the table, then click on *Link*.
 
     .. figure:: lti/moodle_select_content_link.png
         :align: center
