@@ -91,9 +91,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
      * <p>
      * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
      * </p>
-     * <p>
-     * This modal is only shown if the user is not on the login screen.
-     * </p>
      */
     openSetupPasskeyModal(): void {
         if (!this.isPasskeyEnabled) {
