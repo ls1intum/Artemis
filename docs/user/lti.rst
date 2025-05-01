@@ -461,22 +461,22 @@ Retrieve LTI 1.3 Launch URL from Artemis
 #. Once inside the course settings, select the *LTI Configuration* tab.
 
 For exercises:
-#. Inside the LTI Configuration, locate and click on the Exercises tab. This tab lists all the exercises available for the course.
-#. For each exercise listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the exercise. Find the exercise you wish to link and copy its LTI 1.3 Launch URL.
+    #. Inside the LTI Configuration, locate and click on the Exercises tab. This tab lists all the exercises available for the course.
+    #. For each exercise listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the exercise. Find the exercise you wish to link and copy its LTI 1.3 Launch URL.
 
-.. figure:: lti/ltiexercises_list.png
-    :align: center
-    :width: 700
-    :alt: LTI Exercise List
+    .. figure:: lti/ltiexercises_list.png
+        :align: center
+        :width: 700
+        :alt: LTI Exercise List
 
 For lectures:
-#. Inside the LTI Configuration, locate and click on the Lectures tab. This tab lists all the lectures available for the course.
-#. For each lecture listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the lecture. Find the lecture you wish to link and copy its LTI 1.3 Launch URL.
+    #. Inside the LTI Configuration, locate and click on the Lectures tab. This tab lists all the lectures available for the course.
+    #. For each lecture listed, there is an associated LTI 1.3 Launch URL. This URL is crucial for linking the lecture. Find the lecture you wish to link and copy its LTI 1.3 Launch URL.
 
-.. figure:: lti/lti_lectures_list.png
-    :align: center
-    :width: 700
-    :alt: LTI Lecture List
+    .. figure:: lti/lti_lectures_list.png
+        :align: center
+        :width: 700
+        :alt: LTI Lecture List
 
 Link exercise or lectures to Moodle
 """""""""""""""""""""""
