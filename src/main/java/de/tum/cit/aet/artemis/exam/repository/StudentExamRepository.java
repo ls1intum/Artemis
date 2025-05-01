@@ -231,6 +231,10 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
      * and exam. The result is wrapped in an {@link Optional} to handle cases where no matching
      * record exists.
      * </p>
+     * <p>
+     * <strong>Note:</strong> This method should not be used for test exams, as multiple
+     * {@link StudentExam} entries may exist for the same student and exam.
+     * </p>
      *
      * @param examId The ID of the exam.
      * @param userId The ID of the user (student).
