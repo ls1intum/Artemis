@@ -635,7 +635,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             this.openThreadOnFocus = true;
             id = (post as AnswerPost)?.post?.conversation?.id;
             this.focusPostId = (post as AnswerPost)?.post?.id;
-        } else {
+        } else if (!(post as AnswerPost).post && this.activeConversation?.id === id) {
             this.openThread(post as Post);
         }
 
