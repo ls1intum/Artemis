@@ -21,7 +21,7 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('HomeComponent', () => {
@@ -41,6 +41,8 @@ describe('HomeComponent', () => {
     beforeEach(async () => {
         router = new MockRouter();
         router.setUrl('');
+
+        localStorage.clear();
 
         await TestBed.configureTestingModule({
             imports: [MockRouterLinkDirective, RouterTestingModule, SetupPasskeyModalComponent],
@@ -116,16 +118,7 @@ describe('HomeComponent', () => {
         it('should not open the modal if passkey feature is disabled', () => {
             component.isPasskeyEnabled = false;
             const openModalSpy = jest.spyOn(modalService, 'open');
-
-            component.openSetupPasskeyModal();
-
-            expect(openModalSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not open the modal if the user is on the login screen', () => {
-            component.isPasskeyEnabled = true;
-            const openModalSpy = jest.spyOn(modalService, 'open');
-            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(false);
+            accountService.userIdentity = { hasRegisteredAPasskey: false } as any;
 
             component.openSetupPasskeyModal();
 
@@ -135,7 +128,6 @@ describe('HomeComponent', () => {
         it('should not open the modal if the user has already registered a passkey', () => {
             component.isPasskeyEnabled = true;
             const openModalSpy = jest.spyOn(modalService, 'open');
-            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(true);
             accountService.userIdentity = { hasRegisteredAPasskey: true } as any;
 
             component.openSetupPasskeyModal();
@@ -146,13 +138,40 @@ describe('HomeComponent', () => {
         it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
             component.isPasskeyEnabled = true;
             const openModalSpy = jest.spyOn(modalService, 'open');
-            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(true);
 
             accountService.userIdentity = { hasRegisteredAPasskey: false } as any;
 
             component.openSetupPasskeyModal();
 
             expect(openModalSpy).toHaveBeenCalledWith(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+        });
+
+        it('should return early if the user disabled the reminder for the current timeframe', () => {
+            component.isPasskeyEnabled = true;
+            const futureDate = new Date();
+            futureDate.setDate(futureDate.getDate() + 1);
+            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, futureDate.toISOString());
+
+            accountService.userIdentity = { hasRegisteredAPasskey: false } as any;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not return early if the reminder date is in the past', () => {
+            component.isPasskeyEnabled = true;
+            const dateInPast = new Date();
+            dateInPast.setDate(dateInPast.getDate() - 10);
+            localStorage.setItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, dateInPast.toISOString());
+
+            accountService.userIdentity = { hasRegisteredAPasskey: false } as any;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).toHaveBeenCalled();
         });
     });
 });

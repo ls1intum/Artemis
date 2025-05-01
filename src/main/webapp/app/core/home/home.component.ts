@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, effect, inject } from '@angular/core';
+import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -20,7 +20,7 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
-import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
@@ -100,22 +100,17 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             return;
         }
 
-        const isUserOnLoginScreen = !this.accountService.isAuthenticatedSignal();
-        if (isUserOnLoginScreen) {
+        const earliestReminderDate = localStorage.getItem(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY);
+        const userDisabledReminderForCurrentTimeframe = earliestReminderDate && new Date() < new Date(earliestReminderDate);
+        if (userDisabledReminderForCurrentTimeframe) {
             return;
         }
 
-        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredAPasskey) {
+        if (this.accountService.userIdentity?.hasRegisteredAPasskey) {
             return;
         }
 
         this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
-    }
-
-    constructor() {
-        effect(() => {
-            this.openSetupPasskeyModal();
-        });
     }
 
     ngOnInit() {
@@ -237,6 +232,8 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
         }
+
+        this.openSetupPasskeyModal();
 
         this.eventManager.broadcast({
             name: 'authenticationSuccess',
