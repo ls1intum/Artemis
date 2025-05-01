@@ -8,6 +8,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Information",
+            "learnerProfile": "Learner Profile",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
             "scienceSettings": "Science",
