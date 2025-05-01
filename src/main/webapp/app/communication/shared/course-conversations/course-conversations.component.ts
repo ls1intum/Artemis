@@ -409,6 +409,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearchConfig.filterToUnresolved = false;
         this.courseWideSearchConfig.filterToAnsweredOrReacted = false;
         this.courseWideSearchConfig.sortingOrder = SortDirection.ASCENDING;
+        this.courseWideSearchConfig.selectedAuthors = [];
+        this.courseWideSearchConfig.selectedConversations = [];
     }
 
     initializeSidebarAccordions() {
