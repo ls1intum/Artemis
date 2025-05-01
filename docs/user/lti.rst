@@ -71,6 +71,7 @@ Additionally, we outline the capabilities available to different user roles with
      - ✔
 
 The following types of content can be linked to the LMS via LTI:
+
 .. list-table::
    :widths: 40 60
    :align: center
