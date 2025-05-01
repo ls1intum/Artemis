@@ -479,7 +479,7 @@ For lectures:
             :alt: LTI Lecture List
 
 Link exercise or lectures to Moodle
-"""""""""""""""""""""""
+"""""""""""""""""""""""""""""""""""
 
 With the LTI 1.3 Launch URL copied, you can now link the exercise or lecture in Moodle:
 
@@ -518,7 +518,7 @@ This video describes how to use manually link exercises from an Artemis course i
     </div>
 
 Link exercise or lectures to edX
-""""""""""""""""""""
+""""""""""""""""""""""""""""""""
 
 #. As an edX course instructor, navigate to Studio for the course.
 #. Locate the unit and the corresponding LTI component in Studio.
