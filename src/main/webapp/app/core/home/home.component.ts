@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
+import { AfterViewChecked, Component, OnInit, Renderer2, effect, inject } from '@angular/core';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -12,7 +12,6 @@ import { EventManager } from 'app/shared/service/event-manager.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCircleNotch, faKey } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
@@ -21,6 +20,8 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-home',
@@ -46,6 +47,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     private translateService = inject(TranslateService);
     private webauthnService = inject(WebauthnService);
     private webauthnApiService = inject(WebauthnApiService);
+    private modalService = inject(NgbModal);
 
     protected usernameTouched = false;
     protected passwordTouched = false;
@@ -81,6 +83,40 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo;
+
+    /**
+     * <p>
+     * We want users to use passkey authentication over password authentication.
+     * </p>
+     * <p>
+     * If the passkey feature is enabled and no passkeys are set up yet, we display a modal that informs the user about passkeys and forwards to the setup page.
+     * </p>
+     * <p>
+     * This modal is only shown if the user is not on the login screen.
+     * </p>
+     */
+    openSetupPasskeyModal(): void {
+        if (!this.isPasskeyEnabled) {
+            return;
+        }
+
+        const isUserOnLoginScreen = !this.accountService.isAuthenticatedSignal();
+        if (isUserOnLoginScreen) {
+            return;
+        }
+
+        if (!this.accountService.userIdentity || this.accountService.userIdentity.hasRegisteredAPasskey) {
+            return;
+        }
+
+        this.modalService.open(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+    }
+
+    constructor() {
+        effect(() => {
+            this.openSetupPasskeyModal();
+        });
+    }
 
     ngOnInit() {
         this.initializeWithProfileInfo();

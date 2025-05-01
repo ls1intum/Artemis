@@ -21,6 +21,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { RouterTestingModule } from '@angular/router/testing';
 import { of } from 'rxjs';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
+import { SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
+import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -41,13 +43,14 @@ describe('HomeComponent', () => {
         router.setUrl('');
 
         await TestBed.configureTestingModule({
-            imports: [MockRouterLinkDirective, RouterTestingModule],
+            imports: [MockRouterLinkDirective, RouterTestingModule, SetupPasskeyModalComponent],
             providers: [
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useValue: router },
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(LoginService),
                 MockProvider(StateStorageService),
                 MockProvider(EventManager),
@@ -69,5 +72,87 @@ describe('HomeComponent', () => {
 
     it('should create the component', () => {
         expect(component).toBeTruthy();
+    });
+
+    it('should initialize with profile info and prefilled username', () => {
+        expect(component.username).toBe('testUser');
+        expect(component.isPasskeyEnabled).toBeTrue();
+    });
+
+    it('should open the setup passkey modal if conditions are met', () => {
+        const openSpy = jest.spyOn(modalService, 'open');
+        component.openSetupPasskeyModal();
+        expect(openSpy).toHaveBeenCalled();
+    });
+
+    it('should not open the setup passkey modal if passkey feature is disabled', () => {
+        component.isPasskeyEnabled = false;
+        const openSpy = jest.spyOn(modalService, 'open');
+        component.openSetupPasskeyModal();
+        expect(openSpy).not.toHaveBeenCalled();
+    });
+
+    it('should handle login success and navigate to courses', async () => {
+        const router = TestBed.inject(Router);
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        jest.spyOn(accountService, 'identity').mockResolvedValue({} as any);
+
+        await component.login();
+        expect(navigateSpy).toHaveBeenCalledWith(['courses']);
+    });
+
+    it('should validate form correctly', () => {
+        component.username = 'testUser';
+        component.password = 'password123';
+        component.checkFormValidity();
+        expect(component.isFormValid).toBeTrue();
+
+        component.password = '';
+        component.checkFormValidity();
+        expect(component.isFormValid).toBeFalse();
+    });
+
+    describe('openSetupPasskeyModal', () => {
+        it('should not open the modal if passkey feature is disabled', () => {
+            component.isPasskeyEnabled = false;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not open the modal if the user is on the login screen', () => {
+            component.isPasskeyEnabled = true;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(false);
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not open the modal if the user has already registered a passkey', () => {
+            component.isPasskeyEnabled = true;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(true);
+            accountService.userIdentity = { hasRegisteredAPasskey: true } as any;
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).not.toHaveBeenCalled();
+        });
+
+        it('should open the modal if the passkey feature is enabled, the user is authenticated, and no passkey is registered', () => {
+            component.isPasskeyEnabled = true;
+            const openModalSpy = jest.spyOn(modalService, 'open');
+            jest.spyOn(accountService, 'isAuthenticatedSignal').mockReturnValue(true);
+
+            accountService.userIdentity = { hasRegisteredAPasskey: false } as any;
+
+            component.openSetupPasskeyModal();
+
+            expect(openModalSpy).toHaveBeenCalledWith(SetupPasskeyModalComponent, { size: 'lg', backdrop: 'static' });
+        });
     });
 });
