@@ -3,7 +3,7 @@ import { MockDirective, MockProvider } from 'ng-mocks';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Router } from '@angular/router';
 
-import { SetupPasskeyModalComponent } from './setup-passkey-modal.component';
+import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from './setup-passkey-modal.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('SetupPasskeyModalComponent', () => {
@@ -41,6 +41,19 @@ describe('SetupPasskeyModalComponent', () => {
 
         component.closeModal();
 
+        expect(closeModalSpy).toHaveBeenCalled();
+    });
+
+    it('should set reminder date in localStorage and close the modal', () => {
+        const localStorageSpy = jest.spyOn(localStorage, 'setItem');
+        const closeModalSpy = jest.spyOn(activeModal, 'close');
+
+        component.remindMeIn30Days();
+
+        const expectedDate = new Date();
+        expectedDate.setDate(expectedDate.getDate() + 30);
+
+        expect(localStorageSpy).toHaveBeenCalledWith(EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, expectedDate.toISOString());
         expect(closeModalSpy).toHaveBeenCalled();
     });
 });
