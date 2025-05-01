@@ -1,4 +1,3 @@
-import org.yaml.snakeyaml.Yaml
 
 buildscript {
     dependencies {
@@ -74,166 +73,6 @@ defaultTasks "bootRun"
 
 springBoot {
     mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
-}
-
-openApi {
-    apiDocsUrl.set("http://localhost:8080/api-docs.yaml")
-    outputDir.set(file("$rootDir/openapi"))
-    outputFileName.set("openapi.yaml")
-    waitTimeInSeconds.set(180)
-    customBootRun {
-        jvmArgs = ["-Dspring.profiles.active=test,artemis,core,atlas,scheduling,athena,apollon,iris,aeolus,theia,lti," +
-
-                       "dev","-Dspringdoc.packages-to-scan=de.tum.cit.aet.artemis.tutorialgroup.web"]
-
-        args.set(["--artemis.user-management.use-external=false","--artemis.iris.url=http://iris.fake=",
-                  "--artemis.iris.secret-token=token", "--spring.jpa.database=h2", "--spring.datasource.url=jdbc:h2:mem:mydb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE", "--spring.datasource.username=sa", --"spring.datasource.password=", "--aeolus.url=http://aeolus.fake"])
-
-    }
-}
-
-openApiGenerate {
-    generatorName = "typescript-angular"
-    inputSpec = "${project.rootDir}/openapi/openapi-normalized.yaml"
-    outputDir = "${rootDir}/src/main/webapp/app/tutorialgroup/generated"
-    apiPackage = "api"
-    modelPackage = "model"
-    skipValidateSpec = true
-    configOptions = [
-        serviceSuffix: "ApiService",
-        supportsES6: "true",
-        serviceFileSuffix: "Api.service"
-    ]
-}
-tasks.register('pruneOpenApiSpec') {
-    description = 'Prune invalid $ref nodes and drop operations (and empty paths) with missing schemas'
-
-    doLast {
-        def root       = project.rootDir
-        def inputFile  = file("$root/openapi/openapi.yaml")
-        def outputFile = file("$root/openapi/openapi-pruned.yaml")
-        def yaml       = new Yaml()
-        def spec       = yaml.load(inputFile.text) as Map<String, Object>
-        def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
-
-        // 1) Prune invalid $ref nodes
-        Closure pruneRec
-        pruneRec = { obj ->
-            if (obj instanceof Map && obj.size() == 1 && obj.containsKey('$ref')) {
-                def ref     = obj['$ref'] as String
-                def matcher = (ref =~ /^#\/components\/([^\/]+)\/(.+)$/)
-                if (matcher.matches() && !components[matcher[0][1]]?.containsKey(matcher[0][2])) {
-                    return null
-                }
-                return obj
-            }
-            if (obj instanceof Map) {
-                obj.collectEntries { key, val ->
-                    def prunedVal = pruneRec(val)
-                    prunedVal != null ? [(key): prunedVal] : [:]
-                }
-            } else if (obj instanceof List) {
-                obj.collect { pruneRec(it) }.findAll { it != null }
-            } else {
-                obj
-            }
-        }
-        def prunedSpec = pruneRec(spec) as Map<String, Object>
-
-        // 2) Drop invalid operations
-        prunedSpec.paths?.with { pathsMap ->
-            pathsMap.each { pathName, ops ->
-                // collect operation names to remove
-                def toRemoveOps = ops.keySet().findAll { opName ->
-                    def op = ops[opName] as Map
-                    // invalid if requestBody has a content type with null schema
-                    def badReq  = op.requestBody?.content?.values()?.any { mt -> mt.schema == null }
-                    // or any response media type has null schema
-                    def badResp = op.responses?.values()?.any { resp ->
-                        resp.content?.values()?.any { mt -> mt.schema == null }
-                    }
-                    badReq || badResp
-                }
-                // remove them
-                toRemoveOps.each { badOpName ->
-                    ops.remove(badOpName)
-                }
-            }
-            // 3) Drop any path now left with no operations
-            def emptyPaths = pathsMap.keySet().findAll { pn ->
-                (pathsMap[pn] as Map).isEmpty()
-            }
-            emptyPaths.each { ep ->
-                pathsMap.remove(ep)
-            }
-        }
-
-        // 4) Write out the cleaned spec
-        outputFile.text = yaml.dump(prunedSpec)
-        println "✔ Pruned spec written to $outputFile"
-    }
-}
-
-tasks.register('normalizeOperationIds') {
-    group       = 'documentation'
-    description = 'Strip prefixes from operationId (e.g. User-update → update)'
-
-    doLast {
-        def root       = project.rootDir
-        def inputFile  = file("$root/openapi/openapi-pruned.yaml")
-        def outputFile = file("$root/openapi/openapi-normalized.yaml")
-        def yaml       = new Yaml()
-        def spec       = yaml.load(inputFile.text) as Map<String, Object>
-
-        // Walk all paths and operations
-        spec.paths?.each { path, opsMap ->
-            opsMap.each { method, op ->
-                if (op.operationId instanceof String) {
-                    def parts = op.operationId.split('_', 2)
-                    op.operationId = parts[0]
-                }
-            }
-        }
-
-        outputFile.text = yaml.dump(spec)
-        println "✔ Normalized operationIds written to $outputFile"
-    }
-}
-
-tasks.register('stripSuffix') {
-    description = 'Remove leading underscores and numeric suffixes from generated TS methods'
-
-    doLast {
-        def genDir = file("$project.rootDir/src/main/webapp/app/tutorialgroup/generated")
-        // fileTree API to locate all .ts files
-        fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
-            // replaceAll handles both patterns in one go
-            def updated = tsFile.text.replaceAll(
-                /(public\s+)_+([A-Za-z_][A-Za-z0-9_]*)/,
-                '$1$2'
-            ).replaceAll(
-                /(public\s+[A-Za-z_][A-Za-z0-9_]*)_[0-9]+(\s*\()/,
-                '$1$2'
-            )
-            tsFile.text = updated
-        }
-        println "✔ Stripped leading underscores and numeric suffixes via Gradle"
-    }
-}
-
-
-//tasks.named('pruneOpenApiSpec') {
-//    dependsOn tasks.named('generateOpenApiDocs')
-//}
-tasks.named('normalizeOperationIds') {
-    dependsOn 'pruneOpenApiSpec'
-}
-tasks.named('openApiGenerate') {
-    dependsOn 'normalizeOperationIds'
-}
-
-tasks.named('openApiGenerate') {
-    finalizedBy 'stripSuffix'
 }
 
 modernizer {
@@ -374,7 +213,7 @@ dependencies {
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
-            strictly "2.4"
+            strictly "${snakevaml_version}"
             // needed to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
@@ -612,6 +451,7 @@ dependencies {
 
 // we have to apply the test.gradle file after the dependencies block, otherwise we get the error  Cannot change dependencies of dependency configuration ':mockitoAgent' after it has been resolved
 apply from: "gradle/test.gradle"
+apply from: "gradle/openapi.gradle"
 
 
 dependencyManagement {
