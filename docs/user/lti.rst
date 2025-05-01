@@ -363,7 +363,7 @@ However, if instructors prefer to restrict exercise and lecture participation to
 #. In the *General Configuration* section, enable the *Require existing user* checkbox.
 #. Hit *Save* to apply your changes.
 
-Linking Artemis content
+Linking Artemis Content
 -------------------------
 
 Artemis supports various methods for integrating LTI platforms, enhancing the platform's versatility in connecting with external learning resources. A preferred method for setting up content links in Artemis is deep linking (also known as content selection).
