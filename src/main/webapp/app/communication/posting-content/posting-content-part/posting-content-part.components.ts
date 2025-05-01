@@ -79,6 +79,10 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         this.imageNotFound = true;
     }
 
+    /**
+     * Processes content before and after any reference (user/channel/etc.)
+     * to escape markdown-specific characters like lists (e.g., 1., -).
+     */
     processContent() {
         if (this.postingContentPart()?.contentBeforeReference) {
             this.processedContentBeforeReference = this.escapeNumberedList(this.postingContentPart()?.contentBeforeReference || '');
@@ -91,10 +95,22 @@ export class PostingContentPartComponent implements OnInit, OnChanges {
         }
     }
 
+    /**
+     * Escapes numbered list markdown (e.g., "1. item") to prevent incorrect rendering.
+     *
+     * @param content The raw markdown content
+     * @returns Processed content with escaped numbered lists
+     */
     escapeNumberedList(content: string): string {
         return content.replace(/^(\s*\d+)\. /gm, '$1\\.  ');
     }
 
+    /**
+     * Escapes unordered list markdown (e.g., "- item") to prevent unintended list rendering.
+     *
+     * @param content The raw markdown content
+     * @returns Processed content with escaped dashes
+     */
     escapeUnorderedList(content: string): string {
         return content.replace(/^(- )/gm, '\\$1');
     }

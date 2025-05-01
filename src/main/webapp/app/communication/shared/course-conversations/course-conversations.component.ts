@@ -446,6 +446,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseWideSearch()?.onSearch();
     }
 
+    /**
+     * Refreshes and prepares the sidebar data used for rendering channel and chat groups.
+     *
+     * - Forces MetisConversationService to refresh data (e.g., conversations).
+     * - Maps the latest conversations to sidebar card elements.
+     * - Regroups conversations under their respective accordion sections (e.g., general, exercise).
+     * - Sets the 'recents' section based on the currently open conversation.
+     * - Calls updateSidebarData() to finalize the sidebarData structure.
+     */
     prepareSidebarData() {
         this.metisConversationService.forceRefresh().subscribe({
             complete: () => {
@@ -549,6 +558,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             });
     }
 
+    /**
+     * Opens the create channel modal dialog.
+     * Emits a create action for the given channel on confirmation.
+     */
     openCreateChannelDialog() {
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
@@ -625,6 +638,12 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Determines which post to focus and whether to open thread view,
+     * then sets the active conversation accordingly.
+     *
+     * @param post The post or answer post being navigated to
+     */
     onTriggerNavigateToPost(post: Posting) {
         let id = (post as Post)?.conversation?.id;
         this.focusPostId = post.id;
