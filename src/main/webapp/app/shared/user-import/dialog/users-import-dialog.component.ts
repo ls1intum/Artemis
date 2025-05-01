@@ -19,6 +19,7 @@ import { TranslateDirective } from '../../language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { Student } from 'app/tutorialgroup/generated';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -231,7 +232,15 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.isImporting = true;
         if (this.tutorialGroup) {
             this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
-                next: (res) => this.onSaveSuccess(res),
+                next: (res) => {
+                    const convertedResponse = new HttpResponse<Student[]>({
+                        body: res.body ? Array.from(res.body) : [],
+                        headers: res.headers,
+                        status: res.status,
+                        statusText: res.statusText,
+                    });
+                    this.onSaveSuccess(convertedResponse);
+                },
                 error: () => this.onSaveError(),
             });
         } else if (this.courseGroup && !this.exam) {
