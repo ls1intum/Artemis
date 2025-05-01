@@ -14,8 +14,6 @@ export class MockAccountService implements IAccountService {
         this.userIdentityValue = user;
     }
 
-    isAuthenticatedSignal = jest.fn(() => true);
-
     identity = () => Promise.resolve({ id: 99, login: 'admin' } as User);
     getAndClearPrefilledUsername = () => 'prefilledUsername';
     setPrefilledUsername = (username: string) => ({});
