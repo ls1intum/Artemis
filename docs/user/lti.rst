@@ -26,7 +26,7 @@ Additionally, we outline the capabilities available to different user roles with
 
 * **Administrators** can manage and configure LTI settings across the platform.
 * **Instructors** can create and link Artemis content within their LMS courses.
-* **Students** benefit from seamless access to exercises and course materials.
+* **Students** benefit from seamless access to Artemis features and course materials.
 
 .. list-table::
    :widths: 30 10 10 10
@@ -65,7 +65,7 @@ Additionally, we outline the capabilities available to different user roles with
      - ✔
      -
      -
-   * - Launch exercise
+   * - Launch content
      - ✔
      - ✔
      - ✔
@@ -75,7 +75,7 @@ This guide is structured as follows:
 #. Overview: Begin this section by understanding the importance of LTI and role in enhancing the interoperability between Artemis and LMS platforms.
 #. Preparation Steps: Before proceeding with LTI integration, ensure your Artemis platform is prepared by following the `Enabling Online Course`_ section.
 #. Registration Process: If your LMS supports `Dynamic Registration`_ or requires `Manual Registration`_, follow the steps outlined in the `Register Artemis with the platform`_ section.
-#. Linking Courses and Exercises: The `Sharing access to a course`_ and `Link creation via Deep Linking`_ sections provide detailed instructions for linking Artemis exercises with your LMS, ensuring a seamless experience for students.
+#. Linking Courses and their content: The `Sharing access to a course`_ and `Link creation via Deep Linking`_ sections provide detailed instructions for linking Artemis exercises, lectures, competencies, learning-paths and the Iris dashboard with your LMS, ensuring a seamless experience for students.
 #. Platform-Specific Instructions: For detailed instructions tailored to Moodle or edX, refer to the respective sections that guide you through each step of the configuration process.
 #. Common Issues: Should you encounter any challenges, the `Common Issues`_ section addresses typical problems and their solutions.
 
@@ -84,7 +84,7 @@ This guide is structured as follows:
     Whether you're an administrator setting up the integration or an instructor looking to link Artemis content to your courses, this guide aims to provide you with all the necessary information to achieve a successful LTI integration.
 
 .. warning::
-    Before instructors integrate Artemis or students access and start Artemis exercises through LMS via LTI, server administrators must ensure that LTI is active with the necessary profile on the Artemis server. If you are a server admin, please configure this setting to allow instructors and students to utilize the LTI integration.
+    Before instructors integrate Artemis or students access and start Artemis content through LMS via LTI, server administrators must ensure that LTI is active with the necessary profile on the Artemis server. If you are a server admin, please configure this setting to allow instructors and students to utilize the LTI integration.
 
 Enabling Online Course
 ---------------------------
@@ -348,14 +348,14 @@ To unlock the full potential of the LTI configuration and enable the Deep Linkin
 Artemis user account provisioning
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Instructors can decide to automatically create new user accounts for students who first participate in an exercise via an external platform and do not already have an Artemis account. Artemis automatically generates a new student account by default when they first engage with an Artemis exercise through an external LMS.
+Instructors can decide to automatically create new user accounts for students who first participate in an exercise or lecture via an external platform and do not already have an Artemis account. Artemis automatically generates a new student account by default when they first engage with an Artemis exercise or lecture through an external LMS.
 
 .. figure:: lti/moodle_password_popup.png
     :align: center
     :width: 700
     :alt: Moodle - Password Pop-up
 
-However, if instructors prefer to restrict exercise participation to only those students who already have an existing Artemis account, they can adjust the settings by following the steps outlined below:
+However, if instructors prefer to restrict exercise and lecture participation to only those students who already have an existing Artemis account, they can adjust the settings by following the steps outlined below:
 
 #. As an instructor, head to the *Course Management* section and select your targeted online course to configure.
 #. Within the course management area, locate and click on the *LTI Configuration tab*.
@@ -363,11 +363,11 @@ However, if instructors prefer to restrict exercise participation to only those 
 #. In the *General Configuration* section, enable the *Require existing user* checkbox.
 #. Hit *Save* to apply your changes.
 
-Linking Artemis Exercises
+Linking Artemis content
 -------------------------
 
-Artemis supports various methods for integrating LTI platforms, enhancing the platform's versatility in connecting with external learning resources. A preferred method for setting up exercise links in Artemis is deep linking (also known as content selection).
-This approach streamlines the integration process, allowing for a seamless connection between Artemis and external platforms. For situations where Deep Linking is not enabled, manual configuration of exercise links within external platforms is also possible.
+Artemis supports various methods for integrating LTI platforms, enhancing the platform's versatility in connecting with external learning resources. A preferred method for setting up content links in Artemis is deep linking (also known as content selection).
+This approach streamlines the integration process, allowing for a seamless connection between Artemis and external platforms. For situations where Deep Linking is not enabled, manual configuration of content links within external platforms is also possible.
 Below, we explain both methods to assist instructors in choosing the best approach for their needs.
 
 Link creation via Deep Linking
@@ -394,16 +394,31 @@ Deep Linking for Moodle
         :width: 700
         :alt: Moodle Deep Linking Select Course
 
-#. Select from a list of exercises, then click on *Link*.
+#. Moodle will show a table of linkable Artemis content
 
-    .. figure:: lti/moodle_select-exercise.png
+    .. figure:: lti/moodle_select_content_new.png
         :align: center
         :width: 700
-        :alt: Moodle Deep Linking Select Exercises
+        :alt: Moodle Deep Linking Select Content
+
+#. Select an item form the table, then click on *Link*.
+
+    .. figure:: lti/moodle_select_content_link.png
+        :align: center
+        :width: 700
+        :alt: Moodle Deep Link Content
+
+#. (Optional) Select multiple exercises or lectures and select the "Activate exercise grouping" to create a custom content group. This allows students to navigate between the exercises or lectures of the group using a sidebar.
+
+    .. figure:: lti/moodle_select_content_link_grouped.png
+            :align: center
+            :width: 700
+            :alt: Moodle Deep Linking Select Grouped Content
+
 
 #. Save and return the course.
 
-This video describes how to use LTI Deep Linking Service to link exercises from an Artemis course into an Moodle course:
+This video describes how you can use the LTI Deep Linking Service to integrate content from an Artemis course into a Moodle course using the example of an exercise:
 
 .. raw:: html
 
@@ -421,7 +436,7 @@ Deep Linking for edX
 #. In the LTI component page in Studio, locate the *Deep Linking Launch - Configure tool* link at the bottom and navigate.
 #. Artemis will redirect you to the login page to login using your instructor account.
 #. Select the Artemis course to which you have access.
-#. Select from a list of exercises, then click on *Link*.
+#. Select from a list of content, then click on *Link*.
 #. Once the configuration is complete, close this tab.
 #. Navigate to the Studio and refresh the page; the Deep Linking setup will be complete.
 #. The content you selected in the tool will be presented to your students in the LMS.
