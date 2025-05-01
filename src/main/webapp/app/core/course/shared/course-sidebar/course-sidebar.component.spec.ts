@@ -119,10 +119,13 @@ describe('CourseSidebarComponent', () => {
             ],
         }).compileComponents();
 
-        fixture = TestBed.createComponent(CourseSidebarComponent);
+        // we have to set this up before we create the component because the signal is set up in the constructor
         layoutService = TestBed.inject(LayoutService);
-        component = fixture.componentInstance;
         breakpointsSubject = new BehaviorSubject<string[]>([]);
+        jest.spyOn(layoutService, 'subscribeToLayoutChanges').mockReturnValue(breakpointsSubject.asObservable());
+
+        fixture = TestBed.createComponent(CourseSidebarComponent);
+        component = fixture.componentInstance;
 
         // Set up initial inputs
         fixture.componentRef.setInput('course', course1);
@@ -132,20 +135,22 @@ describe('CourseSidebarComponent', () => {
         fixture.detectChanges();
     });
 
-    it('should initialize signals in constructor and update canExpand when activeBreakpoints changes', () => {
+    it('should update canExpand when activeBreakpoints changes', () => {
         expect(component.activeBreakpoints()).toEqual([]);
         expect(component.canExpand()).toBeFalse();
+        layoutService.activeBreakpoints = [CustomBreakpointNames.sidebarExpandable];
+        fixture.detectChanges();
+        const isBreakpointActiveSpy = jest.spyOn(layoutService, 'isBreakpointActive');
 
-        breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable, CustomBreakpointNames.large]);
+        breakpointsSubject.next([CustomBreakpointNames.sidebarExpandable]);
         fixture.detectChanges();
 
-        expect(layoutService.isBreakpointActive).toHaveBeenCalled();
+        expect(isBreakpointActiveSpy).toHaveBeenCalledExactlyOnceWith(CustomBreakpointNames.sidebarExpandable);
         expect(component.canExpand()).toBeTrue();
 
+        layoutService.activeBreakpoints = [CustomBreakpointNames.small];
         breakpointsSubject.next([CustomBreakpointNames.small]);
         fixture.detectChanges();
-
-        expect(layoutService.isBreakpointActive).toHaveBeenCalledWith(CustomBreakpointNames.small);
         expect(component.canExpand()).toBeFalse();
     });
 
