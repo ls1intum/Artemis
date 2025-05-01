@@ -6,6 +6,9 @@ import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,6 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 public class IrisTutorSuggestionSession extends IrisChatSession {
 
     @ManyToOne
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
     private Post post;
 
