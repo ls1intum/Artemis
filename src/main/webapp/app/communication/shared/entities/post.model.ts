@@ -10,9 +10,9 @@ export class Post extends Posting {
     public plagiarismCase?: PlagiarismCase;
     public displayPriority?: DisplayPriority;
     public resolved?: boolean;
+    public forwardedPosts?: (Post | undefined)[] = [];
+    public forwardedAnswerPosts?: (AnswerPost | undefined)[] = [];
     public originalPostId?: number;
-    public forwardedPosts?: Post[] = [];
-    public forwardedAnswerPosts?: AnswerPost[] = [];
 
     constructor() {
         super();

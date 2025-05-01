@@ -36,6 +36,7 @@ import { WebsocketService } from 'app/shared/service/websocket.service';
 import dayjs from 'dayjs/esm';
 import { cloneDeep } from 'lodash-es';
 import { BehaviorSubject, Observable, ReplaySubject, Subscription, catchError, forkJoin, map, of, switchMap, tap, throwError } from 'rxjs';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 
 @Injectable()
 export class MetisService implements OnDestroy {
@@ -47,6 +48,7 @@ export class MetisService implements OnDestroy {
     private conversationService = inject(ConversationService);
     private forwardedMessageService = inject(ForwardedMessageService);
     private savedPostService = inject(SavedPostService);
+    private metisConversationService = inject(MetisConversationService);
 
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
@@ -681,6 +683,10 @@ export class MetisService implements OnDestroy {
         const postIsNotFromCurrentPlagiarismCase =
             this.currentPostContextFilter.plagiarismCaseId && postDTO.post.plagiarismCase?.id !== this.currentPostContextFilter.plagiarismCaseId;
 
+        if (postDTO.action === MetisPostAction.CREATE && postDTO.post.conversation?.id !== this.currentConversation?.id && postDTO.post.author?.id !== this.user.id) {
+            this.metisConversationService.handleNewMessage(postConvId, postDTO.post.creationDate);
+        }
+
         if (!isValidPostContext || !postIsFromCurrentConversation || postIsNotFromCurrentPlagiarismCase || postIsPrivate) {
             return;
         }
@@ -713,7 +719,10 @@ export class MetisService implements OnDestroy {
                 }
 
                 if (this.currentPostContextFilter.conversationIds && this.currentPostContextFilter.conversationIds.length == 1 && postDTO.post.author?.id !== this.user.id) {
-                    this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter.conversationIds[0]).subscribe();
+                    setTimeout(() => {
+                        // We add a small timeout to avoid concurrency issues
+                        this.conversationService.markAsRead(this.courseId, this.currentPostContextFilter!.conversationIds![0]).subscribe();
+                    }, 1000);
                 }
 
                 this.addTags(postDTO.post.tags);
@@ -728,6 +737,14 @@ export class MetisService implements OnDestroy {
                         if (cachedAnswer) {
                             answer.authorRole = cachedAnswer.authorRole;
                         }
+
+                        // The updates only set the post.id property of answers, so we set the author and conversation properties manually
+                        // to ensure the same answer.post structure as from the get-messages call.
+                        answer.post = {
+                            id: postDTO.post.id,
+                            author: postDTO.post.author,
+                            conversation: postDTO.post.conversation,
+                        };
                     });
                     this.cachedPosts[indexToUpdate] = postDTO.post;
                 }

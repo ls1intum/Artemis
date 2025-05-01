@@ -16,12 +16,14 @@ import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationNotificationRecipientSummary;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
@@ -52,7 +54,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -72,13 +73,12 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
-            ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
-            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
-            ChannelAuthorizationService channelAuthorizationService, SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService,
-            PostRepository postRepository, SingleUserNotificationService singleUserNotificationService) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository,
-                savedPostRepository);
+    protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
+            AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
+            SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
+            SingleUserNotificationService singleUserNotificationService) {
+        super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.channelAuthorizationService = channelAuthorizationService;
@@ -268,8 +268,26 @@ public class ConversationMessagingService extends PostingService {
         // This check is needed to avoid resetting the unread count when searching
         if (postContextFilter.searchText() == null && postContextFilter.conversationIds().length == 1) {
             Long conversationId = conversationIds.getFirst();
-            // invoke async due to db write access to avoid that the client has to wait
-            conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+            var participantSet = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversationId, Set.of(requestingUser.getId()));
+
+            // If there is no entry yet (e.g. for course-wide channels in which the user did not write a post yet,
+            // we create the entry to be able to track the unread count)
+            if (participantSet.isEmpty()) {
+                var participant = ConversationParticipant.createWithDefaultValues(requestingUser, conversationService.getConversationById(conversationId));
+                participant.setLastRead(ZonedDateTime.now());
+                // We surround this with a try/catch to avoid errors in case there are multiple requests at the exact
+                // same time and the select query on top was not aware of that yet. Therefore, we simply continue.
+                try {
+                    conversationParticipantRepository.save(participant);
+                }
+                catch (DataIntegrityViolationException e) {
+                    // Continue
+                }
+            }
+            else {
+                // invoke async due to db write access to avoid that the client has to wait
+                conversationParticipantRepository.updateLastReadAsync(requestingUser.getId(), conversationId, ZonedDateTime.now());
+            }
         }
 
         return conversationPosts;
