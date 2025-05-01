@@ -251,7 +251,7 @@ public class FilePathService {
         if (path.toString().contains("student")) {
             return URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
         }
-        if (!path.toString().contains("slide")) {
+        if (!path.toString().contains("slide/")) {
             return URI.create("attachments/attachment-unit/" + id + "/" + filename);
         }
         try {
