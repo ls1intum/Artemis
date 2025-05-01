@@ -34,7 +34,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { AfterViewInit, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';
 import { CourseManagementContainerComponent } from 'app/core/course/manage/course-management-container/course-management-container.component';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -254,6 +254,7 @@ describe('CourseManagementContainerComponent', () => {
                 jest.spyOn(metisConversationService, 'course', 'get').mockReturnValue(course);
                 jest.spyOn(courseStorageService, 'getCourse').mockReturnValue(course1);
                 jest.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
+                component.courseBody = { nativeElement: { scrollTop: 123 } } as ElementRef<HTMLElement>;
             });
     }));
 
@@ -472,6 +473,7 @@ describe('CourseManagementContainerComponent', () => {
         component.onSubRouteActivate(stubSubComponent.componentInstance);
         fixture.detectChanges();
         stubSubComponent.detectChanges();
+        expect(component.courseBody.nativeElement.scrollTop).toBe(0);
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
         expect(expectedButton).not.toBeNull();
