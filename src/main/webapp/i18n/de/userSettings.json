@@ -113,7 +113,8 @@
                     "recommendation": "Wir empfehlen, jetzt einen Passkey einzurichten, um die Sicherheit deines Kontos zu erhöhen und eine nahtlose und passwortfreie Anemldung zu genießen."
                 },
                 "setupLater": "Später einrichten",
-                "setupPasskey": "Passkey einrichten"
+                "setupPasskey": "Passkey einrichten",
+                "remindMeIn30Days": "Erinnere mich in 30 Tagen"
             },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",

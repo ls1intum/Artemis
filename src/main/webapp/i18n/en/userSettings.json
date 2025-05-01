@@ -113,7 +113,8 @@
                     "recommendation": "We recommend setting up a passkey now to enhance your account’s security and enjoy a seamless, passwordless login experience."
                 },
                 "setupLater": "Set Up Later",
-                "setupPasskey": "Set Up Passkey"
+                "setupPasskey": "Set Up Passkey",
+                "remindMeIn30Days": "Remind Me in 30 Days"
             },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
