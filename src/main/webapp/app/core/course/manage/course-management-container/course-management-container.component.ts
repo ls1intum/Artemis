@@ -52,6 +52,7 @@ import { CourseConversationsComponent } from 'app/communication/shared/course-co
 import { ButtonSize } from 'app/shared/components/button/button.component';
 import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { CourseDeletionSummaryDTO } from 'app/core/course/shared/entities/course-deletion-summary.model';
+import { MODULE_FEATURE_LECTURE } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-course-management-container',
@@ -277,7 +278,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
 
         sidebarItems.push(...this.sidebarItemService.getManagementDefaultItems(this.courseId()));
 
-        if (currentCourse.isAtLeastEditor) {
+        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE) && currentCourse.isAtLeastEditor) {
             sidebarItems.splice(3, 0, this.sidebarItemService.getLecturesItem(this.courseId()));
         }
         const nonInstructorItems: SidebarItem[] = [];
