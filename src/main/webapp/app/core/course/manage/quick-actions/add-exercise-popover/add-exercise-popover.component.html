@@ -13,22 +13,26 @@
                     <div class="col-4">
                         <strong jhiTranslate="{{ exercise.translationKey }}">{{ exercise.type }}</strong>
                     </div>
-                    <div class="col-8">
-                        <div class="d-flex gap-2">
-                            <jhi-exercise-create-button
-                                [course]="course()"
-                                [translationKey]="'global.generic.create'"
-                                [exerciseType]="exercise.type"
-                                [featureToggle]="exercise.featureToggle"
-                                (click)="hidePopover()"
-                            />
-                            <jhi-exercise-import-button
-                                [course]="course()"
-                                [translationKey]="'entity.action.to-import'"
-                                [exerciseType]="exercise.type"
-                                [featureToggle]="exercise.featureToggle"
-                                (click)="hidePopover()"
-                            />
+                    <div class="ms-n3 col-8">
+                        <div class="row gx-2">
+                            <div class="col-6">
+                                <jhi-exercise-create-button
+                                    [course]="course()"
+                                    [translationKey]="'global.generic.create'"
+                                    [exerciseType]="exercise.type"
+                                    [featureToggle]="exercise.featureToggle"
+                                    (click)="hidePopover()"
+                                />
+                            </div>
+                            <div class="col-6">
+                                <jhi-exercise-import-button
+                                    [course]="course()"
+                                    [translationKey]="'entity.action.to-import'"
+                                    [exerciseType]="exercise.type"
+                                    [featureToggle]="exercise.featureToggle"
+                                    (click)="hidePopover()"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>

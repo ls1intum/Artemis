@@ -20,6 +20,7 @@ interface ExerciseModalRow {
     selector: 'jhi-add-exercise-popover',
     imports: [TranslateDirective, ExerciseCreateButtonComponent, ExerciseImportButtonComponent, Popover, FaIconComponent],
     templateUrl: './add-exercise-popover.component.html',
+    styleUrls: ['./add-exercise-popover.component.scss'],
     exportAs: 'addExercisePopover',
 })
 export class AddExercisePopoverComponent {
