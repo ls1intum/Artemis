@@ -49,7 +49,7 @@ describe('TextUnitComponent', () => {
         }).compileComponents();
 
         const competencyService = TestBed.inject(CourseCompetencyService);
-        jest.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(rxjsOf({} as HttpResponse<CompetencyContributionCardDTO[]>));
+        jest.spyOn(competencyService, 'getCompetencyContributionsForLectureUnit').mockReturnValue(of({} as HttpResponse<CompetencyContributionCardDTO[]>));
 
         scienceService = TestBed.inject(ScienceService);
 
