@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.net.URI;
 import java.util.regex.Pattern;
 
 import jakarta.persistence.AttributeConverter;
@@ -25,11 +26,19 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
     private final Pattern pattern;
 
     /**
-     * @param vcUrl The base URL of the version control system
+     * @param vcUrlString The base URL of the version control system
      */
-    public RepositoryUrlConverter(@Value("${artemis.version-control.url}") String vcUrl) {
-        this.prefix = vcUrl + "/git/";
-        this.pattern = Pattern.compile("^" + Pattern.quote(prefix) + "([^/]+)/([^/]+)" + Pattern.quote(postfix) + "$");
+    public RepositoryUrlConverter(@Value("${artemis.version-control.url}") String vcUrlString) {
+        URI vcUrl;
+        try {
+            vcUrl = URI.create(vcUrlString);
+        }
+        catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid version control URL: " + vcUrlString, e);
+        }
+
+        this.prefix = vcUrl.resolve("git").toString();
+        this.pattern = Pattern.compile("^" + Pattern.quote(prefix) + "(.*?)" + Pattern.quote(postfix) + "$");
     }
 
     /**
@@ -52,7 +61,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
         }
 
         // Extract the {project_key}/{user_part} part
-        return matcher.group(1) + "/" + matcher.group(2);
+        return matcher.group(1);
     }
 
     /**

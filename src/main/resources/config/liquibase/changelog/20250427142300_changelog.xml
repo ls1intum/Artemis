@@ -12,8 +12,8 @@
                     valueComputed="
                     regexp_replace(
                         repository_url,
-                        '^.*/git/([^/]+)/([^/]+)\.git$',
-                        '$1/$2'
+                        '^.*/git/(.*?)\.git$',
+                        '$1'
                     )
                 "/>
         </update>
@@ -28,8 +28,8 @@
                     valueComputed="
                     regexp_replace(
                        repository_url,
-                       '^.*/git/([^/]+)/([^/]+)\.git$',
-                       '\1/\2'
+                       '^.*/git/(.*?)\.git$',
+                       '\1'
                     )
                 "/>
         </update>
