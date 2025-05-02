@@ -11,7 +11,7 @@ import { CourseCompetencyService } from 'app/atlas/shared/services/course-compet
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
-import { of as rxjsOf } from 'rxjs';
+import { of } from 'rxjs';
 
 describe('TextUnitComponent', () => {
     let scienceService: ScienceService;
@@ -109,6 +109,3 @@ describe('TextUnitComponent', () => {
         expect(logEventSpy).toHaveBeenCalledOnce();
     });
 });
-function of(arg0: HttpResponse<CompetencyContributionCardDTO[]>): any {
-    throw new Error('Function not implemented.');
-}
