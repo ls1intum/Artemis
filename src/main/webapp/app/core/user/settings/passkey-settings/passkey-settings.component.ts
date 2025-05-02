@@ -147,15 +147,34 @@ export class PasskeySettingsComponent implements OnDestroy {
             console.log("credential before fix")
             console.log(credential)
 
-
-            const fixedCredential = this.fixClonedCredential(cloneDeep(credential) as unknown as Credential);
-
+            const clonedCredential = cloneDeep(credential) as unknown as Credential;
+            const fixedCredential = this.fixClonedCredential(clonedCredential);
 
             console.log("fixed credential")
             console.log(fixedCredential)
             console.log(JSON.stringify(fixedCredential));
 
-            return fixedCredential;
+            const missingAttributes = {
+                //@ts-ignore exists on bitwarden credential
+                clientExtensionResults: credential.getClientExtensionResults(),
+                response: {
+                    //@ts-ignore exists on bitwarden credential
+                    authenticatorData: this.arrayBufferToBase64(this.convertToArrayBuffer(credential.response.getAuthenticatorData())),
+                    //@ts-ignore exists on bitwarden credential
+                    publicKey: this.arrayBufferToBase64(this.convertToArrayBuffer(credential.response.getPublicKey())),
+                    //@ts-ignore exists on bitwarden credential
+                    publicKeyAlgorithm: credential.response.getPublicKeyAlgorithm(),
+                    //@ts-ignore exists on bitwarden credential
+                    transports: credential.response.getTransports(),
+                }
+            }
+            const credentialWithMissingAttributes = {...fixedCredential, ...missingAttributes}
+            credentialWithMissingAttributes.response = {...fixedCredential.response, ...missingAttributes.response}
+
+            console.log("credential with missing attributes")
+            console.log(credentialWithMissingAttributes)
+
+            return credentialWithMissingAttributes;
         }
     }
 
@@ -174,7 +193,7 @@ export class PasskeySettingsComponent implements OnDestroy {
         for (let i = 0; i < uint8Array.length; i++) {
             binary += String.fromCharCode(uint8Array[i]);
         }
-        return btoa(binary);
+        return btoa(binary).replace(/\//g, '_').replace(/\+/g, '-');
     }
 
     fixClonedCredential(clonedCredential: any): any {
