@@ -50,12 +50,13 @@
         <div class="d-flex flex-wrap gap-2">
             @if (course()?.isAtLeastEditor) {
                 <jhi-button
+                    id="open-add-exercise-popover"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addExercise'"
                     [icon]="faListAlt"
                     [shouldToggle]="true"
-                    (onClick)="openAddExerciseModal()"
+                    (click)="addExercisePopover.showPopover($event)"
                 />
 
                 <jhi-button
@@ -90,6 +91,7 @@
         </div>
     </div>
 </div>
+<jhi-add-exercise-popover [course]="course()" #addExercisePopover="addExercisePopover" />
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
     <div class="text-center me-3">
