@@ -18,7 +18,8 @@
                 }
             </fa-layers>
         </h5>
-        @if (this.mastery()) {
+        <!-- we need to compare to undefined since the mastery might be 0 -->
+        @if (this.mastery() !== undefined) {
             <div class="d-flex justify-content-between align-items-baseline flex-wrap mt-2">
                 <span [jhiTranslate]="'artemisApp.competency.mastery'"></span>
                 <span class="right-aligned">{{ this.mastery() }}%</span>
