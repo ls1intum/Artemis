@@ -567,7 +567,25 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             assertThat(contributions).hasSize(1);
             assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
             assertThat(contributions.getFirst().title()).isEqualTo(courseCompetency.getTitle());
-            assertThat(contributions.getFirst().weight()).isEqualTo(0.5);
+            assertThat(contributions.getFirst().weight()).isEqualTo(1);
+            assertThat(contributions.getFirst().mastery()).isEqualTo(0);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldGetCompetencyContributionsForLectureUnit() throws Exception {
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            final var lectureUnit = lectureUtilService.createTextUnit();
+            final var lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1));
+            lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
+            lectureUtilService.completeLectureUnitForUser(lectureUnit, student1);
+
+            var contributions = request.getList("/api/atlas/exercises/" + textExercise.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
+
+            assertThat(contributions).hasSize(1);
+            assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+            assertThat(contributions.getFirst().title()).isEqualTo(courseCompetency.getTitle());
+            assertThat(contributions.getFirst().weight()).isEqualTo(1);
             assertThat(contributions.getFirst().mastery()).isEqualTo(0);
         }
     }

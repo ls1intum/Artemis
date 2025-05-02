@@ -478,11 +478,13 @@ public class CourseCompetencyService {
      * @return The list of competency contributions
      */
     public List<CompetencyContributionDTO> getCompetencyContributionsForExercise(long exerciseId, long userId) {
-        return competencyProgressRepository.findCompetencyProgressWithCompetencyAndLinksByExerciseIdAndUserId(exerciseId, userId).stream()
-                .map(competencyProgress -> new CompetencyContributionDTO(competencyProgress.getCompetency().getId(), competencyProgress.getCompetency().getTitle(),
-                        competencyProgress.getCompetency().getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0),
-                        CompetencyProgressService.getMastery(competencyProgress)))
-                .collect(Collectors.toList());
+        final var competencies = courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), master);
+        }).toList();
     }
 
     /**
@@ -493,10 +495,12 @@ public class CourseCompetencyService {
      * @return The list of competency contributions
      */
     public List<CompetencyContributionDTO> getCompetencyContributionsForLectureUnit(long lectureUnitId, long userId) {
-        return competencyProgressRepository.findCompetencyProgressWithCompetencyAndLinksByLectureUnitIdAndUserId(lectureUnitId, userId).stream()
-                .map(competencyProgress -> new CompetencyContributionDTO(competencyProgress.getCompetency().getId(), competencyProgress.getCompetency().getTitle(),
-                        competencyProgress.getCompetency().getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0),
-                        CompetencyProgressService.getMastery(competencyProgress)))
-                .collect(Collectors.toList());
+        final var competencies = courseCompetencyRepository.findAllByLectureUnitIdWithLectureUnitLinks(lectureUnitId);
+        return competencies.stream().map(competency -> {
+            final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
+            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
+                    competency.getLectureUnitLinks().stream().findFirst().map(CompetencyLectureUnitLink::getWeight).orElse(0.0), master);
+        }).toList();
     }
 }
