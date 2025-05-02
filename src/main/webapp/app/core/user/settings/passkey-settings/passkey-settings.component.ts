@@ -18,6 +18,7 @@ import { decodeBase64url } from 'app/shared/util/base64.util';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
+import cloneDeep from 'lodash';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -96,10 +97,20 @@ export class PasskeySettingsComponent implements OnDestroy {
             }
             const options = await this.webauthnApiService.getRegistrationOptions();
 
+            console.log("Creating credential options")
+
             const credentialOptions = this.createCredentialOptions(options, user);
-            const credential = await navigator.credentials.create({
+
+            console.log("Successfully created credential options")
+
+            const authenticatorCredential = await navigator.credentials.create({
                 publicKey: credentialOptions,
             });
+
+            const credential = this.getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential)
+
+            console.log(credential)
+            console.log(JSON.stringify(credential))
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {
@@ -108,6 +119,8 @@ export class PasskeySettingsComponent implements OnDestroy {
                 },
             });
         } catch (error) {
+            console.log(error)
+
             if (error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code) {
                 return; // the user pressed cancel in the passkey creation dialog
             }
@@ -120,6 +133,73 @@ export class PasskeySettingsComponent implements OnDestroy {
             return;
         }
         await this.updateRegisteredPasskeys();
+    }
+
+    getCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null) {
+        try {
+            // properly returned credentials can be stringified
+            JSON.stringify(credential);
+            return credential;
+        } catch (error) {
+            // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
+            console.log("Credential is not serializable, using a workaround to get the credential")
+
+            console.log("credential before fix")
+            console.log(credential)
+
+
+            const fixedCredential = this.fixClonedCredential(cloneDeep(credential) as unknown as Credential);
+
+
+            console.log("fixed credential")
+            console.log(fixedCredential)
+            console.log(JSON.stringify(fixedCredential));
+
+            return fixedCredential;
+        }
+    }
+
+    convertToArrayBuffer(rawIdObject: Record<string, number> | null | undefined): ArrayBuffer {
+        if (!rawIdObject || typeof rawIdObject !== 'object') {
+            throw new TypeError('Invalid input: rawIdObject must be a non-null object');
+        }
+
+        const uint8Array = new Uint8Array(Object.values(rawIdObject));
+        return uint8Array.buffer;
+    }
+
+    arrayBufferToBase64(buffer: ArrayBuffer): string {
+        const uint8Array = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < uint8Array.length; i++) {
+            binary += String.fromCharCode(uint8Array[i]);
+        }
+        return btoa(binary);
+    }
+
+    fixClonedCredential(clonedCredential: any): any {
+        const serializedCredential = JSON.stringify(clonedCredential);
+        const credential = JSON.parse(serializedCredential);
+
+        const rawIdAsArrayBuffer = this.convertToArrayBuffer(credential.rawId);
+        const clientDataJSONAsArrayBuffer = this.convertToArrayBuffer(credential.response.clientDataJSON);
+        const attestationObjectAsArrayBuffer = this.convertToArrayBuffer(credential.response.attestationObject);
+
+        return {
+            authenticatorAttachment: credential.authenticatorAttachment,
+            // clientExtensionResults: "",
+            id: credential.id,
+            rawId: this.arrayBufferToBase64(rawIdAsArrayBuffer),
+            response: {
+                attestationObject: this.arrayBufferToBase64(attestationObjectAsArrayBuffer),
+                // authenticatorData: "",
+                clientDataJSON: this.arrayBufferToBase64(clientDataJSONAsArrayBuffer),
+                // publicKey: "",
+                // publicKeyAlgorithm: "",
+                // transports: ""
+            },
+            type: credential.type
+        };
     }
 
     private loadCurrentUser() {
