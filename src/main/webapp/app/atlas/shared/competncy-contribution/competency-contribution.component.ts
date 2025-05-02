@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, input } from '@angular/core';
+import { Component, effect, inject, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -7,14 +7,15 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CompetencyContributionCardComponent } from 'app/atlas/shared/competncy-contribution/competncy-contribution-card/competency-contribution-card.component';
+import { CarouselModule } from 'primeng/carousel';
 
 @Component({
     selector: 'jhi-competency-contribution',
-    imports: [TranslateDirective, CompetencyContributionCardComponent],
+    imports: [TranslateDirective, CompetencyContributionCardComponent, CarouselModule],
     templateUrl: './competency-contribution.component.html',
     styleUrl: './competency-contribution.component.scss',
 })
-export class CompetencyContributionComponent implements OnInit {
+export class CompetencyContributionComponent {
     courseId = input.required<number>();
     learningObjectiveId = input.required<number>();
     isExercise = input.required<boolean>();
@@ -24,8 +25,8 @@ export class CompetencyContributionComponent implements OnInit {
 
     competencies: CompetencyContributionCardDTO[] = [];
 
-    ngOnInit(): void {
-        this.loadData();
+    constructor() {
+        effect(() => this.loadData());
     }
 
     private loadData(): void {

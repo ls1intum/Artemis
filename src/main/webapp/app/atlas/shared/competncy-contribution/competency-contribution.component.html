@@ -1,17 +1,18 @@
 @if (this.competencies.length) {
-    <div class="mt-4">
+    <div class="mt-4 mb-2">
         <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
-        <div class="d-flex flex-row">
-            @for (competency of this.competencies; track competency.id) {
-                <jhi-competency-contribution-card
-                    class="w-100"
-                    [competencyId]="competency.id"
-                    [courseId]="this.courseId()"
-                    [title]="competency.title"
-                    [weight]="competency.weight"
-                    [mastery]="competency.mastery"
-                />
-            }
-        </div>
+        <p-carousel [value]="this.competencies" [numVisible]="3" [numScroll]="1" [circular]="true">
+            <ng-template let-competency #item>
+                <div class="m-2">
+                    <jhi-competency-contribution-card
+                        [competencyId]="competency.competencyId"
+                        [courseId]="this.courseId()"
+                        [title]="competency.title"
+                        [weight]="competency.weight"
+                        [mastery]="competency.mastery"
+                    />
+                </div>
+            </ng-template>
+        </p-carousel>
     </div>
 }
