@@ -4,7 +4,7 @@
         @if (this.competencies.length > 3) {
             <p-carousel [value]="this.competencies" [numVisible]="3" [numScroll]="1" [circular]="true">
                 <ng-template let-competency #item>
-                    <div class="m-2">
+                    <div class="p-2">
                         <jhi-competency-contribution-card
                             [competencyId]="competency.competencyId"
                             [courseId]="this.courseId()"
