@@ -21,7 +21,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
 
     private final String prefix;
 
-    private final String postfix = ".git";
+    private final String postfix;
 
     private final Pattern pattern;
 
@@ -29,6 +29,13 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
      * @param vcUrlString The base URL of the version control system
      */
     public RepositoryUrlConverter(@Value("${artemis.version-control.url}") String vcUrlString) {
+        if (vcUrlString == null || vcUrlString.isEmpty()) {
+            this.pattern = null;
+            this.prefix = "";
+            this.postfix = "";
+            return;
+        }
+
         URI vcUrl;
         try {
             vcUrl = URI.create(vcUrlString);
@@ -38,6 +45,7 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
         }
 
         this.prefix = vcUrl.resolve("git").toString();
+        this.postfix = ".git";
         this.pattern = Pattern.compile("^" + Pattern.quote(prefix) + "(.*?)" + Pattern.quote(postfix) + "$");
     }
 
@@ -52,6 +60,10 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
     public String convertToDatabaseColumn(String attribute) {
         if (attribute == null) {
             return null;
+        }
+
+        if (pattern == null) {
+            return attribute;
         }
 
         // Remove prefix and postfix by regex
@@ -75,6 +87,10 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
     public String convertToEntityAttribute(String dbData) {
         if (dbData == null) {
             return null;
+        }
+
+        if (pattern == null) {
+            return dbData;
         }
 
         // Add prefix and postfix back
