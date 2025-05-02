@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { CompetencyContributionComponent } from 'app/atlas/shared/competncy-contribution/competency-contribution.component';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 @Component({
     selector: 'jhi-lecture-unit-card',

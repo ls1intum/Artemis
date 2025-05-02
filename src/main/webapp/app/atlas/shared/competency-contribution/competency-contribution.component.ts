@@ -6,7 +6,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CompetencyContributionCardComponent } from 'app/atlas/shared/competncy-contribution/competncy-contribution-card/competency-contribution-card.component';
+import { CompetencyContributionCardComponent } from 'app/atlas/shared/competency-contribution/competency-contribution-card/competency-contribution-card.component';
 import { CarouselModule } from 'primeng/carousel';
 
 @Component({

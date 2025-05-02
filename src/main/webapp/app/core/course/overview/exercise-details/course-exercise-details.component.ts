@@ -56,7 +56,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
-import { CompetencyContributionComponent } from 'app/atlas/shared/competncy-contribution/competency-contribution.component';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 
 interface InstructorActionItem {
     routerLink: string;
