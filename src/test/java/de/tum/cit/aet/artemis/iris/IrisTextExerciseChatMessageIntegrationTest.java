@@ -122,6 +122,34 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessageWithCustomInstructions() throws Exception {
+        // Set custom instructions for text exercise chat
+        String testCustomInstructions = "Please focus on text formatting and grammar.";
+        var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(exercise);
+        exerciseSettings.getIrisTextExerciseChatSettings().setCustomInstructions(testCustomInstructions);
+        exerciseSettings.getIrisTextExerciseChatSettings().setEnabled(true);
+        irisSettingsService.saveIrisSettings(exerciseSettings);
+
+        // Prepare session and message
+        var irisSession = createSessionForUser("student1");
+        var messageToSend = createDefaultMockMessage(irisSession);
+        messageToSend.setMessageDifferentiator(789101112);
+
+        // Mock Pyris response and assert customInstructions in DTO
+        irisRequestMockProvider.mockTextExerciseChatResponse(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        });
+
+        // Send message
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        // Await invocation
+        await().until(pipelineDone::get);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void sendOneMessageToWrongSession() throws Exception {
         createSessionForUser("student1");
         var irisSession = createSessionForUser("student2");

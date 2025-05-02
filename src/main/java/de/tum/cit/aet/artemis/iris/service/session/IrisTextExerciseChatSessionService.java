@@ -89,7 +89,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
         var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExercise().getId());
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
+        var settings = irisSettingsService.getCombinedIrisSettingsFor(exercise, false).irisLectureChatSettings();
+        if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -110,7 +111,7 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
                 "default",
                 Optional.empty(),
                 pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, PyrisTextExerciseDTO.of(exercise), conversation, latestSubmissionText, settings.customInstructions()),
                 stages -> irisChatWebsocketService.sendMessage(session, null, stages)
         );
         // @formatter:on

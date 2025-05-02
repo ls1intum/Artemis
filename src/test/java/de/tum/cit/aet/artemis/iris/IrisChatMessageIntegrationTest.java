@@ -187,6 +187,34 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         sendOneMessage(teamExercise, "student2", teamParticipation.getSubmissions().iterator().next().getId());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessageWithCustomInstructions() throws Exception {
+        // Set custom instructions for programming exercise chat
+        String testCustomInstructions = "Please focus on code style.";
+        var exerciseSettings = irisSettingsService.getRawIrisSettingsFor(soloExercise);
+        exerciseSettings.getIrisChatSettings().setCustomInstructions(testCustomInstructions);
+        irisSettingsService.saveIrisSettings(exerciseSettings);
+
+        // Prepare session and message
+        long submissionId = soloParticipation.getSubmissions().iterator().next().getId();
+        var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(soloExercise, userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var messageToSend = createDefaultMockMessage(irisSession);
+        messageToSend.setMessageDifferentiator(123456789);
+
+        // Mock Pyris response and assert customInstructions in DTO
+        irisRequestMockProvider.mockProgrammingExerciseChatResponseExpectingSubmissionId(dto -> {
+            assertThat(dto.customInstructions()).isEqualTo(testCustomInstructions);
+            pipelineDone.set(true);
+        }, submissionId);
+
+        // Send message
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+
+        // Await invocation
+        await().until(pipelineDone::get);
+    }
+
     private void sendOneMessage(ProgrammingExercise exercise, String studentLogin, long submissionId) throws Exception {
         var irisSession = irisExerciseChatSessionService.createChatSessionForProgrammingExercise(exercise, userUtilService.getUserByLogin(TEST_PREFIX + studentLogin));
         var messageToSend = createDefaultMockMessage(irisSession);

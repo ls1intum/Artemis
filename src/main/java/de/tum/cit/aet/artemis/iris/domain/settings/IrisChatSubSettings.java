@@ -37,6 +37,10 @@ public class IrisChatSubSettings extends IrisSubSettings {
     private SortedSet<String> disabledProactiveEvents = new TreeSet<>();
 
     @Nullable
+    @Column(name = "custom_instructions", length = 2048)
+    private String customInstructions;
+
+    @Nullable
     public Integer getRateLimit() {
         return rateLimit;
     }
@@ -68,5 +72,14 @@ public class IrisChatSubSettings extends IrisSubSettings {
 
     public void setDisabledProactiveEvents(SortedSet<String> disabledProactiveEvents) {
         this.disabledProactiveEvents = disabledProactiveEvents;
+    }
+
+    @Nullable
+    public String getCustomInstructions() {
+        return customInstructions;
+    }
+
+    public void setCustomInstructions(@Nullable String customInstructions) {
+        this.customInstructions = customInstructions;
     }
 }
