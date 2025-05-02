@@ -38,7 +38,7 @@
                     },
                     "faqIngestionSettings": {
                         "title": "FAQ Processing Settings",
-                        "autoIngest": "Send FAQs To Pyris Automatically"
+                        "autoIngest": "Send FAQs To Iris Automatically"
                     },
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "proactivityBuildFailedEventEnabled": {
@@ -115,17 +115,17 @@
                 "partiallyIngested": "Partially processed"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Lecture unit processing in Pyris has started",
-                "lectureUnitError": "Error while sending lecture unit to Pyris",
-                "lectureSuccess": "Lecture processing in Pyris has started",
-                "lectureError": "Error while sending lecture to Pyris",
+                "lectureUnitSuccess": "Lecture unit processing in Iris has started",
+                "lectureUnitError": "Error while sending lecture unit to Iris",
+                "lectureSuccess": "Lecture processing in Iris has started",
+                "lectureError": "Error while sending lecture to Iris",
                 "allLecturesSuccess": "All Lectures are now being processed",
-                "allFaqsSuccess": "All Faq processing in Pyris started successfully",
-                "allLecturesError": "Error while sending all lectures to Pyris",
-                "allFaqsError": "Error while sending all Faqs to Pyris",
+                "allFaqsSuccess": "All Faq processing in Iris started successfully",
+                "allLecturesError": "Error while sending all lectures to Iris",
+                "allFaqsError": "Error while sending all Faqs to Iris",
                 "lectureNotFound": "Could not send lecture to Iris, no lecture found with the provided id.",
-                "pyrisUnavailable": "Pyris is currently unavailable.",
-                "pyrisError": "An error occurred while getting processing status from Pyris.",
+                "pyrisUnavailable": "Iris is currently unavailable.",
+                "pyrisError": "An error occurred while getting processing status from Iris.",
                 "transcriptionIngestionError": "Error while sending transcription"
             }
         }

@@ -13,7 +13,7 @@
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "ingestLecturesInPyrisLabel": "Vorlesungen an Pyris senden"
+                "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",

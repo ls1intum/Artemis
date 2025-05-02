@@ -34,11 +34,11 @@
                     "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Einstellungen zur Vorlesungsverarbeitung",
-                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
+                        "autoIngestOnAttachmentUpload": "Vorlesungen automatisch senden"
                     },
                     "faqIngestionSettings": {
                         "title": "Einstellungen zur FAQ-Verarbeitung",
-                        "autoIngest": "FAQs automatisch an Pyris senden"
+                        "autoIngest": "FAQs automatisch an Iris senden"
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "proactivityBuildFailedEventEnabled": {
@@ -115,18 +115,18 @@
                 "partiallyIngested": "Teilweise verarbeitet"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Vorlesungseinheit wird in Pyris verarbeitet",
-                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Pyris",
-                "lectureSuccess": "Vorlesung wird in Pyris verarbeitet",
-                "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
+                "lectureUnitSuccess": "Vorlesungseinheit wird in Iris verarbeitet",
+                "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Iris",
+                "lectureSuccess": "Vorlesung wird in Iris verarbeitet",
+                "lectureError": "Fehler beim Senden der Vorlesung an Iris",
                 "allLecturesSuccess": "Alle Vorlesungen werden nun verarbeitet",
-                "allFaqsSuccess": "Alle Faqs werden in Pyris verarbeitet",
-                "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
-                "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
-                "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
-                "pyrisUnavailable": "Pyris ist derzeit nicht verfügbar.",
-                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Pyris aufgetreten.",
-                "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription an Pyris"
+                "allFaqsSuccess": "Alle Faqs werden in Iris verarbeitet",
+                "allLecturesError": "Fehler beim Senden aller Vorlesungen an Iris",
+                "allFaqsError": "Fehler beim Senden aller FAQs an Iris",
+                "lectureNotFound": "Vorlesung kann nicht an Iris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
+                "pyrisUnavailable": "Iris ist derzeit nicht verfügbar.",
+                "pyrisError": "Ein Fehler ist bei der Kommunikation mit Iris aufgetreten.",
+                "transcriptionIngestionError": "Fehler beim Senden einer Vorlesungstranskription"
             }
         }
     }
