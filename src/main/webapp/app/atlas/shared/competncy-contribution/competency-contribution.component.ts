@@ -13,7 +13,6 @@ import { CarouselModule } from 'primeng/carousel';
     selector: 'jhi-competency-contribution',
     imports: [TranslateDirective, CompetencyContributionCardComponent, CarouselModule],
     templateUrl: './competency-contribution.component.html',
-    styleUrl: './competency-contribution.component.scss',
 })
 export class CompetencyContributionComponent {
     courseId = input.required<number>();

@@ -11,7 +11,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     selector: 'jhi-competency-contribution-card',
     imports: [FaIconComponent, FaLayersComponent, NgbTooltipModule, NgbProgressbar, TranslateDirective, ArtemisTranslatePipe, RouterLink],
     templateUrl: './competency-contribution-card.component.html',
-    styleUrl: './competency-contribution-card.component.scss',
 })
 export class CompetencyContributionCardComponent {
     courseId = input.required<number>();
