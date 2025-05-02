@@ -14,7 +14,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 
-public class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
+class EnforceRoleInLectureUnitTest extends AbstractEnforceRoleInResourceTest {
 
     @Autowired
     private LectureUtilService lectureUtilService;
