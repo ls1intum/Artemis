@@ -17,7 +17,7 @@ import { CarouselModule } from 'primeng/carousel';
 })
 export class CompetencyContributionComponent {
     courseId = input.required<number>();
-    learningObjectiveId = input.required<number>();
+    learningObjectId = input.required<number>();
     isExercise = input.required<boolean>();
 
     private readonly courseCompetencyService = inject(CourseCompetencyService);
@@ -32,9 +32,9 @@ export class CompetencyContributionComponent {
     private loadData(): void {
         let observable: Observable<HttpResponse<CompetencyContributionCardDTO[]>>;
         if (this.isExercise()) {
-            observable = this.courseCompetencyService.getCompetencyContributionsForExercise(this.learningObjectiveId());
+            observable = this.courseCompetencyService.getCompetencyContributionsForExercise(this.learningObjectId());
         } else {
-            observable = this.courseCompetencyService.getCompetencyContributionsForLectureUnit(this.learningObjectiveId());
+            observable = this.courseCompetencyService.getCompetencyContributionsForLectureUnit(this.learningObjectId());
         }
         observable.subscribe({
             next: (res) => {
