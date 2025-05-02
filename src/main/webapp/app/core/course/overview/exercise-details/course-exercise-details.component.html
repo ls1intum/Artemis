@@ -192,6 +192,7 @@
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase"></span>
                     </a>
                 }
+                <jhi-competency-contribution [courseId]="courseId" [learningObjectiveId]="exerciseId" [isExercise]="true" />
             </div>
             <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                 @if (exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))) {

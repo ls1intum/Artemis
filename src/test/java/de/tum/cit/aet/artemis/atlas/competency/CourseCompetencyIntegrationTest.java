@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -549,6 +550,26 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         assertThat(relations).isEmpty();
+    }
+
+    @Nested
+    class GetCompetencyContribution {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void shouldGetCompetencyContributionsForExercise() throws Exception {
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            Result textResult = createTextExerciseParticipationSubmissionAndResult(textExercise, student1, textExercise.getMaxPoints(), 0.0, 90, true);
+            studentScoreUtilService.createStudentScore(textExercise, student1, textResult);
+
+            var contributions = request.getList("/api/atlas/exercises/" + textExercise.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
+
+            assertThat(contributions).hasSize(1);
+            assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
+            assertThat(contributions.getFirst().title()).isEqualTo(courseCompetency.getTitle());
+            assertThat(contributions.getFirst().weight()).isEqualTo(0.5);
+            assertThat(contributions.getFirst().mastery()).isEqualTo(0);
+        }
     }
 
     @Nested

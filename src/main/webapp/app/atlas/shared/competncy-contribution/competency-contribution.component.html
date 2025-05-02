@@ -1,0 +1,17 @@
+@if (this.competencies.length) {
+    <div class="mt-4">
+        <h5 [jhiTranslate]="'artemisApp.competency.competencyContribution.title'"></h5>
+        <div class="d-flex flex-row">
+            @for (competency of this.competencies; track competency.id) {
+                <jhi-competency-contribution-card
+                    class="w-100"
+                    [competencyId]="competency.id"
+                    [courseId]="this.courseId()"
+                    [title]="competency.title"
+                    [weight]="competency.weight"
+                    [mastery]="competency.mastery"
+                />
+            }
+        </div>
+    </div>
+}
