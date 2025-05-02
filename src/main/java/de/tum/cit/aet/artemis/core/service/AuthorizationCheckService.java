@@ -978,18 +978,6 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Checks if the passed user is at least a teaching assistant in the given lecture unit.
-     *
-     * @param login         the login of the user that needs to be checked
-     * @param lectureUnitId the id of the lecture unit that needs to be checked
-     * @return true if the user is at least a teaching assistant in the lecture unit, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastTeachingAssistantInLectureUnit(String login, long lectureUnitId) {
-        return userRepository.isAtLeastTeachingAssistantInLectureUnit(login, lectureUnitId);
-    }
-
-    /**
      * Checks if the current user is at least an editor in the given lecture unit.
      *
      * @param lectureUnitId the id of the lecture unit that needs to be checked
@@ -1011,18 +999,6 @@ public class AuthorizationCheckService {
     public boolean isAtLeastInstructorInLectureUnit(long lectureUnitId) {
         final var login = SecurityUtils.getCurrentUserLogin();
         return login.filter(s -> userRepository.isAtLeastInstructorInLectureUnit(s, lectureUnitId)).isPresent();
-    }
-
-    /**
-     * Checks if the passed user is at least an instructor in the given lecture unit.
-     *
-     * @param login         the login of the user that needs to be checked
-     * @param lectureUnitId the id of the lecture unit that needs to be checked
-     * @return true if the user is at least an instructor in the lecture unit, false otherwise
-     */
-    @CheckReturnValue
-    public boolean isAtLeastInstructorInLectureUnit(String login, long lectureUnitId) {
-        return userRepository.isAtLeastInstructorInLectureUnit(login, lectureUnitId);
     }
 
     /**
