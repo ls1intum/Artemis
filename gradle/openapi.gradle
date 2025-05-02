@@ -9,6 +9,7 @@ buildscript {
     dependencies {
         // reuse the same version from your root project
         classpath "org.yaml:snakeyaml:${rootProject.property('snakevaml_version')}"
+        classpath "org.openapitools:openapi-generator-gradle-plugin:7.12.0"
     }
 }
 
@@ -30,7 +31,7 @@ openApi {
 
 openApiGenerate {
     generatorName = "typescript-angular"
-    inputSpec = "${project.rootDir}/openapi/openapi-normalized.yaml"
+    inputSpec = "${project.rootDir}/openapi/openapi.yaml"
     outputDir = "${rootDir}/src/main/webapp/app/tutorialgroup/generated"
     apiPackage = "api"
     modelPackage = "model"
@@ -47,7 +48,7 @@ tasks.register('pruneOpenApiSpec') {
     doLast {
         def root       = project.rootDir
         def inputFile  = file("$root/openapi/openapi.yaml")
-        def outputFile = file("$root/openapi/openapi-pruned.yaml")
+        def outputFile = file("$root/openapi/openapi.yaml")
         def yaml       = new Yaml()
         def spec       = yaml.load(inputFile.text) as Map<String, Object>
         def components = (spec.components ?: [:]) as Map<String, Map<String, Object>>
@@ -167,22 +168,22 @@ tasks.register('postProcessTsFiles') {
 
 
 
-//tasks.named('pruneOpenApiSpec') {
-//    dependsOn tasks.named('generateOpenApiDocs')
-//}
-tasks.named('normalizeOperationIds') {
-    dependsOn 'pruneOpenApiSpec'
+tasks.named('pruneOpenApiSpec') {
+    dependsOn tasks.named('generateOpenApiDocs')
 }
+//tasks.named('normalizeOperationIds') {
+//    dependsOn 'pruneOpenApiSpec'
+//}
 tasks.named('openApiGenerate') {
-    dependsOn 'normalizeOperationIds'
+    dependsOn 'pruneOpenApiSpec'
 }
 
 tasks.named('openApiGenerate') {
     finalizedBy 'postProcessTsFiles'
 }
-
-tasks.withType(GenerateTask).configureEach {
+tasks.named( 'openApiGenerate') {
     doFirst {
         delete file("$rootDir/src/main/webapp/app/tutorialgroup/generated")
+        println "✔ Deleted old generated files"
     }
 }
