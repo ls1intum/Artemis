@@ -580,7 +580,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student1);
 
-            var contributions = request.getList("/api/atlas/exercises/" + textExercise.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
+            var contributions = request.getList("/api/atlas/lecture-units/" + textExercise.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
 
             assertThat(contributions).hasSize(1);
             assertThat(contributions.getFirst().competencyId()).isEqualTo(courseCompetency.getId());
