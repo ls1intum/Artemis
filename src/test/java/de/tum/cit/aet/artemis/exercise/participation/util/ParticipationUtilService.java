@@ -165,7 +165,8 @@ public class ParticipationUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+            String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+            participation.setRepositoryUri(String.format("%sgit/%s/%s.git", vcBaseUrl, exercise.getProjectKey(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -316,7 +317,8 @@ public class ParticipationUtilService {
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateIndividualProgrammingExerciseStudentParticipation(exercise,
                 userUtilService.getUserByLogin(login));
         final var repoName = (exercise.getProjectKey() + "-" + login).toLowerCase();
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+        participation.setRepositoryUri(String.format("%sgit/%s/%s.git", vcBaseUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
         participationVCSAccessTokenService.createParticipationVCSAccessToken(userUtilService.getUserByLogin(login), participation);
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -338,7 +340,8 @@ public class ParticipationUtilService {
         }
         ProgrammingExerciseStudentParticipation participation = ParticipationFactory.generateTeamProgrammingExerciseStudentParticipation(exercise, team);
         final var repoName = (exercise.getProjectKey() + "-" + team.getShortName()).toLowerCase();
-        participation.setRepositoryUri(String.format("%s/git/%s/%s.git", artemisVersionControlUrl, exercise.getProjectKey(), repoName));
+        String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+        participation.setRepositoryUri(String.format("%sgit/%s/%s.git", vcBaseUrl, exercise.getProjectKey(), repoName));
         participation = programmingExerciseStudentParticipationRepo.save(participation);
 
         return (ProgrammingExerciseStudentParticipation) studentParticipationRepo.findWithEagerLegalSubmissionsAndResultsAssessorsById(participation.getId()).orElseThrow();
@@ -928,7 +931,8 @@ public class ParticipationUtilService {
      */
     public void mockCreationOfExerciseParticipation(ProgrammingExercise programmingExercise, VersionControlService versionControlService,
             ContinuousIntegrationService continuousIntegrationService, LocalVCGitBranchService localVCGitBranchService) throws URISyntaxException {
-        var someURL = new VcsRepositoryUri("http://vcs.fake.fake");
+        String vcBaseUrl = artemisVersionControlUrl.endsWith("/") ? artemisVersionControlUrl : artemisVersionControlUrl + "/";
+        var someURL = new VcsRepositoryUri(vcBaseUrl);
         doReturn(someURL).when(versionControlService).copyRepository(any(String.class), any(), any(String.class), any(String.class), any(String.class), any(Integer.class));
         mockCreationOfExerciseParticipationInternal(programmingExercise, continuousIntegrationService, localVCGitBranchService);
     }

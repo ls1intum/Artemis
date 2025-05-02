@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -77,6 +78,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
+@TestPropertySource(properties = { "artemis.version-control.url=file:${java.io.tmpdir}" })
 class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";

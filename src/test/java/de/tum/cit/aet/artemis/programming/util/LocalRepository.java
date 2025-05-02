@@ -36,6 +36,8 @@ public class LocalRepository {
 
     private final String defaultBranch;
 
+    private final Path localTmpGitPath = Path.of(System.getProperty("java.io.tmpdir") + "git");
+
     public LocalRepository(String defaultBranch) {
         this.defaultBranch = defaultBranch;
     }
@@ -52,10 +54,12 @@ public class LocalRepository {
      * @param originIsBare       Whether the origin repository should be bare or not. Set this to false only if you need to create files in the origin repository.
      */
     public void configureRepos(String localRepoFileName, String originRepoFileName, boolean originIsBare) throws Exception {
-        this.localRepoFile = Files.createTempDirectory(localRepoFileName).toFile();
+        Files.createDirectories(localTmpGitPath);
+
+        this.localRepoFile = Files.createTempDirectory(localTmpGitPath, localRepoFileName).toFile();
         this.localGit = initialize(localRepoFile, defaultBranch, false);
 
-        this.originRepoFile = Files.createTempDirectory(originRepoFileName).toFile();
+        this.originRepoFile = Files.createTempDirectory(localTmpGitPath, originRepoFileName).toFile();
         this.originGit = initialize(originRepoFile, defaultBranch, originIsBare);
 
         this.localGit.remoteAdd().setName("origin").setUri(new URIish(String.valueOf(this.originRepoFile))).call();
@@ -81,8 +85,9 @@ public class LocalRepository {
      * @throws URISyntaxException if creating a URI from the origin repository folder fails
      */
     public void configureRepos(String localRepoFileName, Path originRepositoryFolder) throws IOException, GitAPIException, URISyntaxException {
+        Files.createDirectories(localTmpGitPath);
 
-        Path localRepoPath = Files.createTempDirectory(localRepoFileName);
+        Path localRepoPath = Files.createTempDirectory(localTmpGitPath, localRepoFileName);
         this.localRepoFile = localRepoPath.toFile();
         this.localGit = initialize(localRepoFile, defaultBranch, false);
 
