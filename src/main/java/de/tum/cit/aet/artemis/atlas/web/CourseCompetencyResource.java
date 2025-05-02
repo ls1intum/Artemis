@@ -57,6 +57,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -453,7 +454,7 @@ public class CourseCompetencyResource {
      * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
      */
     @GetMapping("lecture-units/{lectureUnitId}/contributions")
-    @EnforceAtLeastStudentInExercise // TODO: Change to EnforceAtLeastStudentInLectureUnit
+    @EnforceAtLeastStudentInLectureUnit
     public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForLectureUnit(@PathVariable long lectureUnitId) {
         log.debug("REST request to get competency contributions for lecture unit: {}", lectureUnitId);
         final var user = userRepository.getUserWithGroupsAndAuthorities();

@@ -1,7 +1,7 @@
 <div [id]="'competency-contribution-card-' + this.competencyId()" class="card pointer" [routerLink]="['/courses', this.courseId(), 'competencies', this.competencyId()]">
     <div class="card-body">
         <h5 class="card-title d-flex justify-content-between align-items-center">
-            <span>{{ this.title() }}</span>
+            <span class="text-truncate">{{ this.title() }}</span>
             <fa-layers
                 class="icon-full-size text-success"
                 [ngbTooltip]="
