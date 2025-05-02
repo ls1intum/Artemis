@@ -13,7 +13,7 @@
                     "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten",
-                "ingestLecturesInPyrisLabel": "Vorlesungen an Iris senden"
+                "ingestLecturesInPyrisLabel": "Vorlesungen an Pyris senden"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",
             "updated": "Vorlesung aktualisiert mit ID {{ param }}",
@@ -29,7 +29,7 @@
             "endDate": "Ende",
             "visibleDate": "Sichtbar ab",
             "course": "Kurs",
-            "ingestionState": "Vorlesungsimport Zustand in Pyris",
+            "ingestionState": "Iris-Verarbeitungsstatus",
             "detail": {
                 "title": "Vorlesung",
                 "sections": {

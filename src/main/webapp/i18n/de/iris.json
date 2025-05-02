@@ -33,11 +33,11 @@
                     "lectureChatSettings": "Vorlesungschat Einstellungen",
                     "courseChatSettings": "Kurs Chat Einstellungen",
                     "lectureIngestionSettings": {
-                        "title": "Vorlesungen Erfassung Einstellungen",
+                        "title": "Einstellungen zur Vorlesungsverarbeitung",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
                     },
                     "faqIngestionSettings": {
-                        "title": "FAQ Ingestion Settings",
+                        "title": "Einstellungen zur FAQ-Verarbeitung",
                         "autoIngest": "FAQs automatisch an Pyris senden"
                     },
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
@@ -112,15 +112,15 @@
                 "inProgress": "In Bearbeitung",
                 "done": "Abgeschlossen",
                 "error": "Fehler",
-                "partiallyIngested": "Teilweise abgeschlossen"
+                "partiallyIngested": "Teilweise verarbeitet"
             },
             "ingestionAlert": {
-                "lectureUnitSuccess": "Vorlesungseinheit Ingestion in Pyris erfolgreich gestartet",
+                "lectureUnitSuccess": "Vorlesungseinheit wird in Pyris verarbeitet",
                 "lectureUnitError": "Fehler beim Senden der Vorlesungseinheit an Pyris",
-                "lectureSuccess": "Vorlesung Ingestion in Pyris erfolgreich gestartet",
+                "lectureSuccess": "Vorlesung wird in Pyris verarbeitet",
                 "lectureError": "Fehler beim Senden der Vorlesung an Pyris",
-                "allLecturesSuccess": "Alle Vorlesungen Ingestion in Pyris erfolgreich gestartet",
-                "allFaqsSuccess": "Alle Faqs Ingestion in Pyris erfolgreich gestartet",
+                "allLecturesSuccess": "Alle Vorlesungen werden nun verarbeitet",
+                "allFaqsSuccess": "Alle Faqs werden in Pyris verarbeitet",
                 "allLecturesError": "Fehler beim Senden aller Vorlesungen an Pyris",
                 "allFaqsError": "Fehler beim Senden aller FAQs an Pyris",
                 "lectureNotFound": "Vorlesung kann nicht an Pyris gesendet werden, keine Vorlesung mit der angegebenen ID gefunden.",
