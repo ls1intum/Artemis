@@ -71,6 +71,7 @@
         "papaparse": "5.5.2",
         "pdf-lib": "1.17.1",
         "pdfjs-dist": "5.1.91",
+        "primeng": "19.1.2",
         "rxjs": "7.8.2",
         "simple-statistics": "7.8.8",
         "smoothscroll-polyfill": "0.4.4",
