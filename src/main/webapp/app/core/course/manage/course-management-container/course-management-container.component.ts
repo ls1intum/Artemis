@@ -254,9 +254,9 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
         }
         // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
-        // if(this.courseBody()) {
-        //     this.courseBody()!.nativeElement.scrollTop = 0;
-        // }
+        if (this.courseBody()) {
+            this.courseBody()!.nativeElement.scrollTop = 0;
+        }
     }
 
     handleToggleSidebar(): void {
