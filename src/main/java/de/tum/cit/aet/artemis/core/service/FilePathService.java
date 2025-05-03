@@ -104,7 +104,7 @@ public class FilePathService {
             case SLIDE -> getSlideFilePath(publicPath, path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesPath(path, filename);
             case ATTACHMENT_UNIT -> getAttachmentUnitFilePath(path, filename);
-            case FILE_UPLOAD_EXERCISE -> actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
+            case FILE_UPLOAD_SUBMISSION -> actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
         };
     }
 
@@ -193,7 +193,7 @@ public class FilePathService {
             case STUDENT_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
             case LECTURE_ATTACHMENT -> URI.create("attachments/lecture/" + id + "/" + filename);
             case SLIDE -> publicPathForActualSlideFilePath(path, filename, id);
-            case FILE_UPLOAD_EXERCISE -> publicPathForActualFileUploadExercisesFilePath(path, filename, id);
+            case FILE_UPLOAD_SUBMISSION -> publicPathForActualFileUploadExercisesFilePath(path, filename, id);
             case STUDENT_VERSION_SLIDES -> URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
             case ATTACHMENT_UNIT -> URI.create("attachments/attachment-unit/" + id + "/" + filename);
         };

@@ -164,7 +164,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
             }
         }
 
-        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, FilePathType.FILE_UPLOAD_EXERCISE, returnedSubmission.getId());
+        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, FilePathType.FILE_UPLOAD_SUBMISSION, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);

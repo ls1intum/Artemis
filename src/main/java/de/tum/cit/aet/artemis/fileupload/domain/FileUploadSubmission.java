@@ -41,7 +41,7 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
-            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath), FilePathType.FILE_UPLOAD_EXERCISE);
+            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath), FilePathType.FILE_UPLOAD_SUBMISSION);
             fileService.schedulePathForDeletion(actualPath, 0);
         }
     }
