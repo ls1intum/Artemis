@@ -123,8 +123,9 @@ export class PasskeySettingsComponent implements OnDestroy {
                 },
             });
         } catch (error) {
-            if (error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code) {
-                return; // the user pressed cancel in the passkey creation dialog
+            const userPressedCancelInPasskeyCreationDialog = error.name == UserAbortedPasskeyCreationError.name && error.code == UserAbortedPasskeyCreationError.code;
+            if (userPressedCancelInPasskeyCreationDialog) {
+                return;
             }
 
             if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
