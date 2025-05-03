@@ -22,7 +22,7 @@ export function createCredentialOptions(options: PublicKeyCredentialCreationOpti
         })),
         authenticatorSelection: {
             requireResidentKey: true,
-            userVerification: 'discouraged', // a little less secure than 'preferred' or 'required', but more user-friendly
+            userVerification: 'preferred',
         },
     };
 }

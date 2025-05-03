@@ -135,6 +135,7 @@ export class PasskeySettingsComponent implements OnDestroy {
 
             throw error;
         }
+
         await this.updateRegisteredPasskeys();
     }
 
