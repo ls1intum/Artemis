@@ -17,8 +17,9 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import { MalformedBitwardenCredential, getCredentialFromInvalidBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
+import { getCredentialFromInvalidBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
 import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
+import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 
 const InvalidStateError = {
     name: 'InvalidStateError',

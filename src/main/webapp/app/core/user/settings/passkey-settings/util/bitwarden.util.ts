@@ -1,27 +1,12 @@
 import cloneDeep from 'lodash';
+import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 
-export type MalformedBitwardenCredential = {
-    id: string;
-    rawId: Record<string, number>;
-    type: string;
-    authenticatorAttachment: string;
-    response: {
-        clientDataJSON: Record<string, number>;
-        attestationObject: Record<string, number>;
-        getAuthenticatorData: () => Record<string, number>;
-        getPublicKey: () => Record<string, number>;
-        getPublicKeyAlgorithm: () => number;
-        getTransports: () => string[];
-    };
-    getClientExtensionResults: () => unknown;
-}
-
-function convertToArrayBuffer(rawIdObject: Record<string, number> | null | undefined): ArrayBuffer {
-    if (!rawIdObject || typeof rawIdObject !== 'object') {
-        throw new TypeError('Invalid input: rawIdObject must be a non-null object');
+function convertToArrayBuffer(rawObject: Record<string, number> | null | undefined): ArrayBuffer {
+    if (!rawObject || typeof rawObject !== 'object') {
+        throw new TypeError('Invalid input: must be a non-null object');
     }
 
-    const uint8Array = new Uint8Array(Object.values(rawIdObject));
+    const uint8Array = new Uint8Array(Object.values(rawObject));
     return uint8Array.buffer;
 }
 
@@ -31,10 +16,11 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     for (let i = 0; i < uint8Array.length; i++) {
         binary += String.fromCharCode(uint8Array[i]);
     }
+    // eslint-disable-next-line no-undef
     return btoa(binary).replace(/\//g, '_').replace(/\+/g, '-');
 }
 
-export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential): Credential | null {
+export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): Credential | null {
     if (!malformedBitwardenCredential) {
         return null;
     }
@@ -42,7 +28,7 @@ export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCreden
     /**
      * By cloning the object with lodash, we have an easy way to get a version that can be stringified
      */
-    let clonedCredential: Credential = cloneDeep(malformedBitwardenCredential) as unknown as Credential;
+    const clonedCredential: Credential = cloneDeep(malformedBitwardenCredential) as unknown as Credential;
 
     const serializedCredential = JSON.stringify(clonedCredential);
     const credential = JSON.parse(serializedCredential);
@@ -52,7 +38,7 @@ export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCreden
     const attestationObjectAsArrayBuffer = convertToArrayBuffer(credential.response.attestationObject);
 
     return {
-        //@ts-expect-error authenticatorAttachment is a method in the (getAuthenticatorAttachment) object, but we return it as property here for simplicity, assuming that we only want to stringify it afterward anyways
+        //@ts-expect-error authenticatorAttachment is a method in the (getAuthenticatorAttachment) object, but we return it as property here for simplicity, assuming that we only want to stringify it afterward anyway
         authenticatorAttachment: credential.authenticatorAttachment,
         clientExtensionResults: malformedBitwardenCredential.getClientExtensionResults(),
         id: credential.id,
@@ -65,6 +51,6 @@ export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCreden
             publicKeyAlgorithm: malformedBitwardenCredential.response.getPublicKeyAlgorithm(),
             transports: malformedBitwardenCredential.response.getTransports(),
         },
-        type: credential.type
+        type: credential.type,
     };
 }
