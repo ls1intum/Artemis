@@ -5,6 +5,7 @@ export const CustomBreakpointNames = {
     small: 'small',
     medium: 'medium',
     large: 'large',
+    sidebarExpandable: 'sidebarExpandable',
     extraLarge: 'extraLarge',
 };
 
@@ -18,6 +19,7 @@ export class BreakpointsService {
         this.breakpoints.set('(max-width: 576px)', CustomBreakpointNames.extraSmall);
         this.breakpoints.set('(min-width: 576px)', CustomBreakpointNames.small);
         this.breakpoints.set('(min-width: 768px)', CustomBreakpointNames.medium);
+        this.breakpoints.set('(min-width: 960px)', CustomBreakpointNames.sidebarExpandable);
         this.breakpoints.set('(min-width: 992px)', CustomBreakpointNames.large);
         this.breakpoints.set('(min-width: 1200px)', CustomBreakpointNames.extraLarge);
     }
