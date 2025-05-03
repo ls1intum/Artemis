@@ -154,7 +154,6 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        FilePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
         Path oldPath;
         Path newPath;
         FilePathType filePathType;
