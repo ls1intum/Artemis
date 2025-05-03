@@ -127,8 +127,6 @@ export class PasskeySettingsComponent implements OnDestroy {
                 return; // the user pressed cancel in the passkey creation dialog
             }
 
-            // TODO send sentry isssue
-
             if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
