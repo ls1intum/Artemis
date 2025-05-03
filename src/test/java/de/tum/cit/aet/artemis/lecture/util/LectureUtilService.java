@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -262,18 +264,27 @@ public class LectureUtilService {
         attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
         attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
         attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+        attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
         for (int i = 1; i <= numberOfSlides; i++) {
             Slide slide = new Slide();
             slide.setSlideNumber(i);
             String testFileName = "slide" + i + ".png";
+
+            slide.setAttachmentUnit(attachmentUnit);
+            // we have to set a dummy value here, as null is not allowed. The correct value is set below.
+            slide.setSlideImagePath("dummy");
+            slide = slideRepository.save(slide);
+            Path slidePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
             try {
-                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), FilePathService.getTempFilePath().resolve(testFileName).toFile());
+                FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
             }
             catch (IOException ex) {
                 fail("Failed while copying test attachment files", ex);
             }
-            slide.setSlideImagePath("temp/" + testFileName);
-            slide.setAttachmentUnit(attachmentUnit);
+            // in the database we omit the prefix "uploads"
+            var indexOfTheFirstSeperator = slidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
+            var slidePathWithoutFileUploadPathPrefix = slidePath.toString().substring(indexOfTheFirstSeperator + 1);
+            slide.setSlideImagePath(slidePathWithoutFileUploadPathPrefix);
             slideRepository.save(slide);
         }
         return attachmentUnitRepository.save(attachmentUnit);
