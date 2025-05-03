@@ -14,14 +14,11 @@ import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialo
 import { getOS } from 'app/shared/util/os-detector.util';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
-import { decodeBase64url } from 'app/shared/util/base64.util';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import {
-    getCredentialFromInvalidBitwardenObject,
-    MalformedBitwardenCredential,
-} from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
+import { MalformedBitwardenCredential, getCredentialFromInvalidBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
+import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -110,15 +107,13 @@ export class PasskeySettingsComponent implements OnDestroy {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
                 throw new Error('User or Username is not defined');
             }
-            const options = await this.webauthnApiService.getRegistrationOptions();
-
-            const credentialOptions = this.createCredentialOptions(options, user);
+            const registrationOptions = await this.webauthnApiService.getRegistrationOptions();
+            const credentialOptions = createCredentialOptions(registrationOptions, user);
 
             const authenticatorCredential = await navigator.credentials.create({
                 publicKey: credentialOptions,
             });
-
-            const credential = this.getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential)
+            const credential = this.getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {
@@ -139,7 +134,7 @@ export class PasskeySettingsComponent implements OnDestroy {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
             }
 
-            throw error
+            throw error;
         }
         await this.updateRegisteredPasskeys();
     }
@@ -160,32 +155,6 @@ export class PasskeySettingsComponent implements OnDestroy {
         if (this.currentUser != undefined) {
             await this.updateRegisteredPasskeys();
         }
-    }
-
-    private createCredentialOptions(options: PublicKeyCredentialCreationOptions, user: User): PublicKeyCredentialCreationOptions {
-        const username = user.email;
-
-        if (!user.id || !username) {
-            throw new Error('Invalid credential');
-        }
-
-        return {
-            ...options,
-            challenge: decodeBase64url(options.challenge),
-            user: {
-                id: new TextEncoder().encode(user.id.toString()),
-                name: username,
-                displayName: username,
-            },
-            excludeCredentials: options.excludeCredentials?.map((credential) => ({
-                ...credential,
-                id: decodeBase64url(credential.id),
-            })),
-            authenticatorSelection: {
-                requireResidentKey: true,
-                userVerification: 'discouraged', // a little less secure than 'preferred' or 'required', but more user-friendly
-            },
-        };
     }
 
     getDeleteSummary(passkey: PasskeyDTO | undefined): Observable<EntitySummary> | undefined {
