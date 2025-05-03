@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
@@ -387,7 +388,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathService.actualPathForPublicPath(URI.create(updatedSlide.getSlideImagePath()));
+        Path newImagePath = FilePathService.actualPathForPublicPath(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
         assert newImagePath != null;
         assertThat(newImagePath.toFile().exists()).isTrue();
 
@@ -711,7 +712,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
 
             // Check that image files actually exist on filesystem
-            Path imagePath = FilePathService.actualPathForPublicPath(URI.create(slide.getSlideImagePath()));
+            Path imagePath = FilePathService.actualPathForPublicPath(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
             assert imagePath != null;
             assertThat(imagePath.toFile().exists()).isTrue();
         }

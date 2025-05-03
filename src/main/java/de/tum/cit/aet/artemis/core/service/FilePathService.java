@@ -190,14 +190,14 @@ public class FilePathService {
             case EXAM_USER_SIGNATURE -> URI.create("exam-user/signatures/" + id + "/" + filename);
             case STUDENT_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
             case LECTURE_ATTACHMENT -> URI.create("attachments/lecture/" + id + "/" + filename);
-            case ATTACHMENT_UNIT -> publicPathForActualAttachmentUnitFilePath(path, filename, id);
+            case SLIDE -> publicPathForActualSlideFilePath(path, filename, id);
             case FILE_UPLOAD_EXERCISE -> publicPathForActualFileUploadExercisesFilePath(path, filename, id);
             case STUDENT_VERSION_SLIDES -> URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
-            case SLIDE -> URI.create("attachments/attachment-unit/" + id + "/" + filename);
+            case ATTACHMENT_UNIT -> URI.create("attachments/attachment-unit/" + id + "/" + filename);
         };
     }
 
-    private static URI publicPathForActualAttachmentUnitFilePath(Path path, String filename, String id) {
+    private static URI publicPathForActualSlideFilePath(Path path, String filename, String id) {
         try {
             // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
             // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)

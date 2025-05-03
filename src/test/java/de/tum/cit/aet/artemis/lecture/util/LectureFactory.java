@@ -10,6 +10,7 @@ import java.util.UUID;
 import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -91,7 +92,8 @@ public class LectureFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, filePathType, entityId).toString());
         return attachment;
     }
 
@@ -111,7 +113,8 @@ public class LectureFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

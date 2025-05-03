@@ -29,6 +29,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -163,7 +164,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractFileUploadIntegrationT
             }
         }
 
-        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, returnedSubmission.getId());
+        URI publicFilePath = FilePathService.publicPathForActualPathOrThrow(actualFilePath, FilePathType.FILE_UPLOAD_EXERCISE, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
         assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath.toString());
         var fileBytes = Files.readAllBytes(actualFilePath);

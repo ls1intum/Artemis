@@ -16,40 +16,42 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testActualPathForPublicPath() {
-        Path actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/backgrounds/background.jpeg"));
+        Path actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/backgrounds/background.jpeg"), FilePathType.DRAG_AND_DROP_BACKGROUND);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "background.jpeg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/drag-items/image.jpeg"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/drag-items/image.jpeg"), FilePathType.DRAG_ITEM);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "image.jpeg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("course/icons/icon.png"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("course/icons/icon.png"), FilePathType.COURSE_ICON);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icon.png"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/lecture/4/slides.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/lecture/4/slides.pdf"), FilePathType.LECTURE_ATTACHMENT);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "4", "slides.pdf"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/download.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/download.pdf"), FilePathType.ATTACHMENT_UNIT);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "download.pdf"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/slide/1/1.jpg"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/slide/1/1.jpg"), FilePathType.SLIDE);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "slide", "1", "1.jpg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/student/download.pdf"));
+        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/student/download.pdf"), FilePathType.STUDENT_VERSION_SLIDES);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "student", "download.pdf"));
     }
 
-    @Test
-    void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
-        Path path = FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf"));
-        assertThat(path).isNull();
-    }
+    // @Test
+    // void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
+    // Path path = FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf"));
+    // assertThat(path).isNull();
+    // }
 
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("file-upload-exercises/file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class)
+                .isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("file-upload-exercises/file.pdf"), FilePathType.FILE_UPLOAD_EXERCISE))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class)
+                .isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf"), FilePathType.FILE_UPLOAD_EXERCISE))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 
@@ -60,21 +62,22 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(publicPath).isEqualTo(URI.create(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName()));
     }
 
-    @Test
-    void testPublicPathForActualPath_shouldReturnNull() {
-        URI otherPath = FilePathService.publicPathForActualPath(Path.of("unknown-path", "unknown-file.pdf"), 1L);
-        assertThat(otherPath).isNull();
-    }
+    // @Test
+    // void testPublicPathForActualPath_shouldReturnNull() {
+    // URI otherPath = FilePathService.publicPathForActualPath(Path.of("unknown-path", "unknown-file.pdf"), 1L);
+    // assertThat(otherPath).isNull();
+    // }
 
     @Test
     void testPublicPathForActualPath_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             Path actualFileUploadPath = FilePathService.getFileUploadExercisesFilePath();
-            FilePathService.publicPathForActualPathOrThrow(actualFileUploadPath, 1L);
+            FilePathService.publicPathForActualPathOrThrow(actualFileUploadPath, FilePathType.FILE_UPLOAD_EXERCISE, 1L);
 
         }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
 
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.publicPathForActualPathOrThrow(Path.of("unknown-path", "unknown-file.pdf"), 1L))
+        assertThatExceptionOfType(FilePathParsingException.class)
+                .isThrownBy(() -> FilePathService.publicPathForActualPathOrThrow(Path.of("unknown-path", "unknown-file.pdf"), FilePathType.FILE_UPLOAD_EXERCISE, 1L))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 }

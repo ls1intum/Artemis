@@ -391,7 +391,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         String url = "/api/core/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + unsanitizedFilename;
 
         try (MockedStatic<FilePathService> filePathServiceMock = Mockito.mockStatic(FilePathService.class)) {
-            filePathServiceMock.when(() -> FilePathService.actualPathForPublicPath(Mockito.any(URI.class))).thenReturn(tempFile);
+            filePathServiceMock.when(() -> FilePathService.actualPathForPublicPath(Mockito.any(URI.class), FilePathType.TEMPORARY)).thenReturn(tempFile);
 
             MvcResult result = mockMvc.perform(get(url)).andExpect(status().isOk()).andReturn();
 
