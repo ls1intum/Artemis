@@ -68,6 +68,7 @@ import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.LearnerProfileApi;
 import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -292,15 +293,15 @@ public class CourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath, false);
-            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, courseId).toString());
+            courseUpdate.setCourseIcon(FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {

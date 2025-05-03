@@ -8,6 +8,7 @@ import java.nio.file.Path;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -45,18 +46,17 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
-        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("file-upload-exercises/file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("file-upload-exercises/file.pdf")))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
 
-        assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> FilePathService.actualPathForPublicPathOrThrow(URI.create("/api/core/unknown-path/unknown-file.pdf")))
+        assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf")))
                 .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
     void testPublicPathForActualTempFilePath() {
         Path actualPath = FilePathService.getTempFilePath().resolve("test");
-        URI publicPath = FilePathService.publicPathForActualPath(actualPath, 1L);
+        URI publicPath = FilePathService.publicPathForActualPath(actualPath, FilePathType.TEMPORARY, 1L);
         assertThat(publicPath).isEqualTo(URI.create(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName()));
     }
 

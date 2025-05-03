@@ -11,6 +11,7 @@ import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -40,7 +41,7 @@ public class FileUploadSubmission extends Submission {
     @PostRemove
     public void onDelete() {
         if (filePath != null) {
-            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath));
+            Path actualPath = FilePathService.actualPathForPublicPath(URI.create(filePath), FilePathType.FILE_UPLOAD_EXERCISE);
             fileService.schedulePathForDeletion(actualPath, 0);
         }
     }

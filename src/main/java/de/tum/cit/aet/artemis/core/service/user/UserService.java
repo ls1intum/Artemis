@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.communication.domain.SavedPost;
 import de.tum.cit.aet.artemis.communication.repository.SavedPostRepository;
 import de.tum.cit.aet.artemis.communication.service.CourseNotificationSettingService;
 import de.tum.cit.aet.artemis.communication.service.UserCourseNotificationStatusService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -506,7 +507,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString)), 0);
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString), FilePathType.STUDENT_IMAGE), 0);
         }
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);

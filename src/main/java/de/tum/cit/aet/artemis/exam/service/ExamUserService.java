@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
@@ -134,11 +135,11 @@ public class ExamUserService {
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
             Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
 
-            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathService.publicPathForActualPathOrThrow(savedPath, FilePathType.STUDENT_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString));
+                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString), FilePathType.STUDENT_IMAGE);
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
@@ -153,8 +154,8 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create).map(FilePathService::actualPathForPublicPath)
-                .forEach(path -> fileService.schedulePathForDeletion(path, 0));
+        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create)
+                .map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.STUDENT_IMAGE)).forEach(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
     /**

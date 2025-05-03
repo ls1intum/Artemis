@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
@@ -173,7 +174,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
         }
         final Path savePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final URI newFilePath = FilePathService.publicPathForActualPathOrThrow(savePath, fileUploadSubmission.getId());
+        final URI newFilePath = FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.FILE_UPLOAD_EXERCISE, fileUploadSubmission.getId());
 
         // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
         final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(savePath));

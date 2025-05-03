@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.iris.api.IrisLectureApi;
@@ -153,7 +154,7 @@ public class LectureUnitImportService {
         attachment.setVersion(importedAttachment.getVersion());
         attachment.setAttachmentType(importedAttachment.getAttachmentType());
 
-        Path oldPath = FilePathService.actualPathForPublicPathOrThrow(URI.create(importedAttachment.getLink()));
+        Path oldPath = FilePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
         Path newPath;
         if (oldPath.toString().contains("/attachment-unit/")) {
             newPath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
@@ -163,7 +164,7 @@ public class LectureUnitImportService {
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, entityId).toString());
+        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.LECTURE_ATTACHMENT, entityId).toString());
         return attachment;
     }
 }

@@ -10,6 +10,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -278,10 +280,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
         List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
         validateQuizExerciseFiles(updatedExercise, nullsafeFiles, false);
-        // Find old drag items paths
-        Set<String> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
-        // Init files to remove with all old paths
-        Set<String> filesToRemove = new HashSet<>(oldPaths);
+        Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
+        Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
         Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
 
@@ -291,31 +291,39 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
 
-        fileService.deleteFiles(filesToRemove.stream().map(Path::of).toList());
+        var allFilesToRemoveMerged = filesToRemove.values().stream().flatMap(Set::stream).map(Path::of).toList();
+
+        fileService.deleteFiles(allFilesToRemoveMerged);
     }
 
-    private Set<String> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
-        Set<String> paths = new HashSet<>();
+    private Map<FilePathType, Set<String>> getAllPathsFromDragAndDropQuestionsOfExercise(QuizExercise quizExercise) {
+        Map<FilePathType, Set<String>> paths = new HashMap<>();
+        paths.put(FilePathType.DRAG_AND_DROP_BACKGROUND, new HashSet<>());
+        paths.put(FilePathType.DRAG_ITEM, new HashSet<>());
+
         for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 if (dragAndDropQuestion.getBackgroundFilePath() != null) {
-                    paths.add(dragAndDropQuestion.getBackgroundFilePath());
+                    paths.get(FilePathType.DRAG_AND_DROP_BACKGROUND).add(dragAndDropQuestion.getBackgroundFilePath());
                 }
-                paths.addAll(dragAndDropQuestion.getDragItems().stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet()));
+                Set<String> dragItemPaths = dragAndDropQuestion.getDragItems().stream().map(DragItem::getPictureFilePath).filter(Objects::nonNull).collect(Collectors.toSet());
+                paths.get(FilePathType.DRAG_ITEM).addAll(dragItemPaths);
             }
         }
+
         return paths;
     }
 
-    private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Set<String> oldPaths, Set<String> filesToRemove, Map<String, MultipartFile> fileMap,
-            DragAndDropQuestion questionUpdate) throws IOException {
+    private void handleDndQuestionUpdate(DragAndDropQuestion dragAndDropQuestion, Map<FilePathType, Set<String>> oldPaths, Map<FilePathType, Set<String>> filesToRemove,
+            Map<String, MultipartFile> fileMap, DragAndDropQuestion questionUpdate) throws IOException {
         String newBackgroundPath = dragAndDropQuestion.getBackgroundFilePath();
 
         // Don't do anything if the path is null because it's getting removed
         if (newBackgroundPath != null) {
-            if (oldPaths.contains(newBackgroundPath)) {
+            var oldBackgroundPaths = oldPaths.get(FilePathType.DRAG_AND_DROP_BACKGROUND);
+            if (oldBackgroundPaths.contains(newBackgroundPath)) {
                 // Path didn't change
-                filesToRemove.remove(dragAndDropQuestion.getBackgroundFilePath());
+                filesToRemove.get(FilePathType.DRAG_AND_DROP_BACKGROUND).remove(newBackgroundPath);
             }
             else {
                 // Path changed and file was provided
@@ -325,7 +333,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             String newDragItemPath = dragItem.getPictureFilePath();
-            if (dragItem.getPictureFilePath() != null && !oldPaths.contains(newDragItemPath)) {
+            var dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
+            if (dragItem.getPictureFilePath() != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
                 saveDndDragItemPicture(dragItem, fileMap, null);
             }
@@ -341,22 +350,47 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      */
     public void validateQuizExerciseFiles(QuizExercise quizExercise, @NotNull List<MultipartFile> providedFiles, boolean isCreate) {
         long fileCount = providedFiles.size();
-        Set<String> exerciseFileNames = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
-        Set<String> newFileNames = isCreate ? exerciseFileNames : exerciseFileNames.stream().filter(fileNameOrUri -> {
-            try {
-                return !Files.exists(FilePathService.actualPathForPublicPathOrThrow(URI.create(fileNameOrUri)));
-            }
-            catch (FilePathParsingException e) {
-                // File is not in the internal API format and hence expected to be a new file
-                return true;
-            }
-        }).collect(Collectors.toSet());
 
-        if (newFileNames.size() != fileCount) {
+        Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
+
+        Map<FilePathType, Set<String>> newFilePathsMap = new HashMap<>();
+
+        if (isCreate) {
+            newFilePathsMap = new HashMap<>(exerciseFilePathsMap);
+        }
+        else {
+            for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
+                FilePathType type = entry.getKey();
+                Set<String> paths = entry.getValue();
+
+                Set<String> newPaths = paths.stream().filter(filePath -> {
+                    // TODO we can probably remove this try/catch
+                    try {
+                        return !Files.exists(FilePathService.actualPathForPublicPath(URI.create(filePath), type));
+                    }
+                    catch (FilePathParsingException e) {
+                        // File is not in the internal API format and hence expected to be a new file
+                        return true;
+                    }
+                }).collect(Collectors.toSet());
+
+                if (!newPaths.isEmpty()) {
+                    newFilePathsMap.put(type, newPaths);
+                }
+            }
+        }
+
+        int totalNewPathsCount = newFilePathsMap.values().stream().mapToInt(Set::size).sum();
+
+        if (totalNewPathsCount != fileCount) {
             throw new BadRequestAlertException("Number of files does not match number of new drag items and backgrounds", ENTITY_NAME, null);
         }
+
+        Set<String> allNewFilePaths = newFilePathsMap.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+
         Set<String> providedFileNames = providedFiles.stream().map(MultipartFile::getOriginalFilename).collect(Collectors.toSet());
-        if (!newFileNames.equals(providedFileNames)) {
+
+        if (!allNewFilePaths.equals(providedFileNames)) {
             throw new BadRequestAlertException("File names do not match new drag item and background file names", ENTITY_NAME, null);
         }
     }
@@ -375,7 +409,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + question.getBackgroundFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        question.setBackgroundFilePath(saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, questionId).toString());
+        question.setBackgroundFilePath(
+                saveDragAndDropImage(FilePathService.getDragAndDropBackgroundFilePath(), file, FilePathType.DRAG_AND_DROP_BACKGROUND, questionId).toString());
     }
 
     /**
@@ -392,7 +427,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             throw new BadRequestAlertException("The file " + dragItem.getPictureFilePath() + " was not provided", ENTITY_NAME, null);
         }
 
-        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, entityId).toString());
+        dragItem.setPictureFilePath(saveDragAndDropImage(FilePathService.getDragItemFilePath(), file, FilePathType.DRAG_ITEM, entityId).toString());
     }
 
     /**
@@ -400,11 +435,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @return the public path of the saved image
      */
-    private URI saveDragAndDropImage(Path basePath, MultipartFile file, @Nullable Long entityId) throws IOException {
+    private URI saveDragAndDropImage(Path basePath, MultipartFile file, FilePathType filePathType, @Nullable Long entityId) throws IOException {
         String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.publicPathForActualPathOrThrow(savePath, entityId);
+        return FilePathService.publicPathForActualPathOrThrow(savePath, filePathType, entityId);
     }
 
     /**
@@ -476,11 +511,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
-                if (FilePathService.actualPathForPublicPath(publicPathUri) == null) {
+                if (FilePathService.actualPathForPublicPath(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND) == null) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                    if (dragItem.getPictureFilePath() != null && FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath())) == null) {
+                    if (dragItem.getPictureFilePath() != null
+                            && FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM) == null) {
                         saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }

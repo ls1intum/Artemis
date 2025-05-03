@@ -17,6 +17,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -68,7 +69,7 @@ public class AttachmentService {
 
         try {
             String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath));
+            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath), FilePathType.STUDENT_VERSION_SLIDES);
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
@@ -89,8 +90,8 @@ public class AttachmentService {
         if (attachment.getStudentVersion() != null) {
             try {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath), 0);
-                fileService.evictCacheForPath(FilePathService.actualPathForPublicPathOrThrow(oldStudentVersionPath));
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
+                fileService.evictCacheForPath(FilePathService.actualPathForPublicPath(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
             catch (Exception e) {
                 throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());
@@ -141,6 +142,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, attachmentUnitId).toString());
+        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
     }
 }

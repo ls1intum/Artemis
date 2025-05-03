@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -169,12 +171,13 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path backgroundFileIntendedPath)
             // If it is null it is a new image which doesn't exist yet and will be added later.
-            if (FilePathService.actualPathForPublicPath(backgroundFilePublicPath) != null) {
+            // TODO how to handle this now, we never return null now
+            if (Files.exists(FilePathService.actualPathForPublicPath(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                 FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
-                Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath);
+                Path oldPath = FilePathService.actualPathForPublicPath(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND);
                 Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
-                dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, null).toString());
+                dndQuestion.setBackgroundFilePath(FilePathService.publicPathForActualPathOrThrow(newPath, FilePathType.DRAG_AND_DROP_BACKGROUND, null).toString());
             }
         }
         else {
@@ -213,12 +216,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path pictureFileIntendedPath)
             // If it is null it is a new image which doesn't exist yet and will be added later.
-            if (FilePathService.actualPathForPublicPath(pictureFilePublicPath) != null) {
+            if (Files.exists(FilePathService.actualPathForPublicPath(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
                 FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
                 // Need to copy the file and get a new path, same as above
-                Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath);
+                Path oldDragItemPath = FilePathService.actualPathForPublicPath(pictureFilePublicPath, FilePathType.DRAG_ITEM);
                 Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
-                dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, null).toString());
+                dragItem.setPictureFilePath(FilePathService.publicPathForActualPathOrThrow(newDragItemPath, FilePathType.DRAG_ITEM, null).toString());
             }
         }
         dndQuestion.setDragItems(newDragItems);
