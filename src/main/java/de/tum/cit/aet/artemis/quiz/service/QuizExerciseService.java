@@ -290,7 +290,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
 
-        var allFilesToRemoveMerged = filesToRemove.values().stream().flatMap(Set::stream).map(Path::of).toList();
+        var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
+                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.actualPathForPublicPath(URI.create(p), entry.getKey()))).filter(Objects::nonNull).toList();
 
         fileService.deleteFiles(allFilesToRemoveMerged);
     }

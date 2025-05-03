@@ -6,9 +6,7 @@ import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -154,8 +152,13 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Stream.of(user.getSigningImagePath(), user.getStudentImagePath()).filter(Objects::nonNull).map(URI::create)
-                .map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.STUDENT_IMAGE)).forEach(path -> fileService.schedulePathForDeletion(path, 0));
+        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.EXAM_USER_SIGNATURE))
+                .ifPresent(path -> {
+                    fileService.schedulePathForDeletion(path, 0);
+                });
+
+        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.STUDENT_IMAGE))
+                .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
     /**

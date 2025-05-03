@@ -7,7 +7,6 @@ import static org.awaitility.Awaitility.await;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -345,9 +344,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Path directoryFilePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        int indexOfFirstFileSystemSeparator = originalSlidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
-        String slidePathForDB = originalSlidePath.toString().substring(indexOfFirstFileSystemSeparator);
-        slide.setSlideImagePath(slidePathForDB);
+        slide.setSlideImagePath(FilePathService.publicPathForActualPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -540,9 +537,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set up attachment link - make sure the link is updated properly
-        int indexOfFirstFileSystemSeparator = pdfPath.toString().indexOf(FileSystems.getDefault().getSeparator());
-        String pdfPathForDB = pdfPath.toString().substring(indexOfFirstFileSystemSeparator);
-        testAttachmentUnit.getAttachment().setLink(pdfPathForDB);
+        testAttachmentUnit.getAttachment().setLink(FilePathService.publicPathForActualPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
         testAttachmentUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -568,9 +563,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
-            indexOfFirstFileSystemSeparator = slidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
-            String slidePathForDB = slidePath.toString().substring(indexOfFirstFileSystemSeparator);
-            savedSlide.setSlideImagePath(slidePathForDB);
+
+            savedSlide.setSlideImagePath(FilePathService.publicPathForActualPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
