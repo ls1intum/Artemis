@@ -154,24 +154,6 @@ public class FilePathService {
     /**
      * Generate the public path for the file at the given path
      *
-     * @param actualPathString the path to the file in the local filesystem
-     * @param entityId         the id of the entity associated with the file
-     * @throws FilePathParsingException if the path is unknown
-     * @return the public file url that can be used by users to access the file from outside
-     */
-    public static URI publicPathForActualPathOrThrow(Path actualPathString, FilePathType filePathType, @Nullable Long entityId) {
-        URI publicPath = publicPathForActualPath(actualPathString, filePathType, entityId);
-        if (publicPath == null) {
-            // path is unknown => cannot convert
-            throw new FilePathParsingException("Unknown Filepath: " + actualPathString);
-        }
-
-        return publicPath;
-    }
-
-    /**
-     * Generate the public path for the file at the given path
-     *
      * @param path     the path to the file in the local filesystem
      * @param entityId the id of the entity associated with the file
      * @return the public file url that can be used by users to access the file from outside

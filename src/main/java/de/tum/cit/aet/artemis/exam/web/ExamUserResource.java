@@ -89,7 +89,7 @@ public class ExamUserResource {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathService.getExamUserSignatureFilePath();
             Path savePath = fileService.saveFile(signatureFile, basePath, false);
-            examUser.setSigningImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
+            examUser.setSigningImagePath(FilePathService.publicPathForActualPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded

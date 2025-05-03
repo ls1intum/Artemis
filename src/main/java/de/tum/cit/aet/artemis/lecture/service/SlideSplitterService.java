@@ -134,7 +134,7 @@ public class SlideSplitterService {
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
                 slideRepository.save(slideEntity);

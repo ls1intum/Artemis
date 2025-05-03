@@ -72,7 +72,7 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testPublicPathForActualPath_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
             Path actualFileUploadPath = FilePathService.getFileUploadExercisesFilePath();
-            FilePathService.publicPathForActualPathOrThrow(actualFileUploadPath, FilePathType.FILE_UPLOAD_SUBMISSION, 1L);
+            FilePathService.publicPathForActualPath(actualFileUploadPath, FilePathType.FILE_UPLOAD_SUBMISSION, 1L);
 
         }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
 

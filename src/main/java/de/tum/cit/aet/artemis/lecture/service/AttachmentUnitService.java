@@ -177,7 +177,7 @@ public class AttachmentUnitService {
         if (file != null && !file.isEmpty()) {
             Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
+            attachment.setLink(FilePathService.publicPathForActualPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }

@@ -93,7 +93,7 @@ public class LectureFactory {
             fail("Failed while copying test attachment files", ex);
         }
         FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, filePathType, entityId).toString());
+        attachment.setLink(FilePathService.publicPathForActualPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 
@@ -114,7 +114,7 @@ public class LectureFactory {
             fail("Failed while copying test attachment files", ex);
         }
         FilePathType filePathType = forUnit ? FilePathType.ATTACHMENT_UNIT : FilePathType.LECTURE_ATTACHMENT;
-        attachment.setLink(FilePathService.publicPathForActualPathOrThrow(savePath, filePathType, entityId).toString());
+        attachment.setLink(FilePathService.publicPathForActualPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }
