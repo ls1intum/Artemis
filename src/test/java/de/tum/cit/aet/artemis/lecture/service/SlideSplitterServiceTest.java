@@ -107,9 +107,9 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         exerciseRepository.save(testExercise);
 
         // Arrange
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId\":" + testExercise.getId() + "}]";
+        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId" + "\":" + testExercise.getId() + "}]";
 
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"2\",\"order\":2},{\"slideId\":\"3\",\"order\":3}]";
+        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"2\",\"order\":2},{\"slideId\":\"3\"," + "\"order\":3}]";
 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
@@ -161,7 +161,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         String hiddenPages = "[]";
 
         // Include a new temporary slide ID
-        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"temp_new\",\"order\":2},{\"slideId\":\"3\",\"order\":3}]";
+        String pageOrder = "[{\"slideId\":\"1\",\"order\":1},{\"slideId\":\"temp_new\",\"order\":2}," + "{\"slideId\":\"3\",\"order\":3}]";
 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
@@ -278,7 +278,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
-        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId\":" + testExercise.getId() + "}]";
+        String hiddenPages = "[{\"slideId\":\"1\",\"date\":\"" + ZonedDateTime.now().plusDays(1) + "\",\"exerciseId" + "\":" + testExercise.getId() + "}]";
 
         String pageOrder = "[{\"slideId\":\"1\",\"order\":1}]";
 
@@ -469,13 +469,14 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Slide slide = new Slide();
         slide.setSlideNumber(1);
         slide.setAttachmentUnit(testAttachmentUnit);
-        // The path must be valid format but point to a non-existent file
-        slide.setSlideImagePath("temp/non_existent_file.png");
+        // We have to set a dummy path here as null is not allowed by the database and the desired value is set later
+        slide.setSlideImagePath("dummy");
 
         // Save the slide and get the ID
         Slide savedSlide = slideRepository.save(slide);
         Long slideId = savedSlide.getId();
-
+        savedSlide.setSlideImagePath("attachments/attachmentUnit/" + testAttachmentUnit.getId() + "/slide/" + slideId + "/not-existent.png");
+        slideRepository.save(savedSlide);
         // Create a page order that changes the slide number
         String hiddenPages = "[]";
         String pageOrder = "[{\"slideId\":\"" + slideId + "\",\"order\":2}]";
@@ -527,23 +528,25 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
         slideRepository.deleteAll(existingSlides);
-
+        Path attachmentDirectory = FilePathService.getAttachmentUnitFilePath().resolve(testAttachmentUnit.getId().toString());
+        Files.createDirectories(attachmentDirectory);
         // Create mock PDF file with 3 pages
-        Path tempDir = Files.createTempDirectory("test-slides-mixed");
-        Path tempPdfPath = tempDir.resolve("test-slides.pdf");
+        Path pdfPath = attachmentDirectory.resolve("test-slides.pdf");
         try (PDDocument doc = new PDDocument()) {
             for (int i = 0; i < 3; i++) {
                 doc.addPage(new PDPage());
             }
-            doc.save(tempPdfPath.toFile());
+            doc.save(pdfPath.toFile());
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentUnit.getAttachment().setLink(tempPdfPath.toUri().toString());
+        int indexOfFirstFileSystemSeparator = pdfPath.toString().indexOf(FileSystems.getDefault().getSeparator());
+        String pdfPathForDB = pdfPath.toString().substring(indexOfFirstFileSystemSeparator);
+        testAttachmentUnit.getAttachment().setLink(pdfPathForDB);
         testAttachmentUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
-        Path slideImagesDir = tempDir.resolve("slide-images");
+        Path slideImagesDir = attachmentDirectory.resolve("slide");
         Files.createDirectories(slideImagesDir);
 
         // Create existing slides (1 and 2) with proper file paths
@@ -551,28 +554,31 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         List<Slide> createdSlides = new ArrayList<>();
 
         for (int i = 1; i <= 2; i++) {
-            Path slidePath = slideImagesDir.resolve("slide" + i + ".png");
-            BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
-            ImageIO.write(image, "png", slidePath.toFile());
-
-            // Create a path that FilePathService can resolve properly
-            String mockPublicPath = "temp/slide-images/slide" + i + ".png";
 
             Slide slide = new Slide();
             // DO NOT set the ID - let the repository assign it
             slide.setSlideNumber(i);
             slide.setAttachmentUnit(testAttachmentUnit);
-            slide.setSlideImagePath(mockPublicPath);
+            // Set a dummy path for the slide image as it cannot be null. Correct value is set after saving the slide
+            slide.setSlideImagePath("dummy");
 
             // Save the slide and add it to our collection
             Slide savedSlide = slideRepository.save(slide);
+            Files.createDirectories(slideImagesDir.resolve(savedSlide.getId().toString()));
+            Path slidePath = slideImagesDir.resolve(Path.of(savedSlide.getId().toString(), "slide" + i + ".png"));
+            BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
+            ImageIO.write(image, "png", slidePath.toFile());
+            indexOfFirstFileSystemSeparator = slidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
+            String slidePathForDB = slidePath.toString().substring(indexOfFirstFileSystemSeparator);
+            savedSlide.setSlideImagePath(slidePathForDB);
+            savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
 
         // Now that we have the slides with their assigned IDs, set up hiddenPages and pageOrder
-        hiddenPages = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"date\":\"" + hiddenDate + "\",\"exerciseId\":" + testExercise.getId() + "}]";
+        hiddenPages = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"date\":\"" + hiddenDate + "\"," + "\"exerciseId\":" + testExercise.getId() + "}]";
 
-        pageOrder = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"order\":1}," + "{\"slideId\":\"temp_new\",\"order\":2}," + "{\"slideId\":\""
+        pageOrder = "[{\"slideId\":\"" + createdSlides.get(0).getId() + "\",\"order\":1}," + "{\"slideId\":\"temp_new" + "\",\"order\":2}," + "{\"slideId\":\""
                 + createdSlides.get(1).getId() + "\",\"order\":3}]";
 
         // Verify we have 2 slides before starting the test
@@ -580,7 +586,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
 
         // Instead of using the async method, use the direct method with the loaded document
         // This avoids issues with file loading in the asynchronous context
-        try (PDDocument loadedDoc = Loader.loadPDF(tempPdfPath.toFile())) {
+        try (PDDocument loadedDoc = Loader.loadPDF(pdfPath.toFile())) {
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(loadedDoc, testAttachmentUnit, "test-slides.pdf", hiddenPages, pageOrder);
         }
 
@@ -615,23 +621,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify there is a new slide with number 2
         Slide newSlide = slides.stream().filter(s -> s.getSlideNumber() == 2).findFirst().orElse(null);
         assertThat(newSlide).isNotNull();
-
-        // Clean up
-        Files.deleteIfExists(tempPdfPath);
-        Files.walkFileTree(tempDir, new SimpleFileVisitor<>() {
-
-            @Override
-            public @NotNull FileVisitResult visitFile(Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                Files.delete(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public @NotNull FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-                Files.delete(dir);
-                return FileVisitResult.CONTINUE;
-            }
-        });
     }
 
     @Test
@@ -645,7 +634,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Arrange
         ZonedDateTime hiddenDate = ZonedDateTime.now().plusDays(1);
         String hiddenPages = "[{\"slideId\":\"temp_1\",\"date\":\"" + hiddenDate + "\",\"exerciseId\":" + testExercise.getId() + "}]";
-        String pageOrder = "[{\"slideId\":\"temp_1\",\"order\":1},{\"slideId\":\"temp_2\",\"order\":2},{\"slideId\":\"temp_3\",\"order\":3}]";
+        String pageOrder = "[{\"slideId\":\"temp_1\",\"order\":1},{\"slideId\":\"temp_2\",\"order\":2}," + "{\"slideId\":\"temp_3\",\"order\":3}]";
 
         // Clear any existing slides for this test
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
@@ -671,7 +660,8 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             slideSplitterService.splitAttachmentUnitIntoSingleSlides(loadedDoc, testAttachmentUnit, "test-slides.pdf", hiddenPages, pageOrder);
         }
 
-        // Since the method is no longer asynchronous, we can check immediately, but add a small wait time for any DB operations
+        // Since the method is no longer asynchronous, we can check immediately, but add a small wait time for any DB
+        // operations
         Thread.sleep(500);
 
         // Get the slides
