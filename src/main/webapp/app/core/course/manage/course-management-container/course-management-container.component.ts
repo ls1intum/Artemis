@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -85,6 +85,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private courseSub?: Subscription;
     private urlSubscription?: Subscription;
     private learningPathsActive = signal(false);
+    @ViewChild('courseBodyContainer') courseBody: ElementRef<HTMLElement>;
     isSettingsPage = signal(false);
     studentViewLink = signal<string[]>([]);
 
@@ -252,6 +253,8 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             const childRouteComponent = this.activatedComponentReference() as CourseConversationsComponent;
             this.isSidebarCollapsed.set(childRouteComponent?.isCollapsed ?? false);
         }
+        // if we don't scroll to the top, the page will be scrolled to the last position which is not expected by the user
+        this.courseBody.nativeElement.scrollTop = 0;
     }
 
     handleToggleSidebar(): void {
