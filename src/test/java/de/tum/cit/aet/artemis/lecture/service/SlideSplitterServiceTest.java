@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -323,12 +324,32 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testUpdateExistingSlideImage() throws IOException {
         // Arrange
-        // Get a proper temp path for slides
-        Path tempFilePath = FilePathService.getTempFilePath();
-        Files.createDirectories(tempFilePath);
+        // Clear existing slides
+        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
+        slideRepository.deleteAll(existingSlides);
 
+        // Create a slide with original image and save it to ensure it has a valid ID
+        Slide slide = new Slide();
+        slide.setSlideNumber(1); // Start with slide number 1
+        slide.setAttachmentUnit(testAttachmentUnit);
+        // Set a dummy path for the slide image as it cannot be null. Correct value is set after saving the slide
+        slide.setSlideImagePath("dummy");
+
+        // Save the slide and get the generated ID
+        Slide savedSlide = slideRepository.save(slide);
+        Long slideId = savedSlide.getId();
+
+        // Verify the slide was saved properly
+        assertThat(slideId).isNotNull();
+
+        Path directoryFilePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
+        Files.createDirectories(directoryFilePath);
+        Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
+        int indexOfFirstFileSystemSeparator = originalSlidePath.toString().indexOf(FileSystems.getDefault().getSeparator());
+        String slidePathForDB = originalSlidePath.toString().substring(indexOfFirstFileSystemSeparator);
+        slide.setSlideImagePath(slidePathForDB);
+        slideRepository.save(slide);
         // Create a test image file
-        Path originalSlidePath = tempFilePath.resolve("original_slide.png");
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
 
         // Set a specific RGB color with alpha component
@@ -342,23 +363,6 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             }
         }
         ImageIO.write(originalImage, "png", originalSlidePath.toFile());
-
-        // Clear existing slides
-        List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
-        slideRepository.deleteAll(existingSlides);
-
-        // Create a slide with original image and save it to ensure it has a valid ID
-        Slide slide = new Slide();
-        slide.setSlideNumber(1); // Start with slide number 1
-        slide.setAttachmentUnit(testAttachmentUnit);
-        slide.setSlideImagePath("temp/original_slide.png");
-
-        // Save the slide and get the generated ID
-        Slide savedSlide = slideRepository.save(slide);
-        Long slideId = savedSlide.getId();
-
-        // Verify the slide was saved properly
-        assertThat(slideId).isNotNull();
 
         // Create a page order that changes the slide number from 1 to 2
         // Use the actual ID from the saved slide
