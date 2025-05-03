@@ -17,9 +17,8 @@ import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/b
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
-import { getCredentialFromInvalidBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
 import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
-import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -89,18 +88,6 @@ export class PasskeySettingsComponent implements OnDestroy {
         this.registeredPasskeys.set(await this.passkeySettingsApiService.getRegisteredPasskeys());
     }
 
-    getCredentialWithGracefullyHandlingAuthenticatorIssues(credential: Credential | null) {
-        try {
-            // properly returned credentials can be stringified
-            JSON.stringify(credential);
-            return credential;
-        } catch (error) {
-            // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-            const malformedBitwardenCredential: MalformedBitwardenCredential = credential as unknown as MalformedBitwardenCredential;
-            return getCredentialFromInvalidBitwardenObject(malformedBitwardenCredential);
-        }
-    }
-
     async addNewPasskey() {
         try {
             const user = this.currentUser();
@@ -114,7 +101,7 @@ export class PasskeySettingsComponent implements OnDestroy {
             const authenticatorCredential = await navigator.credentials.create({
                 publicKey: credentialOptions,
             });
-            const credential = this.getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
+            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {

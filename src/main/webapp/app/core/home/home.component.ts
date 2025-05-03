@@ -21,6 +21,7 @@ import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauth
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
+import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
 
 @Component({
     selector: 'jhi-home',
@@ -102,10 +103,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
 
     async loginWithPasskey() {
         try {
-            const credential = await this.webauthnService.getCredential();
+            const authenticatorCredential = await this.webauthnService.getCredential();
 
-            if (!credential || credential.type != 'public-key') {
+            if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
                 alert("Credential is undefined or type is not 'public-key'");
+                return;
+            }
+
+            const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
+            if (!credential) {
+                alert('Credential is undefined');
                 return;
             }
 
@@ -213,7 +220,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.account = account;
         if (account) {
             // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
-            // since login is successful, go to stored previousState and clear previousState
+            // since login is successful, go to the stored previousState and clear the previousState
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
@@ -222,10 +229,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 this.router.navigate(['courses']);
             }
         }
-    }
-
-    isAuthenticated() {
-        return this.accountService.isAuthenticated();
     }
 
     inputChange(event: any) {
