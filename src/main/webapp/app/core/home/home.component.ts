@@ -113,6 +113,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.handleLoginSuccess();
         } catch (error) {
             this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            throw error;
         }
     }
 
