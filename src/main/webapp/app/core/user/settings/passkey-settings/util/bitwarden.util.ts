@@ -25,11 +25,8 @@ export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCreden
         return null;
     }
 
-    /**
-     * By cloning the object with lodash, we have an easy way to get a version that can be stringified
-     */
+    // By cloning the object with lodash, we have an easy way to get a version that can be stringified
     const clonedCredential: Credential = cloneDeep(malformedBitwardenCredential) as unknown as Credential;
-
     const serializedCredential = JSON.stringify(clonedCredential);
     const credential = JSON.parse(serializedCredential);
 
