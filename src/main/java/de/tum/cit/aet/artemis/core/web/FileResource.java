@@ -493,7 +493,8 @@ public class FileResource {
         List<Path> attachmentLinks = lectureAttachments.stream().map(unit -> {
             Attachment attachment = unit.getAttachment();
             String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
-            return FilePathService.actualPathForPublicPath(URI.create(filePath), FilePathType.STUDENT_VERSION_SLIDES);
+            FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.LECTURE_ATTACHMENT;
+            return FilePathService.actualPathForPublicPath(URI.create(filePath), filePathType);
         }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
