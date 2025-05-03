@@ -19,11 +19,15 @@ import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { DeepLinkingType } from 'app/lti/manage/lti13-deep-linking/lti.constants';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-deep-linking',
     templateUrl: './lti13-deep-linking.component.html',
     imports: [
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
         TranslateDirective,
         FaIconComponent,
         FormsModule,
