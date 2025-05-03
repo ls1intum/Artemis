@@ -9,3 +9,24 @@
     align-items: center;
     gap: 0.5rem;
 }
+
+.dropdown-container {
+    position: relative;
+}
+
+.dropdown-section {
+    margin-bottom: 1rem;
+}
+
+.ngb-dropdown-menu {
+    position: static !important;
+    width: 100%;
+    margin-top: 0.5rem;
+    border: 1px solid #dee2e6;
+    box-shadow: none;
+}
+
+.dropdown-menu.show {
+    inset: unset !important;
+    transform: none !important;
+}
