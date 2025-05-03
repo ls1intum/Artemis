@@ -170,8 +170,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
             URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path backgroundFileIntendedPath)
-            // If it is null it is a new image which doesn't exist yet and will be added later.
-            // TODO how to handle this now, we never return null now
+            // If it doesn't exist yet, it is a new image and will be added later.
             if (Files.exists(FilePathService.actualPathForPublicPath(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                 FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted

@@ -38,21 +38,11 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "student", "download.pdf"));
     }
 
-    // @Test
-    // void testActualPathForPublicFileUploadExercisePath_shouldReturnNull() {
-    // Path path = FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf"));
-    // assertThat(path).isNull();
-    // }
-
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class)
                 .isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("file-upload-exercises/file.pdf"), FilePathType.FILE_UPLOAD_SUBMISSION))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
-
-        // assertThatExceptionOfType(FilePathParsingException.class)
-        // .isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("/api/core/unknown-path/unknown-file.pdf"), FilePathType.FILE_UPLOAD_EXERCISE))
-        // .withMessageStartingWith("Unknown Filepath:");
     }
 
     @Test
@@ -62,12 +52,6 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(publicPath).isEqualTo(URI.create(FileService.DEFAULT_FILE_SUBPATH + actualPath.getFileName()));
     }
 
-    // @Test
-    // void testPublicPathForActualPath_shouldReturnNull() {
-    // URI otherPath = FilePathService.publicPathForActualPath(Path.of("unknown-path", "unknown-file.pdf"), 1L);
-    // assertThat(otherPath).isNull();
-    // }
-
     @Test
     void testPublicPathForActualPath_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class).isThrownBy(() -> {
@@ -75,9 +59,5 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
             FilePathService.publicPathForActualPath(actualFileUploadPath, FilePathType.FILE_UPLOAD_SUBMISSION, 1L);
 
         }).withMessageStartingWith("Unexpected String in upload file path. Exercise ID should be present here:");
-
-        // assertThatExceptionOfType(FilePathParsingException.class)
-        // .isThrownBy(() -> FilePathService.publicPathForActualPathOrThrow(Path.of("unknown-path", "unknown-file.pdf"), FilePathType.FILE_UPLOAD_EXERCISE, 1L))
-        // .withMessageStartingWith("Unknown Filepath:");
     }
 }

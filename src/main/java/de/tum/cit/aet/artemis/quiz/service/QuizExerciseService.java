@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
@@ -363,16 +362,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
 
-                Set<String> newPaths = paths.stream().filter(filePath -> {
-                    // TODO we can probably remove this try/catch
-                    try {
-                        return !Files.exists(FilePathService.actualPathForPublicPath(URI.create(filePath), type));
-                    }
-                    catch (FilePathParsingException e) {
-                        // File is not in the internal API format and hence expected to be a new file
-                        return true;
-                    }
-                }).collect(Collectors.toSet());
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.actualPathForPublicPath(URI.create(filePath), type)))
+                        .collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
                     newFilePathsMap.put(type, newPaths);
