@@ -100,15 +100,17 @@ public class FilePathService {
             case PROFILE_PICTURE -> getProfilePictureFilePath().resolve(filename);
             case EXAM_USER_SIGNATURE -> getExamUserSignatureFilePath().resolve(filename);
             case STUDENT_IMAGE -> getStudentImageFilePath().resolve(filename);
-            case LECTURE_ATTACHMENT -> {
-                String lectureId = path.getName(2).toString();
-                yield getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
-            }
+            case LECTURE_ATTACHMENT -> getLectureAttachmentFilePath(path, filename);
             case SLIDE -> getSlideFilePath(publicPath, path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesPath(path, filename);
             case ATTACHMENT_UNIT -> getAttachmentUnitFilePath(path, filename);
             case FILE_UPLOAD_EXERCISE -> actualPathForPublicFileUploadExercisesFilePath(publicPath, filename);
         };
+    }
+
+    private static Path getLectureAttachmentFilePath(Path path, String filename) {
+        String lectureId = path.getName(2).toString();
+        return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
     }
 
     private static Path getAttachmentUnitFilePath(Path path, String filename) {

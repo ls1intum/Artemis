@@ -69,7 +69,7 @@ public class AttachmentService {
 
         try {
             String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath), FilePathType.STUDENT_VERSION_SLIDES);
+            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
