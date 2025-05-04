@@ -213,7 +213,10 @@ export class HomeComponent implements OnInit, AfterViewChecked {
                 password: this.password,
                 rememberMe: this.rememberMe,
             })
-            .then(() => this.handleLoginSuccess())
+            .then(() => {
+                this.handleLoginSuccess();
+                this.openSetupPasskeyModal();
+            })
             .catch(() => {
                 this.authenticationError = true;
             })
@@ -229,8 +232,6 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (this.router.url === '/register' || /^\/activate\//.test(this.router.url) || /^\/reset\//.test(this.router.url)) {
             this.router.navigate(['']);
         }
-
-        this.openSetupPasskeyModal();
 
         this.eventManager.broadcast({
             name: 'authenticationSuccess',
