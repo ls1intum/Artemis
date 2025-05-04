@@ -58,7 +58,8 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             // The identification of manual results is only relevant when the due date was passed, otherwise they could be overridden anyway.
             if (hasDueDatePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
-                const newestResult = !!this.participation.results && head(orderBy(this.participation.results, ['id'], ['desc']));
+                const allResults = this.participation.submissions?.flatMap((submission) => submission.results ?? []) || [];
+                const newestResult = allResults.length ? head(orderBy(allResults, ['id'], ['desc'])) : undefined;
                 this.lastResultIsManual = !!newestResult && isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)

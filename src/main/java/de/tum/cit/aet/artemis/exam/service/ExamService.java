@@ -586,10 +586,6 @@ public class ExamService {
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
-            else {
-                // To prevent LazyInitializationException.
-                participation.setResults(Set.of());
-            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
         }
@@ -628,24 +624,19 @@ public class ExamService {
         boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-        // To prevent LazyInitializationException.
-        participation.setResults(Set.of());
         if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
-                // Also set the latest result into the participation as the client expects it there for programming exercises
                 Result latestResult = lastSubmission.getLatestResult();
                 if (latestResult != null) {
-                    latestResult.setParticipation(null);
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
-                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                    // lastResult -> lastSubmission
-                    participation.setResults(Set.of(latestResult));
+                    lastSubmission.setResults(List.of(latestResult));
                 }
-                participation.setSubmissions(Set.of(lastSubmission));
             }
-            lastSubmission.setResults(null);
+            else {
+                lastSubmission.setResults(List.of());
+            }
         }
     }
 
@@ -690,7 +681,7 @@ public class ExamService {
             }
             // Relevant Result is already calculated
             if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result relevantResult = studentParticipation.getResults().iterator().next();
+                Result relevantResult = studentParticipation.findLatestResult();
                 PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
                 double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
                 double achievedPoints = calculateAchievedPoints(exercise, relevantResult, exam.getCourse(), plagiarismPointDeductionPercentage);
@@ -1184,11 +1175,12 @@ public class ExamService {
                 exam.getNumberOfCorrectionRoundsInExam());
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
 
-        final long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
+        final long numberOfComplaints = complaintRepository.countByResult_Submission_Participation_Exercise_ExerciseGroup_Exam_IdAndComplaintType(examId, ComplaintType.COMPLAINT);
         stats.setNumberOfComplaints(numberOfComplaints);
 
         final long numberOfComplaintResponses = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId, ComplaintType.COMPLAINT);
+                .countByComplaint_Result_Submission_Participation_Exercise_ExerciseGroup_Exam_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(examId,
+                        ComplaintType.COMPLAINT);
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
 
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndExamId(userRepository.getUserWithGroupsAndAuthorities().getId(), examId);

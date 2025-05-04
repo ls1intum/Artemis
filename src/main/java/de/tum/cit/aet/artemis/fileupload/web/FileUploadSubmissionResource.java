@@ -324,7 +324,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        participation.setResults(null);
 
         if (fileUploadSubmission.getLatestResult() != null) {
             // do not send the feedback to the client

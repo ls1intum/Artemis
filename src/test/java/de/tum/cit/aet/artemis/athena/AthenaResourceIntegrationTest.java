@@ -343,7 +343,6 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
         var result = new Result();
         result.setScore(1.0);
         result.setSubmission(programmingSubmission);
-        result.setParticipation(participation);
         result.setAssessmentType(AssessmentType.MANUAL);
         // Create example feedback so that Athena can process it
         var feedback = new Feedback();

@@ -623,8 +623,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         }
 
         // apply submission if it exists
-        if (participation?.results?.length) {
-            this.submission = participation.results[0].submission as QuizSubmission;
+        if (participation?.submissions?.length) {
+            this.submission = participation.submissions.first() as QuizSubmission;
 
             // update submission time
             this.updateSubmissionTime();
@@ -632,9 +632,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // show submission answers in UI
             this.applySubmission();
 
-            if (participation.results[0].score !== undefined && this.quizExercise.quizEnded) {
+            if (this.submission.results?.length && this.submission.results[0].score !== undefined && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
-                this.showResult(participation.results[0]);
+                this.showResult(this.submission.results[0]);
             }
         } else {
             this.submission = new QuizSubmission();
@@ -689,15 +689,16 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results?.first()?.submission !== undefined && quizExercise.quizEnded) {
+        if (participation.submissions?.first() !== undefined && quizExercise.quizEnded) {
             // quiz has ended and results are available
-            this.submission = participation.results[0].submission as QuizSubmission;
-
-            // update submission time
-            this.updateSubmissionTime();
-            this.transferInformationToQuizExercise(quizExercise);
-            this.applySubmission();
-            this.showResult(participation.results[0]);
+            this.submission = participation.submissions.first() as QuizSubmission;
+            if (this.submission.results?.length) {
+                // update submission time
+                this.updateSubmissionTime();
+                this.transferInformationToQuizExercise(quizExercise);
+                this.applySubmission();
+                this.showResult(this.submission.results[0]);
+            }
         }
     }
 
@@ -944,7 +945,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         this.isSubmitting = false;
         this.submission = result.submission as QuizSubmission;
         // make sure the additional information (explanations, correct answers) is available
-        const quizExercise = (result.participation! as StudentParticipation).exercise as QuizExercise;
+        const quizExercise = (this.submission.participation! as StudentParticipation).exercise as QuizExercise;
         this.transferInformationToQuizExercise(quizExercise);
         this.applySubmission();
         this.showResult(result);

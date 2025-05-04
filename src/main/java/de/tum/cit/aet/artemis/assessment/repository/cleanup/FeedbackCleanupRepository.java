@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback, Long> {
 
     /**
-     * Deletes {@link Feedback} entries where the associated {@link Result} has no submission and no participation.
+     * Deletes {@link Feedback} entries where the associated {@link Result} has no submission or its submission has no participation.
      *
      * @return the number of deleted entities
      */
@@ -34,29 +34,31 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     // Subquery ok
     @Query("""
             DELETE FROM Feedback f
-            WHERE f.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+            WHERE f.id IN (
+                SELECT f2.id
+                FROM Feedback f2
+                    LEFT JOIN f2.result r
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
+                WHERE s IS NULL
+                   OR p IS NULL
+            )
             """)
     int deleteFeedbackForOrphanResults();
 
     /**
-     * Counts {@link Feedback} entries where the associated {@link Result} has no submission and no participation.
+     * Counts {@link Feedback} entries where the associated {@link Result} has no submission or its submission has no participation.
      *
      * @return the number of entities that would be deleted
      */
     @Query("""
             SELECT COUNT(f)
             FROM Feedback f
-            WHERE f.result IN (
-                SELECT r
-                FROM Result r
-                WHERE r.submission IS NULL
-                    AND r.participation IS NULL
-                )
+                LEFT JOIN f.result r
+                LEFT JOIN r.submission s
+                LEFT JOIN s.participation p
+            WHERE s IS NULL
+                OR p IS NULL
             """)
     int countFeedbackForOrphanResults();
 
@@ -86,8 +88,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     int countOrphanFeedback();
 
     /**
-     * Deletes {@link Feedback} entries associated with rated {@link Result} that are not the latest rated result
-     * for a {@link Participation}, within courses conducted between the specified date range.
+     * Deletes {@link Feedback} entries associated with rated {@link Result} (accessed via its submission)
+     * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      * This query removes old feedback entries that are not part of the latest rated results, for courses whose
      * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
      *
@@ -102,13 +104,16 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
             WHERE f.result IN (
                 SELECT r
                 FROM Result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = TRUE
                     )
                     AND r.rated = TRUE
@@ -119,8 +124,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     int deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Counts {@link Feedback} entries associated with rated {@link Result} that are not the latest rated result
-     * for a {@link Participation}, within courses conducted between the specified date range.
+     * Counts {@link Feedback} entries associated with rated {@link Result} (accessed via its submission)
+     * that are not the latest rated result for a {@link Participation}, within courses conducted between the specified date range.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
@@ -132,13 +137,16 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
             WHERE f.result IN (
                 SELECT r
                 FROM Result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                         AND r2.rated = TRUE
                     )
                     AND r.rated = TRUE
@@ -149,7 +157,8 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     int countOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Deletes non-rated {@link Feedback} entries that are not the latest non-rated result, where the associated course's start and end dates
+     * Deletes non-rated {@link Feedback} entries (accessed via its result's submission)
+     * that are not the latest non-rated result for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
      * This query removes old feedback entries that are not part of the latest non-rated result within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
@@ -165,13 +174,16 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
             WHERE f.result IN (
                 SELECT r
                 FROM Result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                     )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo
@@ -181,12 +193,13 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
     int deleteOldNonRatedFeedbackWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     /**
-     * Counts non-rated {@link Feedback} entries that are not the latest non-rated result, where the associated course's start and end dates
+     * Counts non-rated {@link Feedback} entries (accessed via its result's submission)
+     * that are not the latest non-rated result for a {@link Participation}, where the associated course's start and end dates
      * are between the specified date range.
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     * @return the number of entities that would be deleted
+     * @return the number of entities that would be deleted upon execution of the cleanup operation
      */
     @Query("""
             SELECT COUNT(f)
@@ -194,13 +207,16 @@ public interface FeedbackCleanupRepository extends ArtemisJpaRepository<Feedback
             WHERE f.result IN (
                 SELECT r
                 FROM Result r
-                    LEFT JOIN r.participation p
+                    LEFT JOIN r.submission s
+                    LEFT JOIN s.participation p
                     LEFT JOIN p.exercise e
                     LEFT JOIN e.course c
                 WHERE r.id NOT IN (
                     SELECT MAX(r2.id)
                     FROM Result r2
-                    WHERE r2.participation.id = p.id
+                        LEFT JOIN r2.submission s2
+                        LEFT JOIN s2.participation p2
+                    WHERE p2.id = p.id
                     )
                     AND r.rated = FALSE
                     AND c.endDate < :deleteTo

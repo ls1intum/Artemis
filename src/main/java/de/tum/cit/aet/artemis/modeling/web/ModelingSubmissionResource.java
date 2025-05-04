@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -354,9 +353,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        if (ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
-            participation.setResults(null);
-        }
 
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
@@ -370,8 +366,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
             if (participationResults != null) {
                 List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                 modelingSubmission.setResults(athenaResults);
-                Set<Result> athenaResultsSet = new HashSet<>(athenaResults);
-                participation.setResults(athenaResultsSet);
             }
         }
 

@@ -65,7 +65,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 scrollToTopOfPage();
                 return;
             }
-            const isTeamExercise = !!(results[0].result.participation! as StudentParticipation).team;
+            const isTeamExercise = !!(results[0].result!.submission!.participation! as StudentParticipation).team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
             let keys;
@@ -74,14 +74,14 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 const testCasesNames = getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
                     const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
                 });
             } else {
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
                 rows = results.map((resultWithPoints) => {
-                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    const studentParticipation = resultWithPoints.result.submission!.participation! as StudentParticipation;
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
                 });
             }

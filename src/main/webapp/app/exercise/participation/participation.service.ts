@@ -110,7 +110,6 @@ export class ParticipationService {
     protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             ParticipationService.convertParticipationDatesFromServer(res.body);
-            res.body.results = this.submissionService.convertResultArrayDatesFromServer(res.body.results);
             res.body.submissions = this.submissionService.convertSubmissionArrayDatesFromServer(res.body.submissions);
             res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise);
         }
@@ -220,9 +219,6 @@ export class ParticipationService {
         }
 
         participations.forEach((participation) => {
-            if (participation.results) {
-                combinedParticipation.results = combinedParticipation.results ? combinedParticipation.results.concat(participation.results) : participation.results;
-            }
             if (participation.submissions) {
                 combinedParticipation.submissions = combinedParticipation.submissions
                     ? combinedParticipation.submissions.concat(participation.submissions)
@@ -231,11 +227,6 @@ export class ParticipationService {
         });
 
         // make sure that results and submissions are connected with the participation because some components need this
-        if (combinedParticipation.results?.length) {
-            combinedParticipation.results.forEach((result) => {
-                result.participation = combinedParticipation;
-            });
-        }
         if (combinedParticipation.submissions?.length) {
             combinedParticipation.submissions.forEach((submission) => {
                 submission.participation = combinedParticipation;

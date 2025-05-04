@@ -136,9 +136,9 @@ public class RatingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
         responseRatings.forEach(rating -> {
+            rating.getResult().getSubmission().getParticipation().getExercise().setCourse(null);
+            rating.getResult().getSubmission().getParticipation().getExercise().setExerciseGroup(null);
             rating.getResult().setSubmission(null);
-            rating.getResult().getParticipation().getExercise().setCourse(null);
-            rating.getResult().getParticipation().getExercise().setExerciseGroup(null);
         });
         return ResponseEntity.ok(responseRatings);
     }
@@ -151,7 +151,7 @@ public class RatingResource {
     private void checkIfUserIsOwnerOfSubmissionElseThrow(Long resultId) {
         User user = userRepository.getUser();
         Result result = resultRepository.findByIdElseThrow(resultId);
-        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getParticipation(), user)) {
+        if (!authCheckService.isOwnerOfParticipation((StudentParticipation) result.getSubmission().getParticipation(), user)) {
             log.warn("User {} has tried to access rating for result {}", user.getLogin(), resultId);
             throw new AccessForbiddenException();
         }

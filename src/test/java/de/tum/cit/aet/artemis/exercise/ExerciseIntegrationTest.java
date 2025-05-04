@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
@@ -428,8 +429,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                addResultToSubmissionAndParticipation(exercise);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
@@ -453,8 +453,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
+                addResultToSubmissionAndParticipation(exercise);
             }
             ExerciseDetailsDTO exerciseWithDetails = request.get("/api/exercise/exercises/" + exercise.getId() + "/details", HttpStatus.OK, ExerciseDetailsDTO.class);
             for (StudentParticipation participation : exerciseWithDetails.exercise().getStudentParticipations()) {
@@ -470,6 +469,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 }
             }
         }
+    }
+
+    private void addResultToSubmissionAndParticipation(Exercise exercise) {
+        var participation = exercise.getStudentParticipations().iterator().next();
+        var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
+        participationUtilService.addResultToSubmission(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L), submission);
     }
 
     @Test
@@ -493,8 +498,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether the manual result will be displayed before the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC,
-                        ZonedDateTime.now().minusHours(1L), exercise.getStudentParticipations().iterator().next())));
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
 
@@ -521,11 +525,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         for (Exercise exercise : course.getExercises()) {
             // For programming exercises we add a manual result, to check whether this is correctly displayed after the assessment due date
             if (exercise instanceof ProgrammingExercise) {
-                Result result = participationUtilService.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1L),
-                        exercise.getStudentParticipations().iterator().next());
-                exercise.getStudentParticipations().iterator().next().setResults(Set.of(result));
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().setResults(new ArrayList<>());
-                exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().addResult(result);
+                addResultToSubmissionAndParticipation(exercise);
             }
             exerciseService.filterExerciseForCourseDashboard(exercise, Set.copyOf(exercise.getStudentParticipations()), true);
             // All exercises have one result

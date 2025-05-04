@@ -324,13 +324,15 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
     }
 
     @Override
-    public Set<Result> findResultsFilteredForStudents(Participation participation) {
+    public void filterResultsForStudents(Participation participation) {
         if (shouldFilterForStudents()) {
-            // results are never relevant before quiz has ended => return null
-            return null;
-        }
-        else {
-            return participation.getResults();
+            // results are never relevant before quiz has ended => clear all results
+            participation.getSubmissions().forEach(submission -> {
+                List<Result> results = submission.getResults();
+                if (results != null) {
+                    results.clear();
+                }
+            });
         }
     }
 

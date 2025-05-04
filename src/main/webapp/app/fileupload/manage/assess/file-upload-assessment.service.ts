@@ -63,8 +63,8 @@ export class FileUploadAssessmentService {
         if (result.submission) {
             result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
-        if (result.participation) {
-            result.participation.initializationDate = convertDateFromServer(result.participation.initializationDate);
+        if (result.submission?.participation) {
+            result.submission.participation.initializationDate = convertDateFromServer(result.submission.participation.initializationDate);
         }
 
         return res.clone({ body: result });

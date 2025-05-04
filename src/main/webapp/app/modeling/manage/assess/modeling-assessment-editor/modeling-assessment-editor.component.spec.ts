@@ -18,7 +18,6 @@ import { Feedback, FeedbackType } from 'app/assessment/shared/entities/feedback.
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { getLatestSubmissionResult } from 'app/exercise/shared/entities/submission/submission.model';
@@ -168,7 +167,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             const user = <User>{ id: 99, groups: ['instructorGroup'] };
             const result: Result = {
                 feedbacks: [new Feedback()],
-                participation: new StudentParticipation(),
                 score: 80,
                 successful: true,
                 submission: new ProgrammingSubmission(),
@@ -282,9 +280,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 rated: true,
                 hasComplaint: false,
             } as unknown as Result;
-            component.result.participation = {
-                results: [component.result],
-            } as unknown as Participation;
 
             component.submission = {
                 id: 1,
@@ -391,10 +386,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 score: 8,
                 rated: true,
                 hasComplaint: false,
-                participation: {
-                    type: ParticipationType.SOLUTION,
-                    results: [],
-                } as unknown as Participation,
             } as unknown as Result;
 
             const errorMessage = 'errMsg';
@@ -437,16 +428,14 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(serviceSpy).toHaveBeenCalledOnce();
             if (!errorKeyFromServer) {
                 expect(errorSpy).not.toHaveBeenCalled();
-                expect(component.result?.participation?.results).toEqual([changedResult]);
+                expect(component.result).toEqual(changedResult);
             } else if (errorKeyFromServer === 'complaintLock') {
                 expect(errorSpy).toHaveBeenCalledOnce();
                 expect(errorSpy).toHaveBeenCalledWith(errorMessage, errorParams);
-                expect(component.result?.participation?.results).toBeUndefined();
             } else {
                 // Handle all other errors
                 expect(errorSpy).toHaveBeenCalledOnce();
                 expect(errorSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.updateAfterComplaintFailed');
-                expect(component.result?.participation?.results).toBeUndefined();
             }
             expect(onSuccessCalled).toBe(!errorKeyFromServer);
             expect(onErrorCalled).toBe(!!errorKeyFromServer);
