@@ -23,7 +23,6 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -105,9 +104,9 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, @Qualifier("taskScheduler") TaskScheduler messageBrokerTaskScheduler,
-            TokenProvider tokenProvider, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService,
-            ExerciseRepository exerciseRepository, Optional<ExamRepositoryApi> examRepositoryApi) {
+    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
+            Optional<ExamRepositoryApi> examRepositoryApi) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
