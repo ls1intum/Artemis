@@ -230,11 +230,11 @@ public class AccountResource {
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
         Path savePath = fileService.saveFile(file, basePath, false);
-        String publicPath = FilePathService.publicUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
+        String publicPath = FilePathService.externalUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);
         return ResponseEntity.ok(new UserDTO(user));
@@ -251,7 +251,7 @@ public class AccountResource {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();

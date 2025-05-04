@@ -123,7 +123,7 @@ public class FilePathService {
      * @return the path to the lecture attachments directory
      */
     @NotNull
-    public static Path getLectureAttachmentFilePath() {
+    public static Path getLectureAttachmentFileSystemPath() {
         return Path.of(fileUploadPath, "attachments", "lecture");
     }
 
@@ -133,7 +133,7 @@ public class FilePathService {
      * @return the path to the attachment unit files directory
      */
     @NotNull
-    public static Path getAttachmentUnitFilePath() {
+    public static Path getAttachmentUnitFileSystemPath() {
         return Path.of(fileUploadPath, "attachments", "attachment-unit");
     }
 
@@ -172,14 +172,14 @@ public class FilePathService {
     /**
      * Converts a public file URI to its corresponding local file system path.
      *
-     * @param publicUri    the public file URI to convert
+     * @param externalUri  the external file URI to convert
      * @param filePathType the type of file path
      * @return the actual path to the file in the local filesystem
      * @throws FilePathParsingException if the URI cannot be parsed correctly
      */
     @NotNull
-    public static Path fileSystemPathForPublicUri(@NotNull URI publicUri, @NotNull FilePathType filePathType) {
-        String uriPath = publicUri.getPath();
+    public static Path fileSystemPathForExternalUri(@NotNull URI externalUri, @NotNull FilePathType filePathType) {
+        String uriPath = externalUri.getPath();
         Path path = Path.of(uriPath);
         String filename = path.getFileName().toString();
 
@@ -191,11 +191,11 @@ public class FilePathService {
             case PROFILE_PICTURE -> getProfilePictureFilePath().resolve(filename);
             case EXAM_USER_SIGNATURE -> getExamUserSignatureFilePath().resolve(filename);
             case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> getStudentImageFilePath().resolve(filename);
-            case LECTURE_ATTACHMENT -> getLectureAttachmentFilePath(path, filename);
-            case SLIDE -> getSlideFilePath(path, filename);
-            case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesPath(path, filename);
-            case ATTACHMENT_UNIT -> getAttachmentUnitFilePath(path, filename);
-            case FILE_UPLOAD_SUBMISSION -> actualPathForPublicFileUploadExercisesFilePath(publicUri, filename);
+            case LECTURE_ATTACHMENT -> getLectureAttachmentFileSystemPath(path, filename);
+            case SLIDE -> getSlideFileSystemPath(path, filename);
+            case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
+            case ATTACHMENT_UNIT -> getAttachmentUnitFileSystemPath(path, filename);
+            case FILE_UPLOAD_SUBMISSION -> actualPathForPublicFileUploadExercisesFilePath(externalUri, filename);
         };
     }
 
@@ -204,13 +204,20 @@ public class FilePathService {
      *
      * @param path     the path to the lecture attachment
      * @param filename the name of the file
+     * @throws FilePathParsingException if the path cannot be parsed correctly
      * @return the path to the lecture attachment file
      */
 
     @NotNull
-    private static Path getLectureAttachmentFilePath(@NotNull Path path, @NotNull String filename) {
-        String lectureId = path.getName(2).toString();
-        return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
+    private static Path getLectureAttachmentFileSystemPath(@NotNull Path path, @NotNull String filename) {
+        try {
+            String lectureId = path.getName(2).toString();
+            Long.parseLong(lectureId);
+            return getLectureAttachmentFileSystemPath().resolve(Path.of(lectureId, filename));
+        }
+        catch (IllegalArgumentException e) {
+            throw new FilePathParsingException("External URI does not contain correct lectureId: " + path, e);
+        }
     }
 
     /**
@@ -218,58 +225,72 @@ public class FilePathService {
      *
      * @param path     the path to the attachment unit
      * @param filename the name of the file
+     * @throws FilePathParsingException if the path cannot be parsed correctly
      * @return the path to the attachment unit file
      */
     @NotNull
-    private static Path getAttachmentUnitFilePath(@NotNull Path path, @NotNull String filename) {
-        String attachmentUnitId = path.getName(2).toString();
-        return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
+    private static Path getAttachmentUnitFileSystemPath(@NotNull Path path, @NotNull String filename) {
+        try {
+            String attachmentUnitId = path.getName(2).toString();
+            Long.parseLong(attachmentUnitId);
+            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, filename));
+        }
+        catch (IllegalArgumentException e) {
+            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId: " + path, e);
+        }
     }
 
     /**
      * Generates the path for an attachment unit file based on the provided path and filename.
      *
-     * @param path     the path to the attachment unit
+     * @param path     the path to the attachment unit as external URI
      * @param filename the name of the file
+     * @throws FilePathParsingException if the path cannot be parsed correctly
      * @return the path to the attachment unit file
      */
     @NotNull
-    private static Path getStudentVersionSlidesPath(@NotNull Path path, @NotNull String filename) {
-        String attachmentUnitId = path.getName(2).toString();
-        return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
+    private static Path getStudentVersionSlidesFileSystemPath(@NotNull Path path, @NotNull String filename) {
+        try {
+            String attachmentUnitId = path.getName(2).toString();
+            Long.parseLong(attachmentUnitId);
+            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, "student", filename));
+        }
+        catch (IllegalArgumentException e) {
+            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId: " + path, e);
+        }
     }
 
     /**
      * Generates the path for a slide file based on the provided path and filename.
      *
-     * @param path     the path to the slide
+     * @param path     the path to the slide as external URI
      * @param filename the name of the file
      * @return the path to the slide file
      */
     @NotNull
-    private static Path getSlideFilePath(@NotNull Path path, @NotNull String filename) {
+    private static Path getSlideFileSystemPath(@NotNull Path path, @NotNull String filename) {
         try {
             String attachmentUnitId = path.getName(2).toString();
             String slideId = path.getName(4).toString();
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
-            return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
+            return getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Public Uri does not contain correct attachmentUnitId or slideId: " + path, e);
+            throw new FilePathParsingException("External URI does not contain correct attachmentUnitId or slideId: " + path, e);
         }
     }
 
     /**
-     * Generates the actual path for a file upload exercise submission based on the provided public URI and filename.
+     * Generates the actual path for a file upload exercise submission based on the provided external URI and filename.
      *
-     * @param publicUri the public URI of the file upload exercise
-     * @param filename  the name of the file
+     * @param externalUri the external URI of the file upload exercise
+     * @param filename    the name of the file
      * @return the actual path to the file upload exercise submission
      */
     @NotNull
-    private static Path actualPathForPublicFileUploadExercisesFilePath(@NotNull URI publicUri, @NotNull String filename) {
-        Path path = Path.of(publicUri.getPath());
+    private static Path actualPathForPublicFileUploadExercisesFilePath(@NotNull URI externalUri, @NotNull String filename) {
+        Path path = Path.of(externalUri.getPath());
         try {
             String expectedExerciseId = path.getName(1).toString();
             String expectedSubmissionId = path.getName(3).toString();
@@ -278,21 +299,21 @@ public class FilePathService {
             return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicUri, e);
+            throw new FilePathParsingException("External URI does not contain correct exerciseId or submissionId: " + externalUri, e);
         }
     }
 
     /**
-     * Generates the public URI for a file at the given local file system path.
+     * Generates the external URI for a file at the given local file system path.
      *
      * @param path         the path to the file in the local filesystem
      * @param filePathType the type of file path
      * @param entityId     the ID of the entity associated with the file (may be null)
-     * @return the public file URI that can be used to access the file externally
+     * @return the external file URI that can be used to access the file externally
      * @throws FilePathParsingException if the path cannot be parsed correctly
      */
     @NotNull
-    public static URI publicUriForFileSystemPath(@NotNull Path path, @NotNull FilePathType filePathType, @Nullable Long entityId) {
+    public static URI externalUriForFileSystemPath(@NotNull Path path, @NotNull FilePathType filePathType, @Nullable Long entityId) {
         String filename = path.getFileName().toString();
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
@@ -305,23 +326,23 @@ public class FilePathService {
             case EXAM_USER_SIGNATURE -> URI.create("exam-user/signatures/" + id + "/" + filename);
             case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
             case LECTURE_ATTACHMENT -> URI.create("attachments/lecture/" + id + "/" + filename);
-            case SLIDE -> publicPathForActualSlideFilePath(path, filename, id);
-            case FILE_UPLOAD_SUBMISSION -> publicPathForActualFileUploadExercisesFilePath(path, filename, id);
+            case SLIDE -> externalUriForSlideFileSystemPath(path, filename, id);
+            case FILE_UPLOAD_SUBMISSION -> externalUriForFileUploadExercisesFileSystemPath(path, filename, id);
             case STUDENT_VERSION_SLIDES -> URI.create("attachments/attachment-unit/" + id + "/student/" + filename);
             case ATTACHMENT_UNIT -> URI.create("attachments/attachment-unit/" + id + "/" + filename);
         };
     }
 
     /**
-     * Generates the public URI for a slide file based on the provided path, filename, and ID.
+     * Generates the external URI for a slide file based on the provided path, filename, and ID.
      *
-     * @param path     the path to the slide
+     * @param path     the path to the slide in the local filesystem
      * @param filename the name of the file
      * @param id       the ID of the slide
-     * @return the public URI for the slide file
+     * @return the external URI for the slide file
      */
     @NotNull
-    private static URI publicPathForActualSlideFilePath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
+    private static URI externalUriForSlideFileSystemPath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
             final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
@@ -333,16 +354,16 @@ public class FilePathService {
     }
 
     /**
-     * Generates the public URI for a file upload exercise submission based on the provided path, filename, and ID.
+     * Generates the external URI for a file upload exercise submission based on the provided path, filename, and ID.
      *
      * @param path     the path to the file upload exercise
      * @param filename the name of the file
      * @param id       the ID of the file upload submission
-     * @return the public URI for the file upload exercise submission
+     * @return the external URI for the file upload exercise submission
      */
 
     @NotNull
-    private static URI publicPathForActualFileUploadExercisesFilePath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
+    private static URI externalUriForFileUploadExercisesFileSystemPath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);

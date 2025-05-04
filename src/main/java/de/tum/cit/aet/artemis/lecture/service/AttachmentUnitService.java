@@ -175,9 +175,9 @@ public class AttachmentUnitService {
      */
     private void handleFile(MultipartFile file, Attachment attachment, boolean keepFilename, Long attachmentUnitId) {
         if (file != null && !file.isEmpty()) {
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path basePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
             Path savePath = fileService.saveFile(file, basePath, keepFilename);
-            attachment.setLink(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
+            attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.ATTACHMENT_UNIT, attachmentUnitId).toString());
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
@@ -195,15 +195,15 @@ public class AttachmentUnitService {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                Path localPath = FilePathService.fileSystemPathForPublicUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+                Path localPath = FilePathService.fileSystemPathForExternalUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
                 fileService.schedulePathForDeletion(localPath, 0);
                 this.fileService.evictCacheForPath(localPath);
             }
 
             // Update student version of attachment
-            Path basePath = FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnitId.toString());
+            Path basePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(attachmentUnitId.toString());
             Path savePath = fileService.saveFile(studentVersionFile, basePath.resolve("student"), true);
-            attachment.setStudentVersion(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
+            attachment.setStudentVersion(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
             attachmentRepository.save(attachment);
         }
     }
@@ -216,7 +216,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(FilePathService.fileSystemPathForPublicUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
+            this.fileService.evictCacheForPath(FilePathService.fileSystemPathForExternalUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
         }
     }
 

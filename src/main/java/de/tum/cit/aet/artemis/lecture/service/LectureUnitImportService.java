@@ -158,18 +158,18 @@ public class LectureUnitImportService {
         Path newPath;
         FilePathType filePathType;
         if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
-            newPath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
+            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            newPath = FilePathService.getAttachmentUnitFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.ATTACHMENT_UNIT;
         }
         else {
-            oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
-            newPath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());
+            oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+            newPath = FilePathService.getLectureAttachmentFileSystemPath().resolve(entityId.toString());
             filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
-        attachment.setLink(FilePathService.publicUriForFileSystemPath(savePath, filePathType, entityId).toString());
+        attachment.setLink(FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

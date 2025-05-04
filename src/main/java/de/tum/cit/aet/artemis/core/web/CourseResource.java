@@ -293,15 +293,15 @@ public class CourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath, false);
-            courseUpdate.setCourseIcon(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
+            courseUpdate.setCourseIcon(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, courseId).toString());
             if (existingCourse.getCourseIcon() != null) {
                 // delete old course icon
-                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
             }
         }
         else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(new URI(existingCourse.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
 
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {

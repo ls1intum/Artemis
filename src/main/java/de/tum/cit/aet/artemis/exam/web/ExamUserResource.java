@@ -89,11 +89,11 @@ public class ExamUserResource {
             String oldPathString = examUser.getSigningImagePath();
             Path basePath = FilePathService.getExamUserSignatureFilePath();
             Path savePath = fileService.saveFile(signatureFile, basePath, false);
-            examUser.setSigningImagePath(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
+            examUser.setSigningImagePath(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.EXAM_USER_SIGNATURE, examUser.getId()).toString());
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded
-                Path oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
+                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
                 // Don't throw an exception if the file does not exist as then it's already deleted for some reason
                 fileService.schedulePathForDeletion(oldPath, 0);
             }

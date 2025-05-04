@@ -357,13 +357,13 @@ public class FileService implements DisposableBean {
         if (targetFolder.equals(FilePathService.getStudentImageFilePath())) {
             return "ExamUserImage_";
         }
-        if (pathContains(targetFolder, FilePathService.getLectureAttachmentFilePath())) {
+        if (pathContains(targetFolder, FilePathService.getLectureAttachmentFileSystemPath())) {
             return "LectureAttachment_";
         }
-        if (pathContains(targetFolder, FilePathService.getAttachmentUnitFilePath())) {
+        if (pathContains(targetFolder, FilePathService.getAttachmentUnitFileSystemPath())) {
             return "AttachmentUnit_";
         }
-        if (pathContains(targetFolder, FilePathService.getAttachmentUnitFilePath()) && pathContains(targetFolder, Path.of("/slide"))) {
+        if (pathContains(targetFolder, FilePathService.getAttachmentUnitFileSystemPath()) && pathContains(targetFolder, Path.of("/slide"))) {
             return "AttachmentUnitSlide_";
         }
         return "Unspecified_";

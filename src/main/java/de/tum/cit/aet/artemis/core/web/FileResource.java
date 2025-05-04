@@ -494,7 +494,7 @@ public class FileResource {
             Attachment attachment = unit.getAttachment();
             String filePath = attachment.getStudentVersion() != null ? attachment.getStudentVersion() : attachment.getLink();
             FilePathType filePathType = attachment.getStudentVersion() != null ? FilePathType.STUDENT_VERSION_SLIDES : FilePathType.ATTACHMENT_UNIT;
-            return FilePathService.fileSystemPathForPublicUri(URI.create(filePath), filePathType);
+            return FilePathService.fileSystemPathForExternalUri(URI.create(filePath), filePathType);
         }).toList();
 
         Optional<byte[]> file = fileService.mergePdfFiles(attachmentLinks, api.getLectureTitle(lectureId));
@@ -669,7 +669,7 @@ public class FileResource {
 
         String fileName = studentVersion.substring(studentVersion.lastIndexOf("/") + 1);
 
-        return buildFileResponse(FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
+        return buildFileResponse(FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "student")), fileName, false);
     }
 
     /**
@@ -763,7 +763,7 @@ public class FileResource {
     }
 
     private Path getActualPathFromPublicPathString(@NotNull String publicPath, FilePathType filePathType) {
-        return FilePathService.fileSystemPathForPublicUri(URI.create(publicPath), filePathType);
+        return FilePathService.fileSystemPathForExternalUri(URI.create(publicPath), filePathType);
     }
 
     private MediaType getMediaTypeFromFilename(String filename) {

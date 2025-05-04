@@ -693,7 +693,7 @@ public class QuizExerciseResource {
 
     private Path convertToActualPath(String pathString, FilePathType filePathType) {
         try {
-            return FilePathService.fileSystemPathForPublicUri(URI.create(pathString), filePathType);
+            return FilePathService.fileSystemPathForExternalUri(URI.create(pathString), filePathType);
         }
         catch (FilePathParsingException e) {
             log.warn("Could not find file {} for deletion", pathString);

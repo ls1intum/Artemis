@@ -64,7 +64,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testRegenerateStudentVersion_withNoHiddenSlides() {
         String originalPath = testAttachment1.getStudentVersion();
-        Path actualFilePath = FilePathService.fileSystemPathForPublicUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         attachmentService.regenerateStudentVersion(testAttachment1);
         assertThat(testAttachment1.getStudentVersion()).isNull();
@@ -76,7 +76,7 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testRegenerateStudentVersion_withHiddenSlides() {
         attachmentService.regenerateStudentVersion(testAttachment2);
         String originalPath = testAttachment2.getStudentVersion();
-        Path actualFilePath = FilePathService.fileSystemPathForPublicUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
+        Path actualFilePath = FilePathService.fileSystemPathForExternalUri(URI.create(originalPath), FilePathType.STUDENT_VERSION_SLIDES);
 
         assertThat(testAttachment2.getStudentVersion()).isNotNull();
         assertThat(Files.exists(actualFilePath)).isTrue();
@@ -106,8 +106,8 @@ class AttachmentServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Get hidden slides
         List<Slide> hiddenSlides = slideRepository.findByAttachmentUnitIdAndHiddenNotNull(testAttachment2.getAttachmentUnit().getId());
 
-        byte[] pdfData = attachmentService
-                .generateStudentVersionPdf(FilePathService.fileSystemPathForPublicUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
+        byte[] pdfData = attachmentService.generateStudentVersionPdf(
+                FilePathService.fileSystemPathForExternalUri(URI.create(testAttachment2.getLink()), FilePathType.ATTACHMENT_UNIT).toFile(), hiddenSlides);
 
         // Verify output
         assertThat(pdfData).isNotNull();

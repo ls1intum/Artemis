@@ -341,10 +341,10 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Verify the slide was saved properly
         assertThat(slideId).isNotNull();
 
-        Path directoryFilePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
+        Path directoryFilePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathService.publicUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(FilePathService.externalUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -389,7 +389,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(originalSlidePath.toFile().exists()).isFalse();
 
         // Verify the new file exists by resolving the path
-        Path newImagePath = FilePathService.fileSystemPathForPublicUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
+        Path newImagePath = FilePathService.fileSystemPathForExternalUri(URI.create(updatedSlide.getSlideImagePath()), FilePathType.SLIDE);
         assert newImagePath != null;
         assertThat(newImagePath.toFile().exists()).isTrue();
 
@@ -525,7 +525,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         // Clear existing slides
         List<Slide> existingSlides = slideRepository.findAllByAttachmentUnitId(testAttachmentUnit.getId());
         slideRepository.deleteAll(existingSlides);
-        Path attachmentDirectory = FilePathService.getAttachmentUnitFilePath().resolve(testAttachmentUnit.getId().toString());
+        Path attachmentDirectory = FilePathService.getAttachmentUnitFileSystemPath().resolve(testAttachmentUnit.getId().toString());
         Files.createDirectories(attachmentDirectory);
         // Create mock PDF file with 3 pages
         Path pdfPath = attachmentDirectory.resolve("test-slides.pdf");
@@ -537,7 +537,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentUnit.getAttachment().setLink(FilePathService.publicUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
+        testAttachmentUnit.getAttachment().setLink(FilePathService.externalUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
         testAttachmentUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -564,7 +564,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathService.publicUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(FilePathService.externalUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }
@@ -700,7 +700,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             assertThat(slide.getSlideImagePath()).isNotNull().isNotEmpty();
 
             // Check that image files actually exist on filesystem
-            Path imagePath = FilePathService.fileSystemPathForPublicUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
+            Path imagePath = FilePathService.fileSystemPathForExternalUri(URI.create(slide.getSlideImagePath()), FilePathType.SLIDE);
             assert imagePath != null;
             assertThat(imagePath.toFile().exists()).isTrue();
         }

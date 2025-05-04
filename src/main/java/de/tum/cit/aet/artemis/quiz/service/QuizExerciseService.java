@@ -291,7 +291,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.fileSystemPathForPublicUri(URI.create(p), entry.getKey()))).filter(Objects::nonNull).toList();
+                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.fileSystemPathForExternalUri(URI.create(p), entry.getKey()))).filter(Objects::nonNull)
+                .toList();
 
         fileService.deleteFiles(allFilesToRemoveMerged);
     }
@@ -363,7 +364,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
 
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForPublicUri(URI.create(filePath), type)))
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(filePath), type)))
                         .collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
@@ -431,7 +432,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         String sanitizedFilename = fileService.checkAndSanitizeFilename(file.getOriginalFilename());
         Path savePath = basePath.resolve(fileService.generateFilename("dnd_image_", sanitizedFilename, true));
         FileUtils.copyToFile(file.getInputStream(), savePath.toFile());
-        return FilePathService.publicUriForFileSystemPath(savePath, filePathType, entityId);
+        return FilePathService.externalUriForFileSystemPath(savePath, filePathType, entityId);
     }
 
     /**
@@ -503,12 +504,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
-                if (FilePathService.fileSystemPathForPublicUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND) == null) {
+                if (!Files.exists(FilePathService.fileSystemPathForExternalUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null
-                            && FilePathService.fileSystemPathForPublicUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM) == null) {
+                            && !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM))) {
                         saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }

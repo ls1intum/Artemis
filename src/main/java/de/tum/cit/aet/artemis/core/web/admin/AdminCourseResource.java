@@ -153,7 +153,7 @@ public class AdminCourseResource {
         if (file != null) {
             Path basePath = FilePathService.getCourseIconFilePath();
             Path savePath = fileService.saveFile(file, basePath, false);
-            createdCourse.setCourseIcon(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
+            createdCourse.setCourseIcon(FilePathService.externalUriForFileSystemPath(savePath, FilePathType.COURSE_ICON, createdCourse.getId()).toString());
             createdCourse = courseRepository.save(createdCourse);
         }
 
@@ -180,7 +180,7 @@ public class AdminCourseResource {
 
         courseService.delete(course);
         if (course.getCourseIcon() != null) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(course.getCourseIcon()), FilePathType.COURSE_ICON), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }

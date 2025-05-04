@@ -161,7 +161,7 @@ public class LectureUnitService {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
-            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(URI.create((attachmentUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT),
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create((attachmentUnit.getAttachment().getLink())), FilePathType.ATTACHMENT_UNIT),
                     5);
         }
 

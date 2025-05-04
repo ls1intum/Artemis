@@ -274,7 +274,7 @@ public class LectureUtilService {
             // we have to set a dummy value here, as null is not allowed. The correct value is set below.
             slide.setSlideImagePath("dummy");
             slide = slideRepository.save(slide);
-            Path slidePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
+            Path slidePath = FilePathService.getAttachmentUnitFileSystemPath().resolve(Path.of(attachmentUnit.getId().toString(), "slide", slide.getId().toString(), testFileName));
             try {
                 FileUtils.copyFile(ResourceUtils.getFile("classpath:test-data/attachment/placeholder.jpg"), slidePath.toFile());
             }

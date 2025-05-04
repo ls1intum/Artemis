@@ -129,7 +129,7 @@ public class DragItem extends TempIdObject implements QuizQuestionComponent<Drag
         // delete old file if necessary
         try {
             if (pictureFilePath != null) {
-                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForExternalUri(URI.create(pictureFilePath), FilePathType.DRAG_ITEM), 0);
             }
         }
         catch (FilePathParsingException e) {
