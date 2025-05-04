@@ -91,7 +91,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
         var actualIrisSession = irisTutorSuggestionSessionRepository.findByIdElseThrow(irisSession.getId());
         assertThat(actualIrisSession.getUser()).isEqualTo(userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"));
-        assertThat(post).isEqualTo(actualIrisSession.getPost());
+        assertThat(post.getId()).isEqualTo(actualIrisSession.getPostId());
     }
 
     @Test
@@ -162,7 +162,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         post.setCourse(course);
         post = postRepository.saveAndFlush(post);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPost(post);
+        irisSession.setPostId(post.getId());
 
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Initial message for tutor suggestion"));
@@ -204,7 +204,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         post = postRepository.save(post);
 
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisTutorSuggestionSession.class, HttpStatus.CREATED);
-        irisSession.setPost(post);
+        irisSession.setPostId(post.getId());
 
         var message = new IrisMessage();
         message.addContent(new IrisTextMessageContent("Message with answer post"));

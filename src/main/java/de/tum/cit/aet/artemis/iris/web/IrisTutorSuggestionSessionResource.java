@@ -89,7 +89,7 @@ public class IrisTutorSuggestionSessionResource {
         }
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, course);
 
-        var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post, user));
+        var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post.getId(), user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.config.AtlasNotPresentException;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -229,10 +230,10 @@ public class PyrisPipelineService {
      * @param variant      the variant of the pipeline
      * @param session      the chat session
      * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
+     * @param post         the post the session is about
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Optional<Long> lectureIdOptional,
-            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO) {
-        var post = session.getPost();
+            Optional<PyrisTextExerciseDTO> textExerciseDTOOptional, Optional<PyrisSubmissionDTO> submissionDTO, Optional<PyrisProgrammingExerciseDTO> exerciseDTO, Post post) {
         var course = post.getCoursePostingBelongsTo();
         // @formatter:off
         executePipeline(
