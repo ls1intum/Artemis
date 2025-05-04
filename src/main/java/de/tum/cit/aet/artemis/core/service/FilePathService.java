@@ -171,10 +171,18 @@ public class FilePathService {
 
     /**
      * Converts a public file URI to its corresponding local file system path.
+     * <p>
+     * Example:
+     *
+     * <pre>
+     *     URI externalUri = URI.create("attachments/lecture/4/slides.pdf");
+     *     Path fileSystemPath = FilePathService.fileSystemPathForExternalUri(externalUri, FilePathType.LECTURE_ATTACHMENT);
+     *     fileSystemPath: uploads/attachments/lecture/4/slides.pdf
+     * </pre>
      *
      * @param externalUri  the external file URI to convert
      * @param filePathType the type of file path
-     * @return the actual path to the file in the local filesystem
+     * @return the path to the file in the local filesystem
      * @throws FilePathParsingException if the URI cannot be parsed correctly
      */
     @NotNull
@@ -195,7 +203,7 @@ public class FilePathService {
             case SLIDE -> getSlideFileSystemPath(path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
             case ATTACHMENT_UNIT -> getAttachmentUnitFileSystemPath(path, filename);
-            case FILE_UPLOAD_SUBMISSION -> actualPathForPublicFileUploadExercisesFilePath(externalUri, filename);
+            case FILE_UPLOAD_SUBMISSION -> fileSystemPathForFileUploadSubmissionExternalUri(externalUri, filename);
         };
     }
 
@@ -282,14 +290,14 @@ public class FilePathService {
     }
 
     /**
-     * Generates the actual path for a file upload exercise submission based on the provided external URI and filename.
+     * Generates the file system path for a file upload exercise submission based on the provided external URI and filename.
      *
      * @param externalUri the external URI of the file upload exercise
      * @param filename    the name of the file
-     * @return the actual path to the file upload exercise submission
+     * @return the file system path to the file upload exercise submission
      */
     @NotNull
-    private static Path actualPathForPublicFileUploadExercisesFilePath(@NotNull URI externalUri, @NotNull String filename) {
+    private static Path fileSystemPathForFileUploadSubmissionExternalUri(@NotNull URI externalUri, @NotNull String filename) {
         Path path = Path.of(externalUri.getPath());
         try {
             String expectedExerciseId = path.getName(1).toString();
@@ -305,6 +313,16 @@ public class FilePathService {
 
     /**
      * Generates the external URI for a file at the given local file system path.
+     *
+     * <p>
+     * Example:
+     *
+     * <pre>
+     *     Path fileSystemPath = Path.of("uploads", "attachments", "lecture", "4", "slides.pdf");
+     *     URI externalUri = FilePathService.externalUriForFileSystemPath(fileSystemPath, FilePathType.LECTURE_ATTACHMENT, 4L);
+     *     externalUri: attachments/lecture/4/slides.pdf
+     * </pre>
+     * </p>
      *
      * @param path         the path to the file in the local filesystem
      * @param filePathType the type of file path
