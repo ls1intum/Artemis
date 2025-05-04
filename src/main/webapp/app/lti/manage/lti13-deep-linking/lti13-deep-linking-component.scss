@@ -1,21 +1,29 @@
 .dropdown-container {
     display: flex;
     flex-direction: column;
-    gap: 0.94rem;
+    gap: 1rem;
+}
+
+.dropdown-section {
+    width: 100%;
+}
+
+.dropdown-section > .btn {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
 }
 
 .checkbox-container {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-}
-
-.dropdown-container {
-    position: relative;
-}
-
-.dropdown-section {
-    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
 }
 
 .ngb-dropdown-menu {
@@ -24,9 +32,26 @@
     margin-top: 0.5rem;
     border: 1px solid #dee2e6;
     box-shadow: none;
+    padding: 0;
 }
 
 .dropdown-menu.show {
     inset: unset !important;
     transform: none !important;
+}
+
+.table-responsive {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+/* Modal footer styling */
+.modal-footer {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: flex-end;
 }
