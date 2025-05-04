@@ -22,6 +22,7 @@ import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { WebauthnApiService } from 'app/core/user/settings/passkey-settings/webauthn-api.service';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/button/button.component';
 import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 
 @Component({
     selector: 'jhi-home',
@@ -106,20 +107,26 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             const authenticatorCredential = await this.webauthnService.getCredential();
 
             if (!authenticatorCredential || authenticatorCredential.type != 'public-key') {
-                alert("Credential is undefined or type is not 'public-key'");
-                return;
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
             }
 
             const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential) as unknown as PublicKeyCredential;
             if (!credential) {
-                alert('Credential is undefined');
-                return;
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
             }
 
             await this.webauthnApiService.loginWithPasskey(credential);
             this.handleLoginSuccess();
         } catch (error) {
-            this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.login');
+            }
+            // eslint-disable-next-line no-undef
+            console.error(error);
             throw error;
         }
     }
