@@ -6,8 +6,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import jakarta.annotation.PostConstruct;
-
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -57,23 +55,6 @@ public class LiquibaseConfiguration {
         this.buildProperties = buildProperties;
     }
 
-    @PostConstruct
-    public void forceLiquibaseClearChecksums() {
-        try {
-            log.info("Clearing Liquibase checksums manually before SpringLiquibase starts...");
-
-            Liquibase liquibase = new Liquibase("classpath:config/liquibase/master.xml", new ClassLoaderResourceAccessor(),
-                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())));
-
-            liquibase.clearCheckSums();
-            log.info("Liquibase checksums cleared successfully.");
-        }
-        catch (Exception e) {
-            log.error("Failed to clear Liquibase checksums", e);
-            throw new IllegalStateException("Could not clear Liquibase checksums", e);
-        }
-    }
-
     /**
      * reads properties and configures liquibase
      *
@@ -93,6 +74,20 @@ public class LiquibaseConfiguration {
         if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             this.databaseMigration = new DatabaseMigration(currentVersionString, dataSource);
             databaseMigration.checkMigrationPath();
+        }
+
+        try {
+            log.info("Clearing Liquibase checksums manually before SpringLiquibase starts...");
+
+            Liquibase liquibase = new Liquibase("classpath:config/liquibase/master.xml", new ClassLoaderResourceAccessor(),
+                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())));
+
+            liquibase.clearCheckSums();
+            log.info("Liquibase checksums cleared successfully.");
+        }
+        catch (Exception e) {
+            log.error("Failed to clear Liquibase checksums", e);
+            throw new IllegalStateException("Could not clear Liquibase checksums", e);
         }
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
