@@ -1,5 +1,6 @@
 import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from './credential.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 
 describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     it('should return the credential if it can be stringified', () => {
@@ -9,7 +10,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     });
 
     it('should handle malformed Bitwarden credentials gracefully', () => {
-        jest.spyOn(console, 'warn').mockImplementation();
+        jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
         const malformedCredential: MalformedBitwardenCredential = {
             id: 'mock-id',
             rawId: { 0: 1, 1: 2, 2: 3 },
@@ -51,7 +52,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     });
 
     it('should handle malformed Bitwarden credentials gracefully during login', () => {
-        jest.spyOn(console, 'warn').mockImplementation();
+        jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test
         const malformedCredential: MalformedBitwardenCredential = {
             id: 'mock-id',
             rawId: { 0: 1, 1: 2, 2: 3 },
@@ -89,5 +90,19 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     it('should return null if the credential is null', () => {
         const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(null);
         expect(result).toBeNull();
+    });
+
+    it('should throw InvalidCredentialError if the credential cannot be processed', () => {
+        jest.spyOn(console, 'warn').mockImplementation(); // Suppress console warnings in the test // Suppress console warnings in the test
+        const malformedCredential = { id: 'mock-id' } as unknown as Credential;
+
+        // Mock the toJSON method to simulate an error
+        (malformedCredential as any).toJSON = () => {
+            throw new TypeError('Illegal invocation');
+        };
+
+        expect(() => {
+            getCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+        }).toThrow(InvalidCredentialError);
     });
 });
