@@ -1,4 +1,4 @@
-<div class="card col-12 col-md-10 col-lg-8 col-xl-5 col-xxl-5 mb-3">
+<div class="card mb-3" style="max-width: 35rem; width: 100%">
     <h2 class="card-header course-quick-actions-title mb-3" jhiTranslate="entity.quickActions"></h2>
     <div class="card-body">
         <div class="d-flex flex-wrap align-items-center mb-3">
@@ -50,12 +50,13 @@
         <div class="d-flex flex-wrap gap-2">
             @if (course()?.isAtLeastEditor) {
                 <jhi-button
+                    id="open-add-exercise-popover"
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addExercise'"
                     [icon]="faListAlt"
                     [shouldToggle]="true"
-                    (onClick)="openAddExerciseModal()"
+                    (click)="addExercisePopover.showPopover($event)"
                 />
 
                 <jhi-button
@@ -90,6 +91,7 @@
         </div>
     </div>
 </div>
+<jhi-add-exercise-popover [course]="course()" #addExercisePopover="addExercisePopover" />
 
 <ng-template #courseStatItem let-userGroup="userGroup" let-count="count">
     <div class="text-center me-3">
