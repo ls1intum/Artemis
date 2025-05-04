@@ -335,9 +335,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var dragItem : dragAndDropQuestion.getDragItems()) {
             String newDragItemPath = dragItem.getPictureFilePath();
             var dragItemOldPaths = oldPaths.get(FilePathType.DRAG_ITEM);
-            if (dragItem.getPictureFilePath() != null && !dragItemOldPaths.contains(newDragItemPath)) {
+            if (newDragItemPath != null && !dragItemOldPaths.contains(newDragItemPath)) {
                 // Path changed and file was provided
                 saveDndDragItemPicture(dragItem, fileMap, null);
+            }
+            else if (newDragItemPath != null) {
+                filesToRemove.get(FilePathType.DRAG_ITEM).remove(newDragItemPath);
             }
         }
     }
