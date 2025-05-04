@@ -1,9 +1,9 @@
 import cloneDeep from 'lodash';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 
-function convertToBase64(rawObject: Record<string, number> | null | undefined): string {
+function convertToBase64(rawObject: Record<string, number> | null | undefined): string | undefined {
     if (!rawObject || typeof rawObject !== 'object') {
-        throw new TypeError('Invalid input: must be a non-null object');
+        return undefined;
     }
     const uint8Array = new Uint8Array(Object.values(rawObject));
     // eslint-disable-next-line no-undef
@@ -28,11 +28,15 @@ export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCreden
         rawId: convertToBase64(credential.rawId),
         response: {
             attestationObject: convertToBase64(credential.response.attestationObject),
-            authenticatorData: convertToBase64(malformedBitwardenCredential.response.getAuthenticatorData()),
+            authenticatorData: convertToBase64(
+                malformedBitwardenCredential.response.authenticatorData ?? malformedBitwardenCredential.response.getAuthenticatorData?.() ?? undefined,
+            ),
             clientDataJSON: convertToBase64(credential.response.clientDataJSON),
-            publicKey: convertToBase64(malformedBitwardenCredential.response.getPublicKey()),
-            publicKeyAlgorithm: malformedBitwardenCredential.response.getPublicKeyAlgorithm(),
-            transports: malformedBitwardenCredential.response.getTransports(),
+            publicKey: convertToBase64(malformedBitwardenCredential.response.getPublicKey?.() ?? undefined),
+            publicKeyAlgorithm: malformedBitwardenCredential.response.getPublicKeyAlgorithm?.() ?? undefined,
+            transports: malformedBitwardenCredential.response.getTransports?.() ?? undefined,
+            signature: convertToBase64(malformedBitwardenCredential.response.signature),
+            userHandle: convertToBase64(malformedBitwardenCredential.response.userHandle),
         },
         type: credential.type,
     };
