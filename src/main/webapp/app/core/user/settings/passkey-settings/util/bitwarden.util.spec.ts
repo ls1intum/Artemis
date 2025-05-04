@@ -39,10 +39,11 @@ describe('Bitwarden Util', () => {
         expect(credential).toBeNull();
     });
 
-    it('should throw an error for invalid rawIdObject', () => {
-        const invalidCredential = { ...malformedCredential, rawId: null };
-        expect(() => getCredentialFromMalformedBitwardenObject(invalidCredential as unknown as MalformedBitwardenCredential)).toThrow(
-            'Invalid input: rawIdObject must be a non-null object',
-        );
+    it('should return null for an invalid object', () => {
+        const invalidCredential = null;
+
+        const result = getCredentialFromMalformedBitwardenObject(invalidCredential as unknown as MalformedBitwardenCredential);
+
+        expect(result).toBeNull();
     });
 });

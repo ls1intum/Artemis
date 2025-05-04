@@ -31,6 +31,6 @@ export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credentia
         // eslint-disable-next-line no-undef
         console.warn('Authenticator returned a malformed credential, attempting to fix it', error);
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
-        handleMalformedBitwardenCredential(credential);
+        return handleMalformedBitwardenCredential(credential);
     }
 }

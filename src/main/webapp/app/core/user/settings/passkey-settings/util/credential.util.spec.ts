@@ -9,6 +9,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     });
 
     it('should handle malformed Bitwarden credentials gracefully', () => {
+        jest.spyOn(console, 'warn').mockImplementation();
         const malformedCredential: MalformedBitwardenCredential = {
             id: 'mock-id',
             rawId: { 0: 1, 1: 2, 2: 3 },
@@ -50,6 +51,7 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
     });
 
     it('should handle malformed Bitwarden credentials gracefully during login', () => {
+        jest.spyOn(console, 'warn').mockImplementation();
         const malformedCredential: MalformedBitwardenCredential = {
             id: 'mock-id',
             rawId: { 0: 1, 1: 2, 2: 3 },
