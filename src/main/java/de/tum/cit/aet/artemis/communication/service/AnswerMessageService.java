@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewAnswe
 import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewMentionNotification;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
@@ -163,7 +164,7 @@ public class AnswerMessageService extends PostingService {
      * @param answerMessage   answer message to update
      * @return updated answer message that was persisted
      */
-    public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, AnswerPost answerMessage) {
+    public AnswerPost updateAnswerMessage(Long courseId, Long answerMessageId, UpdatePostingDTO answerMessage) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // checks

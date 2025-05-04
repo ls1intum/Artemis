@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.communication.domain.course_notifications.NewPostN
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
@@ -303,7 +304,7 @@ public class ConversationMessagingService extends PostingService {
      * @param messagePost post to update
      * @return updated post that was persisted
      */
-    public Post updateMessage(Long courseId, Long postId, Post messagePost) {
+    public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
         if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {

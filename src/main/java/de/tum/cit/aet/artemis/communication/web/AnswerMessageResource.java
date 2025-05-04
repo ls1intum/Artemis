@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.dto.UpdatePostingDTO;
 import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -65,16 +66,16 @@ public class AnswerMessageResource {
      *
      * @param courseId        id of the course the answer post belongs to
      * @param answerMessageId id of the answer post to update
-     * @param answerMessage   answer post to update
+     * @param updatedAnswer   answer post to update
      * @return ResponseEntity with status 200 (OK) containing the updated answer message in the response body,
      *         or with status 400 (Bad Request) if the checks on user, course or associated post validity fail
      */
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody AnswerPost answerMessage) {
-        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, answerMessage.getContent());
+    public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
+        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.getContent());
         long start = System.nanoTime();
-        AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, answerMessage);
+        AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);
         log.debug("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
         return new ResponseEntity<>(updatedAnswerMessage, null, HttpStatus.OK);
     }
