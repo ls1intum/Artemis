@@ -74,6 +74,7 @@ public class LiquibaseConfiguration {
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
         Scope.setScopeManager(new SingletonScopeManager());
+        liquibase.setClearCheckSums(true);
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts() != null ? liquibaseProperties.getContexts().getFirst() : null);
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
