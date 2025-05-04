@@ -1,5 +1,6 @@
 import cloneDeep from 'lodash';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
+import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 
 /**
  * Converts a record containing numeric values into a Base64-encoded string.
@@ -12,10 +13,7 @@ function convertToBase64(rawObject: Record<string, number> | null | undefined): 
         return undefined;
     }
     const uint8Array = new Uint8Array(Object.values(rawObject));
-    // eslint-disable-next-line no-undef
-    return btoa(String.fromCharCode(...uint8Array))
-        .replace(/\//g, '_')
-        .replace(/\+/g, '-');
+    return encodeAsBase64Url(uint8Array);
 }
 
 /**
