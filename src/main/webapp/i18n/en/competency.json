@@ -146,6 +146,14 @@
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "softDueDate": "Recommended"
             },
+            "competencyContribution": {
+                "title": "Related Competencies",
+                "weightIconTooltips": {
+                    "low": "Low relevance for the competency",
+                    "medium": "Medium relevance for the competency",
+                    "high": "High relevance for the competency"
+                }
+            },
             "competencyPopover": {
                 "connectedCompetencies": "Linked Competencies",
                 "explanation": "This lecture unit helps you to achieve the following competencies: ",
