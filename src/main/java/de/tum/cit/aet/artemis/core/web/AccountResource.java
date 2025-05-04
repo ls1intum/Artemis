@@ -230,7 +230,7 @@ public class AccountResource {
 
         // Delete existing
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
         }
 
         Path savePath = fileService.saveFile(file, basePath, false);
@@ -251,7 +251,7 @@ public class AccountResource {
         log.debug("REST request to remove profile picture for logged-in user");
         User user = userRepository.getUser();
         if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(new URI(user.getImageUrl()), FilePathType.PROFILE_PICTURE), 0);
             userRepository.updateUserImageUrl(user.getId(), null);
         }
         return ResponseEntity.ok().build();

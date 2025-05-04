@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.FilePathService.actualPathForPublicPath;
+import static de.tum.cit.aet.artemis.core.service.FilePathService.fileSystemPathForPublicUri;
 
 import java.net.URI;
 import java.nio.file.Path;
@@ -103,8 +103,8 @@ public class AttachmentResource {
             attachment.setLink(FilePathService.publicPathForActualPath(savePath, FilePathType.LECTURE_ATTACHMENT, originalAttachment.getLecture().getId()).toString());
             // Delete the old file
             URI oldPath = URI.create(originalAttachment.getLink());
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPath(oldPath, FilePathType.LECTURE_ATTACHMENT));
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+            this.fileService.evictCacheForPath(FilePathService.fileSystemPathForPublicUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
         }
 
         Attachment result = attachmentRepository.save(attachment);
@@ -177,8 +177,8 @@ public class AttachmentResource {
         try {
             if (AttachmentType.FILE.equals(attachment.getAttachmentType())) {
                 URI oldPath = URI.create(attachment.getLink());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
-                this.fileService.evictCacheForPath(actualPathForPublicPath(oldPath, FilePathType.LECTURE_ATTACHMENT));
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(oldPath, FilePathType.LECTURE_ATTACHMENT), 0);
+                this.fileService.evictCacheForPath(fileSystemPathForPublicUri(oldPath, FilePathType.LECTURE_ATTACHMENT));
             }
         }
         catch (RuntimeException exception) {

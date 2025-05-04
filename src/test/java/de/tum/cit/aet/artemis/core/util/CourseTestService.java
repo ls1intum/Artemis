@@ -3352,7 +3352,7 @@ public class CourseTestService {
         byte[] iconBytes = "icon".getBytes();
         MockMultipartFile iconFile = new MockMultipartFile("file", "icon.png", MediaType.APPLICATION_JSON_VALUE, iconBytes);
         Course savedCourseWithFile = request.putWithMultipartFile("/api/core/courses/" + savedCourse.getId(), savedCourse, "course", iconFile, Course.class, HttpStatus.OK, null);
-        Path path = FilePathService.actualPathForPublicPath(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
+        Path path = FilePathService.fileSystemPathForPublicUri(URI.create(savedCourseWithFile.getCourseIcon()), FilePathType.COURSE_ICON);
 
         savedCourseWithFile.setCourseIcon(null);
         request.putWithMultipartFile("/api/core/courses/" + savedCourseWithFile.getId(), savedCourseWithFile, "course", null, Course.class, HttpStatus.OK, null);

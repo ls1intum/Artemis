@@ -69,7 +69,7 @@ public class AttachmentService {
 
         try {
             String originalPdfPath = attachment.getLink();
-            Path pdfPath = FilePathService.actualPathForPublicPath(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
+            Path pdfPath = FilePathService.fileSystemPathForPublicUri(URI.create(originalPdfPath), FilePathType.ATTACHMENT_UNIT);
 
             byte[] studentVersionPdf = generateStudentVersionPdf(pdfPath.toFile(), hiddenSlides);
 
@@ -90,8 +90,8 @@ public class AttachmentService {
         if (attachment.getStudentVersion() != null) {
             try {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
-                fileService.evictCacheForPath(FilePathService.actualPathForPublicPath(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
+                fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES), 0);
+                fileService.evictCacheForPath(FilePathService.fileSystemPathForPublicUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES));
             }
             catch (Exception e) {
                 throw new InternalServerErrorException("Failed to delete student version file: " + e.getMessage());

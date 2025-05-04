@@ -16,32 +16,32 @@ class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testActualPathForPublicPath() {
-        Path actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/backgrounds/background.jpeg"), FilePathType.DRAG_AND_DROP_BACKGROUND);
+        Path actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("drag-and-drop/backgrounds/background.jpeg"), FilePathType.DRAG_AND_DROP_BACKGROUND);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "backgrounds", "background.jpeg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("drag-and-drop/drag-items/image.jpeg"), FilePathType.DRAG_ITEM);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("drag-and-drop/drag-items/image.jpeg"), FilePathType.DRAG_ITEM);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "drag-and-drop", "drag-items", "image.jpeg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("course/icons/icon.png"), FilePathType.COURSE_ICON);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("course/icons/icon.png"), FilePathType.COURSE_ICON);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "course", "icons", "icon.png"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/lecture/4/slides.pdf"), FilePathType.LECTURE_ATTACHMENT);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("attachments/lecture/4/slides.pdf"), FilePathType.LECTURE_ATTACHMENT);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "lecture", "4", "slides.pdf"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/download.pdf"), FilePathType.ATTACHMENT_UNIT);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("attachments/attachment-unit/4/download.pdf"), FilePathType.ATTACHMENT_UNIT);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "download.pdf"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/slide/1/1.jpg"), FilePathType.SLIDE);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("attachments/attachment-unit/4/slide/1/1.jpg"), FilePathType.SLIDE);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "slide", "1", "1.jpg"));
 
-        actualPath = FilePathService.actualPathForPublicPath(URI.create("attachments/attachment-unit/4/student/download.pdf"), FilePathType.STUDENT_VERSION_SLIDES);
+        actualPath = FilePathService.fileSystemPathForPublicUri(URI.create("attachments/attachment-unit/4/student/download.pdf"), FilePathType.STUDENT_VERSION_SLIDES);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "attachments", "attachment-unit", "4", "student", "download.pdf"));
     }
 
     @Test
     void testActualPathForPublicFileUploadExercisePathOrThrow_shouldThrowException() {
         assertThatExceptionOfType(FilePathParsingException.class)
-                .isThrownBy(() -> FilePathService.actualPathForPublicPath(URI.create("file-upload-exercises/file.pdf"), FilePathType.FILE_UPLOAD_SUBMISSION))
+                .isThrownBy(() -> FilePathService.fileSystemPathForPublicUri(URI.create("file-upload-exercises/file.pdf"), FilePathType.FILE_UPLOAD_SUBMISSION))
                 .withMessageStartingWith("Public path does not contain correct exerciseId or submissionId:");
     }
 

@@ -167,7 +167,7 @@ public class PyrisWebhookService {
     }
 
     private String attachmentToBase64(AttachmentUnit attachmentUnit) {
-        Path path = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path path = FilePathService.fileSystemPathForPublicUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         try {
             byte[] fileBytes = Files.readAllBytes(path);
             return Base64.getEncoder().encodeToString(fileBytes);

@@ -507,7 +507,7 @@ public class UserService {
         scienceEventApi.ifPresent(api -> api.renameIdentity(originalLogin, anonymizedLogin));
 
         if (userImageString != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPath(URI.create(userImageString), FilePathType.STUDENT_IMAGE), 0);
+            fileService.schedulePathForDeletion(FilePathService.fileSystemPathForPublicUri(URI.create(userImageString), FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE), 0);
         }
 
         updateUserInConnectorsAndAuthProvider(user, originalLogin, originalGroups, randomPassword);

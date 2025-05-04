@@ -133,11 +133,11 @@ public class ExamUserService {
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
             Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
 
-            examUser.setStudentImagePath(FilePathService.publicPathForActualPath(savedPath, FilePathType.STUDENT_IMAGE, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathService.publicPathForActualPath(savedPath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString), FilePathType.STUDENT_IMAGE);
+                Path oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(oldPathString), FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE);
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
@@ -152,12 +152,13 @@ public class ExamUserService {
      * @param user the exam user whose images should be deleted
      */
     public void deleteAvailableExamUserImages(ExamUser user) {
-        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.EXAM_USER_SIGNATURE))
+        Optional.ofNullable(user.getSigningImagePath()).map(URI::create).map(uri -> FilePathService.fileSystemPathForPublicUri(uri, FilePathType.EXAM_USER_SIGNATURE))
                 .ifPresent(path -> {
                     fileService.schedulePathForDeletion(path, 0);
                 });
 
-        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathService.actualPathForPublicPath(uri, FilePathType.STUDENT_IMAGE))
+        Optional.ofNullable(user.getStudentImagePath()).map(URI::create)
+                .map(uri -> FilePathService.fileSystemPathForPublicUri(uri, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE))
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 

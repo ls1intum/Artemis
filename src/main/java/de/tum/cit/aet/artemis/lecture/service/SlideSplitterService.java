@@ -76,7 +76,7 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit) {
-        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path attachmentPath = FilePathService.fileSystemPathForPublicUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
@@ -97,7 +97,7 @@ public class SlideSplitterService {
      */
     @Async
     public void splitAttachmentUnitIntoSingleSlides(AttachmentUnit attachmentUnit, String hiddenPages, String pageOrder) {
-        Path attachmentPath = FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
+        Path attachmentPath = FilePathService.fileSystemPathForPublicUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT);
         File file = attachmentPath.toFile();
         try (PDDocument document = Loader.loadPDF(file)) {
             String pdfFilename = file.getName();
@@ -282,7 +282,7 @@ public class SlideSplitterService {
     private void updateExistingSlideImage(Slide slideEntity, String fileNameWithOutExt, AttachmentUnit attachmentUnit, int order) {
         String oldPath = slideEntity.getSlideImagePath();
         if (oldPath != null && !oldPath.isEmpty()) {
-            Path originalPath = FilePathService.actualPathForPublicPath(URI.create(oldPath), FilePathType.SLIDE);
+            Path originalPath = FilePathService.fileSystemPathForPublicUri(URI.create(oldPath), FilePathType.SLIDE);
             String newFilename = fileNameWithOutExt + "_" + attachmentUnit.getId() + "_Slide_" + order + ".png";
 
             try {

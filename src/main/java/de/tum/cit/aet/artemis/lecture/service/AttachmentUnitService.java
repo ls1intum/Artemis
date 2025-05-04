@@ -195,7 +195,7 @@ public class AttachmentUnitService {
             // Delete the old student version
             if (attachment.getStudentVersion() != null) {
                 URI oldStudentVersionPath = URI.create(attachment.getStudentVersion());
-                Path localPath = FilePathService.actualPathForPublicPath(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
+                Path localPath = FilePathService.fileSystemPathForPublicUri(oldStudentVersionPath, FilePathType.STUDENT_VERSION_SLIDES);
                 fileService.schedulePathForDeletion(localPath, 0);
                 this.fileService.evictCacheForPath(localPath);
             }
@@ -216,7 +216,7 @@ public class AttachmentUnitService {
      */
     private void evictCache(MultipartFile file, AttachmentUnit attachmentUnit) {
         if (file != null && !file.isEmpty()) {
-            this.fileService.evictCacheForPath(FilePathService.actualPathForPublicPath(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
+            this.fileService.evictCacheForPath(FilePathService.fileSystemPathForPublicUri(URI.create(attachmentUnit.getAttachment().getLink()), FilePathType.ATTACHMENT_UNIT));
         }
     }
 

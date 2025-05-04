@@ -291,7 +291,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.actualPathForPublicPath(URI.create(p), entry.getKey()))).filter(Objects::nonNull).toList();
+                .flatMap(entry -> entry.getValue().stream().map(p -> FilePathService.fileSystemPathForPublicUri(URI.create(p), entry.getKey()))).filter(Objects::nonNull).toList();
 
         fileService.deleteFiles(allFilesToRemoveMerged);
     }
@@ -363,7 +363,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
 
-                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.actualPathForPublicPath(URI.create(filePath), type)))
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForPublicUri(URI.create(filePath), type)))
                         .collect(Collectors.toSet());
 
                 if (!newPaths.isEmpty()) {
@@ -503,12 +503,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (var question : newQuizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 URI publicPathUri = URI.create(dragAndDropQuestion.getBackgroundFilePath());
-                if (FilePathService.actualPathForPublicPath(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND) == null) {
+                if (FilePathService.fileSystemPathForPublicUri(publicPathUri, FilePathType.DRAG_AND_DROP_BACKGROUND) == null) {
                     saveDndQuestionBackground(dragAndDropQuestion, fileMap, dragAndDropQuestion.getId());
                 }
                 for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
                     if (dragItem.getPictureFilePath() != null
-                            && FilePathService.actualPathForPublicPath(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM) == null) {
+                            && FilePathService.fileSystemPathForPublicUri(URI.create(dragItem.getPictureFilePath()), FilePathType.DRAG_ITEM) == null) {
                         saveDndDragItemPicture(dragItem, fileMap, dragItem.getId());
                     }
                 }

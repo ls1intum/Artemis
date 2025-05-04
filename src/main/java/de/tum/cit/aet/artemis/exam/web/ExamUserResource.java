@@ -93,7 +93,7 @@ public class ExamUserResource {
 
             if (oldPathString != null) {
                 // Only delete old file if saving the new one succeeded
-                Path oldPath = FilePathService.actualPathForPublicPath(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
+                Path oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(oldPathString), FilePathType.EXAM_USER_SIGNATURE);
                 // Don't throw an exception if the file does not exist as then it's already deleted for some reason
                 fileService.schedulePathForDeletion(oldPath, 0);
             }

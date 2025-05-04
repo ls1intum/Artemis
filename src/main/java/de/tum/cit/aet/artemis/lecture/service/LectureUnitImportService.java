@@ -158,12 +158,12 @@ public class LectureUnitImportService {
         Path newPath;
         FilePathType filePathType;
         if (importedAttachment.getLink().contains("/attachment-unit/")) {
-            oldPath = FilePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
+            oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(importedAttachment.getLink()), FilePathType.ATTACHMENT_UNIT);
             newPath = FilePathService.getAttachmentUnitFilePath().resolve(entityId.toString());
             filePathType = FilePathType.ATTACHMENT_UNIT;
         }
         else {
-            oldPath = FilePathService.actualPathForPublicPath(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
+            oldPath = FilePathService.fileSystemPathForPublicUri(URI.create(importedAttachment.getLink()), FilePathType.LECTURE_ATTACHMENT);
             newPath = FilePathService.getLectureAttachmentFilePath().resolve(entityId.toString());
             filePathType = FilePathType.LECTURE_ATTACHMENT;
         }
