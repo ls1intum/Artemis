@@ -34,7 +34,7 @@ function convertToBase64(rawObject: Record<string, number> | null | undefined): 
  *
  * <p><strong>We fix the issue by creating a serializable copy of the object with its properties converted into the correct format.</strong></p>
  */
-export function getCredentialFromInvalidBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): Credential | null {
+export function getCredentialFromMalformedBitwardenObject(malformedBitwardenCredential: MalformedBitwardenCredential | null): Credential | null {
     if (!malformedBitwardenCredential) {
         return null;
     }

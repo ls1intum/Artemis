@@ -1,4 +1,4 @@
-import { getCredentialFromInvalidBitwardenObject } from './bitwarden.util';
+import { getCredentialFromMalformedBitwardenObject } from './bitwarden.util';
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 
 describe('Bitwarden Util', () => {
@@ -19,7 +19,7 @@ describe('Bitwarden Util', () => {
     };
 
     it('should convert a malformed Bitwarden credential to a valid Credential object', () => {
-        const credential = getCredentialFromInvalidBitwardenObject(malformedCredential) as unknown as any;
+        const credential = getCredentialFromMalformedBitwardenObject(malformedCredential) as unknown as any;
 
         expect(credential).toBeDefined();
         expect(credential?.id).toBe('test-id');
@@ -35,13 +35,13 @@ describe('Bitwarden Util', () => {
     });
 
     it('should return null for a null input', () => {
-        const credential = getCredentialFromInvalidBitwardenObject(null);
+        const credential = getCredentialFromMalformedBitwardenObject(null);
         expect(credential).toBeNull();
     });
 
     it('should throw an error for invalid rawIdObject', () => {
         const invalidCredential = { ...malformedCredential, rawId: null };
-        expect(() => getCredentialFromInvalidBitwardenObject(invalidCredential as unknown as MalformedBitwardenCredential)).toThrow(
+        expect(() => getCredentialFromMalformedBitwardenObject(invalidCredential as unknown as MalformedBitwardenCredential)).toThrow(
             'Invalid input: rawIdObject must be a non-null object',
         );
     });
