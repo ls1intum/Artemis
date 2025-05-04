@@ -227,6 +227,7 @@ public class PyrisPipelineService {
      * @param variant      the variant of the pipeline
      * @param session      the chat session
      * @param eventVariant the event variant if this function triggers a pipeline execution due to a specific event
+     * @param post         the post the session is about
      */
     public void executeTutorSuggestionPipeline(String variant, IrisTutorSuggestionSession session, Optional<String> eventVariant, Post post) {
         var course = post.getCoursePostingBelongsTo();
