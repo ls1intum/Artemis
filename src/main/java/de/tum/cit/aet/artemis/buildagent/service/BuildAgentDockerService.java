@@ -19,7 +19,6 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Profile;
@@ -90,7 +89,7 @@ public class BuildAgentDockerService {
     private String imageArchitecture;
 
     public BuildAgentDockerService(BuildAgentConfiguration buildAgentConfiguration, DistributedDataAccessService distributedDataAccessService,
-            BuildJobContainerService buildJobContainerService, @Qualifier("taskScheduler") TaskScheduler taskScheduler) {
+            BuildJobContainerService buildJobContainerService, TaskScheduler taskScheduler) {
         this.buildAgentConfiguration = buildAgentConfiguration;
         this.distributedDataAccessService = distributedDataAccessService;
         this.buildJobContainerService = buildJobContainerService;
