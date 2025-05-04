@@ -1,6 +1,7 @@
 import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-settings/entities/malformed-bitwarden-credential';
 import { getCredentialFromMalformedBitwardenObject } from 'app/core/user/settings/passkey-settings/util/bitwarden.util';
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
+import { captureException } from '@sentry/angular';
 
 function handleMalformedBitwardenCredential(credential: Credential | null) {
     try {
@@ -28,6 +29,7 @@ export function getCredentialWithGracefullyHandlingAuthenticatorIssues(credentia
         JSON.stringify(credential);
         return credential;
     } catch (error) {
+        captureException(error);
         // eslint-disable-next-line no-undef
         console.warn('Authenticator returned a malformed credential, attempting to fix it', error);
         // Authenticators, such as bitwarden, do not handle the credential generation properly; this is a workaround for it
