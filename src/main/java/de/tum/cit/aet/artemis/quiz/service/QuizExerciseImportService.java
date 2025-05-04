@@ -171,8 +171,8 @@ public class QuizExerciseImportService extends ExerciseImportService {
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path backgroundFileIntendedPath)
             // If it doesn't exist yet, it is a new image and will be added later.
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
-                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(backgroundFilePublicPath, backgroundFileIntendedPath);
                 // Need to copy the file and get a new path, otherwise two different questions would share the same image and would cause problems in case one was deleted
                 Path oldPath = FilePathService.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND);
                 Path newPath = fileService.copyExistingFileToTarget(oldPath, FilePathService.getDragAndDropBackgroundFilePath());
@@ -214,9 +214,9 @@ public class QuizExerciseImportService extends ExerciseImportService {
             URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
             // Check whether pictureFilePublicPath is actually a picture file path
             // (which is the case when its path starts with the path pictureFileIntendedPath)
+            FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
             // If it is null it is a new image which doesn't exist yet and will be added later.
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
-                FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(pictureFilePublicPath, pictureFileIntendedPath);
                 // Need to copy the file and get a new path, same as above
                 Path oldDragItemPath = FilePathService.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM);
                 Path newDragItemPath = fileService.copyExistingFileToTarget(oldDragItemPath, FilePathService.getDragItemFilePath());
