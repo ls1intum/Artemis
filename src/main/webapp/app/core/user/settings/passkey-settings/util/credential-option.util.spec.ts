@@ -36,7 +36,7 @@ describe('Credential Option Util', () => {
         expect(result.excludeCredentials).toEqual([{ id: 'decoded-mockCredentialId', type: 'public-key' }]);
         expect(result.authenticatorSelection).toEqual({
             requireResidentKey: true,
-            userVerification: 'discouraged',
+            userVerification: 'preferred',
         });
     });
 
