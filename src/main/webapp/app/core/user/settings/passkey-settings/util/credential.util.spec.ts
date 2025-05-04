@@ -3,6 +3,10 @@ import { MalformedBitwardenCredential } from 'app/core/user/settings/passkey-set
 import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 
 describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
+    afterEach(() => {
+        jest.restoreAllMocks();
+    });
+
     it('should return the credential if it can be stringified', () => {
         const validCredential = { id: '123' } as unknown as Credential;
         const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(validCredential);

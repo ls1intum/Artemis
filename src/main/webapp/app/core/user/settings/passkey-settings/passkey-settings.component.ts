@@ -19,6 +19,7 @@ import { CommonModule } from '@angular/common';
 import { CustomMaxLengthDirective } from 'app/shared/validators/custom-max-length-validator/custom-max-length-validator.directive';
 import { createCredentialOptions } from 'app/core/user/settings/passkey-settings/util/credential-option.util';
 import { getCredentialWithGracefullyHandlingAuthenticatorIssues } from 'app/core/user/settings/passkey-settings/util/credential.util';
+import { InvalidCredentialError } from 'app/core/user/settings/passkey-settings/entities/invalid-credential-error';
 
 const InvalidStateError = {
     name: 'InvalidStateError',
@@ -102,6 +103,10 @@ export class PasskeySettingsComponent implements OnDestroy {
                 publicKey: credentialOptions,
             });
             const credential = getCredentialWithGracefullyHandlingAuthenticatorIssues(authenticatorCredential);
+            if (!credential) {
+                // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
+                throw new InvalidCredentialError();
+            }
 
             await this.webauthnApiService.registerPasskey({
                 publicKey: {
@@ -115,7 +120,9 @@ export class PasskeySettingsComponent implements OnDestroy {
                 return;
             }
 
-            if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
+            if (error instanceof InvalidCredentialError) {
+                this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
+            } else if (error.name == InvalidStateError.name && error.code == InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
             } else {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.registration');
