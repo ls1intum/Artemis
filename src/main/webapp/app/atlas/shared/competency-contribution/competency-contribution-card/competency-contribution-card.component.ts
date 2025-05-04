@@ -19,8 +19,8 @@ export class CompetencyContributionCardComponent {
     weight = input.required<number>();
     mastery = input<number>();
 
-    readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
-    readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
+    protected readonly HIGH_COMPETENCY_LINK_WEIGHT = HIGH_COMPETENCY_LINK_WEIGHT;
+    protected readonly MEDIUM_COMPETENCY_LINK_WEIGHT = MEDIUM_COMPETENCY_LINK_WEIGHT;
 
-    readonly faArrowRight = faArrowRight;
+    protected readonly faArrowRight = faArrowRight;
 }

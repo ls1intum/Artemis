@@ -579,6 +579,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             final var lecture = lectureUtilService.createLecture(course, ZonedDateTime.now().minusDays(1));
             lectureUtilService.addLectureUnitsToLecture(lecture, List.of(lectureUnit));
             lectureUtilService.completeLectureUnitForUser(lectureUnit, student1);
+            competencyUtilService.linkLectureUnitToCompetency(courseCompetency, lectureUnit);
 
             var contributions = request.getList("/api/atlas/lecture-units/" + lectureUnit.getId() + "/contributions", HttpStatus.OK, CompetencyContributionDTO.class);
 

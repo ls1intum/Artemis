@@ -481,9 +481,9 @@ public class CourseCompetencyService {
         final var competencies = courseCompetencyRepository.findAllByExerciseIdWithExerciseLinks(exerciseId);
         return competencies.stream().map(competency -> {
             final var progress = competencyProgressRepository.findByCompetencyIdAndUserId(competency.getId(), userId);
-            final var master = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
+            final var mastery = progress.map(CompetencyProgressService::getMastery).orElse(0.0);
             return new CompetencyContributionDTO(competency.getId(), competency.getTitle(),
-                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), master);
+                    competency.getExerciseLinks().stream().findFirst().map(CompetencyExerciseLink::getWeight).orElse(0.0), mastery);
         }).toList();
     }
 
