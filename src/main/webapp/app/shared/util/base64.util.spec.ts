@@ -104,10 +104,16 @@ describe('Base64 Utility Functions', () => {
             expect(output).toBe('SGVsbG8');
         });
 
-        it('replaces / with _ and + with -', () => {
-            const input = new Uint8Array([255, 255, 43]); // Encodes to "//+"
+        it('encodes Base64 with URL-safe replacements', () => {
+            const input = new Uint8Array([255, 255, 43]); // Encodes to "ÿÿ+//+"
             const output = encodeAsBase64Url(input);
             expect(output).toBe('__8r');
+        });
+
+        it('replaces / with _ and + with -', () => {
+            const input = new Uint8Array([47, 47, 43]); // Encodes to "//+"
+            const output = encodeAsBase64Url(input);
+            expect(output).toBe('Ly8r');
         });
 
         it('handles empty input', () => {
