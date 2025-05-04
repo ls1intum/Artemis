@@ -4,15 +4,10 @@ import java.util.Optional;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToOne;
-
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
@@ -24,29 +19,27 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisTutorSuggestionSession extends IrisChatSession {
 
-    @ManyToOne
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JsonIgnore
-    private Post post;
+    private Long postId;
 
-    public IrisTutorSuggestionSession(Post post, User user) {
+    public IrisTutorSuggestionSession(Long postId, User user) {
         super(user);
-        this.post = post;
+        this.postId = postId;
     }
 
     public IrisTutorSuggestionSession() {
     }
 
-    public Post getPost() {
-        return post;
+    public Long getPostId() {
+        return postId;
     }
 
-    public void setPost(Post post) {
-        this.post = post;
+    public void setPostId(Long postId) {
+        this.postId = postId;
     }
 
     @Override
     public String toString() {
-        return "IrisTutorSuggestionSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "post=" + post + '}';
+        return "IrisTutorSuggestionSession{" + "user=" + Optional.ofNullable(getUser()).map(User::getLogin).orElse("null") + "," + "postId=" + postId + '}';
     }
 }

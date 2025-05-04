@@ -25,5 +25,13 @@
                                  referencedTableName="iris_sub_settings"
                                  onDelete="CASCADE"
         />
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="iris_session"
+                                      constraintName="FK_IRIS_SESSION_ON_POST"/>
+            <dropForeignKeyConstraint baseTableName="iris_settings"
+                                      constraintName="FK_IRIS_SETTINGS_ON_IRIS_TUTOR_SUGGESTION_SETTINGS"/>
+            <dropColumn tableName="iris_session" columnName="post_id"/>
+            <dropColumn tableName="iris_settings" columnName="iris_tutor_suggestion_settings_id"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

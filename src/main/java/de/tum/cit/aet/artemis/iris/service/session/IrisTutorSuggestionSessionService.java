@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -51,9 +52,11 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     private final IrisSettingsService irisSettingsService;
 
+    private final PostRepository postRepository;
+
     public IrisTutorSuggestionSessionService(IrisSessionRepository irisSessionRepository, ObjectMapper objectMapper, IrisMessageService irisMessageService,
             IrisChatWebsocketService irisChatWebsocketService, LLMTokenUsageService llmTokenUsageService, IrisRateLimitService rateLimitService,
-            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService) {
+            PyrisPipelineService pyrisPipelineService, AuthorizationCheckService authCheckService, IrisSettingsService irisSettingsService, PostRepository postRepository) {
         super(irisSessionRepository, objectMapper, irisMessageService, irisChatWebsocketService, llmTokenUsageService);
         this.irisSessionRepository = irisSessionRepository;
         this.irisChatWebsocketService = irisChatWebsocketService;
@@ -61,11 +64,13 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         this.pyrisPipelineService = pyrisPipelineService;
         this.authCheckService = authCheckService;
         this.irisSettingsService = irisSettingsService;
+        this.postRepository = postRepository;
     }
 
     @Override
     protected void setLLMTokenUsageParameters(LLMTokenUsageService.LLMTokenUsageBuilder builder, IrisTutorSuggestionSession session) {
-        builder.withCourse(session.getPost().getCoursePostingBelongsTo().getId());
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
+        builder.withCourse(post.getCoursePostingBelongsTo().getId());
     }
 
     @Override
@@ -88,8 +93,9 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
         var chatSession = (IrisTutorSuggestionSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
 
         var variant = "default";
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(session.getPostId());
 
-        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event);
+        pyrisPipelineService.executeTutorSuggestionPipeline(variant, chatSession, event, post);
     }
 
     @Override
@@ -99,7 +105,8 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkHasAccessTo(User user, IrisTutorSuggestionSession irisSession) {
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, irisSession.getPost().getCoursePostingBelongsTo(), user);
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, post.getCoursePostingBelongsTo(), user);
         if (!Objects.equals(irisSession.getUser(), user)) {
             throw new AccessForbiddenException("Iris Session", irisSession.getId());
         }
@@ -107,6 +114,7 @@ public class IrisTutorSuggestionSessionService extends AbstractIrisChatSessionSe
 
     @Override
     public void checkIsFeatureActivatedFor(IrisTutorSuggestionSession irisSession) {
-        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, irisSession.getPost().getCoursePostingBelongsTo());
+        var post = postRepository.findPostOrMessagePostByIdElseThrow(irisSession.getPostId());
+        irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TUTOR_SUGGESTION, post.getCoursePostingBelongsTo());
     }
 }
