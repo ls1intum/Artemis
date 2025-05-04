@@ -57,7 +57,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationIndepen
         lecture.setCourse(course);
         lecture = lectureRepository.save(lecture);
         attachment.setLecture(lecture);
-        attachment.setLink("attachments/lecture" + lecture.getId() + "/example.txt");
+        attachment.setLink("attachments/lecture/" + lecture.getId() + "/example.txt");
         attachment = attachmentRepository.save(attachment);
     }
 
