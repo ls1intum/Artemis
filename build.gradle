@@ -394,7 +394,7 @@ dependencies {
     annotationProcessor "org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
 
-
+    implementation "de.codecentric:chaos-monkey-spring-boot:3.2.1"
     // ---- CHECKSTYLE DEPENDENCIES ----
 
     // use newest version of plexus to avoid security issues through outdated dependencies

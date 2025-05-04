@@ -289,7 +289,9 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
                     // Prometheus endpoint protected by IP address.
-                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())));
+                    .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
+                    // Chaos monkey actuator requires admin
+                    .requestMatchers("/management/chaosmonkey/**").hasAuthority(Role.ADMIN.getAuthority());
 
                     // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVcsActive()) {

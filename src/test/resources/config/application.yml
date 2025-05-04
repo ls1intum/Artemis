@@ -246,6 +246,8 @@ management:
     endpoint:
         jhimetrics:
             enabled: true
+        chaosmonkey:
+            access: unrestricted
     info:
         env:
             enabled: true
