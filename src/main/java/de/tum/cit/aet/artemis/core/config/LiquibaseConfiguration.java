@@ -6,6 +6,8 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import jakarta.annotation.PostConstruct;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -24,9 +26,13 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.config.migration.DatabaseMigration;
+import liquibase.Liquibase;
 import liquibase.Scope;
 import liquibase.SingletonScopeManager;
+import liquibase.database.DatabaseFactory;
+import liquibase.database.jvm.JdbcConnection;
 import liquibase.integration.spring.SpringLiquibase;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
 
@@ -49,6 +55,23 @@ public class LiquibaseConfiguration {
     public LiquibaseConfiguration(Environment env, BuildProperties buildProperties) {
         this.env = env;
         this.buildProperties = buildProperties;
+    }
+
+    @PostConstruct
+    public void forceLiquibaseClearChecksums() {
+        try {
+            log.info("Clearing Liquibase checksums manually before SpringLiquibase starts...");
+
+            Liquibase liquibase = new Liquibase("classpath:config/liquibase/master.xml", new ClassLoaderResourceAccessor(),
+                    DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(dataSource.getConnection())));
+
+            liquibase.clearCheckSums();
+            log.info("Liquibase checksums cleared successfully.");
+        }
+        catch (Exception e) {
+            log.error("Failed to clear Liquibase checksums", e);
+            throw new IllegalStateException("Could not clear Liquibase checksums", e);
+        }
     }
 
     /**
