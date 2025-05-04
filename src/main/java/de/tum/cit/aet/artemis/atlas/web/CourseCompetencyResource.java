@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyContributionDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
@@ -55,6 +56,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLectureUnit.EnforceAtLeastStudentInLectureUnit;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -426,6 +429,38 @@ public class CourseCompetencyResource {
         final var jols = competencyJolService.getLatestJudgementOfLearningForUserByCourseId(userId, courseId);
 
         return ResponseEntity.ok(jols);
+    }
+
+    /**
+     * GET exercises/:exerciseId/contributions : Gets the competency contributions for the given exercise
+     *
+     * @param exerciseId the id of the exercise for which to get the contributions
+     * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
+     */
+    @GetMapping("exercises/{exerciseId}/contributions")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForExercise(@PathVariable long exerciseId) {
+        log.debug("REST request to get competency contributions for exercise: {}", exerciseId);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var competencyContributions = courseCompetencyService.getCompetencyContributionsForExercise(exerciseId, user.getId());
+
+        return ResponseEntity.ok(competencyContributions);
+    }
+
+    /**
+     * GET lecture-units/:lectureUnitId/contributions : Gets the competency contributions for the given lecture unit
+     *
+     * @param lectureUnitId the id of the lecture unit for which to get the contributions
+     * @return the ResponseEntity with status 200 (OK) and with body the competency contributions
+     */
+    @GetMapping("lecture-units/{lectureUnitId}/contributions")
+    @EnforceAtLeastStudentInLectureUnit
+    public ResponseEntity<List<CompetencyContributionDTO>> getCompetencyContributionsForLectureUnit(@PathVariable long lectureUnitId) {
+        log.debug("REST request to get competency contributions for lecture unit: {}", lectureUnitId);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var competencyContributions = courseCompetencyService.getCompetencyContributionsForLectureUnit(lectureUnitId, user.getId());
+
+        return ResponseEntity.ok(competencyContributions);
     }
 
     /**
