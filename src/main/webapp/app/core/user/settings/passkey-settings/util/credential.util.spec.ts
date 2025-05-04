@@ -49,6 +49,41 @@ describe('getCredentialWithGracefullyHandlingAuthenticatorIssues', () => {
         });
     });
 
+    it('should handle malformed Bitwarden credentials gracefully during login', () => {
+        const malformedCredential: MalformedBitwardenCredential = {
+            id: 'mock-id',
+            rawId: { 0: 1, 1: 2, 2: 3 },
+            type: 'public-key',
+            authenticatorAttachment: 'platform',
+            response: {
+                clientDataJSON: { 0: 123, 1: 34, 2: 116, 3: 101, 4: 115, 5: 116, 6: 34, 7: 125 },
+                authenticatorData: { 0: 10, 1: 20, 2: 30 },
+                signature: { 0: 40, 1: 50, 2: 60 },
+                userHandle: { 0: 70, 1: 80, 2: 90 },
+            },
+            getClientExtensionResults: () => ({}),
+        };
+        // Define a custom toJSON method that throws an error (which is the bug in the Bitwarden plugin)
+        (malformedCredential as any).toJSON = () => {
+            throw new TypeError('Illegal invocation');
+        };
+
+        const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(malformedCredential);
+        expect(result).toEqual({
+            authenticatorAttachment: 'platform',
+            clientExtensionResults: {},
+            id: 'mock-id',
+            rawId: 'AQID',
+            response: {
+                authenticatorData: 'ChQe',
+                clientDataJSON: 'eyJ0ZXN0In0=',
+                signature: 'KDI8',
+                userHandle: 'RlBa',
+            },
+            type: 'public-key',
+        });
+    });
+
     it('should return null if the credential is null', () => {
         const result = getCredentialWithGracefullyHandlingAuthenticatorIssues(null);
         expect(result).toBeNull();
