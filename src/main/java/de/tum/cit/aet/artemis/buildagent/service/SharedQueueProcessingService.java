@@ -70,6 +70,8 @@ public class SharedQueueProcessingService {
 
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
+    private final AtomicInteger consecutiveFailedJobs = new AtomicInteger(0);
+
     private final BuildAgentInformationService buildAgentInformationService;
 
     private final TaskScheduler taskScheduler;
@@ -356,6 +358,7 @@ public class SharedQueueProcessingService {
             localProcessingJobs.decrementAndGet();
             buildAgentInformationService.updateLocalBuildAgentInformationWithRecentJob(finishedJob, isPaused.get());
 
+            consecutiveFailedJobs.set(0);
             // process next build job if node is available
             checkAvailabilityAndProcessNextBuild();
         });
@@ -384,6 +387,11 @@ public class SharedQueueProcessingService {
             else {
                 status = BuildStatus.FAILED;
                 log.error("Error while processing build job: {}", buildJob, ex);
+
+                if (consecutiveFailedJobs.incrementAndGet() >= 5) {
+                    log.error("Failed for for 5 consecutive build jobs. Pausing build agent.");
+                    pauseBuildAgent();
+                }
             }
 
             job = new BuildJobQueueItem(buildJob, completionDate, status);
