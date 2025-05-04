@@ -3,6 +3,7 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
     Competency,
+    CompetencyContributionCardDTO,
     CompetencyExerciseLink,
     CompetencyJol,
     CompetencyProgress,
@@ -186,6 +187,26 @@ export class CourseCompetencyService {
         return this.httpClient
             .get<{ [key: number]: { current: CompetencyJol; prior?: CompetencyJol } }>(`${this.resourceURL}/courses/${courseId}/course-competencies/jol`, { observe: 'response' })
             .pipe(map((res: CompetencyJolMapResponseType) => res));
+    }
+
+    /**
+     * Retrieves the competency contributions for the given exercise.
+     *
+     * @param exerciseId the id of the exercise for which to get the contributions
+     * @return an Observable of HttpResponse containing the list of competency contributions
+     */
+    getCompetencyContributionsForExercise(exerciseId: number) {
+        return this.httpClient.get<CompetencyContributionCardDTO[]>(`${this.resourceURL}/exercises/${exerciseId}/contributions`, { observe: 'response' });
+    }
+
+    /**
+     * Retrieves the competency contributions for the given lecture unit.
+     *
+     * @param lectureUnitId the id of the lecture unit for which to get the contributions
+     * @return an Observable of HttpResponse containing the list of competency contributions
+     */
+    getCompetencyContributionsForLectureUnit(lectureUnitId: number) {
+        return this.httpClient.get<CompetencyContributionCardDTO[]>(`${this.resourceURL}/lecture-units/${lectureUnitId}/contributions`, { observe: 'response' });
     }
 
     protected convertCompetencyResponseFromServer(res: EntityResponseType): EntityResponseType {

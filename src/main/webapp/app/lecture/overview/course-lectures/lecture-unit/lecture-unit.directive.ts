@@ -5,6 +5,7 @@ import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures
 
 @Directive()
 export class LectureUnitDirective<T extends LectureUnit> {
+    courseId = input.required<number>();
     lectureUnit = input.required<T>();
 
     readonly onCompletion = output<LectureUnitCompletionEvent>();
