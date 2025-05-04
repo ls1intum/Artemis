@@ -10,7 +10,7 @@ import { NgbProgressbar, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 
-describe('CompetncyContributionCardComponent', () => {
+describe('CompetencyContributionCardComponent', () => {
     let component: CompetencyContributionCardComponent;
     let fixture: ComponentFixture<CompetencyContributionCardComponent>;
 

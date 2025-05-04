@@ -12,7 +12,7 @@ import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { CompetencyContributionCardDTO } from 'app/atlas/shared/entities/competency.model';
 
-describe('CompetncyContributionComponent', () => {
+describe('CompetencyContributionComponent', () => {
     let component: CompetencyContributionComponent;
     let fixture: ComponentFixture<CompetencyContributionComponent>;
     let service: CourseCompetencyService;
