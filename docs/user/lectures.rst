@@ -125,7 +125,7 @@ In the preview, instructors can enlarge pages, delete them, reorder them, merge 
 
 The following video shows how to use all of the mentioned features effectively.
 
-    .. raw:: html
+.. raw:: html
 
     <iframe src="https://live.rbg.tum.de/w/artemisintro/59823?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
@@ -135,7 +135,7 @@ Pages can be hidden indefinitely, until a specific date, or until an exercise's 
 
 The following video shows how to observe the effects of hidden pages on the Student Version and slide references.
 
-    .. raw:: html
+.. raw:: html
 
     <iframe src="https://live.rbg.tum.de/w/artemisintro/59826?video_only=1&t=0" allowfullscreen="1" frameborder="0" width="600" height="350">
         Watch this video on TUM-Live.
