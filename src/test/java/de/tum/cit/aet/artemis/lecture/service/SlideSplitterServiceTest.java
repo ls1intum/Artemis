@@ -344,7 +344,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         Path directoryFilePath = FilePathService.getAttachmentUnitFilePath().resolve(Path.of(testAttachmentUnit.getId().toString(), "slide", slideId.toString()));
         Files.createDirectories(directoryFilePath);
         Path originalSlidePath = directoryFilePath.resolve("original_slide.png");
-        slide.setSlideImagePath(FilePathService.publicPathForActualPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
+        slide.setSlideImagePath(FilePathService.publicUriForFileSystemPath(originalSlidePath, FilePathType.SLIDE, slide.getId()).toString());
         slideRepository.save(slide);
         // Create a test image file
         BufferedImage originalImage = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
@@ -537,7 +537,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
         }
 
         // Set up attachment link - make sure the link is updated properly
-        testAttachmentUnit.getAttachment().setLink(FilePathService.publicPathForActualPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
+        testAttachmentUnit.getAttachment().setLink(FilePathService.publicUriForFileSystemPath(pdfPath, FilePathType.ATTACHMENT_UNIT, testAttachmentUnit.getId()).toString());
         testAttachmentUnit.getAttachment().setName("test-slides.pdf");
 
         // Create temp directory for mock slide images
@@ -564,7 +564,7 @@ class SlideSplitterServiceTest extends AbstractSpringIntegrationIndependentTest 
             BufferedImage image = new BufferedImage(10, 10, BufferedImage.TYPE_INT_RGB);
             ImageIO.write(image, "png", slidePath.toFile());
 
-            savedSlide.setSlideImagePath(FilePathService.publicPathForActualPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
+            savedSlide.setSlideImagePath(FilePathService.publicUriForFileSystemPath(slidePath, FilePathType.SLIDE, slide.getId()).toString());
             savedSlide = slideRepository.save(savedSlide);
             createdSlides.add(savedSlide);
         }

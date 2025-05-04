@@ -169,7 +169,7 @@ public class LectureUnitImportService {
         }
         log.debug("Copying attachment file from {} to {}", oldPath, newPath);
         Path savePath = fileService.copyExistingFileToTarget(oldPath, newPath);
-        attachment.setLink(FilePathService.publicPathForActualPath(savePath, filePathType, entityId).toString());
+        attachment.setLink(FilePathService.publicUriForFileSystemPath(savePath, filePathType, entityId).toString());
         return attachment;
     }
 }

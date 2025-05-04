@@ -142,6 +142,6 @@ public class AttachmentService {
 
         FileUtils.writeByteArrayToFile(savePath.toFile(), pdfData);
 
-        attachment.setStudentVersion(FilePathService.publicPathForActualPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
+        attachment.setStudentVersion(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.STUDENT_VERSION_SLIDES, attachmentUnitId).toString());
     }
 }

@@ -133,7 +133,7 @@ public class ExamUserService {
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
             Path savedPath = fileService.saveFile(studentImageFile, FilePathService.getStudentImageFilePath(), false);
 
-            examUser.setStudentImagePath(FilePathService.publicPathForActualPath(savedPath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathService.publicUriForFileSystemPath(savedPath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {

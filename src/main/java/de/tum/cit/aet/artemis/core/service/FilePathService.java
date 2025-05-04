@@ -43,7 +43,7 @@ public class FilePathService {
      * @param fileUploadPath the base path for file uploads
      */
     @Value("${artemis.file-upload-path}")
-    public void setFileUploadPathStatic(String fileUploadPath) {
+    public void setFileUploadPathStatic(@NotNull String fileUploadPath) {
         FilePathService.fileUploadPath = fileUploadPath;
     }
 
@@ -52,6 +52,7 @@ public class FilePathService {
      *
      * @return the path to the temporary files directory
      */
+    @NotNull
     public static Path getTempFilePath() {
         return Path.of(fileUploadPath, "images", "temp");
     }
@@ -61,6 +62,7 @@ public class FilePathService {
      *
      * @return the path to the drag and drop backgrounds directory
      */
+    @NotNull
     public static Path getDragAndDropBackgroundFilePath() {
         return Path.of(fileUploadPath, "images", "drag-and-drop", "backgrounds");
     }
@@ -70,6 +72,7 @@ public class FilePathService {
      *
      * @return the path to the drag item images directory
      */
+    @NotNull
     public static Path getDragItemFilePath() {
         return Path.of(fileUploadPath, "images", "drag-and-drop", "drag-items");
     }
@@ -79,6 +82,7 @@ public class FilePathService {
      *
      * @return the path to the course icons directory
      */
+    @NotNull
     public static Path getCourseIconFilePath() {
         return Path.of(fileUploadPath, "images", "course", "icons");
     }
@@ -88,6 +92,7 @@ public class FilePathService {
      *
      * @return the path to the profile pictures directory
      */
+    @NotNull
     public static Path getProfilePictureFilePath() {
         return Path.of(fileUploadPath, "images", "user", "profile-pictures");
     }
@@ -97,6 +102,7 @@ public class FilePathService {
      *
      * @return the path to the exam user signatures directory
      */
+    @NotNull
     public static Path getExamUserSignatureFilePath() {
         return Path.of(fileUploadPath, "images", "exam-user", "signatures");
     }
@@ -106,6 +112,7 @@ public class FilePathService {
      *
      * @return the path to the student images directory
      */
+    @NotNull
     public static Path getStudentImageFilePath() {
         return Path.of(fileUploadPath, "images", "exam-user");
     }
@@ -115,6 +122,7 @@ public class FilePathService {
      *
      * @return the path to the lecture attachments directory
      */
+    @NotNull
     public static Path getLectureAttachmentFilePath() {
         return Path.of(fileUploadPath, "attachments", "lecture");
     }
@@ -124,6 +132,7 @@ public class FilePathService {
      *
      * @return the path to the attachment unit files directory
      */
+    @NotNull
     public static Path getAttachmentUnitFilePath() {
         return Path.of(fileUploadPath, "attachments", "attachment-unit");
     }
@@ -133,6 +142,7 @@ public class FilePathService {
      *
      * @return the path to the file upload exercises directory
      */
+    @NotNull
     public static Path getFileUploadExercisesFilePath() {
         return Path.of(fileUploadPath, "file-upload-exercises");
     }
@@ -142,6 +152,7 @@ public class FilePathService {
      *
      * @return the path to the markdown files directory
      */
+    @NotNull
     public static Path getMarkdownFilePath() {
         return Path.of(fileUploadPath, "markdown");
     }
@@ -153,6 +164,7 @@ public class FilePathService {
      * @param conversationId the conversation ID
      * @return the path to the markdown files for the conversation
      */
+    @NotNull
     public static Path getMarkdownFilePathForConversation(long courseId, long conversationId) {
         return getMarkdownFilePath().resolve("communication").resolve(String.valueOf(courseId)).resolve(String.valueOf(conversationId));
     }
@@ -167,7 +179,6 @@ public class FilePathService {
      */
     @NotNull
     public static Path fileSystemPathForPublicUri(@NotNull URI publicUri, @NotNull FilePathType filePathType) {
-        // Extract the filename from the url
         String uriPath = publicUri.getPath();
         Path path = Path.of(uriPath);
         String filename = path.getFileName().toString();
@@ -188,26 +199,58 @@ public class FilePathService {
         };
     }
 
-    private static Path getLectureAttachmentFilePath(Path path, String filename) {
+    /**
+     * Generates the path for a lecture attachment file based on the provided path and filename.
+     *
+     * @param path     the path to the lecture attachment
+     * @param filename the name of the file
+     * @return the path to the lecture attachment file
+     */
+
+    @NotNull
+    private static Path getLectureAttachmentFilePath(@NotNull Path path, @NotNull String filename) {
         String lectureId = path.getName(2).toString();
         return getLectureAttachmentFilePath().resolve(Path.of(lectureId, filename));
     }
 
-    private static Path getAttachmentUnitFilePath(Path path, String filename) {
+    /**
+     * Generates the path for an attachment unit file based on the provided path and filename.
+     *
+     * @param path     the path to the attachment unit
+     * @param filename the name of the file
+     * @return the path to the attachment unit file
+     */
+    @NotNull
+    private static Path getAttachmentUnitFilePath(@NotNull Path path, @NotNull String filename) {
         String attachmentUnitId = path.getName(2).toString();
         return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, filename));
     }
 
-    private static Path getStudentVersionSlidesPath(Path path, String filename) {
+    /**
+     * Generates the path for an attachment unit file based on the provided path and filename.
+     *
+     * @param path     the path to the attachment unit
+     * @param filename the name of the file
+     * @return the path to the attachment unit file
+     */
+    @NotNull
+    private static Path getStudentVersionSlidesPath(@NotNull Path path, @NotNull String filename) {
         String attachmentUnitId = path.getName(2).toString();
         return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "student", filename));
     }
 
-    private static Path getSlideFilePath(Path path, String filename) {
+    /**
+     * Generates the path for a slide file based on the provided path and filename.
+     *
+     * @param path     the path to the slide
+     * @param filename the name of the file
+     * @return the path to the slide file
+     */
+    @NotNull
+    private static Path getSlideFilePath(@NotNull Path path, @NotNull String filename) {
         try {
             String attachmentUnitId = path.getName(2).toString();
             String slideId = path.getName(4).toString();
-            // check if the ids are valid long values
             Long.parseLong(attachmentUnitId);
             Long.parseLong(slideId);
             return getAttachmentUnitFilePath().resolve(Path.of(attachmentUnitId, "slide", slideId, filename));
@@ -217,8 +260,16 @@ public class FilePathService {
         }
     }
 
-    private static Path actualPathForPublicFileUploadExercisesFilePath(URI publicPath, String filename) {
-        Path path = Path.of(publicPath.getPath());
+    /**
+     * Generates the actual path for a file upload exercise submission based on the provided public URI and filename.
+     *
+     * @param publicUri the public URI of the file upload exercise
+     * @param filename  the name of the file
+     * @return the actual path to the file upload exercise submission
+     */
+    @NotNull
+    private static Path actualPathForPublicFileUploadExercisesFilePath(@NotNull URI publicUri, @NotNull String filename) {
+        Path path = Path.of(publicUri.getPath());
         try {
             String expectedExerciseId = path.getName(1).toString();
             String expectedSubmissionId = path.getName(3).toString();
@@ -227,7 +278,7 @@ public class FilePathService {
             return FileUploadSubmission.buildFilePath(exerciseId, submissionId).resolve(filename);
         }
         catch (IllegalArgumentException e) {
-            throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicPath, e);
+            throw new FilePathParsingException("Public path does not contain correct exerciseId or submissionId: " + publicUri, e);
         }
     }
 
@@ -240,11 +291,9 @@ public class FilePathService {
      * @return the public file URI that can be used to access the file externally
      * @throws FilePathParsingException if the path cannot be parsed correctly
      */
-    public static URI publicPathForActualPath(Path path, FilePathType filePathType, @Nullable Long entityId) {
-        // Extract filename
+    @NotNull
+    public static URI publicUriForFileSystemPath(@NotNull Path path, @NotNull FilePathType filePathType, @Nullable Long entityId) {
         String filename = path.getFileName().toString();
-
-        // Generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACEHOLDER : entityId.toString();
 
         return switch (filePathType) {
@@ -263,10 +312,17 @@ public class FilePathService {
         };
     }
 
-    private static URI publicPathForActualSlideFilePath(Path path, String filename, String id) {
+    /**
+     * Generates the public URI for a slide file based on the provided path, filename, and ID.
+     *
+     * @param path     the path to the slide
+     * @param filename the name of the file
+     * @param id       the ID of the slide
+     * @return the public URI for the slide file
+     */
+    @NotNull
+    private static URI publicPathForActualSlideFilePath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
-            // The last name is the file name, the one before that is the slide number and the one before that is the attachmentUnitId, in which we are interested
-            // (e.g. uploads/attachments/attachment-unit/941/slide/1/State_pattern_941_Slide_1.png)
             final String expectedAttachmentUnitId = path.getName(path.getNameCount() - 4).toString();
             final long attachmentUnitId = Long.parseLong(expectedAttachmentUnitId);
             return URI.create("attachments/attachment-unit/" + attachmentUnitId + "/slide/" + id + "/" + filename);
@@ -276,9 +332,18 @@ public class FilePathService {
         }
     }
 
-    private static URI publicPathForActualFileUploadExercisesFilePath(Path path, String filename, String id) {
+    /**
+     * Generates the public URI for a file upload exercise submission based on the provided path, filename, and ID.
+     *
+     * @param path     the path to the file upload exercise
+     * @param filename the name of the file
+     * @param id       the ID of the file upload submission
+     * @return the public URI for the file upload exercise submission
+     */
+
+    @NotNull
+    private static URI publicPathForActualFileUploadExercisesFilePath(@NotNull Path path, @NotNull String filename, @NotNull String id) {
         try {
-            // The last name is the file name, the one before that is the submissionId and the one before that is the exerciseId, in which we are interested
             final var expectedExerciseId = path.getName(path.getNameCount() - 3).toString();
             final long exerciseId = Long.parseLong(expectedExerciseId);
             return URI.create("file-upload-exercises/" + exerciseId + "/submissions/" + id + "/" + filename);

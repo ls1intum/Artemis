@@ -234,7 +234,7 @@ public class AccountResource {
         }
 
         Path savePath = fileService.saveFile(file, basePath, false);
-        String publicPath = FilePathService.publicPathForActualPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
+        String publicPath = FilePathService.publicUriForFileSystemPath(savePath, FilePathType.PROFILE_PICTURE, user.getId()).toString();
         userRepository.updateUserImageUrl(user.getId(), publicPath);
         user.setImageUrl(publicPath);
         return ResponseEntity.ok(new UserDTO(user));

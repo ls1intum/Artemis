@@ -134,7 +134,7 @@ public class SlideSplitterService {
                         .resolve(String.valueOf(slideNumber)).resolve(filename));
 
                 Slide slideEntity = new Slide();
-                slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
+                slideEntity.setSlideImagePath(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) slideNumber).toString());
                 slideEntity.setSlideNumber(slideNumber);
                 slideEntity.setAttachmentUnit(attachmentUnit);
                 slideRepository.save(slideEntity);
@@ -272,7 +272,7 @@ public class SlideSplitterService {
             Path savePath = fileService.saveFile(slideFile,
                     FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide").resolve(String.valueOf(order)).resolve(filename));
 
-            slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, FilePathType.SLIDE, (long) order).toString());
+            slideEntity.setSlideImagePath(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
         }
     }
 
@@ -295,7 +295,7 @@ public class SlideSplitterService {
                     Path savePath = fileService.saveFile(slideFile, FilePathService.getAttachmentUnitFilePath().resolve(attachmentUnit.getId().toString()).resolve("slide")
                             .resolve(String.valueOf(order)).resolve(newFilename));
 
-                    slideEntity.setSlideImagePath(FilePathService.publicPathForActualPath(savePath, FilePathType.SLIDE, (long) order).toString());
+                    slideEntity.setSlideImagePath(FilePathService.publicUriForFileSystemPath(savePath, FilePathType.SLIDE, (long) order).toString());
                     existingFile.delete();
                 }
                 else {
