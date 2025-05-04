@@ -21,7 +21,7 @@ export class StandardizedCompetencyFilterComponent {
 
     constructor() {
         effect(() => {
-            this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.competencyTitleFilterChange.emit(this.competencyTitleFilter));
+            this.titleFilterSubject.pipe(debounceTime(500)).subscribe(() => this.competencyTitleFilterChange.emit(this.competencyTitleFilter() ?? ''));
         });
 
         inject(DestroyRef).onDestroy(() => {

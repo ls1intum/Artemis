@@ -28,13 +28,13 @@ describe('ImportCompetenciesTableComponent', () => {
             .then(() => {
                 componentFixture = TestBed.createComponent(ImportCompetenciesTableComponent);
                 component = componentFixture.componentInstance;
-                component.content = { resultsOnPage: [], numberOfPages: 1 };
-                component.search = {
+                componentFixture.componentRef.setInput('content', { resultsOnPage: [], numberOfPages: 1 });
+                componentFixture.componentRef.setInput('search', {
                     sortedColumn: 'ID',
                     sortingOrder: SortingOrder.DESCENDING,
                     pageSize: 10,
                     page: 1,
-                };
+                });
             });
     });
 
@@ -48,23 +48,23 @@ describe('ImportCompetenciesTableComponent', () => {
     });
 
     it('should change page', () => {
-        const searchEmitSpy = jest.spyOn(component.searchChange, 'emit');
+        const searchEmitSpy = jest.spyOn(component.search, 'set');
 
         component.onPageChange(5);
-        expect(component.search.page).toBe(5);
+        expect(component.search().page).toBe(5);
         expect(searchEmitSpy).toHaveBeenCalledOnce();
     });
 
     it('should change sort', () => {
-        const searchEmitSpy = jest.spyOn(component.searchChange, 'emit');
+        const searchEmitSpy = jest.spyOn(component.search, 'set');
 
-        expect(component.search.sortingOrder).toBe(SortingOrder.DESCENDING);
-        expect(component.search.sortedColumn).toBe('ID');
+        expect(component.search().sortingOrder).toBe(SortingOrder.DESCENDING);
+        expect(component.search().sortedColumn).toBe('ID');
 
         component.onSortChange({ predicate: 'TITLE', ascending: true });
 
-        expect(component.search.sortingOrder).toBe(SortingOrder.ASCENDING);
-        expect(component.search.sortedColumn).toBe('TITLE');
+        expect(component.search().sortingOrder).toBe(SortingOrder.ASCENDING);
+        expect(component.search().sortedColumn).toBe('TITLE');
         expect(searchEmitSpy).toHaveBeenCalledOnce();
     });
 });

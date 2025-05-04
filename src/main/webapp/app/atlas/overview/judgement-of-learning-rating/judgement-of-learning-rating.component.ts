@@ -32,13 +32,13 @@ export class JudgementOfLearningRatingComponent {
 
         const newRating = event.newValue;
 
-        this.courseCompetencyService.setJudgementOfLearning(this.courseId(), this.competencyId(), newRating).subscribe(
-            () => {
+        this.courseCompetencyService.setJudgementOfLearning(this.courseId(), this.competencyId(), newRating).subscribe({
+            next: () => {
                 this.rating.set(newRating);
             },
-            () => {
+            error: () => {
                 this.alertService.error('artemisApp.courseStudentDashboard.judgementOfLearning.error');
             },
-        );
+        });
     }
 }

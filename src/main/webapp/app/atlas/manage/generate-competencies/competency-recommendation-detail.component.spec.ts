@@ -39,15 +39,18 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
     beforeEach(() => {
         //initialize component
-        competencyRecommendationDetailComponent.form = new FormGroup({
-            competency: new FormGroup({
-                title: new FormControl('Title' as string | undefined, { nonNullable: true }),
-                description: new FormControl('Description' as string | undefined, { nonNullable: true }),
-                taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+        competencyRecommendationDetailComponentFixture.componentRef.setInput(
+            'form',
+            new FormGroup({
+                competency: new FormGroup({
+                    title: new FormControl('Title' as string | undefined, { nonNullable: true }),
+                    description: new FormControl('Description' as string | undefined, { nonNullable: true }),
+                    taxonomy: new FormControl(CompetencyTaxonomy.ANALYZE as CompetencyTaxonomy | undefined, { nonNullable: true }),
+                }),
+                viewed: new FormControl(false, { nonNullable: true }),
             }),
-            viewed: new FormControl(false, { nonNullable: true }),
-        });
-        competencyRecommendationDetailComponent.index = 0;
+        );
+        competencyRecommendationDetailComponentFixture.componentRef.setInput('index', 0);
     });
 
     afterEach(() => {
@@ -66,7 +69,7 @@ describe('CompetencyRecommendationDetailComponent', () => {
 
         //component should not start out in edit mode
         expect(competencyRecommendationDetailComponent.isInEditMode).toBeFalse();
-        expect(competencyRecommendationDetailComponent.form.controls.competency.disabled).toBeTrue();
+        expect(competencyRecommendationDetailComponent.form().controls.competency.disabled).toBeTrue();
 
         const editButton = competencyRecommendationDetailComponentFixture.debugElement.nativeElement.querySelector('#editButton-0 > .jhi-btn');
         editButton.click();

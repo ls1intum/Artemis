@@ -93,7 +93,7 @@ export class GenerateCompetenciesComponent implements ComponentCanDeactivate {
         });
     }
 
-    private initialize(): void {
+    initialize(): void {
         this.activatedRoute.params.subscribe((params) => {
             this.courseId = Number(params['courseId']);
             firstValueFrom(this.courseManagementService.find(this.courseId))

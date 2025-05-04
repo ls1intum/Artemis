@@ -178,7 +178,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             return undefined;
         }
 
-        const competencyExercises = this.metrics().competencyMetrics?.exercises?.[this.competency.id];
+        const competencyExercises = this.metrics().competencyMetrics?.exercises?.[this.competency().id];
 
         if (competencyExercises === undefined || competencyExercises.length === 0) {
             return undefined;
@@ -202,7 +202,7 @@ export class CompetencyAccordionComponent implements OnChanges {
             return undefined;
         }
 
-        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency.id];
+        const competencyLectureUnits = this.metrics().competencyMetrics?.lectureUnits?.[this.competency().id];
         const releasedLectureUnits = competencyLectureUnits?.filter((lectureUnitId) =>
             this.metrics().lectureUnitStudentMetricsDTO?.lectureUnitInformation?.[lectureUnitId]?.releaseDate?.isBefore(dayjs()),
         );
