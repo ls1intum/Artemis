@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, model } from '@angular/core';
 import { faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button/button.component';
 import { getSemesters } from 'app/shared/util/semester-utils';
@@ -15,8 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [TranslateDirective, FormsModule, NgbCollapse, ButtonComponent, FaIconComponent],
 })
 export class CompetencySearchComponent {
-    @Input() search: CourseCompetencyFilter;
-    @Output() searchChange = new EventEmitter<CourseCompetencyFilter>();
+    search = model.required<CourseCompetencyFilter>();
 
     advancedSearchEnabled = false;
 
@@ -39,12 +38,12 @@ export class CompetencySearchComponent {
      * Resets all filters to default values
      */
     reset() {
-        this.search = {
+        this.search.set({
             title: '',
             description: '',
             courseTitle: '',
             semester: '',
-        };
+        });
     }
 
     /**
@@ -53,11 +52,11 @@ export class CompetencySearchComponent {
      */
     performSearch() {
         if (this.advancedSearchEnabled) {
-            this.searchChange.emit(this.search);
+            this.search.set(this.search()); // necessary to emit the event
         } else {
             //only search with competency title if advancedSearch is disabled
-            this.searchChange.emit({
-                title: this.search.title,
+            this.search.set({
+                title: this.search().title,
                 description: '',
                 courseTitle: '',
                 semester: '',

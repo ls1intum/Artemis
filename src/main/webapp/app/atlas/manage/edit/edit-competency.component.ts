@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { finalize, switchMap, take } from 'rxjs/operators';
@@ -16,14 +16,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './edit-competency.component.html',
     imports: [CompetencyFormComponent, TranslateDirective],
 })
-export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
+export class EditCompetencyComponent extends EditCourseCompetencyComponent {
     private competencyService = inject(CompetencyService);
 
     competency: Competency;
     formData: CourseCompetencyFormData;
 
-    ngOnInit(): void {
-        super.ngOnInit();
+    constructor() {
+        super();
+        effect(() => {
+            this.initialize();
+        });
+    }
+
+    private initialize(): void {
+        super.initialize();
 
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(

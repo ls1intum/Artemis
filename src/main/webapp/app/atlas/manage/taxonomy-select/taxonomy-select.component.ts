@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,12 +13,12 @@ export class TaxonomySelectComponent {
     /**
      * id given of the select, to be referenced by labels (for)
      */
-    @Input() selectId = '';
+    selectId = input<string>('');
 
     /**
      * Form control for the selected taxonomy
      */
-    @Input({ required: true }) form: FormControl;
+    form = input.required<FormControl>();
 
     /**
      * increasing indentation for the select options

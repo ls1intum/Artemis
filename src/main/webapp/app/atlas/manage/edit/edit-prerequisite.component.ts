@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, effect, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,14 +16,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './edit-prerequisite.component.html',
     imports: [PrerequisiteFormComponent, TranslateDirective],
 })
-export class EditPrerequisiteComponent extends EditCourseCompetencyComponent implements OnInit {
+export class EditPrerequisiteComponent extends EditCourseCompetencyComponent {
     private prerequisiteService = inject(PrerequisiteService);
 
     prerequisite: Prerequisite;
     formData: CourseCompetencyFormData;
 
-    ngOnInit(): void {
-        super.ngOnInit();
+    constructor() {
+        super();
+        effect(() => {
+            this.initialize();
+        });
+    }
+
+    private initialize(): void {
+        super.initialize();
 
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])

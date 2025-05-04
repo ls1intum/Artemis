@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Component, effect, inject, input, output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button/button.component';
@@ -13,12 +13,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './course-description-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, FaIconComponent, NgbTooltip, IrisLogoButtonComponent, ArtemisTranslatePipe],
 })
-export class CourseDescriptionFormComponent implements OnInit {
+export class CourseDescriptionFormComponent {
     private formBuilder = inject(FormBuilder);
 
-    @Input() isLoading = false;
-    @Input() placeholder = '';
-    @Output() formSubmitted: EventEmitter<string> = new EventEmitter<string>();
+    isLoading = input<boolean>(false);
+    placeholder = input<string>('');
+    formSubmitted = output<string>();
 
     form: FormGroup<{ courseDescription: FormControl<string | null> }>;
     hasBeenSubmitted = false;
@@ -31,7 +31,13 @@ export class CourseDescriptionFormComponent implements OnInit {
     protected readonly DESCRIPTION_MIN = 100;
     protected readonly ButtonType = ButtonType;
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => {
+            this.initialize();
+        });
+    }
+
+    private initialize(): void {
         this.form = this.formBuilder.group({
             courseDescription: [this.placeholder, [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
         });

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, effect, input } from '@angular/core';
 import { faFlag } from '@fortawesome/free-solid-svg-icons';
 import { CompetencyLectureUnitLink } from 'app/atlas/shared/entities/competency.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,22 +13,23 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     encapsulation: ViewEncapsulation.None,
     imports: [TranslateDirective, RouterLink, NgbPopover, FaIconComponent],
 })
-export class CompetenciesPopoverComponent implements OnInit {
-    @Input()
-    courseId: number;
-    @Input()
-    competencyLinks: CompetencyLectureUnitLink[] = [];
-    @Input()
-    navigateTo: 'competencyManagement' | 'courseCompetencies' = 'courseCompetencies';
+export class CompetenciesPopoverComponent {
+    courseId = input.required<number>();
+    competencyLinks = input<CompetencyLectureUnitLink[]>([]);
+    navigateTo = input<'competencyManagement' | 'courseCompetencies'>('courseCompetencies');
 
     navigationArray: string[] = [];
 
     // Icons
     faFlag = faFlag;
 
-    ngOnInit(): void {
+    constructor() {
+        effect(() => this.initNavigationArray());
+    }
+
+    private initNavigationArray(): void {
         if (this.courseId) {
-            switch (this.navigateTo) {
+            switch (this.navigateTo()) {
                 case 'courseCompetencies': {
                     this.navigationArray = ['/courses', `${this.courseId}`, 'competencies'];
                     break;
