@@ -207,7 +207,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required. Does not save the quiz.
+     * Update a QuizExercise so that it ends at a specific date and moves the start date of the batches as required.
+     * Does not save the quiz.
      *
      * @param quizExercise The quiz to end
      */
@@ -240,7 +241,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Verifies that for DragAndDropQuestions all files are present and valid. Saves the files and updates the exercise accordingly.
+     * Verifies that for DragAndDropQuestions all files are present and valid. Saves the files and updates the
+     * exercise accordingly.
      *
      * @param quizExercise the quiz exercise to create
      * @param files        the provided files
@@ -269,7 +271,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Verifies that for DragAndDropQuestions all files are present and valid. Saves the files and updates the exercise accordingly.
+     * Verifies that for DragAndDropQuestions all files are present and valid. Saves the files and updates the
+     * exercise accordingly.
      * Ignores unchanged paths and removes deleted background images.
      *
      * @param updatedExercise  the updated quiz exercise
@@ -366,7 +369,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
+                if (type == FilePathType.DRAG_ITEM) {
+                    paths.forEach(path -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FileService.PICTURE_FILE_SUBPATH)));
+                }
+                else {
+                    paths.forEach(path -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FileService.BACKGROUND_FILE_SUBPATH)));
 
+                }
                 Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(filePath), type)))
                         .collect(Collectors.toSet());
 
@@ -379,7 +388,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         int totalNewPathsCount = newFilePathsMap.values().stream().mapToInt(Set::size).sum();
 
         if (totalNewPathsCount != fileCount) {
-            throw new BadRequestAlertException("Number of files does not match number of new drag items and backgrounds", ENTITY_NAME, null);
+            throw new BadRequestAlertException("Number of files does not match number of new drag items and " + "backgrounds", ENTITY_NAME, null);
         }
 
         Set<String> allNewFilePaths = newFilePathsMap.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
@@ -414,7 +423,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      *
      * @param dragItem the drag item
      * @param files    all provided files
-     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id for drag item images
+     * @param entityId The entity id connected to this file, can be question id for background, or the drag item id
+     *                     for drag item images
      */
     public void saveDndDragItemPicture(DragItem dragItem, Map<String, MultipartFile> files, @Nullable Long entityId) throws IOException {
         MultipartFile file = files.get(dragItem.getPictureFilePath());
@@ -489,16 +499,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
 
-        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
+        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from
+        // the questions
         // and delete the now orphaned entries from the database
         log.debug("Save quiz exercise to database: {}", quizExercise);
         return quizExerciseRepository.saveAndFlush(quizExercise);
     }
 
     /**
-     *
      * @param newQuizExercise the newly created quiz exercise, after importing basis of imported exercise
-     * @param files           the new files to be added to the newQuizExercise which do not have a previous path and need to be saved in the server
+     * @param files           the new files to be added to the newQuizExercise which do not have a previous path and
+     *                            need to be saved in the server
      * @return the new exercise with the updated file paths which have been created and saved
      * @throws IOException throws IO exception if corrupted files
      */
