@@ -53,6 +53,8 @@ const esModules = [
     'ngx-webstorage',
     'rxjs/operators',
     'trigram-utils',
+    'primeng',
+    '@primeuix'
 ].join('|');
 
 const {
