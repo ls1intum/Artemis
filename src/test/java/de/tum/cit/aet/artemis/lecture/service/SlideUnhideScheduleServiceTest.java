@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
+import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
@@ -31,7 +32,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     private ScheduleService scheduleService;
 
     @Mock
-    private SlideUnhideService slideUnhideService;
+    private SlideUnhideExecutionService slideUnhideExecutionService;
 
     @Autowired
     private LectureUtilService lectureUtilService;
@@ -49,7 +50,7 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         MockitoAnnotations.openMocks(this);
 
         // Create the service with SlideTestRepository instead of mocked SlideRepository
-        slideUnhideScheduleService = new SlideUnhideScheduleService(slideTestRepository, slideUnhideService, scheduleService);
+        slideUnhideScheduleService = new SlideUnhideScheduleService(slideTestRepository, slideUnhideExecutionService, scheduleService);
 
         // AttachmentUnit with hidden slides
         AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
@@ -73,10 +74,12 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleAllHiddenSlides();
 
-        // Since we have exactly 2 hidden slides, verify that handleSlideHiddenUpdate
-        // was called for each one specifically
-        verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.get(1));
-        verify(slideUnhideService).handleSlideHiddenUpdate(testSlides.get(3));
+        // We have slides with past and future dates
+        // For the past date (testSlides.get(1)), we should call unhideSlide immediately
+        verify(slideUnhideExecutionService).unhideSlide(testSlides.get(1).getId());
+
+        // For the future date (testSlides.get(3)), we should schedule a task
+        verify(scheduleService).scheduleSlideTask(any(), any(), any(), any());
     }
 
     @Test
@@ -93,8 +96,10 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhidingByDTO(dto);
 
-        // Verify handleSlideHiddenUpdate was called
-        verify(slideUnhideService).handleSlideHiddenUpdate(any(Slide.class));
+        // If hidden date is in the future, we use scheduleService to schedule the task
+        // If it's in the past, we directly call unhideSlide
+        // In our test case, the date is in the future
+        verify(scheduleService).scheduleSlideTask(any(), any(), any(), any());
     }
 
     @Test
@@ -106,8 +111,10 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhidingByDTO(dto);
 
-        // Verify that unhide service was never called
-        verify(slideUnhideService, never()).handleSlideHiddenUpdate(any());
+        // Verify that scheduleService was never called
+        verify(scheduleService, never()).scheduleSlideTask(any(), any(), any(), any());
+        // Verify that slideUnhideExecutionService was never called
+        verify(slideUnhideExecutionService, never()).unhideSlide(any());
     }
 
     @Test
@@ -120,8 +127,14 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhiding(slideId);
 
-        // Verify handleSlideHiddenUpdate was called with this specific slide
-        verify(slideUnhideService).handleSlideHiddenUpdate(slide);
+        // Since we're calling scheduleSlideUnhiding(slideId), which calls scheduleSlideUnhidingByDTO,
+        // and our slide doesn't have a hidden property set by default, verify scheduleService wasn't called
+        // In real implementation, we'd verify that scheduleService.scheduleSlideTask() is called
+        // if slide.getHidden() is in the future, or slideUnhideExecutionService.unhideSlide() is called
+        // if slide.getHidden() is in the past
+        // Here we just verify nothing happens since hidden is null
+        verify(scheduleService, never()).scheduleSlideTask(any(), any(), any(), any());
+        verify(slideUnhideExecutionService, never()).unhideSlide(any());
     }
 
     @Test
@@ -133,8 +146,9 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.scheduleSlideUnhiding(nonExistentId);
 
-        // Verify handleSlideHiddenUpdate was never called
-        verify(slideUnhideService, never()).handleSlideHiddenUpdate(any());
+        // Verify neither scheduleService nor slideUnhideExecutionService was called since slide wasn't found
+        verify(scheduleService, never()).scheduleSlideTask(any(), any(), any(), any());
+        verify(slideUnhideExecutionService, never()).unhideSlide(any());
     }
 
     @Test
@@ -145,8 +159,8 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
         // Call the method to test
         slideUnhideScheduleService.cancelScheduledUnhiding(slideId);
 
-        // Verify cancelAllScheduledSlideTasks was called with the correct ID
-        verify(scheduleService).cancelAllScheduledSlideTasks(slideId);
+        // Verify cancelScheduledTaskForSlideLifecycle was called with the correct ID and lifecycle
+        verify(scheduleService).cancelScheduledTaskForSlideLifecycle(slideId, SlideLifecycle.UNHIDE);
     }
 
     @Test

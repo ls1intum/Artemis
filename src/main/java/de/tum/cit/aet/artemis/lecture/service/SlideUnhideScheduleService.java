@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lecture.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE_AND_SCHEDULING;
 
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -12,12 +14,14 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 import de.tum.cit.aet.artemis.lecture.dto.SlideUnhideDTO;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 /**
  * Scheduler implementation that is only active on nodes with the CORE_AND_SCHEDULING profile.
- * This handles the actual scheduling of tasks using the integrated ScheduleService.
+ * This handles the actual scheduling of tasks using both the traditional scheduling mechanisms
+ * and the integrated ScheduleService.
  */
 @Profile(PROFILE_CORE_AND_SCHEDULING)
 @Service
@@ -25,15 +29,15 @@ public class SlideUnhideScheduleService {
 
     private final SlideRepository slideRepository;
 
-    private final SlideUnhideService slideUnhideService;
+    private final SlideUnhideExecutionService slideUnhideExecutionService;
 
     private final ScheduleService scheduleService;
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideScheduleService.class);
 
-    public SlideUnhideScheduleService(SlideRepository slideRepository, SlideUnhideService slideUnhideService, ScheduleService scheduleService) {
+    public SlideUnhideScheduleService(SlideRepository slideRepository, SlideUnhideExecutionService slideUnhideExecutionService, ScheduleService scheduleService) {
         this.slideRepository = slideRepository;
-        this.slideUnhideService = slideUnhideService;
+        this.slideUnhideExecutionService = slideUnhideExecutionService;
         this.scheduleService = scheduleService;
     }
 
@@ -69,7 +73,24 @@ public class SlideUnhideScheduleService {
             return;
         }
 
-        slideRepository.findById(slideDTO.id()).ifPresent(slideUnhideService::handleSlideHiddenUpdate);
+        // Cancel any existing scheduled task for this slide
+        cancelScheduledUnhiding(slideDTO.id());
+
+        ZonedDateTime unhideDate = slideDTO.hidden();
+        Instant unhideTime = unhideDate.toInstant();
+        Instant now = Instant.now();
+
+        if (unhideTime.isBefore(now)) {
+            // If time has already passed, unhide immediately
+            slideUnhideExecutionService.unhideSlide(slideDTO.id());
+        }
+        else {
+            // Schedule for future unhiding using the full slide entity
+            slideRepository.findById(slideDTO.id()).ifPresent(slide -> {
+                scheduleService.scheduleSlideTask(slide, SlideLifecycle.UNHIDE, () -> slideUnhideExecutionService.unhideSlide(slide.getId()), "Slide Unhiding");
+                log.debug("Scheduled slide {} to be unhidden at {}", slideDTO.id(), unhideDate);
+            });
+        }
     }
 
     /**
@@ -78,7 +99,10 @@ public class SlideUnhideScheduleService {
      * @param slideId The ID of the slide to be scheduled for unhiding
      */
     public void scheduleSlideUnhiding(Long slideId) {
-        slideRepository.findById(slideId).ifPresent(slideUnhideService::handleSlideHiddenUpdate);
+        slideRepository.findById(slideId).ifPresent(slide -> {
+            SlideUnhideDTO slideDTO = new SlideUnhideDTO(slide.getId(), slide.getHidden());
+            scheduleSlideUnhidingByDTO(slideDTO);
+        });
     }
 
     /**
@@ -87,7 +111,7 @@ public class SlideUnhideScheduleService {
      * @param slideId The ID of the slide whose task should be canceled
      */
     public void cancelScheduledUnhiding(Long slideId) {
-        scheduleService.cancelAllScheduledSlideTasks(slideId);
+        scheduleService.cancelScheduledTaskForSlideLifecycle(slideId, SlideLifecycle.UNHIDE);
         log.debug("Cancelled scheduled unhiding for slide {}", slideId);
     }
 }

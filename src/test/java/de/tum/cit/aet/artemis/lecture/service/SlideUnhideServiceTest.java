@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
@@ -31,6 +32,9 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Mock
     private ScheduleService scheduleService;
+
+    @Mock
+    private InstanceMessageSendService instanceMessageSendService;
 
     @Mock
     private SlideUnhideExecutionService slideUnhideExecutionService;
@@ -51,7 +55,7 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         MockitoAnnotations.openMocks(this);
 
         // Create the service with mocks
-        slideUnhideService = new SlideUnhideService(slideUnhideExecutionService, Optional.of(scheduleService));
+        slideUnhideService = new SlideUnhideService(instanceMessageSendService, slideUnhideExecutionService, Optional.of(scheduleService));
 
         // AttachmentUnit with hidden slides
         AttachmentUnit testAttachmentUnit = lectureUtilService.createAttachmentUnitWithSlidesAndFile(5, true);
@@ -77,6 +81,10 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Call handleSlideHiddenUpdate
         slideUnhideService.handleSlideHiddenUpdate(slideWithFutureHidden);
+
+        // Verify message sending occurred
+        verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideWithFutureHidden.getId());
+        verify(instanceMessageSendService).sendSlideUnhideSchedule(slideWithFutureHidden.getId());
 
         // Capture arguments to scheduleSlideTask
         ArgumentCaptor<Slide> slideCaptor = ArgumentCaptor.forClass(Slide.class);
@@ -108,11 +116,17 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Call handleSlideHiddenUpdate
         slideUnhideService.handleSlideHiddenUpdate(slideWithPastHidden);
 
+        // Verify message cancel occurred
+        verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideWithPastHidden.getId());
+
         // Verify that the slide is immediately unhidden
         verify(slideUnhideExecutionService).unhideSlide(slideWithPastHidden.getId());
 
         // Verify scheduleSlideTask was not called
         verify(scheduleService, never()).scheduleSlideTask(any(), any(), any(), any());
+
+        // Verify schedule message was not sent
+        verify(instanceMessageSendService, never()).sendSlideUnhideSchedule(any());
     }
 
     @Test
@@ -129,12 +143,16 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         // Handle the update
         slideUnhideService.handleSlideHiddenUpdate(slideToUpdate);
 
-        // Verify cancellation occurred
+        // Verify message cancel occurred
+        verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideToUpdate.getId());
+
+        // Verify cancellation occurred locally
         verify(scheduleService).cancelScheduledTaskForSlideLifecycle(slideToUpdate.getId(), SlideLifecycle.UNHIDE);
 
         // Verify neither scheduling nor unhiding was called
         verify(scheduleService, never()).scheduleSlideTask(any(), any(), any(), any());
         verify(slideUnhideExecutionService, never()).unhideSlide(any());
+        verify(instanceMessageSendService, never()).sendSlideUnhideSchedule(any());
     }
 
     @Test
@@ -145,10 +163,16 @@ class SlideUnhideServiceTest extends AbstractSpringIntegrationIndependentTest {
         slideToUnhide.setHidden(ZonedDateTime.now());
         slideRepository.save(slideToUnhide);
 
-        // Directly unhide the slide
-        slideUnhideService.unhideSlide(slideToUnhide.getId());
+        // This method no longer exists in the new implementation
+        // slideUnhideService.unhideSlide(slideToUnhide.getId());
+
+        // Instead, directly test handleSlideHiddenUpdate with a past date
+        // which will trigger an immediate unhide
+        slideToUnhide.setHidden(ZonedDateTime.now().minusDays(1));
+        slideUnhideService.handleSlideHiddenUpdate(slideToUnhide);
 
         // Verify cancellation occurred
+        verify(instanceMessageSendService).sendSlideUnhideScheduleCancel(slideToUnhide.getId());
         verify(scheduleService).cancelScheduledTaskForSlideLifecycle(slideToUnhide.getId(), SlideLifecycle.UNHIDE);
 
         // Verify unhideSlide was called

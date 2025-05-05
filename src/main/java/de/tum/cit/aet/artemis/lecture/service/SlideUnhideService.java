@@ -11,11 +11,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.domain.SlideLifecycle;
 
 /**
- * Service for handling the business logic related to slide unhiding.
+ * Service for managing slide unhiding operations in a multi-node environment.
+ * This service handles both the messaging aspects and the integration with ScheduleService.
  */
 @Profile(PROFILE_CORE)
 @Service
@@ -23,27 +25,34 @@ public class SlideUnhideService {
 
     private static final Logger log = LoggerFactory.getLogger(SlideUnhideService.class);
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     private final SlideUnhideExecutionService slideUnhideExecutionService;
 
     private final Optional<ScheduleService> scheduleService;
 
-    public SlideUnhideService(SlideUnhideExecutionService slideUnhideExecutionService, Optional<ScheduleService> scheduleService) {
+    public SlideUnhideService(InstanceMessageSendService instanceMessageSendService, SlideUnhideExecutionService slideUnhideExecutionService,
+            Optional<ScheduleService> scheduleService) {
+        this.instanceMessageSendService = instanceMessageSendService;
         this.slideUnhideExecutionService = slideUnhideExecutionService;
         this.scheduleService = scheduleService;
     }
 
     /**
      * Processes a slide's hidden property update.
-     * If the slide is marked as hidden with a future date, schedules an unhiding task.
+     * If the slide is marked as hidden with a future date, sends a message to schedule an unhiding task.
      * If the slide is marked as hidden with a past date, unhides it immediately.
-     * If the hidden property is null, cancels any existing unhiding tasks.
+     * If the hidden property is null, sends a message to cancel any existing unhiding tasks.
      *
      * @param slide The slide whose hidden property has been updated
      */
     public void handleSlideHiddenUpdate(Slide slide) {
         ZonedDateTime hiddenUntil = slide.getHidden();
 
-        // Cancel any existing tasks first if schedule service is available
+        // Cancel any existing tasks through the messaging service
+        instanceMessageSendService.sendSlideUnhideScheduleCancel(slide.getId());
+
+        // Also cancel locally if schedule service is available
         scheduleService.ifPresent(service -> service.cancelScheduledTaskForSlideLifecycle(slide.getId(), SlideLifecycle.UNHIDE));
 
         if (hiddenUntil == null) {
@@ -58,20 +67,13 @@ public class SlideUnhideService {
             slideUnhideExecutionService.unhideSlide(slide.getId());
         }
         else {
-            log.debug("Scheduling unhiding of slide {} at {}", slide.getId(), hiddenUntil);
+            // Send message to scheduling node to schedule unhiding
+            instanceMessageSendService.sendSlideUnhideSchedule(slide.getId());
+            log.debug("Sent slide unhide schedule message for slide {} with unhide time {}", slide.getId(), hiddenUntil);
+
+            // Also schedule locally if schedule service is available and we're on a scheduling node
             scheduleService
                     .ifPresent(service -> service.scheduleSlideTask(slide, SlideLifecycle.UNHIDE, () -> slideUnhideExecutionService.unhideSlide(slide.getId()), "Slide Unhiding"));
         }
-    }
-
-    /**
-     * Immediately unhides a slide regardless of its scheduled unhiding time.
-     *
-     * @param slideId The ID of the slide to unhide
-     */
-    public void unhideSlide(Long slideId) {
-        log.debug("Manual unhiding of slide {}", slideId);
-        scheduleService.ifPresent(service -> service.cancelScheduledTaskForSlideLifecycle(slideId, SlideLifecycle.UNHIDE));
-        slideUnhideExecutionService.unhideSlide(slideId);
     }
 }
