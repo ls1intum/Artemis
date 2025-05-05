@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -100,12 +99,6 @@ public class PublicUserJwtResource {
 
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe, tool);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
-
-            userRepository.findOneByLogin(username).ifPresent(user -> {
-                if (!user.isInternal()) {
-                    mailSendingService.buildAndSendAsync(user, "email.notification.login.title", "mail/notification/newLoginEmail", new HashMap<>());
-                }
-            });
 
             return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }

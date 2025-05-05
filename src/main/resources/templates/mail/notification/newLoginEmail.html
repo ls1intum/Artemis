@@ -16,7 +16,7 @@
     <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
 
     <p>
-        <span th:text="#{email.notification.login.text}">A new login on Artemis was detected. If you are not aware of this make sure to reset your login credentials</span>:
+        <span th:text="#{email.notification.login.text}">A new login on Artemis was detected. If you are not aware of this, make sure to reset your login credentials</span>:
 
         <a th:with="url=(@{|${baseUrl}/user-settings/account|})" th:href="${url}" th:text="${url}">User Account</a>
     </p>
