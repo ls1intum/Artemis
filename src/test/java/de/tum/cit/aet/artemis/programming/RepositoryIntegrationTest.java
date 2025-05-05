@@ -46,7 +46,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.util.LinkedMultiValueMap;
 
 import ch.qos.logback.classic.Level;
@@ -88,7 +87,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-@TestPropertySource(properties = { "artemis.version-control.url=file:#{systemProperties['java.io.tmpdir']}" })
+// @TestPropertySource(properties = { "artemis.version-control.url=file:#{systemProperties['java.io.tmpdir']}" })
 class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Autowired
