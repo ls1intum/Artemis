@@ -70,12 +70,12 @@
                 "loadingMessages": "Nachrichten laden..."
             },
             "globalSearch": {
-                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direkt-Chats und Gruppen (Strg/Cmd + K)",
+                "searchBarDefault": "Suche nach einer Nachrichten in allen Kanälen, Direktnachrichten und Gruppen (Strg/Cmd + K)",
                 "searchBarWithConversationSelected": "Suche nach einer Nachricht in den ausgewählten Unterhaltungen",
                 "noConversationFound": "Keine Unterhaltung für '{{ search }}' gefunden",
                 "noUserFound": "Kein Benutzer für '{{ search }}' gefunden",
-                "userQueryTooShort": "Bitte gib mindestens 3 Zeichen ein, um nach einem Benutzer zu suchen.",
-                "toolTip": "Gib 'in:' ein, um eine Unterhaltung zum Suchen auszuwählen, oder 'from:', um Nachrichten von einem bestimmten Autor zu finden"
+                "userQueryTooShort": "Bitte gib mindestens 3 Zeichen ein, um nach einem/einer Nutzer:in zu suchen.",
+                "toolTip": "Gib 'in:' ein, um eine Unterhaltung zum Suchen auszuwählen, oder 'from:', um Nachrichten von einem/einer bestimmten Nutzer:in zu finden"
             },
             "overview": {
                 "title": "Nachrichten",
