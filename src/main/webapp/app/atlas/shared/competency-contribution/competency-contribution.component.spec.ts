@@ -42,11 +42,9 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for exercise', () => {
-        runInInjectionContext(TestBed, () => {
-            component.courseId = input<number>(1);
-            component.isExercise = input<boolean>(true);
-            component.learningObjectId = input<number>(2);
-        });
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isExercise', true);
+        fixture.componentRef.setInput('learningObjectId', 2);
 
         fixture.detectChanges();
 
@@ -55,11 +53,9 @@ describe('CompetencyContributionComponent', () => {
     });
 
     it('should fetch for lecture unit', () => {
-        runInInjectionContext(TestBed, () => {
-            component.courseId = input<number>(1);
-            component.isExercise = input<boolean>(false);
-            component.learningObjectId = input<number>(2);
-        });
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isExercise', false);
+        fixture.componentRef.setInput('learningObjectId', 2);
 
         fixture.detectChanges();
 
