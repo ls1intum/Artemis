@@ -165,9 +165,17 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
      * Sends a message to Iris to provide a new suggestion based on the current context
      */
     sendMessageToIris(): void {
-        //const message = this.newMessageTextContent;
+        const message = this.newMessageTextContent;
         this.newMessageTextContent = '';
-        //TODO: Implement sending {{message}} to Iris
+        this.chatService
+            .sendMessage(message)
+            .pipe(
+                catchError((err) => {
+                    this.error = IrisErrorMessageKey.SEND_MESSAGE_FAILED;
+                    return of(undefined);
+                }),
+            )
+            .subscribe();
     }
 
     /**
