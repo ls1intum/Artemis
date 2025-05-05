@@ -42,6 +42,7 @@
     @if (!isCollapsed()) {
         <div id="lecture-unit-body" class="lecture-unit-body px-4 py-2">
             <ng-content />
+            <jhi-competency-contribution [courseId]="courseId()" [learningObjectId]="this.lectureUnit().id!" [isExercise]="false" />
         </div>
     }
 </div>
