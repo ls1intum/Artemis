@@ -26,7 +26,7 @@ jobs:
   run-e2e:
     name: Run E2E Tests
     if: github.event.workflow_run.conclusion == 'success'
-    runs-on: [self-hosted, e2e-test]
+    runs-on: [aet-extralarge-ubuntu]
     environment: playwright-e2e-tests
     timeout-minutes: 90
     env:
