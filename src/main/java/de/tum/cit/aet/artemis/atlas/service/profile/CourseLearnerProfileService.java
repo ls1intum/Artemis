@@ -1,20 +1,19 @@
 package de.tum.cit.aet.artemis.atlas.service.profile;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.profile.CourseLearnerProfile;
 import de.tum.cit.aet.artemis.atlas.repository.CourseLearnerProfileRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
-@Profile(PROFILE_CORE)
+@Conditional(AtlasEnabled.class)
 @Service
 public class CourseLearnerProfileService {
 
@@ -22,9 +21,13 @@ public class CourseLearnerProfileService {
 
     private final LearnerProfileRepository learnerProfileRepository;
 
-    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository) {
+    private final LearnerProfileService learnerProfileService;
+
+    public CourseLearnerProfileService(CourseLearnerProfileRepository courseLearnerProfileRepository, LearnerProfileRepository learnerProfileRepository,
+            LearnerProfileService learnerProfileService) {
         this.courseLearnerProfileRepository = courseLearnerProfileRepository;
         this.learnerProfileRepository = learnerProfileRepository;
+        this.learnerProfileService = learnerProfileService;
     }
 
     /**
@@ -34,6 +37,11 @@ public class CourseLearnerProfileService {
      * @param user   the user for which the profile is created
      */
     public void createCourseLearnerProfile(Course course, User user) {
+
+        if (user.getLearnerProfile() == null) {
+            learnerProfileService.createProfile(user);
+        }
+
         var courseProfile = new CourseLearnerProfile();
         courseProfile.setCourse(course);
 
@@ -50,10 +58,13 @@ public class CourseLearnerProfileService {
      * @param users  the users for which the profiles are created with eagerly loaded learner profiles
      */
     public void createCourseLearnerProfiles(Course course, Set<User> users) {
+
+        users.stream().filter(user -> user.getLearnerProfile() == null).forEach(learnerProfileService::createProfile);
+
         Set<CourseLearnerProfile> courseProfiles = users.stream().map(user -> {
             var courseProfile = new CourseLearnerProfile();
             courseProfile.setCourse(course);
-            courseProfile.setLearnerProfile(user.getLearnerProfile());
+            courseProfile.setLearnerProfile(learnerProfileRepository.findByUserElseThrow(user));
 
             return courseProfile;
         }).collect(Collectors.toSet());

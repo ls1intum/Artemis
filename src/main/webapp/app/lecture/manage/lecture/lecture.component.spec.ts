@@ -15,7 +15,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
-import { of, throwError } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { LectureImportComponent } from 'app/lecture/manage/lecture-import/lecture-import.component';
@@ -26,6 +26,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IngestionState } from 'app/lecture/shared/entities/lecture-unit/attachmentUnit.model';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -149,6 +150,7 @@ describe('Lecture', () => {
                         return of(new HttpResponse({ status: 200 }));
                     },
                 }),
+                MockProvider(IrisSettingsService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
@@ -303,5 +305,63 @@ describe('Lecture', () => {
         lectureComponent.lectures = [lectureToIngest];
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
+    });
+
+    function setupInitializationTests() {
+        const updateIngestionStatesSpy = jest.spyOn(lectureComponent, 'updateIngestionStates');
+        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+
+        // Mock the services with Subjects to control when they emit
+        const lectureSubject = new Subject<HttpResponse<Lecture[]>>();
+        const settingsSubject = new Subject<any>();
+
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(lectureSubject.asObservable());
+        jest.spyOn(TestBed.inject(IrisSettingsService), 'getCombinedCourseSettings').mockReturnValue(settingsSubject.asObservable());
+
+        // Set up test data
+        const lectures = [lectureToIngest];
+        const enabledSettings = {
+            irisLectureIngestionSettings: {
+                enabled: true,
+            },
+        };
+
+        return {
+            updateIngestionStatesSpy,
+            lectureSubject,
+            settingsSubject,
+            lectures,
+            enabledSettings,
+        };
+    }
+
+    it('should properly load ingestion state when lectures load first, then settings', () => {
+        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
+
+        // Initialize component
+        lectureComponent.ngOnInit();
+
+        // Emit lectures first
+        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
+        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+
+        // Then emit settings
+        settingsSubject.next(enabledSettings);
+        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should properly load ingestion state when settings load first, then lectures', () => {
+        const { updateIngestionStatesSpy, lectureSubject, settingsSubject, lectures, enabledSettings } = setupInitializationTests();
+
+        // Initialize component
+        lectureComponent.ngOnInit();
+
+        // Emit settings first
+        settingsSubject.next(enabledSettings);
+        expect(updateIngestionStatesSpy).not.toHaveBeenCalled();
+
+        // Then emit lectures
+        lectureSubject.next(new HttpResponse({ body: lectures, status: 200 }));
+        expect(updateIngestionStatesSpy).toHaveBeenCalledOnce();
     });
 });
