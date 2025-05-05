@@ -53,6 +53,12 @@ enum UserSearchStatus {
     imports: [FormsModule, ButtonComponent, TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent, FaIconComponent, NgbTooltip],
 })
 export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
+    protected readonly addPublicFilePrefix = addPublicFilePrefix;
+    readonly SearchMode = SearchMode;
+    readonly UserSearchStatus = UserSearchStatus;
+    protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
+    protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
+
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
     onSearch = output<ConversationGlobalSearchConfig>();
@@ -347,10 +353,4 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             this.focusInput();
         }
     }
-
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-    readonly SearchMode = SearchMode;
-    readonly UserSearchStatus = UserSearchStatus;
-    protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
-    protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
 }
