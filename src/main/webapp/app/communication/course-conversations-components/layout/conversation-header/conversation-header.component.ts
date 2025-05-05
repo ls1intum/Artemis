@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -46,8 +46,8 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
 
     private ngUnsubscribe = new Subject<void>();
 
-    @Output() onSearchClick = new EventEmitter<void>();
-    @Output() onUpdateSidebar = new EventEmitter<void>();
+    onUpdateSidebar = output<void>();
+    onSearchClick = output<void>();
 
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
