@@ -56,7 +56,7 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     ngOnInit() {
         this.routerLink = this.router.url;
-
+        this.participation.exercise = this.exercise;
         this.result = this.participation.submissions![0].results![0];
         // TODO this is not a a perfect solution.
         this.result.submission = this.submission;
