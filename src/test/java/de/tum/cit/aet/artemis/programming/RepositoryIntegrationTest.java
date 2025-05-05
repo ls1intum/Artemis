@@ -38,6 +38,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.merge.MergeStrategy;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -87,8 +88,20 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-// @TestPropertySource(properties = { "artemis.version-control.url=file:#{systemProperties['java.io.tmpdir']}" })
+// @TestPropertySource(properties = { "artemis.version-control.url=file:${java.io.tmpdir}" })
 class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
+
+    private static final org.slf4j.Logger log = LoggerFactory.getLogger(RepositoryIntegrationTest.class);
+
+    static {
+        // print tmp directory
+        log.error("Temporary directory: {}", System.getProperty("java.io.tmpdir"));
+    }
+
+    @BeforeAll
+    static void logTemp() {
+        log.error("Temporary directory: {}", System.getProperty("java.io.tmpdir"));
+    }
 
     @Autowired
     private ExamTestRepository examRepository;
