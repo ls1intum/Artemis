@@ -11,6 +11,7 @@ import { By } from '@angular/platform-browser';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { ComplaintType } from '../../shared/entities/complaint.model';
 
 describe('ComplaintsFormComponent', () => {
     const teamComplaints = 42;
@@ -41,26 +42,28 @@ describe('ComplaintsFormComponent', () => {
                 complaintService = TestBed.inject(ComplaintService);
                 alertService = TestBed.inject(AlertService);
                 component = fixture.componentInstance;
-                component.exercise = exercise;
+                fixture.componentRef.setInput('exercise', exercise);
+                fixture.componentRef.setInput('resultId', undefined);
+                fixture.componentRef.setInput('complaintType', undefined);
             });
     });
 
     it('should initialize with correct values for exam complaints', fakeAsync(() => {
-        component.exercise = exercise;
+        fixture.componentRef.setInput('exercise', exercise);
         fixture.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toBe(1);
     }));
 
     it('should initialize with correct values for course complaints', fakeAsync(() => {
-        component.exercise = courseExercise;
+        fixture.componentRef.setInput('exercise', courseExercise);
         fixture.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toStrictEqual(studentComplaints);
     }));
 
     it('should initialize with correct values for course complaints for team exercises', fakeAsync(() => {
-        component.exercise = courseTeamExercise;
+        fixture.componentRef.setInput('exercise', courseTeamExercise);
         fixture.detectChanges();
         tick(100);
         expect(component.maxComplaintsPerCourse).toStrictEqual(teamComplaints);
@@ -101,7 +104,7 @@ describe('ComplaintsFormComponent', () => {
 
     it('should throw exceeded complaint text error after complaint creation', () => {
         // Get course
-        component.exercise = courseExercise;
+        fixture.componentRef.setInput('exercise', courseExercise);
         component.ngOnInit();
 
         const submitSpy = jest.spyOn(component.onSubmit, 'emit');
@@ -116,8 +119,8 @@ describe('ComplaintsFormComponent', () => {
 
     it('text area should have the correct max length', fakeAsync(() => {
         // Get course
-        component.exercise = courseExercise;
-        component.isCurrentUserSubmissionAuthor = true;
+        fixture.componentRef.setInput('exercise', courseExercise);
+        fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
         fixture.detectChanges();
@@ -137,8 +140,8 @@ describe('ComplaintsFormComponent', () => {
 
     it('submit complaint button should be disabled', fakeAsync(() => {
         // Get course
-        component.exercise = courseExercise;
-        component.isCurrentUserSubmissionAuthor = true;
+        fixture.componentRef.setInput('exercise', courseExercise);
+        fixture.componentRef.setInput('isCurrentUserSubmissionAuthor', true);
         component.ngOnInit();
 
         fixture.detectChanges();

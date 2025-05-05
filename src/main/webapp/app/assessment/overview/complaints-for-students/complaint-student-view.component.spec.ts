@@ -103,8 +103,9 @@ describe('ComplaintsStudentViewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 accountService = TestBed.inject(AccountService);
                 serverDateService = TestBed.inject(ArtemisServerDateService);
-                component.participation = participation;
-                component.result = result;
+                fixture.componentRef.setInput('participation', participation);
+                fixture.componentRef.setInput('result', result);
+                fixture.componentRef.setInput('exam', undefined);
                 numberOfAllowedComplaintsStub = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             });
     });
@@ -115,9 +116,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
     describe('Exam mode', () => {
         it('should initialize', fakeAsync(() => {
-            component.exercise = examExercise;
-            component.result = result;
-            component.exam = defaultExam;
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
             const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -133,9 +134,10 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should initialize with complaint', fakeAsync(() => {
-            component.exercise = examExercise;
-            component.result = result;
-            component.exam = defaultExam;
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
+
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({ body: complaint } as EntityResponseType));
             const numberOfAllowedComplaintsMock = jest.spyOn(courseService, 'getNumberOfAllowedComplaintsInCourse').mockReturnValue(of(numberOfComplaints));
             const userMock = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
@@ -151,9 +153,9 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('should set complaint type COMPLAINT and scroll to complaint form when pressing complaint', fakeAsync(() => {
-            component.exercise = examExercise;
-            component.result = result;
-            component.exam = defaultExam;
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', defaultExam);
             component.showSection = true;
             component.isCorrectUserToFileAction = true;
             const complaintBySubmissionMock = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
@@ -166,11 +168,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -187,10 +185,10 @@ describe('ComplaintsStudentViewComponent', () => {
             const now = dayjs();
             const examWithFutureReview: Exam = { examStudentReviewStart: dayjs(now).add(1, 'day'), examStudentReviewEnd: dayjs(now).add(2, 'day') } as Exam;
             const serverDateStub = jest.spyOn(serverDateService, 'now').mockReturnValue(dayjs());
-            component.exercise = examExercise;
-            component.result = result;
-            component.exam = examWithFutureReview;
-            component.testRun = true;
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', examWithFutureReview);
+            fixture.componentRef.setInput('testRun', true);
 
             fixture.detectChanges();
             tick(100);
@@ -219,9 +217,9 @@ describe('ComplaintsStudentViewComponent', () => {
         function testVisibilityToBeHiddenWithExam(exam: Exam) {
             jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of());
 
-            component.exercise = examExercise;
-            component.result = result;
-            component.exam = exam;
+            fixture.componentRef.setInput('exercise', examExercise);
+            fixture.componentRef.setInput('result', result);
+            fixture.componentRef.setInput('exam', exam);
 
             fixture.detectChanges();
             tick(100);
@@ -252,7 +250,7 @@ describe('ComplaintsStudentViewComponent', () => {
                 course: courseWithMaxComplaints,
             };
             component.course = courseWithMaxComplaints;
-            component.exercise = exerciseWithMaxComplaints;
+            fixture.componentRef.setInput('exercise', exerciseWithMaxComplaints);
 
             component.showSection = true;
             component.isCorrectUserToFileAction = true;
@@ -262,11 +260,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#complain');
             button.click();
@@ -290,11 +284,7 @@ describe('ComplaintsStudentViewComponent', () => {
 
             // Mock complaint scrollpoint
             const scrollIntoViewMock = jest.fn();
-            component.complaintScrollpoint = {
-                nativeElement: {
-                    scrollIntoView: scrollIntoViewMock,
-                },
-            } as ElementRef;
+            component.complaintScrollpoint()!.nativeElement['scrollIntoView'] = scrollIntoViewMock;
 
             const button = fixture.debugElement.nativeElement.querySelector('#more-feedback');
             button.click();
@@ -309,8 +299,8 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should not be available if before or at assessment due date', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course, assessmentDueDate: dayjs() } as Exercise;
             const resultMatchingDate: Result = { id: 1, completionDate: dayjs(exercise.assessmentDueDate) } as Result;
-            component.exercise = exercise;
-            component.result = resultMatchingDate;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('result', resultMatchingDate);
 
             fixture.detectChanges();
             tick(100);
@@ -322,8 +312,8 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should not be available if assessment due date not set and completion date is out of period', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'day') } as Result;
-            component.exercise = exercise;
-            component.result = resultDateOutOfLimits;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
             tick(100);
@@ -340,8 +330,8 @@ describe('ComplaintsStudentViewComponent', () => {
                 assessmentDueDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day'),
             } as Exercise;
             const resultMatchingDate: Result = { ...result, completionDate: dayjs(exercise.assessmentDueDate!).add(1, 'day') } as Result;
-            component.exercise = exercise;
-            component.result = resultMatchingDate;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('result', resultMatchingDate);
 
             fixture.detectChanges();
             tick(100);
@@ -353,8 +343,8 @@ describe('ComplaintsStudentViewComponent', () => {
         it('should be available if result was before due date', fakeAsync(() => {
             const exercise: Exercise = { id: 1, teamMode: false, course, dueDate: dayjs().subtract(1, 'minute'), assessmentType: AssessmentType.MANUAL } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 1, 'days') } as Result;
-            component.exercise = exercise;
-            component.result = resultDateOutOfLimits;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
             tick(100);
@@ -373,8 +363,8 @@ describe('ComplaintsStudentViewComponent', () => {
                 assessmentType: AssessmentType.MANUAL,
             } as Exercise;
             const resultDateOutOfLimits: Result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'days') } as Result;
-            component.exercise = exercise;
-            component.result = resultDateOutOfLimits;
+            fixture.componentRef.setInput('exercise', exercise);
+            fixture.componentRef.setInput('result', resultDateOutOfLimits);
 
             fixture.detectChanges();
             tick(100);
@@ -384,11 +374,11 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('complaints should be available if feedback requests disabled', fakeAsync(() => {
-            component.exercise = {
+            fixture.componentRef.setInput('exercise', {
                 ...courseExercise,
                 course: courseWithoutFeedback,
                 assessmentDueDate: dayjs().subtract(2),
-            } as Exercise;
+            } as Exercise);
             component.course = courseWithoutFeedback;
 
             fixture.detectChanges();
@@ -407,11 +397,11 @@ describe('ComplaintsStudentViewComponent', () => {
                 maxComplaints: undefined,
                 maxTeamComplaints: undefined,
             } as Course;
-            component.exercise = {
+            fixture.componentRef.setInput('exercise', {
                 ...courseExercise,
                 course: courseWithoutComplaints,
                 assessmentDueDate: dayjs().subtract(2),
-            } as Exercise;
+            } as Exercise);
             component.course = courseWithoutComplaints;
 
             fixture.detectChanges();
@@ -423,8 +413,8 @@ describe('ComplaintsStudentViewComponent', () => {
         }));
 
         it('no action should be allowed if the result is automatic for a non automatic exercise', fakeAsync(() => {
-            component.exercise = courseExercise;
-            component.result = { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false };
+            fixture.componentRef.setInput('exercise', courseExercise);
+            fixture.componentRef.setInput('result', { ...result, assessmentType: AssessmentType.AUTOMATIC, rated: false });
 
             fixture.detectChanges();
             tick(100);
@@ -442,8 +432,8 @@ describe('ComplaintsStudentViewComponent', () => {
         }
 
         function testInitWithResultStub(content: Observable<EntityResponseType>) {
-            component.exercise = courseExercise;
-            component.result = result;
+            fixture.componentRef.setInput('exercise', courseExercise);
+            fixture.componentRef.setInput('result', result);
             const complaintBySubmissionStub = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(content);
             const userStub = jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
 
@@ -469,9 +459,9 @@ describe('ComplaintsStudentViewComponent', () => {
 
     it('should set time of complaint invalid without completion date', fakeAsync(() => {
         const participationWithoutCompletionDate: Participation = { id: 2, results: [resultWithoutCompletionDate], submissions: [submission], student: user } as Participation;
-        component.exercise = courseExercise;
-        component.participation = participationWithoutCompletionDate;
-        component.result = resultWithoutCompletionDate;
+        fixture.componentRef.setInput('exercise', courseExercise);
+        fixture.componentRef.setInput('participation', participationWithoutCompletionDate);
+        fixture.componentRef.setInput('result', resultWithoutCompletionDate);
 
         fixture.detectChanges();
         tick(100);
@@ -480,8 +470,8 @@ describe('ComplaintsStudentViewComponent', () => {
     }));
 
     it('complaint should be possible with long assessment periods', fakeAsync(() => {
-        component.exercise = { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') };
-        component.result = { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') };
+        fixture.componentRef.setInput('exercise', { ...courseExercise, assessmentDueDate: dayjs().subtract(3, 'day') });
+        fixture.componentRef.setInput('result', { ...result, completionDate: dayjs().subtract(complaintTimeLimitDays + 2, 'day') });
 
         fixture.detectChanges();
         tick(100);
