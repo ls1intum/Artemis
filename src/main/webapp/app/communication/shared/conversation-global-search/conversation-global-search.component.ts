@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, input, output, viewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, inject, input, output, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { faQuestionCircle, faSearch, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from '../entities/conversation/conversation.model';
@@ -59,6 +59,9 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     protected readonly PREFIX_CONVERSATION_SEARCH = PREFIX_CONVERSATION_SEARCH;
     protected readonly PREFIX_USER_SEARCH = PREFIX_USER_SEARCH;
 
+    private courseManagementService = inject(CourseManagementService);
+    private accountService = inject(AccountService);
+
     conversations = input<ConversationDTO[]>([]);
     courseId = input<number | undefined>(undefined);
     onSearch = output<ConversationGlobalSearchConfig>();
@@ -87,11 +90,6 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
     faSpinner = faSpinner;
     readonly ButtonType = ButtonType;
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.accountService.identity().then((user: User) => {
@@ -195,7 +193,10 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
                     type: 'user',
                     img: user.imageUrl,
                 }));
-                if (this.user && this.user.name?.toLowerCase().includes(searchQuery.toLowerCase())) {
+                if (
+                    (this.user && this.user.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                    (this.user && this.user.login?.toLowerCase().includes(searchQuery.toLowerCase()))
+                ) {
                     this.addOwnUserToOptions();
                 }
                 this.userSearchStatus = UserSearchStatus.RESULTS;
