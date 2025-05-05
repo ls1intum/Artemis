@@ -88,7 +88,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-@TestPropertySource(properties = { "artemis.version-control.url=file:${java.io.tmpdir}" })
+@TestPropertySource(properties = { "artemis.version-control.url=file:#{systemProperties['java.io.tmpdir']}" })
 class RepositoryIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTest {
 
     @Autowired

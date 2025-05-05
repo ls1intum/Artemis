@@ -78,7 +78,7 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsLocalVcTest;
 
-@TestPropertySource(properties = { "artemis.version-control.url=file:${java.io.tmpdir}" })
+@TestPropertySource(properties = { "artemis.version-control.url=file:#{systemProperties['java.io.tmpdir']}" })
 class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsLocalVcTest {
 
     private static final String TEST_PREFIX = "dataexportcreation";
