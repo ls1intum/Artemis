@@ -92,10 +92,10 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.filteredOptions[0].name).toBe('General Channel');
     }));
 
-    it('should filter users when using "by:" prefix and search length >= 3', fakeAsync(() => {
-        // Simulate input with "by:" prefix
+    it('should filter users when using "from:" prefix and search length >= 3', fakeAsync(() => {
+        // Simulate input with "from:" prefix
         const inputEl = fixture.debugElement.query(By.css('input#search')).nativeElement;
-        inputEl.value = 'by:john';
+        inputEl.value = 'from:john';
         inputEl.dispatchEvent(new Event('input'));
         tick();
         fixture.detectChanges();
@@ -110,10 +110,10 @@ describe('ConversationGlobalSearchComponent', () => {
         expect(component.filteredUsers).toEqual(mockUsers);
     }));
 
-    it('should filter own user when using "by:me" prefix', fakeAsync(() => {
-        // Simulate input with "by:" prefix
+    it('should filter own user when using "from:me" prefix', fakeAsync(() => {
+        // Simulate input with "from:" prefix
         const inputEl = fixture.debugElement.query(By.css('input#search')).nativeElement;
-        inputEl.value = 'by:me';
+        inputEl.value = 'from:me';
         inputEl.dispatchEvent(new Event('input'));
         tick();
         fixture.detectChanges();

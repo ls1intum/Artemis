@@ -31,7 +31,7 @@ interface CombinedOption {
 }
 
 const PREFIX_CONVERSATION_SEARCH = 'in:';
-const PREFIX_USER_SEARCH = 'by:';
+const PREFIX_USER_SEARCH = 'from:';
 const PREFIX_USER_SEARCH_ME = 'me';
 
 enum SearchMode {
@@ -117,7 +117,7 @@ export class ConversationGlobalSearchComponent implements OnInit, OnDestroy {
             this.searchMode = SearchMode.CONVERSATION;
             this.showDropdown = true;
         }
-        // Check if search starts with "by:" for users
+        // Check if search starts with "from:" for users
         else if (this.fullSearchTerm.startsWith(PREFIX_USER_SEARCH)) {
             const searchQuery = this.fullSearchTerm.substring(PREFIX_USER_SEARCH.length).toLowerCase();
             this.searchTermWithoutPrefix = searchQuery;
