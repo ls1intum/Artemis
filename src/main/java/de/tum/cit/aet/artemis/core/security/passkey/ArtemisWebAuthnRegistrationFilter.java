@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.security.passkey;
 
+import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -9,7 +11,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.webauthn.management.UserCredentialRepository;
 import org.springframework.security.web.webauthn.management.WebAuthnRelyingPartyOperations;
 import org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter;
@@ -18,10 +22,14 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
- * Custom WebAuthn registration filter for Artemis that extends Spring Security's WebAuthnRegistrationFilter.
+ * Custom WebAuthn registration filter for Artemis that extends Spring Security's {@link org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter}.
  * This filter sends email notifications to non-internal users when they successfully register a new passkey.
  */
 public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilter {
+
+    static final String DEFAULT_REGISTER_CREDENTIAL_URL = "/webauthn/register";
+
+    private final RequestMatcher registerCredentialMatcher = antMatcher(HttpMethod.POST, DEFAULT_REGISTER_CREDENTIAL_URL);
 
     private final MailSendingService mailSendingService;
 
@@ -58,14 +66,14 @@ public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilte
     }
 
     /**
-     * Determines if the current request is a WebAuthn registration request.
+     * Determines if the current request is a WebAuthn registration request as defined by {@link WebAuthnRegistrationFilter}.
      * A request is considered a WebAuthn registration request if it is a POST request
-     * to a URI ending with "/register".
+     * to a URI ending with "webauthn/register".
      *
      * @param request The HTTP servlet request to check
      * @return true if the request is a WebAuthn registration request, false otherwise
      */
     private boolean isWebAuthnRegistrationRequest(HttpServletRequest request) {
-        return request.getRequestURI().endsWith("/register") && request.getMethod().equals("POST");
+        return registerCredentialMatcher.matches(request) && request.getMethod().equals("POST");
     }
 }
