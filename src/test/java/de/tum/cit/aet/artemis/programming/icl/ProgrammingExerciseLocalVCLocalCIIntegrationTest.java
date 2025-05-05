@@ -7,10 +7,20 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -26,14 +36,13 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.core.io.ClassPathResource;
-import java.util.zip.ZipInputStream;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.zip.ZipEntry;
-import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
@@ -359,9 +368,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importFromFile_validImportZip_changeTitle_success() throws Exception {
-        // Generate a unique suffix for this test run
         String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
-        // Prepare the resource and extract the details JSON as a String (like the frontend)
         var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
         ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
         String detailsJsonString = null;
@@ -369,13 +376,13 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         while ((entry = zipInputStream.getNextEntry()) != null) {
             if (entry.getName().endsWith(".json")) {
                 // Read the JSON file as a String
-                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 byte[] buffer = new byte[1024];
                 int len;
                 while ((len = zipInputStream.read(buffer)) > 0) {
                     baos.write(buffer, 0, len);
                 }
-                detailsJsonString = baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+                detailsJsonString = baos.toString(StandardCharsets.UTF_8);
                 break;
             }
         }
@@ -398,93 +405,62 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         parsedExercise.setId(null);
         parsedExercise.setChannelName("testchannel-pe-imported");
         parsedExercise.forceNewProjectKey();
-        System.out.println("[DEBUG] Project key: " + parsedExercise.getProjectKey());
-        java.nio.file.Path importedRoot = java.nio.file.Paths.get(localVCBasePath, parsedExercise.getProjectKey());
-        System.out.println("[DEBUG] Directory to check: " + importedRoot.toAbsolutePath());
         // Prepare the file for import
-        MockMultipartFile file = new MockMultipartFile(
-            "file", "test.zip", "application/zip", resource.getInputStream()
-        );
+        MockMultipartFile file = new MockMultipartFile("file", "test.zip", "application/zip", resource.getInputStream());
         // Count old title occurrences in the original zip
         int oldTitleCountInZip = 0;
-        try (ZipInputStream zipIn = new ZipInputStream(new java.io.FileInputStream(resource.getFile()))) {
+        try (ZipInputStream zipIn = new ZipInputStream(new FileInputStream(resource.getFile()))) {
             ZipEntry zipEntry;
             while ((zipEntry = zipIn.getNextEntry()) != null) {
                 if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
-                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     byte[] buf = new byte[1024];
                     int n;
                     while ((n = zipIn.read(buf)) > 0) {
                         baos.write(buf, 0, n);
                     }
-                    String content = baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+                    String content = baos.toString(StandardCharsets.UTF_8);
                     int idx = 0;
                     while ((idx = content.indexOf(oldTitle, idx)) != -1) {
                         oldTitleCountInZip++;
-                        int lineStart = content.lastIndexOf('\n', idx);
-                        int lineEnd = content.indexOf('\n', idx);
-                        if (lineStart == -1) lineStart = 0; else lineStart++;
-                        if (lineEnd == -1) lineEnd = content.length();
-                        String line = content.substring(lineStart, lineEnd);
-                        System.out.println("[GREP][ZIP][OLD] " + zipEntry.getName() + ": " + line);
                         idx += oldTitle.length();
                     }
                 }
             }
         }
-        System.out.println("[DEBUG] Occurrences of old title '" + oldTitle + "' in original zip: " + oldTitleCountInZip);
-        // Call the endpoint
-        ProgrammingExercise importedExercise = request.postWithMultipartFile(
-            "/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
-            parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK
-        );
-        // Assert the import worked and the title was changed
+        ProgrammingExercise importedExercise = request.postWithMultipartFile("/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
+                parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK);
+
         assertThat(importedExercise).isNotNull();
         assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
         assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(parsedExercise.getProgrammingLanguage());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
-        // Now check the imported files for the new and old title
-        // Use the working (cloned) repositories, not the bare ones
+
         String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
         String projectKey = parsedExercise.getProjectKey();
         String[] repoDirs = { projectKey + "-exercise", projectKey + "-solution", projectKey + "-tests" };
         int newTitleCount = 0;
         int oldTitleCount = 0;
         for (String repoDir : repoDirs) {
-            java.nio.file.Path repoPath = java.nio.file.Paths.get(repoClonePath, projectKey, repoDir.toLowerCase());
-            if (!java.nio.file.Files.exists(repoPath)) continue;
-            java.util.List<java.nio.file.Path> files = new java.util.ArrayList<>();
-            java.nio.file.Files.walk(repoPath)
-                .filter(java.nio.file.Files::isRegularFile)
-                .forEach(files::add);
-            for (java.nio.file.Path filePath : files) {
-                String content = new String(java.nio.file.Files.readAllBytes(filePath), java.nio.charset.StandardCharsets.UTF_8);
+            Path repoPath = Paths.get(repoClonePath, projectKey, repoDir.toLowerCase());
+            if (!Files.exists(repoPath))
+                continue;
+            List<Path> files = new ArrayList<>();
+            Files.walk(repoPath).filter(Files::isRegularFile).forEach(files::add);
+            for (Path filePath : files) {
+                String content = new String(Files.readAllBytes(filePath), StandardCharsets.UTF_8);
                 int idx = 0;
                 while ((idx = content.indexOf(newTitle, idx)) != -1) {
                     newTitleCount++;
-                    int lineStart = content.lastIndexOf('\n', idx);
-                    int lineEnd = content.indexOf('\n', idx);
-                    if (lineStart == -1) lineStart = 0; else lineStart++;
-                    if (lineEnd == -1) lineEnd = content.length();
-                    String line = content.substring(lineStart, lineEnd);
-                    System.out.println("[GREP][NEW] " + filePath + ": " + line);
                     idx += newTitle.length();
                 }
                 idx = 0;
                 while ((idx = content.indexOf(oldTitle, idx)) != -1) {
                     oldTitleCount++;
-                    int lineStart = content.lastIndexOf('\n', idx);
-                    int lineEnd = content.indexOf('\n', idx);
-                    if (lineStart == -1) lineStart = 0; else lineStart++;
-                    if (lineEnd == -1) lineEnd = content.length();
-                    String line = content.substring(lineStart, lineEnd);
-                    System.out.println("[GREP][OLD] " + filePath + ": " + line);
                     idx += oldTitle.length();
                 }
             }
         }
-        System.out.println("[DEBUG] Occurrences of new title '" + newTitle + "' in imported files: " + newTitleCount);
-        System.out.println("[DEBUG] Occurrences of old title '" + oldTitle + "' in imported files: " + oldTitleCount);
         assertThat(newTitleCount).isEqualTo(oldTitleCountInZip);
         assertThat(oldTitleCount).isZero();
     }
