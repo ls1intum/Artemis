@@ -307,7 +307,7 @@ public class ConversationMessagingService extends PostingService {
     public Post updateMessage(Long courseId, Long postId, UpdatePostingDTO messagePost) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
-        if (messagePost.getId() == null || !Objects.equals(messagePost.getId(), postId)) {
+        if (!Objects.equals(messagePost.id(), postId)) {
             throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
         }
 
@@ -315,11 +315,11 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
         var course = preCheckUserAndCourseForMessaging(user, courseId);
 
-        parseUserMentions(course, messagePost.getContent());
+        parseUserMentions(course, messagePost.content());
 
         // update: allow overwriting of values only for depicted fields
-        existingMessage.setContent(messagePost.getContent());
-        existingMessage.setTitle(messagePost.getTitle());
+        existingMessage.setContent(messagePost.content());
+        existingMessage.setTitle(messagePost.title());
         existingMessage.setUpdatedDate(ZonedDateTime.now());
 
         Post updatedPost = conversationMessageRepository.save(existingMessage);

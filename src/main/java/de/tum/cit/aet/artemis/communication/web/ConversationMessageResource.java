@@ -169,7 +169,7 @@ public class ConversationMessageResource {
     @PutMapping("courses/{courseId}/messages/{messageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<Post> updateMessage(@PathVariable Long courseId, @PathVariable Long messageId, @RequestBody UpdatePostingDTO updatedPost) {
-        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, updatedPost.getContent());
+        log.debug("PUT updateMessage invoked for course {} with post {}", courseId, updatedPost.content());
         long start = System.nanoTime();
         // Note: authorization is checked in the service method
         Post updatedMessagePost = conversationMessagingService.updateMessage(courseId, messageId, updatedPost);

@@ -8,21 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record UpdatePostingDTO(Long id, String content, String title, Boolean resolvesPost) {
+public record UpdatePostingDTO(long id, String content, String title, boolean resolvesPost) {
 
-    public String getContent() {
-        return content;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Boolean doesResolvePost() {
-        return resolvesPost;
-    }
 }

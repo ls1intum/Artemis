@@ -73,7 +73,7 @@ public class AnswerMessageResource {
     @PutMapping("courses/{courseId}/answer-messages/{answerMessageId}")
     @EnforceAtLeastStudent
     public ResponseEntity<AnswerPost> updateAnswerMessage(@PathVariable Long courseId, @PathVariable Long answerMessageId, @RequestBody UpdatePostingDTO updatedAnswer) {
-        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.getContent());
+        log.debug("PUT updateAnswerMessage invoked for course {} with message {}", courseId, updatedAnswer.content());
         long start = System.nanoTime();
         AnswerPost updatedAnswerMessage = answerMessageService.updateAnswerMessage(courseId, answerMessageId, updatedAnswer);
         log.debug("updateAnswerMessage took {}", TimeLogUtil.formatDurationFrom(start));
