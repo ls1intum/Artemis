@@ -49,8 +49,6 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     setDisabledState(): void {}
 
     writeValue(obj: any): void {
-        // eslint-disable-next-line no-undef
-        console.log('writeValue', obj);
         if (this.selectedDate !== obj) {
             this.selectedDate = !obj || isDate(obj) ? obj : obj.toDate();
             this.selectedDate?.setSeconds(0, 0);
