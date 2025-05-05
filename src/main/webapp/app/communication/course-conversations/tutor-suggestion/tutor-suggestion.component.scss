@@ -20,3 +20,14 @@
     word-wrap: break-word;
     word-break: break-word;
 }
+
+.chat-input {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background-color: var(--iris-client-chat-input);
+    padding: 5px;
+    flex: 0 1 auto;
+    border-radius: 0 0 var(--bs-border-radius-lg) var(--bs-border-radius-lg);
+}

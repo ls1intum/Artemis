@@ -23,6 +23,22 @@
                 }
             }
             <jhi-chat-status-bar [stages]="stages" />
+            <div class="chat-input">
+                <textarea
+                    [(ngModel)]="newMessageTextContent"
+                    rows="1"
+                    class="form-control"
+                    (ngModelChange)="onModelChange()"
+                    (input)="onInput()"
+                    (paste)="onPaste()"
+                    type="text"
+                    [disabled]="!suggestion"
+                    (keydown)="handleKey($event)"
+                    placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
+                    #messageTextarea
+                ></textarea>
+                <jhi-button id="irisSendButton" (onClick)="sendMessageToIris()" [btnType]="ButtonType.SUCCESS_OUTLINE" [icon]="faPaperPlane" [disabled]="!suggestion" />
+            </div>
         </div>
     </div>
 }

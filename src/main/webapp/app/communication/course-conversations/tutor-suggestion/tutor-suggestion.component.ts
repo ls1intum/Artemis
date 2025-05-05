@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, ElementRef, OnChanges, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, filter, skip, switchMap, take } from 'rxjs/operators';
@@ -15,6 +15,10 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { FormsModule } from '@angular/forms';
+import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
+import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -24,7 +28,7 @@ import { AccountService } from 'app/core/auth/account.service';
     selector: 'jhi-tutor-suggestion',
     templateUrl: './tutor-suggestion.component.html',
     styleUrl: './tutor-suggestion.component.scss',
-    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent],
+    imports: [IrisLogoComponent, AsPipe, ChatStatusBarComponent, ArtemisTranslatePipe, FormsModule, ButtonComponent],
 })
 export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     protected readonly IrisLogoSize = IrisLogoSize;
@@ -49,6 +53,10 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
 
     irisEnabled = false;
     isAtLeastTutor = false;
+
+    newMessageTextContent = '';
+    @ViewChild('messageTextarea') messageTextarea: ElementRef<HTMLTextAreaElement>;
+    faPaperPlane = faPaperPlane;
 
     post = input<Post>();
     course = input<Course>();
@@ -154,6 +162,15 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
+     * Sends a message to Iris to provide a new suggestion based on the current context
+     */
+    sendMessageToIris(): void {
+        //const message = this.newMessageTextContent;
+        this.newMessageTextContent = '';
+        //TODO: Implement sending {{message}} to Iris
+    }
+
+    /**
      * Fetches the messages from the chat service and updates the suggestion if necessary
      */
     private fetchMessages(): void {
@@ -168,4 +185,57 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         });
         this.errorSubscription = this.chatService.currentError().subscribe((error) => (this.error = error));
     }
+
+    onModelChange(): void {
+        //TODO: Implement this method to handle changes in the model
+    }
+
+    handleKey(event: KeyboardEvent): void {
+        if (event.key === 'Enter') {
+            if (this.suggestion) {
+                if (!event.shiftKey) {
+                    event.preventDefault();
+                    this.sendMessageToIris();
+                } else {
+                    const textArea = event.target as HTMLTextAreaElement;
+                    const { selectionStart, selectionEnd } = textArea;
+                    const value = textArea.value;
+                    textArea.value = value.slice(0, selectionStart) + value.slice(selectionEnd);
+                    textArea.selectionStart = textArea.selectionEnd = selectionStart + 1;
+                }
+            }
+        }
+    }
+
+    /**
+     * Handles the input event in the message textarea.
+     */
+    onInput() {
+        this.adjustTextareaRows();
+    }
+
+    /**
+     * Handles the paste event in the message textarea.
+     */
+    onPaste() {
+        setTimeout(() => {
+            this.adjustTextareaRows();
+        }, 0);
+    }
+
+    /**
+     * Adjusts the height of the message textarea based on its content.
+     */
+    adjustTextareaRows() {
+        const textarea: HTMLTextAreaElement = this.messageTextarea.nativeElement;
+        textarea.style.height = 'auto'; // Reset the height to auto
+        const bufferForSpaceBetweenLines = 4;
+        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
+        const maxRows = 3;
+        const maxHeight = lineHeight * maxRows;
+
+        textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    }
+
+    protected readonly ButtonType = ButtonType;
 }
