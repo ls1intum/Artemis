@@ -6,6 +6,8 @@ import java.util.regex.Pattern;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 
 /**
@@ -18,6 +20,8 @@ import org.springframework.beans.factory.annotation.Value;
  */
 @Converter
 public class RepositoryUrlConverter implements AttributeConverter<String, String> {
+
+    private static final Logger log = LoggerFactory.getLogger(RepositoryUrlConverter.class);
 
     private final String prefix;
 
@@ -41,7 +45,12 @@ public class RepositoryUrlConverter implements AttributeConverter<String, String
             vcUrl = URI.create(vcUrlString);
         }
         catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid version control URL: " + vcUrlString, e);
+            RepositoryUrlConverter.log.debug("Invalid version control URL: {}", vcUrlString);
+
+            this.pattern = null;
+            this.prefix = "";
+            this.postfix = "";
+            return;
         }
 
         this.prefix = vcUrl.resolve("git").toString();
