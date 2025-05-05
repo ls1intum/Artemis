@@ -48,6 +48,7 @@ describe('OnlineUnitComponent', () => {
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', onlineUnit);
+        fixture.componentRef.setInput('courseId', 1);
     });
 
     afterEach(() => {
