@@ -73,7 +73,7 @@
 
                 <!-- lecture dropdown -->
                 <div ngbDropdown class="dropdown-section">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" ngbDropdownToggle>
+                    <button class="btn dropdown-button dropdown-toggle" type="button" ngbDropdownToggle>
                         <span class="d-sm-inline" jhiTranslate="artemisApp.lti.contentSelectionTable.lectures"></span>
                     </button>
 
@@ -114,38 +114,38 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="lti-competency-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
-        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
-    </div>
+        <div class="lti-competency-selector">
+            <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.competencies.header"></h4>
+            <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.competencies.selector" />
+            <input class="form-check-input" type="checkbox" (change)="enableCompetency()" [ngModel]="isCompetencySelected" />
+        </div>
 
-    <div class="lti-learning-path-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
-        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
-    </div>
+        <div class="lti-learning-path-selector">
+            <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.learningPaths.header"></h4>
+            <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.learningPaths.selector" />
+            <input class="form-check-input" type="checkbox" (change)="enableLearningPath()" [ngModel]="isLearningPathSelected" />
+        </div>
 
-    <div class="lti-iris-selector">
-        <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
-        <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
-        <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected" />
-    </div>
+        <div class="lti-iris-selector">
+            <h4 jhiTranslate="artemisApp.lti.contentSelectionTable.iris.header"></h4>
+            <jhi-help-icon class="ps-1" text="artemisApp.lti.contentSelectionTable.iris.selector" />
+            <input class="form-check-input" type="checkbox" (change)="enableIris()" [ngModel]="isIrisSelected" />
+        </div>
 
-    <div class="modal-footer">
-        <div>
-            @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected || isLearningPathSelected || isIrisSelected) {
-                <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
-                </button>
-            } @else {
-                <button type="submit" class="btn btn-success disabled">
-                    <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.selectToLink"></span>
-                </button>
-            }
+        <div class="modal-footer">
+            <div>
+                @if (selectedExercises?.size || selectedLectures?.size || isCompetencySelected || isLearningPathSelected || isIrisSelected) {
+                    <button type="submit" (click)="sendDeepLinkRequest()" class="btn btn-success">
+                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.link"></span>
+                    </button>
+                } @else {
+                    <button type="submit" class="btn btn-success disabled">
+                        <span class="d-sm-inline" jhiTranslate="artemisApp.lti13.deepLinking.selectToLink"></span>
+                    </button>
+                }
+            </div>
         </div>
     </div>
+    <h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>
 </div>
-<h2 [hidden]="isLinking" jhiTranslate="artemisApp.lti13.deepLinking.linkedFailed"></h2>
