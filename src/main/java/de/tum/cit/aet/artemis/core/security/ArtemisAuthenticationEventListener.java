@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.core.security;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.util.HashMap;
 
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.event.AuthenticationSuccessEvent;
 import org.springframework.stereotype.Component;
 
@@ -15,6 +18,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
  * This component listens for successful login attempts and sends email notifications
  * to non-internal users when they successfully log in.
  */
+@Profile(PROFILE_CORE)
 @Component
 public class ArtemisAuthenticationEventListener implements ApplicationListener<AuthenticationSuccessEvent> {
 
