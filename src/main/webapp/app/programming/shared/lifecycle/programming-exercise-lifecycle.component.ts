@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faCalendarDays, faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Subject, Subscription } from 'rxjs';
@@ -49,8 +49,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     protected readonly faCogs = faCogs;
     protected readonly faUserCheck = faUserCheck;
     protected readonly faUserSlash = faUserSlash;
-
-    protected readonly faCalendarDays = faCalendarDays;
 
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
