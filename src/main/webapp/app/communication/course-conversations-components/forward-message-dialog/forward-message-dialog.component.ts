@@ -24,6 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
+import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 
 interface CombinedOption {
     id: number;
@@ -37,7 +38,7 @@ interface CombinedOption {
     templateUrl: './forward-message-dialog.component.html',
     styleUrls: ['./forward-message-dialog.component.scss'],
     imports: [ArtemisTranslatePipe, ProfilePictureComponent, NgClass, PostingContentComponent, MarkdownEditorMonacoComponent, FormsModule, TranslateDirective],
-    providers: [MetisService, LinkPreviewService, LinkifyService],
+    providers: [MetisService, LinkPreviewService, LinkifyService, MetisConversationService],
 })
 export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
     channels = signal<ChannelDTO[] | []>([]);
