@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 /**
- * Custom WebAuthn registration filter for Artemis that extends Spring Security's {@link org.springframework.security.web.webauthn.registration.WebAuthnRegistrationFilter}.
+ * Custom WebAuthn registration filter for Artemis that extends Spring Security's {@link WebAuthnRegistrationFilter}.
  * This filter sends email notifications to non-internal users when they successfully register a new passkey.
  */
 public class ArtemisWebAuthnRegistrationFilter extends WebAuthnRegistrationFilter {
