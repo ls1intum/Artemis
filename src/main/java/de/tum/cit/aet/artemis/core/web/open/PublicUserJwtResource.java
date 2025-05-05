@@ -31,10 +31,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
@@ -58,17 +56,10 @@ public class PublicUserJwtResource {
 
     private final Optional<SAML2Service> saml2Service;
 
-    private final UserRepository userRepository;
-
-    private final MailSendingService mailSendingService;
-
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service, UserRepository userRepository,
-            MailSendingService mailSendingService) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
-        this.userRepository = userRepository;
-        this.mailSendingService = mailSendingService;
     }
 
     /**

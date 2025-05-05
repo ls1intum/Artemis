@@ -65,7 +65,7 @@ public class UserTokenExpiryNotificationService {
      *
      * @param recipient the user to whose account the VCS access token was added
      */
-    public void notifyUserAboutExpiredVcsAccessToken(User recipient) {
+    private void notifyUserAboutExpiredVcsAccessToken(User recipient) {
         mailSendingService.buildAndSendSync(recipient, "email.notification.vcsAccessTokenExpiry.title", "mail/notification/vcsAccessTokenExpiredEmail", new HashMap<>());
     }
 }
