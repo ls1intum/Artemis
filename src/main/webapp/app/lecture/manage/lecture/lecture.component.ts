@@ -107,6 +107,9 @@ export class LectureComponent implements OnInit, OnDestroy {
         if (this.irisEnabled) {
             this.irisSettingsService.getCombinedCourseSettings(this.courseId).subscribe((settings) => {
                 this.lectureIngestionEnabled = settings?.irisLectureIngestionSettings?.enabled || false;
+                if (this.lectureIngestionEnabled && this.lectures?.length) {
+                    this.updateIngestionStates();
+                }
             });
         }
 
