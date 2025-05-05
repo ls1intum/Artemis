@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, SecurityContext, inject, viewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from '../../../shared/language/translate.directive';
@@ -27,8 +27,7 @@ export class Lti13SelectContentComponent implements OnInit {
     actionLink: string;
     isLinking = true;
 
-    @ViewChild('deepLinkingForm', { static: false })
-    deepLinkingForm?: ElementRef;
+    readonly deepLinkingForm = viewChild<ElementRef>('deepLinkingForm');
 
     /**
      * Initializes the component.
@@ -71,7 +70,7 @@ export class Lti13SelectContentComponent implements OnInit {
      * - Submits the form.
      */
     autoSubmitForm(): void {
-        const form = this.deepLinkingForm?.nativeElement;
+        const form = this.deepLinkingForm()?.nativeElement;
         if (form) {
             form.action = this.actionLink;
             form.submit();
