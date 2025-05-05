@@ -26,22 +26,24 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.core.io.ClassPathResource;
+import java.util.zip.ZipInputStream;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.zip.ZipEntry;
+import org.springframework.mock.web.MockMultipartFile;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
@@ -352,6 +354,139 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         programmingExerciseTestService.createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void importFromFile_validImportZip_changeTitle_success() throws Exception {
+        // Generate a unique suffix for this test run
+        String uniqueSuffix = java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+        // Prepare the resource and extract the details JSON as a String (like the frontend)
+        var resource = new ClassPathResource("test-data/import-from-file/valid-import.zip");
+        ZipInputStream zipInputStream = new ZipInputStream(resource.getInputStream());
+        String detailsJsonString = null;
+        ZipEntry entry;
+        while ((entry = zipInputStream.getNextEntry()) != null) {
+            if (entry.getName().endsWith(".json")) {
+                // Read the JSON file as a String
+                java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = zipInputStream.read(buffer)) > 0) {
+                    baos.write(buffer, 0, len);
+                }
+                detailsJsonString = baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+                break;
+            }
+        }
+        zipInputStream.close();
+        assertThat(detailsJsonString).isNotNull();
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        objectMapper.findAndRegisterModules();
+        ProgrammingExercise parsedExercise = objectMapper.readValue(detailsJsonString, ProgrammingExercise.class);
+        if (parsedExercise.getBuildConfig() == null) {
+            parsedExercise.setBuildConfig(new de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig());
+        }
+        // Change the title and short name to unique values
+        String oldTitle = parsedExercise.getTitle();
+        String newTitle = "TITLE" + uniqueSuffix;
+        String newShortName = "SHORT" + uniqueSuffix;
+        parsedExercise.setTitle(newTitle);
+        parsedExercise.setShortName(newShortName);
+        parsedExercise.setCourse(course);
+        parsedExercise.setId(null);
+        parsedExercise.setChannelName("testchannel-pe-imported");
+        parsedExercise.forceNewProjectKey();
+        System.out.println("[DEBUG] Project key: " + parsedExercise.getProjectKey());
+        java.nio.file.Path importedRoot = java.nio.file.Paths.get(localVCBasePath, parsedExercise.getProjectKey());
+        System.out.println("[DEBUG] Directory to check: " + importedRoot.toAbsolutePath());
+        // Prepare the file for import
+        MockMultipartFile file = new MockMultipartFile(
+            "file", "test.zip", "application/zip", resource.getInputStream()
+        );
+        // Count old title occurrences in the original zip
+        int oldTitleCountInZip = 0;
+        try (ZipInputStream zipIn = new ZipInputStream(new java.io.FileInputStream(resource.getFile()))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zipIn.getNextEntry()) != null) {
+                if (!zipEntry.isDirectory() && zipEntry.getName().endsWith(".zip")) {
+                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+                    byte[] buf = new byte[1024];
+                    int n;
+                    while ((n = zipIn.read(buf)) > 0) {
+                        baos.write(buf, 0, n);
+                    }
+                    String content = baos.toString(java.nio.charset.StandardCharsets.UTF_8);
+                    int idx = 0;
+                    while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                        oldTitleCountInZip++;
+                        int lineStart = content.lastIndexOf('\n', idx);
+                        int lineEnd = content.indexOf('\n', idx);
+                        if (lineStart == -1) lineStart = 0; else lineStart++;
+                        if (lineEnd == -1) lineEnd = content.length();
+                        String line = content.substring(lineStart, lineEnd);
+                        System.out.println("[GREP][ZIP][OLD] " + zipEntry.getName() + ": " + line);
+                        idx += oldTitle.length();
+                    }
+                }
+            }
+        }
+        System.out.println("[DEBUG] Occurrences of old title '" + oldTitle + "' in original zip: " + oldTitleCountInZip);
+        // Call the endpoint
+        ProgrammingExercise importedExercise = request.postWithMultipartFile(
+            "/api/programming/courses/" + course.getId() + "/programming-exercises/import-from-file",
+            parsedExercise, "programmingExercise", file, ProgrammingExercise.class, HttpStatus.OK
+        );
+        // Assert the import worked and the title was changed
+        assertThat(importedExercise).isNotNull();
+        assertThat(importedExercise.getTitle()).isEqualTo(newTitle);
+        assertThat(importedExercise.getProgrammingLanguage()).isEqualTo(parsedExercise.getProgrammingLanguage());
+        assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(course);
+        // Now check the imported files for the new and old title
+        // Use the working (cloned) repositories, not the bare ones
+        String repoClonePath = System.getProperty("artemis.repo-clone-path", "repos");
+        String projectKey = parsedExercise.getProjectKey();
+        String[] repoDirs = { projectKey + "-exercise", projectKey + "-solution", projectKey + "-tests" };
+        int newTitleCount = 0;
+        int oldTitleCount = 0;
+        for (String repoDir : repoDirs) {
+            java.nio.file.Path repoPath = java.nio.file.Paths.get(repoClonePath, projectKey, repoDir.toLowerCase());
+            if (!java.nio.file.Files.exists(repoPath)) continue;
+            java.util.List<java.nio.file.Path> files = new java.util.ArrayList<>();
+            java.nio.file.Files.walk(repoPath)
+                .filter(java.nio.file.Files::isRegularFile)
+                .forEach(files::add);
+            for (java.nio.file.Path filePath : files) {
+                String content = new String(java.nio.file.Files.readAllBytes(filePath), java.nio.charset.StandardCharsets.UTF_8);
+                int idx = 0;
+                while ((idx = content.indexOf(newTitle, idx)) != -1) {
+                    newTitleCount++;
+                    int lineStart = content.lastIndexOf('\n', idx);
+                    int lineEnd = content.indexOf('\n', idx);
+                    if (lineStart == -1) lineStart = 0; else lineStart++;
+                    if (lineEnd == -1) lineEnd = content.length();
+                    String line = content.substring(lineStart, lineEnd);
+                    System.out.println("[GREP][NEW] " + filePath + ": " + line);
+                    idx += newTitle.length();
+                }
+                idx = 0;
+                while ((idx = content.indexOf(oldTitle, idx)) != -1) {
+                    oldTitleCount++;
+                    int lineStart = content.lastIndexOf('\n', idx);
+                    int lineEnd = content.indexOf('\n', idx);
+                    if (lineStart == -1) lineStart = 0; else lineStart++;
+                    if (lineEnd == -1) lineEnd = content.length();
+                    String line = content.substring(lineStart, lineEnd);
+                    System.out.println("[GREP][OLD] " + filePath + ": " + line);
+                    idx += oldTitle.length();
+                }
+            }
+        }
+        System.out.println("[DEBUG] Occurrences of new title '" + newTitle + "' in imported files: " + newTitleCount);
+        System.out.println("[DEBUG] Occurrences of old title '" + oldTitle + "' in imported files: " + oldTitleCount);
+        assertThat(newTitleCount).isEqualTo(oldTitleCountInZip);
+        assertThat(oldTitleCount).isZero();
     }
 
     @Nested
