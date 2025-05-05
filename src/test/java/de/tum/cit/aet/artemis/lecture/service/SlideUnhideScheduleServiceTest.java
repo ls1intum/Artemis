@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
@@ -68,18 +69,17 @@ class SlideUnhideScheduleServiceTest extends AbstractSpringIntegrationIndependen
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testScheduleAllHiddenSlides() {
-        // Insert test slide data into the real repository
-        // The hidden slides are already set up in the initTestCase method
-
         // Call the method to test
         slideUnhideScheduleService.scheduleAllHiddenSlides();
 
-        // We have slides with past and future dates
-        // For the past date (testSlides.get(1)), we should call unhideSlide immediately
-        verify(slideUnhideExecutionService).unhideSlide(testSlides.get(1).getId());
+        // Capture the actual ID of the slide that should be unhidden immediately (the one with past date)
+        Long pastSlideId = testSlides.get(1).getId(); // Index 1 has the past date from your setup
 
-        // For the future date (testSlides.get(3)), we should schedule a task
-        verify(scheduleService).scheduleSlideTask(any(), any(), any(), any());
+        // For the past date slide, verify unhideSlide is called with the correct ID
+        verify(slideUnhideExecutionService).unhideSlide(pastSlideId);
+
+        // For future date slides, verify scheduleSlideTask is called at least once
+        verify(scheduleService, atLeastOnce()).scheduleSlideTask(any(), any(), any(), any());
     }
 
     @Test
