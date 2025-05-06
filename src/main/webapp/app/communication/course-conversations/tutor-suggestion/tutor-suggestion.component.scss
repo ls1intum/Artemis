@@ -24,10 +24,17 @@
 .chat-input {
     display: flex;
     align-items: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: space-between;
     background-color: var(--iris-client-chat-input);
     padding: 5px;
     flex: 0 1 auto;
     border-radius: 0 0 var(--bs-border-radius-lg) var(--bs-border-radius-lg);
+}
+
+.timestamp-container {
+    text-align: right;
+    font-size: 0.75rem;
+    color: #888;
+    margin-bottom: 2px;
 }

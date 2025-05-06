@@ -7,10 +7,13 @@
         <div class="iris-suggestion-field">
             @if (suggestion) {
                 @for (content of suggestion?.content; track content.id) {
-                    <div>
+                    <div class="iris-suggestion-text">
                         @for (line of (content | as: IrisTextMessageContent).textContent.split('\n'); track line) {
                             <div [innerHTML]="line" class="iris-suggestion-text"></div>
                         }
+                    </div>
+                    <div class="timestamp-container">
+                        {{ getTimestamp(suggestion.sentAt) }}
                     </div>
                 }
             } @else {

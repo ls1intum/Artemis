@@ -19,6 +19,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
 import { ButtonComponent, ButtonType } from 'app/shared/components/button/button.component';
 import { faPaperPlane } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 /**
  * Component to display the tutor suggestion in the chat
@@ -243,6 +244,36 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
         const maxHeight = lineHeight * maxRows;
 
         textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    }
+
+    getTimestamp(date: dayjs.Dayjs | string | Date | undefined): string | undefined {
+        if (!date) {
+            return '';
+        }
+
+        const parsedDate = dayjs(date);
+        const now = dayjs();
+
+        if (parsedDate.isSame(now, 'day')) {
+            const diffMinutes = now.diff(parsedDate, 'minute');
+            const diffHours = now.diff(parsedDate, 'hour');
+            if (diffMinutes < 1) {
+                return 'just now';
+            } else if (diffMinutes < 60) {
+                return `${diffMinutes} minutes ago`;
+            } else {
+                return `${diffHours} hours ago`;
+            }
+        } else {
+            const diffDays = now.diff(parsedDate, 'day');
+            if (diffDays < 1) {
+                return 'yesterday';
+            } else if (diffDays < 7) {
+                return `${diffDays} days ago`;
+            } else {
+                return parsedDate.format('DD/MM/YYYY');
+            }
+        }
     }
 
     protected readonly ButtonType = ButtonType;
