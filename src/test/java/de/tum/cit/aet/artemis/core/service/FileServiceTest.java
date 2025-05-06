@@ -37,6 +37,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.util.ResourceUtils;
@@ -435,5 +437,23 @@ class FileServiceTest extends AbstractSpringIntegrationIndependentTest {
     void testSanitizeByCheckingIfPathContainsSubPathElseThrow_Picture_Invalid_Path() {
         assertThatExceptionOfType(IllegalArgumentException.class)
                 .isThrownBy(() -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(INVALID_DRAGITEM_PATH, VALID_INTENDED_DRAGITEM_PATH));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "folder/file.txt", "folder/subfolder/file.pdf", "file.docx", "safe_name-123.txt" })
+    void testSanitizeFilePath_ValidPaths(String filePath) {
+        assertThatNoException().isThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(filePath));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "../file.txt", "folder/../file.txt", "folder\\..\\file.txt", "folder/..\\file.txt", "folder/evil/../../file.txt", "folder\\fi\\le.txt" })
+    void testSanitizeFilePath_InvalidPaths(String filePath) {
+        assertThatThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(filePath)).isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid file path segment");
+    }
+
+    @Test
+    void testSanitizeFilePath_EmptyPath() {
+        assertThatNoException().isThrownBy(() -> FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(""));
     }
 }

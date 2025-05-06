@@ -369,7 +369,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
-                paths.forEach(FileService::sanitizeFilePathElseThrow);
+                paths.forEach(FileService::sanitizeFilePathByCheckingForInvalidCharactersElseThrow);
                 paths.stream().filter(path -> Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
                     URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileService.BACKGROUND_FILE_SUBPATH)
                             : URI.create(FileService.PICTURE_FILE_SUBPATH);

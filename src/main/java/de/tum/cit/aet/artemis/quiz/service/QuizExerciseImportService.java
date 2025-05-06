@@ -168,7 +168,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         if (dndQuestion.getBackgroundFilePath() != null) {
             URI backgroundFilePublicPath = URI.create(dndQuestion.getBackgroundFilePath());
             URI backgroundFileIntendedPath = URI.create(FileService.BACKGROUND_FILE_SUBPATH);
-            FileService.sanitizeFilePathElseThrow(dndQuestion.getBackgroundFilePath());
+            FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dndQuestion.getBackgroundFilePath());
             // If it doesn't exist yet, it is a new image and will be added later.
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(backgroundFilePublicPath, FilePathType.DRAG_AND_DROP_BACKGROUND))) {
                 // Check whether pictureFilePublicPath is actually a picture file path
@@ -213,7 +213,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
 
             URI pictureFilePublicPath = URI.create(dragItem.getPictureFilePath());
             URI pictureFileIntendedPath = URI.create(FileService.PICTURE_FILE_SUBPATH);
-            FileService.sanitizeFilePathElseThrow(dragItem.getPictureFilePath());
+            FileService.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(dragItem.getPictureFilePath());
             if (Files.exists(FilePathService.fileSystemPathForExternalUri(pictureFilePublicPath, FilePathType.DRAG_ITEM))) {
                 // Check whether pictureFilePublicPath is actually a picture file path
                 // (which is the case when its path starts with the path pictureFileIntendedPath)
