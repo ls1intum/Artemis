@@ -39,15 +39,10 @@ public class LearnerProfile extends DomainObject {
     @JsonIgnoreProperties("learnerProfile")
     private Set<CourseLearnerProfile> courseLearnerProfiles = new HashSet<>();
 
-    @Column(name = "feedback_practical_theoretical")
+    @Column(name = "feedback_alternative_standard")
     @Min(1)
     @Max(5)
-    private int feedbackPracticalTheoretical;
-
-    @Column(name = "feedback_creative_guidance")
-    @Min(1)
-    @Max(5)
-    private int feedbackCreativeGuidance;
+    private int feedbackAlternativeStandard;
 
     @Column(name = "feedback_followup_summary")
     @Min(1)
@@ -87,20 +82,12 @@ public class LearnerProfile extends DomainObject {
         return this.courseLearnerProfiles.remove(courseLearnerProfile);
     }
 
-    public int getFeedbackPracticalTheoretical() {
-        return feedbackPracticalTheoretical;
+    public int getFeedbackAlternativeStandard() {
+        return feedbackAlternativeStandard;
     }
 
-    public void setFeedbackPracticalTheoretical(int feedbackPracticalTheoretical) {
-        this.feedbackPracticalTheoretical = feedbackPracticalTheoretical;
-    }
-
-    public int getFeedbackCreativeGuidance() {
-        return feedbackCreativeGuidance;
-    }
-
-    public void setFeedbackCreativeGuidance(int feedbackCreativeGuidance) {
-        this.feedbackCreativeGuidance = feedbackCreativeGuidance;
+    public void setFeedbackAlternativeStandard(int feedbackAlternativeStandard) {
+        this.feedbackAlternativeStandard = feedbackAlternativeStandard;
     }
 
     public int getFeedbackFollowupSummary() {
