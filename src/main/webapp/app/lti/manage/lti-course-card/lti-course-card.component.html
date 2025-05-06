@@ -36,12 +36,12 @@
             <div class="col-6">
                 @if (course().startDate) {
                     <p>
-                        <strong><span jhiTranslate="artemisApp.course.startDate"></span>:</strong> {{ course.startDate | artemisDate }}
+                        <strong><span jhiTranslate="artemisApp.course.startDate"></span>:</strong> {{ course().startDate | artemisDate }}
                     </p>
                 }
                 @if (course().endDate) {
                     <p>
-                        <strong><span jhiTranslate="artemisApp.course.endDate"></span>:</strong> {{ course.endDate | artemisDate }}
+                        <strong><span jhiTranslate="artemisApp.course.endDate"></span>:</strong> {{ course().endDate | artemisDate }}
                     </p>
                 }
             </div>
