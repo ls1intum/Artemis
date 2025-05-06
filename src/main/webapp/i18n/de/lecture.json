@@ -131,7 +131,8 @@
                     "selectExercise": "Aufgabe auswählen",
                     "noExercises": "Keine Aufgaben verfügbar",
                     "exerciseTypeTitle": "{{ param }} Aufgaben",
-                    "dateError": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen."
+                    "dateError": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen.",
+                    "dateErrorWithPages": "Die ausgewählten Daten dürfen nicht in der Vergangenheit liegen. Ungültige Seiten: {{ param }}"
                 }
             }
         }

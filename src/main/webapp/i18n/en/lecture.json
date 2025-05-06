@@ -131,7 +131,8 @@
                     "selectExercise": "Select Exercise",
                     "noExercises": "No exercises available",
                     "exerciseTypeTitle": "{{ param }} Exercises",
-                    "dateError": "The selected date can not be in the past."
+                    "dateError": "The selected date can not be in the past.",
+                    "dateErrorWithPages": "The selected date can not be in the past. Invalid pages: {{ param }}"
                 }
             }
         }
