@@ -1,0 +1,55 @@
+<div class="d-flex justify-content-between">
+    <h2 jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.title"></h2>
+    @if (editing) {
+        <button type="button" class="btn btn-primary" id="apply-changes-button" (click)="update()">
+            <fa-icon class="ng" [icon]="faSave" />
+            {{ 'artemisApp.userSettings.saveChanges' | artemisTranslate }}
+        </button>
+    }
+</div>
+<hr />
+<div class="row align-items-center">
+    <div class="col">
+        <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.description"></span><br />
+        <div class="d-flex align-items-center my-2">
+            <span class="dot background-color ms-1 me-2"></span>
+            <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.initialState"></span>
+            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.initialValueHint" />
+            <span class="dot bg-primary ms-3 me-2"></span>
+            <span jhiTranslate="artemisApp.learnerProfile.feedbackLearnerProfile.currentState"></span>
+            <jhi-help-icon class="ps-1" text="artemisApp.learnerProfile.currentValueHint" />
+        </div>
+    </div>
+</div>
+<div class="row row-cols-2 gx-5 align-items-end">
+    <div class="col">
+        <jhi-double-slider
+            [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.alternativeStandard')"
+            [min]="1"
+            [max]="5"
+            [initialValue]="initialFeedbackAlternativeStandard"
+            [(currentValue)]="feedbackAlternativeStandard"
+            (currentValueChange)="this.editing = true"
+        />
+    </div>
+    <div class="col">
+        <jhi-double-slider
+            [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.followupSummary')"
+            [min]="1"
+            [max]="5"
+            [initialValue]="initialFeedbackFollowupSummary"
+            [(currentValue)]="feedbackFollowupSummary"
+            (currentValueChange)="this.editing = true"
+        />
+    </div>
+    <div class="col">
+        <jhi-double-slider
+            [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefDetailed')"
+            [min]="1"
+            [max]="5"
+            [initialValue]="initialFeedbackBriefDetailed"
+            [(currentValue)]="feedbackBriefDetailed"
+            (currentValueChange)="this.editing = true"
+        />
+    </div>
+</div>

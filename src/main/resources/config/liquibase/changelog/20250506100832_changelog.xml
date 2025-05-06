@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <changeSet id="20250422202149" author="ahmetsenturk">
+    <changeSet id="20250506100832" author="ahmetsenturk">
         <addColumn tableName="learner_profile">
             <column name="feedback_alternative_standard" type="int" defaultValueNumeric="3">
                 <constraints nullable="false"/>

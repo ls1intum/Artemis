@@ -13,6 +13,15 @@
                 "timeInvestment": "Time investment",
                 "repetitionIntensity": "Repetition Intensity",
                 "profileSaved": "Profile saved"
+            },
+            "feedbackLearnerProfile": {
+                "title": "Feedback Learner Profile",
+                "description": "Here, you are able to view and update your feedback learner profile.",
+                "initialState": "Initial State",
+                "currentState": "Current State",
+                "alternativeStandard": "Alternative Standard",
+                "followupSummary": "Followup Summary",
+                "briefDetailed": "Brief Detailed"
             }
         }
     }

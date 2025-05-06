@@ -13,6 +13,15 @@
                 "timeInvestment": "Zeitaufwand",
                 "repetitionIntensity": "Wiederholungsintensität",
                 "profileSaved": "Lernprofil gespeichert"
+            },
+            "feedbackLearnerProfile": {
+                "title": "Feedback-Lernprofil",
+                "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren.",
+                "initialState": "Ursprünglicher Zustand",
+                "currentState": "Aktueller Zustand",
+                "alternativeStandard": "Alternative Standard",
+                "followupSummary": "Followup Summary",
+                "briefDetailed": "Brief Detailed"
             }
         }
     }

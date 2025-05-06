@@ -151,13 +151,11 @@ public class LearnerProfileResource {
 
         LearnerProfile updateProfile = learnerProfileRepository.findByUserElseThrow(user);
 
-        validateProfileField(learnerProfileDTO.feedbackPracticalTheoretical(), "FeedbackPracticalTheoretical");
-        validateProfileField(learnerProfileDTO.feedbackCreativeGuidance(), "FeedbackCreativeGuidance");
+        validateProfileField(learnerProfileDTO.feedbackAlternativeStandard(), "FeedbackCreativeGuidance");
         validateProfileField(learnerProfileDTO.feedbackFollowupSummary(), "FeedbackFollowupSummary");
         validateProfileField(learnerProfileDTO.feedbackBriefDetailed(), "FeedbackBriefDetailed");
 
-        updateProfile.setFeedbackPracticalTheoretical(learnerProfileDTO.feedbackPracticalTheoretical());
-        updateProfile.setFeedbackCreativeGuidance(learnerProfileDTO.feedbackCreativeGuidance());
+        updateProfile.setFeedbackAlternativeStandard(learnerProfileDTO.feedbackAlternativeStandard());
         updateProfile.setFeedbackFollowupSummary(learnerProfileDTO.feedbackFollowupSummary());
         updateProfile.setFeedbackBriefDetailed(learnerProfileDTO.feedbackBriefDetailed());
 
