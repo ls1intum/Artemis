@@ -49,7 +49,7 @@ class FilePathServiceTest {
 
         // EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE
         actualPath = FilePathService.fileSystemPathForExternalUri(URI.create("exam-user/42/photo.jpg"), FilePathType.EXAM_USER_IMAGE);
-        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "exam-user", "photo.jpg"));
+        assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "exam-user", "42", "photo.jpg"));
 
         // LECTURE_ATTACHMENT
         actualPath = FilePathService.fileSystemPathForExternalUri(URI.create("attachments/lecture/4/slides.pdf"), FilePathType.LECTURE_ATTACHMENT);
