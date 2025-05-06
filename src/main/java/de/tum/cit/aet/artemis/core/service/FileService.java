@@ -334,6 +334,22 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Sanitizes a file path by checking for invalid characters or path traversal.
+     *
+     * @param filePath the file path to sanitize
+     * @throws IllegalArgumentException if the file path is invalid
+     */
+    public static void sanitizeFilePathElseThrow(String filePath) {
+        Path path = Path.of(filePath);
+        for (Path segment : path) {
+            String part = segment.toString();
+            if (part.contains("..") || part.contains("/") || part.contains("\\")) {
+                throw new IllegalArgumentException("Invalid file path segment: " + part);
+            }
+        }
+    }
+
+    /**
      * Generates a prefix for the filename based on the file path type
      *
      * @param filePathType the type of the file path

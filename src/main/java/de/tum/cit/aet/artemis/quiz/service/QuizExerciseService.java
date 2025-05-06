@@ -369,13 +369,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
                 FilePathType type = entry.getKey();
                 Set<String> paths = entry.getValue();
-                if (type == FilePathType.DRAG_ITEM) {
-                    paths.forEach(path -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FileService.PICTURE_FILE_SUBPATH)));
-                }
-                else {
-                    paths.forEach(path -> FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), URI.create(FileService.BACKGROUND_FILE_SUBPATH)));
+                paths.forEach(FileService::sanitizeFilePathElseThrow);
+                paths.stream().filter(path -> Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(path), type))).forEach(path -> {
+                    URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileService.BACKGROUND_FILE_SUBPATH)
+                            : URI.create(FileService.PICTURE_FILE_SUBPATH);
+                    FileService.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
+                });
 
-                }
                 Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathService.fileSystemPathForExternalUri(URI.create(filePath), type)))
                         .collect(Collectors.toSet());
 
