@@ -1,4 +1,4 @@
-<form name="setupPasskeyModal" (ngSubmit)="navigateToSetupPasskey()">
+<form name="setupPasskeyModal" (ngSubmit)="setupPasskey()">
     <div class="modal-header">
         <h4 class="modal-title">
             <fa-icon [icon]="faShieldHalved" />
@@ -24,7 +24,7 @@
                 jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupLater"
                 aria-label="Set Up Later"
             ></button>
-            <button type="button" class="btn btn-primary" (click)="navigateToSetupPasskey()">
+            <button type="button" class="btn btn-primary" (click)="setupPasskey()">
                 <fa-icon [icon]="faKey" />
                 <span jhiTranslate="artemisApp.userSettings.setupPasskeyModal.setupPasskey"></span>
             </button>
