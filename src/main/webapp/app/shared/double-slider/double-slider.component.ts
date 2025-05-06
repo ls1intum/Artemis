@@ -7,9 +7,12 @@ import { Component, input, model } from '@angular/core';
 })
 export class DoubleSliderComponent {
     title = input.required<string>();
+    description = input<string>('');
     initialValue = input.required<number>();
     min = input.required<number>();
     max = input.required<number>();
+    minLabel = input<string>('');
+    maxLabel = input<string>('');
 
     currentValue = model.required<number>();
 

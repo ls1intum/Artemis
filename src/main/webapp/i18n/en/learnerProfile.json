@@ -19,9 +19,18 @@
                 "description": "Here, you are able to view and update your feedback learner profile.",
                 "initialState": "Initial State",
                 "currentState": "Current State",
-                "alternativeStandard": "Alternative Standard",
-                "followupSummary": "Followup Summary",
-                "briefDetailed": "Brief Detailed"
+                "alternativeStandard": "Alternative vs. Standard",
+                "standard": "Standard",
+                "alternative": "Alternative",
+                "alternativeStandardDescription": "Choose whether you prefer feedback that explores creative, alternative solutions or feedback that focuses on the most common, standard approaches.",
+                "followupSummary": "Followup vs. Summary",
+                "followup": "Followup",
+                "summary": "Summary",
+                "followupSummaryDescription": "Choose whether you prefer feedback that ends with a follow-up question (to encourage further thinking and reflection) or with a summary/conclusion (to clearly wrap up the feedback).",
+                "briefDetailed": "Brief vs. Detailed",
+                "brief": "Brief",
+                "detailed": "Detailed",
+                "briefDetailedDescription": "Choose whether you like your feedback to be brief and straight to the point, or more detailed with explanations and examples."
             }
         }
     }

@@ -19,9 +19,18 @@
                 "description": "Hier kannst du dein Feedback-Lernprofil einsehen und aktualisieren.",
                 "initialState": "Ursprünglicher Zustand",
                 "currentState": "Aktueller Zustand",
-                "alternativeStandard": "Alternative Standard",
-                "followupSummary": "Followup Summary",
-                "briefDetailed": "Brief Detailed"
+                "alternativeStandard": "Alternative vs. Standard",
+                "standard": "Standard",
+                "alternative": "Alternative",
+                "alternativeStandardDescription": "Wähle, ob du Feedback lieber mit kreativen, alternativen Lösungen oder mit Standard-Methoden erhalten möchtest.",
+                "followupSummary": "Followup vs. Summary",
+                "followup": "Followup",
+                "summary": "Summary",
+                "followupSummaryDescription": "Wähle, ob du Feedback lieber mit einem Follow-up-Frage (um weitere Überlegungen und Reflexionen anzuregen) oder mit einem Summary/Abschluss erhalten möchtest.",
+                "briefDetailed": "Brief vs. Detailed",
+                "brief": "Brief",
+                "detailed": "Detailed",
+                "briefDetailedDescription": "Wähle, ob du Feedback lieber kurz und knapp halten möchtest oder detaillierter mit Erklärungen und Beispielen."
             }
         }
     }

@@ -25,8 +25,11 @@
     <div class="col">
         <jhi-double-slider
             [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.alternativeStandard')"
+            [description]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.alternativeStandardDescription')"
             [min]="1"
             [max]="5"
+            [minLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.standard')"
+            [maxLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.alternative')"
             [initialValue]="initialFeedbackAlternativeStandard"
             [(currentValue)]="feedbackAlternativeStandard"
             (currentValueChange)="this.editing = true"
@@ -35,8 +38,11 @@
     <div class="col">
         <jhi-double-slider
             [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.followupSummary')"
+            [description]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.followupSummaryDescription')"
             [min]="1"
             [max]="5"
+            [minLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.followup')"
+            [maxLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.summary')"
             [initialValue]="initialFeedbackFollowupSummary"
             [(currentValue)]="feedbackFollowupSummary"
             (currentValueChange)="this.editing = true"
@@ -45,8 +51,11 @@
     <div class="col">
         <jhi-double-slider
             [title]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefDetailed')"
+            [description]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.briefDetailedDescription')"
             [min]="1"
             [max]="5"
+            [minLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.brief')"
+            [maxLabel]="translateService.instant('artemisApp.learnerProfile.feedbackLearnerProfile.detailed')"
             [initialValue]="initialFeedbackBriefDetailed"
             [(currentValue)]="feedbackBriefDetailed"
             (currentValueChange)="this.editing = true"
