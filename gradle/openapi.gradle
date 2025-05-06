@@ -137,10 +137,10 @@
     }
 
     tasks.register('postProcessTsFiles') {
-        description = 'Remove leading underscores and numeric suffixes from generated TS methods, and add // @ts-nocheck'
+        description = 'Remove leading underscores and numeric suffixes from OpenAPI TS methods, and add // @ts-nocheck'
 
         doLast {
-            def genDir = file("$project.rootDir/src/main/webapp/app/tutorialgroup/generated")
+            def genDir = file("$project.rootDir/src/main/webapp/app/tutorialgroup/openapi")
             fileTree(dir: genDir, include: '**/*.ts').each { File tsFile ->
                 def content = tsFile.text
 
@@ -184,6 +184,6 @@
     tasks.named( 'openApiGenerate') {
         doFirst {
             delete file("$rootDir/src/main/webapp/app/tutorialgroup/openapi")
-            println "✔ Deleted old generated files"
+            println "✔ Deleted old openapi files"
         }
     }

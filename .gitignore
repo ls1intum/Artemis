@@ -227,4 +227,4 @@ data-exports/
 ##############################
 # Files generated for OpenAPI
 ##############################
-/src/main/webapp/app/**/generated/**
+/src/main/webapp/app/**/openapi/**
