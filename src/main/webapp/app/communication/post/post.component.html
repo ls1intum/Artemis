@@ -128,7 +128,7 @@
     </div>
     @if (!isDeleted && displayInlineInput && !readOnlyMode()) {
         <div class="post-content-padding">
-            <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+            <jhi-message-inline-input [posting]="posting" (isModalOpen)="setDisplayInlineInput(false)" />
         </div>
     }
     @if (!isDeleted) {

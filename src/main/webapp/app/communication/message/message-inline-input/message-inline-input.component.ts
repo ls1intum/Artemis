@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -20,6 +20,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 })
 export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     private localStorageService = inject(LocalStorageService);
+    private cdr = inject(ChangeDetectorRef);
     course = input<Course>();
 
     warningDismissed = false;
@@ -69,6 +70,9 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             },
             error: () => {
                 this.isLoading = false;
+            },
+            complete: () => {
+                this.cdr.detectChanges();
             },
         });
     }

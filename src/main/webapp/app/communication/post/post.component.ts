@@ -344,6 +344,11 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         }
     }
 
+    protected setDisplayInlineInput(active: boolean) {
+        this.displayInlineInput = active;
+        this.changeDetector.detectChanges();
+    }
+
     private assignPostingToPost() {
         // This is needed because otherwise instanceof returns 'object'.
         if (this.posting && !(this.posting instanceof Post)) {
