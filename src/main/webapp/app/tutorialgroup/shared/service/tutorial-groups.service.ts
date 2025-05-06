@@ -8,7 +8,7 @@ import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { Student, TutorialGroupApiService, TutorialGroupRegistrationImport } from 'app/tutorialgroup/generated';
+import { TutorialGroupApi, TutorialGroupRegistrationImport } from 'app/tutorialgroup/openapi';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -18,16 +18,16 @@ export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
-    private tutorialGroupApiService = inject(TutorialGroupApiService);
+    private tutorialGroupApi = new TutorialGroupApi();
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueCampusValues(courseId: number): Observable<HttpResponse<Set<string>>> {
-        return this.tutorialGroupApiService.getUniqueCampusValues(courseId, 'response');
+    getUniqueCampusValues(courseId: number) {
+        return this.tutorialGroupApi.getUniqueCampusValues({ courseId });
     }
 
-    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Set<string>>> {
-        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response');
+    getUniqueLanguageValues(courseId: number) {
+        return this.tutorialGroupApi.getUniqueLanguageValues({ courseId });
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
@@ -70,24 +70,24 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, login, 'response');
+    deregisterStudent(courseId: number, tutorialGroupId: number, login: string) {
+        return this.tutorialGroupApi.deregisterStudent({ courseId, tutorialGroupId, studentLogin: login });
     }
 
-    registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
+    registerStudent(courseId: number, tutorialGroupId: number, login: string) {
+        return this.tutorialGroupApi.registerStudent({ courseId, tutorialGroupId, studentLogin: login });
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<Set<Student>>> {
-        return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, new Set(studentDtos), 'response');
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]) {
+        return this.tutorialGroupApi.registerMultipleStudentsToTutorialGroup({ courseId, tutorialGroupId, student: new Set(studentDtos) });
     }
 
-    import(courseId: number, tutorialGroups: Set<TutorialGroupRegistrationImport>): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
-        return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
+    import(courseId: number, tutorialGroups: Set<TutorialGroupRegistrationImport>) {
+        return this.tutorialGroupApi.importRegistrations({ courseId, tutorialGroupRegistrationImport: tutorialGroups });
     }
 
-    delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
+    delete(courseId: number, tutorialGroupId: number) {
+        return this.tutorialGroupApi._delete({ courseId, tutorialGroupId });
     }
 
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
