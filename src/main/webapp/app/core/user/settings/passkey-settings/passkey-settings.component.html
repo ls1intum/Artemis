@@ -105,7 +105,7 @@
                     [btnSize]="ButtonSize.SMALL"
                     [icon]="faPlus"
                     [title]="'artemisApp.userSettings.passkeySettingsPage.addNewPasskey'"
-                    (onClick)="addNewPasskey()"
+                    (onClick)="addNewPasskey(currentUser(), webauthnApiService, alertService)"
                 />
             </div>
         </div>
