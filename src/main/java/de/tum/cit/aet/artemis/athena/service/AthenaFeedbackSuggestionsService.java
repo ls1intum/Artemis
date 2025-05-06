@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.athena.dto.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.athena.dto.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.atlas.domain.profile.LearnerProfile;
 import de.tum.cit.aet.artemis.atlas.dto.LearnerProfileDTO;
+import de.tum.cit.aet.artemis.atlas.repository.LearnerProfileRepository;
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -67,6 +68,8 @@ public class AthenaFeedbackSuggestionsService {
     @Value("${artemis.athena.allowed-feedback-requests:10}")
     private int allowedFeedbackRequests;
 
+    private final LearnerProfileRepository learnerProfileRepository;
+
     /**
      * Create a new AthenaFeedbackSuggestionsService to receive feedback suggestions from the Athena service.
      *
@@ -76,13 +79,14 @@ public class AthenaFeedbackSuggestionsService {
      * @param llmTokenUsageService      Service to store the usage of LLM tokens
      */
     public AthenaFeedbackSuggestionsService(@Qualifier("athenaRestTemplate") RestTemplate athenaRestTemplate, AthenaModuleService athenaModuleService,
-            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService) {
+            AthenaDTOConverterService athenaDTOConverterService, LLMTokenUsageService llmTokenUsageService, LearnerProfileRepository learnerProfileRepository) {
         textAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOText.class);
         programmingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOProgramming.class);
         modelingAthenaConnector = new AthenaConnector<>(athenaRestTemplate, ResponseDTOModeling.class);
         this.athenaDTOConverterService = athenaDTOConverterService;
         this.athenaModuleService = athenaModuleService;
         this.llmTokenUsageService = llmTokenUsageService;
+        this.learnerProfileRepository = learnerProfileRepository;
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
@@ -109,7 +113,7 @@ public class AthenaFeedbackSuggestionsService {
      */
     private LearnerProfile extractLearnerProfile(Submission submission) {
         if (submission.getParticipation() instanceof StudentParticipation studentParticipation) {
-            return studentParticipation.getStudent().map(User::getLearnerProfile).orElse(null);
+            return studentParticipation.getStudent().map(User::getLearnerProfile).map(lp -> learnerProfileRepository.findByIdInitialized(lp.getId()).orElse(null)).orElse(null);
         }
         return null;
     }
