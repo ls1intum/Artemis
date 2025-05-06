@@ -432,7 +432,7 @@ public class FileResource {
         ExamUser examUser = api.findWithExamById(examUserId).orElseThrow();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examUser.getExam().getCourse(), null);
 
-        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE), true);
+        return buildFileResponse(getActualPathFromPublicPathString(examUser.getStudentImagePath(), FilePathType.EXAM_USER_IMAGE), true);
     }
 
     /**

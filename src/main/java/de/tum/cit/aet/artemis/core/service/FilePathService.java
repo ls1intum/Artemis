@@ -198,7 +198,7 @@ public class FilePathService {
             case COURSE_ICON -> getCourseIconFilePath().resolve(filename);
             case PROFILE_PICTURE -> getProfilePictureFilePath().resolve(filename);
             case EXAM_USER_SIGNATURE -> getExamUserSignatureFilePath().resolve(filename);
-            case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> getStudentImageFileSystemPath(path, filename);
+            case EXAM_USER_IMAGE -> getStudentImageFileSystemPath(path, filename);
             case LECTURE_ATTACHMENT -> getLectureAttachmentFileSystemPath(path, filename);
             case SLIDE -> getSlideFileSystemPath(path, filename);
             case STUDENT_VERSION_SLIDES -> getStudentVersionSlidesFileSystemPath(path, filename);
@@ -355,7 +355,7 @@ public class FilePathService {
             case COURSE_ICON -> URI.create("course/icons/" + id + "/" + filename);
             case PROFILE_PICTURE -> URI.create("user/profile-pictures/" + id + "/" + filename);
             case EXAM_USER_SIGNATURE -> URI.create("exam-user/signatures/" + id + "/" + filename);
-            case EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
+            case EXAM_USER_IMAGE -> URI.create("exam-user/" + id + "/" + filename);
             case LECTURE_ATTACHMENT -> URI.create("attachments/lecture/" + id + "/" + filename);
             case SLIDE -> externalUriForSlideFileSystemPath(path, filename, id);
             case FILE_UPLOAD_SUBMISSION -> externalUriForFileUploadExercisesFileSystemPath(path, filename, id);

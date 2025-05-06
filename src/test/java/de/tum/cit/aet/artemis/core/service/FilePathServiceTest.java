@@ -48,7 +48,7 @@ class FilePathServiceTest {
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "exam-user", "signatures", "sign.png"));
 
         // EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE
-        actualPath = FilePathService.fileSystemPathForExternalUri(URI.create("exam-user/42/photo.jpg"), FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE);
+        actualPath = FilePathService.fileSystemPathForExternalUri(URI.create("exam-user/42/photo.jpg"), FilePathType.EXAM_USER_IMAGE);
         assertThat(actualPath).isEqualTo(Path.of("uploads", "images", "exam-user", "photo.jpg"));
 
         // LECTURE_ATTACHMENT
@@ -107,7 +107,7 @@ class FilePathServiceTest {
 
         // EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE
         path = FilePathService.getStudentImageFilePath().resolve("photo.jpg");
-        uri = FilePathService.externalUriForFileSystemPath(path, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, 9L);
+        uri = FilePathService.externalUriForFileSystemPath(path, FilePathType.EXAM_USER_IMAGE, 9L);
         assertThat(uri).isEqualTo(URI.create("exam-user/9/photo.jpg"));
 
         // LECTURE_ATTACHMENT

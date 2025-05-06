@@ -133,13 +133,13 @@ public class ExamUserService {
             MultipartFile studentImageFile = fileService.convertByteArrayToMultipart("student_image", ".png", examUserWithImageDTO.image().imageInBytes());
             String externalUri = "/exam-user/" + examUser.getId() + "/" + studentImageFile.getOriginalFilename();
             Path basePath = FilePathService.getStudentImageFilePath().resolve(examUser.getId().toString());
-            Path savedPath = fileService.saveFile(studentImageFile, basePath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, true);
+            Path savedPath = fileService.saveFile(studentImageFile, basePath, FilePathType.EXAM_USER_IMAGE, true);
 
-            examUser.setStudentImagePath(FilePathService.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE, examUser.getId()).toString());
+            examUser.setStudentImagePath(FilePathService.externalUriForFileSystemPath(savedPath, FilePathType.EXAM_USER_IMAGE, examUser.getId()).toString());
             examUserRepository.save(examUser);
 
             if (oldPathString != null) {
-                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE);
+                Path oldPath = FilePathService.fileSystemPathForExternalUri(URI.create(oldPathString), FilePathType.EXAM_USER_IMAGE);
                 fileService.schedulePathForDeletion(oldPath, 0);
             }
         }
@@ -159,8 +159,7 @@ public class ExamUserService {
                     fileService.schedulePathForDeletion(path, 0);
                 });
 
-        Optional.ofNullable(user.getStudentImagePath()).map(URI::create)
-                .map(uri -> FilePathService.fileSystemPathForExternalUri(uri, FilePathType.EXAM_ATTENDANCE_CHECK_STUDENT_IMAGE))
+        Optional.ofNullable(user.getStudentImagePath()).map(URI::create).map(uri -> FilePathService.fileSystemPathForExternalUri(uri, FilePathType.EXAM_USER_IMAGE))
                 .ifPresent(path -> fileService.schedulePathForDeletion(path, 0));
     }
 
